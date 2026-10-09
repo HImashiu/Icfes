@@ -81,3 +81,13 @@ describe("option figures and passage cleanup", () => {
     expect(prepareExam(exam, new Map())).toBe(exam);
   });
 });
+
+describe("image figures", () => {
+  it("keeps the src of an image figure without treating it as an error", () => {
+    const map = parseFigureSpecs({
+      format: "icfes-figures-specs/1",
+      figures: [{ id: "img", kind: "image", src: "crops/S11-O_2da/q033.png", location: { question: 33 } }],
+    });
+    expect(map.get("33")[0]).toMatchObject({ kind: "image", src: "crops/S11-O_2da/q033.png", error: null, spec: null });
+  });
+});

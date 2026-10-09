@@ -16,12 +16,16 @@ export function parseFigureSpecs(raw) {
     const keys = [];
     if (loc.question != null) keys.push(String(loc.question));
     if (loc.group) keys.push(`group:${loc.group}`);
-    const errors = fig.spec ? engine.validate(fig.spec) : ["no spec"];
+    // A kind "image" figure is a picture (map, photo, geometry) shown as its crop, referenced by src.
+    const isImage = fig.kind === "image";
+    const errors = isImage || !fig.spec ? [] : engine.validate(fig.spec);
+    if (!isImage && !fig.spec) errors.push("no spec");
     const entry = {
       id: fig.id,
       kind: fig.kind,
-      spec: errors.length ? null : fig.spec,
+      spec: errors.length || isImage ? null : fig.spec,
       error: errors.length ? errors.join("; ") : null,
+      src: isImage ? fig.src ?? null : null,
       fallbackCrop: fig.fallback_crop ?? null,
       fidelity: fig.fidelity ?? "draft",
       target: loc.stem_or_option ?? "stem",
