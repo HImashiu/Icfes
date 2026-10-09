@@ -4,6 +4,9 @@
 export const EXAM_FORMAT = "icfes-golden/1";
 export const KEY_FORMAT = "icfes-key/1";
 
+// Shown on every question. The questions are a free resource; the platform is the product.
+export const SOURCE_LINE = "Fuente: ICFES, Saber 11";
+
 export class ExamFormatError extends Error {}
 
 export function parseExam(raw) {

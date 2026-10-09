@@ -35,6 +35,7 @@ la app muestra "Clave pendiente" y guarda las respuestas sin calcular puntaje.
 - Pantalla de respuesta con textos compartidos al lado de cada pregunta, mapa de preguntas,
   marcar para revisar, entregar con aviso de preguntas en blanco.
 - Resultado por área y revisión pregunta por pregunta.
+- Cada pregunta lleva la línea "Fuente: ICFES, Saber 11". Las preguntas son un recurso gratuito; practicar no requiere pago.
 - Matemáticas con KaTeX (`$...$`). Funciona en teléfono.
 - El intento en curso se guarda en el navegador de quien responde, así que recargar no lo borra.
 

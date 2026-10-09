@@ -1,4 +1,5 @@
 import RichText from "./RichText.jsx";
+import { SOURCE_LINE } from "../lib/exam.js";
 
 // One question with its shared passage. In review mode, `review` carries the correct letter (or null when no key).
 export default function QuestionView({ question, answer, onAnswer, review }) {
@@ -54,6 +55,7 @@ export default function QuestionView({ question, answer, onAnswer, review }) {
           );
         })}
       </ul>
+      <p className="source">{SOURCE_LINE}</p>
     </article>
   );
 }
