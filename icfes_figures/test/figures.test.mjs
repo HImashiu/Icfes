@@ -106,3 +106,24 @@ test('rotated category labels get extra bottom margin', () => {
   const short = { ...long, categories: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'] };
   assert.ok(!F.render(short).includes('rotate(-45'));
 });
+
+test('table spans: rowspan and colspan cells render and must cover the width', () => {
+  const spec = { kind: 'table', rows: [['a', 'b', 'c'], ['1', '2']] };
+  assert.ok(F.validate(spec).length > 0, 'rows of different width are rejected');
+  const ok = { kind: 'table', rows: [[{ text: 'A', rowspan: 2 }, { text: 'B', colspan: 2 }], ['c', 'd']] };
+  assert.deepEqual(F.validate(ok), []);
+  const html = F.render(ok);
+  assert.ok(html.includes('rowspan="2"') && html.includes('colspan="2"'));
+});
+
+test('geometry kind draws segments, ticks and angle marks; hidden points get no label', () => {
+  const g = { kind: 'geometry', points: { A: [0, 0], B: [4, 0], C: [1, 3], _h: [2, 2] },
+    segments: [{ a: 'A', b: 'B', ticks: 2 }, { a: 'B', b: 'C', dashed: true }],
+    angles: [{ vertex: 'A', a: 'B', b: 'C', label: '45°' }] };
+  assert.deepEqual(F.validate(g), []);
+  const svg = F.render(g);
+  assert.ok(svg.includes('stroke-dasharray'));
+  assert.ok(svg.includes('45°'));
+  assert.ok(!svg.includes('>_h<'));
+  assert.ok(F.validate({ kind: 'geometry', points: { A: [0, 0] }, segments: [{ a: 'A', b: 'Z' }] }).length > 0);
+});
