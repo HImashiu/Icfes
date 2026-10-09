@@ -35,7 +35,7 @@ themselves charts (for example, four bar charts labelled A to D).
 ## Kinds
 
 Every spec has `kind` and may have `title`. Labels are plain strings and may contain Spanish
-accents. Numbers print with a decimal comma.
+accents. Numbers print with Spanish separators: "." groups thousands and "," is the decimal mark.
 
 ### `bar`, vertical bars
 

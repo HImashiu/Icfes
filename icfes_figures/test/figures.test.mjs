@@ -53,4 +53,6 @@ test('table renders as an HTML table and escapes cell text', () => {
 test('decimal comma on axis labels', () => {
   assert.equal(F.fmt(2.5), '2,5');
   assert.equal(F.fmt(4), '4');
+  assert.equal(F.fmt(10000), '10.000');
+  assert.equal(F.fmt(1234.5), '1.234,5');
 });

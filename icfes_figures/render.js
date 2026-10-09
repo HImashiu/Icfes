@@ -74,10 +74,12 @@
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
-  // Spanish-style decimal comma, as on the exam paper.
+  // Spanish-style separators, as on the exam paper: "." groups thousands, "," is the decimal mark.
   function fmt(n) {
-    if (Number.isInteger(n)) return String(n);
-    return String(Math.round(n * 1000) / 1000).replace('.', ',');
+    const group = (s) => s.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    if (Number.isInteger(n)) return group(String(n));
+    const [whole, frac] = String(Math.round(n * 1000) / 1000).split('.');
+    return (Math.abs(n) >= 1000 ? group(whole) : whole) + (frac ? ',' + frac : '');
   }
 
   function niceStep(span, target) {
