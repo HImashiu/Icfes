@@ -48,6 +48,36 @@ Options: `--workers N` (documents in parallel, default 1, max 8), `--only TEXT`,
 `--retry-failed`, `--max-pages-per-request` (default 100), `--max-request-mb` (default 100),
 `--max-retries` (default 6), `--keep-work`, `-v`.
 
+## Viewing the cleaned questions (College Board style)
+
+`icfes_view` is a separate, deterministic stage (no LLM, no Azure calls, free to re-run). It reads
+`markdown/` + `figures/` from the ingest output and writes:
+
+```
+data/out/questions/<doc_id>.json   cleaned questions as Markdown: stimulus, stem, options A-D, group passages, flags
+data/out/view/<doc_id>.html        one self-contained page (images embedded) + view/index.html
+```
+
+```powershell
+python -m icfes_view --output data\out            # add --link-images to link ../figures/ instead of embedding
+start data\out\view\index.html
+```
+
+The page has a passage pane (left) and question pane (right), lettered choices, Mark for Review, choice
+elimination, a question map grouped by section, keyboard shortcuts (left/right arrows, A-D), dark mode and an
+"Original extraction" toggle to compare against the raw text.
+
+What the clean-up does: drops page headers/footers and logos that repeat on every page, repairs hyphenated line
+breaks, restores option letters hidden by scan marks (`marked in scan` is a pen mark on the page, **not** an answer
+key), keeps numbered sub-lists inside their question, and separates shared passages ("RESPONDA LAS PREGUNTAS X A Y")
+from the individual questions. It never drops anything silently: questions with fewer options than expected carry a
+**review note**, and question numbers it could not find become red **not detected** placeholders listed in
+`missing_numbers`. Known limits: answer choices that are images, scrambled fraction/diagram options, figures that
+straddle a page break (attached to the wrong question), and the matching/picture parts of the English test.
+Those are what the later interpretation stage (LLM, out of scope here) is meant to resolve.
+
+OCR text is untrusted, so all embedded HTML goes through a whitelist sanitizer before it reaches the page.
+
 ## Spending cap
 
 `--budget-usd 3` (or `--max-pages 300`) is a **hard cap across all runs**, tracked in `manifest.json`
@@ -105,7 +135,7 @@ the real Azure SDK against a fake HTTP layer to verify the request that is sent
 
 ## Status
 
-- 27 offline tests pass (fake backend + real SDK against a fake HTTP layer).
+- 33 offline tests pass (fake backend + real SDK against a fake HTTP layer).
 - **Live check done:** `S11-O 2da sesión.pdf` (26 scanned pages, 10 MB) ran against a real S0 resource in about
   35 s: 26/26 pages, 45 figures (all downloaded from the service, none needed the local-crop fallback), Spanish
   accents intact, tables emitted as HTML, 26 pages billed (~$0.26 at $10/1000 pages).

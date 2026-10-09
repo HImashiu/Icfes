@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
+<style>
+:root{
+  --bg:#ffffff; --panel:#ffffff; --ink:#1b1f24; --muted:#5b6470; --line:#d5d9e0; --soft:#f4f6f9;
+  --brand:#0b4fb3; --brand-ink:#ffffff; --sel:#e6effc; --warn-bg:#fff4d6; --warn-ink:#6a4700; --warn-line:#f0d58a;
+  --bad-bg:#fdebea; --bad-ink:#8a1f17; --bad-line:#f2b8b3; --ok:#1c7c54; --badge:#111; --badge-ink:#fff;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12151a; --panel:#181c22; --ink:#e7e9ee; --muted:#9aa3b0; --line:#313844; --soft:#1e232b;
+    --brand:#6aa3ff; --brand-ink:#0a0f18; --sel:#1c2c47; --warn-bg:#3a2f12; --warn-ink:#f3d58b; --warn-line:#6b5516;
+    --bad-bg:#3b1a18; --bad-ink:#f5b4ae; --bad-line:#6e2b27; --ok:#58c79a; --badge:#e7e9ee; --badge-ink:#12151a;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12151a; --panel:#181c22; --ink:#e7e9ee; --muted:#9aa3b0; --line:#313844; --soft:#1e232b;
+  --brand:#6aa3ff; --brand-ink:#0a0f18; --sel:#1c2c47; --warn-bg:#3a2f12; --warn-ink:#f3d58b; --warn-line:#6b5516;
+  --bad-bg:#3b1a18; --bad-ink:#f5b4ae; --bad-line:#6e2b27; --ok:#58c79a; --badge:#e7e9ee; --badge-ink:#12151a;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  display:flex;flex-direction:column}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,select:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:2px solid var(--ink);background:var(--panel)}
+.top .title{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top .sub{color:var(--muted);font-size:13px}
+.top .grow{flex:1}
+.top select,.chip{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:6px 10px;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--sel);border-color:var(--brand);color:var(--brand)}
+.banner{background:var(--soft);border-bottom:1px solid var(--line);padding:6px 20px;font-size:13px;color:var(--muted)}
+
+/* panes */
+main{flex:1;display:grid;grid-template-columns:1fr 1fr;min-height:0}
+main.single{grid-template-columns:minmax(0,760px);justify-content:center}
+.pane{overflow:auto;padding:24px 32px 40px;min-width:0}
+.pane.left{border-right:2px solid var(--line)}
+.directions{font-style:italic;color:var(--muted);margin:0 0 14px;font-size:14px}
+.prose p{margin:0 0 .9em}
+.prose img{max-width:100%;height:auto;display:block;margin:10px 0;border:1px solid var(--line);border-radius:6px;background:#fff}
+.prose table{border-collapse:collapse;margin:12px 0;max-width:100%;font-size:15px}
+.prose th,.prose td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+.prose th{background:var(--soft)}
+.prose h4{margin:0 0 .6em;font-size:16px;letter-spacing:.02em}
+.sep{border:0;border-top:1px dashed var(--line);margin:18px 0}
+
+/* question header */
+.qhead{display:flex;align-items:center;gap:10px;background:var(--soft);border-bottom:2px dashed var(--ink);
+  margin:-24px -32px 20px;padding:8px 32px;position:sticky;top:-24px;z-index:2}
+.qnum{background:var(--badge);color:var(--badge-ink);font-weight:700;min-width:34px;height:34px;display:grid;place-items:center;
+  padding:0 8px;border-radius:2px}
+.tool{border:0;background:none;display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;font-size:14px}
+.tool:hover{background:var(--line)}
+.tool[aria-pressed="true"]{color:var(--brand);font-weight:600}
+.qhead .grow{flex:1}
+.stem{font-size:17px;margin-bottom:18px}
+.note{border:1px solid var(--warn-line);background:var(--warn-bg);color:var(--warn-ink);border-radius:8px;
+  padding:10px 12px;font-size:14px;margin:0 0 16px}
+.note.bad{border-color:var(--bad-line);background:var(--bad-bg);color:var(--bad-ink)}
+.note ul{margin:4px 0 0 18px;padding:0}
+
+/* options */
+.opts{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.opt{display:flex;align-items:stretch;gap:0}
+.card{flex:1;display:flex;gap:14px;align-items:flex-start;text-align:left;background:var(--panel);
+  border:2px solid var(--line);border-radius:10px;padding:12px 14px}
+.card:hover{border-color:var(--ink)}
+.opt.sel .card{border-color:var(--brand);background:var(--sel)}
+.letter{flex:none;width:30px;height:30px;border-radius:50%;border:2px solid var(--ink);display:grid;place-items:center;font-weight:700;font-size:14px}
+.opt.sel .letter{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.otext{min-width:0}
+.otext p{margin:0}
+.opt.elim .otext{text-decoration:line-through;color:var(--muted)}
+.opt.elim .card{border-style:dashed;opacity:.8}
+.elimbtn{border:0;background:none;width:36px;color:var(--muted);font-size:18px;visibility:hidden}
+.elimmode .elimbtn,.opt:hover .elimbtn,.elimbtn:focus-visible{visibility:visible}
+.pill{display:inline-block;font-size:11px;border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-left:8px;color:var(--muted);vertical-align:middle}
+.raw{margin-top:22px;border:1px solid var(--line);border-radius:8px;background:var(--soft)}
+.raw h5{margin:0;padding:8px 12px;border-bottom:1px solid var(--line);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.raw pre{margin:0;padding:12px;white-space:pre-wrap;word-break:break-word;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monospace;max-height:320px;overflow:auto}
+
+/* bottom bar */
+.bottom{display:flex;align-items:center;gap:12px;padding:10px 20px;border-top:2px solid var(--ink);background:var(--panel);position:relative}
+.bottom .grow{flex:1}
+.mapbtn{border:0;background:var(--ink);color:var(--bg);border-radius:6px;padding:8px 14px;font-weight:700}
+.nav{border:0;background:var(--brand);color:var(--brand-ink);border-radius:999px;padding:9px 24px;font-weight:700}
+.nav:disabled{opacity:.35;cursor:default}
+.nav.alt{background:var(--panel);color:var(--brand);border:2px solid var(--brand)}
+.map{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);width:min(720px,94vw);max-height:62vh;overflow:auto;
+  background:var(--panel);border:2px solid var(--ink);border-radius:12px;padding:18px 20px;box-shadow:0 12px 40px rgba(0,0,0,.25);z-index:5}
+.map[hidden]{display:none}
+.map h4{margin:0 0 4px;font-size:15px}
+.map .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:8px 0 14px}
+.grid{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+.cell{width:38px;height:38px;border:2px dashed var(--brand);color:var(--brand);background:var(--panel);border-radius:4px;font-weight:700;position:relative}
+.cell.ans{border-style:solid;background:var(--brand);color:var(--brand-ink)}
+.cell.cur{outline:3px solid var(--ink);outline-offset:1px}
+.cell.rev::after{content:"⚑";position:absolute;top:-9px;right:-6px;color:#c4312a;font-size:15px}
+.cell.chk::before{content:"";position:absolute;left:-5px;bottom:-5px;width:11px;height:11px;border-radius:50%;background:#e0a800;border:2px solid var(--panel)}
+.cell.ph{border-color:var(--bad-ink);color:var(--bad-ink)}
+
+@media (max-width:860px){
+  main{grid-template-columns:1fr}
+  .pane.left{border-right:0;border-bottom:2px solid var(--line);max-height:42vh}
+  .pane{padding:16px 16px 28px}
+  .qhead{margin:-16px -16px 16px;padding:8px 16px;top:-16px}
+  .top{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div style="min-width:0"><div class="title" id="title"></div><div class="sub" id="subtitle"></div></div>
+  <div class="grow"></div>
+  <label class="sub" for="sec">Section</label>
+  <select id="sec" aria-label="Jump to section"></select>
+  <button class="chip" id="rawbtn" aria-pressed="false" title="Compare with the original extracted text">Original extraction</button>
+  <button class="chip" id="theme" aria-label="Toggle dark mode">Dark / Light</button>
+</header>
+<div class="banner" id="banner"></div>
+<main id="main"></main>
+<footer class="bottom">
+  <div class="sub" id="who"></div>
+  <div class="grow"></div>
+  <button class="mapbtn" id="mapbtn" aria-expanded="false" aria-controls="map"></button>
+  <div class="map" id="map" hidden></div>
+  <div class="grow"></div>
+  <button class="nav alt" id="back">Back</button>
+  <button class="nav" id="next">Next</button>
+</footer>
+
+<script id="data" type="application/json">__DATA__</script>
+<script>
+(function(){
+  var D = JSON.parse(document.getElementById('data').textContent);
+  var Q = D.questions, G = D.groups || {}, IM = D.images || {}, KEY = 'icfes-view:' + D.doc_id;
+  var S = {i:0, ans:{}, rev:{}, elim:{}, raw:false, elimMode:false};
+  try { var saved = JSON.parse(localStorage.getItem(KEY) || 'null'); if (saved) { S.ans = saved.ans||{}; S.rev = saved.rev||{}; S.elim = saved.elim||{}; } } catch(e){}
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify({ans:S.ans, rev:S.rev, elim:S.elim})); } catch(e){} }
+  function $(id){ return document.getElementById(id); }
+  function el(tag, cls, html){ var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+  function img(h){ return h ? h.replace(/src="IMG:([^"]+)"/g, function(m, n){ return 'src="' + (IM[n] || '') + '"'; }) : h; }
+  function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  $('title').textContent = D.title;
+  var flagged = Q.filter(function(q){ return q.flags.length; }).length;
+  $('subtitle').textContent = Q.length + ' questions · cleaned from the scanned PDF';
+  $('banner').innerHTML = flagged
+    ? '<strong>' + flagged + ' of ' + Q.length + '</strong> questions carry a review note (usually answer choices that live inside an image or a garbled scan). They are marked <span style="color:#b57b00">●</span> on the question map.'
+    : 'All questions parsed without review notes.';
+
+  var sections = []; Q.forEach(function(q, idx){ var s = q.section || 'Other'; if (!sections.some(function(x){return x.name===s;})) sections.push({name:s, first:idx}); });
+  var sel = $('sec'); sections.forEach(function(s){ var o = el('option'); o.value = s.first; o.textContent = s.name; sel.appendChild(o); });
+  sel.onchange = function(){ go(parseInt(sel.value,10)); };
+
+  function go(i){ S.i = Math.max(0, Math.min(Q.length-1, i)); $('map').hidden = true; $('mapbtn').setAttribute('aria-expanded','false'); render(); }
+
+  function render(){
+    var q = Q[S.i], n = q.number;
+    var grp = q.group ? G[q.group] : null;
+    var hasLeft = !!(q.stimulus_html || (grp && (grp.html || grp.directions)));
+    var main = $('main'); main.innerHTML = ''; main.className = hasLeft ? '' : 'single';
+    if (hasLeft){
+      var L = el('section', 'pane left'); L.setAttribute('aria-label', 'Passage');
+      if (grp){
+        if (grp.directions) L.appendChild(el('p', 'directions', esc(grp.directions)));
+        if (grp.html) L.appendChild(el('div', 'prose', img(grp.html)));
+        if (grp.html && q.stimulus_html) L.appendChild(el('hr', 'sep'));
+      }
+      if (q.stimulus_html) L.appendChild(el('div', 'prose', img(q.stimulus_html)));
+      main.appendChild(L);
+    }
+    var R = el('section', 'pane right' + (S.elimMode ? ' elimmode' : '')); R.setAttribute('aria-label', 'Question');
+    var head = el('div', 'qhead');
+    head.appendChild(el('div', 'qnum', n));
+    var rv = el('button', 'tool', '⚑ Mark for Review'); rv.setAttribute('aria-pressed', !!S.rev[n]);
+    rv.onclick = function(){ S.rev[n] = !S.rev[n]; save(); render(); }; head.appendChild(rv);
+    head.appendChild(el('div', 'grow'));
+    var em = el('button', 'tool', '<s>ABC</s> Eliminate'); em.setAttribute('aria-pressed', S.elimMode);
+    em.onclick = function(){ S.elimMode = !S.elimMode; render(); }; head.appendChild(em);
+    R.appendChild(head);
+
+    if (q.flags.length){
+      var note = el('div', 'note' + (q.placeholder ? ' bad' : ''), '<strong>' + (q.placeholder ? 'Not detected' : 'Needs review') + '</strong><ul>' +
+        q.flags.map(function(f){ return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>');
+      R.appendChild(note);
+    }
+    if (q.stem_html) R.appendChild(el('div', 'stem prose', img(q.stem_html)));
+    if (q.options.length){
+      var ul = el('ul', 'opts'); ul.setAttribute('role', 'radiogroup');
+      q.options.forEach(function(o){
+        var elim = (S.elim[n] || []).indexOf(o.letter) >= 0, on = S.ans[n] === o.letter;
+        var li = el('li', 'opt' + (on ? ' sel' : '') + (elim ? ' elim' : ''));
+        var b = el('button', 'card');
+        b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', on);
+        b.innerHTML = '<span class="letter">' + o.letter + '</span><span class="otext prose">' + (img(o.html) || '<em>(empty)</em>') +
+          (o.marked ? '<span class="pill" title="A selection mark was detected on this option in the scanned page">marked in scan</span>' : '') + '</span>';
+        b.onclick = function(){ S.ans[n] = (S.ans[n] === o.letter) ? null : o.letter; save(); render(); };
+        li.appendChild(b);
+        var x = el('button', 'elimbtn', elim ? '↺' : '⊘'); x.title = elim ? 'Restore choice' : 'Eliminate choice'; x.setAttribute('aria-label', x.title);
+        x.onclick = function(){ var a = S.elim[n] = S.elim[n] || []; var k = a.indexOf(o.letter); if (k>=0) a.splice(k,1); else a.push(o.letter); save(); render(); };
+        li.appendChild(x); ul.appendChild(li);
+      });
+      R.appendChild(ul);
+    }
+    if (S.raw){
+      var raw = el('div', 'raw'); raw.appendChild(el('h5', null, 'Original extraction (before cleaning)'));
+      var pre = el('pre'); pre.textContent = q.raw || '(nothing: this question was not detected)'; raw.appendChild(pre); R.appendChild(raw);
+    }
+    main.appendChild(R);
+
+    $('who').textContent = (q.section || '') + (q.part ? ' · ' + q.part : '');
+    $('mapbtn').textContent = 'Question ' + (S.i+1) + ' of ' + Q.length + ' ▴';
+    $('back').disabled = S.i === 0; $('next').disabled = S.i === Q.length-1;
+    $('next').textContent = S.i === Q.length-1 ? 'End' : 'Next';
+    sel.value = sections.filter(function(s){ return s.first <= S.i; }).pop().first;
+    buildMap();
+  }
+
+  function buildMap(){
+    var m = $('map'); m.innerHTML = '';
+    var answered = Object.keys(S.ans).filter(function(k){ return S.ans[k]; }).length;
+    m.appendChild(el('h4', null, esc(D.title) + ' · ' + answered + ' answered'));
+    m.appendChild(el('div', 'legend', '<span>▣ current</span><span>■ answered</span><span>⚑ marked for review</span><span><b style="color:#b57b00">●</b> needs review note</span>'));
+    sections.forEach(function(s, si){
+      var end = si+1 < sections.length ? sections[si+1].first : Q.length;
+      m.appendChild(el('h4', null, esc(s.name)));
+      var g = el('div', 'grid');
+      for (var i = s.first; i < end; i++){
+        (function(i){
+          var q = Q[i], c = el('button', 'cell' + (S.ans[q.number] ? ' ans' : '') + (i === S.i ? ' cur' : '') + (S.rev[q.number] ? ' rev' : '') +
+            (q.flags.length ? ' chk' : '') + (q.placeholder ? ' ph' : ''), q.number);
+          c.setAttribute('aria-label', 'Go to question ' + q.number); c.onclick = function(){ go(i); }; g.appendChild(c);
+        })(i);
+      }
+      m.appendChild(g);
+    });
+  }
+
+  $('mapbtn').onclick = function(){ var m = $('map'); m.hidden = !m.hidden; this.setAttribute('aria-expanded', !m.hidden); };
+  $('back').onclick = function(){ go(S.i-1); }; $('next').onclick = function(){ go(S.i+1); };
+  $('rawbtn').onclick = function(){ S.raw = !S.raw; this.setAttribute('aria-pressed', S.raw); render(); };
+  $('theme').onclick = function(){
+    var r = document.documentElement, dark = getComputedStyle(r).getPropertyValue('--bg').trim() !== '#ffffff';
+    r.setAttribute('data-theme', dark ? 'light' : 'dark');
+  };
+  document.addEventListener('keydown', function(e){
+    if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+    if (e.key === 'ArrowRight') go(S.i+1); else if (e.key === 'ArrowLeft') go(S.i-1);
+    else if (/^[a-dA-D]$/.test(e.key)){ var q = Q[S.i], L = e.key.toUpperCase();
+      if (q.options.some(function(o){ return o.letter === L; })){ S.ans[q.number] = L; save(); render(); } }
+  });
+  go(0);
+})();
+</script>
+</body>
+</html>
