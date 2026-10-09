@@ -78,6 +78,29 @@ Those are what the later interpretation stage (LLM, out of scope here) is meant 
 
 OCR text is untrusted, so all embedded HTML goes through a whitelist sanitizer before it reaches the page.
 
+## Source crops (what the original page looks like, per question)
+
+`icfes_crop` is a third separate stage (no LLM, no Azure calls). It uses the geometry Azure already returned
+(position of every paragraph, table, figure and word) plus the original PDF to cut one image per question and one
+per shared passage:
+
+```powershell
+python -m icfes_view --output data\out                         # needs questions/<doc>.json
+python -m icfes_crop --output data\out --input $zip            # the same zip/folder given to icfes_ingest
+python -m icfes_view --output data\out                         # re-run: the viewer now has a "Source crop" button
+```
+
+Output (`data/out/crops/<doc>/`): `q051.png`, `g51-53.png`, `bundles.json` (boxes, checks, flags per question) and
+`overlays/pNNN.jpg` (each page with every question's box drawn on it, orphan words in red).
+
+How it avoids cutting text: ownership comes from reading order between question anchors, so a crop is the bounding
+box of **the question's own words/elements**, split by page and column, deskewed with the tilt Azure reports (the
+direction is confirmed against real ink), padded, and grown until the edge strip is clean white without ever entering
+another owner's text. Checks that run on every bundle: **words cut** (any word outside its crop: must be 0),
+**orphan words** (page text that belongs to no question: listed), **touching neighbor text** (other owners' words inside
+the crop), and **ink at the edge** (often the dark scan border or handwriting). Page titles, headers and page
+numbers are treated as furniture and excluded. Use `--embed-crops flagged` on `icfes_view` for a smaller shareable HTML.
+
 ## Spending cap
 
 `--budget-usd 3` (or `--max-pages 300`) is a **hard cap across all runs**, tracked in `manifest.json`
@@ -135,7 +158,7 @@ the real Azure SDK against a fake HTTP layer to verify the request that is sent
 
 ## Status
 
-- 33 offline tests pass (fake backend + real SDK against a fake HTTP layer).
+- 40 offline tests pass (fake backend + real SDK against a fake HTTP layer).
 - **Live check done:** `S11-O 2da sesión.pdf` (26 scanned pages, 10 MB) ran against a real S0 resource in about
   35 s: 26/26 pages, 45 figures (all downloaded from the service, none needed the local-crop fallback), Spanish
   accents intact, tables emitted as HTML, 26 pages billed (~$0.26 at $10/1000 pages).

@@ -51,6 +51,9 @@ main.single{grid-template-columns:minmax(0,760px);justify-content:center}
 .prose th{background:var(--soft)}
 .prose h4{margin:0 0 .6em;font-size:16px;letter-spacing:.02em}
 .sep{border:0;border-top:1px dashed var(--line);margin:18px 0}
+.src{margin:0 0 18px;border:1px solid var(--line);border-radius:8px;background:#fff;overflow:hidden}
+.src h5{margin:0;padding:6px 12px;background:var(--soft);border-bottom:1px solid var(--line);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.src img{display:block;width:100%;height:auto}
 
 /* question header */
 .qhead{display:flex;align-items:center;gap:10px;background:var(--soft);border-bottom:2px dashed var(--ink);
@@ -122,6 +125,7 @@ main.single{grid-template-columns:minmax(0,760px);justify-content:center}
   <div class="grow"></div>
   <label class="sub" for="sec">Section</label>
   <select id="sec" aria-label="Jump to section"></select>
+  <button class="chip" id="cropbtn" aria-pressed="false" title="Show the original page image of this question">Source crop</button>
   <button class="chip" id="rawbtn" aria-pressed="false" title="Compare with the original extracted text">Original extraction</button>
   <button class="chip" id="theme" aria-label="Toggle dark mode">Dark / Light</button>
 </header>
@@ -142,7 +146,7 @@ main.single{grid-template-columns:minmax(0,760px);justify-content:center}
 (function(){
   var D = JSON.parse(document.getElementById('data').textContent);
   var Q = D.questions, G = D.groups || {}, IM = D.images || {}, KEY = 'icfes-view:' + D.doc_id;
-  var S = {i:0, ans:{}, rev:{}, elim:{}, raw:false, elimMode:false};
+  var S = {i:0, ans:{}, rev:{}, elim:{}, raw:false, crop:false, elimMode:false};
   try { var saved = JSON.parse(localStorage.getItem(KEY) || 'null'); if (saved) { S.ans = saved.ans||{}; S.rev = saved.rev||{}; S.elim = saved.elim||{}; } } catch(e){}
   function save(){ try { localStorage.setItem(KEY, JSON.stringify({ans:S.ans, rev:S.rev, elim:S.elim})); } catch(e){} }
   function $(id){ return document.getElementById(id); }
@@ -166,7 +170,8 @@ main.single{grid-template-columns:minmax(0,760px);justify-content:center}
   function render(){
     var q = Q[S.i], n = q.number;
     var grp = q.group ? G[q.group] : null;
-    var hasLeft = !!(q.stimulus_html || (grp && (grp.html || grp.directions)));
+    var gcrop = (S.crop && grp && grp.crop) ? grp.crop : null;
+    var hasLeft = !!(q.stimulus_html || gcrop || (grp && (grp.html || grp.directions)));
     var main = $('main'); main.innerHTML = ''; main.className = hasLeft ? '' : 'single';
     if (hasLeft){
       var L = el('section', 'pane left'); L.setAttribute('aria-label', 'Passage');
@@ -176,6 +181,7 @@ main.single{grid-template-columns:minmax(0,760px);justify-content:center}
         if (grp.html && q.stimulus_html) L.appendChild(el('hr', 'sep'));
       }
       if (q.stimulus_html) L.appendChild(el('div', 'prose', img(q.stimulus_html)));
+      if (gcrop) L.appendChild(el('div', 'src', '<h5>Source: shared passage (original page)</h5><img alt="Original page crop of the shared passage" src="' + (IM[gcrop] || gcrop) + '">'));
       main.appendChild(L);
     }
     var R = el('section', 'pane right' + (S.elimMode ? ' elimmode' : '')); R.setAttribute('aria-label', 'Question');
@@ -188,6 +194,11 @@ main.single{grid-template-columns:minmax(0,760px);justify-content:center}
     em.onclick = function(){ S.elimMode = !S.elimMode; render(); }; head.appendChild(em);
     R.appendChild(head);
 
+    var qc = q.crop || (q.placeholder && grp && grp.crop) || null;
+    if (S.crop){
+      R.appendChild(qc ? el('div', 'src', '<h5>Source: original page' + (q.crop ? '' : ' (shared passage)') + '</h5><img alt="Original page crop of question ' + n + '" src="' + (IM[qc] || qc) + '">')
+                       : el('div', 'note', 'No source crop for this question (its number was not found on the page).'));
+    }
     if (q.flags.length){
       var note = el('div', 'note' + (q.placeholder ? ' bad' : ''), '<strong>' + (q.placeholder ? 'Not detected' : 'Needs review') + '</strong><ul>' +
         q.flags.map(function(f){ return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>');
@@ -247,6 +258,7 @@ main.single{grid-template-columns:minmax(0,760px);justify-content:center}
 
   $('mapbtn').onclick = function(){ var m = $('map'); m.hidden = !m.hidden; this.setAttribute('aria-expanded', !m.hidden); };
   $('back').onclick = function(){ go(S.i-1); }; $('next').onclick = function(){ go(S.i+1); };
+  $('cropbtn').onclick = function(){ S.crop = !S.crop; this.setAttribute('aria-pressed', S.crop); render(); };
   $('rawbtn').onclick = function(){ S.raw = !S.raw; this.setAttribute('aria-pressed', S.raw); render(); };
   $('theme').onclick = function(){
     var r = document.documentElement, dark = getComputedStyle(r).getPropertyValue('--bg').trim() !== '#ffffff';

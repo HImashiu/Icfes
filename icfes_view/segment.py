@@ -194,7 +194,8 @@ def build(ch: Chunk, trailer_out: list[str] | None = None) -> dict:
             "stimulus_md": "\n\n".join(stimulus), "stem_md": stem,
             "options": [{"letter": o["letter"], "text_md": o["text"], "marked_in_scan": o["marked_in_scan"]}
                         for o in options],
-            "figures": figs, "flags": flags, "raw_md": "\n\n".join(ch.raw + ch.body[len(ch.raw):])}
+            "figures": figs, "flags": flags, "raw_md": "\n\n".join(ch.raw + ch.body[len(ch.raw):]),
+            "anchor": (ch.raw[0] if ch.raw else "")[:120]}  # text of the paragraph that starts this question
 
 
 def segment(items: list[str]) -> dict:

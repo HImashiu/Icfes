@@ -152,3 +152,12 @@ def test_viewer_html_embeds_data_safely(tmp_path):
     assert "Doc &lt;b&gt;" in page
     data = json.loads(page.split('type="application/json">')[1].split("</script>")[0].replace("<\\/", "</"))
     assert len(data["questions"]) == 5 and data["groups"]["g5-6"]["directions"].startswith("RESPONDA")
+
+
+def test_crops_are_attached_to_questions_and_groups():
+    _, _, seg = run()
+    crops = {"q1": "crop:q1", "g5-6": "crop:g5-6"}
+    data = prepare("d", "t", seg, lambda s: s, {}, crops)
+    q = {x["number"]: x for x in data["questions"]}
+    assert q[1]["crop"] == "crop:q1" and q[2]["crop"] is None
+    assert data["groups"]["g5-6"]["crop"] == "crop:g5-6"

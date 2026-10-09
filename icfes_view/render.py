@@ -73,14 +73,17 @@ def make_resolver(figures_root: Path, doc_id: str, embed: bool, images: dict[str
     return resolve
 
 
-def prepare(doc_id: str, title: str, seg: dict, resolve, images: dict[str, str] | None = None) -> dict:
-    groups = {g["id"]: {"directions": g["directions"], "html": md_to_html("\n\n".join(g["stimulus"]), resolve)}
-              for g in seg["groups"]}
+def prepare(doc_id: str, title: str, seg: dict, resolve, images: dict[str, str] | None = None,
+            crops: dict[str, str] | None = None) -> dict:
+    crops = crops or {}
+    groups = {g["id"]: {"directions": g["directions"], "html": md_to_html("\n\n".join(g["stimulus"]), resolve),
+                        "crop": crops.get(f"g{g['from']}-{g['to']}")} for g in seg["groups"]}
     qs = []
     for q in seg["questions"]:
         qs.append({
             "number": q["number"], "section": q["section"], "part": q["part"], "flags": q["flags"],
             "placeholder": bool(q.get("placeholder")), "group": q.get("group_id"),
+            "crop": crops.get(f"q{q['number']}"),
             "stimulus_html": md_to_html(q["stimulus_md"], resolve),
             "stem_html": md_to_html(q["stem_md"], resolve),
             "options": [{"letter": o["letter"], "html": md_to_html(o["text_md"], resolve),
