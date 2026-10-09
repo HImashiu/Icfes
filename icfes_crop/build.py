@@ -17,6 +17,7 @@ from typing import Any
 from PIL import Image, ImageDraw
 
 from . import geometry as G
+from .options import assign_lines, collect_lines, split_options
 
 log = logging.getLogger("icfes_crop")
 
@@ -161,7 +162,91 @@ def assign_owners(els: list[El], questions: list[dict], groups: list[dict]) -> d
         e.owner = owner
     for h in pending:
         h.owner = owner
-    return {"anchors": anchors, "zones": zones, "missing_anchor": missing}
+    return {"anchors": anchors, "zones": zones, "missing_anchor": missing, "event_idx": set(events)}
+
+
+def refine_row_layout(els: list[El], lines: list, anchor_idx: set[int], pages: dict[int, PageInfo]) -> int:
+    """Row-layout fix. Some pages put every question stem in one column and its options in the OTHER column, on the
+    same row (e.g. English reading questions). Azure then reads all stems first and merges the option lists into one
+    long paragraph, so reading order gives every option to the last question. On such a page the anchor-less
+    column is split into per-line elements and each line goes to the anchor on its row.
+
+    Signature (all must hold): one column has >= 2 anchors and the other none, and at least 70% of the anchors have
+    a line starting at the same height (+-0.2in) in the other column. Mixed pages (2 columns + full-width items) and
+    a lone continuation column do not match, and keep reading-order ownership."""
+    by_page: dict[int, list[int]] = {}
+    for i, e in enumerate(els):
+        if e.owner not in (None, "furniture"):
+            by_page.setdefault(e.page, []).append(i)
+    lines_on: dict[int, list] = {}
+    for ln in lines:
+        if ln.el is not None and els[ln.el].owner not in (None, "furniture"):
+            lines_on.setdefault(ln.page, []).append(ln)
+    drop: set[int] = set()
+    new_els: list[El] = []
+    moved = 0
+    # only QUESTION anchors define a row layout; a shared-passage directive at the top of a column does not
+    anchor_idx = {i for i in anchor_idx if (els[i].owner or "").startswith("q")}
+    for page, idxs in by_page.items():
+        w = pages[page].w
+        cols = {i: G.column_of(els[i].box, w) for i in idxs}
+        anchors = {c: sorted((els[i].box[1], i) for i in idxs if i in anchor_idx and cols[i] == c) for c in ("left", "right")}
+        if len(anchors["left"]) >= 2 and not anchors["right"]:
+            a_col, o_col = "left", "right"
+        elif len(anchors["right"]) >= 2 and not anchors["left"]:
+            a_col, o_col = "right", "left"
+        else:
+            continue
+        ys = [y for y, _ in anchors[a_col]]
+        centers = [(els[i].box[1] + els[i].box[3]) / 2 for _, i in anchors[a_col]]
+        o_lines = [l for l in lines_on.get(page, []) if G.column_of(l.box, w) == o_col]
+        aligned = sum(any(abs(l.box[1] - y) <= 0.2 for l in o_lines) for y in ys)
+        if aligned < max(2, 0.7 * len(ys)):
+            continue
+        by_el: dict[int, list] = {}
+        for l in o_lines:
+            by_el.setdefault(l.el, []).append(l)
+        # work items: every line, or the whole element when it has no line record (e.g. a lone ':selected:' dot)
+        items = []   # (box, text, chunk, offset, length, element index)
+        for ei in [i for i in idxs if cols[i] == o_col and i not in anchor_idx and els[i].kind == "p"]:
+            e = els[ei]
+            if by_el.get(ei):
+                items += [(l.box, l.text, l.chunk, l.offset, l.length, ei) for l in by_el[ei]]
+            else:
+                items.append((e.box, e.text, e.chunk, e.start, e.end - e.start, ei))
+        items.sort(key=lambda t: t[0][1])
+        # only items at/below the first stem are row content; anything above it (shared passage, example) is untouched
+        below = [it for it in items if it[0][1] >= ys[0] - 0.3]
+        split_els = {it[5] for it in below}
+        above = [it for it in items if it[5] in split_els and it[0][1] < ys[0] - 0.3]
+        for box, text, chunk, offset, length, ei in above:      # same element, upper part: keep its owner
+            drop.add(ei)
+            new_els.append(El("p", (chunk, offset), page, box, text, None, offset, offset + length, chunk, els[ei].owner))
+        # Each question's option block STARTS at about the height of its stem (-0.12..+0.08in). Gaps between blocks can
+        # be as small as the line spacing, so gap clustering would chain them together; starts are the reliable cue.
+        below.sort(key=lambda t: t[0][1])
+        starts: list[tuple[float, int]] = []
+        for j, (ytop, _) in enumerate(anchors[a_col]):
+            cand = [it[0][1] for it in below if ytop - 0.12 <= it[0][1] <= ytop + 0.08]
+            if cand:
+                starts.append((min(cand), j))
+        starts.sort()
+        for box, text, chunk, offset, length, ei in below:
+            e = els[ei]
+            drop.add(ei)
+            j = None
+            for y0, jj in starts:
+                if y0 <= box[1] + 1e-6:
+                    j = jj
+            if j is None:   # before every detected start: nearest stem by vertical centre
+                cy = (box[1] + box[3]) / 2
+                j = min(range(len(centers)), key=lambda t: abs(centers[t] - cy))
+            owner = els[anchors[a_col][j][1]].owner
+            new_els.append(El("p", (chunk, offset), page, box, text, None, offset, offset + length, chunk, owner))
+            moved += owner != e.owner
+    if drop:
+        els[:] = sorted([e for i, e in enumerate(els) if i not in drop] + new_els, key=lambda e: e.key)
+    return moved
 
 
 def assign_words(els: list[El], words: list[Word]) -> None:
@@ -263,7 +348,28 @@ def build_bundles(doc: dict, qdata: dict, pdf, out_dir: Path, dpi: int = 200) ->
     sign = _sign_from_ink(pdf, doc, dpi)
     pages, els, words = collect(doc, sign)
     own = assign_owners(els, qdata["questions"], qdata["groups"])
+    lines = collect_lines(doc, sign, pages)
+    assign_lines(els, lines)
+    # anchors are tracked by element identity, because refining the row layout replaces elements
+    anchor_ids = {id(els[i]) for i in own.pop("event_idx")}
+    moved = refine_row_layout(els, lines, {i for i, e in enumerate(els) if id(e) in anchor_ids}, pages)
+    own["moved_by_geometry"] = moved
     assign_words(els, words)
+    assign_lines(els, lines)
+    options_geo: dict[str, list[dict]] = {}
+    exp = {f"q{q['number']}": q.get("expected_options") for q in qdata["questions"]}
+    lines_by_owner: dict[str, list] = {}
+    furniture = {norm(f) for f in qdata.get("furniture", [])}
+    for ln in lines:
+        if ln.el is not None and els[ln.el].kind == "p" and els[ln.el].owner not in (None, "furniture") \
+                and norm(ln.text) not in furniture:
+            lines_by_owner.setdefault(els[ln.el].owner, []).append(ln)
+    for owner, ls in lines_by_owner.items():
+        if exp.get(owner):
+            ls.sort(key=lambda l: (l.chunk, l.offset))
+            got = split_options(ls, exp[owner], pages[ls[0].page].w, lines)
+            if got:
+                options_geo[owner] = got
 
     # segments: one per (owner, page, column)
     segs: dict[tuple[str, int, str], dict] = {}
@@ -378,9 +484,12 @@ def build_bundles(doc: dict, qdata: dict, pdf, out_dir: Path, dpi: int = 200) ->
         flags = []
         if any(r["words_cut"] for _, r in parts):
             flags.append("text may be cut: some words fall outside the crop")
+        bl = sorted({o for _, r in parts for o in r["bleed_from"] if r["bleed_words"]})
+        if bl:
+            flags.append(f"this crop also contains text that belongs to {', '.join(bl)}")
         if any(r["edge_flags"] for _, r in parts):
             flags.append("ink touches the crop edge (possible handwriting or text the OCR missed)")
-        bundles[owner] = {"id": owner, "file": name if owner != "front" else None,
+        bundles[owner] = {"id": owner, "file": name if owner != "front" else None, "options_geo": options_geo.get(owner),
                           "kind": "question" if owner[0] == "q" else ("group" if owner[0] == "g" else "front"),
                           "segments": [r for _, r in parts], "flags": flags}
     return {"sign": sign, "dpi": dpi, "bundles": bundles, "orphans": orphans, **own}

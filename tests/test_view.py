@@ -148,9 +148,11 @@ def test_viewer_html_embeds_data_safely(tmp_path):
     _, _, seg = run()
     seg["questions"][0]["stem_md"] = "</script><script>alert(1)</script> ¿Pregunta?"
     page = render_html(prepare("d", "Doc <b>", seg, lambda s: s))
-    assert "<script>alert" not in page and page.count("</script>") == 2   # only the page's own two script tags
+    from icfes_view.render import TEMPLATE
+    assert "<script>alert" not in page and page.count("</script>") == TEMPLATE.count("</script>")   # embedding adds no tags
+    assert "<!--" not in page.split('type="application/json">')[1].split("</script>")[0]
     assert "Doc &lt;b&gt;" in page
-    data = json.loads(page.split('type="application/json">')[1].split("</script>")[0].replace("<\\/", "</"))
+    data = json.loads(page.split('type="application/json">')[1].split("</script>")[0])
     assert len(data["questions"]) == 5 and data["groups"]["g5-6"]["directions"].startswith("RESPONDA")
 
 
@@ -161,3 +163,72 @@ def test_crops_are_attached_to_questions_and_groups():
     q = {x["number"]: x for x in data["questions"]}
     assert q[1]["crop"] == "crop:q1" and q[2]["crop"] is None
     assert data["groups"]["g5-6"]["crop"] == "crop:g5-6"
+
+
+def test_merged_options_are_flagged_not_trusted():
+    from icfes_view.segment import cut, build
+    items = ["1\\. Pregunta de prueba larga para el test completo?", "A. uno", "B. dos C. tres muy distinto", "D. cuatro"]
+    q = build(cut(items)[0][0])
+    assert any("may contain another option" in f for f in q["flags"])
+
+
+def test_boundary_mark_between_options_does_not_merge_them():
+    from icfes_view.clean import clean
+    from icfes_view.segment import cut, build
+    md = ("# Prueba de Matemáticas parte II\n\n40\\. ¿Cuál de los requerimientos es imposible de cumplir en el problema?\n\n"
+          "A. Requerimiento 1.\n☒\nRequerimiento 2.\nC. Requerimiento 3.\nD. Requerimiento 4.\n")
+    items, _ = clean(md)
+    q = build(cut(items)[0][0])
+    assert [o["letter"] for o in q["options"]] == list("ABCD")
+    assert q["options"][0]["text_md"] == "Requerimiento 1." and q["options"][1]["text_md"] == "Requerimiento 2."
+    assert q["options"][1]["marked_in_scan"] and not q["flags"]
+
+
+def test_mark_inside_a_letterless_option_still_belongs_to_that_option():
+    from icfes_view.clean import clean
+    from icfes_view.segment import cut, build
+    md = ("15\\. ¿Las conclusiones de estos estudios son?\n\nA. uno largo\n\nB. dos largo\n\n"
+          "contradictorias, porque una se refiere a los efectos\n☒\npositivos de tener ambos padres\n\nD. cuatro largo\n")
+    items, _ = clean(md)
+    q = build(cut(items)[0][0])
+    assert [o["letter"] for o in q["options"]] == list("ABCD")
+    assert q["options"][2]["text_md"].startswith("contradictorias") and "positivos" in q["options"][2]["text_md"]
+
+
+def test_options_with_letters_but_no_text_are_flagged():
+    from icfes_view.segment import cut, build
+    items = ["30\\. Pregunta cuyas opciones están en una tabla de datos?", "A.", "B.", ".", "D."]
+    q = build(cut(items)[0][0])
+    assert any("no text" in f for f in q["flags"])
+
+
+def test_mark_between_the_two_lines_of_an_option_keeps_it_as_one_option():
+    from icfes_view.clean import clean
+    from icfes_view.segment import cut, build
+    md = ("9\\. ¿Qué derecho se está vulnerando en esta situación descrita?\n\n"
+          "A. protegiendo el derecho a la libre empresa, pues sí\n\n"
+          "vulnerando el derecho a la diversidad étnica y cultural,\n\n☒ pues los sitios sagrados son parte esencial\n\n"
+          "C. protegiendo el derecho a la libertad de expresión\n\nD. vulnerando el derecho al trabajo de todos\n")
+    items, _ = clean(md)
+    q = build(cut(items)[0][0])
+    assert [o["letter"] for o in q["options"]] == list("ABCD") and not q["flags"]
+    assert q["options"][1]["text_md"].startswith("vulnerando el derecho a la diversidad") and "pues los sitios" in q["options"][1]["text_md"]
+
+
+def test_last_option_with_dot_and_mark_on_second_line():
+    from icfes_view.clean import clean
+    from icfes_view.segment import cut, build
+    md = ("20\\. ¿Cuál puede ser la principal intención de esta acción pública?\n\nA. Tranquilizar a la población\n\n"
+          "B. Intimidar a los demás criminales\n\nC. Presionar a las Fuerzas Armadas\n\n"
+          ". Desviar la atención de las acusaciones en su contra\n\n☒ otra información.\n")
+    items, _ = clean(md)
+    q = build(cut(items)[0][0])
+    assert [o["letter"] for o in q["options"]] == list("ABCD") and q["options"][3]["text_md"].endswith("otra información.")
+
+
+def test_latex_is_tidied_protected_from_markdown_and_kept_as_text():
+    from icfes_view.clean import tidy_math
+    assert tidy_math("expresión $\\frac { x ^ { 2 } + 1 } { 1 0 0 }$ y $0 , 5$ m") == "expresión $\\frac { x ^ { 2 } + 1 } { 100 }$ y $0,5$ m"
+    h = md_to_html("Valor de $a_1 * b_2$ y **negrita** y $\\frac { 1 } { 3 }$", lambda s: s)
+    assert "$a_1 * b_2$" in h and "<strong>negrita</strong>" in h and "\\frac { 1 } { 3 }" in h
+    assert "<script" not in md_to_html("$<script>alert(1)</script>$", lambda s: s) and "&lt;script&gt;" in md_to_html("$<script>x</script>$", lambda s: s)

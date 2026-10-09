@@ -291,3 +291,31 @@ def test_dry_run_flags_over_budget_and_smallest_first(dirs):
     plan = p.dry_run(smallest_first=True)
     assert [d["file"] for d in plan["documents"]] == ["small.pdf", "big.pdf"]
     assert plan["documents"][0]["action"] == "process" and "OVER BUDGET" in plan["documents"][1]["action"]
+
+
+def test_remove_blue_option_preprocesses_chunks_and_is_recorded(dirs, monkeypatch):
+    from icfes_ingest import preprocess
+    make_pdf(dirs[0] / "a.pdf", 2)
+    seen = []
+    real = preprocess.remove_blue_ink
+    monkeypatch.setattr(preprocess, "remove_blue_ink", lambda b: (seen.append(len(b)), real(b))[1])
+    b = FakeBackend()
+    pipe(dirs, b, remove_blue=True, features=("formulas",)).run()
+    assert seen and b.calls == [2]                       # page count preserved through the image-only PDF
+    rec = next(iter(manifest(dirs).documents.values()))
+    assert rec["processing"] == {"features": ["formulas"], "remove_blue": True}
+
+
+def test_whiten_blue_keeps_answer_dots_but_removes_other_blue_ink():
+    from PIL import Image, ImageDraw
+    from icfes_ingest.preprocess import whiten_blue
+    im = Image.new("RGB", (400, 120), "white")
+    d = ImageDraw.Draw(im)
+    d.rectangle([2, 2, 30, 20], fill=(10, 10, 10))                    # black print
+    d.ellipse([60, 40, 82, 62], fill=(20, 90, 235))                   # answer dot ~0.11 in at 200 dpi
+    for x in range(120, 380, 14):                                      # blue handwriting-like strokes
+        d.line([x, 30, x + 6, 70], fill=(20, 90, 235), width=3)
+    out = whiten_blue(im, 200)
+    assert out.getpixel((10, 10)) == (10, 10, 10)
+    assert out.getpixel((71, 51)) == (20, 90, 235)                    # dot preserved: it marks where an option starts
+    assert all(out.getpixel((x + 3, 50)) == (255, 255, 255) for x in range(120, 380, 14))

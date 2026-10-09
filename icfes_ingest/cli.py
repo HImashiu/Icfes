@@ -46,6 +46,10 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--max-request-mb", type=float, default=Settings.max_request_bytes / 2**20,
                    help="split PDFs bigger than this (use 4 on the free F0 tier)")
     r.add_argument("--max-retries", type=int, default=Settings.max_retries)
+    r.add_argument("--features", default="",
+                   help="comma-separated paid Azure add-ons, e.g. formulas,ocrHighResolution (bills extra per page)")
+    r.add_argument("--remove-blue", action="store_true",
+                   help="whiten blue ink (digital answer dots and notes) before OCR; best combined with --features formulas")
     r.add_argument("--keep-work", action="store_true", help="keep per-document cache after success")
     r.add_argument("-v", "--verbose", action="store_true")
     s = sub.add_parser("status", help="show manifest summary")
@@ -96,7 +100,8 @@ def main(argv: list[str] | None = None) -> int:
     setup_logging(None if args.dry_run else lay.log_file, args.verbose)
     settings = Settings(max_pages_per_request=args.max_pages_per_request,
                         max_request_bytes=int(args.max_request_mb * 2**20), max_retries=args.max_retries,
-                        workers=max(1, min(args.workers, 8)), keep_work=args.keep_work, retry_failed=args.retry_failed)
+                        workers=max(1, min(args.workers, 8)), keep_work=args.keep_work, retry_failed=args.retry_failed,
+                        remove_blue=args.remove_blue, features=tuple(f for f in args.features.split(",") if f))
     src = args.input
     if not src.exists():
         log.error("Input not found: %s", src)
@@ -108,7 +113,7 @@ def main(argv: list[str] | None = None) -> int:
     backend_factory = None
     if creds:
         from .backend import AzureLayoutBackend
-        backend_factory = lambda: AzureLayoutBackend(creds)  # noqa: E731
+        backend_factory = lambda: AzureLayoutBackend(creds, features=list(settings.features))  # noqa: E731
         log.info("Using endpoint %s", creds.endpoint)
 
     cap = args.max_pages

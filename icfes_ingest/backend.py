@@ -23,14 +23,16 @@ class Backend(Protocol):
 
 
 class AzureLayoutBackend:
-    def __init__(self, creds: Credentials, poll_seconds: float = 2.0, **client_kwargs):
+    def __init__(self, creds: Credentials, poll_seconds: float = 2.0, features: list[str] | None = None,
+                 **client_kwargs):
         from azure.ai.documentintelligence import DocumentIntelligenceClient
         from azure.core.credentials import AzureKeyCredential
 
         self.client = DocumentIntelligenceClient(creds.endpoint, AzureKeyCredential(creds.key), **client_kwargs)
         self.poll_seconds = poll_seconds
+        self.features = features or None  # e.g. ["formulas", "ocrHighResolution"] (paid add-ons)
 
-    def analyze(self, pdf: bytes) -> Outcome:
+    def analyze(self, pdf: bytes, pages: str | None = None) -> Outcome:
         from azure.ai.documentintelligence.models import (
             AnalyzeOutputOption, DocumentContentFormat, StringIndexType)
 
@@ -39,6 +41,8 @@ class AzureLayoutBackend:
             io.BytesIO(pdf),
             content_type="application/octet-stream",
             polling_interval=self.poll_seconds,
+            **({"features": self.features} if self.features else {}),
+            **({"pages": pages} if pages else {}),
             output=[AnalyzeOutputOption.FIGURES],
             output_content_format=DocumentContentFormat.MARKDOWN,
             # Spans index into the Markdown by code point, matching Python str offsets.

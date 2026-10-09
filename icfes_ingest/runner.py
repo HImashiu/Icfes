@@ -249,6 +249,10 @@ class Pipeline:
         backend, expected = self._get_backend(), e - s + 1
         label = f"{job.relpath} pages {s}-{e}"
 
+        if self.settings.remove_blue:  # same page count and sizes, so geometry and billing are unchanged
+            from .preprocess import remove_blue_ink
+            data = remove_blue_ink(data)
+
         def go():
             if not man.reserve_pages(expected, self.max_pages):
                 raise BudgetExceeded(f"{man.billed_pages} of {self.max_pages} pages already used; "
@@ -328,6 +332,7 @@ class Pipeline:
         atomic_write(lay.md_dir / f"{job.doc_id}.md", md)
         status = M.PARTIAL if warnings else M.COMPLETED
         man.upsert(job.sha, status=status, completed_at=M.now(), warnings=warnings, error=None,
+                   processing={"features": list(self.settings.features), "remove_blue": self.settings.remove_blue},
                    outputs={"json": f"json/{job.doc_id}.json", "markdown": f"markdown/{job.doc_id}.md",
                             "figures_dir": f"figures/{job.doc_id}", "figure_count": len(index),
                             "figures_missing": len(warnings)})

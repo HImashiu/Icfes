@@ -51,11 +51,21 @@ def sanitize(h: str) -> str:
     return "".join(p.out)
 
 
+MATH = re.compile(r"\$[^$\n]{1,300}\$")
+
+
 def md_to_html(md: str, resolve_img) -> str:
     if not md.strip():
         return ""
-    h = markdown.markdown(md, extensions=["tables", "sane_lists"])
+    maths: list[str] = []
+
+    def stash(m: re.Match) -> str:  # keep LaTeX away from Markdown (underscores, asterisks, backslashes)
+        maths.append(m.group(0))
+        return f"@@MATH{len(maths) - 1}@@"
+
+    h = markdown.markdown(MATH.sub(stash, md), extensions=["tables", "sane_lists"])
     h = sanitize(h)
+    h = re.sub(r"@@MATH(\d+)@@", lambda m: html.escape(maths[int(m.group(1))], quote=False), h)
     return re.sub(r'src="([^"]+)"', lambda m: f'src="{resolve_img(html.unescape(m.group(1)))}"', h)
 
 
@@ -74,28 +84,31 @@ def make_resolver(figures_root: Path, doc_id: str, embed: bool, images: dict[str
 
 
 def prepare(doc_id: str, title: str, seg: dict, resolve, images: dict[str, str] | None = None,
-            crops: dict[str, str] | None = None) -> dict:
+            crops: dict[str, str] | None = None, validation: dict | None = None) -> dict:
     crops = crops or {}
     groups = {g["id"]: {"directions": g["directions"], "html": md_to_html("\n\n".join(g["stimulus"]), resolve),
                         "crop": crops.get(f"g{g['from']}-{g['to']}")} for g in seg["groups"]}
     qs = []
     for q in seg["questions"]:
         qs.append({
-            "number": q["number"], "section": q["section"], "part": q["part"], "flags": q["flags"],
+            "number": q["number"], "section": q["section"], "part": q["part"], "flags": q["flags"], "notes": q.get("notes", []),
             "placeholder": bool(q.get("placeholder")), "group": q.get("group_id"),
             "crop": crops.get(f"q{q['number']}"),
             "stimulus_html": md_to_html(q["stimulus_md"], resolve),
-            "stem_html": md_to_html(q["stem_md"], resolve),
-            "options": [{"letter": o["letter"], "html": md_to_html(o["text_md"], resolve),
+            "stem_html": md_to_html(q["stem_md"], resolve), "stem_md": q["stem_md"],
+            "item_type": q.get("item_type"), "expected_options": q.get("expected_options"),
+            "status": q.get("status"),
+            "options": [{"letter": o["letter"], "html": md_to_html(o["text_md"], resolve), "md": o["text_md"],
                          "marked": o["marked_in_scan"]} for o in q["options"]],
             "raw": q["raw_md"],
         })
     return {"doc_id": doc_id, "title": title, "questions": qs, "groups": groups, "images": images or {},
-            "missing": seg["missing"]}
+            "missing": seg["missing"], "validation": validation or {}}
 
 
 def render_html(data: dict) -> str:
-    payload = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
+    # every "<" becomes \u003c: JSON still parses identically, but the HTML parser can never see a tag or "<!--" in it
+    payload = json.dumps(data, ensure_ascii=False).replace("<", "\\u003c")
     return TEMPLATE.replace("__TITLE__", html.escape(data["title"])).replace("__DATA__", payload)
 
 

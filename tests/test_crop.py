@@ -4,7 +4,8 @@ import pypdfium2 as pdfium
 from PIL import Image, ImageDraw
 
 from icfes_crop import geometry as G
-from icfes_crop.build import assign_owners, build_bundles, collect, find_anchor, norm
+from icfes_crop.build import assign_owners, build_bundles, collect, find_anchor, norm, refine_row_layout
+from icfes_crop.options import assign_lines, collect_lines
 
 DPI, W, H = 200, 8.5, 11.0
 
@@ -13,7 +14,7 @@ class Doc:
     """Builds a fake one-page Azure result and the matching scanned PDF (ink exactly where the words are)."""
 
     def __init__(self, angle=0.0):
-        self.content, self.paras, self.words = "", [], []
+        self.content, self.paras, self.words, self.lines = "", [], [], []
         self.angle = angle
         self.img = Image.new("RGB", (int(W * DPI), int(H * DPI)), "white")
         self.draw = ImageDraw.Draw(self.img)
@@ -34,6 +35,22 @@ class Doc:
         p = {"content": text, "role": role, "spans": [{"offset": start, "length": len(text)}],
              "boundingRegions": [{"pageNumber": 1, "polygon": [x0, y0, x1, y0, x1, y1, x0, y1]}]}
         self.paras.append(p)
+        self.lines.append({"content": text, "polygon": [x0, y0, x1, y0, x1, y1, x0, y1],
+                           "spans": [{"offset": start, "length": len(text)}]})
+
+    def para_lines(self, rows, x0, x1):
+        """ONE paragraph element made of several lines (rows = [(text, y0, y1)]), like Azure's merged option lists."""
+        start = len(self.content)
+        for text, y0, y1 in rows:
+            n0 = len(self.lines)
+            self.para(text, x0, y0, x1, y1)
+        # merge the per-line paragraphs just created into a single paragraph
+        made = self.paras[-len(rows):]
+        del self.paras[-len(rows):]
+        content = "\n".join(r[0] for r in rows)
+        top, bot = min(r[1] for r in rows), max(r[2] for r in rows)
+        self.paras.append({"content": content, "role": None, "spans": [{"offset": start, "length": len(self.content) - start - 1}],
+                           "boundingRegions": [{"pageNumber": 1, "polygon": [x0, top, x1, top, x1, bot, x0, bot]}]})
 
     def orphan_word(self, x0, y0, x1, y1):
         poly = [x0, y0, x1, y0, x1, y1, x0, y1]
@@ -44,7 +61,7 @@ class Doc:
         return {"chunks": [{"page_start": 1, "page_end": 1, "page_offset": 0, "result": {
             "content": self.content, "paragraphs": self.paras, "tables": [], "figures": [],
             "pages": [{"pageNumber": 1, "angle": self.angle, "width": W, "height": H, "unit": "inch",
-                       "words": self.words, "selectionMarks": []}]}}]}
+                       "words": self.words, "lines": self.lines, "selectionMarks": []}]}}]}
 
     def pdf(self, path):
         self.img.save(path, "PDF", resolution=float(DPI))
@@ -156,3 +173,57 @@ def test_anchor_matching_and_heading_ownership():
     assert owners["Prueba de Ma"] == "furniture"                 # running page title is not content
     assert owners["RESPONDA LAS"] == "g26-27" and owners["Texto compar"] == "g26-27"
     assert owners["26. Pregunta"] == "q26" and info["missing_anchor"] == []
+
+
+def _owned(d, qs):
+    pages, els, _ = collect(d.result(), 1)
+    info = assign_owners(els, qs, [])
+    lines = collect_lines(d.result(), 1, pages)
+    assign_lines(els, lines)
+    moved = refine_row_layout(els, lines, info["event_idx"], pages)
+    return pages, els, moved
+
+
+def test_row_layout_merged_option_paragraph_is_split_by_row():
+    # stems in the left column; ONE merged paragraph of option lines in the right column, on the same rows
+    d = Doc()
+    d.para("113. Who gave money to build the building?", 0.5, 6.2, 4.0, 6.4)
+    d.para("114. John Raskob and Pierre were the", 0.5, 6.8, 4.0, 7.0)
+    d.para("115. When was the building finished okay?", 0.5, 7.4, 4.0, 7.6)
+    d.para_lines([("A. Walter Chrysler.", 6.2, 6.35), ("B. John Raskob.", 6.37, 6.52), ("A. business partners.", 6.8, 6.95),
+                  ("B. office workers.", 6.97, 7.12), ("A. On March 17, 1930.", 7.4, 7.55), ("B. On April 11, 1931.", 7.57, 7.72)], 5.0, 8.0)
+    qs = [{"number": 113, "anchor": "113. Who gave money to build the building?"},
+          {"number": 114, "anchor": "114. John Raskob and Pierre were the"},
+          {"number": 115, "anchor": "115. When was the building finished okay?"}]
+    _, els, moved = _owned(d, qs)
+    def owner(prefix):
+        return next(e.owner for e in els if e.kind == "p" and e.text.startswith(prefix))
+    assert owner("A. Walter Chrysler") == "q113" and owner("B. John Raskob") == "q113"
+    assert owner("A. business partners") == "q114" and owner("A. On March 17") == "q115" and moved >= 4
+
+
+def test_mixed_pages_and_lone_continuation_columns_keep_reading_order():
+    m = Doc()   # anchors in BOTH columns
+    m.para("43. Pregunta de la izquierda de prueba", 0.5, 1.0, 4.0, 1.3)
+    m.para("44. Pregunta de la derecha de prueba", 4.5, 1.0, 8.0, 1.3)
+    m.para("Texto dentro de la derecha después", 4.5, 2.0, 8.0, 2.3)
+    _, _, moved = _owned(m, [{"number": 43, "anchor": "43. Pregunta de la izquierda de prueba"},
+                             {"number": 44, "anchor": "44. Pregunta de la derecha de prueba"}])
+    assert moved == 0
+    c = Doc()   # anchors only on the left, right column is just the continuation of the LAST left question
+    c.para("1. Primera pregunta de prueba", 0.5, 1.0, 4.0, 1.25)
+    c.para("2. Segunda pregunta de prueba", 0.5, 3.4, 4.0, 3.65)
+    c.para("Contexto de la segunda pregunta", 4.5, 1.0, 8.0, 1.5)
+    c.para("A. uno B. dos C. tres D. cuatro", 4.5, 1.6, 8.0, 2.2)
+    pages, els, moved = _owned(c, [{"number": 1, "anchor": "1. Primera pregunta de prueba"},
+                                   {"number": 2, "anchor": "2. Segunda pregunta de prueba"}])
+    assert moved == 0 and {e.text[:10]: e.owner for e in els}["Contexto d"] == "q2"
+
+
+def test_formula_lines_use_the_latex_from_the_content_not_the_placeholder():
+    d = Doc()
+    d.para("$\\frac { 1 } { 3 }$", 0.5, 1.0, 2.0, 1.3)
+    res = d.result()
+    res["chunks"][0]["result"]["pages"][0]["lines"][0]["content"] = ":formula:"   # what Azure's line record says
+    pages, els, _ = collect(res, 1)
+    assert collect_lines(res, 1, pages)[0].text == "$\\frac { 1 } { 3 }$"

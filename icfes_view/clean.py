@@ -36,7 +36,7 @@ def split_figures(md: str) -> tuple[str, list[dict]]:
     return FIGURE_RE.sub(sub, md), figs
 
 
-def drop_running_furniture(md: str, figs: list[dict], min_repeats: int = 3) -> tuple[str, list[dict]]:
+def drop_running_furniture(md: str, figs: list[dict], min_repeats: int = 3, found: set | None = None) -> tuple[str, list[dict]]:
     """Drop short headings / ALL-CAPS lines / figure labels that repeat on many pages (running headers, logos)."""
     counts: Counter[str] = Counter()
     for line in md.split("\n"):
@@ -48,6 +48,8 @@ def drop_running_furniture(md: str, figs: list[dict], min_repeats: int = 3) -> t
         if f["ocr_text"] and len(f["ocr_text"]) <= 30:
             counts[_norm(f["ocr_text"])] += 1
     furniture = {k for k, v in counts.items() if v >= min_repeats and len(k) >= 3 and not k.isdigit()}
+    if found is not None:
+        found |= furniture
     out_lines = []
     for line in md.split("\n"):
         t = line.strip()
@@ -85,11 +87,20 @@ def reflow(md: str) -> list[str]:
             if buf:
                 items.append("\n".join(buf))
             continue
-        # Selection marks (☒) replace a lost option letter. The OCR may put the lone mark before the
-        # option text, in the middle of it, or in its own block: detect and move it to the front.
-        marked = [l for l in lines if l in tuple(MARKS)]
-        lines = [l for l in lines if l not in tuple(MARKS)]
-        mark = (marked[0] if marked else "") or carry_mark
+        # Selection marks (☒) replace a lost option letter. Position decides what the mark belongs to:
+        #  - right after a lettered option line ("A. ...") it BEGINS the next option (that option's letter was hidden);
+        #  - otherwise (block start, or inside a letterless option's wrapped text) it belongs to the start of the block.
+        block_mark, kept = "", []
+        for l in lines:
+            if l in tuple(MARKS):
+                if kept and kept[-1] not in tuple(MARKS) and re.match(r"^\(?[A-D]\)?[\.\)](\s|$)", kept[-1]):
+                    kept.append(l)          # boundary mark: handled in the loop below
+                elif not block_mark:
+                    block_mark = l
+            else:
+                kept.append(l)
+        lines = kept
+        mark = block_mark or carry_mark
         carry_mark = ""
         if not lines:  # a block that is only a mark belongs to the next block
             carry_mark = mark
@@ -97,7 +108,15 @@ def reflow(md: str) -> list[str]:
         if mark:
             lines[0] = f"{mark} {lines[0]}"
         cur = ""
+        boundary = ""
         for l in lines:
+            if l in tuple(MARKS):                 # boundary mark: the next line starts a new option
+                if cur:
+                    items.append(cur); cur = ""
+                boundary = l
+                continue
+            if boundary:
+                l, boundary = f"{boundary} {l}", ""
             starts_item = bool(LIST_START.match(l))
             if cur and starts_item:
                 items.append(cur); cur = l
@@ -112,8 +131,21 @@ def reflow(md: str) -> list[str]:
     return items
 
 
-def clean(md: str) -> tuple[list[str], list[dict]]:
-    md = strip_comments(md)
+MATH = re.compile(r"\$[^$\n]{1,300}\$")
+
+
+def tidy_math(md: str) -> str:
+    """Azure's formula OCR spaces digits out ("1 0 0", "0 , 5"); inside $...$ those spaces are meaningless."""
+    def fix(m: re.Match) -> str:
+        t = m.group(0)
+        for _ in range(3):
+            t = re.sub(r"(?<=\d) (?=\d)", "", t)
+        return re.sub(r"(?<=\d) ?, ?(?=\d)", ",", t)
+    return MATH.sub(fix, md)
+
+
+def clean(md: str, furniture_out: set | None = None) -> tuple[list[str], list[dict]]:
+    md = tidy_math(strip_comments(md))
     md, figs = split_figures(md)
-    md, figs = drop_running_furniture(md, figs)
+    md, figs = drop_running_furniture(md, figs, found=furniture_out)
     return reflow(md), figs

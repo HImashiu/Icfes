@@ -50,3 +50,5 @@ class Settings:
     workers: int = 1
     keep_work: bool = False
     retry_failed: bool = False
+    remove_blue: bool = False             # whiten blue ink (answer dots / notes) before OCR
+    features: tuple[str, ...] = ()        # paid Azure add-ons, e.g. ("formulas", "ocrHighResolution")

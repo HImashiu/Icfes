@@ -156,11 +156,59 @@ The suite uses a programmable fake backend (throttling, failures, page loss, int
 the real Azure SDK against a fake HTTP layer to verify the request that is sent
 (`output=figures`, `outputContentFormat=markdown`, binary body) and how the response is parsed.
 
+## Improving Math and English (what was added and measured)
+
+| Change | What it does | Where |
+|---|---|---|
+| Exam blueprint + validation | Reads the cover table ("Prueba / Preguntas / Total"), warns when a section or the total is short (e.g. 119 of 134 extracted), labels English parts by item type | `icfes_view/blueprint.py` |
+| Geometry option splitter | Uses line positions (letters hang at the margin, wrapped lines are indented) to split options when a hidden letter or merge broke the text split; refuses ambiguous layouts | `icfes_crop/options.py` |
+| Row-layout fix | English reading pages put stems in one column and options beside them in the other; options are split per line and given to the stem on their row | `icfes_crop/build.py` |
+| Merge guards | Flags options that contain another option's letter, are much longer than the rest, or have a letter but no text | `icfes_view/segment.py` |
+| Review mode in the viewer | "Needs review only" navigation, an editor, a "verified" box, **Export corrections** (JSON); `icfes_view --corrections file.json` applies them | `icfes_view/viewer.html`, `corrections.py` |
+| LaTeX | Formulas render with KaTeX (CDN; raw LaTeX stays readable offline); digit spacing from the OCR is tidied | `render.py`, `clean.py` |
+| Gold scoring | `python -m icfes_view.score --questions questions/<doc>.auto.json --gold gold.json` | `icfes_view/score.py` |
+| Azure add-ons + blue-ink removal | `icfes_ingest --features formulas,ocrHighResolution --remove-blue` (paid add-ons; see below) | `icfes_ingest/` |
+| Claude vision stage | `python -m icfes_llm` transcribes the questions still flagged, from their source crops | `icfes_llm/` |
+
+**`--remove-blue` keeps the blue answer dots on purpose.** A dot can sit over an option letter; whitening it removes the
+only marker that tells the OCR where an option starts, and in an experiment that made 4 Math questions lose options
+(Q30, Q38, Q43, Q44). Only other blue ink (typed notes, handwriting) is removed.
+
+### Measured on `S11-O 2da sesión` (one real exam; 26 pages, ~$0.26 per plain pass)
+
+| Run | Clean questions (no review note) of 119 |
+|---|---|
+| Start of this round | 70 |
+| Same OCR, new parsing/geometry (v1) | 79 |
+| `--remove-blue --features formulas,ocrHighResolution` (v2) | **91** |
+
+By section (v1 -> v2): Sociales 24 -> 25 of 25, Matemáticas 19 -> 22 of 25, Ciencias 17 -> 18 of 29, Inglés 19 -> 26 of 40.
+Against a 20-question gold set (10 Math + 10 English, **drafted by Claude from the source crops: verify it**): pass rate
+v1 40% -> v2 90% (Math 4/10 -> 8/10, English 4/10 -> 10/10). The English items 113-119 were also the ones used to develop
+the row-layout fix, so they are not an independent test. 14 English numbers (80-84, 90, 98-105) are still "not detected"
+(picture items): that is what the Claude stage is for.
+
+## Claude vision stage (`icfes_llm`)
+
+```powershell
+$env:ANTHROPIC_API_KEY = "<key>"        # or `ant auth login`; never commit it
+python -m icfes_llm --output data\out --dry-run               # lists what would be sent + estimated cost, no key needed
+python -m icfes_llm --output data\out --budget-usd 2          # flagged questions + unnumbered picture items
+python -m icfes_llm --output data\out --numbers 34,35 --passes 2   # Math: transcribe twice and compare
+python -m icfes_view --output data\out --ai                   # show the transcriptions (marked ai / ai_review)
+```
+
+Default model `claude-opus-5-5`; `--model claude-sonnet-5-5` costs about half. Each request sends the question's source
+crop plus the OCR text and asks for structured JSON (`output_config.format`). Safeguards: hard USD cap across runs
+(checked before every call), results cached by crop+prompt+model, refusals and truncated answers are errors, and every
+answer is cross-checked: disagreement with the OCR, disagreement between passes, low confidence, or a wrong option count
+marks it `ai_review` (needs a human). Human-verified corrections are never overwritten. **This stage has only been
+tested with a fake client** (no Anthropic key was available while building it).
+
 ## Status
 
-- 40 offline tests pass (fake backend + real SDK against a fake HTTP layer).
-- **Live check done:** `S11-O 2da sesión.pdf` (26 scanned pages, 10 MB) ran against a real S0 resource in about
-  35 s: 26/26 pages, 45 figures (all downloaded from the service, none needed the local-crop fallback), Spanish
-  accents intact, tables emitted as HTML, 26 pages billed (~$0.26 at $10/1000 pages).
-- Not yet exercised live: chunking of very large PDFs (>100 pages), 429 throttling, resume after a real
-  interruption. These paths are covered by the offline tests only.
+- 61 offline tests pass (fake Azure and Anthropic backends, the real Azure SDK against a fake HTTP layer, synthetic
+  scanned pages for the crop checks).
+- **Run live against Azure** on `S11-O 2da sesión` (several variants, ~100 pages billed in total). Not yet run live: the
+  Claude stage, chunking of very large PDFs, 429 throttling, resume after a real interruption.
+- Only one exam has been processed; other forms may expose layouts these heuristics do not cover. The gold set is a draft.

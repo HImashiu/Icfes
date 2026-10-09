@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
+from .blueprint import item_info
 from .clean import IMG_RE, MARKS, MARKS_ON
 
 Q_START = re.compile(r"^(\d{1,3})\\?\.(?!\d)\s*(.*)$", re.S)
@@ -148,8 +149,16 @@ def parse_options(body: list[str]) -> tuple[list[str], list[dict], list[str]]:
         elif (m := MARKED.match(it)):
             options.append({"letter": want, "text": m.group(2).strip(), "marked_in_scan": m.group(1) in MARKS_ON,
                             "letter_restored": True})
+        elif (is_text(it) and not LIST_ITEM.match(it) and i + 1 < len(body) and (mm := MARKED.match(body[i + 1]))
+              and (nxt is None or (i + 2 < len(body) and _letter(body[i + 2]) == nxt))):
+            # the scan mark landed BETWEEN the two lines of this option (letter hidden): one option, two lines
+            txt = re.sub(r"^[\.\u2022\u25CF\u00B7]\s*", "", it.strip())
+            options.append({"letter": want, "text": (txt + " " + mm.group(2)).strip(),
+                            "marked_in_scan": mm.group(1) in MARKS_ON, "letter_restored": True})
+            i += 1
         elif is_text(it) and not LIST_ITEM.match(it) and nxt and i + 1 < len(body) and _letter(body[i + 1]) == nxt:
-            options.append({"letter": want, "text": it.strip(), "marked_in_scan": False, "letter_restored": True})
+            options.append({"letter": want, "text": re.sub(r"^[\.\u2022\u25CF\u00B7]\s+", "", it.strip()),
+                            "marked_in_scan": False, "letter_restored": True})
         else:
             break
         i += 1
@@ -178,9 +187,21 @@ def build(ch: Chunk, trailer_out: list[str] | None = None) -> dict:
     else:
         stem, stimulus = "", paras
     flags: list[str] = []
-    want = 3 if (ch.section or "").lower().startswith("ingl") else 4  # the English test uses 3-option items
-    if len(options) < want:
+    item_type, want = item_info(ch.section, ch.part)
+    if want and len(options) < want:
         flags.append(f"Expected {want} options, found {len(options)} (answer choices may be inside an image: check the figure)")
+    empty = [o["letter"] for o in options if not re.sub(r"[\W_]+", "", o["text"])]
+    if empty:
+        flags.append(f"Option(s) {', '.join(empty)} have a letter but no text (the choices are probably in a table or an image)")
+    for o in options:  # a second option marker inside one option's text: two options were glued together
+        if re.search(r"(?:^|\s)[A-D][\.\)]\s+\S", o["text"][1:] if o["text"][:1] in "ABCD" else o["text"]):
+            flags.append(f"Option {o['letter']} may contain another option (merged answer choices): check the source crop")
+    lens = [len(o["text"]) for o in options]
+    if len(lens) >= 3:
+        med = sorted(lens)[len(lens) // 2]
+        for o in options:
+            if med >= 8 and len(o["text"]) > 2.6 * med and not any(f.startswith(f"Option {o['letter']} may") for f in flags):
+                flags.append(f"Option {o['letter']} is much longer than the others (possible merged options)")
     leftovers = " ".join(t for t in trailer if is_text(t) and len(t) > 14)
     if len(leftovers) > 120:
         flags.append("Unclassified text after the options was left out of the view (see Original extraction)")
@@ -189,8 +210,8 @@ def build(ch: Chunk, trailer_out: list[str] | None = None) -> dict:
     if trailer_out is not None:
         trailer_out.extend(trailer)
     figs = [m.group(2) for p in paras + [o["text"] for o in options] for m in IMG_RE.finditer(p)]
-    return {"number": ch.number, "section": ch.section, "part": ch.part,
-            "group_id": ch.group["id"] if ch.group else None,
+    return {"number": ch.number, "section": ch.section, "part": ch.part, "item_type": item_type,
+            "expected_options": want, "group_id": ch.group["id"] if ch.group else None,
             "stimulus_md": "\n\n".join(stimulus), "stem_md": stem,
             "options": [{"letter": o["letter"], "text_md": o["text"], "marked_in_scan": o["marked_in_scan"]}
                         for o in options],
@@ -221,7 +242,8 @@ def segment(items: list[str]) -> dict:
         g = next((g for g in groups if g["from"] <= m <= g["to"]), None)
         prev = max((n for n in sec_of if n < m), default=None)
         sec, part = (g["section"], g["part"]) if g else sec_of.get(prev, (None, None))
-        questions.append({"number": m, "section": sec, "part": part, "group_id": g["id"] if g else None,
+        questions.append({"number": m, "section": sec, "part": part, "item_type": item_info(sec, part)[0],
+                          "expected_options": item_info(sec, part)[1], "group_id": g["id"] if g else None,
                           "stimulus_md": "", "stem_md": "", "options": [], "figures": [], "placeholder": True,
                           "flags": ["This question was not detected (picture-based item or lost question number). "
                                     "Its content is in the shared passage / source figures; check the original page."],

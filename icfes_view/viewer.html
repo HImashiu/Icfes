@@ -67,6 +67,7 @@ main.single{grid-template-columns:minmax(0,760px);justify-content:center}
 .stem{font-size:17px;margin-bottom:18px}
 .note{border:1px solid var(--warn-line);background:var(--warn-bg);color:var(--warn-ink);border-radius:8px;
   padding:10px 12px;font-size:14px;margin:0 0 16px}
+.note.info{border-color:var(--line);background:var(--soft);color:var(--muted);font-size:13px;padding:6px 10px}
 .note.bad{border-color:var(--bad-line);background:var(--bad-bg);color:var(--bad-ink)}
 .note ul{margin:4px 0 0 18px;padding:0}
 
@@ -110,6 +111,18 @@ main.single{grid-template-columns:minmax(0,760px);justify-content:center}
 .cell.chk::before{content:"";position:absolute;left:-5px;bottom:-5px;width:11px;height:11px;border-radius:50%;background:#e0a800;border:2px solid var(--panel)}
 .cell.ph{border-color:var(--bad-ink);color:var(--bad-ink)}
 
+.editor{border:1px solid var(--brand);border-radius:10px;padding:12px 14px;margin:0 0 18px;background:var(--panel)}
+.editor h5{margin:0 0 8px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--brand)}
+.editor label{display:block;font-size:12px;color:var(--muted);margin:8px 0 3px}
+.editor textarea,.editor input[type=text]{width:100%;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:var(--bg);color:var(--ink)}
+.editor .row{display:flex;gap:8px;margin-top:10px;align-items:center}
+.editor .ver{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink);margin-top:10px}
+.editor button{border:1px solid var(--brand);background:var(--brand);color:var(--brand-ink);border-radius:8px;padding:6px 14px;font-weight:600}
+.editor button.alt{background:var(--panel);color:var(--brand)}
+.cell.fix::after{content:"\270E";position:absolute;top:-9px;right:-6px;color:var(--brand);font-size:14px}
+.cell.ver{background:var(--ok);border-color:var(--ok);color:#fff}
+.pill.edited{border-color:var(--brand);color:var(--brand)}
+.vwarn{margin-top:4px}
 @media (max-width:860px){
   main{grid-template-columns:1fr}
   .pane.left{border-right:0;border-bottom:2px solid var(--line);max-height:42vh}
@@ -118,6 +131,9 @@ main.single{grid-template-columns:minmax(0,760px);justify-content:center}
   .top{flex-wrap:wrap}
 }
 </style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 </head>
 <body>
 <header class="top">
@@ -125,6 +141,9 @@ main.single{grid-template-columns:minmax(0,760px);justify-content:center}
   <div class="grow"></div>
   <label class="sub" for="sec">Section</label>
   <select id="sec" aria-label="Jump to section"></select>
+  <button class="chip" id="onlybtn" aria-pressed="false" title="Next/Back skip questions that have no review note">Needs review only</button>
+  <button class="chip" id="editbtn" aria-pressed="false" title="Correct the question text or options">Edit</button>
+  <button class="chip" id="exportbtn" title="Download your corrections as JSON">Export corrections</button>
   <button class="chip" id="cropbtn" aria-pressed="false" title="Show the original page image of this question">Source crop</button>
   <button class="chip" id="rawbtn" aria-pressed="false" title="Compare with the original extracted text">Original extraction</button>
   <button class="chip" id="theme" aria-label="Toggle dark mode">Dark / Light</button>
@@ -146,7 +165,13 @@ main.single{grid-template-columns:minmax(0,760px);justify-content:center}
 (function(){
   var D = JSON.parse(document.getElementById('data').textContent);
   var Q = D.questions, G = D.groups || {}, IM = D.images || {}, KEY = 'icfes-view:' + D.doc_id;
-  var S = {i:0, ans:{}, rev:{}, elim:{}, raw:false, crop:false, elimMode:false};
+  var S = {i:0, ans:{}, rev:{}, elim:{}, raw:false, crop:false, elimMode:false, only:false, edit:false, fix:{}};
+  var FKEY = KEY + ':fix';
+  try { S.fix = JSON.parse(localStorage.getItem(FKEY) || '{}') || {}; } catch(e){}
+  function saveFix(){ try { localStorage.setItem(FKEY, JSON.stringify(S.fix)); } catch(e){} }
+  function plain(t){ return '<p>' + esc(t).replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br>') + '</p>'; }
+  function isFlagged(q){ var f = S.fix[q.number]; return !!((q.flags.length || q.placeholder) && !(f && f.verified)); }
+  function step(d){ var i = S.i + d; while (S.only && i >= 0 && i < Q.length && !isFlagged(Q[i])) i += d; if (i >= 0 && i < Q.length) go(i); }
   try { var saved = JSON.parse(localStorage.getItem(KEY) || 'null'); if (saved) { S.ans = saved.ans||{}; S.rev = saved.rev||{}; S.elim = saved.elim||{}; } } catch(e){}
   function save(){ try { localStorage.setItem(KEY, JSON.stringify({ans:S.ans, rev:S.rev, elim:S.elim})); } catch(e){} }
   function $(id){ return document.getElementById(id); }
@@ -160,6 +185,8 @@ main.single{grid-template-columns:minmax(0,760px);justify-content:center}
   $('banner').innerHTML = flagged
     ? '<strong>' + flagged + ' of ' + Q.length + '</strong> questions carry a review note (usually answer choices that live inside an image or a garbled scan). They are marked <span style="color:#b57b00">●</span> on the question map.'
     : 'All questions parsed without review notes.';
+  var W = (D.validation && D.validation.warnings) || [];
+  if (W.length) $('banner').innerHTML += '<div class="vwarn">⚠ ' + W.map(esc).join('<br>⚠ ') + '</div>';
 
   var sections = []; Q.forEach(function(q, idx){ var s = q.section || 'Other'; if (!sections.some(function(x){return x.name===s;})) sections.push({name:s, first:idx}); });
   var sel = $('sec'); sections.forEach(function(s){ var o = el('option'); o.value = s.first; o.textContent = s.name; sel.appendChild(o); });
@@ -168,7 +195,7 @@ main.single{grid-template-columns:minmax(0,760px);justify-content:center}
   function go(i){ S.i = Math.max(0, Math.min(Q.length-1, i)); $('map').hidden = true; $('mapbtn').setAttribute('aria-expanded','false'); render(); }
 
   function render(){
-    var q = Q[S.i], n = q.number;
+    var q = Q[S.i], n = q.number, fx = S.fix[n] || {};
     var grp = q.group ? G[q.group] : null;
     var gcrop = (S.crop && grp && grp.crop) ? grp.crop : null;
     var hasLeft = !!(q.stimulus_html || gcrop || (grp && (grp.html || grp.directions)));
@@ -199,20 +226,41 @@ main.single{grid-template-columns:minmax(0,760px);justify-content:center}
       R.appendChild(qc ? el('div', 'src', '<h5>Source: original page' + (q.crop ? '' : ' (shared passage)') + '</h5><img alt="Original page crop of question ' + n + '" src="' + (IM[qc] || qc) + '">')
                        : el('div', 'note', 'No source crop for this question (its number was not found on the page).'));
     }
-    if (q.flags.length){
+    if (S.edit){
+      var letters = q.options.length ? q.options.map(function(o){ return o.letter; }) : 'ABCD'.slice(0, q.expected_options || 4).split('');
+      var cur = {}; q.options.forEach(function(o){ cur[o.letter] = o.md; });
+      var ed = el('div', 'editor', '<h5>Edit question ' + n + ' (stored in this browser; use Export to keep)</h5>' +
+        '<label for="ed-stem">Question text</label><textarea id="ed-stem" rows="4">' + esc(fx.stem != null ? fx.stem : (q.stem_md || '')) + '</textarea>' +
+        letters.map(function(L){ var v = (fx.opts && fx.opts[L] != null) ? fx.opts[L] : (cur[L] || ''); return '<label for="ed-' + L + '">Option ' + L + '</label><textarea id="ed-' + L + '" rows="2">' + esc(v) + '</textarea>'; }).join('') +
+        '<label class="ver"><input type="checkbox" id="ed-ver"' + (fx.verified ? ' checked' : '') + '> Verified against the source crop</label>' +
+        '<label for="ed-note">Note</label><input type="text" id="ed-note" value="' + esc(fx.note || '') + '">' +
+        '<div class="row"><button id="ed-save">Save</button><button class="alt" id="ed-revert">Revert to extracted</button></div>');
+      R.appendChild(ed);
+      ed.querySelector('#ed-save').onclick = function(){
+        var f = {stem: ed.querySelector('#ed-stem').value, opts: {}, verified: ed.querySelector('#ed-ver').checked, note: ed.querySelector('#ed-note').value};
+        letters.forEach(function(L){ f.opts[L] = ed.querySelector('#ed-' + L).value; });
+        S.fix[n] = f; saveFix(); render();
+      };
+      ed.querySelector('#ed-revert').onclick = function(){ delete S.fix[n]; saveFix(); render(); };
+    }
+    if ((q.flags.length || q.placeholder) && !fx.verified){
       var note = el('div', 'note' + (q.placeholder ? ' bad' : ''), '<strong>' + (q.placeholder ? 'Not detected' : 'Needs review') + '</strong><ul>' +
         q.flags.map(function(f){ return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>');
       R.appendChild(note);
     }
-    if (q.stem_html) R.appendChild(el('div', 'stem prose', img(q.stem_html)));
-    if (q.options.length){
+    if ((q.notes || []).length) R.appendChild(el('div', 'note info', (q.notes || []).map(function(f){ return 'ℹ ' + esc(f); }).join('<br>')));
+    var stemHtml = fx.stem != null ? plain(fx.stem) : img(q.stem_html);
+    if (stemHtml) R.appendChild(el('div', 'stem prose', stemHtml + (fx.stem != null ? '<span class="pill edited">edited</span>' : '')));
+    var shown = q.options.length ? q.options : (fx.opts ? Object.keys(fx.opts).filter(function(L){ return fx.opts[L]; }).map(function(L){ return {letter:L, html:'', md:'', marked:false}; }) : []);
+    if (shown.length){
       var ul = el('ul', 'opts'); ul.setAttribute('role', 'radiogroup');
-      q.options.forEach(function(o){
+      shown.forEach(function(o){
+        var edited = fx.opts && fx.opts[o.letter] != null;
         var elim = (S.elim[n] || []).indexOf(o.letter) >= 0, on = S.ans[n] === o.letter;
         var li = el('li', 'opt' + (on ? ' sel' : '') + (elim ? ' elim' : ''));
         var b = el('button', 'card');
         b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', on);
-        b.innerHTML = '<span class="letter">' + o.letter + '</span><span class="otext prose">' + (img(o.html) || '<em>(empty)</em>') +
+        b.innerHTML = '<span class="letter">' + o.letter + '</span><span class="otext prose">' + ((edited ? plain(fx.opts[o.letter]) : img(o.html)) || '<em>(empty)</em>') + (edited ? '<span class="pill edited">edited</span>' : '') +
           (o.marked ? '<span class="pill" title="A selection mark was detected on this option in the scanned page">marked in scan</span>' : '') + '</span>';
         b.onclick = function(){ S.ans[n] = (S.ans[n] === o.letter) ? null : o.letter; save(); render(); };
         li.appendChild(b);
@@ -234,13 +282,20 @@ main.single{grid-template-columns:minmax(0,760px);justify-content:center}
     $('next').textContent = S.i === Q.length-1 ? 'End' : 'Next';
     sel.value = sections.filter(function(s){ return s.first <= S.i; }).pop().first;
     buildMap();
+    typeset();
   }
+
+  function typeset(){
+    // formulas arrive as $LaTeX$; KaTeX is loaded from a CDN, so offline the raw LaTeX simply stays readable
+    if (window.renderMathInElement) try { renderMathInElement($('main'), {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}], throwOnError: false}); } catch(e){}
+  }
+  window.addEventListener('load', typeset);
 
   function buildMap(){
     var m = $('map'); m.innerHTML = '';
     var answered = Object.keys(S.ans).filter(function(k){ return S.ans[k]; }).length;
     m.appendChild(el('h4', null, esc(D.title) + ' · ' + answered + ' answered'));
-    m.appendChild(el('div', 'legend', '<span>▣ current</span><span>■ answered</span><span>⚑ marked for review</span><span><b style="color:#b57b00">●</b> needs review note</span>'));
+    m.appendChild(el('div', 'legend', '<span>▣ current</span><span>■ answered</span><span>⚑ marked for review</span><span><b style="color:#b57b00">●</b> needs review note</span><span>✎ edited</span><span style="color:var(--ok)">■ verified</span>'));
     sections.forEach(function(s, si){
       var end = si+1 < sections.length ? sections[si+1].first : Q.length;
       m.appendChild(el('h4', null, esc(s.name)));
@@ -248,7 +303,8 @@ main.single{grid-template-columns:minmax(0,760px);justify-content:center}
       for (var i = s.first; i < end; i++){
         (function(i){
           var q = Q[i], c = el('button', 'cell' + (S.ans[q.number] ? ' ans' : '') + (i === S.i ? ' cur' : '') + (S.rev[q.number] ? ' rev' : '') +
-            (q.flags.length ? ' chk' : '') + (q.placeholder ? ' ph' : ''), q.number);
+            (isFlagged(q) ? ' chk' : '') + (q.placeholder && !(S.fix[q.number] && S.fix[q.number].verified) ? ' ph' : '') +
+            (S.fix[q.number] ? ' fix' : '') + (S.fix[q.number] && S.fix[q.number].verified ? ' ver' : ''), q.number);
           c.setAttribute('aria-label', 'Go to question ' + q.number); c.onclick = function(){ go(i); }; g.appendChild(c);
         })(i);
       }
@@ -257,7 +313,16 @@ main.single{grid-template-columns:minmax(0,760px);justify-content:center}
   }
 
   $('mapbtn').onclick = function(){ var m = $('map'); m.hidden = !m.hidden; this.setAttribute('aria-expanded', !m.hidden); };
-  $('back').onclick = function(){ go(S.i-1); }; $('next').onclick = function(){ go(S.i+1); };
+  $('back').onclick = function(){ step(-1); }; $('next').onclick = function(){ step(1); };
+  $('onlybtn').onclick = function(){ S.only = !S.only; this.setAttribute('aria-pressed', S.only); if (S.only && !isFlagged(Q[S.i])) step(1); };
+  $('editbtn').onclick = function(){ S.edit = !S.edit; this.setAttribute('aria-pressed', S.edit); render(); };
+  $('exportbtn').onclick = function(){
+    var out = {doc_id: D.doc_id, exported_at: new Date().toISOString(), corrections: Object.keys(S.fix).map(function(k){
+      var f = S.fix[k]; return {number: +k, stem_md: f.stem, options: Object.keys(f.opts || {}).map(function(L){ return {letter: L, text_md: f.opts[L]}; }),
+        verified: !!f.verified, note: f.note || ''}; })};
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 1)], {type: 'application/json'}));
+    a.download = 'corrections-' + D.doc_id + '.json'; document.body.appendChild(a); a.click(); a.remove();
+  };
   $('cropbtn').onclick = function(){ S.crop = !S.crop; this.setAttribute('aria-pressed', S.crop); render(); };
   $('rawbtn').onclick = function(){ S.raw = !S.raw; this.setAttribute('aria-pressed', S.raw); render(); };
   $('theme').onclick = function(){
@@ -266,7 +331,7 @@ main.single{grid-template-columns:minmax(0,760px);justify-content:center}
   };
   document.addEventListener('keydown', function(e){
     if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
-    if (e.key === 'ArrowRight') go(S.i+1); else if (e.key === 'ArrowLeft') go(S.i-1);
+    if (e.key === 'ArrowRight') step(1); else if (e.key === 'ArrowLeft') step(-1);
     else if (/^[a-dA-D]$/.test(e.key)){ var q = Q[S.i], L = e.key.toUpperCase();
       if (q.options.some(function(o){ return o.letter === L; })){ S.ans[q.number] = L; save(); render(); } }
   });
