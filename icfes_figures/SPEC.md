@@ -54,7 +54,19 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 { "kind": "line", "categories": ["Ene", "Feb", "Mar"], "series": [ { "name": "Ventas", "values": [4, null, 7] } ] }
 ```
 
-- `null` leaves a gap, and the line breaks there. The second series is drawn dashed.
+- `null` leaves a gap, and the line breaks there. Lines are solid unless a series sets `"style": "dashed"`.
+- Set `"marker"` per series to `"circle"` (default), `"square"` or `"triangle"`, so series stay
+  apart in grey-scale print.
+
+### `line` with numeric x
+
+```json
+{ "kind": "line", "x": { "label": "Tiempo (h)", "min": -1, "max": 10, "step": 1 }, "y": { "label": "%", "min": 0, "max": 100, "step": 10 },
+  "series": [ { "name": "Aluminio", "points": [[0.5, 4], [1.5, 8], [9.5, 70]] } ] }
+```
+
+- Use `points` instead of `categories` when the x values are uneven numbers (for example time at
+  half hours). Each point sits at its real x.
 
 ### `scatter`, points on numeric axes
 
@@ -62,6 +74,28 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 { "kind": "scatter", "x": { "label": "Horas", "min": 0, "max": 10, "step": 2 }, "y": { "label": "Nota" },
   "series": [ { "points": [[1, 2], [4, 6.5]] } ] }
 ```
+
+### `curve`, a qualitative shape with no scale
+
+```json
+{ "kind": "curve", "x": { "label": "Eje horizontal" }, "y": { "label": "Eje vertical" },
+  "series": [ { "name": "Línea 1", "label": "Línea 1", "labelAt": 1, "style": "dashed", "points": [[0, 0.7], [0.6, 0.7], [1, 0.35]] } ] }
+```
+
+- For graphs that show only the shape. The points are sketch positions, with no tick values drawn.
+- Points are joined with a smooth curve. `label` is printed near point `labelAt` (default: middle).
+
+### `bar` with a second y axis
+
+```json
+{ "kind": "bar", "x": { "label": "Mes" }, "y": { "label": "Título eje y1", "min": 0, "max": 250, "step": 50 },
+  "y2": { "label": "Título eje y2", "min": 0, "max": 14, "step": 2 },
+  "categories": ["Ene", "Feb"],
+  "series": [ { "name": "Serie 1", "values": [160, 190] }, { "name": "Serie 2", "values": [9.6, 11.4], "axis": 2 } ] }
+```
+
+- Series with `"axis": 2` are scaled by `y2`. Series with no `axis` use `y`.
+- Both axis titles are required. Use the exam's printed title; do not paraphrase it.
 
 ### `pie`, a circle split into slices
 
@@ -78,17 +112,36 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 ```
 
 - Cells are strings, so they keep the exam's formatting (for example "1.200" or "12,5 %").
+- Empty cells stay empty. Copy the scan as printed; do not fill gaps.
+- `TABLE_CSS` is exported, so a page can style the table the same way in a browser.
+- Table rendering is checked in Chromium (screenshot), not only by reading the HTML.
 
 ## Axes
 
+Every chart axis needs a `label` (axis title). `validate` reports a missing title as an error.
 `x` and `y` objects accept `label`, `min`, `max` and `step`. If `min`, `max` or `step` is missing,
 the renderer picks a nice range from the data. Bar and line `y` axes start at zero unless `min` says
 otherwise. Negative bar values are rejected.
 
+## Option-level figures
+
+Many ICFES questions have a chart in each answer option. Those figures sit in the same spec file
+as the stem figures, with the question number and option letter in `location`:
+
+```json
+{ "id": "k1-q2-opt-A",
+  "location": { "page": 2, "question": 2, "stem_or_option": "option", "option": "A" },
+  "kind": "bar", "spec": { "kind": "bar", "...": "..." }, "fidelity": "draft" }
+```
+
+- `stem_or_option` is `"stem"` for a figure in the question text and `"option"` for an answer choice.
+- Option figures are keyed by `question` plus `option`, so a question can have one figure per letter.
+
 ## Not supported yet
 
 Horizontal bars, stacked bars, histograms, number lines, Venn and tree diagrams, geometry figures,
-and function graphs. Each of these stays an image until a kind is added here with a fixture.
+and function graphs. Known gap: rotated category labels (used when labels would collide) can clip
+at the bottom edge of the SVG. Each of these stays an image until a kind is added here with a fixture.
 
 ## Validation
 
