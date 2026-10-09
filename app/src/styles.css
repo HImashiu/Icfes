@@ -140,13 +140,13 @@ legend { padding: 0 6px; color: var(--muted); }
 .option label, label.option { cursor: pointer; }
 .letter { font-weight: 700; min-width: 1.2rem; }
 .options.charts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.options.charts .option { flex-direction: column; align-items: stretch; }
-.options.charts .option > .letter { align-self: flex-start; }
-.options.charts .option label { display: contents; }
+.options.charts .option { display: grid; grid-template-columns: auto auto 1fr; align-items: center; column-gap: 10px; row-gap: 8px; }
+.options.charts .option input { margin-top: 0; }
+.options.charts .option > :not(input):not(.letter) { grid-column: 1 / -1; min-width: 0; }
 .figure.native { margin: 8px 0; overflow-x: auto; }
 .figure.native svg { display: block; width: 100%; height: auto; max-width: 560px; }
-.figure.native table { border-collapse: collapse; width: 100%; }
-.figure.native td, .figure.native th { border: 1px solid var(--line); padding: 6px 8px; text-align: left; }
+.figure.native table { border-collapse: collapse; width: max-content; min-width: 100%; font-size: 0.85rem; }
+.figure.native td, .figure.native th { border: 1px solid var(--line); padding: 4px 6px; text-align: left; vertical-align: top; }
 .figure.crop img { max-width: 100%; height: auto; display: block; }
 .option-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 
