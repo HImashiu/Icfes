@@ -13,7 +13,7 @@ def apply_ai(seg: dict, path: Path) -> int:
     n = 0
     for q in seg["questions"]:
         r = by.get(q["number"])
-        if not r or (q.get("status") or "").startswith("human"):
+        if not r or (q.get("status") or "") in ("human_verified", "human_edited", "claude_verified", "claude_edited"):
             continue
         q["stem_md"] = r["stem_md"] or q["stem_md"]
         q["options"] = [{"letter": o["letter"], "text_md": o["text_md"], "marked_in_scan": bool(o.get("marked_in_scan"))}

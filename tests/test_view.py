@@ -232,3 +232,19 @@ def test_latex_is_tidied_protected_from_markdown_and_kept_as_text():
     h = md_to_html("Valor de $a_1 * b_2$ y **negrita** y $\\frac { 1 } { 3 }$", lambda s: s)
     assert "$a_1 * b_2$" in h and "<strong>negrita</strong>" in h and "\\frac { 1 } { 3 }" in h
     assert "<script" not in md_to_html("$<script>alert(1)</script>$", lambda s: s) and "&lt;script&gt;" in md_to_html("$<script>x</script>$", lambda s: s)
+
+
+def test_corrections_record_who_checked_and_keep_scan_marks(tmp_path):
+    from icfes_view.corrections import apply_corrections, is_locked
+    seg = {"questions": [{"number": 98, "stem_md": "", "options": [], "flags": ["not detected"], "placeholder": True},
+                         {"number": 5, "stem_md": "x", "options": [], "flags": []}]}
+    p = tmp_path / "c.json"
+    p.write_text(json.dumps({"corrections": [
+        {"number": 98, "by": "claude", "verified": True, "stem_md": "Gap (98)", "note": "n",
+         "options": [{"letter": "A", "text_md": "enough", "marked_in_scan": False}, {"letter": "C", "text_md": "other", "marked_in_scan": True}]},
+        {"number": 5, "verified": False, "stem_md": "y", "options": []}]}))
+    assert apply_corrections(seg, p) == 2
+    q = {x["number"]: x for x in seg["questions"]}
+    assert q[98]["status"] == "claude_verified" and not q[98]["flags"] and "placeholder" not in q[98]
+    assert q[98]["options"][1]["marked_in_scan"] and is_locked(q[98])
+    assert q[5]["status"] == "human_edited"

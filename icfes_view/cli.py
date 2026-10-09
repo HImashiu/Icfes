@@ -58,7 +58,7 @@ def apply_geometry(seg: dict, bundles_path: Path) -> int:
     for q in seg["questions"]:
         geo = (bundles.get(f"q{q['number']}") or {}).get("options_geo")
         want = q.get("expected_options")
-        if not geo or not want or len(geo) != want or (q.get("status") or "").startswith("human"):
+        if not geo or not want or len(geo) != want or (q.get("status") or "") in ("human_verified", "human_edited", "claude_verified", "claude_edited"):
             continue
         same = len(q["options"]) == len(geo) and all(sim(a["text_md"], b["text"]) >= 0.85 for a, b in zip(q["options"], geo))
         if same:
@@ -109,7 +109,7 @@ def build_doc(out: Path, doc_id: str, title: str, embed: bool, embed_crops: str 
     for w in validation["warnings"]:
         print(f"  WARNING {doc_id}: {w}")
     if fixed:
-        print(f"  applied {fixed} human correction(s) from {corrections}")
+        print(f"  applied {fixed} correction(s) from {corrections}")
     return {"doc_id": doc_id, "title": title, "questions": len(qs),
             "clean": sum(not q["flags"] for q in qs), "flagged": sum(bool(q["flags"]) for q in qs),
             "missing": seg["missing"]}

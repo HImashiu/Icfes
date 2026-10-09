@@ -44,7 +44,16 @@ def score_question(q: dict, g: dict, stem_min: float = 0.9, opt_min: float = 0.8
             "options": {k: round(v, 2) for k, v in per.items()}, "pass": passed}
 
 
+def _gold_items(gold: dict) -> list[dict]:
+    """Accept both a corrections export and an icfes-golden file (only its verified questions count as gold)."""
+    if gold.get("format", "").startswith("icfes-golden"):
+        return [{"number": q["number"], "verified": True, "stem_md": q["stem_md"], "options": q["options"]}
+                for q in gold["questions"] if q["provenance"]["trusted"]]
+    return gold.get("corrections", [])
+
+
 def score(questions: list[dict], gold: dict) -> dict:
+    gold = {"corrections": _gold_items(gold)}
     by = {q["number"]: q for q in questions}
     rows = []
     for g in gold.get("corrections", []):
