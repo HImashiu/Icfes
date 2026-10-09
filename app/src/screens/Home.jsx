@@ -13,6 +13,7 @@ export default function Home({ exams, onOpen, onStart, onResume, selected, loadi
         <h1>Práctica Saber 11</h1>
         <p className="muted">Escoja un examen para empezar.</p>
         {exams.length === 0 && <p className="notice">No hay exámenes cargados todavía.</p>}
+        {error && <p className="notice error">{error}</p>}
         <ul className="exam-list">
           {exams.map((e) => (
             <li key={e.slug}>

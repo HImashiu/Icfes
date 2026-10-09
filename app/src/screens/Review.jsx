@@ -2,7 +2,7 @@ import { useState } from "react";
 import QuestionView from "../components/QuestionView.jsx";
 
 // Walk through every question with the answer given and, when a key exists, the correct one.
-export default function Review({ questions, attempt, answerKey, onBack }) {
+export default function Review({ questions, attempt, answerKey, onBack, figures }) {
   const [filter, setFilter] = useState("all");
   const [index, setIndex] = useState(0);
 
@@ -36,6 +36,7 @@ export default function Review({ questions, attempt, answerKey, onBack }) {
             question={q}
             answer={attempt.answers[q.key]}
             review={{ correctLetter: answerKey?.get(q.key) ?? null }}
+            figures={figures}
           />
           <p className="review-status">
             {!answerKey && <span className="badge pending">Clave pendiente</span>}

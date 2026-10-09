@@ -5,6 +5,7 @@ import Results from "./screens/Results.jsx";
 import Review from "./screens/Review.jsx";
 import { parseExam, parseKey, questionsFor, timedSeconds } from "./lib/exam.js";
 import { clearAttempt, loadAttempt, saveAttempt } from "./lib/storage.js";
+import { parseFigureSpecs } from "./lib/figures.js";
 
 const base = import.meta.env.BASE_URL;
 
@@ -42,11 +43,12 @@ export default function App() {
     const entry = exams?.find((e) => e.slug === slug);
     setOpening(true);
     try {
-      const [raw, rawKey] = await Promise.all([
+      const [raw, rawKey, rawFigures] = await Promise.all([
         getJson(`exams/${slug}.json`),
         entry?.hasKey ? getJson(`exams/${slug}.key.json`) : null,
+        entry?.hasFigures ? getJson(`exams/${slug}.figures.json`) : null,
       ]);
-      setSelected({ slug, exam: parseExam(raw), key: parseKey(rawKey) });
+      setSelected({ slug, exam: parseExam(raw), key: parseKey(rawKey), figures: parseFigureSpecs(rawFigures) });
     } catch (err) {
       setOpenError(err.message);
     } finally {
@@ -123,6 +125,7 @@ export default function App() {
           onChange={setAttempt}
           onSubmit={submit}
           onExit={goHome}
+          figures={selected.figures}
         />
       )}
 
@@ -132,6 +135,7 @@ export default function App() {
           questions={questions}
           attempt={attempt}
           answerKey={selected.key}
+          figures={selected.figures}
           onReview={() => setView("review")}
           onHome={goHome}
           onRetry={() => startAttempt(attempt.scope, attempt.mode)}
@@ -143,6 +147,7 @@ export default function App() {
           questions={questions}
           attempt={attempt}
           answerKey={selected.key}
+          figures={selected.figures}
           onBack={() => setView("results")}
         />
       )}

@@ -4,13 +4,17 @@
 // Source folder: $ICFES_DATA_DIR, or /mnt/project-files/icfes/data when that exists.
 // Files:  <name>.golden.json  (exam, icfes-golden/1)
 //         <name>.key.json     (optional answer key, icfes-key/1)
-import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from "node:fs";
+// Optional, from the icfes root (the parent of the data folder):
+//         figures/specs/<name>.json  (figure specs, icfes-figures-specs/1)
+//         crops/                      (original figure crops, used when a spec is missing)
+import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync, rmSync, cpSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const out = join(here, "..", "public", "exams");
 const src = process.env.ICFES_DATA_DIR || "/mnt/project-files/icfes/data";
+const root = dirname(src);
 
 rmSync(out, { recursive: true, force: true });
 mkdirSync(out, { recursive: true });
@@ -31,6 +35,12 @@ for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
     continue;
   }
   writeFileSync(join(out, `${slug}.json`), readFileSync(join(src, file)));
+  const figFile = join(root, "figures", "specs", `${slug}.json`);
+  let hasFigures = false;
+  if (existsSync(figFile)) {
+    writeFileSync(join(out, `${slug}.figures.json`), readFileSync(figFile));
+    hasFigures = true;
+  }
   const keyFile = `${slug}.key.json`;
   let hasKey = false;
   if (files.includes(keyFile)) {
@@ -43,7 +53,10 @@ for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
     questions: exam.questions?.length ?? 0,
     sections: (exam.sections ?? []).map((s) => s.name),
     hasKey,
+    hasFigures,
   });
 }
+const crops = join(root, "crops");
+if (existsSync(crops)) cpSync(crops, join(out, "crops"), { recursive: true });
 writeFileSync(join(out, "index.json"), JSON.stringify({ exams }, null, 2));
 console.log(`[sync-exams] ${exams.length} exam(s) from ${src}`);

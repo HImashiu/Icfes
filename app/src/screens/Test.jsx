@@ -4,7 +4,7 @@ import QuestionView from "../components/QuestionView.jsx";
 import { formatClock } from "../lib/exam.js";
 
 // The answering screen: passage and question on the left, question map on the right.
-export default function Test({ title, questions, attempt, onChange, onSubmit, onExit }) {
+export default function Test({ title, questions, attempt, onChange, onSubmit, onExit, figures }) {
   const [now, setNow] = useState(() => Date.now());
   const [mapOpen, setMapOpen] = useState(() => window.matchMedia("(min-width: 900px)").matches);
   const timed = Boolean(attempt.durationSec);
@@ -84,7 +84,7 @@ export default function Test({ title, questions, attempt, onChange, onSubmit, on
       <div className="test-body">
         <main className="test-main">
           {q && (
-            <QuestionView question={q} answer={attempt.answers[q.key]} onAnswer={setAnswer} />
+            <QuestionView question={q} answer={attempt.answers[q.key]} onAnswer={setAnswer} figures={figures} />
           )}
           <div className="test-controls">
             <button type="button" onClick={() => go(current - 1)} disabled={current === 0}>← Anterior</button>

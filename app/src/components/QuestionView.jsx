@@ -1,9 +1,15 @@
 import RichText from "./RichText.jsx";
+import FigureBlock from "./FigureBlock.jsx";
 import { SOURCE_LINE } from "../lib/exam.js";
 
 // One question with its shared passage. In review mode, `review` carries the correct letter (or null when no key).
-export default function QuestionView({ question, answer, onAnswer, review }) {
+// `figures` is the Map from parseFigureSpecs; figures without a valid spec fall back to their crop.
+export default function QuestionView({ question, answer, onAnswer, review, figures }) {
   const { group } = question;
+  const stemFigures = [
+    ...(figures?.get(question.key) ?? []),
+    ...(group ? figures?.get(`group:${group.id}`) ?? [] : []),
+  ].filter((f) => f.target === "stem");
   // Many questions repeat their passage in stimulus_md, which the group already shows.
   const ownStimulus = question.stimulus_md && question.stimulus_md.trim() !== group?.stimulus_md?.trim();
   return (
@@ -20,6 +26,9 @@ export default function QuestionView({ question, answer, onAnswer, review }) {
         {question.part ? <span className="part"> · {question.part}</span> : null}
       </h2>
       <RichText html={question.stem_md} className="stem" />
+      {stemFigures.map((f) => (
+        <FigureBlock key={f.id} figure={f} alt={f.id} />
+      ))}
       <ul className="options">
         {question.options.map((opt) => {
           const selected = answer === opt.letter;
