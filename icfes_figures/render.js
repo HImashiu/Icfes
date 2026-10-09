@@ -9,7 +9,7 @@
 })(typeof self !== 'undefined' ? self : globalThis, function () {
   'use strict';
 
-  const KINDS = ['bar', 'line', 'scatter', 'curve', 'pie', 'table'];
+  const KINDS = ['bar', 'line', 'scatter', 'curve', 'pie', 'table', 'geometry'];
   const AXIS_KINDS = ['bar', 'line', 'scatter', 'curve'];
   // Booklets print in grey-scale, so series use fill patterns, not grey shades.
   const PATTERNS = ['hatch', 'solid', 'white', 'dots'];
@@ -93,11 +93,25 @@
         if (!(total > 0)) errs.push('slice values must add up to more than 0');
       }
     } else if (spec.kind === 'table') {
-      if (!Array.isArray(spec.headers) || spec.headers.length === 0) errs.push('headers must be a non-empty array');
+      if (spec.headers != null && (!Array.isArray(spec.headers) || spec.headers.length === 0)) errs.push('headers must be a non-empty array when given');
       if (!Array.isArray(spec.rows)) errs.push('rows must be an array');
-      else spec.rows.forEach((r, i) => {
-        if (!Array.isArray(r) || r.length !== (spec.headers || []).length) errs.push(`rows[${i}] must have one cell per header`);
-      });
+      else {
+        const g = layoutTable(spec);
+        errs.push(...g.errors);
+      }
+    }
+    if (spec.kind === 'geometry') {
+      const pts = spec.points || {};
+      const ok = (v) => (typeof v === 'string' ? pts[v] != null : Array.isArray(v) && v.length === 2 && isNum(v[0]) && isNum(v[1]));
+      if (!spec.points || typeof spec.points !== 'object') errs.push('points must be an object of name: [x, y]');
+      Object.entries(pts).forEach(([k, v]) => { if (!Array.isArray(v) || v.length !== 2 || !isNum(v[0]) || !isNum(v[1])) errs.push(`points.${k} must be [x, y]`); });
+      (spec.segments || []).forEach((g, i) => { if (!ok(g.a) || !ok(g.b)) errs.push(`segments[${i}] needs known endpoints a and b`); });
+      (spec.polygons || []).forEach((g, i) => { if (!Array.isArray(g.vertices) || g.vertices.length < 3 || !g.vertices.every(ok)) errs.push(`polygons[${i}] needs at least three known vertices`); });
+      (spec.circles || []).forEach((g, i) => { if (!ok(g.center) || !isNum(g.r) || g.r <= 0) errs.push(`circles[${i}] needs a center and a positive r`); });
+      (spec.ellipses || []).forEach((g, i) => { if (!ok(g.center) || !isNum(g.rx) || !isNum(g.ry)) errs.push(`ellipses[${i}] needs a center, rx and ry`); });
+      (spec.arcs || []).forEach((g, i) => { if (!ok(g.center) || !isNum(g.r) || !isNum(g.from) || !isNum(g.to)) errs.push(`arcs[${i}] needs center, r, from and to (degrees)`); });
+      (spec.angles || []).forEach((g, i) => { if (!ok(g.vertex) || !ok(g.a) || !ok(g.b)) errs.push(`angles[${i}] needs known vertex, a and b`); });
+      (spec.labels || []).forEach((g, i) => { if (!ok(g.at) || typeof g.text !== 'string') errs.push(`labels[${i}] needs at and text`); });
     }
     return errs;
   }
@@ -414,11 +428,136 @@
     '.icfes-table th,.icfes-table td{border:1px solid #000;padding:4px 10px;text-align:center}' +
     '.icfes-table caption{font-weight:bold;margin-bottom:4px}';
 
+  // Cells are strings or {text, colspan, rowspan, header}. Headers, if given, are the first row.
+  // Returns the placed cells per row and the column count, or errors when rows do not fill the grid.
+  function layoutTable(spec) {
+    const errors = [];
+    const all = (Array.isArray(spec.headers) && spec.headers.length ? [{ cells: spec.headers, header: true }] : [])
+      .concat((spec.rows || []).map((r) => ({ cells: r, header: false })));
+    const width = Array.isArray(spec.headers) && spec.headers.length ? spec.headers.length : 0;
+    const taken = [];
+    const placed = all.map(() => []);
+    let cols = width;
+    all.forEach((row, r) => {
+      if (!Array.isArray(row.cells)) { errors.push(`row ${r} must be an array`); return; }
+      let c = 0;
+      row.cells.forEach((cell) => {
+        const o = typeof cell === 'object' && cell !== null ? cell : { text: cell };
+        while (taken[r] && taken[r][c]) c++;
+        const cs = o.colspan || 1;
+        const rs = o.rowspan || 1;
+        for (let dr = 0; dr < rs; dr++) for (let dc = 0; dc < cs; dc++) {
+          taken[r + dr] = taken[r + dr] || [];
+          if (taken[r + dr][c + dc]) errors.push(`row ${r}: cell overlaps another span`);
+          taken[r + dr][c + dc] = true;
+        }
+        placed[r].push({ text: o.text == null ? '' : String(o.text), colspan: cs, rowspan: rs, header: !!(o.header || row.header) });
+        c += cs;
+      });
+      const span = (taken[r] || []).filter(Boolean).length;
+      if (!width && r === 0) cols = span;
+      if (cols && span !== cols) errors.push(`row ${r} covers ${span} columns, expected ${cols}`);
+    });
+    return { rows: placed, cols, errors };
+  }
+
   function tableHtml(spec) {
-    const head = spec.headers.map((h) => `<th>${esc(h)}</th>`).join('');
-    const body = spec.rows.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('');
+    const g = layoutTable(spec);
+    const body = g.rows.map((cells) => `<tr>${cells.map((c) => {
+      const attrs = (c.colspan > 1 ? ` colspan="${c.colspan}"` : '') + (c.rowspan > 1 ? ` rowspan="${c.rowspan}"` : '');
+      return c.header ? `<th${attrs}>${esc(c.text)}</th>` : `<td${attrs}>${esc(c.text)}</td>`;
+    }).join('')}</tr>`).join('');
     const cap = spec.title ? `<caption>${esc(spec.title)}</caption>` : '';
-    return `<table class="icfes-table">${cap}<thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+    return `<table class="icfes-table">${cap}<tbody>${body}</tbody></table>`;
+  }
+
+  // Geometry: named points, segments, polygons, circles, ellipses, arcs and angle marks, drawn in a
+  // coordinate frame with y pointing up. Coordinates are fitted to the frame; axes are not drawn.
+  function geometrySvg(spec, id) {
+    const pts = spec.points || {};
+    const at = (v) => (typeof v === 'string' ? pts[v] : v);
+    const xs = [], ys = [];
+    const add = (p) => { xs.push(p[0]); ys.push(p[1]); };
+    Object.values(pts).forEach(add);
+    (spec.ellipses || []).forEach((e) => { const c = at(e.center); add([c[0] - e.rx, c[1] - e.ry]); add([c[0] + e.rx, c[1] + e.ry]); });
+    (spec.circles || []).forEach((e) => { const c = at(e.center); add([c[0] - e.r, c[1] - e.r]); add([c[0] + e.r, c[1] + e.r]); });
+    const pad = 36;
+    const minx = Math.min(...xs), maxx = Math.max(...xs), miny = Math.min(...ys), maxy = Math.max(...ys);
+    const sc = Math.min((W - 2 * pad) / ((maxx - minx) || 1), (H - 2 * pad) / ((maxy - miny) || 1));
+    const offx = (W - (maxx - minx) * sc) / 2, offy = (H - (maxy - miny) * sc) / 2;
+    const X = (x) => offx + (x - minx) * sc;
+    const Y = (y) => H - offy - (y - miny) * sc;
+    const P = (p) => [X(p[0]), Y(p[1])];
+    const dash = (d) => (d ? ' stroke-dasharray="5 4"' : '');
+    const out = [];
+    const line = (a, b, d) => `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="#000" stroke-width="1.6"${dash(d)}/>`;
+    (spec.polygons || []).forEach((g) => {
+      const v = g.vertices.map((q) => P(at(q)));
+      out.push(`<polygon points="${v.map((q) => q.map((n) => n.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="#000" stroke-width="1.6"${dash(g.dashed)}/>`);
+    });
+    (spec.segments || []).forEach((g) => {
+      const a = P(at(g.a)), b = P(at(g.b));
+      out.push(line(a, b, g.dashed));
+      const len = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+      const ux = (b[0] - a[0]) / len, uy = (b[1] - a[1]) / len;
+      const n = g.ticks || 0;
+      if (n > 0) {
+        const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+        const nx = -uy, ny = ux;
+        for (let k = 0; k < n; k++) {
+          const off = (k - (n - 1) / 2) * 5;
+          const cx = mx + ux * off, cy = my + uy * off;
+          out.push(line([cx + nx * 5, cy + ny * 5], [cx - nx * 5, cy - ny * 5], false));
+        }
+      }
+      if (g.label) out.push(text((a[0] + b[0]) / 2 + (-uy) * 12, (a[1] + b[1]) / 2 + ux * 12 + 4, g.label));
+    });
+    (spec.circles || []).forEach((g) => {
+      const c = P(at(g.center));
+      out.push(`<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="${(g.r * sc).toFixed(1)}" fill="none" stroke="#000" stroke-width="1.6"${dash(g.dashed)}/>`);
+    });
+    (spec.ellipses || []).forEach((g) => {
+      const c = P(at(g.center));
+      out.push(`<ellipse cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" rx="${(g.rx * sc).toFixed(1)}" ry="${(g.ry * sc).toFixed(1)}" fill="none" stroke="#000" stroke-width="1.6"${dash(g.dashed)}/>`);
+    });
+    const arcPath = (c, r, from, to) => {
+      const rad = (d) => (d * Math.PI) / 180;
+      const p0 = [c[0] + r * Math.cos(rad(from)), c[1] - r * Math.sin(rad(from))];
+      const p1 = [c[0] + r * Math.cos(rad(to)), c[1] - r * Math.sin(rad(to))];
+      const sweep = to - from > 180 || to - from < 0 ? 0 : 1;
+      return `M${p0[0].toFixed(1)},${p0[1].toFixed(1)} A${r},${r} 0 ${sweep === 1 ? 0 : 1} ${sweep === 1 ? 1 : 0} ${p1[0].toFixed(1)},${p1[1].toFixed(1)}`;
+    };
+    (spec.arcs || []).forEach((g) => {
+      const c = P(at(g.center));
+      const d = arcPath(c, g.r * sc, g.from, g.to);
+      out.push(`<path d="${d}" fill="none" stroke="#000" stroke-width="1.2"/>`);
+    });
+    (spec.angles || []).forEach((g) => {
+      const v = P(at(g.vertex)), a = P(at(g.a)), b = P(at(g.b));
+      const ang = (p) => Math.atan2(-(p[1] - v[1]), p[0] - v[0]) * 180 / Math.PI;
+      let from = ang(a), to = ang(b);
+      let diff = ((to - from) % 360 + 360) % 360;
+      if (diff > 180) { const t = from; from = to; to = t; diff = 360 - diff; }
+      const r = g.r || 18;
+      out.push(`<path d="${arcPath(v, r, from, from + diff)}" fill="none" stroke="#000" stroke-width="1"/>`);
+      if (g.label) {
+        const mid = ((from + diff / 2) * Math.PI) / 180;
+        out.push(text(v[0] + Math.cos(mid) * (r + 12), v[1] - Math.sin(mid) * (r + 12) + 4, g.label));
+      }
+    });
+    Object.entries(pts).filter(([name]) => !name.startsWith('_')).forEach(([name, p]) => {
+      const q = P(p);
+      out.push(`<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="2.6" fill="#000"/>`);
+    });
+    Object.entries(pts).filter(([name]) => !name.startsWith('_')).forEach(([name, p]) => {
+      const q = P(p);
+      out.push(text(q[0] + 8, q[1] - 6, name, { anchor: 'start' }));
+    });
+    (spec.labels || []).forEach((g) => {
+      const q = P(at(g.at));
+      out.push(text(q[0], q[1], g.text, { anchor: g.anchor || 'middle' }));
+    });
+    return out;
   }
 
   // Charts return an SVG string; tables return an HTML string. Invalid specs throw, so callers can fall back to the crop.
@@ -427,6 +566,7 @@
     if (errs.length) throw new Error('invalid figure spec: ' + errs.join('; '));
     if (spec.kind === 'table') return tableHtml(spec);
     const id = `icf${++seq}`;
+    if (spec.kind === 'geometry') return svgOpen(spec.title, id) + geometrySvg(spec, id).join('') + '</svg>';
     const body = spec.kind === 'bar' ? barSvg(spec, id)
       : spec.kind === 'line' ? lineSvg(spec, id)
       : spec.kind === 'scatter' ? scatterSvg(spec, id)

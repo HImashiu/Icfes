@@ -111,10 +111,32 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 { "kind": "table", "title": "Resultados", "headers": ["Año", "Total"], "rows": [["2019", "12"], ["2020", "30"]] }
 ```
 
-- Cells are strings, so they keep the exam's formatting (for example "1.200" or "12,5 %").
+- Cells are strings (or span objects, below), so they keep the exam's formatting (for example "1.200" or "12,5 %").
 - Empty cells stay empty. Copy the scan as printed; do not fill gaps.
 - `TABLE_CSS` is exported, so a page can style the table the same way in a browser.
 - Table rendering is checked in Chromium (screenshot), not only by reading the HTML.
+
+### `geometry`, points, segments and arcs in a coordinate frame
+
+```json
+{ "kind": "geometry", "points": { "A": [0, 0], "B": [4, 0], "C": [1, 3] },
+  "segments": [ { "a": "A", "b": "B", "ticks": 1 }, { "a": "B", "b": "C", "ticks": 1 }, { "a": "C", "b": "A", "dashed": true } ],
+  "angles": [ { "vertex": "A", "a": "B", "b": "C", "label": "45°" } ] }
+```
+
+- `points` maps a name to `[x, y]` (y up). Names are drawn as labels. A name that starts with `_` is a
+  hidden point: it takes part in the layout but draws no dot or label.
+- `segments`: endpoints are point names or `[x, y]`. `ticks` (0 to 3) marks equal sides. `dashed`, `label`.
+- `polygons` (`vertices`), `circles` (`center`, `r`), `ellipses` (`center`, `rx`, `ry`), `arcs`
+  (`center`, `r`, `from`, `to` in degrees), `angles` (`vertex`, `a`, `b`, `label`, `r`) and `labels`
+  (`at`, `text`, `anchor`). Dashed outlines take `dashed: true`.
+- The drawing is scaled to fit the frame. No axes are drawn.
+
+### `table` with spans
+
+Cells in `rows` (and `headers`, if given) are strings, or objects `{ "text", "colspan", "rowspan", "header" }`.
+Each row must cover the table width exactly. `headers`, if given, is the first row. Without `headers`,
+the first row sets the width.
 
 ## Axes
 
@@ -143,9 +165,9 @@ as the stem figures, with the question number and option letter in `location`:
 
 ## Not supported yet
 
-Horizontal bars, stacked bars, histograms, number lines, Venn and tree diagrams, geometry figures,
-and function graphs. Known gap: rotated category labels (used when labels would collide) can clip
-at the bottom edge of the SVG. Each of these stays an image until a kind is added here with a fixture.
+Horizontal bars, stacked bars, histograms, number lines, Venn and tree diagrams, and function graphs.
+Geometry figures are drawn with the `geometry` kind; biology and chemistry diagrams and circuits stay
+as crops (`kind: "image"`, `src` relative to the figures folder).  Each of these stays an image until a kind is added here with a fixture.
 
 ## Validation
 
