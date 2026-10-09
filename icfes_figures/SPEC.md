@@ -118,6 +118,10 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 
 ## Axes
 
+Set `domain: [lo, hi]` on an axis to widen the drawn scale past the printed range (for example to
+hold a point at -0.5) without drawing ticks outside `min`..`max`. Category labels rotate when they
+would collide, and the plot leaves room for them below the axis.
+
 Every chart axis needs a `label` (axis title). `validate` reports a missing title as an error.
 `x` and `y` objects accept `label`, `min`, `max` and `step`. If `min`, `max` or `step` is missing,
 the renderer picks a nice range from the data. Bar and line `y` axes start at zero unless `min` says
