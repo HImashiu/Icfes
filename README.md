@@ -188,6 +188,30 @@ v1 40% -> v2 90% (Math 4/10 -> 8/10, English 4/10 -> 10/10). The English items 1
 the row-layout fix, so they are not an independent test. 14 English numbers (80-84, 90, 98-105) are still "not detected"
 (picture items): that is what the Claude stage is for.
 
+### The whole collection (13 PDFs, 14 exams)
+
+All 13 PDFs went through the pipeline with `--remove-blue --features formulas,ocrHighResolution` (429 pages, 485 after
+re-reading one PDF). `S11-P` contains two exams (session 1 and 2, numbering restarts), so it was split into
+`S11-P_1ra` and `S11-P_2da` (28 pages each) and read again. No exam failed. The first pass exposed layouts the
+single-exam work had not seen; these were fixed offline (no Azure cost):
+
+- **Sections** follow the cover table's order and closed-question counts (Math 1-25, Lectura 26-66, ...) instead of the
+  headings, which exist only on some sections' pages. The cover parser handles "Preguntas cerradas / abiertas"
+  columns (117 total = 113 closed + 4 open), garbled names, and unreadable counts (falls back to the usual form).
+- **Second-session English** has other layouts: cloze answer *tables* (97-104, 105-112, 125-134), stems printed first
+  with all options after (matching 85-89, conversation 90-96), and picture-only items. All are parsed now.
+- Question numbers are no longer lost after a picture-only item or a group start.
+
+| | before fixes | after |
+|---|---|---|
+| questions found / expected | 1440 / ~1700 | 1686 |
+| clean (no review note) | 1189 (83%) | 1370 (81%) of a larger, more honest set |
+| English found | 67 | 232 |
+
+What is left is mostly real: options inside images (Math/Science charts), picture items whose number is only in the
+image (English part 1: 78-82), and one poor scan (`S11-G_1ra`, text missing around 36-39). Only `S11-O 2da` has been
+verified, so only it passes the golden validation; the rest fail on unreviewed flags by design.
+
 ## Claude vision stage (`icfes_llm`)
 
 ```powershell
@@ -207,8 +231,8 @@ tested with a fake client** (no Anthropic key was available while building it).
 
 ## Status
 
-- 61 offline tests pass (fake Azure and Anthropic backends, the real Azure SDK against a fake HTTP layer, synthetic
+- 74 offline tests pass (fake Azure and Anthropic backends, the real Azure SDK against a fake HTTP layer, synthetic
   scanned pages for the crop checks).
 - **Run live against Azure** on `S11-O 2da sesión` (several variants, ~100 pages billed in total). Not yet run live: the
   Claude stage, chunking of very large PDFs, 429 throttling, resume after a real interruption.
-- Only one exam has been processed; other forms may expose layouts these heuristics do not cover. The gold set is a draft.
+- Fourteen exams have been processed; only one is human/Claude-verified. The gold set is a draft.

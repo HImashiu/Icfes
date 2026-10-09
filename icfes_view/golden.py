@@ -80,7 +80,7 @@ def validate_golden(g: dict) -> dict:
         letters = [o["letter"] for o in q["options"]]
         if want and len(letters) < want:
             errors.append(f"Q{n}: {len(letters)} options, expected {want}")
-        if letters != list("ABCD"[:len(letters)]):
+        if letters != list("ABCDEFGH"[:len(letters)]) or (len(letters) > 4 and q.get("item_type") != "matching"):
             errors.append(f"Q{n}: option letters are not A, B, C… in order: {letters}")
         if any(not o["text_md"].strip() for o in q["options"]):
             errors.append(f"Q{n}: an option has no text")
