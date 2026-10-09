@@ -1,0 +1,4 @@
+node_modules/
+dist/
+# exam content is copied here at dev/build time; never commit it
+public/exams/

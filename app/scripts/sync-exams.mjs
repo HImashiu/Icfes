@@ -1,0 +1,49 @@
+// Copies exam JSON from a data folder into public/exams so the app can load it.
+// Exam content never goes into git: public/exams is gitignored and is rebuilt on every dev/build run.
+//
+// Source folder: $ICFES_DATA_DIR, or /mnt/project-files/icfes/data when that exists.
+// Files:  <name>.golden.json  (exam, icfes-golden/1)
+//         <name>.key.json     (optional answer key, icfes-key/1)
+import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const here = dirname(fileURLToPath(import.meta.url));
+const out = join(here, "..", "public", "exams");
+const src = process.env.ICFES_DATA_DIR || "/mnt/project-files/icfes/data";
+
+rmSync(out, { recursive: true, force: true });
+mkdirSync(out, { recursive: true });
+
+if (!existsSync(src)) {
+  console.warn(`[sync-exams] ${src} not found; the app will show no exams.`);
+  writeFileSync(join(out, "index.json"), JSON.stringify({ exams: [] }, null, 2));
+  process.exit(0);
+}
+
+const files = readdirSync(src);
+const exams = [];
+for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
+  const slug = file.replace(/\.golden\.json$/, "");
+  const exam = JSON.parse(readFileSync(join(src, file), "utf8"));
+  if (exam.format !== "icfes-golden/1") {
+    console.warn(`[sync-exams] skipped ${file}: format ${exam.format}`);
+    continue;
+  }
+  writeFileSync(join(out, `${slug}.json`), readFileSync(join(src, file)));
+  const keyFile = `${slug}.key.json`;
+  let hasKey = false;
+  if (files.includes(keyFile)) {
+    writeFileSync(join(out, `${slug}.key.json`), readFileSync(join(src, keyFile)));
+    hasKey = true;
+  }
+  exams.push({
+    slug,
+    title: exam.exam?.title ?? slug,
+    questions: exam.questions?.length ?? 0,
+    sections: (exam.sections ?? []).map((s) => s.name),
+    hasKey,
+  });
+}
+writeFileSync(join(out, "index.json"), JSON.stringify({ exams }, null, 2));
+console.log(`[sync-exams] ${exams.length} exam(s) from ${src}`);
