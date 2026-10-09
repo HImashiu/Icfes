@@ -9,7 +9,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-from .blueprint import item_info
+from .blueprint import item_info, section_of
+from .blueprint import CELL, ROW
 from .clean import IMG_RE, MARKS, MARKS_ON
 
 Q_START = re.compile(r"^(\d{1,3})\\?\.(?!\d)\s*(.*)$", re.S)
@@ -20,6 +21,7 @@ RANGE = re.compile(r"PREGUNTAS?\s+(\d+)\s+(?:A|Y|-)\s+(\d+)", re.I)
 SECTION = re.compile(r"^#+\s*Prueba\s+de\s+(.+?)(?:\s+parte\s+[IVX\d]+)?\s*$", re.I)
 PART = re.compile(r"^#+\s*(PARTE\s+\w+(?:\.\w)?)", re.I)
 LETTERS = "ABCD"
+LETTERS_EXT = "ABCDEFGH"
 
 
 @dataclass
@@ -30,6 +32,7 @@ class Chunk:
     group: dict | None
     body: list[str] = field(default_factory=list)   # everything between this question's number and the next
     raw: list[str] = field(default_factory=list)
+    bank: list[dict] | None = None   # shared options (matching parts)
 
 
 def is_text(item: str) -> bool:
@@ -53,8 +56,118 @@ def _first_question_number(items: list[str]) -> int | None:
 def _has_options(body: list[str]) -> bool:
     return any(_letter(x) in ("A", "B") or MARKED.match(x) for x in body)
 
+TBL_NUM = re.compile(r"^(\d{1,3})\\?\.\s*(.*)$", re.S)
+_LATEX_LETTER = [(re.compile(r"\$\s*\\mathrm\s*\{\s*([A-Da-d])\s*\}\s*[\.,]?\s*\$"), r"\1."),
+                 (re.compile(r"\$\s*([A-Da-d])\s*\.?\s*\$"), r"\1.")]
+_OPT_TOKEN = re.compile(rf"(?:(?<=\s)|^)([A-Da-d]\.|[{MARKS}])(?=\s|$)")
 
-def cut(items: list[str]) -> tuple[list[Chunk], list[dict], list[int]]:
+
+def _row_options(text: str) -> list[str]:
+    """'☒ happier B. happy C. happiest' -> ['☒ happier', 'B. happy', 'C. happiest'] with positional letters."""
+    for rx, rep in _LATEX_LETTER:
+        text = rx.sub(rep, text)
+    parts = _OPT_TOKEN.split(text)       # [head, marker, text, marker, text, ...]
+    segs: list[tuple[str, str]] = []
+    if parts[0].strip():
+        segs.append(("", parts[0].strip()))
+    for i in range(1, len(parts) - 1, 2):
+        if parts[i + 1].strip():
+            segs.append((parts[i], parts[i + 1].strip()))
+    out = []
+    for k, (mk, t) in enumerate(segs[:4]):
+        out.append(f"{mk} {t}" if mk and mk in MARKS else f"{LETTERS[k]}. {t}")
+    return out
+
+
+class _Row(str):
+    """A question number emitted from an answer-table row (a reliable anchor, unlike numbers inside a passage)."""
+
+
+def expand_tables(items: list[str]) -> list[str]:
+    """Cloze answer tables ('97. | A. | happier | B. | ...') become ordinary question items:
+    '97.' followed by one option per line, so the normal segmentation and scan-mark handling apply."""
+    out: list[str] = []
+    for it in items:
+        if not it.startswith("<table"):
+            out.append(it)
+            continue
+        rows = []
+        for r in ROW.findall(it):
+            txt = re.sub(r"\s+", " ", " ".join(re.sub(r"<[^>]+>", " ", c) for c in CELL.findall(r))).strip()
+            rows.append(txt)
+        parsed = []
+        for txt in rows:
+            m = TBL_NUM.match(txt)
+            if m and int(m.group(1)) > 0:
+                opts = _row_options(m.group(2))
+                if len(opts) >= 2:
+                    parsed.append((int(m.group(1)), opts))
+        if len(parsed) >= 3 and len(parsed) >= len(rows) - 2:
+            for n, opts in parsed:
+                out.append(_Row(f"{n}\\."))
+                out.extend(opts)
+        else:
+            out.append(it)
+    return out
+
+def _opt_text(line: str) -> tuple[str, bool]:
+    """(text without its letter/mark, marked)"""
+    if m := OPT.match(line):
+        return m.group(2).strip(), False
+    if m := MARKED.match(line):
+        return m.group(2).strip(), m.group(1) in MARKS_ON
+    return line.strip(), False
+
+
+def distribute_options(chunks: list[Chunk]) -> int:
+    """Parts where the stems are printed first (85-89, 90-96) and every option afterwards: the option lines all landed
+    in the LAST stem's body. Re-attach them: shared word bank for matching parts, consecutive triples otherwise."""
+    done = 0
+    i = 0
+    while i < len(chunks):
+        j = i
+        while j + 1 < len(chunks) and chunks[j + 1].number == chunks[j].number + 1 and chunks[j + 1].part == chunks[i].part:
+            j += 1
+        run = chunks[i:j + 1]
+        i = j + 1
+        if len(run) < 2 or not (run[0].part or "").upper().startswith("PARTE"):
+            continue
+        if any(_has_options(c.body) for c in run[:-1]):
+            continue
+        last = run[-1]
+        stem, tail = last.body[0], last.body[1:]
+        tail = [x for x in tail if not x.startswith(("![", "#"))]
+        lines = [x for x in tail if is_text(x) and not LIST_ITEM.match(x)]
+        if len(lines) != len(tail):
+            continue
+        n = len(run)
+        item_type, want = item_info(last.section, last.part)
+        if item_type == "matching" or (want is None and len(lines) >= 4):
+            bank = [(LETTERS_EXT[k], *_opt_text(t)) for k, t in enumerate(lines[:8])]
+            for c in run:   # every description shares one word bank (A-H)
+                c.bank = [{"letter": L, "text": t, "marked_in_scan": mk} for L, t, mk in bank]
+            last.body = [stem]
+            done += n
+        elif want and len(lines) == want * n:
+            for k, c in enumerate(run):
+                seg_lines = lines[k * want:(k + 1) * want]
+                new = []
+                for q, ln in enumerate(seg_lines):
+                    t, mk = _opt_text(ln)
+                    new.append(f"☒ {t}" if mk else f"{LETTERS[q]}. {t}")
+                c.body = [c.body[0] if c is not last else stem] + new
+                if c is last:
+                    c.raw = [last.raw[0]] if last.raw else []
+            done += n
+    return done
+
+
+def _picture_only(body: list[str]) -> bool:
+    """A picture-based item: its body holds only figures/headings (the question text lives inside the image)."""
+    return not any(is_text(x) for x in body[1:]) and any(x.startswith("![") for x in body)
+
+
+def cut(items: list[str], plan: list | None = None) -> tuple[list[Chunk], list[dict], list[int]]:
     expected = _first_question_number(items)
     if expected is None:
         return [], [], []
@@ -69,13 +182,17 @@ def cut(items: list[str]) -> tuple[list[Chunk], list[dict], list[int]]:
     def start(n: int, first_text: str, raw: str) -> None:
         nonlocal cur, collecting, expected
         g = group if group and group["from"] <= n <= group["to"] else None
-        cur = Chunk(n, section, part, g)
+        cur = Chunk(n, (section_of(plan, n) if plan else None) or section, part, g)
         cur.body.append(first_text)
         cur.raw.append(raw)
         chunks.append(cur)
         collecting, expected = None, n + 1
 
-    for it in items:
+    later: dict[int, list[int]] = {}   # number -> positions of answer-table rows (a later table row for the expected number beats a jump)
+    for k, x in enumerate(items):
+        if isinstance(x, _Row) and (m := Q_START.match(x)):
+            later.setdefault(int(m.group(1)), []).append(k)
+    for pos, it in enumerate(items):
         if not it.startswith("#") and it.upper().startswith("RESPONDA LAS PREGUNTAS") and RANGE.search(it):
             it = "## " + it  # some parts print the directive as plain text instead of a heading
         hq = Q_START.match(re.sub(r"^#+\s*", "", it)) if it.startswith("#") else None
@@ -90,7 +207,7 @@ def cut(items: list[str]) -> tuple[list[Chunk], list[dict], list[int]]:
             if rm := RANGE.search(it):
                 group = collecting = {"id": f"g{rm.group(1)}-{rm.group(2)}", "from": int(rm.group(1)),
                                       "to": int(rm.group(2)), "directions": re.sub(r"^#+\s*", "", it), "stimulus": [],
-                                      "section": section, "part": part}
+                                      "section": (section_of(plan, int(rm.group(1))) if plan else None) or section, "part": part}
                 groups.append(group)
             elif collecting is not None:
                 collecting["stimulus"].append(it)
@@ -99,7 +216,9 @@ def cut(items: list[str]) -> tuple[list[Chunk], list[dict], list[int]]:
             continue
 
         qm = Q_START.match(it)
-        if qm and cur is not None and _has_options(cur.body) and len(qm.group(2)) > 20:
+        if (qm and cur is not None and (_has_options(cur.body) or _picture_only(cur.body)
+                                         or (collecting is not None and int(qm.group(1)) == collecting["from"])) and len(qm.group(2)) > 20
+                and not any(k > pos for k in later.get(expected, ()))):
             n = int(qm.group(1))
             # OCR/layout lost one or more question numbers (e.g. picture-based items): jump ahead, but report it.
             # Small numbers are more likely sub-list items, so long jumps only count for n > 10.
@@ -173,6 +292,8 @@ def parse_options(body: list[str]) -> tuple[list[str], list[dict], list[str]]:
 
 def build(ch: Chunk, trailer_out: list[str] | None = None) -> dict:
     pre, options, trailer = parse_options(ch.body)
+    if ch.bank:   # matching part: the word bank is shared by every description
+        pre, options, trailer = ch.body, [dict(o) for o in ch.bank], []
     # sub-lists ("1. ... 2. ...") belong to the paragraph they follow
     paras: list[str] = []
     for p in pre:
@@ -205,6 +326,8 @@ def build(ch: Chunk, trailer_out: list[str] | None = None) -> dict:
     leftovers = " ".join(t for t in trailer if is_text(t) and len(t) > 14)
     if len(leftovers) > 120:
         flags.append("Unclassified text after the options was left out of the view (see Original extraction)")
+    if not stem and item_type == "cloze_text" and options:
+        stem = f"Blank ({ch.number}): choose the option that completes the text."
     if not stem:
         flags.append("No question text found")
     if trailer_out is not None:
@@ -219,9 +342,10 @@ def build(ch: Chunk, trailer_out: list[str] | None = None) -> dict:
             "anchor": (ch.raw[0] if ch.raw else "")[:120]}  # text of the paragraph that starts this question
 
 
-def segment(items: list[str]) -> dict:
+def segment(items: list[str], plan: list | None = None) -> dict:
     """Full pass: returns {'questions': [...], 'groups': [...], 'missing': [...]}."""
-    chunks, groups, missing = cut(items)
+    chunks, groups, missing = cut(expand_tables(items), plan)
+    distribute_options(chunks)
     questions: list[dict] = []
     for idx, ch in enumerate(chunks):
         trailer: list[str] = []

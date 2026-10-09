@@ -11,7 +11,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from .blueprint import parse_cover_table, validate
+from .blueprint import parse_cover_table, section_plan, validate
 from .clean import clean, tidy_math
 from .ai import apply_ai
 from .corrections import apply_corrections
@@ -78,10 +78,11 @@ def build_doc(out: Path, doc_id: str, title: str, embed: bool, embed_crops: str 
     md = (out / "markdown" / f"{doc_id}.md").read_text(encoding="utf-8")
     furniture: set[str] = set()
     items, figs = clean(md, furniture)
-    seg = segment(items)
+    cover = parse_cover_table(md)
+    seg = segment(items, section_plan(cover))
     qs0 = seg["questions"]
     regeo = apply_geometry(seg, out / "crops" / doc_id / "bundles.json")
-    validation = validate(seg["questions"], parse_cover_table(md))
+    validation = validate(seg["questions"], cover)
     validation["options_resplit_by_geometry"] = regeo
     qdir, vdir = out / "questions", out / "view"
     qdir.mkdir(exist_ok=True)
