@@ -34,6 +34,7 @@ class Manifest:
             if loaded.get("version") != VERSION:
                 raise ManifestError(f"Unsupported manifest version {loaded.get('version')!r}")
             self.data = loaded
+        self.data.setdefault("billed_pages", 0)
 
     @property
     def documents(self) -> dict[str, dict]:
@@ -74,6 +75,24 @@ class Manifest:
                 except OSError:
                     pass
             os.replace(tmp, self.path)
+
+    @property
+    def billed_pages(self) -> int:
+        return self.data["billed_pages"]
+
+    def reserve_pages(self, n: int, cap: int | None) -> bool:
+        """Atomically add n pages to the billed counter unless that would exceed cap."""
+        with self._lock:
+            if cap is not None and self.billed_pages + n > cap:
+                return False
+            self.data["billed_pages"] += n
+            self.save()
+            return True
+
+    def refund_pages(self, n: int) -> None:
+        with self._lock:
+            self.data["billed_pages"] = max(0, self.billed_pages - n)
+            self.save()
 
     def summary(self) -> dict[str, int]:
         out: dict[str, int] = {}

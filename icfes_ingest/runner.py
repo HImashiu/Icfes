@@ -27,6 +27,10 @@ def safe_name(s: str) -> str:
     return s[:80] or "doc"
 
 
+class BudgetExceeded(RuntimeError):
+    pass
+
+
 @dataclass
 class Layout:
     out: Path
@@ -69,15 +73,17 @@ class Job:
 
 class Pipeline:
     def __init__(self, input_dir: Path, out: Path, settings: Settings,
-                 backend_factory: Callable[[], Backend] | None = None):
+                 backend_factory: Callable[[], Backend] | None = None, max_pages: int | None = None):
+        self.max_pages = max_pages  # hard cap on pages sent to Azure, across all runs (manifest-tracked)
         self.input_dir, self.settings, self.lay = Path(input_dir), settings, Layout(Path(out))
         self.backend_factory = backend_factory
         self.stop = threading.Event()
+        self.budget_hit = False
         self._backend: Backend | None = None
 
     # ---------------------------------------------------------------- discovery
     def discover(self, manifest: M.Manifest | None, only: str | None = None,
-                 limit: int | None = None) -> tuple[list[Job], list[dict], list[Path]]:
+                 limit: int | None = None, smallest_first: bool = False) -> tuple[list[Job], list[dict], list[Path]]:
         """Hash + page-count every PDF. Returns (jobs, problems, ignored_non_pdfs)."""
         pdfs, ignored = scan_pdfs(self.input_dir)
         if only:
@@ -102,34 +108,42 @@ class Pipeline:
                 problems.append({"path": rel, "error": str(e)})
                 log.error("Unreadable PDF %s: %s", rel, e)
         jobs = list(by_hash.values())
+        if smallest_first:
+            jobs.sort(key=lambda j: (j.pages, j.relpath))
         if limit:
             jobs = jobs[:limit]
         return jobs, problems, ignored
 
     # ---------------------------------------------------------------- dry run
-    def dry_run(self, only: str | None = None, limit: int | None = None) -> dict[str, Any]:
+    def dry_run(self, only: str | None = None, limit: int | None = None, smallest_first: bool = False) -> dict[str, Any]:
         man = M.Manifest(self.lay.manifest) if self.lay.manifest.exists() else None
-        jobs, problems, ignored = self.discover(man, only, limit)
+        jobs, problems, ignored = self.discover(man, only, limit, smallest_first)
+        already = man.billed_pages if man else 0
+        running = already
         rows = []
         for j in jobs:
             rec = man.get(j.sha) if man else None
             status = rec["status"] if rec else "new"
             action = "skip (completed)" if status == M.COMPLETED else \
                      "skip (needs --retry-failed)" if status in (M.FAILED, M.PARTIAL) and not self.settings.retry_failed else "process"
+            if action == "process":
+                running += j.pages
+                if self.max_pages is not None and running > self.max_pages:
+                    action = "OVER BUDGET (would stop)"
             rows.append({"file": j.relpath, "doc_id": j.doc_id, "pages": j.pages, "size_mb": round(j.size / 2**20, 2),
                          "requests": len(j.ranges), "ranges": j.ranges, "duplicates": j.duplicates,
                          "manifest_status": status, "action": action})
-        todo = [r for r in rows if r["action"] == "process"]
-        return {"documents": rows, "unreadable": problems, "ignored_non_pdf": [p.name for p in ignored],
+        todo = [r for r in rows if r["action"] in ("process", "OVER BUDGET (would stop)")]
+        return {"budget_pages": self.max_pages, "already_billed_pages": already, "documents": rows, "unreadable": problems, "ignored_non_pdf": [p.name for p in ignored],
                 "to_process": len(todo), "pages_to_bill": sum(r["pages"] for r in todo),
                 "requests": sum(r["requests"] for r in todo)}
 
     # ---------------------------------------------------------------- run
-    def run(self, only: str | None = None, limit: int | None = None) -> dict[str, Any]:
+    def run(self, only: str | None = None, limit: int | None = None, smallest_first: bool = False) -> dict[str, Any]:
         lay = self.lay
         lay.out.mkdir(parents=True, exist_ok=True)
         man = M.Manifest(lay.manifest)
-        jobs, problems, ignored = self.discover(man, only, limit)
+        jobs, problems, ignored = self.discover(man, only, limit, smallest_first)
         for pr in problems:
             man.set_file(pr["path"], role="unreadable", error=pr["error"])
         for j in jobs:
@@ -165,7 +179,8 @@ class Pipeline:
             self.stop.set()
             log.warning("Interrupted; progress saved. Re-run the same command to resume.")
         man.save()
-        return {"summary": man.summary(), "unreadable": problems}
+        return {"summary": man.summary(), "unreadable": problems, "billed_pages": man.billed_pages,
+                "budget_pages": self.max_pages, "budget_hit": self.budget_hit}
 
     def _outputs_exist(self, rec: dict) -> bool:
         o = rec.get("outputs") or {}
@@ -192,6 +207,11 @@ class Pipeline:
             for s, e in job.ranges:
                 chunks += self._do_range(job, s, e, reader, whole, work, man)
             self._finalize(job, chunks, man)
+        except BudgetExceeded as e:
+            self.budget_hit = True
+            self.stop.set()
+            man.upsert(job.sha, status=M.IN_PROGRESS, error=f"budget reached; will resume with a higher budget ({e})")
+            log.warning("BUDGET REACHED at %s: %s. Stopping; progress is saved.", job.relpath, e)
         except Interrupted:
             man.upsert(job.sha, status=M.IN_PROGRESS, error="interrupted; will resume")
             log.warning("%s interrupted", job.relpath)
@@ -214,7 +234,7 @@ class Pipeline:
             rd = reader or open_reader(job.path)
             return (self._do_range(job, s, mid, rd, None, work, man)
                     + self._do_range(job, mid + 1, e, rd, None, work, man))
-        chunk = self._analyze_chunk(job, s, e, data, work)
+        chunk = self._analyze_chunk(job, s, e, data, work, man)
         atomic_write(cache, json.dumps(chunk, ensure_ascii=False))
         rec = man.get(job.sha)
         man.upsert(job.sha, chunks_done=rec.get("chunks_done", 0) + 1)
@@ -225,12 +245,19 @@ class Pipeline:
         return call_with_retry(fn, what=what, max_retries=st.max_retries, base_delay=st.retry_base_delay,
                                max_delay=st.retry_max_delay, stop=self.stop)
 
-    def _analyze_chunk(self, job: Job, s: int, e: int, data: bytes, work: Path) -> dict:
+    def _analyze_chunk(self, job: Job, s: int, e: int, data: bytes, work: Path, man: M.Manifest) -> dict:
         backend, expected = self._get_backend(), e - s + 1
         label = f"{job.relpath} pages {s}-{e}"
 
         def go():
-            out = backend.analyze(data)
+            if not man.reserve_pages(expected, self.max_pages):
+                raise BudgetExceeded(f"{man.billed_pages} of {self.max_pages} pages already used; "
+                                     f"{label} needs {expected} more")
+            try:
+                out = backend.analyze(data)
+            except BaseException:
+                man.refund_pages(expected)  # request failed before a result: not billed
+                raise
             if out.page_count != expected:  # never accept silently lost pages
                 raise TransientError(f"service returned {out.page_count} pages, expected {expected}")
             return out

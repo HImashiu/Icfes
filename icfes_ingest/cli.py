@@ -36,6 +36,11 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--limit", type=int, help="process only the first N unique PDFs (e.g. --limit 1 to test)")
     r.add_argument("--only", help="only PDFs whose file name contains this text")
     r.add_argument("--workers", type=int, default=1, help="documents processed concurrently (default 1, max 8)")
+    r.add_argument("--budget-usd", type=float, help="hard spending cap across ALL runs (tracked in the manifest)")
+    r.add_argument("--max-pages", type=int, help="hard cap on pages sent to Azure across all runs (overrides --budget-usd)")
+    r.add_argument("--usd-per-1000-pages", type=float, default=10.0,
+                   help="price used to convert --budget-usd to pages; check your Azure pricing (default 10.0)")
+    r.add_argument("--smallest-first", action="store_true", help="process the shortest PDFs first")
     r.add_argument("--retry-failed", action="store_true", help="also retry documents marked failed/partial")
     r.add_argument("--max-pages-per-request", type=int, default=Settings.max_pages_per_request)
     r.add_argument("--max-request-mb", type=float, default=Settings.max_request_bytes / 2**20,
@@ -63,6 +68,7 @@ def print_plan(plan: dict) -> None:
 def cmd_status(out: Path) -> int:
     man = M.Manifest(Layout(out).manifest)
     print(json.dumps(man.summary(), indent=2))
+    print(f"billed pages (tracked): {man.billed_pages}")
     bad = 0
     for rec in man.documents.values():
         if rec["status"] != M.COMPLETED:
@@ -105,15 +111,28 @@ def main(argv: list[str] | None = None) -> int:
         backend_factory = lambda: AzureLayoutBackend(creds)  # noqa: E731
         log.info("Using endpoint %s", creds.endpoint)
 
-    pipe = Pipeline(src, args.output, settings, backend_factory)
+    cap = args.max_pages
+    if cap is None and args.budget_usd is not None:
+        cap = int(args.budget_usd / args.usd_per_1000_pages * 1000)
+    if cap is not None:
+        log.info("Budget cap: %d pages (~$%.2f at $%.2f per 1000 pages)", cap, cap * args.usd_per_1000_pages / 1000,
+                 args.usd_per_1000_pages)
+    pipe = Pipeline(src, args.output, settings, backend_factory, max_pages=cap)
     if args.dry_run:
-        plan = pipe.dry_run(args.only, args.limit)
+        plan = pipe.dry_run(args.only, args.limit, args.smallest_first)
         print_plan(plan)
+        est = plan["pages_to_bill"] * args.usd_per_1000_pages / 1000
+        print(f"\nEstimated cost of this plan: ~${est:.2f} ({plan['pages_to_bill']} pages at ${args.usd_per_1000_pages}/1000)."
+              + (f" Budget: {cap} pages." if cap is not None else " No budget cap set."), file=sys.stderr)
         print(f"\nDRY RUN: {plan['to_process']} document(s), {plan['pages_to_bill']} page(s), "
               f"{plan['requests']} request(s) would be sent. Nothing was uploaded.", file=sys.stderr)
         return 1 if plan["unreadable"] else 0
 
-    result = pipe.run(args.only, args.limit)
+    result = pipe.run(args.only, args.limit, args.smallest_first)
     print(json.dumps(result["summary"], indent=2))
+    print(f"Pages billed so far: {result['billed_pages']}"
+          f" (~${result['billed_pages'] * args.usd_per_1000_pages / 1000:.2f})", file=sys.stderr)
+    if result["budget_hit"]:
+        print("BUDGET REACHED: stopped early. Raise --budget-usd and re-run the same command to resume.", file=sys.stderr)
     code = cmd_status(args.output)
     return code or (1 if result["unreadable"] else 0)

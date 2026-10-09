@@ -250,3 +250,44 @@ def test_zip_slip_rejected_and_pdfs_extracted(tmp_path):
         zf.writestr("readme.txt", "x")
     root = unpack_zip(z2, tmp_path / "dest")
     assert (root / "folder" / "a.pdf").exists() and not (root / "readme.txt").exists()
+
+
+def test_budget_cap_stops_run_and_resumes_later(dirs):
+    for n in "abc":
+        make_pdf(dirs[0] / f"{n}.pdf", 5 + ord(n) % 2, pad=ord(n))  # a=6, b=5, c=6 pages; pad keeps hashes distinct
+    b = FakeBackend()
+    res = Pipeline(dirs[0], dirs[1], Settings(retry_base_delay=0), lambda: b, max_pages=11).run()
+    m = manifest(dirs)
+    assert res["budget_hit"] and m.billed_pages == sum(b.calls) <= 11
+    assert m.summary() == {"completed": 2, "in_progress": 1}
+    # resume with a bigger cap: only the unfinished document is sent, total counter keeps accumulating
+    b2 = FakeBackend()
+    Pipeline(dirs[0], dirs[1], Settings(retry_base_delay=0), lambda: b2, max_pages=100).run()
+    assert len(b2.calls) == 1 and manifest(dirs).summary() == {"completed": 3}
+    assert manifest(dirs).billed_pages == 17
+
+
+def test_budget_never_exceeded_mid_document(dirs):
+    make_pdf(dirs[0] / "big.pdf", 30)
+    b = FakeBackend()
+    Pipeline(dirs[0], dirs[1], Settings(retry_base_delay=0, max_pages_per_request=10), lambda: b, max_pages=25).run()
+    assert b.calls == [10, 10] and manifest(dirs).billed_pages == 20  # third chunk (10) would exceed 25
+    b2 = FakeBackend()
+    Pipeline(dirs[0], dirs[1], Settings(retry_base_delay=0, max_pages_per_request=10), lambda: b2, max_pages=100).run()
+    assert b2.calls == [10]  # cached chunks reused, only the last is billed
+
+
+def test_failed_request_is_refunded_from_budget(dirs):
+    make_pdf(dirs[0] / "a.pdf", 4)
+    b = FakeBackend(analyze_errors=[http_error(400)])
+    Pipeline(dirs[0], dirs[1], Settings(retry_base_delay=0), lambda: b, max_pages=10).run()
+    assert manifest(dirs).billed_pages == 0
+
+
+def test_dry_run_flags_over_budget_and_smallest_first(dirs):
+    make_pdf(dirs[0] / "big.pdf", 9)
+    make_pdf(dirs[0] / "small.pdf", 2)
+    p = Pipeline(dirs[0], dirs[1], Settings(), None, max_pages=5)
+    plan = p.dry_run(smallest_first=True)
+    assert [d["file"] for d in plan["documents"]] == ["small.pdf", "big.pdf"]
+    assert plan["documents"][0]["action"] == "process" and "OVER BUDGET" in plan["documents"][1]["action"]

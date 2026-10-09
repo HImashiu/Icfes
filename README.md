@@ -48,6 +48,20 @@ Options: `--workers N` (documents in parallel, default 1, max 8), `--only TEXT`,
 `--retry-failed`, `--max-pages-per-request` (default 100), `--max-request-mb` (default 100),
 `--max-retries` (default 6), `--keep-work`, `-v`.
 
+## Spending cap
+
+`--budget-usd 3` (or `--max-pages 300`) is a **hard cap across all runs**, tracked in `manifest.json`
+(`billed_pages`). Pages are reserved before each request and refunded if the request fails; when the next
+request would exceed the cap the run stops cleanly, the document stays `in_progress`, and re-running with a
+higher cap resumes from the cached chunks. USD is converted with `--usd-per-1000-pages` (default 10.0:
+**check your Azure pricing**). `--dry-run` prints the estimated cost and marks documents that would go over
+budget; `--smallest-first` processes the shortest PDFs first (useful for a cheap first test).
+
+```powershell
+python -m icfes_ingest run --input $zip --output data\out --dry-run --budget-usd 3 --smallest-first
+python -m icfes_ingest run --input $zip --output data\out --budget-usd 3 --smallest-first --limit 1
+```
+
 ## Output layout
 
 ```
@@ -91,6 +105,6 @@ the real Azure SDK against a fake HTTP layer to verify the request that is sent
 
 ## Status / what is not verified
 
-Tested offline only (23 tests). It has **not yet been run against the live Azure service or your real PDFs**:
+Tested offline only (27 tests). It has **not yet been run against the live Azure service or your real PDFs**:
 step 2 above is that check. Things worth eyeballing in that first run: figure crops, where the image links land in
 the Markdown, and table rendering for the exam layouts.
