@@ -103,8 +103,11 @@ The suite uses a programmable fake backend (throttling, failures, page loss, int
 the real Azure SDK against a fake HTTP layer to verify the request that is sent
 (`output=figures`, `outputContentFormat=markdown`, binary body) and how the response is parsed.
 
-## Status / what is not verified
+## Status
 
-Tested offline only (27 tests). It has **not yet been run against the live Azure service or your real PDFs**:
-step 2 above is that check. Things worth eyeballing in that first run: figure crops, where the image links land in
-the Markdown, and table rendering for the exam layouts.
+- 27 offline tests pass (fake backend + real SDK against a fake HTTP layer).
+- **Live check done:** `S11-O 2da sesión.pdf` (26 scanned pages, 10 MB) ran against a real S0 resource in about
+  35 s: 26/26 pages, 45 figures (all downloaded from the service, none needed the local-crop fallback), Spanish
+  accents intact, tables emitted as HTML, 26 pages billed (~$0.26 at $10/1000 pages).
+- Not yet exercised live: chunking of very large PDFs (>100 pages), 429 throttling, resume after a real
+  interruption. These paths are covered by the offline tests only.
