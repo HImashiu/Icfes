@@ -204,7 +204,7 @@ single-exam work had not seen; these were fixed offline (no Azure cost):
 
 | | before fixes | after |
 |---|---|---|
-| questions found / expected | 1440 / ~1700 | 1686 |
+| question slots (incl. 69 "not detected" placeholders) vs 1724 expected from the cover tables | 1440 | 1686 |
 | clean (no review note) | 1189 (83%) | 1370 (81%) of a larger, more honest set |
 | English found | 67 | 232 |
 
