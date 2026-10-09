@@ -66,6 +66,16 @@ export function questionsFor(exam, scope) {
   return exam.sections.find((s) => s.name === scope)?.questions ?? [];
 }
 
+// The sidecar gives each key letter a confidence and a short reason. Returns Map: number -> { confidence, reason }.
+export function parseKeyNotes(raw) {
+  if (!raw?.answers) return null;
+  const map = new Map();
+  for (const [num, note] of Object.entries(raw.answers)) {
+    if (note && typeof note === "object") map.set(String(num), { confidence: note.confidence ?? null, reason: note.reason ?? null });
+  }
+  return map;
+}
+
 export function scoreAttempt(questions, answers, key) {
   const areas = new Map();
   const add = (name, field) => {

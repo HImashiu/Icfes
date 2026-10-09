@@ -2,6 +2,12 @@ import { useState } from "react";
 import { AREA_MINUTES, formatClock, questionsFor, timedSeconds } from "../lib/exam.js";
 import { loadAttempt } from "../lib/storage.js";
 
+export function keyLabel(keyStatus, hasKey) {
+  if (keyStatus === "official") return "Con clave oficial";
+  if (hasKey) return "Clave preliminar, no oficial";
+  return "Clave pendiente";
+}
+
 // Pick an exam, then an area or the whole exam, then practice or timed mode.
 export default function Home({ exams, onOpen, onStart, onResume, selected, loading, error }) {
   const [scope, setScope] = useState("all");
@@ -20,8 +26,8 @@ export default function Home({ exams, onOpen, onStart, onResume, selected, loadi
               <button type="button" className="exam-card" onClick={() => onOpen(e.slug)}>
                 <strong>{e.title}</strong>
                 <span className="muted">{e.questions} preguntas · {e.sections.length} áreas</span>
-                <span className={e.hasKey ? "badge ok" : "badge pending"}>
-                  {e.hasKey ? "Con clave de respuestas" : "Clave pendiente"}
+                <span className={e.keyStatus === "official" ? "badge ok" : "badge pending"}>
+                  {keyLabel(e.keyStatus, e.hasKey)}
                 </span>
               </button>
             </li>
@@ -41,6 +47,9 @@ export default function Home({ exams, onOpen, onStart, onResume, selected, loadi
       <button type="button" className="link" onClick={() => onOpen(null)}>← Todos los exámenes</button>
       <h1>{exam.title}</h1>
       {!key && <p className="notice">Clave pendiente: podrá responder y ver sus respuestas, pero el puntaje aparecerá cuando haya clave.</p>}
+      {key && selected.keyStatus !== "official" && (
+        <p className="notice">Clave preliminar, no oficial: el puntaje es orientativo.</p>
+      )}
 
       <fieldset>
         <legend>Qué quiere practicar</legend>

@@ -1,7 +1,8 @@
 import { scoreAttempt } from "../lib/exam.js";
 
 // Score per area, then the way into the answer review.
-export default function Results({ title, questions, attempt, answerKey, onReview, onHome, onRetry }) {
+export default function Results({ title, questions, attempt, answerKey, keyStatus, onReview, onHome, onRetry }) {
+  const preliminary = keyStatus !== "official";
   const score = scoreAttempt(questions, attempt.answers, answerKey);
   const flagged = Object.keys(attempt.flags).length;
   return (
@@ -13,7 +14,8 @@ export default function Results({ title, questions, attempt, answerKey, onReview
 
       {score.keyed ? (
         <p className="score">
-          <strong>{score.correct}</strong> correctas de <strong>{score.total}</strong>
+          <strong>{score.correct}</strong> {score.correct === 1 ? "correcta" : "correctas"} de <strong>{score.total}</strong>
+          {preliminary && <span className="badge pending score-label">Clave preliminar, no oficial</span>}
         </p>
       ) : (
         <p className="notice">
@@ -39,7 +41,7 @@ export default function Results({ title, questions, attempt, answerKey, onReview
           ))}
         </tbody>
       </table>
-      {flagged > 0 && <p className="muted small">Marcó {flagged} preguntas para revisar.</p>}
+      {flagged > 0 && <p className="muted small">Marcó {flagged} {flagged === 1 ? "pregunta" : "preguntas"} para revisar.</p>}
 
       <div className="actions">
         <button type="button" className="primary" onClick={onReview}>Revisar respuestas</button>

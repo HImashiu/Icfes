@@ -7,6 +7,9 @@
 // Optional, from the icfes root (the parent of the data folder):
 //         figures/specs/<name>.json  (figure specs, icfes-figures-specs/1)
 //         crops/                      (original figure crops, used when a spec is missing)
+//         answer-keys/<name>.key.json          (preliminary key: solved, not official)
+//         answer-keys/<name>.key.sidecar.json  (per-question confidence and reasons)
+// A key in the data folder counts as official; one from answer-keys is labelled preliminary.
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync, rmSync, cpSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -43,9 +46,22 @@ for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
   }
   const keyFile = `${slug}.key.json`;
   let hasKey = false;
+  let keyStatus = null;
+  const prelimKey = join(root, "answer-keys", keyFile);
+  const sidecarFile = join(root, "answer-keys", `${slug}.key.sidecar.json`);
   if (files.includes(keyFile)) {
     writeFileSync(join(out, `${slug}.key.json`), readFileSync(join(src, keyFile)));
     hasKey = true;
+    keyStatus = "official";
+  } else if (existsSync(prelimKey)) {
+    writeFileSync(join(out, `${slug}.key.json`), readFileSync(prelimKey));
+    hasKey = true;
+    keyStatus = "preliminary";
+  }
+  let hasSidecar = false;
+  if (hasKey && existsSync(sidecarFile)) {
+    writeFileSync(join(out, `${slug}.sidecar.json`), readFileSync(sidecarFile));
+    hasSidecar = true;
   }
   exams.push({
     slug,
@@ -53,6 +69,8 @@ for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
     questions: exam.questions?.length ?? 0,
     sections: (exam.sections ?? []).map((s) => s.name),
     hasKey,
+    keyStatus,
+    hasSidecar,
     hasFigures,
   });
 }

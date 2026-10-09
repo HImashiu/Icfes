@@ -1,8 +1,10 @@
 import { useState } from "react";
 import QuestionView from "../components/QuestionView.jsx";
 
+const CONFIDENCE = { high: "alta", medium: "media", low: "baja" };
+
 // Walk through every question with the answer given and, when a key exists, the correct one.
-export default function Review({ questions, attempt, answerKey, onBack, figures }) {
+export default function Review({ questions, attempt, answerKey, keyStatus, notes, onBack, figures }) {
   const [filter, setFilter] = useState("all");
   const [index, setIndex] = useState(0);
 
@@ -39,12 +41,19 @@ export default function Review({ questions, attempt, answerKey, onBack, figures 
             figures={figures}
           />
           <p className="review-status">
+            {answerKey && keyStatus !== "official" && <span className="badge pending">Clave preliminar, no oficial</span>}
+            {notes?.get(q.key)?.confidence && (
+              <span className={`badge confidence ${notes.get(q.key).confidence}`}>
+                Confianza {CONFIDENCE[notes.get(q.key).confidence] ?? notes.get(q.key).confidence}
+              </span>
+            )}
             {!answerKey && <span className="badge pending">Clave pendiente</span>}
             {answerKey && status(q) === "correct" && <span className="badge ok">Correcta</span>}
             {answerKey && status(q) === "wrong" && <span className="badge bad">Incorrecta</span>}
             {answerKey && status(q) === "blank" && <span className="badge pending">Sin responder</span>}
             {answerKey && !answerKey.get(q.key) && <span className="badge pending">Clave pendiente para esta pregunta</span>}
           </p>
+          {notes?.get(q.key)?.reason && answerKey && <p className="muted small key-reason">{notes.get(q.key).reason}</p>}
           <div className="test-controls">
             <button type="button" onClick={() => setIndex(i - 1)} disabled={i === 0}>← Anterior</button>
             <button type="button" onClick={() => setIndex(i + 1)} disabled={i >= visible.length - 1}>Siguiente →</button>

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import tiny from "./fixtures/tiny.golden.json";
 import tinyKey from "./fixtures/tiny.key.json";
 import {
-  AREA_MINUTES, ExamFormatError, formatClock, parseExam, parseKey, questionsFor, scoreAttempt, timedSeconds,
+  AREA_MINUTES, ExamFormatError, formatClock, parseExam, parseKey, parseKeyNotes, questionsFor, scoreAttempt, timedSeconds,
 } from "../src/lib/exam.js";
 
 describe("parseExam", () => {
@@ -86,5 +86,17 @@ describe("scoping and timing", () => {
     expect(formatClock(75)).toBe("01:15");
     expect(formatClock(3725)).toBe("1:02:05");
     expect(formatClock(-4)).toBe("00:00");
+  });
+});
+
+describe("key notes", () => {
+  it("keeps confidence and reason per question", () => {
+    const notes = parseKeyNotes({ answers: { 21: { letter: "B", confidence: "medium", reason: "x" }, 2: null } });
+    expect(notes.get("21")).toEqual({ confidence: "medium", reason: "x" });
+    expect(notes.has("2")).toBe(false);
+  });
+
+  it("returns null without a sidecar", () => {
+    expect(parseKeyNotes(null)).toBeNull();
   });
 });

@@ -3,7 +3,7 @@ import Home from "./screens/Home.jsx";
 import Test from "./screens/Test.jsx";
 import Results from "./screens/Results.jsx";
 import Review from "./screens/Review.jsx";
-import { parseExam, parseKey, questionsFor, timedSeconds } from "./lib/exam.js";
+import { parseExam, parseKey, parseKeyNotes, questionsFor, timedSeconds } from "./lib/exam.js";
 import { clearAttempt, loadAttempt, saveAttempt } from "./lib/storage.js";
 import { parseFigureSpecs, prepareExam } from "./lib/figures.js";
 
@@ -43,13 +43,21 @@ export default function App() {
     const entry = exams?.find((e) => e.slug === slug);
     setOpening(true);
     try {
-      const [raw, rawKey, rawFigures] = await Promise.all([
+      const [raw, rawKey, rawFigures, rawSidecar] = await Promise.all([
         getJson(`exams/${slug}.json`),
         entry?.hasKey ? getJson(`exams/${slug}.key.json`) : null,
         entry?.hasFigures ? getJson(`exams/${slug}.figures.json`) : null,
+        entry?.hasSidecar ? getJson(`exams/${slug}.sidecar.json`) : null,
       ]);
       const figures = parseFigureSpecs(rawFigures);
-      setSelected({ slug, exam: prepareExam(parseExam(raw), figures), key: parseKey(rawKey), figures });
+      setSelected({
+        slug,
+        exam: prepareExam(parseExam(raw), figures),
+        key: parseKey(rawKey),
+        keyStatus: entry?.keyStatus ?? null,
+        notes: parseKeyNotes(rawSidecar),
+        figures,
+      });
     } catch (err) {
       setOpenError(err.message);
     } finally {
@@ -136,6 +144,7 @@ export default function App() {
           questions={questions}
           attempt={attempt}
           answerKey={selected.key}
+          keyStatus={selected.keyStatus}
           figures={selected.figures}
           onReview={() => setView("review")}
           onHome={goHome}
@@ -148,6 +157,8 @@ export default function App() {
           questions={questions}
           attempt={attempt}
           answerKey={selected.key}
+          keyStatus={selected.keyStatus}
+          notes={selected.notes}
           figures={selected.figures}
           onBack={() => setView("results")}
         />

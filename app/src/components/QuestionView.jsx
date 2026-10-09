@@ -26,7 +26,7 @@ export default function QuestionView({ question, answer, onAnswer, review, figur
       {ownStimulus && <RichText html={question.stimulus_md} className="stimulus" />}
       <h2 id={`q-${question.key}`} className="qnum">
         Pregunta {question.number}
-        {question.part ? <span className="part"> · {question.part}</span> : null}
+        <span className="part"> · {question.section}{question.part ? ` · ${question.part}` : ""}</span>
       </h2>
       <RichText html={question.stem_md} className="stem" />
       {stemFigures.map((f) => (
