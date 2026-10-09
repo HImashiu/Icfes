@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+.pytest_cache/
+# pipeline data (never commit source PDFs, outputs or credentials)
+data/
+output/
