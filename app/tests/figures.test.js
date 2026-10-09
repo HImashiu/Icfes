@@ -83,6 +83,14 @@ describe("option figures and passage cleanup", () => {
 });
 
 describe("image figures", () => {
+  it("reads the src from the spec of an image figure", () => {
+    const map = parseFigureSpecs({
+      format: "icfes-figures-specs/1",
+      figures: [{ id: "img2", kind: "image", spec: { kind: "image", src: "crops/S11-O_2da/q056.png" }, location: { question: 56 } }],
+    });
+    expect(map.get("56")[0]).toMatchObject({ src: "crops/S11-O_2da/q056.png", error: null });
+  });
+
   it("keeps the src of an image figure without treating it as an error", () => {
     const map = parseFigureSpecs({
       format: "icfes-figures-specs/1",

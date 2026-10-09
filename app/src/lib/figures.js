@@ -25,7 +25,7 @@ export function parseFigureSpecs(raw) {
       kind: fig.kind,
       spec: errors.length || isImage ? null : fig.spec,
       error: errors.length ? errors.join("; ") : null,
-      src: isImage ? fig.src ?? null : null,
+      src: isImage ? fig.spec?.src ?? fig.src ?? null : null,
       fallbackCrop: fig.fallback_crop ?? null,
       fidelity: fig.fidelity ?? "draft",
       target: loc.stem_or_option ?? "stem",
