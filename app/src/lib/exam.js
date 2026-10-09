@@ -71,7 +71,9 @@ export function parseKeyNotes(raw) {
   if (!raw?.answers) return null;
   const map = new Map();
   for (const [num, note] of Object.entries(raw.answers)) {
-    if (note && typeof note === "object") map.set(String(num), { confidence: note.confidence ?? null, reason: note.reason ?? null });
+    if (note && typeof note === "object") {
+      map.set(String(num), { confidence: note.confidence ?? null, reason: note.reason ?? null, status: note.status ?? null });
+    }
   }
   return map;
 }

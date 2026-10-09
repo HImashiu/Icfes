@@ -92,7 +92,7 @@ describe("scoping and timing", () => {
 describe("key notes", () => {
   it("keeps confidence and reason per question", () => {
     const notes = parseKeyNotes({ answers: { 21: { letter: "B", confidence: "medium", reason: "x" }, 2: null } });
-    expect(notes.get("21")).toEqual({ confidence: "medium", reason: "x" });
+    expect(notes.get("21")).toEqual({ confidence: "medium", reason: "x", status: null });
     expect(notes.has("2")).toBe(false);
   });
 

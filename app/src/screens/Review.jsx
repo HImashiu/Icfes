@@ -42,6 +42,7 @@ export default function Review({ questions, attempt, answerKey, keyStatus, notes
           />
           <p className="review-status">
             {answerKey && keyStatus !== "official" && <span className="badge pending">Clave preliminar, no oficial</span>}
+            {notes?.get(q.key)?.status === "verified_by_scan" && <span className="badge ok">Verificada en el escaneo</span>}
             {notes?.get(q.key)?.confidence && (
               <span className={`badge confidence ${notes.get(q.key).confidence}`}>
                 Confianza {CONFIDENCE[notes.get(q.key).confidence] ?? notes.get(q.key).confidence}
