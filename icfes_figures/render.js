@@ -30,6 +30,7 @@
       for (const k of ['min', 'max', 'step']) if (a[k] != null && !isNum(a[k])) errs.push(`${name}.${k} must be a number`);
       if (isNum(a.min) && isNum(a.max) && a.min >= a.max) errs.push(`${name}: min must be below max`);
       if (isNum(a.step) && a.step <= 0) errs.push(`${name}.step must be positive`);
+      if (a.domain != null && (!Array.isArray(a.domain) || a.domain.length !== 2 || !isNum(a.domain[0]) || !isNum(a.domain[1]) || a.domain[0] >= a.domain[1])) errs.push(`${name}.domain must be [lo, hi] with lo below hi`);
     };
     const series = Array.isArray(spec.series) ? spec.series : [];
     if (AXIS_KINDS.includes(spec.kind)) {
@@ -122,6 +123,7 @@
   }
 
   // Linear scale from a data extent, honouring explicit min/max/step from the spec.
+  // axis.domain = [lo, hi] widens the drawn scale without adding ticks outside min..max.
   function scaleFor(axis, values, forceZero) {
     const vals = values.filter(isNum);
     let lo = vals.length ? Math.min(...vals) : 0;
@@ -133,8 +135,11 @@
     const step = axis && isNum(axis.step) ? axis.step : niceStep(hi - lo, 5);
     if (!(axis && isNum(axis.min))) lo = Math.floor(lo / step) * step;
     if (!(axis && isNum(axis.max))) hi = Math.ceil(hi / step) * step;
+    const tickLo = lo;
+    const tickHi = hi;
+    if (axis && Array.isArray(axis.domain)) { lo = Math.min(axis.domain[0], lo); hi = Math.max(axis.domain[1], hi); }
     const ticks = [];
-    for (let v = lo; v <= hi + step * 1e-9; v += step) ticks.push(Math.round(v / step * 1e9) / 1e9 * step);
+    for (let v = tickLo; v <= tickHi + step * 1e-9; v += step) ticks.push(Math.round(v / step * 1e9) / 1e9 * step);
     return { lo, hi, step, ticks };
   }
 
@@ -181,14 +186,14 @@
   }
 
   // Shared frame: title, legend, y axis with gridlines, and x axis line. `right` moves the plot edge for a second axis.
-  function frame(spec, showLegend, yScale, right) {
+  function frame(spec, showLegend, yScale, right, extraBottom) {
     const out = [];
     let top = 14;
     if (spec.title) { out.push(text(W / 2, 18, spec.title, { weight: 'bold' })); top = 30; }
     if (showLegend) top += 18;
     const left = 58;
     const plotRight = right == null ? W - 16 : right;
-    const bottom = H - 50;
+    const bottom = H - 50 - (extraBottom || 0);
     const y = (v) => bottom - (v - yScale.lo) / (yScale.hi - yScale.lo) * (bottom - top);
     for (const t of yScale.ticks) {
       out.push(`<line x1="${left}" x2="${plotRight}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}" stroke="#e4e4e4" stroke-width="1"/>`);
@@ -220,7 +225,9 @@
     const secondary = series.filter((s) => s.axis === 2);
     const yScale = scaleFor(spec.y, primary.flatMap((s) => s.values), true);
     const y2Scale = spec.y2 ? scaleFor(spec.y2, secondary.flatMap((s) => s.values), true) : null;
-    const fr = frame(spec, showLegend, yScale, y2Scale ? W - 58 : W - 16);
+    // Rotated category labels need room below the axis; decide before the frame is laid out.
+    const rotateLabels = spec.categories.some((c) => c.length * 6.5 > (W - 74) / spec.categories.length);
+    const fr = frame(spec, showLegend, yScale, y2Scale ? W - 58 : W - 16, rotateLabels ? 36 : 0);
     const out = fr.out;
     if (y2Scale) {
       const yy = (v) => fr.bottom - (v - y2Scale.lo) / (y2Scale.hi - y2Scale.lo) * (fr.bottom - fr.top);
@@ -232,7 +239,6 @@
     const n = spec.categories.length;
     const band = (fr.right - fr.left) / n;
     const barW = Math.min(44, band * 0.7 / series.length);
-    const rotateLabels = spec.categories.some((c) => c.length * 6.5 > band);
     spec.categories.forEach((cat, c) => {
       const cx = fr.left + band * (c + 0.5);
       series.forEach((s, si) => {

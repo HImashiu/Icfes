@@ -88,3 +88,21 @@ test('decimal comma on axis labels', () => {
   assert.equal(F.fmt(10000), '10.000');
   assert.equal(F.fmt(1234.5), '1.234,5');
 });
+
+test('domain widens the drawn scale without ticks outside min..max', () => {
+  const spec = { kind: 'line', x: { label: 'Tiempo', min: 0, max: 10, step: 1, domain: [-1, 10] }, y: { label: 'Y', min: 0, max: 100, step: 10 },
+    series: [{ name: 'A', points: [[-0.5, 2], [9.5, 70]] }] };
+  assert.deepEqual(F.validate(spec), []);
+  const svg = F.render(spec);
+  assert.ok(!svg.includes('>-1<'), 'no tick label for -1');
+  assert.ok(svg.includes('>10<'));
+  assert.ok(F.validate({ ...spec, x: { ...spec.x, domain: [5, 1] } }).length > 0);
+});
+
+test('rotated category labels get extra bottom margin', () => {
+  const long = { kind: 'bar', x: { label: 'Mes' }, y: { label: 'Ventas' }, categories: ['Septiembre', 'Noviembre', 'Diciembre', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Octubre'], series: [{ values: [1,2,3,4,5,6,7,8,9,10,11,12] }] };
+  const svg = F.render(long);
+  assert.ok(svg.includes('rotate(-45'), 'labels rotate');
+  const short = { ...long, categories: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'] };
+  assert.ok(!F.render(short).includes('rotate(-45'));
+});
