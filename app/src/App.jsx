@@ -5,7 +5,7 @@ import Results from "./screens/Results.jsx";
 import Review from "./screens/Review.jsx";
 import { parseExam, parseKey, questionsFor, timedSeconds } from "./lib/exam.js";
 import { clearAttempt, loadAttempt, saveAttempt } from "./lib/storage.js";
-import { parseFigureSpecs } from "./lib/figures.js";
+import { parseFigureSpecs, prepareExam } from "./lib/figures.js";
 
 const base = import.meta.env.BASE_URL;
 
@@ -48,7 +48,8 @@ export default function App() {
         entry?.hasKey ? getJson(`exams/${slug}.key.json`) : null,
         entry?.hasFigures ? getJson(`exams/${slug}.figures.json`) : null,
       ]);
-      setSelected({ slug, exam: parseExam(raw), key: parseKey(rawKey), figures: parseFigureSpecs(rawFigures) });
+      const figures = parseFigureSpecs(rawFigures);
+      setSelected({ slug, exam: prepareExam(parseExam(raw), figures), key: parseKey(rawKey), figures });
     } catch (err) {
       setOpenError(err.message);
     } finally {

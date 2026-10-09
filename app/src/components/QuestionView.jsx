@@ -10,6 +10,9 @@ export default function QuestionView({ question, answer, onAnswer, review, figur
     ...(figures?.get(question.key) ?? []),
     ...(group ? figures?.get(`group:${group.id}`) ?? [] : []),
   ].filter((f) => f.target === "stem");
+  const optionFigure = (letter) =>
+    (figures?.get(question.key) ?? []).find((f) => f.target === "option" && f.option === letter);
+  const chartOptions = question.options.some((o) => optionFigure(o.letter));
   // Many questions repeat their passage in stimulus_md, which the group already shows.
   const ownStimulus = question.stimulus_md && question.stimulus_md.trim() !== group?.stimulus_md?.trim();
   return (
@@ -29,7 +32,7 @@ export default function QuestionView({ question, answer, onAnswer, review, figur
       {stemFigures.map((f) => (
         <FigureBlock key={f.id} figure={f} alt={f.id} />
       ))}
-      <ul className="options">
+      <ul className={chartOptions ? "options charts" : "options"}>
         {question.options.map((opt) => {
           const selected = answer === opt.letter;
           const correct = Boolean(review?.correctLetter) && review.correctLetter === opt.letter;
@@ -41,7 +44,11 @@ export default function QuestionView({ question, answer, onAnswer, review, figur
           const body = (
             <>
               <span className="letter">{opt.letter}</span>
-              <RichText html={opt.text_md} className="option-text" />
+              {optionFigure(opt.letter) ? (
+                <FigureBlock figure={optionFigure(opt.letter)} alt={`Opción ${opt.letter}`} />
+              ) : (
+                <RichText html={opt.text_md} className="option-text" />
+              )}
             </>
           );
           return (

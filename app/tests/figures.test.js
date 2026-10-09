@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { parseFigureSpecs } from "../src/lib/figures.js";
-import { drawFigure } from "../src/lib/figures.js";
+import { drawFigure, parseFigureSpecs, prepareExam } from "../src/lib/figures.js";
+import { parseExam } from "../src/lib/exam.js";
+import tiny from "./fixtures/tiny.golden.json";
 
 // Made-up spec, not exam content.
 const bar = {
   kind: "bar", title: "Ventas",
   categories: ["Enero", "Febrero"],
   series: [{ name: "Agua", values: [5, 7] }],
+  x: { label: "Mes" },
   y: { label: "Unidades", min: 0, max: 10, step: 2 },
 };
 
@@ -45,5 +47,37 @@ describe("drawFigure", () => {
     expect(svg).toContain("<svg");
     expect(svg).toContain("Enero");
     expect(svg).not.toContain("<script");
+  });
+});
+
+describe("option figures and passage cleanup", () => {
+  it("keys option figures by letter", () => {
+    const map = parseFigureSpecs({
+      format: "icfes-figures-specs/1",
+      figures: [{ id: "o-a", kind: "bar", spec: bar, location: { question: 2, stem_or_option: "option", option: "A" } }],
+    });
+    expect(map.get("2")[0]).toMatchObject({ target: "option", option: "A" });
+  });
+
+  it("removes axis-label leftovers from a passage once a native figure replaces the chart", () => {
+    const exam = parseExam({
+      ...tiny,
+      groups: [{ id: "g1-2", from: 1, to: 2, directions: "d", stimulus_md: "<p>Texto real.</p><p>250 14 Titulo eje y1 Título eje y2 0</p>", crop: null }],
+    });
+    const figures = parseFigureSpecs({
+      format: "icfes-figures-specs/1",
+      figures: [{ id: "f1", kind: "bar", spec: bar, location: { question: 1, stem_or_option: "stem" } }],
+    });
+    const prepared = prepareExam(exam, figures);
+    const stim = prepared.questions[0].group.stimulus_md;
+    expect(stim).toContain("Texto real.");
+    expect(stim).not.toMatch(/eje y/i);
+    // The original exam object is left unchanged.
+    expect(exam.questions[0].group.stimulus_md).toMatch(/eje y/i);
+  });
+
+  it("leaves passages alone when no native figure exists", () => {
+    const exam = parseExam(tiny);
+    expect(prepareExam(exam, new Map())).toBe(exam);
   });
 });

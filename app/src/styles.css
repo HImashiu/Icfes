@@ -134,6 +134,15 @@ legend { padding: 0 6px; color: var(--muted); }
 .option.wrong { border-color: var(--bad); background: var(--bad-soft); }
 .option label, label.option { cursor: pointer; }
 .letter { font-weight: 700; min-width: 1.2rem; }
+.options.charts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.options.charts .option { flex-direction: column; align-items: stretch; }
+.options.charts .option > .letter { align-self: flex-start; }
+.options.charts .option label { display: contents; }
+.figure.native { margin: 8px 0; overflow-x: auto; }
+.figure.native svg { display: block; width: 100%; height: auto; max-width: 560px; }
+.figure.native table { border-collapse: collapse; width: 100%; }
+.figure.native td, .figure.native th { border: 1px solid var(--line); padding: 6px 8px; text-align: left; }
+.figure.crop img { max-width: 100%; height: auto; display: block; }
 .option-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 
 .navigator { display: grid; gap: 8px; margin-top: 8px; }
@@ -157,6 +166,7 @@ table.areas th, table.areas td { text-align: left; padding: 8px; border-bottom: 
 .review-status { margin-top: 12px; }
 
 @media (max-width: 899px) {
+  .options.charts { grid-template-columns: 1fr; }
   .test-body { grid-template-columns: 1fr; }
   .test-side { position: static; max-height: none; }
   .test-bar { margin: 0 -16px; }
