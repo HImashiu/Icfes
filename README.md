@@ -254,3 +254,13 @@ Open http://127.0.0.1:8765. The data folder is the one that holds `data/`, `answ
 - `--scans` is optional. Scan pages are looked up by the render names used so far (`o1-10-10.png` = letter + session + page); pages not found are reported as missing.
 
 Tests: `python -m pytest tests/test_admin.py`.
+
+### Round trip with the shared folder
+
+The shared icfes folder (the one the app and other threads read) is not on the laptop. The laptop uses a copy at `C:\Icfes\icfes`:
+
+1. Copy the shared `data/`, `answer-keys/` and `figures/traced/` into `C:\Icfes\icfes` (the Claude thread does this).
+2. Run the editor on the copy: `python -m icfes_admin --data C:\Icfes\icfes`.
+3. When you are done, ask for a sync. It copies changed files back to the shared folder, but only goldens that do not add validator errors. Each replaced file is backed up in `data/.backups/`.
+
+To preview or apply the sync by hand: `python -m icfes_admin.sync --from C:\Icfes\icfes --to <shared folder> [--write]`.
