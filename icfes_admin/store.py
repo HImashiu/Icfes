@@ -515,6 +515,11 @@ class Store:
         return self.add_scan_figure(exam, n, data, option=option, replaces=replaces, page=page,
                                     box=[round(v, 4) for v in (x0, y0, x1, y1)])
 
+    def crop_image(self, exam, page, box, dpi=200):
+        """The PNG of a box on the original page, for the clean-up step before it is saved."""
+        exam = self._exam(exam)
+        return self._render_box(exam, page, self._box(box), dpi).tobytes("png")
+
     def add_scan_figure(self, exam, n, data, option=None, replaces=None, page=None, box=None, ctype="image/png"):
         """Stores a picture of the scan as the figure of question n (or of one option) in figures/traced/<exam>/manifest.json.
 

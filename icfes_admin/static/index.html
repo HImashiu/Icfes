@@ -206,6 +206,14 @@ table.icfes-table caption{font-weight:700;color:#000;margin-bottom:4px}
 .studio{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column}
 .stbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--side)}
 .stgrid{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,28%) minmax(0,42%) minmax(0,30%)}
+.clgrid{flex:1;min-height:0;display:grid;grid-template-columns:260px 1fr}
+.cltools{padding:14px;border-right:1px solid var(--line);overflow:auto;display:flex;flex-direction:column;gap:8px}
+.cltools .row{display:flex;gap:6px;flex-wrap:wrap}
+.cltools .ib.on{background:var(--accent-soft);border-color:var(--accent)}
+.cltools .sw{width:30px;height:30px;border-radius:8px;border:2px solid var(--line);cursor:pointer}
+.cltools .sw.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.clstage{overflow:auto;padding:20px;display:flex;align-items:flex-start;justify-content:center;background:repeating-conic-gradient(#d8d8d8 0 25%,#f4f4f4 0 50%) 0 0/16px 16px}
+#cl-canvas{max-width:100%;height:auto;box-shadow:0 4px 24px rgba(0,0,0,.35);cursor:crosshair;touch-action:none;image-rendering:auto}
 .cvbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
 .cvbar .sw{width:26px;height:26px;border-radius:6px;border:2px solid var(--line);cursor:pointer;padding:0}
 .cvbar .sw.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
@@ -728,7 +736,7 @@ function drawFigs() {
   const scans = d.figures.filter(traceShown).map(t => `<div class="figcard">
       <div class="head"><b>Imagen del escaneo</b><span class="muted">${traceOption(t) ? `opción ${esc(traceOption(t))}` : "enunciado"}</span>
         <span class="spacer"></span>
-        ${STATIC ? "" : `<button class="ib warn" type="button" onclick="deleteScan('${esc(t.figure_id)}')" title="Quitar">✕</button>`}</div>
+        ${STATIC ? "" : `<button class="ib" type="button" onclick="cleanSaved('${esc(t.figure_id)}')" title="Quitar el fondo o tapar texto encima">✨ Limpiar</button><button class="ib warn" type="button" onclick="deleteScan('${esc(t.figure_id)}')" title="Quitar">✕</button>`}</div>
       <div class="mini"><img src="${scanUrl(t)}" alt="${esc(t.figure_id)}"></div></div>`);
   const pending = d.figures.filter(t => !traceShown(t)).map(t => `<div class="figcard"><div class="head"><b>${esc(t.figure_id || t.spec_id)}</b><span class="badge hid">${t.pending_spec ? "pendiente" : esc(t.method || "")}</span></div></div>`);
   $("#figs").innerHTML = [...natives, ...scans, ...pending].join("") || `<p class="muted" style="margin:0">Sin figuras. Si la pregunta tiene un dibujo, mapa o foto, recórtalo del PDF. Si es una gráfica o tabla, créala con «+ Gráfica o tabla».</p>`;
@@ -925,6 +933,7 @@ async function undo() {
 
 document.addEventListener("keydown", e => {
   if (!document.body.classList.contains("editing")) return;
+  if ($("#cleaner")) { cleanerKey(e); return; }
   if ($(".studio")) {
     if (cvKey(e)) return;
     if (e.key === "Escape") closeStudio();
@@ -1299,6 +1308,7 @@ function scrollToAnchor() {
   sc.scrollTop = Math.max(0, page.offsetTop + a.y * page.offsetHeight - 40);
 }
 
+const cleanToggle = () => `<label class="switch" style="width:100%;font-size:12px" title="Antes de guardar, quita el fondo o tapa texto encima del dibujo"><input type="checkbox" ${state.cleanCrop ? "checked" : ""} onchange="state.cleanCrop = this.checked; remember('cleanCrop', this.checked)"> ✨ Limpiar la imagen antes de guardarla</label>`;
 function drawBox(withBar) {
   const ov = $("#ov");
   ov.innerHTML = anchorMark();
@@ -1317,13 +1327,14 @@ function drawBox(withBar) {
   const eng = `<select class="ib" title="Motor de OCR" onchange="setEngine(this.value)">${sel(ENGINES, state.engine)}</select>`;
   if (tgt?.kind === "replace") bar.innerHTML = `<span class="lbl">Cambiar la figura por este recorte</span>
        <button class="ib go" onclick="cropTo('${esc(tgt.option || "")}', '${esc(tgt.replaces)}')">Usar este recorte</button>
-       <button class="ib" onclick="cancelCrop()">Cancelar</button>`;
+       <button class="ib" onclick="cancelCrop()">Cancelar</button>${cleanToggle()}`;
   else if (tgt?.kind === "field") bar.innerHTML = `<span class="lbl">Leer el texto del recuadro</span>
        <button class="ib go" onclick="ocrTo('${tgt.field}')">${tgt.field === "opts" ? "Repartir en opciones A–D" : `Escribir en ${esc(fieldName($("#" + tgt.field)))}`}</button>
        ${eng}<button class="ib" onclick="cancelCrop()">✕</button>`;
   else bar.innerHTML = `<span class="lbl">Imagen del recuadro en…</span>
        <button class="ib" onclick="cropTo('')">Enunciado</button>
        ${letters.map(l => `<button class="ib" onclick="cropTo('${esc(l)}')">Opción ${esc(l)}</button>`).join("")}
+       ${cleanToggle()}
        <span class="lbl">Texto del recuadro (OCR)</span>
        <button class="ib go" onclick="ocrTo('last')" title="Escribe el texto en el último campo que usaste">→ ${esc(fieldName(state.lastArea))}</button>
        <button class="ib" onclick="ocrTo('opts')">Repartir en A–D</button>
@@ -1355,12 +1366,198 @@ function cancelCrop() {
   if ($("#ov")) drawBox(false);
 }
 async function cropTo(option, replaces = null) {
+  if (state.cleanCrop) { openCleaner({ page: state.page, box: state.box, option: option || null, replaces }); return; }
   try {
     await api(`${qpath()}/crop`, J("POST", { page: state.page, box: state.box, option: option || null, replaces }));
     cancelCrop();
     await reloadFigures(option ? `Imagen guardada en la opción ${option}` : "Imagen guardada en el enunciado");
   } catch (e) { toast(e.message, true); }
 }
+// ----- cleaning a crop before it is saved --------------------------------------------------------------
+// The crop opens on a canvas: one click turns the paper white or transparent, and a brush, a cover box and an
+// eraser hide text printed over the drawing. The eraser brings back the original pixels. The result is saved as the crop PNG.
+
+state.cleanCrop = recall("cleanCrop") ?? true;
+const cleaner = { orig: null, hist: [], tool: "rect", color: "#ffffff", size: 14, bg: null, level: 200 };
+
+async function openCleaner(target) {
+  try {
+    let blob;
+    if (target.src) blob = await (await fetch(target.src)).blob();
+    else {
+      const res = await fetch(`/api/exams/${encodeURIComponent(state.exam)}/crop-image`, J("POST", { page: target.page, box: target.box }));
+      if (!res.ok) throw new Error((await res.json()).error || `HTTP ${res.status}`);
+      blob = await res.blob();
+    }
+    const img = await createImageBitmap(blob);
+    Object.assign(cleaner, { target, hist: [], bg: null });
+    document.body.insertAdjacentHTML("beforeend", `<div class="studio" id="cleaner">
+      <div class="stbar">
+        <b style="font:700 18px 'Bricolage Grotesque'">Limpiar recorte · Q${state.detail.number}${target.option ? ` · opción ${esc(target.option)}` : ""}</b>
+        <span class="spacer"></span>
+        <button class="ib" onclick="closeCleaner()">Cancelar (Esc)</button>
+        <button class="ib go" onclick="saveCleaner()">Guardar imagen</button>
+      </div>
+      <div class="clgrid">
+        <div class="cltools" id="cl-tools"></div>
+        <div class="clstage" id="cl-stage"><canvas id="cl-canvas"></canvas></div>
+      </div></div>`);
+    const cv = $("#cl-canvas");
+    cv.width = img.width; cv.height = img.height;
+    const ctx = cv.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0);
+    cleaner.orig = ctx.getImageData(0, 0, cv.width, cv.height);
+    cleaner.base = cleaner.orig;
+    clTools();
+    clBind(cv);
+  } catch (e) { toast(e.message, true); }
+}
+function closeCleaner() { $("#cleaner")?.remove(); cleaner.orig = null; }
+
+function clTools() {
+  const t = (id, label, title) => `<button class="ib ${cleaner.tool === id ? "on" : ""}" onclick="clTool('${id}')" title="${title}">${label}</button>`;
+  $("#cl-tools").innerHTML = `
+    <div class="label">Fondo</div>
+    <div class="row"><button class="ib ${cleaner.bg === "white" ? "on" : ""}" onclick="clBackground('white')" title="El papel gris o amarillento queda blanco">Fondo blanco</button>
+      <button class="ib ${cleaner.bg === "clear" ? "on" : ""}" onclick="clBackground('clear')" title="El papel desaparece; solo queda el dibujo">Fondo transparente</button></div>
+    <label class="muted" style="font-size:12px">Cuánto quitar <input type="range" min="120" max="250" value="${cleaner.level}" oninput="clLevel(this.value)" style="width:100%"></label>
+    <div class="label" style="margin-top:12px">Tapar y dibujar</div>
+    <div class="row">${t("rect", "▭ Tapar", "Arrastra un recuadro sobre el texto que quieres tapar")}${t("brush", "✎ Pincel", "Pinta con el color elegido")}${t("erase", "⌫ Borrador", "Devuelve la imagen original donde pasas")}</div>
+    <div class="row">${[["#ffffff", "Blanco"], ["#000000", "Negro"], ["clear", "Transparente"]].map(([v, l]) => `<button class="sw ${cleaner.color === v ? "on" : ""}" title="${l}" style="background:${v === "clear" ? "repeating-conic-gradient(#ccc 0 25%,#fff 0 50%) 0 0/10px 10px" : v}" onclick="clColor('${v}')"></button>`).join("")}</div>
+    <label class="muted" style="font-size:12px">Grosor <input type="range" min="2" max="60" value="${cleaner.size}" oninput="cleaner.size=+this.value" style="width:100%"></label>
+    <div class="row" style="margin-top:12px"><button class="ib" onclick="clUndo()" ${cleaner.hist.length ? "" : "disabled"} title="Ctrl+Z">↶ Deshacer</button>
+      <button class="ib" onclick="clReset()" title="Vuelve al recorte original">Empezar de nuevo</button></div>
+    <p class="muted" style="font-size:12px">El fondo a cuadros es transparente. La imagen se guarda tal como se ve aquí.</p>`;
+}
+function clTool(t) { cleaner.tool = t; clTools(); }
+function clColor(c) { cleaner.color = c; if (cleaner.tool === "erase") cleaner.tool = "brush"; clTools(); }
+const clCtx = () => $("#cl-canvas").getContext("2d", { willReadFrequently: true });
+function clPush() {
+  const cv = $("#cl-canvas");
+  cleaner.hist.push(clCtx().getImageData(0, 0, cv.width, cv.height));
+  if (cleaner.hist.length > 40) cleaner.hist.shift();
+  clTools();
+}
+function clUndo() { const last = cleaner.hist.pop(); if (last) clCtx().putImageData(last, 0, 0); clTools(); }
+function clReset() { clPush(); cleaner.bg = null; cleaner.base = cleaner.orig; clCtx().putImageData(cleaner.orig, 0, 0); clTools(); }
+
+// Paper is every pixel lighter than the level: it turns white, or transparent. Strokes and drawing stay as they are.
+function clPaper(src, mode, level) {
+  const out = new ImageData(new Uint8ClampedArray(src.data), src.width, src.height), d = out.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const light = Math.min(d[i], d[i + 1], d[i + 2]);
+    if (light >= level || d[i + 3] === 0) { if (mode === "white") { d[i] = d[i + 1] = d[i + 2] = d[i + 3] = 255; } else d[i + 3] = 0; }
+  }
+  return out;
+}
+function clBackground(mode) {
+  clPush();
+  cleaner.bg = mode;
+  // Applied to what is on the canvas now, so covers and strokes already made are kept.
+  cleaner.bgFrom = cleaner.hist[cleaner.hist.length - 1];
+  clCtx().putImageData(clPaper(cleaner.bgFrom, mode, cleaner.level), 0, 0);
+  cleaner.base = clPaper(cleaner.orig, mode, cleaner.level);
+  clTools();
+}
+function clLevel(v) {
+  cleaner.level = +v;
+  if (!cleaner.bg || !cleaner.bgFrom) return;
+  clCtx().putImageData(clPaper(cleaner.bgFrom, cleaner.bg, cleaner.level), 0, 0);
+  cleaner.base = clPaper(cleaner.orig, cleaner.bg, cleaner.level);
+}
+
+function clBind(cv) {
+  const at = (e) => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; };
+  let start = null, last = null, snap = null;
+  const ctx = clCtx();
+  // Pixels of the base (original, with the chosen background) inside a circle: the eraser paints these back.
+  const restore = (x, y, r) => {
+    const x0 = Math.max(0, Math.floor(x - r)), y0 = Math.max(0, Math.floor(y - r));
+    const w = Math.min(cv.width, Math.ceil(x + r)) - x0, h = Math.min(cv.height, Math.ceil(y + r)) - y0;
+    if (w <= 0 || h <= 0) return;
+    const cur = ctx.getImageData(x0, y0, w, h), b = cleaner.base.data;
+    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+      if ((x0 + i - x) ** 2 + (y0 + j - y) ** 2 > r * r) continue;
+      const s = ((y0 + j) * cv.width + x0 + i) * 4, t = (j * w + i) * 4;
+      cur.data[t] = b[s]; cur.data[t + 1] = b[s + 1]; cur.data[t + 2] = b[s + 2]; cur.data[t + 3] = b[s + 3];
+    }
+    ctx.putImageData(cur, x0, y0);
+  };
+  const stroke = (a, b) => {
+    const r = cleaner.size / 2 * (cv.width / cv.getBoundingClientRect().width);
+    if (cleaner.tool === "erase") {
+      const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / (r / 2)));
+      for (let k = 0; k <= n; k++) restore(a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n, r);
+      return;
+    }
+    ctx.save();
+    ctx.globalCompositeOperation = cleaner.color === "clear" ? "destination-out" : "source-over";
+    ctx.strokeStyle = cleaner.color === "clear" ? "#000" : cleaner.color;
+    ctx.lineWidth = r * 2; ctx.lineCap = ctx.lineJoin = "round";
+    ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b); ctx.stroke();
+    ctx.restore();
+  };
+  cv.addEventListener("pointerdown", e => {
+    cv.setPointerCapture(e.pointerId);
+    clPush();
+    start = last = at(e);
+    snap = cleaner.tool === "rect" ? ctx.getImageData(0, 0, cv.width, cv.height) : null;
+    if (cleaner.tool !== "rect") stroke(start, start);
+  });
+  cv.addEventListener("pointermove", e => {
+    if (!start) return;
+    const p = at(e);
+    if (cleaner.tool === "rect") {
+      ctx.putImageData(snap, 0, 0);
+      clCover(ctx, start, p, true);
+    } else { stroke(last, p); last = p; }
+  });
+  cv.addEventListener("pointerup", e => {
+    if (!start) return;
+    if (cleaner.tool === "rect") { ctx.putImageData(snap, 0, 0); clCover(ctx, start, at(e), false); }
+    start = last = snap = null;
+  });
+}
+// The cover box takes the background: white, or a hole when the background is transparent (or that colour is chosen).
+function clCover(ctx, a, b, outline) {
+  const x = Math.min(a[0], b[0]), y = Math.min(a[1], b[1]), w = Math.abs(b[0] - a[0]), h = Math.abs(b[1] - a[1]);
+  const hole = cleaner.color === "clear" || (cleaner.bg === "clear" && cleaner.color === "#ffffff");
+  if (hole) ctx.clearRect(x, y, w, h);
+  else { ctx.fillStyle = cleaner.color; ctx.fillRect(x, y, w, h); }
+  if (outline) { ctx.save(); ctx.setLineDash([6, 4]); ctx.strokeStyle = "#1a6ef5"; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h); ctx.restore(); }
+}
+
+async function saveCleaner() {
+  const t = cleaner.target;
+  try {
+    const blob = await new Promise(r => $("#cl-canvas").toBlob(r, "image/png"));
+    const q = new URLSearchParams();
+    if (t.option) q.set("option", t.option);
+    if (t.replaces) q.set("replaces", t.replaces);
+    if (t.page) q.set("page", t.page);
+    if (t.box) q.set("box", t.box.map(v => (+v).toFixed(4)).join(","));
+    const res = await fetch(`${qpath()}/scan-figures?${q}`, { method: "POST", headers: { "Content-Type": "image/png" }, body: blob });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+    // A cleaned copy of a saved crop takes its place.
+    if (t.oldId) await api(`${qpath()}/scan-figures/${encodeURIComponent(t.oldId)}`, { method: "DELETE" });
+    closeCleaner();
+    cancelCrop();
+    await reloadFigures(t.option ? `Imagen limpia guardada en la opción ${t.option}` : "Imagen limpia guardada en el enunciado");
+  } catch (e) { toast(e.message, true); }
+}
+function cleanSaved(id) {
+  const f = state.detail.figures.find(x => x.figure_id === id);
+  if (!f) return;
+  openCleaner({ src: scanUrl(f), option: traceOption(f), replaces: f.spec_id !== f.figure_id ? f.spec_id : null, oldId: f.figure_id, page: f.page, box: f.box_page_fraction });
+}
+function cleanerKey(e) {
+  if (e.key === "Escape") { closeCleaner(); return true; }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); clUndo(); return true; }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); saveCleaner(); return true; }
+  return true;
+}
+
 const ENGINES = [["auto", "OCR: el mejor disponible"], ["saved", "Azure (lectura guardada)"], ["azure", "Azure (leer ahora)"], ["local", "RapidOCR (sin internet)"]];
 const ENGINE_NAMES = { saved: "Azure guardado", azure: "Azure", local: "RapidOCR" };
 function setEngine(v) { state.engine = v; remember("engine", v); }
