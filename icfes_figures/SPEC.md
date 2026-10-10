@@ -82,6 +82,7 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 ```
 
 - Set `"marker"` on a series (any marker that `line` takes, such as `diamond` or `square`) to draw that shape for its points. Without one, series alternate a filled circle and square. Markers show in the legend.
+- `"lines": true` on a series joins its points in the order given, in the series' `style` (solid, dashed, dotted or dashdot), with the markers drawn on top. Use it for a connected series that is drawn as points, such as a year-by-year line on a scatter axis.
 
 ### `curve`, a qualitative shape with no scale
 

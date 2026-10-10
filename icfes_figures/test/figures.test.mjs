@@ -525,6 +525,16 @@ test('europa: named unions of countries and Länder fill as one region, with a l
   assert.ok(F.validate({ ...cold, bounds: [1, 2, 3] }).length > 0, 'bounds need four numbers');
 });
 
+test('scatter: a series can join its points in order', () => {
+  const spec = { kind: 'scatter', x: { label: 'Año', min: 0, max: 4, step: 1 }, y: { label: 'Valor' }, series: [{ name: 'Serie', lines: true, style: 'dashed', points: [[0, 1], [2, 3], [4, 2]] }] };
+  assert.deepEqual(F.validate(spec), []);
+  const svg = F.render(spec);
+  assert.ok(svg.includes('<polyline') && svg.includes('stroke-dasharray="6 4"'), 'the points are joined in the series style');
+  assert.ok(!F.render({ ...spec, series: [{ ...spec.series[0], lines: false }] }).includes('<polyline'), 'lines false draws points only');
+  assert.ok(F.validate({ ...spec, series: [{ ...spec.series[0], lines: 'yes' }] }).length > 0, 'lines must be a boolean');
+  assert.ok(F.validate({ kind: 'bar', categories: ['a'], y: { label: 'y' }, series: [{ name: 's', values: [1], lines: true }] }).length > 0, 'lines is for scatter');
+});
+
 test('curve: ticks, a legend in the series styles, and a dash-dot style', () => {
   const spec = { kind: 'curve', x: { label: 'Tiempo', min: 0, max: 2, step: 1, ticks: true }, y: { label: 'Posición', min: 0, max: 4, step: 2, ticks: true },
     series: [{ name: 'Línea 1', style: 'solid', points: [[0, 0], [1, 2], [2, 3]] }, { name: 'Línea 2', style: 'dashdot', points: [[0, 1], [1, 1.5], [2, 1.2]] }] };

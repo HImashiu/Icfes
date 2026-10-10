@@ -43,6 +43,7 @@
     series.forEach((s, i) => { if (s && s.style != null && !['solid', 'dashed', 'dotted', 'dashdot'].includes(s.style)) errs.push(`series[${i}].style must be solid, dashed, dotted or dashdot`); });
     series.forEach((s, i) => { if (s && s.marker != null && !MARKERS.includes(s.marker)) errs.push(`series[${i}].marker must be one of ${MARKERS.join(', ')}`); });
     series.forEach((s, i) => { if (s && s.marker === 'none' && spec.kind !== 'line' && spec.kind !== 'curve') errs.push(`series[${i}].marker none is only for line and curve charts`); });
+    series.forEach((s, i) => { if (s && s.lines != null && (typeof s.lines !== 'boolean' || spec.kind !== 'scatter')) errs.push(`series[${i}].lines must be true or false, for scatter charts`); });
     series.forEach((s, i) => { if (s && s.pattern != null && !SERIES_PATTERNS.includes(s.pattern)) errs.push(`series[${i}].pattern must be one of ${SERIES_PATTERNS.join(', ')}`); });
     series.forEach((s, i) => {
       if (!s || s.note == null) return;
@@ -566,9 +567,14 @@
       out.push(text(x.toFixed(1), fr.bottom + 15, tickText(spec.x, t)));
     }
     series.forEach((s, si) => {
-      s.points.forEach(([px, py]) => {
-        const x = fr.left + (px - xScale.lo) / (xScale.hi - xScale.lo) * (fr.right - fr.left);
-        const y = fr.y(py);
+      const at = ([px, py]) => [fr.left + (px - xScale.lo) / (xScale.hi - xScale.lo) * (fr.right - fr.left), fr.y(py)];
+      // "lines": true joins the points in the order given, in the series' style, under the markers.
+      if (s.lines === true && s.points.length > 1) {
+        const dash = s.style === 'dashed' ? ' stroke-dasharray="6 4"' : s.style === 'dotted' ? ' stroke-dasharray="1 3" stroke-linecap="round"' : s.style === 'dashdot' ? ' stroke-dasharray="6 3 1 3" stroke-linecap="round"' : '';
+        out.push(`<polyline points="${s.points.map((q) => at(q).map((n) => n.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="#000" stroke-width="1.6"${dash}/>`);
+      }
+      s.points.forEach((pt) => {
+        const [x, y] = at(pt);
         // A series with a marker draws that shape; others keep the alternating filled circle and square.
         if (s.marker) out.push(marker(s.marker, x, y));
         else if (si % 2 === 0) out.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="${fillFor(s, si, id)}" stroke="#000"/>`);
