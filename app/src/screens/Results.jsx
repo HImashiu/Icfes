@@ -79,7 +79,6 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
           <div className="stat">
             <span className="label">XP ganado</span>
             <strong className="display accent">{fmtInt(xpEarned)}</strong>
-            <span className="caption">+10 por acierto · +20 en {WEAKEST_AREA}</span>
           </div>
           <div className="stat">
             <span className="label">Respondidas</span>
@@ -105,7 +104,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
             </div>
           );
         })}
-        {preliminary && <p className="footnote">Clave preliminar, no oficial: el puntaje es orientativo.</p>}
+        <p className="footnote">+10 XP por acierto · +20 en {WEAKEST_AREA}.{preliminary ? " Clave preliminar, no oficial: el puntaje es orientativo." : ""}</p>
       </div>
 
       {flagged > 0 && <p className="caption">Marcó {fmtInt(flagged)} {flagged === 1 ? "pregunta" : "preguntas"} para revisar.</p>}
