@@ -206,6 +206,20 @@ Coordinates are SVG units with y growing downward. The view fits the shapes unle
   boxes and no line work (possible photo stand-ins).
 
 ## Axes
+### `map`, bundled outlines of Colombia, South America and the world
+
+`region` names a bundled outline: `colombia-departamentos` (33 departments), `colombia-pais`, `sudamerica`
+or `mundo` (all countries, with a `continent` field, so Europe is `mundo` with `select` on its names).
+Optional: `select` (areas to fit the frame to), `fills` (area name to a fill name or a hex grey like
+`#bbbbbb`), `points` (`lon`, `lat`, `label`, `marker`), `labels` (`lon`, `lat`, `text`), `legend`
+(`label`, `fill`). Coordinates are longitude and latitude; the projection is equirectangular with a
+cosine correction, fitted to `select` or to the whole region.
+
+Source and licence: Natural Earth (naturalearthdata.com), public domain. Taken from
+github.com/nvkelso/natural-earth-vector: `ne_10m_admin_1_states_provinces` for the departments and
+`ne_110m_admin_0_countries` for the countries. Simplified with Douglas-Peucker (0.02 degrees for the
+departments, 0.25 for the countries). The build script is `maps/build_maps.py`; the outputs are in `maps/`.
+
 ### Line styles
 
 `style` on a `line`, `curve` or numeric `line` series: `solid` (default), `dashed` or `dotted`.

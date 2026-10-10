@@ -258,3 +258,16 @@ test('boxed text that cannot fit even at minSize is flagged, and short text is l
   assert.equal(F.textLayout(ok).size, 12);
   assert.ok(F.validate({ kind: 'diagram', shapes: [{ ...ok, maxWidth: -3 }] }).length > 0);
 });
+
+test('map draws bundled outlines, fills, points and labels, and validates its names', () => {
+  const m = { kind: 'map', region: 'colombia-departamentos', fills: { Antioquia: 'hatch', Bolívar: '#bbbbbb' },
+    points: [{ lon: -75.5, lat: 6.2, label: 'Medellín', marker: 'square' }], labels: [{ lon: -74.1, lat: 4.6, text: 'Bogotá' }] };
+  assert.deepEqual(F.validate(m), []);
+  const svg = F.render(m);
+  assert.equal((svg.match(/<path /g) || []).length, 33);
+  assert.ok(svg.includes('fill="#bbbbbb"'));
+  assert.ok(svg.includes('>Bogotá<'));
+  assert.ok(F.validate({ ...m, fills: { Narnia: 'solid' } }).length > 0);
+  assert.ok(F.validate({ ...m, region: 'marte' }).length > 0);
+  assert.deepEqual(F.validate({ kind: 'map', region: 'colombia-pais' }), []);
+});

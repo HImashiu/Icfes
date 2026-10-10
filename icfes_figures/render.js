@@ -9,7 +9,7 @@
 })(typeof self !== 'undefined' ? self : globalThis, function () {
   'use strict';
 
-  const KINDS = ['bar', 'line', 'scatter', 'curve', 'pie', 'table', 'geometry', 'diagram', 'combo'];
+  const KINDS = ['bar', 'line', 'scatter', 'curve', 'pie', 'table', 'geometry', 'diagram', 'combo', 'map'];
   const AXIS_KINDS = ['bar', 'line', 'scatter', 'curve', 'combo'];
   // Booklets print in grey-scale, so series use fill patterns, not grey shades.
   const PATTERNS = ['hatch', 'solid', 'white', 'dots'];
@@ -103,6 +103,22 @@
         const g = layoutTable(spec);
         errs.push(...g.errors);
       }
+    }
+    if (spec.kind === 'map') {
+      if (!MAP_KEYS.includes(spec.region)) errs.push(`region must be one of ${MAP_KEYS.join(', ')}`);
+      else {
+        const doc = mapDoc(spec.region);
+        const names = new Set(doc ? doc.features.map((f) => f.name) : []);
+        if (!doc) errs.push(`region ${spec.region} could not be loaded`);
+        if (spec.select) (Array.isArray(spec.select) ? spec.select : []).forEach((n) => { if (!names.has(n)) errs.push(`select: unknown area ${n}`); });
+        else if (!Array.isArray(spec.select) && spec.select != null) errs.push('select must be an array of area names');
+        for (const [n, v] of Object.entries(spec.fills || {})) {
+          if (!names.has(n)) errs.push(`fills: unknown area ${n}`);
+          if (!FILLS.includes(v) && !/^#[0-9a-fA-F]{3,6}$/.test(String(v))) errs.push(`fills.${n} must be a fill name or a hex grey/colour`);
+        }
+      }
+      (spec.points || []).forEach((p, i) => { if (!isNum(p.lon) || !isNum(p.lat)) errs.push(`points[${i}] needs numeric lon and lat`); });
+      (spec.labels || []).forEach((l, i) => { if (!isNum(l.lon) || !isNum(l.lat) || typeof l.text !== 'string') errs.push(`labels[${i}] needs lon, lat and text`); });
     }
     if (spec.kind === 'combo') {
       if (!Array.isArray(spec.categories) || spec.categories.length === 0) errs.push('categories must be a non-empty array');
@@ -723,6 +739,63 @@
     return out;
   }
 
+  // Maps: simplified public-domain outlines (Natural Earth), bundled in maps/. Node loads them from there;
+  // a browser build calls registerMap(key, doc) with the same JSON.
+  const MAP_KEYS = ['colombia-departamentos', 'colombia-pais', 'sudamerica', 'mundo'];
+  const MAPS = {};
+  function registerMap(key, doc) { MAPS[key] = doc; }
+  function mapDoc(key) {
+    if (!MAPS[key] && typeof require === 'function') {
+      try { MAPS[key] = require('./maps/' + key + '.json'); } catch (e) { return null; }
+    }
+    return MAPS[key] || null;
+  }
+
+  // Equirectangular with a cosine correction for latitude; fits the given features into the frame.
+  function mapProjector(features, box) {
+    const [bx, by, bw, bh] = box;
+    const pts = features.flatMap((f) => f.polygons.flatMap((poly) => poly.flatMap((ring) => ring)));
+    const lats = pts.map((p) => p[1]);
+    const k = Math.cos(((Math.min(...lats) + Math.max(...lats)) / 2) * Math.PI / 180);
+    const xs = pts.map((p) => p[0] * k), ys = pts.map((p) => p[1]);
+    const minx = Math.min(...xs), maxx = Math.max(...xs), miny = Math.min(...ys), maxy = Math.max(...ys);
+    const pad = 10;
+    const sc = Math.min((bw - 2 * pad) / ((maxx - minx) || 1), (bh - 2 * pad) / ((maxy - miny) || 1));
+    const offx = bx + (bw - (maxx - minx) * sc) / 2, offy = by + (bh - (maxy - miny) * sc) / 2;
+    return ([lon, lat]) => [offx + (lon * k - minx) * sc, offy + (maxy - lat) * sc];
+  }
+
+  function mapSvg(spec, id) {
+    const doc = mapDoc(spec.region);
+    const fit = spec.select ? doc.features.filter((f) => spec.select.includes(f.name)) : doc.features;
+    const P = mapProjector(fit, [0, spec.title ? 26 : 6, W, H - (spec.title ? 26 : 6) - (spec.legend ? 22 : 0)]);
+    const fills = spec.fills || {};
+    const paint = (v) => (String(v).startsWith('#') ? v : paintFor(v, id));
+    const out = [];
+    if (spec.title) out.push(text(W / 2, 18, spec.title, { weight: 'bold' }));
+    doc.features.forEach((f) => {
+      const d = f.polygons.map((poly) => poly.map((ring) =>
+        'M' + ring.map((p) => P(p).map((n) => n.toFixed(1)).join(' ')).join('L') + 'Z').join(' ')).join(' ');
+      out.push(`<path d="${d}" fill="${paint(fills[f.name] || 'none')}" fill-rule="evenodd" stroke="#000" stroke-width="0.7"/>`);
+    });
+    (spec.labels || []).forEach((l) => { const q = P([l.lon, l.lat]); out.push(text(q[0].toFixed(1), q[1].toFixed(1), l.text, { size: 10 })); });
+    (spec.points || []).forEach((p) => {
+      const q = P([p.lon, p.lat]);
+      out.push(marker(p.marker, q[0], q[1]));
+      if (p.label) out.push(text((q[0] + 7).toFixed(1), (q[1] - 5).toFixed(1), p.label, { anchor: 'start', size: 10 }));
+    });
+    if (spec.legend) {
+      let x = 16;
+      const y = H - 10;
+      spec.legend.forEach((l) => {
+        out.push(`<rect x="${x}" y="${y - 9}" width="10" height="10" fill="${paint(l.fill)}" stroke="#000"/>`);
+        out.push(text(x + 14, y, l.label, { anchor: 'start', size: 11 }));
+        x += 28 + String(l.label).length * 6.5;
+      });
+    }
+    return out;
+  }
+
   // Diagram: a free vector scene in SVG coordinates (y grows downward). Covers anything no chart kind does.
   const SHAPES = ['rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'path', 'text'];
   const FILLS = ['none', 'solid', 'white', 'hatch', 'dots'];
@@ -882,6 +955,7 @@
     if (spec.kind === 'table') return tableHtml(spec);
     if (spec.kind === 'diagram') return diagramSvg(spec, `icf${++seq}`);
     const id = `icf${++seq}`;
+    if (spec.kind === 'map') return svgOpen(spec.title, id) + mapSvg(spec, id).join('') + '</svg>';
     if (spec.kind === 'geometry') return svgOpen(spec.title, id) + geometrySvg(spec, id).join('') + '</svg>';
     const body = spec.kind === 'combo' ? comboSvg(spec, id)
       : spec.kind === 'bar' ? barSvg(spec, id)
@@ -892,5 +966,5 @@
     return svgOpen(spec.title, id) + body.join('') + '</svg>';
   }
 
-  return { KINDS, PATTERNS, validate, render, fmt, niceStep, scaleFor, TABLE_CSS, textLayout, textOverflows };
+  return { KINDS, PATTERNS, MAP_KEYS, validate, render, fmt, niceStep, scaleFor, TABLE_CSS, textLayout, textOverflows, registerMap };
 });
