@@ -54,6 +54,7 @@ function auditFigure(f) {
 const examKey = (name) => name.split('.')[0];
 const rows = [];
 const notRep = [];
+const textOnly = [];
 const files = fs.readdirSync(dir).filter((n) => n.endsWith('.json')).sort();
 const groups = new Map();
 for (const name of files) {
