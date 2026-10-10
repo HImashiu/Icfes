@@ -1,0 +1,34 @@
+import Icon from "../components/Icon.jsx";
+import { loadReports } from "../lib/local.js";
+
+// Mis reportes: the error reports saved in this browser. There is no review team behind them yet.
+export default function Reports({ onBack }) {
+  const reports = loadReports().slice().reverse();
+  return (
+    <section className="reports">
+      <header className="screen-head">
+        <button type="button" className="icon-btn" onClick={onBack} aria-label="Volver">
+          <Icon name="left" />
+        </button>
+        <h1>Mis reportes</h1>
+      </header>
+      {reports.length === 0 ? (
+        <p className="card muted">Todavía no has reportado errores. Puedes hacerlo desde cualquier pregunta.</p>
+      ) : (
+        <ul className="report-list">
+          {reports.map((r) => (
+            <li key={r.at + r.question} className="card report-item">
+              <div className="section-head">
+                <strong>Pregunta {r.number}</strong>
+                <span className="caption">{new Date(r.at).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}</span>
+              </div>
+              <span className="caption">{r.exam} · id {r.question}</span>
+              <p>{r.note}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+      <span className="caption">Se guardan solo en este navegador. Aún no se envían a un equipo de revisión.</span>
+    </section>
+  );
+}

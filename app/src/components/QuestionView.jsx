@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import RichText from "./RichText.jsx";
 import FigureBlock from "./FigureBlock.jsx";
 import { SOURCE_LINE } from "../lib/exam.js";
+import ReportError from "./ReportError.jsx";
 
 // Option states: "selected" (the student's pick while answering), "correct" and "incorrect" for grading.
 function optionState({ letter, answer, correctLetter, graded }) {
@@ -70,7 +71,7 @@ export default function QuestionView({
   );
 
   const hasContext = Boolean(passage || ownStimulus || stemFigures.length);
-  const source = <span className="source">{examLabel ? `${SOURCE_LINE} · ${examLabel}` : SOURCE_LINE}</span>;
+  const source = <span className="source">{examLabel ? `${SOURCE_LINE}, ${examLabel}` : SOURCE_LINE}</span>;
 
   return (
     <div className={hasContext ? "q-split" : "q-split solo"}>
@@ -146,6 +147,7 @@ export default function QuestionView({
           })}
         </ul>
         {feedback}
+        <ReportError question={question} examLabel={examLabel} />
         {footer}
       </div>
     </div>

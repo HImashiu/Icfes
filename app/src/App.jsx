@@ -7,6 +7,9 @@ import Review from "./screens/Review.jsx";
 import League from "./screens/League.jsx";
 import Profile from "./screens/Profile.jsx";
 import Teacher from "./screens/Teacher.jsx";
+import History from "./screens/History.jsx";
+import Reports from "./screens/Reports.jsx";
+import FigureCheck from "./screens/FigureCheck.jsx";
 import BottomNav from "./components/BottomNav.jsx";
 import { parseExam, parseKey, parseKeyNotes, questionsFor, timedSeconds } from "./lib/exam.js";
 import { clearAttempt, loadAttempt, saveAttempt } from "./lib/storage.js";
@@ -133,12 +136,14 @@ export default function App() {
     setAttempt(null);
   };
 
+  // Dev check of the figure engine kinds (not in the navigation): open the app with #figuras.
+  if (typeof window !== "undefined" && window.location.hash === "#figuras") return <FigureCheck />;
   if (exams === null) return <main className="frame"><p className="muted">Cargando…</p></main>;
 
   const questions = selected && attempt ? questionsFor(selected.exam, attempt.scope) : [];
   const scopeTitle = attempt && attempt.scope !== "all" ? attempt.scope : "Examen completo";
   const examTitle = selected ? `${selected.exam.title} · ${scopeTitle}` : "";
-  const navView = ["home", "setup", "league", "profile"].includes(view) ? view : null;
+  const navView = ["home", "setup", "history", "league", "profile"].includes(view) ? view : null;
   const resumable = selected && view === "home" ? findResumable(selected.slug, selected.exam) : null;
 
   return (
@@ -215,7 +220,9 @@ export default function App() {
       )}
 
       {view === "league" && <League onBack={() => setView("home")} />}
-      {view === "profile" && <Profile theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} />}
+      {view === "profile" && <Profile theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} onReports={() => setView("reports")} />}
+      {view === "history" && <History onBack={() => setView("home")} />}
+      {view === "reports" && <Reports onBack={() => setView("profile")} />}
       {view === "teacher" && <Teacher onExit={() => setView("profile")} />}
 
       {navView && <BottomNav active={navView} onGo={setView} />}

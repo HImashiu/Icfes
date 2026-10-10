@@ -4,11 +4,13 @@ import { SAMPLE_STUDENT } from "../data/mock.js";
 const ITEMS = [
   { id: "home", label: "Inicio", icon: "home" },
   { id: "setup", label: "Practicar", icon: "book" },
+  { id: "history", label: "Mis simulacros", icon: "clock" },
   { id: "league", label: "Liga", icon: "trophy" },
   { id: "profile", label: "Perfil", icon: "user" },
 ];
 
 // Student navigation: bottom nav on phone, icon rail on tablet, labelled sidebar on desktop.
+// "Practicar" opens the setup screen; "Mis simulacros" lists finished attempts.
 // The active item uses the accent ink color.
 export default function BottomNav({ active, onGo }) {
   return (

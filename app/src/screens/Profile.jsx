@@ -2,7 +2,7 @@ import Icon from "../components/Icon.jsx";
 import { SAMPLE_STUDENT } from "../data/mock.js";
 
 // Perfil: theme choice (dark is the default) and the teacher view entry.
-export default function Profile({ theme, onTheme, onTeacher }) {
+export default function Profile({ theme, onTheme, onTeacher, onReports }) {
   return (
     <section className="profile">
       <header className="screen-head"><h1>Perfil</h1></header>
@@ -21,6 +21,12 @@ export default function Profile({ theme, onTheme, onTeacher }) {
           <button type="button" role="radio" aria-checked={theme === "light"} className={theme === "light" ? "seg active" : "seg"} onClick={() => onTheme("light")}>Claro</button>
         </div>
       </div>
+
+      <button type="button" className="card quick-row" onClick={onReports}>
+        <Icon name="flag" />
+        <span>Mis reportes de errores</span>
+        <Icon name="right" />
+      </button>
 
       <button type="button" className="card quick-row" onClick={onTeacher}>
         <Icon name="user" />

@@ -198,14 +198,14 @@ button.card { text-align: left; width: 100%; }
 /* Bottom nav (student phone) */
 .bottom-nav {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; margin: 0 auto; max-width: 480px;
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px;
   padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
   background: var(--surface); border-top: 1px solid var(--line);
 }
 .nav-item {
   min-height: 52px; border: 0; background: transparent; color: var(--text-2);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-  font-size: 12px; font-weight: 700; border-radius: 12px;
+  font-size: 11px; line-height: 1.15; font-weight: 700; border-radius: 12px; text-align: center;
 }
 .nav-item.active { color: var(--accent-ink); }
 .nav-me { display: none; }
@@ -714,3 +714,27 @@ button.card { text-align: left; width: 100%; }
   .league .podium { padding: 20px; margin: 0; align-self: start; }
   .league .rank-list { margin: 0; }
 }
+
+/* Mis simulacros, Mis reportes and the figure check page */
+.history-list, .report-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.history-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.history-main { display: grid; gap: 4px; min-width: 0; }
+.history-main strong { overflow-wrap: anywhere; }
+.history-score { display: grid; gap: 2px; text-align: right; flex: none; }
+.history-score .display { font-size: 24px; }
+.report-item { display: grid; gap: 6px; }
+.report-item p { margin: 0; color: var(--text); overflow-wrap: anywhere; }
+.reports > .caption, .history > .caption, .figure-check .caption { display: block; margin-top: 12px; }
+.report-status { margin: 8px 0 0; color: var(--ok); }
+.figure-check { display: grid; gap: 14px; }
+.check-item { display: grid; gap: 8px; }
+
+/* Navigator: areas other than the current one collapse to a line */
+.nav-collapsed {
+  width: 100%; display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; align-items: center;
+  padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  color: var(--text); text-align: left; font: inherit; cursor: pointer;
+}
+.nav-collapsed .nav-bar { grid-column: 1 / -1; }
+.nav-bar { display: block; height: 4px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+.nav-bar > span { display: block; height: 100%; background: var(--accent-ink); border-radius: inherit; }

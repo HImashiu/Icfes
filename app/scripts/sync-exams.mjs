@@ -83,4 +83,22 @@ for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
 }
 // Scan crops are not copied: figures are drawn natively from their specs (no crops in the app).
 writeFileSync(join(out, "index.json"), JSON.stringify({ exams }, null, 2));
+
+// Dev check page (#figuras): one real figure per engine kind, taken from the batch specs.
+const CHECKS = [
+  ["S11-J_2da", "q41-remesas-migracion-combo", "Combo: barras y líneas"],
+  ["S11-H_2da", "q58-grafica-2-luz-altura", "Escala logarítmica"],
+  ["S11-J_2da", "q46-opcion-a-barras", "Barras horizontales"],
+  ["S11-J_2da", "q56-opcion-a-area", "Área"],
+  ["S11-C16_2da", "c2-q63-eclosion-huevos", "Línea punteada"],
+  ["S11-N_2da", "n2-p11-q44-venn", "Texto en caja"],
+];
+const checkFigures = [];
+for (const [slug, id, label] of CHECKS) {
+  const file = join(root, "figures", "specs", `${slug}.json`);
+  if (!existsSync(file)) continue;
+  const entry = JSON.parse(readFileSync(file, "utf8")).figures?.find((f) => f.id === id);
+  if (entry?.spec) checkFigures.push({ id, label, from: slug, spec: entry.spec });
+}
+if (checkFigures.length) writeFileSync(join(out, "figure-check.json"), JSON.stringify({ figures: checkFigures }, null, 2));
 console.log(`[sync-exams] ${exams.length} exam(s) from ${src}`);

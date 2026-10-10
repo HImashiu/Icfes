@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import Mascot from "../components/Mascot.jsx";
+import { recordAttempt } from "../lib/local.js";
 import { scoreAttempt } from "../lib/exam.js";
 import { areaColor, fmtInt, fmtPct } from "../lib/brand.js";
 
@@ -9,6 +11,24 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
   const pct = score.keyed && score.answered > 0 ? (score.correct / score.answered) * 100 : null;
   const wrong = score.keyed ? score.answered - score.correct : 0;
   const flagged = Object.keys(attempt.flags).length;
+  const delivered = Boolean(attempt.submittedAt);
+
+  // Keep the finished attempt in "Mis simulacros" (once per attempt, stored in this browser).
+  useEffect(() => {
+    if (!delivered) return;
+    recordAttempt({
+      id: String(attempt.startedAt),
+      title,
+      mode: attempt.mode,
+      at: attempt.submittedAt,
+      answered: score.answered,
+      total: score.total,
+      keyed: score.keyed,
+      correct: score.correct,
+      percent: pct ?? 0,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [delivered, attempt.startedAt]);
   // Per-question grade for the answers grid: ok or bad when a key exists, answered or blank otherwise.
   const cellGrade = (q) => {
     const given = attempt.answers[q.key];
@@ -23,7 +43,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
     <section className="results">
       <div className="results-hero card">
         <Mascot pose="celebrating" size={96} />
-        <h1>{attempt.submittedAt ? "¡Buen trabajo!" : "Intento sin entregar"}</h1>
+        <h1>{!delivered ? "Intento sin entregar" : pct && pct > 0 ? "¡Buen trabajo!" : "¡Sesión entregada!"}</h1>
         <span className="caption">{title}</span>
         {attempt.auto && <span className="caption">El tiempo se acabó y el examen se entregó automáticamente.</span>}
       </div>
