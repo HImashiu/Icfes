@@ -48,23 +48,43 @@ function auditFigure(f) {
   return { kind, issues };
 }
 
+// One exam can have several spec files (for example S11-A_2da.json plus S11-A_2da.batch4.json).
+// The exam key is the file name up to the first dot; the files for one key are merged before auditing.
+const examKey = (name) => name.split('.')[0];
 const rows = [];
 const notRep = [];
 const files = fs.readdirSync(dir).filter((n) => n.endsWith('.json')).sort();
+const groups = new Map();
 for (const name of files) {
-  let data;
-  try { data = JSON.parse(fs.readFileSync(path.join(dir, name), 'utf8')); }
-  catch (e) { rows.push({ exam: name, error: 'not valid JSON: ' + e.message }); continue; }
-  const counts = {};
+  const key = examKey(name);
+  if (!groups.has(key)) groups.set(key, []);
+  groups.get(key).push(name);
+}
+for (const [exam, names] of groups) {
+  const figures = [];
+  const pendingList = [];
+  let broken = null;
+  for (const name of names) {
+    let data;
+    try { data = JSON.parse(fs.readFileSync(path.join(dir, name), 'utf8')); }
+    catch (e) { broken = `${name}: not valid JSON: ${e.message}`; continue; }
+    for (const f of data.figures || []) figures.push({ ...f, _file: name });
+    for (const x of data.not_representable || []) pendingList.push({ ...x, _file: name });
+  }
+  if (broken) { rows.push({ exam, error: broken }); continue; }
+  // Two files must not give the same figure id: the merged exam would show one of them silently.
+  const seen = new Map();
   const problems = [];
-  for (const f of data.figures || []) {
+  const counts = {};
+  for (const f of figures) {
+    if (seen.has(f.id)) problems.push(`${f.id}: duplicate id in ${seen.get(f.id)} and ${f._file}`);
+    else seen.set(f.id, f._file);
     const r = auditFigure(f);
     counts[r.kind] = (counts[r.kind] || 0) + 1;
     for (const i of r.issues) problems.push(`${f.id}: ${i}`);
   }
-  const pending = (data.not_representable || []).length;
-  if (pending) notRep.push(...(data.not_representable || []).map((x) => ({ exam: name, ...x })));
-  rows.push({ exam: name, counts, pending, problems, figures: (data.figures || []).length });
+  for (const x of pendingList) notRep.push({ exam, ...x });
+  rows.push({ exam, files: names, counts, pending: pendingList.length, problems, figures: figures.length });
 }
 
 const kinds = [...new Set(rows.flatMap((r) => Object.keys(r.counts || {})))].sort();
@@ -83,7 +103,7 @@ lines.push(`|---|---|${kinds.map(() => '---').join('|')}|---|---|`);
 for (const r of rows) {
   if (r.error) { lines.push(`| ${r.exam} | error | ${r.error} |`); continue; }
   const cells = kinds.map((k) => (r.counts[k] || 0));
-  lines.push(`| ${r.exam.replace('.json', '')} | ${r.figures} | ${cells.join(' | ')} | ${r.pending} | ${(r.problems || []).length} |`);
+  lines.push(`| ${r.exam} | ${r.figures} | ${cells.join(' | ')} | ${r.pending} | ${(r.problems || []).length} |`);
 }
 lines.push('');
 lines.push('## Problems');
@@ -91,7 +111,7 @@ lines.push('');
 const withProblems = rows.filter((r) => (r.problems || []).length || r.error);
 if (!withProblems.length) lines.push('None.');
 for (const r of withProblems) {
-  lines.push(`### ${r.exam.replace('.json', '')}`);
+  lines.push(`### ${r.exam}`);
   if (r.error) lines.push('- ' + r.error);
   for (const p of r.problems || []) lines.push('- ' + p);
   lines.push('');
@@ -100,7 +120,7 @@ lines.push('## Not representable');
 lines.push('');
 if (!notRep.length) lines.push('None.');
 for (const x of notRep) {
-  lines.push(`- ${x.exam.replace('.json', '')} Q${x.question}${x.stem_or_option ? ' (' + x.stem_or_option + ')' : ''}: ${x.reason}`);
+  lines.push(`- ${x.exam} Q${x.question}${x.stem_or_option ? ' (' + x.stem_or_option + ')' : ''}: ${x.reason}`);
 }
 const text = lines.join('\n') + '\n';
 if (outFile) fs.writeFileSync(outFile, text, 'utf8');
