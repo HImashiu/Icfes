@@ -107,6 +107,8 @@
       }
     } else if (spec.kind === 'table') {
       if (spec.headers != null && (!Array.isArray(spec.headers) || spec.headers.length === 0)) errs.push('headers must be a non-empty array when given');
+      if (spec.maxWidth != null && !(isNum(spec.maxWidth) && spec.maxWidth > 0)) errs.push('maxWidth must be a positive number');
+      if (spec.minSize != null && !(isNum(spec.minSize) && spec.minSize > 0)) errs.push('minSize must be a positive number');
       if (!Array.isArray(spec.rows)) errs.push('rows must be an array');
       else {
         const g = layoutTable(spec);
@@ -625,7 +627,8 @@
   // Table styling for the page that hosts the HTML. Kept here so the viewer and the app share one look.
   const TABLE_CSS = '.icfes-table{border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#000;background:#fff}' +
     '.icfes-table th,.icfes-table td{border:1px solid #000;padding:4px 10px;text-align:center}' +
-    '.icfes-table caption{font-weight:bold;margin-bottom:4px}';
+    '.icfes-table caption{font-weight:bold;margin-bottom:4px}' +
+    '.icfes-table{max-width:100%}.icfes-table th,.icfes-table td{overflow-wrap:anywhere}';
 
   // Cells are strings or {text, colspan, rowspan, header}. Headers, if given, are the first row.
   // Returns the placed cells per row and the column count, or errors when rows do not fill the grid.
@@ -650,7 +653,7 @@
           if (taken[r + dr][c + dc]) errors.push(`row ${r}: cell overlaps another span`);
           taken[r + dr][c + dc] = true;
         }
-        placed[r].push({ text: o.text == null ? '' : String(o.text), colspan: cs, rowspan: rs, header: !!(o.header || row.header) });
+        placed[r].push({ text: o.text == null ? '' : String(o.text), colspan: cs, rowspan: rs, col: c, header: !!(o.header || row.header) });
         c += cs;
       });
       const span = (taken[r] || []).filter(Boolean).length;
@@ -660,14 +663,36 @@
     return { rows: placed, cols, errors };
   }
 
+  // Table width is estimated from the glyph count: each column is as wide as its longest cell (no wrap) or its
+  // longest word (wrapped). The font steps down from 14 px to minSize (default 10 px) until the unwrapped table fits maxWidth.
+  const TABLE_PAD = 20; // padding per column, 10 px each side
+  function tableFit(spec, g) {
+    const maxW = isNum(spec.maxWidth) ? spec.maxWidth : 640;
+    const minSize = isNum(spec.minSize) ? spec.minSize : 10;
+    const full = [], word = [];
+    g.rows.forEach((cells) => cells.forEach((c) => {
+      if (c.colspan !== 1) return;
+      full[c.col] = Math.max(full[c.col] || 0, c.text.length);
+      word[c.col] = Math.max(word[c.col] || 0, ...c.text.split(/\s+/).map((w) => w.length));
+    }));
+    const sum = (arr) => arr.reduce((t, v) => t + (v || 0), 0);
+    const widthAt = (size, lens) => sum(lens) * CHAR_EM * size + TABLE_PAD * g.cols;
+    for (let size = 14; size > minSize; size--) {
+      if (widthAt(size, full) <= maxW) return { size, wraps: false, widthAt: widthAt(size, full) };
+    }
+    return { size: Math.max(minSize, 1), wraps: widthAt(minSize, full) > maxW, widthAt: widthAt(minSize, word) };
+  }
+
   function tableHtml(spec) {
     const g = layoutTable(spec);
+    const fit = tableFit(spec, g);
     const body = g.rows.map((cells) => `<tr>${cells.map((c) => {
       const attrs = (c.colspan > 1 ? ` colspan="${c.colspan}"` : '') + (c.rowspan > 1 ? ` rowspan="${c.rowspan}"` : '');
       return c.header ? `<th${attrs}>${esc(c.text)}</th>` : `<td${attrs}>${esc(c.text)}</td>`;
     }).join('')}</tr>`).join('');
     const cap = spec.title ? `<caption>${esc(spec.title)}</caption>` : '';
-    return `<table class="icfes-table">${cap}<tbody>${body}</tbody></table>`;
+    const style = fit.size < 14 ? ` style="font-size:${fit.size}px"` : '';
+    return `<table class="icfes-table"${style}>${cap}<tbody>${body}</tbody></table>`;
   }
 
   // Geometry: named points, segments, polygons, circles, ellipses, arcs and angle marks, drawn in a

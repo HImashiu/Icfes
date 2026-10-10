@@ -127,6 +127,8 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 - `TABLE_CSS` is exported, so a page can style the table the same way in a browser.
 - Table rendering is checked in Chromium (screenshot), not only by reading the HTML.
 
+- Wide tables fit their width: the font steps down from 14 px to `minSize` (default 10 px) until the table fits `maxWidth` (default 640 px), and long cell text wraps. Set `maxWidth` or `minSize` to change either.
+
 ### `geometry`, points, segments and arcs in a coordinate frame
 
 ```json

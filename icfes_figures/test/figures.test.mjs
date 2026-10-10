@@ -357,3 +357,17 @@ test('textBox: a rotated label is measured along its rotated direction', () => {
   const far = F.textBox({ type: 'text', text: 'Gráfica 1', x: 2, y: 150, size: 12, anchor: 'middle', rotate: -90 });
   assert.ok(far.x0 < 0, 'a label placed at x = 2 runs past the left edge');
 });
+
+test('wide tables shrink their font to fit maxWidth and wrap long cells', () => {
+  const wide = { kind: 'table', headers: ['Muestra', 'Color', 'Prueba de solubilidad en agua', 'Prueba de Lucas', 'Prueba de Jones', 'Tipo de alcohol', 'Sustancia'],
+    rows: [['1', 'Incoloro', '(+)', '(-)', '(+)', 'Primario', 'Etanol'], ['2', 'Incoloro', '(+)', '(+)', '(+)', 'Secundario', '2-propanol'], ['3', 'Blanco', '(-)', '(+)', '(-)', 'Terciario', '2-metil-2-propanol'], ['4', 'Incoloro', '(+)', '(-)', '(+)', 'Primario', 'Metanol']] };
+  assert.deepEqual(F.validate(wide), []);
+  const html = F.render(wide);
+  const size = +html.match(/font-size:(\d+)px/)[1];
+  assert.ok(size < 14 && size >= 10, `font size ${size}`);
+  const narrow = { kind: 'table', headers: ['Año', 'Total'], rows: [['2019', '12'], ['2020', '30']] };
+  assert.ok(!/font-size/.test(F.render(narrow)), 'a small table keeps the default size');
+  const forced = F.render({ ...wide, minSize: 8, maxWidth: 200 });
+  assert.ok(/font-size:8px/.test(forced), 'stops at minSize');
+  assert.ok(F.validate({ ...wide, maxWidth: -1 }).length > 0);
+});
