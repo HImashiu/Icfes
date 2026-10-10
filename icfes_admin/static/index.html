@@ -267,6 +267,9 @@ function studentView(q, g, figs = []) {
       <span class="tile">${esc(o.letter)}</span>
       <div class="body">${render(o.text_md)}${figs.filter(f => f.target === "option" && f.option === o.letter).map(drawNative).join("")}</div>
     </div>`).join("");
+  // Matches the app: matching tables put each item's stem in a row of the passage, so the stem is not shown twice.
+  const plain = h => (h ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
+  const stemInPassage = !!g && plain(q.stem_md).length > 20 && plain(g.stimulus_md).includes(plain(q.stem_md));
   const dir = g ? `<div class="label" style="color:var(--paper-2)">${esc(g.directions)}</div><div class="stimulus">${render(g.passage_md)}</div><hr style="border:0;border-top:1px solid #d8d6cc;margin:12px 0">` : "";
   return `
     <div class="paper">
@@ -274,7 +277,7 @@ function studentView(q, g, figs = []) {
       ${dir}
       ${q.stimulus_md ? `<div class="stimulus">${render(q.stimulus_md)}</div>` : ""}
       ${stemFigs}
-      <div class="stem">${render(q.stem_md)}</div>
+      ${stemInPassage ? "" : `<div class="stem">${render(q.stem_md)}</div>`}
       <div class="src">Fuente: ICFES, Saber 11 · ${esc(state.exam)}</div>
     </div>
     ${opts}`;
