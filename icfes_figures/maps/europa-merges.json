@@ -1,8 +1,70 @@
 {
-  "URSS": ["Russia", "Ukraine", "Belarus", "Moldova", "Lithuania", "Latvia", "Estonia", "Georgia", "Armenia", "Azerbaijan", "Kazakhstan", "Uzbekistan", "Turkmenistan", "Kyrgyzstan", "Tajikistan"],
-  "Yugoslavia": ["Slovenia", "Croatia", "Bosnia and Herz.", "Serbia", "Montenegro", "North Macedonia", "Kosovo"],
-  "Checoslovaquia": ["Czechia", "Slovakia"],
-  "Alemania Oriental": ["Brandenburg", "Mecklenburg-Vorpommern", "Sachsen", "Sachsen-Anhalt", "Thüringen", "Berlin"],
-  "Alemania Occidental": ["Baden-Württemberg", "Bayern", "Bremen", "Hamburg", "Hessen", "Niedersachsen", "Nordrhein-Westfalen", "Rheinland-Pfalz", "Saarland", "Schleswig-Holstein"],
-  "Austria-Hungría (aprox.)": ["Austria", "Hungary", "Czechia", "Slovakia", "Slovenia", "Croatia", "Bosnia and Herz."]
+  "URSS": [
+    "Russia",
+    "Ukraine",
+    "Belarus",
+    "Moldova",
+    "Lithuania",
+    "Latvia",
+    "Estonia",
+    "Georgia",
+    "Armenia",
+    "Azerbaijan",
+    "Kazakhstan",
+    "Uzbekistan",
+    "Turkmenistan",
+    "Kyrgyzstan",
+    "Tajikistan"
+  ],
+  "Yugoslavia": [
+    "Slovenia",
+    "Croatia",
+    "Bosnia and Herz.",
+    "Serbia",
+    "Montenegro",
+    "North Macedonia",
+    "Kosovo"
+  ],
+  "Checoslovaquia": [
+    "Czechia",
+    "Slovakia"
+  ],
+  "Alemania Oriental": [
+    "Brandenburg",
+    "Mecklenburg-Vorpommern",
+    "Sachsen",
+    "Sachsen-Anhalt",
+    "Thüringen",
+    "Berlin"
+  ],
+  "Alemania Occidental": [
+    "Baden-Württemberg",
+    "Bayern",
+    "Bremen",
+    "Hamburg",
+    "Hessen",
+    "Niedersachsen",
+    "Nordrhein-Westfalen",
+    "Rheinland-Pfalz",
+    "Saarland",
+    "Schleswig-Holstein"
+  ],
+  "Alemania": [
+    "Baden-Württemberg",
+    "Bayern",
+    "Berlin",
+    "Brandenburg",
+    "Bremen",
+    "Hamburg",
+    "Hessen",
+    "Mecklenburg-Vorpommern",
+    "Niedersachsen",
+    "Nordrhein-Westfalen",
+    "Rheinland-Pfalz",
+    "Saarland",
+    "Sachsen",
+    "Sachsen-Anhalt",
+    "Schleswig-Holstein",
+    "Thüringen"
+  ]
 }

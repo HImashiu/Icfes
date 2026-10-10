@@ -1,0 +1,27 @@
+{
+  "replace": ["Germany", "Poland", "Ukraine", "Romania"],
+  "carve": {
+    "France": ["Alsacia-Lorena"],
+    "Russia": ["Kaliningrado"],
+    "Turkey": ["Tracia"]
+  },
+  "units": {
+    "Alemania": ["DE:*"],
+    "Polonia (Prusia)": ["PL:Greater Poland", "PL:Kuyavian-Pomeranian", "PL:Lower Silesian", "PL:Lubusz", "PL:Opole", "PL:Pomeranian", "PL:Silesian", "PL:Warmian-Masurian", "PL:West Pomeranian"],
+    "Polonia (Rusia)": ["PL:Lublin", "PL:Łódź", "PL:Masovian", "PL:Podlachian", "PL:Świętokrzyskie"],
+    "Galitzia": ["UA:L'viv", "UA:Ivano-Frankivs'k", "UA:Ternopil'", "UA:Chernivtsi", "UA:Transcarpathia", "PL:Lesser Poland", "PL:Subcarpathian"],
+    "Ucrania": ["UA:*"],
+    "Alsacia-Lorena": ["FR:Bas-Rhin", "FR:Haute-Rhin", "FR:Moselle"],
+    "Kaliningrado": ["RU:Kaliningrad"],
+    "Tracia": ["TR:Edirne", "TR:Kirklareli", "TR:Tekirdag"],
+    "Transilvania": ["RO:Alba", "RO:Arad", "RO:Bihor", "RO:Bistrita-Nasaud", "RO:Brasov", "RO:Caras-Severin", "RO:Cluj", "RO:Covasna", "RO:Harghita", "RO:Hunedoara", "RO:Maramures", "RO:Mures", "RO:Salaj", "RO:Satu Mare", "RO:Sibiu", "RO:Timis"],
+    "Rumanía": ["RO:*"]
+  },
+  "groups": {
+    "Imperio Alemán": ["Alemania", "Polonia (Prusia)", "Alsacia-Lorena", "Kaliningrado"],
+    "Imperio Ruso": ["Russia", "Finland", "Estonia", "Latvia", "Lithuania", "Belarus", "Moldova", "Ucrania", "Polonia (Rusia)", "Georgia", "Armenia", "Azerbaijan", "Kazakhstan", "Uzbekistan", "Turkmenistan", "Kyrgyzstan", "Tajikistan"],
+    "Austria-Hungría": ["Austria", "Hungary", "Czechia", "Slovakia", "Slovenia", "Croatia", "Bosnia and Herz.", "Galitzia", "Transilvania"],
+    "Imperio Otomano": ["Turkey", "Tracia"],
+    "Serbia": ["Serbia", "Kosovo", "North Macedonia"]
+  }
+}

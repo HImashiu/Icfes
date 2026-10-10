@@ -913,7 +913,7 @@
 
   // Maps: simplified public-domain outlines (Natural Earth), bundled in maps/. Node loads them from there;
   // a browser build calls registerMap(key, doc) with the same JSON.
-  const MAP_KEYS = ['colombia-departamentos', 'colombia-pais', 'sudamerica', 'mundo', 'europa'];
+  const MAP_KEYS = ['colombia-departamentos', 'colombia-pais', 'sudamerica', 'mundo', 'europa', 'europa-1914'];
   const MAPS = {};
   function registerMap(key, doc) { MAPS[key] = doc; }
   function mapDoc(key) {

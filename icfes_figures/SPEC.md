@@ -258,8 +258,16 @@ period border fills as one region. Each union has `merged: true` and a `members`
 `maps/europa-merges.json` and are built by `maps/build_europa.py` (needs shapely; the outputs are `maps/europa.json`).
 
 - `URSS` (15 republics), `Yugoslavia`, `Checoslovaquia`, `Alemania Oriental` (the eastern Länder and Berlin),
-  `Alemania Occidental`, `Austria-Hungría (aprox.)`.
-- Add a union by adding a line to `europa-merges.json` and rebuilding. Members must be names from the
+  `Alemania Occidental`, and `Alemania` (the unified Germany, all 16 Länder, for post-1991 maps).
+  These unions overlap (Alemania shares the Länder of the two Germanies), so they are for one period at a time.
+- `europa-1914` is a second region for Europe in 1914: `maps/europa-1914.json`, built from
+  `maps/europa-1914-parts.json` (admin-1 units grouped into pieces, the 110m countries, and the groups). Its shapes
+  are a partition, so no two overlap: `Imperio Alemán` (Länder, Prussian Poland, Alsace-Lorraine, Kaliningrad),
+  `Imperio Ruso`, `Austria-Hungría` (with Galicia and Transylvania), `Imperio Otomano` (Turkey with Thrace),
+  `Serbia` (with Kosovo and North Macedonia; Vojvodina is left in it), plus Romania, Bulgaria and Montenegro as their own
+  shapes. These are approximate 1914 extents from present-day provinces, not historical boundaries.
+  Use `region: "europa-1914"` for it; the same union fields apply.
+- Add a union by adding a line to `europa-merges.json` (1991 era) or `europa-1914-parts.json` (1914) and rebuilding. Members must be names from the
   Natural Earth data, as the build script reports them.
 - Unions are built ahead of time, not at render time: neighbouring Natural Earth polygons do not share exactly the
   same edges, so joining them in the renderer would leave seams.

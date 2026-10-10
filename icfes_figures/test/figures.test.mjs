@@ -525,6 +525,32 @@ test('europa: named unions of countries and Länder fill as one region, with a l
   assert.ok(F.validate({ ...cold, bounds: [1, 2, 3] }).length > 0, 'bounds need four numbers');
 });
 
+test('europa: unified Germany is a union of the 16 Länder, for post-1991 maps', () => {
+  const doc = require('../maps/europa.json');
+  const de = doc.features.find((f) => f.name === 'Alemania');
+  assert.ok(de && de.merged && de.members.length === 16, 'Alemania unions the 16 Länder');
+  const modern = { kind: 'map', region: 'europa', title: 'Europa', bounds: [-12, 35, 42, 62], fills: { Alemania: '#dddddd' } };
+  assert.deepEqual(F.validate(modern), []);
+});
+
+test('europa-1914: the empires and states are a partition, with the 1914 borders', () => {
+  const doc = require('../maps/europa-1914.json');
+  const merged = doc.features.filter((f) => f.merged).map((f) => f.name);
+  for (const n of ['Imperio Alemán', 'Imperio Ruso', 'Austria-Hungría', 'Imperio Otomano', 'Serbia']) assert.ok(merged.includes(n), n);
+  const members = doc.features.filter((f) => f.merged).flatMap((f) => f.members);
+  assert.equal(new Set(members).size, members.length, 'no member is in two unions');
+  const names = doc.features.map((f) => f.name);
+  assert.ok(!names.includes('Germany') && !names.includes('Poland') && !names.includes('Ukraine') && !names.includes('Romania'), 'the split countries are replaced by their parts');
+  assert.ok(names.includes('Rumanía') && names.includes('Montenegro') && names.includes('Bulgaria'), 'Romania, Montenegro and Bulgaria keep their own shapes');
+  const aust = doc.features.find((f) => f.name === 'Austria-Hungría');
+  assert.ok(aust.members.includes('Galitzia') && aust.members.includes('Transilvania'), 'Austria-Hungary takes Galicia and Transylvania');
+  const alemania = doc.features.find((f) => f.name === 'Imperio Alemán');
+  assert.ok(alemania.members.includes('Alsacia-Lorena') && alemania.members.includes('Kaliningrado'), 'the German empire takes Alsace-Lorraine and Kaliningrad');
+  const spec = { kind: 'map', region: 'europa-1914', title: 'Europa en 1914', bounds: [-12, 35, 42, 62], fills: { 'Imperio Alemán': '#666666', 'Imperio Ruso': '#999999' }, legend: [{ fill: '#666666', label: 'Imperio Alemán' }, { fill: '#999999', label: 'Imperio Ruso' }] };
+  assert.deepEqual(F.validate(spec), []);
+  assert.ok(F.render(spec).includes('<path'), 'the 1914 map draws');
+});
+
 test('map legend wraps onto a second row instead of running off the view', () => {
   const entries = ['Alemania Occidental', 'Alemania Oriental', 'Checoslovaquia', 'Yugoslavia', 'URSS'].map((label, i) => ({ fill: ['#000', '#fff', '#888', '#444', '#ccc'][i], label }));
   const svg = F.render({ kind: 'map', region: 'mundo', legend: entries });
