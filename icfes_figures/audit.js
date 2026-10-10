@@ -18,6 +18,49 @@ function onlyBoxesAndText(spec) {
   return [...types].every((t) => t === 'rect' || t === 'text') && ![...types].some((t) => LINE_WORK.has(t)) && rects >= 1 && rects <= 2;
 }
 
+// Two option figures in one question that look alike: same kind and nearly the same numbers and labels.
+// Compared without the title, token by token in order.
+function tokens(spec) {
+  const { title, ...rest } = spec || {};
+  return (JSON.stringify(rest).match(/"[^"]*"|-?\d+(\.\d+)?/g) || []);
+}
+// Position by position: the same values in a different order (a swapped table row) count as different.
+function similarity(a, b) {
+  const n = Math.max(a.length, b.length);
+  if (n === 0) return 1;
+  let same = 0;
+  for (let i = 0; i < n; i++) if (a[i] === b[i]) same++;
+  return same / n;
+}
+
+// Text boxes inside one diagram that overlap each other. Width is estimated from the glyph count.
+function overlappingText(spec) {
+  const boxes = [];
+  (spec.shapes || []).forEach((t, i) => {
+    if (t.type !== 'text') return;
+    const size = t.size || 12;
+    const lines = t.maxWidth != null ? F.textLayout(t).lines : [String(t.text)];
+    const sz = t.maxWidth != null ? F.textLayout(t).size : size;
+    const w = Math.max(...lines.map((l) => l.length)) * 0.55 * sz;
+    const h = lines.length * 1.15 * sz;
+    const left = t.anchor === 'end' ? t.x - w : t.anchor === 'start' ? t.x : t.x - w / 2;
+    const top = t.y - sz * 0.8;
+    boxes.push({ i, text: String(t.text), x0: left, y0: top, x1: left + w, y1: top + h });
+  });
+  const out = [];
+  for (let a = 0; a < boxes.length; a++) {
+    for (let b = a + 1; b < boxes.length; b++) {
+      const A = boxes[a], B = boxes[b];
+      const ox = Math.min(A.x1, B.x1) - Math.max(A.x0, B.x0);
+      const oy = Math.min(A.y1, B.y1) - Math.max(A.y0, B.y0);
+      if (ox <= 0 || oy <= 0) continue;
+      const smaller = Math.min((A.x1 - A.x0) * (A.y1 - A.y0), (B.x1 - B.x0) * (B.y1 - B.y0));
+      if (smaller > 0 && (ox * oy) / smaller > 0.2) out.push(`shapes[${A.i}] "${A.text}" overlaps shapes[${B.i}] "${B.text}"`);
+    }
+  }
+  return out;
+}
+
 function auditFigure(f) {
   const issues = [];
   if (f.kind === 'image') return { kind: 'image', issues };
@@ -33,6 +76,7 @@ function auditFigure(f) {
   if (kind === 'diagram' && spec.shapes && onlyBoxesAndText(spec) && f.text_only !== true) issues.push('diagram is only boxes and text (check for a photo drawn as an empty box)');
   if (kind === 'diagram' && spec.shapes) {
     for (const o of F.textOverflows(spec)) issues.push('text overflow: ' + o);
+    for (const o of overlappingText(spec)) issues.push('text overlap: ' + o);
     // Unboxed text that would run past the view: estimate its width from the glyph count.
     if (Array.isArray(spec.view)) {
       const [vx, vy, vw, vh] = spec.view;
@@ -55,6 +99,7 @@ const examKey = (name) => name.split('.')[0];
 const rows = [];
 const notRep = [];
 const textOnly = [];
+const similar = [];
 const files = fs.readdirSync(dir).filter((n) => n.endsWith('.json')).sort();
 const groups = new Map();
 for (const name of files) {
@@ -85,6 +130,26 @@ for (const [exam, names] of groups) {
     counts[r.kind] = (counts[r.kind] || 0) + 1;
     for (const i of r.issues) problems.push(`${f.id}: ${i}`);
     if (f.text_only === true) textOnly.push(`${exam} ${f.id}`);
+  }
+  // Option figures in one question that are the same or nearly so.
+  const byQuestion = new Map();
+  for (const f of figures) {
+    const loc = f.location || {};
+    if (loc.stem_or_option !== 'option' || !f.spec) continue;
+    const key = String(loc.question);
+    if (!byQuestion.has(key)) byQuestion.set(key, []);
+    byQuestion.get(key).push(f);
+  }
+  for (const [q, opts] of byQuestion) {
+    for (let a = 0; a < opts.length; a++) {
+      for (let b = a + 1; b < opts.length; b++) {
+        const sim = similarity(tokens(opts[a].spec), tokens(opts[b].spec));
+        if (sim >= 0.95) {
+          problems.push(`Q${q}: options ${opts[a].location.option} and ${opts[b].location.option} look the same (${Math.round(sim * 100)}% alike)`);
+          similar.push(`${exam} Q${q} ${opts[a].location.option}/${opts[b].location.option} ${Math.round(sim * 100)}%`);
+        }
+      }
+    }
   }
   for (const x of pendingList) notRep.push({ exam, ...x });
   rows.push({ exam, files: names, counts, pending: pendingList.length, problems, figures: figures.length });
@@ -123,6 +188,11 @@ lines.push(`## Text-only figures (${textOnly.length}, spot-check that the label 
 lines.push('');
 if (!textOnly.length) lines.push('None.');
 for (const t of textOnly) lines.push('- ' + t);
+lines.push('');
+lines.push(`## Similar option figures (${similar.length})`);
+lines.push('');
+if (!similar.length) lines.push('None.');
+for (const t of similar) lines.push('- ' + t);
 lines.push('');
 lines.push('## Not representable');
 lines.push('');

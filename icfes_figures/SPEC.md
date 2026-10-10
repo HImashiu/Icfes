@@ -196,6 +196,8 @@ Coordinates are SVG units with y growing downward. The view fits the shapes unle
   the font (one point at a time, from `size` down to `minSize`, default 7) until the block fits. The block is
   centred on `y`. Text that still does not fit is flagged by `F.textOverflows(spec)` and by the audit; it is never
   cut off silently. Use boxed text for comic bubbles, infographic labels and anything inside a shape.
+- The audit also flags option figures in one question that are the same or at least 95% alike, comparing
+  the specs token by token in order (title ignored), and diagram text boxes that overlap by more than 20%.
 - `text_only: true` on a figure entry marks a sign, ad or poster that is really text in a frame. The audit
   skips the photo stand-in flag for it and lists it under "Text-only figures" for a spot check, so the label
   is not used to hide real drawings.
