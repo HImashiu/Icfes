@@ -37,7 +37,11 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam }
         <span className="caption">Fuente: ICFES, Saber 11 · {exam.questions.length} preguntas</span>
         {exams.length > 1 && (
           <select className="booklet-pick" value={slug} onChange={(e) => onPickExam(e.target.value)} aria-label="Cambiar cuadernillo">
-            {exams.map((e) => <option key={e.slug} value={e.slug}>{e.title}</option>)}
+            {exams.map((e) => (
+              <option key={e.slug} value={e.slug} disabled={e.status === "proximamente"}>
+                {e.status === "proximamente" ? `${e.title} · Próximamente` : e.title}
+              </option>
+            ))}
           </select>
         )}
       </div>

@@ -42,7 +42,7 @@ export default function History({ onBack, onNew, onOpen }) {
                 {r.perArea?.length > 0 && (
                   <div className="area-segments" aria-label="Puntaje por área">
                     {r.perArea.map((a) => (
-                      <span key={a.name} className="seg-track" title={`${a.name}: ${a.correct ?? 0} de ${a.answered}`}>
+                      <span key={a.name} className={a.answered ? "seg-track" : "seg-track empty"} title={a.answered ? `${a.name}: ${a.correct ?? 0} de ${a.answered}` : `${a.name}: sin respuestas`}>
                         <span style={{ width: `${r.keyed ? areaShare(a) : (a.answered / a.total) * 100}%`, background: areaColor(a.name) }} />
                       </span>
                     ))}

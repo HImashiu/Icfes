@@ -1,4 +1,6 @@
 // Copies exam JSON from a data folder into public/exams so the app can load it.
+// The catalog has one entry per exam: a golden file makes it "ready"; a figure spec alone makes it
+// "proximamente" (listed, not openable). figures-review.json holds every spec for the internal #revision-figuras page.
 // Exam content never goes into git: public/exams is gitignored and is rebuilt on every dev/build run.
 //
 // Source folder: $ICFES_DATA_DIR, or /mnt/project-files/icfes/data when that exists.
@@ -28,6 +30,15 @@ if (!existsSync(src)) {
 }
 
 const files = readdirSync(src);
+const specDir = join(root, "figures", "specs");
+const specFiles = existsSync(specDir) ? readdirSync(specDir).filter((f) => f.endsWith(".json") && !f.endsWith(".full.json")) : [];
+
+// "S11-A 1ra" becomes "S11-A · Primera sesión", the same name the app shows (see formatBooklet in src/lib/exam.js).
+const ORDINAL = { 1: "Primera", 2: "Segunda" };
+const booklet = (t) =>
+  t
+    .replace(/\s+(\d)(?:da|ra|a)?\s+sesi[oó]n\b/i, (m, n) => ` · ${ORDINAL[n] ?? n} sesión`)
+    .replace(/\s+(\d)(?:da|ra)$/i, (m, n) => ` · ${ORDINAL[n] ?? n} sesión`);
 const exams = [];
 for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
   const slug = file.replace(/\.golden\.json$/, "");
@@ -72,15 +83,57 @@ for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
   }
   exams.push({
     slug,
-    title: exam.exam?.title ?? slug,
+    title: booklet(exam.exam?.title ?? slug),
     questions: exam.questions?.length ?? 0,
     sections: (exam.sections ?? []).map((s) => s.name),
     hasKey,
     keyStatus,
     hasSidecar,
     hasFigures,
+    status: "ready",
   });
 }
+// Specs without question text yet: listed as "Próximamente" so the catalog shows the whole plan.
+const goldenSlugs = new Set(exams.map((e) => e.slug));
+for (const file of specFiles) {
+  const slug = file.replace(/\.json$/, "");
+  if (goldenSlugs.has(slug)) continue;
+  const spec = JSON.parse(readFileSync(join(specDir, file), "utf8"));
+  exams.push({
+    slug,
+    title: booklet(spec.exam ?? slug),
+    questions: 0,
+    sections: [],
+    hasKey: false,
+    keyStatus: null,
+    hasSidecar: false,
+    hasFigures: true,
+    status: "proximamente",
+  });
+}
+exams.sort((a, b) => (a.status === b.status ? a.slug.localeCompare(b.slug) : a.status === "ready" ? -1 : 1));
+
+// Every figure spec, grouped by exam and question, for the internal review page (#revision-figuras).
+const review = specFiles.map((file) => {
+  const spec = JSON.parse(readFileSync(join(specDir, file), "utf8"));
+  return {
+    slug: file.replace(/\.json$/, ""),
+    title: booklet(spec.exam ?? file),
+    note: spec.note ?? null,
+    pending: spec.pending ?? [],
+    figures: (spec.figures ?? []).map((f) => ({
+      id: f.id,
+      question: f.location?.question ?? null,
+      page: f.location?.page ?? null,
+      target: f.location?.stem_or_option ?? null,
+      kind: f.kind,
+      fidelity: f.fidelity ?? null,
+      note: f.note ?? null,
+      spec: f.spec ?? null,
+    })),
+  };
+});
+writeFileSync(join(out, "figures-review.json"), JSON.stringify({ exams: review }));
 // Scan crops are not copied: figures are drawn natively from their specs (no crops in the app).
 writeFileSync(join(out, "index.json"), JSON.stringify({ exams }, null, 2));
 

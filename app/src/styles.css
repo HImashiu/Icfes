@@ -856,3 +856,23 @@ details.answers-area > summary::-webkit-details-marker { display: none; }
   background: linear-gradient(90deg, var(--cell) var(--pct), var(--surface-2) var(--pct));
 }
 .t-side nav { display: grid; gap: 4px; }
+
+/* Design review v14: phone and desktop details */
+.bottom-nav { height: auto; }
+@media (min-width: 1200px) { .bottom-nav { height: 100vh; position: fixed; } }
+.results > .results-actions .primary.big,
+.results > .results-actions .secondary.big { flex: 0 0 auto; width: auto; padding: 0 28px; }
+@media (max-width: 767px) {
+  .results > .results-actions { display: grid; gap: 10px; }
+  .results > .results-actions .primary.big,
+  .results > .results-actions .secondary.big { width: 100%; padding: 0 16px; }
+  .review .test-controls {
+    position: sticky; bottom: 88px; z-index: 5; background: var(--bg); padding: 8px 0;
+  }
+}
+.report-link { color: var(--text-2); font-weight: 600; font-size: 13px; text-decoration: none; border-bottom: 1px dashed var(--line); }
+.seg-track.empty { background: transparent; border: 1px dashed var(--line); }
+@media (min-width: 1200px) {
+  .quick-grid { grid-template-columns: repeat(3, 1fr); }
+  .quick-wide { grid-column: auto; }
+}

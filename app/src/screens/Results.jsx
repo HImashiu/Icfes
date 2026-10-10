@@ -97,7 +97,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
             <div key={a.name} className="area-row">
               <div className="area-row-head">
                 <span><span className="dot" style={{ background: areaColor(a.name) }} /> {a.name}</span>
-                <span className="muted">{score.keyed ? `${a.correct} / ${a.answered}` : `${a.answered} / ${a.total}`}</span>
+                <span className="muted">{score.keyed ? `${a.correct} de ${a.answered}` : `${a.answered} de ${a.total}`}</span>
               </div>
               <div className="progress thin">
                 <span style={{ width: `${share}%`, background: areaColor(a.name) }} />

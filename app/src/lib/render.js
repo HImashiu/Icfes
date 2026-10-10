@@ -26,7 +26,9 @@ function paragraphs(text) {
 export function renderRich(source) {
   if (!source) return "";
   const withoutPictures = source.replace(IMG, "").replace(MD_IMG, "");
-  const withMath = paragraphs(withoutPictures).replace(MATH, (_, tex) =>
+  // **bold** in the exam text (for example a bold NO in a stem) becomes <strong>.
+  const bold = paragraphs(withoutPictures).replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+  const withMath = bold.replace(MATH, (_, tex) =>
     katex.renderToString(tex.trim(), { throwOnError: false, output: "htmlAndMathml" }),
   );
   return DOMPurify.sanitize(withMath);

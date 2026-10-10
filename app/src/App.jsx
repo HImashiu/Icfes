@@ -10,6 +10,7 @@ import Teacher from "./screens/Teacher.jsx";
 import History from "./screens/History.jsx";
 import Reports from "./screens/Reports.jsx";
 import FigureCheck from "./screens/FigureCheck.jsx";
+import FigureReview from "./screens/FigureReview.jsx";
 import BottomNav from "./components/BottomNav.jsx";
 import { ExamContext } from "./lib/exam-context.js";
 import { parseExam, parseKey, parseKeyNotes, questionsFor, timedSeconds } from "./lib/exam.js";
@@ -68,7 +69,7 @@ export default function App() {
   const openExam = useCallback(async (slug) => {
     setOpenError(null);
     const entry = exams?.find((e) => e.slug === slug);
-    if (!entry) return;
+    if (!entry || entry.status === "proximamente") return;
     setOpening(true);
     try {
       const [raw, rawKey, rawFigures, rawSidecar] = await Promise.all([
@@ -95,7 +96,8 @@ export default function App() {
 
   // Open the first exam once the index is known.
   useEffect(() => {
-    if (exams?.length && !selected && !opening) openExam(exams[0].slug);
+    const first = exams?.find((e) => e.status !== "proximamente");
+    if (first && !selected && !opening) openExam(first.slug);
   }, [exams, selected, opening, openExam]);
 
   // Keep an attempt in this browser so a reload does not lose answers.
@@ -163,7 +165,10 @@ export default function App() {
 
   // Dev check of the figure engine kinds (not in the navigation): open the app with #figuras.
   if (typeof window !== "undefined" && window.location.hash === "#figuras") return <FigureCheck />;
+  // Internal review of every figure spec (not in the student navigation).
+  if (typeof window !== "undefined" && window.location.hash === "#revision-figuras") return <FigureReview />;
   if (exams === null) return <main className="frame"><p className="muted">Cargando…</p></main>;
+  if (!selected) return <main className="frame"><p className="muted">{opening ? "Cargando cuadernillo…" : "Todavía no hay cuadernillos listos."}</p></main>;
 
   const questions = selected && attempt ? questionsFor(selected.exam, attempt.scope) : [];
   const scopeTitle = attempt && attempt.scope !== "all" ? attempt.scope : "Examen completo";
