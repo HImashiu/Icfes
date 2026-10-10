@@ -289,3 +289,33 @@ def test_figure_saves_and_deletes_can_be_undone(root):
     assert [f["id"] for f in store.native_figures(EXAM, 2)] == [made["id"]]
     store.undo(EXAM, 2)
     assert store.native_figures(EXAM, 2) == []
+
+
+def test_search_ignores_accents_and_case(root):
+    store = Store(root)
+    store.update_question(EXAM, 3, {"stem_md": "¿Cuál es la pluviosidad del año?"})
+    hits = store.search("PLUVIOSIDAD ano")
+    assert [(h["exam"], h["number"]) for h in hits] == [(EXAM, 3)]
+    assert store.search("   ") == []
+
+
+def test_reading_falls_back_to_the_next_engine(root, monkeypatch):
+    from icfes_admin import store as store_mod
+    from icfes_admin.ocr import Line
+    store = Store(root)
+    monkeypatch.setattr(store_mod.ocr, "azure_config", lambda: None)
+    calls = []
+
+    def read(name, exam, page, box):
+        calls.append(name)
+        if name == "saved":
+            return {"lines": [], "tables": []}
+        return {"lines": [Line("hola", 0.5, 0.5, 0.1, 0.02)], "tables": []}
+    monkeypatch.setattr(store, "_read_with", read)
+    assert store.ocr_box(EXAM, 3, [0, 0, 1, 1]) == {"engine": "local", "text": "hola"}
+    # Without Azure configured, auto skips it; a table never comes from RapidOCR.
+    assert calls == ["saved", "local"]
+    with pytest.raises(NotFound):
+        store.ocr_box(EXAM, 3, [0, 0, 1, 1], engine="local", want="table")
+    with pytest.raises(BadRequest):
+        store.ocr_box(EXAM, 3, [0, 0, 1, 1], engine="paper")

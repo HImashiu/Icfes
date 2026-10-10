@@ -125,6 +125,18 @@ def ocr(store, m, body, query):
     return store.ocr_text(m.group(1), int(body.get("page") or 0), body.get("box"))
 
 
+@route("POST", r"/api/exams/([^/]+)/read")
+def read_box(store, m, body, query):
+    body = _json_body(body)
+    return store.ocr_box(m.group(1), int(body.get("page") or 0), body.get("box"),
+                         engine=body.get("engine") or "auto", want=body.get("want") or "text")
+
+
+@route("GET", r"/api/search")
+def search(store, m, body, query):
+    return store.search((query.get("q") or [""])[0], (query.get("exam") or [None])[0])
+
+
 @route("POST", r"/api/exams/([^/]+)/questions/(\d+)/undo")
 def undo(store, m, body, query):
     return store.undo(m.group(1), int(m.group(2)))

@@ -169,6 +169,19 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:var(--accent)}
 kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 4px;font:600 11px Figtree}
 .paper img.scanfig{max-width:100%;display:block;margin:8px auto}
 .opt img.scanfig{max-width:100%;background:#fff}
+.overlay{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.55);display:grid;place-items:start center;padding-top:8vh}
+.sheet{width:min(720px,92vw);max-height:80vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px}
+.hits{display:grid;gap:6px}
+.hit{text-align:left;border:1px solid var(--line);background:var(--surface-2);border-radius:12px;padding:10px;cursor:pointer;color:var(--text);font:400 13px/1.4 Figtree}
+.hit:hover{border-color:var(--accent)}
+table.help{border:0}
+table.help td{border-bottom:1px solid var(--line);padding:8px}
+select.ib{padding:0 8px}
+/* Native tables keep the app's print look inside the editor's own table styles. */
+table.icfes-table{width:auto;border:0;border-radius:0;overflow:visible;background:#fff;margin:8px auto}
+table.icfes-table th,table.icfes-table td{border:1px solid #000;padding:4px 10px;text-align:center;color:#000;background:#fff;font:400 14px/1.3 Arial,Helvetica,sans-serif;text-transform:none;letter-spacing:0;vertical-align:middle}
+table.icfes-table th{font-weight:700}
+table.icfes-table caption{font-weight:700;color:#000;margin-bottom:4px}
 /* ----- chart and table studio ----- */
 .studio{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column}
 .stbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--side)}
@@ -223,8 +236,9 @@ const $ = (s) => document.querySelector(s);
 const app = $("#app");
 const AREA = { "Lectura crítica": "--area-lectura", "Matemáticas": "--area-mate", "Sociales y ciudadanas": "--area-sociales", "Ciencias naturales": "--area-ciencias", "Inglés": "--area-ingles" };
 const state = { tab: "progress", exam: null, filter: "all", n: null, detail: null, exams: [], rows: [], natives: {},
-  page: 1, zoom: 1, cropping: false, box: null, dirty: false, opts: [], lastArea: null, preview: true };
+  page: 1, zoom: 1, engine: "auto", cropping: false, box: null, dirty: false, opts: [], lastArea: null, preview: true };
 const STATIC = !!window.ICFES_STATIC;
+try { state.engine = JSON.parse(localStorage.getItem("icfes-editor:engine")) || "auto"; } catch (e) { /* default */ }
 
 function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function status(text, cls = "") { const el = $("#status"); if (el) { el.textContent = text; el.className = "pill " + cls; } }
@@ -273,7 +287,9 @@ document.querySelectorAll(".seg button").forEach(b => b.onclick = () => leave(()
 $("#theme").onclick = () => {
   const root = document.documentElement;
   root.dataset.theme = root.dataset.theme !== "light" ? "light" : "dark";
+  remember("theme", root.dataset.theme);
 };
+if (recall("theme")) document.documentElement.dataset.theme = recall("theme");
 window.addEventListener("beforeunload", e => { if (state.dirty) { e.preventDefault(); e.returnValue = ""; } });
 
 // ----- progress --------------------------------------------------------------
@@ -296,7 +312,12 @@ async function showProgress() {
       <td>${e.figures.traced ? `${e.figures.traced} del escaneo${e.figures.pending_spec ? ` <span class="flame">· ${e.figures.pending_spec} pendientes</span>` : ""}` : '<span class="muted">ninguna</span>'}</td>
     </tr>`;
   }).join("");
-  app.innerHTML = `
+  const last = recall("last");
+  const resume = last && state.exams.some(e => e.exam === last.exam)
+    ? `<div class="card" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><b>Seguir donde quedaste:</b> ${esc(last.exam)} · Q${last.n}
+       <button class="btn sm primary" id="resume">Abrir</button>
+       <button class="btn sm" onclick="openSearch()">🔍 Buscar una pregunta</button></div>` : "";
+  app.innerHTML = resume + `
     <div class="stats">
       <div class="card"><div class="label">Preguntas</div><div class="display num">${fmt(t.q)}</div></div>
       <div class="card"><div class="label">Listas</div><div class="display num acc">${fmt(t.r)}</div><div class="muted">${Math.round(100 * t.r / (t.q || 1))} % de ${fmt(t.q)}</div></div>
@@ -310,6 +331,7 @@ async function showProgress() {
     </table>
     <p class="muted">Toca un examen para ver sus preguntas.</p>`;
   app.querySelectorAll("tr[data-exam]").forEach(tr => tr.onclick = () => { state.exam = tr.dataset.exam; state.n = null; setTab("questions"); });
+  if ($("#resume")) $("#resume").onclick = () => { state.exam = last.exam; openQuestion(last.n, { reloadExam: true }); };
 }
 
 // ----- question map ----------------------------------------------------------
@@ -459,7 +481,9 @@ function renderWorkspace() {
       <span class="chip" style="min-height:32px;cursor:default"><i style="background:${areaColor(q.section)}"></i>${esc(q.section || "sin área")}</span>
       <span id="vis">${visBadges(reasons)}</span>
       <span class="spacer"></span>
-      <span class="keys"><kbd>Ctrl</kbd>+<kbd>S</kbd> guardar · <kbd>Alt</kbd>+<kbd>→</kbd> siguiente</span>
+      <button class="ib" id="fixnext" title="Siguiente pregunta oculta, con errores o con figura inválida (Alt+N)">⚑ Siguiente por arreglar</button>
+      <button class="ib" onclick="openSearch()" title="Buscar en todas las preguntas (Ctrl+K)">🔍</button>
+      <button class="ib" onclick="showHelp()" title="Atajos de teclado (?)">?</button>
       <button class="ib" id="toggle-prev" title="Mostrar u ocultar la vista del estudiante">Vista ${state.preview ? "✓" : "✕"}</button>
       ${STATIC ? "" : `<button class="ib" id="undo" ${d.undo ? "" : "disabled"} title="Deshace el último cambio guardado de esta pregunta">↶ Deshacer${d.undo ? ` (${d.undo})` : ""}</button>`}
       <span id="savestate" class="savestate">Sin cambios</span>
@@ -486,6 +510,8 @@ function renderWorkspace() {
   $("#next").onclick = () => next && leave(() => openQuestion(next));
   $("#ed-exam").onchange = (e) => leave(async () => { state.exam = e.target.value; await loadExam(); openQuestion(state.rows[0].number); });
   $("#save").onclick = saveQuestion;
+  $("#fixnext").onclick = () => { const n = nextToFix(); if (n == null) toast("No queda nada por arreglar en este examen 🎉"); else leave(() => openQuestion(n)); };
+  remember("last", { exam: state.exam, n: d.number });
   $("#toggle-prev").onclick = () => { state.preview = !state.preview; $("#edgrid").classList.toggle("noprev", !state.preview); $("#toggle-prev").textContent = `Vista ${state.preview ? "✓" : "✕"}`; };
   if ($("#undo")) $("#undo").onclick = undo;
   $("#qstrip").querySelectorAll("button").forEach(b => b.onclick = () => leave(() => openQuestion(Number(b.dataset.n))));
@@ -528,23 +554,27 @@ function formPane(q, g) {
       <button class="ib" type="button" onclick="fmtInsert('math')" title="Fórmula">x²</button>
       <button class="ib" type="button" onclick="fmtInsert('frac')" title="Fracción">a/b</button>
       <button class="ib" type="button" onclick="fmtInsert('table')" title="Tabla de texto">Tabla</button>
-      <span class="muted" style="font-size:12px">Selecciona texto y pulsa un botón.</span>
+      <select class="ib" onchange="if (this.value) { fmtInsert('sym', this.value); this.value = ''; }" title="Símbolos">
+        <option value="">Ω símbolo</option>${SYMBOLS.map(x => `<option>${x}</option>`).join("")}</select>
+      <button class="ib" type="button" onclick="cleanField()" title="Une líneas cortadas, quita guiones de corte y espacios dobles en el campo activo">🧹 Limpiar</button>
     </div>
     ${msgs ? `<div class="fld">${msgs}</div>` : ""}
-    ${g ? `<div class="fld"><div class="label"><span>Texto compartido · Q${g.from}–${g.to}</span><span class="muted" style="text-transform:none;letter-spacing:0">lo ven todas sus preguntas</span></div>
-      <textarea id="f-passage">${esc(g.passage_md || g.stimulus_md || "")}</textarea>
+    ${!(q.stem_md || "").trim() ? `<div class="note warn fld">Falta el enunciado. ${STATIC ? "" : `<button class="ib" type="button" onclick="readInto('f-stem')">⌖ Leerlo del PDF</button>`}</div>` : ""}
+    ${g ? `<div class="fld"><div class="label"><span>Texto compartido · Q${g.from}–${g.to} <span class="muted" style="text-transform:none;letter-spacing:0">· lo ven todas sus preguntas</span></span>${STATIC ? "" : `<button class="ib" type="button" onclick="readInto('f-passage')" title="Dibuja un recuadro en la página y su texto se escribe aquí">⌖ Leer del PDF</button>`}</div>
+      <textarea id="f-passage" spellcheck="true" lang="es">${esc(g.passage_md || g.stimulus_md || "")}</textarea>
       <div class="muted" style="font-size:12px;margin-top:4px">Textos literarios: no los reescribas; deja [Texto pendiente: página N].</div></div>` : ""}
-    <div class="fld"><div class="label"><span>Texto propio (contexto)</span></div><textarea id="f-stimulus" placeholder="Texto o descripción antes del enunciado (opcional)">${esc(q.stimulus_md)}</textarea></div>
+    <div class="fld"><div class="label"><span>Texto propio (contexto)</span>${STATIC ? "" : `<button class="ib" type="button" onclick="readInto('f-stimulus')" title="Dibuja un recuadro en la página y su texto se escribe aquí">⌖ Leer del PDF</button>`}</div><textarea id="f-stimulus" spellcheck="true" lang="es" placeholder="Texto o descripción antes del enunciado (opcional)">${esc(q.stimulus_md)}</textarea></div>
     <div class="fld"><div class="label"><span>Figuras</span><span>
       ${STATIC ? "" : `<button class="ib" type="button" onclick="startCrop()" title="Dibuja un recuadro sobre la página">✂ Recortar del PDF</button>`}
       <button class="ib" type="button" onclick="openStudio('new')">+ Gráfica o tabla</button></span></div>
       <div class="figs" id="figs"></div></div>
-    <div class="fld"><div class="label"><span>Enunciado</span></div><textarea id="f-stem">${esc(q.stem_md)}</textarea></div>
-    <div class="fld"><div class="label"><span>Opciones</span><span class="muted" style="text-transform:none;letter-spacing:0">toca la letra para marcar la respuesta correcta</span></div>
+    <div class="fld"><div class="label"><span>Enunciado</span>${STATIC ? "" : `<button class="ib" type="button" onclick="readInto('f-stem')" title="Dibuja un recuadro en la página y su texto se escribe aquí">⌖ Leer del PDF</button>`}</div><textarea id="f-stem" spellcheck="true" lang="es">${esc(q.stem_md)}</textarea></div>
+    <div class="fld"><div class="label"><span>Opciones <span class="muted" style="text-transform:none;letter-spacing:0">· toca la letra para marcar la respuesta</span></span>${STATIC ? "" : `<button class="ib" type="button" onclick="readInto('opts')" title="Dibuja un recuadro en la página y su texto se escribe aquí">⌖ Leer A–D del PDF</button>`}</div>
       <div id="f-opts"></div></div>
     <div class="fld card" style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
       <label class="switch">Área <select id="f-section">${sections.map(s => `<option ${s === q.section ? "selected" : ""}>${esc(s)}</option>`).join("")}</select></label>
       <label class="switch"><input type="checkbox" id="f-ready" ${q.ready ? "checked" : ""}> Lista para estudiantes</label>
+      <button class="ib go" type="button" onclick="readyAndNext()" title="Marca la pregunta como lista, guarda y pasa a la siguiente (Ctrl+Enter)">✓ Lista y siguiente</button>
       <span class="muted" style="font-size:12px">Marcada en el escaneo: ${esc(q.scan_marked_option || "—")}</span>
     </div>
     ${flags || notes ? `<details class="fld"><summary class="muted">Marcas de revisión y notas</summary>
@@ -563,7 +593,7 @@ function drawOpts() {
   $("#f-opts").innerHTML = state.opts.map((o, i) => `
     <div class="orow">
       <button type="button" class="ltile ${state.answer === o.letter ? "key" : ""}" onclick="setAnswer('${esc(o.letter)}')" title="${state.answer === o.letter ? "Respuesta correcta" : "Marcar como respuesta correcta"}">${esc(o.letter)}${o.marked_in_scan ? '<i class="mk" title="marcada en el escaneo"></i>' : ""}</button>
-      <textarea data-letter="${esc(o.letter)}" placeholder="Texto de la opción ${esc(o.letter)}">${esc(o.text_md)}</textarea>
+      <textarea data-letter="${esc(o.letter)}" spellcheck="true" lang="es" placeholder="Texto de la opción ${esc(o.letter)}">${esc(o.text_md)}</textarea>
       <span class="otools">
         <button type="button" onclick="moveOpt(${i}, -1)" ${i === 0 ? "disabled" : ""} title="Subir">↑</button>
         <button type="button" onclick="moveOpt(${i}, 1)" ${i === state.opts.length - 1 ? "disabled" : ""} title="Bajar">↓</button>
@@ -753,6 +783,64 @@ async function saveQuestion() {
 }
 function setSave(text, cls) { const s = $("#savestate"); if (s) { s.textContent = text; s.className = "savestate " + cls; } }
 
+async function readyAndNext() {
+  $("#f-ready").checked = true;
+  markDirty();
+  if (await saveQuestion()) $("#next").disabled ? toast("Era la última pregunta del examen") : $("#next").click();
+}
+
+function nextToFix() {
+  const rows = state.rows, cur = rows.findIndex(r => r.number === state.n);
+  const needs = r => r.errors || r.hidden.length || badFigure(r.number);
+  for (let k = 1; k <= rows.length; k++) { const r = rows[(cur + k) % rows.length]; if (needs(r)) return r.number; }
+  return null;
+}
+
+// Small per-viewer memory: theme, OCR engine and the last question opened.
+function remember(key, value) { try { localStorage.setItem("icfes-editor:" + key, JSON.stringify(value)); } catch (e) { /* private window */ } }
+function recall(key) { try { return JSON.parse(localStorage.getItem("icfes-editor:" + key)); } catch (e) { return null; } }
+
+function closeOverlay() { $("#overlay")?.remove(); }
+function overlay(html) {
+  closeOverlay();
+  document.body.insertAdjacentHTML("beforeend", `<div id="overlay" class="overlay" onclick="if (event.target === this) closeOverlay()"><div class="sheet">${html}</div></div>`);
+}
+function showHelp() {
+  const k = (a, b) => `<tr><td>${a}</td><td>${b}</td></tr>`;
+  overlay(`<div class="label">Atajos y trucos</div><table class="help">
+    ${k("<kbd>Ctrl</kbd>+<kbd>S</kbd>", "Guardar")}
+    ${k("<kbd>Ctrl</kbd>+<kbd>Enter</kbd>", "Marcar lista, guardar y pasar a la siguiente")}
+    ${k("<kbd>Alt</kbd>+<kbd>→</kbd> / <kbd>←</kbd>", "Siguiente / anterior (guarda antes de salir)")}
+    ${k("<kbd>Alt</kbd>+<kbd>N</kbd>", "Siguiente pregunta por arreglar")}
+    ${k("<kbd>Alt</kbd>+<kbd>R</kbd>", "Dibujar un recuadro en la página")}
+    ${k("<kbd>Ctrl</kbd>+<kbd>K</kbd>", "Buscar en todas las preguntas")}
+    ${k("<kbd>Ctrl</kbd>+rueda", "Acercar o alejar la página")}
+    ${k("<kbd>Ctrl</kbd>+<kbd>Z</kbd>", "Deshacer lo escrito en un campo (↶ Deshacer revierte lo guardado)")}
+    ${k("<kbd>Esc</kbd>", "Cerrar el recuadro o la ventana")}
+    ${k("⌖ Leer del PDF", "Dibuja un recuadro y su texto (OCR) se escribe en ese campo")}
+    ${k("Pegar imagen", "Pega o arrastra una imagen al formulario y queda como figura")}
+    ${k("Excel → tabla", "En el editor de gráficas, pega celdas copiadas de Excel en la cuadrícula")}
+  </table><button class="ib" style="margin-top:12px" onclick="closeOverlay()">Cerrar</button>`);
+}
+
+let searchTimer;
+function openSearch() {
+  overlay(`<div class="label">Buscar preguntas</div>
+    <input id="q-search" placeholder="Palabras del enunciado, opciones o texto (sin importar tildes)" style="width:100%;padding:10px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--text)">
+    <label class="switch" style="margin:8px 0;font-size:13px"><input type="checkbox" id="q-all"> En todos los exámenes</label>
+    <div id="q-hits" class="hits"></div>`);
+  const run = async () => {
+    const q = $("#q-search").value.trim();
+    if (q.length < 3) { $("#q-hits").innerHTML = '<p class="muted">Escribe al menos 3 letras.</p>'; return; }
+    const hits = await api(`/api/search?q=${encodeURIComponent(q)}${$("#q-all").checked ? "" : `&exam=${encodeURIComponent(state.exam)}`}`);
+    $("#q-hits").innerHTML = hits.length ? hits.map(h => `<button class="hit" data-exam="${esc(h.exam)}" data-n="${h.number}"><b>${esc(h.exam)} · Q${h.number}</b> <span class="muted">${esc(h.section || "")}</span><br><span>${esc(h.snippet)}</span></button>`).join("") : '<p class="muted">Sin resultados.</p>';
+    $("#q-hits").querySelectorAll(".hit").forEach(b => b.onclick = () => { closeOverlay(); leave(async () => { const ch = state.exam !== b.dataset.exam; state.exam = b.dataset.exam; await openQuestion(Number(b.dataset.n), { reloadExam: ch }); }); });
+  };
+  $("#q-search").oninput = () => { clearTimeout(searchTimer); searchTimer = setTimeout(run, 250); };
+  $("#q-all").onchange = run;
+  $("#q-search").focus();
+}
+
 async function undo() {
   if (state.dirty && !confirm("Tienes cambios sin guardar. Deshacer los descarta y vuelve al último guardado anterior. ¿Seguir?")) return;
   try {
@@ -770,7 +858,14 @@ document.addEventListener("keydown", e => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); saveStudio(); }
     return;
   }
+  if ($("#overlay")) { if (e.key === "Escape") closeOverlay(); return; }
+  const typing = /TEXTAREA|INPUT|SELECT/.test(e.target.tagName);
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); saveQuestion(); }
+  else if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); readyAndNext(); }
+  else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openSearch(); }
+  else if (e.altKey && e.key.toLowerCase() === "n") { e.preventDefault(); $("#fixnext").click(); }
+  else if (e.altKey && e.key.toLowerCase() === "r") { e.preventDefault(); state.cropping ? cancelCrop() : startCrop(); }
+  else if (!typing && e.key === "?") { showHelp(); }
   else if (e.altKey && e.key === "ArrowRight") { e.preventDefault(); $("#next").click(); }
   else if (e.altKey && e.key === "ArrowLeft") { e.preventDefault(); $("#prev").click(); }
   else if (e.key === "Escape") { cancelCrop(); }
@@ -779,13 +874,16 @@ document.addEventListener("keydown", e => {
 // Remembers the text field last used, so the format buttons and OCR know where to write.
 document.addEventListener("focusin", e => { if (e.target.tagName === "TEXTAREA" && e.target.closest("#form")) state.lastArea = e.target; });
 
+// Typing through execCommand keeps Ctrl+Z working for inserted text.
 function insertAt(area, text, selectInserted = false) {
   const start = area.selectionStart ?? area.value.length, end = area.selectionEnd ?? start;
-  area.value = area.value.slice(0, start) + text + area.value.slice(end);
   area.focus();
+  area.setSelectionRange(start, end);
+  if (!document.execCommand("insertText", false, text)) area.value = area.value.slice(0, start) + text + area.value.slice(end);
   if (selectInserted) area.setSelectionRange(start, start + text.length); else area.setSelectionRange(start + text.length, start + text.length);
   area.dispatchEvent(new Event("input", { bubbles: true }));
 }
+const SYMBOLS = ["≤", "≥", "≠", "≈", "±", "×", "÷", "√", "π", "°", "²", "³", "½", "¼", "∞", "→", "←", "↔", "α", "β", "Δ", "θ", "λ", "μ", "Ω", "%", "€", "—"];
 function fmtInsert(kind) {
   const area = state.lastArea;
   if (!area || !area.isConnected) { toast("Primero haz clic en un campo de texto"); return; }
@@ -796,6 +894,7 @@ function fmtInsert(kind) {
     math: `$${sel || "x^2"}$`,
     frac: `$\\frac{${sel || "a"}}{b}$`,
     table: "\n| Columna 1 | Columna 2 |\n|---|---|\n| | |\n",
+    sym: arguments[1],
   }[kind]);
 }
 
@@ -837,10 +936,13 @@ function pdfPane() {
     ${est ? `<div class="note warn" style="margin:8px 10px 0">Página estimada: busca la pregunta con ‹ ›.</div>` : ""}
     <div class="pdfscroll" id="pdfscroll">
       <div class="pdfpage ${state.cropping ? "cropping" : ""}" id="pdfpage" style="width:${Math.round(state.zoom * 100)}%">
-        <img id="pdfimg" alt="página ${state.page} del PDF original" src="/api/scan/${encodeURIComponent(d.exam)}/${state.page}" draggable="false">
+        <img id="pdfimg" alt="página ${state.page} del PDF original" src="/api/scan/${encodeURIComponent(d.exam)}/${state.page}" draggable="false" onerror="pageMissing(this)">
         <div class="ov" id="ov">${anchorMark()}</div>
       </div>
     </div>`;
+}
+function pageMissing(img) {
+  img.replaceWith(Object.assign(document.createElement("div"), { className: "note warn", textContent: "La página original no se pudo abrir. En esta copia en línea no hay PDF: ábrela con el editor del computador." }));
 }
 function anchorMark() {
   const a = state.detail.anchor;
@@ -852,6 +954,7 @@ function bindPdf() {
   img.onerror = () => { img.replaceWith(Object.assign(document.createElement("p"), { className: "muted", style: "padding:16px", textContent: "No se pudo cargar esta página. Revisa pdf-sources.json, o instala PyMuPDF: python -m pip install pymupdf" })); };
   img.onload = () => scrollToAnchor();
   $("#pg").onchange = (e) => goPage(Number(e.target.value));
+  $("#pdfscroll").addEventListener("wheel", (e) => { if (!e.ctrlKey) return; e.preventDefault(); zoomBy(e.deltaY < 0 ? 1.1 : 1 / 1.1); }, { passive: false });
   const ov = $("#ov");
   let start = null;
   const frac = (ev) => { const r = ov.getBoundingClientRect(); return [Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width)), Math.min(1, Math.max(0, (ev.clientY - r.top) / r.height))]; };
@@ -893,18 +996,24 @@ function drawBox(withBar) {
   const bar = document.createElement("div");
   bar.className = "cropbar";
   bar.style.left = `${l * 100}%`;
-  bar.style.top = `calc(${(t + h) * 100}% + 6px)`;
-  bar.innerHTML = tgt
-    ? `<span class="lbl">Cambiar la figura por este recorte</span>
+  // Near the bottom of the page the bar goes above the box, so it stays reachable.
+  if (t + h > 0.7) { bar.style.bottom = `calc(${(1 - t) * 100}% + 6px)`; } else { bar.style.top = `calc(${(t + h) * 100}% + 6px)`; }
+  const eng = `<select class="ib" title="Motor de OCR" onchange="setEngine(this.value)">${sel(ENGINES, state.engine)}</select>`;
+  if (tgt?.kind === "replace") bar.innerHTML = `<span class="lbl">Cambiar la figura por este recorte</span>
        <button class="ib go" onclick="cropTo('${esc(tgt.option || "")}', '${esc(tgt.replaces)}')">Usar este recorte</button>
-       <button class="ib" onclick="cancelCrop()">Cancelar</button>`
-    : `<span class="lbl">Guardar el recuadro como imagen de…</span>
-       <button class="ib go" onclick="cropTo('')">Enunciado</button>
+       <button class="ib" onclick="cancelCrop()">Cancelar</button>`;
+  else if (tgt?.kind === "field") bar.innerHTML = `<span class="lbl">Leer el texto del recuadro</span>
+       <button class="ib go" onclick="ocrTo('${tgt.field}')">${tgt.field === "opts" ? "Repartir en opciones A–D" : `Escribir en ${esc(fieldName($("#" + tgt.field)))}`}</button>
+       ${eng}<button class="ib" onclick="cancelCrop()">✕</button>`;
+  else bar.innerHTML = `<span class="lbl">Imagen del recuadro en…</span>
+       <button class="ib" onclick="cropTo('')">Enunciado</button>
        ${letters.map(l => `<button class="ib" onclick="cropTo('${esc(l)}')">Opción ${esc(l)}</button>`).join("")}
-       ${state.detail.ocr ? `<span class="lbl">…o copiar su texto (OCR)</span>
-       <button class="ib" onclick="ocrTo()" title="Pega el texto en el último campo que usaste">Texto → ${esc(fieldName(state.lastArea))}</button>
-       <button class="ib" onclick="ocrTo(true)">Copiar texto</button>` : ""}
-       <button class="ib" onclick="cancelCrop()">✕</button>`;
+       <span class="lbl">Texto del recuadro (OCR)</span>
+       <button class="ib go" onclick="ocrTo('last')" title="Escribe el texto en el último campo que usaste">→ ${esc(fieldName(state.lastArea))}</button>
+       <button class="ib" onclick="ocrTo('opts')">Repartir en A–D</button>
+       <button class="ib" onclick="ocrTo('copy')">Copiar</button>
+       <button class="ib" onclick="tableFromBox()" title="Convierte la tabla del recuadro en una tabla editable">▦ Tabla</button>
+       ${eng}<button class="ib" onclick="cancelCrop()">✕</button>`;
   ov.appendChild(bar);
   bar.addEventListener("pointerdown", e => e.stopPropagation());
 }
@@ -916,7 +1025,7 @@ function fieldName(area) {
 
 function startCrop(replaces = null, option = "") {
   state.cropping = true;
-  state.cropTarget = replaces ? { replaces, option } : null;
+  state.cropTarget = replaces ? { kind: "replace", replaces, option } : null;
   state.box = null;
   $("#pdfpage")?.classList.add("cropping");
   $("#cropbtn")?.classList.add("on");
@@ -936,15 +1045,106 @@ async function cropTo(option, replaces = null) {
     await reloadFigures(option ? `Imagen guardada en la opción ${option}` : "Imagen guardada en el enunciado");
   } catch (e) { toast(e.message, true); }
 }
-async function ocrTo(copyOnly = false) {
+const ENGINES = [["auto", "OCR: el mejor disponible"], ["saved", "Azure (lectura guardada)"], ["azure", "Azure (leer ahora)"], ["local", "RapidOCR (sin internet)"]];
+const ENGINE_NAMES = { saved: "Azure guardado", azure: "Azure", local: "RapidOCR" };
+function setEngine(v) { state.engine = v; remember("engine", v); }
+
+// Starts a box whose text goes straight into one field (or is split into the options).
+function readInto(field) {
+  if (field !== "opts") state.lastArea = $("#" + field);
+  state.cropping = true;
+  state.cropTarget = { kind: "field", field };
+  state.box = null;
+  $("#pdfpage")?.classList.add("cropping");
+  $("#cropbtn")?.classList.add("on");
+  drawBox(false);
+  toast(field === "opts" ? "Dibuja un recuadro sobre las opciones A–D" : `Dibuja un recuadro sobre el texto del ${fieldName($("#" + field))}`);
+}
+
+async function readBox(want) {
+  setSave(want === "table" ? "Leyendo la tabla…" : "Leyendo el texto…", "");
   try {
-    const { text } = await api(`/api/exams/${encodeURIComponent(state.detail.exam)}/ocr`, J("POST", { page: state.page, box: state.box }));
-    if (!text) { toast("No hay texto reconocido en ese recuadro", true); return; }
-    const area = state.lastArea && state.lastArea.isConnected ? state.lastArea : $("#f-stem");
-    if (copyOnly) { await navigator.clipboard.writeText(text); toast("Texto copiado"); }
-    else { insertAt(area, text, true); toast(`Texto pegado en ${fieldName(area)}; revísalo con la página`); }
+    return await api(`/api/exams/${encodeURIComponent(state.detail.exam)}/read`, J("POST", { page: state.page, box: state.box, engine: state.engine, want }));
+  } finally {
+    setSave(state.dirty ? "Cambios sin guardar" : "Sin cambios", state.dirty ? "dirty" : "");
+  }
+}
+
+async function ocrTo(dest) {
+  try {
+    const { text, engine } = await readBox("text");
+    const via = ENGINE_NAMES[engine] || engine;
+    if (dest === "copy") { await navigator.clipboard.writeText(text); toast(`Texto copiado (${via})`); }
+    else if (dest === "opts") {
+      const parts = splitOptions(text);
+      if (!parts) { toast("No encontré las letras A, B, C… en el recuadro. Prueba con un recuadro solo sobre las opciones.", true); return; }
+      syncOpts();
+      const byLetter = Object.fromEntries(state.opts.map(o => [o.letter, o]));
+      for (const [letter, t] of Object.entries(parts)) {
+        if (byLetter[letter]) byLetter[letter].text_md = t;
+        else state.opts.push({ letter, text_md: t, marked_in_scan: false });
+      }
+      state.opts.sort((x, y) => x.letter.localeCompare(y.letter));
+      drawOpts(); markDirty(); refreshPreview();
+      toast(`Opciones ${Object.keys(parts).join(", ")} escritas (${via}); revísalas con la página`);
+    } else {
+      const area = dest === "last" ? (state.lastArea && state.lastArea.isConnected ? state.lastArea : $("#f-stem")) : $("#" + dest);
+      if (!area.value.trim() || dest !== "last") { area.focus(); area.select(); }
+      insertAt(area, text, true);
+      fit(area);
+      toast(`Texto escrito en ${fieldName(area)} (${via}); revísalo con la página`);
+    }
     cancelCrop();
   } catch (e) { toast(e.message, true); }
+}
+
+// "A. uno B. dos…" split by option letter. The first option's letter is often lost under the answer bubble, so text
+// before the first letter found is the option just before it.
+function splitOptions(text) {
+  const rx = /(^|\n|\s)([A-E])[.)]\s+/g;
+  const marks = [];
+  let m;
+  while ((m = rx.exec(text))) marks.push({ letter: m[2], at: m.index + m[1].length, start: rx.lastIndex });
+  const seq = [];
+  for (const mk of marks) { const want = seq.length ? String.fromCharCode(seq[seq.length - 1].letter.charCodeAt(0) + 1) : null; if (!want || mk.letter === want) seq.push(mk); }
+  if (seq.length < 2) return null;
+  const out = {};
+  const head = text.slice(0, seq[0].at).replace(/^[^A-Za-zÁÉÍÓÚÑáéíóúñ¿¡0-9$(]+/, "").trim();
+  if (head && seq[0].letter !== "A") out[String.fromCharCode(seq[0].letter.charCodeAt(0) - 1)] = head;
+  seq.forEach((mk, i) => { out[mk.letter] = text.slice(mk.start, i + 1 < seq.length ? seq[i + 1].at : undefined).replace(/\s+/g, " ").trim(); });
+  return out;
+}
+
+async function tableFromBox() {
+  try {
+    const { spec, engine } = await readBox("table");
+    cancelCrop();
+    openStudio("new", spec);
+    toast(`Tabla leída con ${ENGINE_NAMES[engine] || engine}; revisa cada celda con la página`);
+  } catch (e) { toast(e.message, true); }
+}
+
+// Joins lines cut by the scan: hyphenated word breaks, single line breaks inside a paragraph, doubled spaces.
+function cleanText(t) {
+  return t.replace(/\r/g, "")
+    .replace(/(\p{L})-\n(\p{Ll})/gu, "$1$2")
+    .replace(/([^\n])\n(?!\n|\s*[A-E][.)]\s|\s*[-•*|]|\s*\d+[.)]\s)/g, "$1 ")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/ +([,.;:?!)])/g, "$1")
+    .replace(/([¿¡(]) +/g, "$1")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+function cleanField() {
+  const area = state.lastArea;
+  if (!area || !area.isConnected) { toast("Primero haz clic en un campo de texto"); return; }
+  const before = area.value, after = cleanText(before);
+  if (after === before) { toast("El texto ya estaba limpio"); return; }
+  area.focus();
+  area.select();
+  document.execCommand("insertText", false, after) || (area.value = after);
+  area.dispatchEvent(new Event("input", { bubbles: true }));
+  toast("Texto limpiado (Ctrl+Z lo deshace)");
 }
 
 function goPage(p) {
@@ -1061,10 +1261,10 @@ const numText = (v) => (v == null ? "" : typeof v === "number" ? String(v).repla
 
 const studio = { draft: null, mode: "form" };
 
-function openStudio(id) {
+function openStudio(id, given = null) {
   const d = state.detail;
   const f = id === "new" ? null : d.native_figures.find(x => x.id === id);
-  const spec = f?.spec ? JSON.parse(JSON.stringify(f.spec)) : starter(f?.kind || "bar");
+  const spec = given || (f?.spec ? JSON.parse(JSON.stringify(f.spec)) : starter(f?.kind || "bar"));
   if (f && !spec.kind) spec.kind = f.kind;
   studio.draft = { id, target: f?.target || "stem", option: f?.option || "", fidelity: f?.fidelity || "draft", spec };
   studio.mode = "form";

@@ -24,6 +24,7 @@ REPO = Path(__file__).resolve().parents[1]
 if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 from icfes_view.golden import validate_golden  # noqa: E402
+from icfes_admin import ocr  # noqa: E402
 
 EXAM_ID = re.compile(r"^[A-Za-z0-9_-]+$")
 QUESTION_PREFIX = re.compile(r"^Q(\d+):")
@@ -246,7 +247,7 @@ class Store:
         order = [first] + ([] if scan["pages"] else [first - 1, first + 1, first - 2, first + 2])
         rx = re.compile(rf"^\s*{n}\s*[.)]?(\s|$)")
         for page in order:
-            for text, cx, cy, left, height in pages.get(page, []):
+            for text, cx, cy, left, height in (pages.get(page) or {}).get("lines", []):
                 if rx.match(text) and left < 0.6:
                     return {"page": page, "y": round(max(0.0, cy - 0.8 * height), 4)}
         return None
@@ -310,6 +311,28 @@ class Store:
         raw["figures"] = [f for f in figs if f is not hit]
         self._write(p, json.dumps(raw, ensure_ascii=False, indent=2) + "\n", p.stem)
         return {"deleted": fig_id}
+
+    def search(self, text, exam=None, limit=60):
+        """Questions whose stem, own text, options or shared passage contain all the words, accents ignored."""
+        words = [w for w in _fold(text).split() if w]
+        if not words:
+            return []
+        hits = []
+        for e in ([self._exam(exam)] if exam else self.exam_ids()):
+            g = self.golden(e)
+            groups = {x["id"]: x for x in g["groups"]}
+            for q in g["questions"]:
+                grp = groups.get(q.get("group_id")) or {}
+                parts = [q.get("stem_md"), q.get("stimulus_md"), grp.get("passage_md")] + [o.get("text_md") for o in q.get("options", [])]
+                body = " ".join(p for p in parts if p)
+                folded = _fold(body)
+                if all(w in folded for w in words):
+                    at = folded.find(words[0])
+                    hits.append({"exam": e, "number": q["number"], "section": q.get("section"),
+                                 "snippet": re.sub(r"\s+", " ", body[max(0, at - 60): at + 140]).strip()})
+                    if len(hits) >= limit:
+                        return hits
+        return hits
 
     def all_native_figures(self, exam):
         """Every native figure of the exam by question number, so the page can find invalid specs."""
@@ -488,24 +511,7 @@ class Store:
         """Cuts a box out of the original page (PDF, or the scan PNG) and stores it as the question's figure."""
         exam = self._exam(exam)
         x0, y0, x1, y1 = self._box(box)
-        fitz = _pymupdf()
-        if fitz is None:
-            raise BadRequest("para recortar instala PyMuPDF: python -m pip install pymupdf")
-        pdf = self.sources.get(exam)
-        if pdf is not None and pdf.is_file():
-            path = pdf
-        else:
-            path = self.scan_file(exam, page)
-            if path is None:
-                raise NotFound("no page to crop for that exam and page")
-            page = 1
-        with fitz.open(path) as doc:
-            if not 1 <= page <= doc.page_count:
-                raise NotFound(f"{exam} has pages 1-{doc.page_count}")
-            pg = doc[page - 1]
-            r = pg.rect
-            clip = fitz.Rect(r.x0 + x0 * r.width, r.y0 + y0 * r.height, r.x0 + x1 * r.width, r.y0 + y1 * r.height)
-            data = pg.get_pixmap(dpi=dpi, clip=clip).tobytes("png")
+        data = self._render_box(exam, page, (x0, y0, x1, y1), dpi).tobytes("png")
         return self.add_scan_figure(exam, n, data, option=option, replaces=replaces, page=page,
                                     box=[round(v, 4) for v in (x0, y0, x1, y1)])
 
@@ -557,65 +563,94 @@ class Store:
         self._write(mp, json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", f"{exam}.manifest")
         return {"deleted": fig_id}
 
-    def _ocr_doc(self, exam):
-        """The Azure layout result for this exam's PDF, matched by file name: {page number: [(text, cx, cy)]} in page fractions."""
-        if exam in self._ocr_pages:
-            return self._ocr_pages[exam]
-        pages = None
+    def _render_box(self, exam, page, box, dpi):
+        """Pixels of a box on the original page (the PDF, or the scan PNG when there is no PDF)."""
+        x0, y0, x1, y1 = box
+        fitz = _pymupdf()
+        if fitz is None:
+            raise BadRequest("para recortar instala PyMuPDF: python -m pip install pymupdf")
         pdf = self.sources.get(exam)
-        if self.ocr and self.ocr.is_dir() and pdf is not None:
-            for f in sorted(self.ocr.glob("*.json")):
-                try:
-                    doc = json.loads(f.read_text(encoding="utf-8"))
-                except ValueError:
-                    continue
-                if (doc.get("source") or {}).get("file") != pdf.name:
-                    continue
-                pages = {}
-                for chunk in doc.get("chunks", []):
-                    res = chunk.get("result", {})
-                    res = res.get("analyzeResult", res)
-                    start, end = chunk.get("page_start"), chunk.get("page_end")
-                    for p in res.get("pages", []):
-                        num = p["pageNumber"]
-                        if not (start and end and start <= num <= end):
-                            num += chunk.get("page_offset") or 0
-                        w, h = p.get("width") or 1, p.get("height") or 1
-                        rows = []
-                        for line in p.get("lines", []):
-                            poly = line.get("polygon") or []
-                            if len(poly) < 8:
-                                continue
-                            xs, ys = poly[0::2], poly[1::2]
-                            rows.append((line.get("content", ""), sum(xs) / len(xs) / w, sum(ys) / len(ys) / h,
-                                         min(xs) / w, max(ys) / h - min(ys) / h))
-                        pages[num] = rows
-                break
-        self._ocr_pages[exam] = pages
-        return pages
+        if pdf is not None and pdf.is_file():
+            path = pdf
+        else:
+            path = self.scan_file(exam, page)
+            if path is None:
+                raise NotFound("no page to crop for that exam and page")
+            page = 1
+        with fitz.open(path) as doc:
+            if not 1 <= page <= doc.page_count:
+                raise NotFound(f"{exam} has pages 1-{doc.page_count}")
+            pg = doc[page - 1]
+            r = pg.rect
+            clip = fitz.Rect(r.x0 + x0 * r.width, r.y0 + y0 * r.height, r.x0 + x1 * r.width, r.y0 + y1 * r.height)
+            return pg.get_pixmap(dpi=dpi, clip=clip)
+
+    def _ocr_doc(self, exam):
+        """The saved Azure layout result for this exam's PDF: {page: {"lines", "tables"}} in page fractions, or None."""
+        if exam not in self._ocr_pages:
+            pdf = self.sources.get(exam)
+            ok = self.ocr and self.ocr.is_dir() and pdf is not None
+            self._ocr_pages[exam] = ocr.load_saved(self.ocr, pdf.name) if ok else None
+        return self._ocr_pages[exam]
 
     def ocr_available(self, exam):
-        return self._ocr_doc(exam) is not None
+        return {"saved": self._ocr_doc(exam) is not None, "azure": ocr.azure_config() is not None}
+
+    def ocr_box(self, exam, page, box, engine="auto", want="text"):
+        """Text (or a table spec) from a box on the page. engine: auto, saved, azure or local.
+
+        Auto uses the saved Azure reading when it has something in the box, then Azure on the box, then RapidOCR.
+        """
+        exam = self._exam(exam)
+        box = self._box(box)
+        if engine not in ("auto", "saved", "azure", "local"):
+            raise BadRequest("engine must be auto, saved, azure or local")
+        if want not in ("text", "table"):
+            raise BadRequest("want must be text or table")
+        order = {"auto": ["saved", "azure", "local"], "saved": ["saved"], "azure": ["azure"], "local": ["local"]}[engine]
+        if engine == "auto" and ocr.azure_config() is None:
+            order.remove("azure")
+        if want == "table":
+            # RapidOCR reads lines, not tables, so a table always comes from Azure.
+            order = [e for e in (order if engine != "local" else ["saved", "azure"]) if e != "local"]
+            if ocr.azure_config() is None and "azure" in order and engine != "azure":
+                order.remove("azure")
+        problems = []
+        for name in order:
+            try:
+                found = self._read_with(name, exam, page, box)
+            except ocr.OcrError as e:
+                problems.append(str(e))
+                continue
+            if found is None:
+                continue
+            if want == "table":
+                if found["tables"]:
+                    best = max(found["tables"], key=lambda t: len(t["cells"]))
+                    return {"engine": name, "spec": ocr.table_spec(best)}
+                continue
+            if found["lines"]:
+                return {"engine": name, "text": ocr.join_lines(found["lines"])}
+        what = "ninguna tabla" if want == "table" else "texto"
+        raise NotFound(f"no se encontró {what} en el recuadro" + (f" ({'; '.join(problems)})" if problems else ""))
+
+    def _read_with(self, name, exam, page, box):
+        if name == "saved":
+            pages = self._ocr_doc(exam)
+            if pages is None:
+                if self.ocr is None:
+                    raise ocr.OcrError("no hay lectura guardada de Azure (abre el editor con --ocr)")
+                return None
+            got = pages.get(page) or {"lines": [], "tables": []}
+            return {"lines": ocr.inside(got["lines"], box), "tables": ocr.tables_inside(got["tables"], box)}
+        pix = self._render_box(exam, page, box, dpi=300)
+        if name == "azure":
+            return ocr.azure_read(pix.tobytes("png"))
+        return ocr.rapid_read(pix.samples, pix.width, pix.height, pix.n)
 
     def ocr_text(self, exam, page, box):
-        """Text of the lines inside a box, from the Azure reading of the scan. Lines on one row are joined; a gap starts a paragraph."""
-        exam = self._exam(exam)
-        x0, y0, x1, y1 = self._box(box)
-        pages = self._ocr_doc(exam)
-        if pages is None:
-            raise NotFound("no OCR reading for this exam (start the editor with --ocr pointing at icfes-azure-data/json)")
-        rows = [r for r in pages.get(page, []) if x0 <= r[1] <= x1 and y0 <= r[2] <= y1]
-        out, last = [], None
-        for text, cx, cy, left, height in rows:
-            if last is not None and cy - last[0] > 1.9 * max(height, last[1]):
-                out.append("\n\n")
-            elif last is not None:
-                out.append(" ")
-            out.append(text)
-            last = (cy, height)
-        joined = "".join(out)
-        # Words cut with a hyphen at a line end are joined again.
-        return {"text": re.sub(r"(\w)- (\w)", r"\1\2", joined)}
+        """Text of the saved Azure lines inside a box (kept for older callers)."""
+        return {"text": self.ocr_box(exam, page, box, engine="saved")["text"]}
 
     # ----- pictures pasted into questions ----------------------------------
 
@@ -736,6 +771,12 @@ class Store:
         else:
             answers[str(n)] = letter
         self._write(path, json.dumps(key, ensure_ascii=False, indent=1) + "\n", f"{exam}.key")
+
+
+def _fold(text):
+    import unicodedata
+    text = unicodedata.normalize("NFKD", (text or "").lower())
+    return "".join(c for c in text if not unicodedata.combining(c))
 
 
 def _text(value, field):
