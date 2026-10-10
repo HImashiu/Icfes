@@ -3,6 +3,7 @@ import Icon from "../components/Icon.jsx";
 import Mascot from "../components/Mascot.jsx";
 import { formatClock, questionsFor, timedSeconds } from "../lib/exam.js";
 import { areaColor, fmtInt } from "../lib/brand.js";
+import { WEAKEST_AREA } from "../data/mock.js";
 
 // Nuevo simulacro: booklet, scope (whole exam or one area), mode, and a sticky start button.
 export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam }) {
@@ -10,7 +11,7 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam }
   const [mode, setMode] = useState("practice");
   const scoped = questionsFor(exam, scope);
   const minutes = timedSeconds(scoped) / 60;
-  const hint = mode === "timed" ? `Tiempo: ${formatClock(timedSeconds(scoped))}` : "+10 XP por acierto";
+  const hint = mode === "timed" ? `Tiempo: ${formatClock(timedSeconds(scoped))}` : `+10 XP por acierto · +20 en ${WEAKEST_AREA}`;
 
   return (
     <section className="setup">

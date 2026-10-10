@@ -2,6 +2,42 @@ import { useState } from "react";
 import QuestionView from "../components/QuestionView.jsx";
 import Icon from "../components/Icon.jsx";
 
+const REPORTS_KEY = "condor:reports";
+
+// Per-question error report. Reports are kept in this browser only; there is no review team behind them yet.
+function ReportError({ questionKey }) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  const [sent, setSent] = useState(false);
+  const submit = (e) => {
+    e.preventDefault();
+    if (!text.trim()) return;
+    try {
+      const prev = JSON.parse(window.localStorage.getItem(REPORTS_KEY) ?? "[]");
+      window.localStorage.setItem(REPORTS_KEY, JSON.stringify([...prev, { question: questionKey, text: text.trim(), at: new Date().toISOString() }]));
+    } catch {
+      /* storage unavailable: the report is shown as sent for this page only */
+    }
+    setSent(true);
+  };
+  if (sent) return <p className="caption">Gracias. Tu reporte quedó guardado en este navegador.</p>;
+  if (!open) {
+    return (
+      <button type="button" className="link report-link" onClick={() => setOpen(true)}>Reportar un error en esta respuesta</button>
+    );
+  }
+  return (
+    <form className="report-form" onSubmit={submit}>
+      <label className="label" htmlFor={`report-${questionKey}`}>Qué está mal</label>
+      <textarea id={`report-${questionKey}`} rows={3} value={text} onChange={(e) => setText(e.target.value)} />
+      <div className="report-actions">
+        <button type="button" className="secondary" onClick={() => setOpen(false)}>Cancelar</button>
+        <button type="submit" className="primary" disabled={!text.trim()}>Enviar reporte</button>
+      </div>
+    </form>
+  );
+}
+
 const CONFIDENCE = { high: "alta", medium: "media", low: "baja" };
 
 // Revisión: filters with counts, a strip of colored question cells, the question card,
@@ -94,6 +130,7 @@ export default function Review({ questions, attempt, answerKey, keyStatus, notes
               <p>{note.reason}</p>
             </div>
           )}
+          <ReportError key={q.key} questionKey={q.key} />
           <div className="test-controls">
             <button type="button" className="secondary" onClick={() => setIndex(i - 1)} disabled={i === 0}>Anterior</button>
             <button type="button" className="secondary" onClick={() => setIndex(i + 1)} disabled={i >= visible.length - 1}>

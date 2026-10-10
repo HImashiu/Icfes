@@ -4,6 +4,10 @@ import QuestionView from "../components/QuestionView.jsx";
 import Icon from "../components/Icon.jsx";
 import { formatClock } from "../lib/exam.js";
 import { areaColor, fmtInt } from "../lib/brand.js";
+import { WEAKEST_AREA } from "../data/mock.js";
+
+// +10 XP per correct practice answer, double in the weakest area.
+const xpFor = (section) => (section === WEAKEST_AREA ? 20 : 10);
 
 // The answering screen. Shows only the progress, the timer or mode, the flag, the question,
 // the options and the map: no streak, XP chart or league here.
@@ -69,7 +73,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
     onChange((a) => {
       if (a.checked?.[q.key]) return a;
       const hit = Boolean(correctLetter) && a.answers[q.key] === correctLetter;
-      return { ...a, checked: { ...(a.checked ?? {}), [q.key]: true }, xp: (a.xp ?? 0) + (hit ? 10 : 0) };
+      return { ...a, checked: { ...(a.checked ?? {}), [q.key]: true }, xp: (a.xp ?? 0) + (hit ? xpFor(q.section) : 0) };
     });
 
   const submit = () => {
@@ -84,7 +88,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
       <Icon name={hasKey && isCorrect ? "check" : "x"} size={22} />
       <div>
         <strong>
-          {!hasKey ? "Clave pendiente" : isCorrect ? "¡Correcto! +10 XP" : `Casi. La respuesta es ${correctLetter}`}
+          {!hasKey ? "Clave pendiente" : isCorrect ? `¡Correcto! +${xpFor(q.section)} XP` : `Casi. La respuesta es ${correctLetter}`}
         </strong>
         <span>{hasKey ? "Clave preliminar, no oficial" : "Esta pregunta todavía no tiene clave."}</span>
       </div>

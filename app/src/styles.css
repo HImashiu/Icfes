@@ -547,3 +547,34 @@ button.card { text-align: left; width: 100%; }
   .stat-grid { grid-template-columns: 1fr 1fr; }
   .quick-grid { grid-template-columns: 1fr; }
 }
+
+.report-link { align-self: start; }
+.report-form { display: grid; gap: 8px; }
+.report-form textarea {
+  width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line);
+  background: var(--surface-2); color: var(--text); resize: vertical; font: inherit;
+}
+.report-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.report-actions .primary, .report-actions .secondary { min-height: 44px; padding: 0 16px; font-size: 15px; }
+
+/* Teacher: left column (assignments, at-risk students) and right column (calendar). */
+.t-col { flex: 1 1 460px; min-width: 0; display: grid; gap: 16px; align-content: start; }
+.t-col-side { flex: 0 1 320px; }
+.calendar { gap: 12px; }
+.cal-title { font-family: "Bricolage Grotesque", sans-serif; font-size: 18px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+.cal-wd { font-size: 12px; font-weight: 700; color: var(--text-2); padding: 4px 0; }
+.cal-cell {
+  position: relative; min-height: 40px; display: grid; place-items: center; border-radius: 10px;
+  font-size: 14px; font-variant-numeric: tabular-nums;
+}
+.cal-cell.empty { visibility: hidden; }
+.cal-cell.today { background: var(--accent); color: var(--on-accent); font-weight: 800; }
+.cal-cell.event::after {
+  content: ""; position: absolute; left: 28%; right: 28%; bottom: 5px; height: 3px; border-radius: 2px; background: var(--ev);
+}
+.cal-legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 13px; color: var(--text-2); }
+.cal-legend li { display: flex; align-items: center; }
+
+/* Full-width teacher view on desktop. */
+.app:has(> .teacher) { max-width: none; padding: 0; }
