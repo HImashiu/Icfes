@@ -14,6 +14,9 @@
   const AXIS_KINDS = ['bar', 'line', 'scatter', 'curve', 'combo'];
   // Booklets print in grey-scale, so series use fill patterns, not grey shades.
   const PATTERNS = ['hatch', 'solid', 'white', 'dots', 'vhatch', 'hhatch', 'xhatch', 'sparse', 'dense', 'grey'];
+  // Print greys for bars and lines: light, mid and dark, so a grey-scale print can show three tints.
+  const GREYS = { lightgrey: '#dcdcdc', grey: '#b8b8b8', darkgrey: '#666666' };
+  const SERIES_PATTERNS = ['hatch', 'solid', 'white', 'dots', 'vhatch', 'hhatch', 'xhatch', 'sparse', 'dense', 'lightgrey', 'grey', 'darkgrey'];
   const W = 480;
   const H = 300;
   const FONT = 'Arial, Helvetica, sans-serif';
@@ -39,6 +42,7 @@
     const series = Array.isArray(spec.series) ? spec.series : [];
     series.forEach((s, i) => { if (s && s.style != null && !['solid', 'dashed', 'dotted'].includes(s.style)) errs.push(`series[${i}].style must be solid, dashed or dotted`); });
     series.forEach((s, i) => { if (s && s.marker != null && !MARKERS.includes(s.marker)) errs.push(`series[${i}].marker must be one of ${MARKERS.join(', ')}`); });
+    series.forEach((s, i) => { if (s && s.pattern != null && !SERIES_PATTERNS.includes(s.pattern)) errs.push(`series[${i}].pattern must be one of ${SERIES_PATTERNS.join(', ')}`); });
     series.forEach((s, i) => {
       if (!s || s.note == null) return;
       if (typeof s.note !== 'string') errs.push(`series[${i}].note must be a string`);
@@ -300,7 +304,7 @@
     const p = series.pattern || PATTERNS[i % PATTERNS.length];
     if (p === 'solid') return '#000';
     if (p === 'white') return '#fff';
-    if (p === 'grey') return '#b8b8b8';
+    if (GREYS[p]) return GREYS[p];
     if (['dots', 'vhatch', 'hhatch', 'xhatch', 'sparse', 'dense'].includes(p)) return `url(#${id}-${p})`;
     return `url(#${id}-hatch)`;
   }
