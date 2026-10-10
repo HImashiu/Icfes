@@ -469,3 +469,17 @@ test('a line series can carry a printed note at a point, to the side of a refere
   assert.ok(F.validate({ ...spec, series: [{ points: [[0, 1], [1, 2]], note: 'x', noteSide: 'top' }] }).length > 0);
   assert.ok(F.validate({ ...spec, series: [{ points: [[0, 1], [1, 2]], note: 'x', noteAt: 1.5 }] }).length > 0);
 });
+
+test('an inverted curve is a dark panel with light strokes and text', () => {
+  const c = { kind: 'curve', title: 'Luz', x: { label: 'Altura' }, y: { label: 'Luz' }, series: [{ points: [[0, 0], [1, 2], [2, 3]] }] };
+  const dark = F.render({ ...c, inverted: true });
+  assert.ok(dark.includes('<rect width="480" height="300" fill="#000"/>'), 'dark background');
+  assert.ok(dark.includes('<path d="M') && dark.includes('stroke="#fff"'), 'light stroke');
+  assert.ok(!dark.includes('stroke="#000"'), 'no black stroke left');
+  assert.ok(dark.includes('fill="#fff"') && /<text [^>]*fill="#fff"/.test(dark), 'light text');
+  // The default stays a black-on-white figure.
+  const plain = F.render(c);
+  assert.ok(plain.includes('<rect width="480" height="300" fill="#fff"/>'));
+  assert.ok(F.validate({ kind: 'bar', inverted: true, x: { label: 'a' }, y: { label: 'b' }, categories: ['x'], series: [{ values: [1] }] }).length > 0);
+  assert.ok(F.validate({ ...c, inverted: 'yes' }).length > 0);
+});

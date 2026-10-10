@@ -160,6 +160,8 @@
       else spec.shapes.forEach((s, i) => errs.push(...diagramShapeErrors(s, i)));
       if (spec.view != null && (!Array.isArray(spec.view) || spec.view.length !== 4 || !spec.view.every(isNum) || spec.view[2] <= 0 || spec.view[3] <= 0)) errs.push('view must be [x, y, width, height] with positive size');
     }
+    if (spec.inverted != null && typeof spec.inverted !== 'boolean') errs.push('inverted must be true or false');
+    if (spec.inverted === true && spec.kind !== 'line' && spec.kind !== 'curve') errs.push('inverted is only for line and curve charts');
     if (spec.kind === 'geometry') {
       const pts = spec.points || {};
       const ok = (v) => (typeof v === 'string' ? pts[v] != null : Array.isArray(v) && v.length === 2 && isNum(v[0]) && isNum(v[1]));
@@ -1138,7 +1140,17 @@
       : spec.kind === 'scatter' ? scatterSvg(spec, id)
       : spec.kind === 'curve' ? curveSvg(spec, id)
       : pieSvg(spec, id);
-    return svgOpen(spec.title, id) + body.join('') + '</svg>';
+    const svg = svgOpen(spec.title, id) + body.join('') + '</svg>';
+    return spec.inverted ? invertPanel(svg) : svg;
+  }
+
+  // A dark panel with light strokes and text, as some scans print. Black and white swap everywhere in the chart,
+  // and the grid turns from light grey to dark grey so it still reads on the dark background.
+  function invertPanel(svg) {
+    return svg.replace(/#000(?![0-9a-fA-F])/g, '@@ink')
+      .replace(/#fff(?![0-9a-fA-F])/gi, '#000')
+      .replace(/@@ink/g, '#fff')
+      .replace(/#e4e4e4/g, '#444444');
   }
 
   return { KINDS, PATTERNS, MAP_KEYS, validate, render, fmt, niceStep, scaleFor, TABLE_CSS, textLayout, textOverflows, textBox, registerMap };

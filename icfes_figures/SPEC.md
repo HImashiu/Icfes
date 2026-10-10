@@ -93,6 +93,8 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 
 - `"ticks": true` on an axis prints its tick values, from that axis' `min`, `max` and `step`, as the other charts do. Without it a curve stays shape-only.
 
+- `"inverted": true` on a `line` or `curve` draws a dark panel with light strokes and text, for prints that are black with white lines. The grid turns dark grey. Only `line` and `curve` take it.
+
 ### `bar` with a second y axis
 
 ```json
