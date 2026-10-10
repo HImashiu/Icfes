@@ -196,10 +196,44 @@ class Store:
             "hidden_reasons": self.hidden_reasons(q, groups, figs),
             "messages": per_q.get(n, {"errors": [], "warnings": []}),
             "figures": figs,
+            "native_figures": self.native_figures(exam, n),
             "key": answers.get(str(n)),
             "scan_pages": q.get("source", {}).get("pages", []),
             "numbers": [x["number"] for x in g["questions"]],
         }
+
+    def native_figures(self, exam, n):
+        """Figure specs for this question from figures/specs/<exam>.json (icfes-figures-specs/1).
+
+        The page validates and draws them with the app's engine. Entries with no spec are kept, so they show as pending.
+        """
+        p = self.figures / "specs" / f"{exam}.json"
+        # The two M booklets share one spec file; its ids start with m1- (1ra) or m2- (2da).
+        booklet = None
+        if not p.exists() and exam.startswith("S11-M_"):
+            p = self.figures / "specs" / "S11-M_1ra-2da.json"
+            booklet = "m1" if exam.endswith("1ra") else "m2"
+        if not p.exists():
+            return []
+        raw = json.loads(p.read_text(encoding="utf-8"))
+        if raw.get("format") not in ("icfes-figures-specs/1", "icfes-figure/1"):
+            return []
+        out = []
+        for fig in raw.get("figures", []):
+            loc = fig.get("location") or {}
+            if str(loc.get("question")) != str(n):
+                continue
+            if booklet and not str(fig.get("id", "")).startswith(booklet + "-"):
+                continue
+            out.append({
+                "id": fig.get("id"),
+                "kind": fig.get("kind"),
+                "target": loc.get("stem_or_option") or "stem",
+                "option": loc.get("option"),
+                "spec": fig.get("spec"),
+                "fidelity": fig.get("fidelity", "draft"),
+            })
+        return out
 
     def scan_file(self, exam, page):
         """Best-effort lookup in the 300 dpi render folder, named like 'o1-10-10.png' (letter, session, page)."""

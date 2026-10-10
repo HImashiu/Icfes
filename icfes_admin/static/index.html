@@ -82,7 +82,21 @@ textarea{width:100%;min-height:110px;font:400 14px/1.45 ui-monospace,Menlo,monos
 @media (max-width:920px){.grid2{grid-template-columns:1fr} main{padding:16px}.top{padding:12px 16px}}
 img.scan{width:100%;border-radius:12px;border:1px solid var(--line)}
 img.fig{max-width:100%;background:#fff;border-radius:12px;margin:4px 0}
+.figure.native{background:transparent}
+.figure.native svg{max-width:100%;height:auto}
+.figure-slot{display:block;padding:12px;border:1px dashed #c9c7bd;border-radius:12px;color:var(--paper-2);font-size:13px}
+.figure-slot.bad{color:#b42318;border-color:#b42318}
+.opt .figure{background:var(--paper);color:var(--paper-ink);border-radius:12px;padding:8px;margin-top:8px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (min-width:1200px){
+ body{display:grid;grid-template-columns:232px minmax(0,1fr)}
+ .top{position:sticky;top:0;height:100vh;flex-direction:column;align-items:stretch;gap:16px;padding:20px 16px;border-right:1px solid var(--line);border-bottom:0}
+ .top .seg{flex-direction:column}
+ .top .seg button{text-align:left;min-height:44px}
+ .top .spacer{flex:1}
+ .top .pill{justify-content:center}
+ main{max-width:none;padding:24px 28px}
+}
 </style>
 </head>
 <body>
@@ -97,6 +111,7 @@ img.fig{max-width:100%;background:#fff;border-radius:12px;margin:4px 0}
   <button class="pill" id="theme" title="Tema">Tema</button>
 </header>
 <main id="app"></main>
+<script src="figures-render.js"></script>
 <script src="render.bundle.js"></script>
 <script>
 const $ = (s) => document.querySelector(s);
@@ -211,11 +226,26 @@ async function openQuestion(n) {
   renderEditor();
 }
 
-function studentView(q, g, letterMark) {
+// Draws one native figure with the app's engine, the same way the student app does. Invalid or missing specs show as pending.
+function drawNative(f) {
+  const E = window.ICFESFigures;
+  if (!E || !f.spec) return `<span class="figure-slot">Figura pendiente de dibujar${f.id ? `: ${esc(f.id)}` : ""}</span>`;
+  const errs = E.validate(f.spec);
+  if (errs.length) return `<span class="figure-slot bad">Figura inválida: ${esc(errs.join("; "))}</span>`;
+  try {
+    const markup = window.DOMPurify.sanitize(E.render(f.spec), { USE_PROFILES: { svg: true, svgFilters: true, html: true } });
+    return `<div class="figure native">${markup}</div>`;
+  } catch (e) {
+    return `<span class="figure-slot bad">${esc(e.message)}</span>`;
+  }
+}
+
+function studentView(q, g, figs = []) {
+  const stemFigs = figs.filter(f => f.target !== "option").map(drawNative).join("");
   const opts = q.options.map(o => `
     <div class="opt" style="pointer-events:none">
       <span class="tile">${esc(o.letter)}</span>
-      <div class="body">${render(o.text_md)}</div>
+      <div class="body">${render(o.text_md)}${figs.filter(f => f.target === "option" && f.option === o.letter).map(drawNative).join("")}</div>
     </div>`).join("");
   const dir = g ? `<div class="label" style="color:var(--paper-2)">${esc(g.directions)}</div><div class="stimulus">${render(g.passage_md)}</div><hr style="border:0;border-top:1px solid #d8d6cc;margin:12px 0">` : "";
   return `
@@ -223,6 +253,7 @@ function studentView(q, g, letterMark) {
       <div class="label" style="color:var(--paper-2)">Pregunta ${q.number}</div>
       ${dir}
       ${q.stimulus_md ? `<div class="stimulus">${render(q.stimulus_md)}</div>` : ""}
+      ${stemFigs}
       <div class="stem">${render(q.stem_md)}</div>
       <div class="src">Fuente: ICFES, Saber 11 · ${esc(state.exam)}</div>
     </div>
@@ -272,7 +303,7 @@ function renderEditor() {
       </div>
       <div>
         <div class="card"><div class="label">Vista del estudiante</div>
-          <div id="preview">${studentView(q, g)}</div>
+          <div id="preview">${studentView(q, g, d.native_figures)}</div>
         </div>
         <div class="card">
           <div class="label">Guardar</div>
@@ -290,7 +321,10 @@ function renderEditor() {
           ${notes ? `<div class="label" style="margin-top:12px">Notas</div><ul class="muted">${notes}</ul>` : ""}
         </div>
         <div class="card"><div class="label">Escaneo (primera página)</div>${scan}</div>
-        <div class="card"><div class="label">Figuras trazadas</div>${figs}</div>
+        <div class="card"><div class="label">Figuras nativas (motor de la app)</div>
+          ${d.native_figures.length ? d.native_figures.map(f => `<div class="muted" style="margin-top:8px"><b>${esc(f.id)}</b> · ${esc(f.kind)} · ${esc(f.target)}${f.option ? " " + esc(f.option) : ""} · ${esc(f.fidelity)}</div>${drawNative(f)}`).join("") : `<p class="muted">Sin figura nativa para esta pregunta.</p>`}
+        </div>
+        <div class="card"><div class="label">Figuras trazadas (escaneo)</div>${figs}</div>
       </div>
     </div>`;
 
@@ -298,7 +332,7 @@ function renderEditor() {
   const refresh = () => {
     const current = { ...q, stem_md: $("#f-stem").value, stimulus_md: $("#f-stimulus").value,
       options: [...document.querySelectorAll("#f-opts [data-letter]")].map(t => ({ letter: t.dataset.letter, text_md: t.value })) };
-    $("#preview").innerHTML = studentView(current, g);
+    $("#preview").innerHTML = studentView(current, g, state.detail.native_figures);
   };
   document.querySelectorAll("#f-stem, #f-stimulus, #f-opts textarea").forEach(t => t.oninput = refresh);
   $("#back").onclick = () => setTab("questions");
