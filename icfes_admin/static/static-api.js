@@ -94,6 +94,8 @@
       exam: e, number: n, question: q, group: grp, hidden_reasons: hidden(e, q),
       messages: msgs(e, n), figures: [], native_figures: natives,
       key: answerOf(e, n), scan_pages: [], numbers: g.questions.map(x => x.number),
+      scan: { pages: (raw.source && raw.source.pages) || [], guess: 1, count: null, estimated: true },
+      anchor: null, undo: 0, ocr: false,
     };
   }
 
@@ -144,6 +146,7 @@
         return detail(e, n);
       }
       if ((m = path.match(/^\/api\/exams\/([^/]+)\/validation$/))) return D.validation[decodeURIComponent(m[1])];
+      if ((m = path.match(/^\/api\/exams\/([^/]+)\/figures$/))) return D.natives[decodeURIComponent(m[1])] || {};
       return fail(404, "not found");
     } catch (err) {
       if (err.status) throw Object.assign(err, { body: err.body || { error: err.message } });

@@ -215,3 +215,77 @@ def test_native_figure_is_created_and_updated(root):
     assert changed["kind"] == "line" and changed["option"] == "B"
     with pytest.raises(BadRequest):
         store.save_native_figure(EXAM, 1, "new", {"kind": "cube", "spec": {}})
+
+
+def _pdf(tmp_path, pages=2):
+    fitz = pytest.importorskip("fitz")
+    pdf = tmp_path / "source.pdf"
+    doc = fitz.open()
+    for i in range(pages):
+        doc.new_page().insert_text((72, 72), f"pagina {i + 1}")
+    doc.save(pdf)
+    sources = tmp_path / "pdf-sources.json"
+    sources.write_text(json.dumps({EXAM: str(pdf)}), encoding="utf-8")
+    return pdf, sources
+
+
+def test_a_box_on_the_page_becomes_a_scan_figure_the_app_shows(root, tmp_path):
+    _, sources = _pdf(tmp_path)
+    store = Store(root, sources=sources)
+    made = store.crop_page(EXAM, 1, 1, [0.1, 0.05, 0.6, 0.3])
+    assert made["method"] == "eyeballed_box" and made["question"] == 1
+    assert (root / "figures" / made["svg"]).read_bytes()[:4] == b"\x89PNG"
+    opt = store.crop_page(EXAM, 1, 2, [0.6, 0.3, 0.1, 0.05], option="b", replaces="t-q1-chart")
+    assert "-opt-b-" in opt["figure_id"] and opt["spec_id"] == "t-q1-chart"
+    ids = [f["figure_id"] for f in store.question_detail(EXAM, 1)["figures"]]
+    assert made["figure_id"] in ids and opt["figure_id"] in ids
+    with pytest.raises(BadRequest):
+        store.crop_page(EXAM, 1, 1, [0.1, 0.1, 0.1, 0.1])
+    store.delete_scan_figure(EXAM, 1, made["figure_id"])
+    assert made["figure_id"] not in [f["figure_id"] for f in store.question_detail(EXAM, 1)["figures"]]
+
+
+def test_ocr_text_comes_from_the_lines_inside_the_box(root, tmp_path):
+    pdf, sources = _pdf(tmp_path, pages=3)
+    ocr = tmp_path / "ocr"
+    ocr.mkdir()
+    line = lambda text, x, y: {"content": text, "polygon": [x, y, x + 3, y, x + 3, y + 0.2, x, y + 0.2]}
+    (ocr / "r.json").write_text(json.dumps({"source": {"file": pdf.name}, "chunks": [{"page_start": 1, "page_end": 3, "page_offset": 0, "result": {
+        "pages": [{"pageNumber": 3, "width": 8.5, "height": 11, "lines": [
+            line("1. Primera pregunta con una pala-", 0.5, 1.0), line("bra cortada", 0.5, 1.25), line("fuera del recuadro", 5.5, 1.0)]}]}}]}),
+        encoding="utf-8")
+    store = Store(root, sources=sources, ocr=ocr)
+    # Question 1 is recorded on page 3, where the OCR finds the line that starts with its number.
+    assert store.ocr_text(EXAM, 3, [0, 0, 0.5, 0.2])["text"] == "1. Primera pregunta con una palabra cortada"
+    assert store.question_detail(EXAM, 1)["anchor"]["page"] == 3
+    with pytest.raises(NotFound):
+        Store(root, sources=sources).ocr_text(EXAM, 1, [0, 0, 1, 1])
+
+
+def test_undo_puts_back_the_last_save_of_one_question(root):
+    store = Store(root)
+    store.update_question(EXAM, 1, {"stem_md": "primera", "answer": "B"})
+    store.update_question(EXAM, 3, {"stem_md": "otra pregunta"})
+    store.update_question(EXAM, 1, {"stem_md": "segunda"})
+    assert store.question_detail(EXAM, 1)["undo"] == 2
+    store.undo(EXAM, 1)
+    assert store.golden(EXAM)["questions"][0]["stem_md"] == "primera"
+    detail = store.undo(EXAM, 1)
+    assert detail["question"]["stem_md"] == "Pregunta 1?" and detail["key"] == "A"
+    assert store.golden(EXAM)["questions"][2]["stem_md"] == "otra pregunta"
+    with pytest.raises(BadRequest):
+        store.undo(EXAM, 1)
+
+
+def test_figure_saves_and_deletes_can_be_undone(root):
+    specs = root / "figures" / "specs"
+    specs.mkdir(parents=True)
+    (specs / f"{EXAM}.json").write_text(json.dumps({"format": "icfes-figures-specs/1", "exam": EXAM, "figures": []}), encoding="utf-8")
+    store = Store(root)
+    made = store.save_native_figure(EXAM, 2, "new", {"kind": "map", "spec": {"region": "colombia-departamentos"}})
+    store.delete_native_figure(EXAM, 2, made["id"])
+    assert store.native_figures(EXAM, 2) == []
+    store.undo(EXAM, 2)
+    assert [f["id"] for f in store.native_figures(EXAM, 2)] == [made["id"]]
+    store.undo(EXAM, 2)
+    assert store.native_figures(EXAM, 2) == []
