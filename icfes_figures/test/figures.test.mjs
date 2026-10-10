@@ -483,3 +483,27 @@ test('an inverted curve is a dark panel with light strokes and text', () => {
   assert.ok(F.validate({ kind: 'bar', inverted: true, x: { label: 'a' }, y: { label: 'b' }, categories: ['x'], series: [{ values: [1] }] }).length > 0);
   assert.ok(F.validate({ ...c, inverted: 'yes' }).length > 0);
 });
+
+test('bars take three print greys, and an unknown pattern is rejected', () => {
+  const bars = (pattern) => ({ kind: 'bar', x: { label: 'Mes' }, y: { label: 'Ventas' }, categories: ['A', 'B'], series: [{ name: 'Uno', values: [1, 2], pattern }] });
+  const fillOf = (p) => F.render(bars(p)).match(/<rect x="[-\d.]+" y="[-\d.]+" width="[-\d.]+" height="[-\d.]+" fill="([^"]+)"/)[1];
+  assert.equal(fillOf('lightgrey'), '#dcdcdc');
+  assert.equal(fillOf('grey'), '#b8b8b8');
+  assert.equal(fillOf('darkgrey'), '#666666');
+  assert.deepEqual(F.validate(bars('darkgrey')), []);
+  assert.ok(F.validate(bars('neon')).length > 0);
+});
+
+test('marker none draws a bare line: no point markers on line or curve series', () => {
+  const line = { kind: 'line', x: { label: 'Mes' }, y: { label: 'Casos' }, categories: ['Ene', 'Feb', 'Mar'], series: [{ name: 'Sin puntos', values: [1, 2, 3], marker: 'none' }] };
+  assert.deepEqual(F.validate(line), []);
+  const bare = F.render(line);
+  assert.ok(bare.includes('<polyline'), 'the line is drawn');
+  const body = bare.replace(/<defs>[\s\S]*?<\/defs>/g, '');
+  assert.ok(!body.includes('<circle') && !body.includes('<polygon points="'), 'no point markers');
+  const withMarkers = F.render({ ...line, series: [{ name: 'Sin puntos', values: [1, 2, 3] }] });
+  assert.ok(withMarkers.replace(/<defs>[\s\S]*?<\/defs>/g, '').includes('<circle'), 'the default still has markers');
+  const curve = { kind: 'curve', x: { label: 'Altura' }, y: { label: 'Luz' }, series: [{ points: [[0, 0], [1, 2], [2, 3]], marker: 'none' }] };
+  assert.deepEqual(F.validate(curve), []);
+  assert.ok(F.validate({ kind: 'scatter', x: { label: 'x' }, y: { label: 'y' }, series: [{ points: [[1, 2], [3, 4]], marker: 'none' }] }).length > 0);
+});

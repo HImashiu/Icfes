@@ -49,6 +49,8 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 - Legend entries come from each series' `name`. A series with no name gets no entry, so nothing is invented. Set `"legend": ["text", ...]` (one per series, `""` hides one) to print exactly the entries the scan shows.
 - A single series with no name draws no legend. `legend: false` on any chart hides the legend even with several series (use it when the scan prints none).
 
+- A series can set `"pattern"` to a print grey: `lightgrey`, `grey` (mid) or `darkgrey`. The other patterns are `hatch`, `solid`, `white`, `dots`, `vhatch`, `hhatch`, `xhatch`, `sparse` and `dense`. Any other value fails validation.
+
 ### `line`, a line over categorical x
 
 ```json
@@ -57,7 +59,7 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 
 - `null` leaves a gap, and the line breaks there. Lines are solid unless a series sets `"style": "dashed"`.
 - Set `"marker"` per series to `"circle"` (default), `"square"`, `"triangle"`, `"dot"` (filled circle),
-  `"star"`, `"diamond"` or `"cross"`, so series stay apart in grey-scale print. On line charts the legend
+  `"star"`, `"diamond"` or `"cross"`, so series stay apart in grey-scale print. `"none"` draws the line with no point markers, for prints that show a bare curve (line and curve only). On line charts the legend
   shows each series' marker in place of its colour swatch, so the marker is the key.
 
 ### `line` with numeric x
