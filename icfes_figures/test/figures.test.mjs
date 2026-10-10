@@ -397,3 +397,37 @@ test('legend: a list gives the printed entries; unnamed series get no invented e
   assert.ok(!listed.includes('>serie'), 'the empty entry is hidden');
   assert.deepEqual(F.validate({ ...two, legend: ['Solo esta', ''] }), []);
 });
+
+test('arcs run counter-clockwise from `from` to `to`, on the side the angles give', () => {
+  const arcFlags = (svg) => {
+    const m = svg.match(/<path d="M[^"]*A[\d.]+,[\d.]+ 0 (\d) (\d) /);
+    return m ? { large: +m[1], sweep: +m[2] } : null;
+  };
+  const geo = (arc) => ({ kind: 'geometry', points: { O: [0, 0], A: [1, 0], B: [0, 1], C: [-1, 0] }, arcs: [{ center: 'O', r: 1, ...arc }] });
+  assert.deepEqual(arcFlags(F.render(geo({ from: 0, to: 90 }))), { large: 0, sweep: 0 }, 'quarter arc');
+  assert.deepEqual(arcFlags(F.render(geo({ from: 0, to: 180 }))), { large: 0, sweep: 0 }, 'half arc');
+  assert.deepEqual(arcFlags(F.render(geo({ from: 0, to: 270 }))), { large: 1, sweep: 0 }, 'three-quarter arc');
+  assert.deepEqual(arcFlags(F.render(geo({ from: 90, to: 0 }))), { large: 1, sweep: 0 }, 'from above to 0 runs the long way round');
+});
+
+test('the semicircle in S11-G1 2da Q46 is drawn above its diameter', () => {
+  const spec = {
+    kind: 'geometry',
+    points: { A: [0, 0], B: [5, 0], C: [3.2, 2.4], _O: [2.5, 0] },
+    arcs: [{ center: [2.5, 0], r: 2.5, from: 0, to: 180 }],
+  };
+  const svg = F.render(spec);
+  const d = svg.match(/<path d="(M[^"]+)"/)[1];
+  const [, x0, y0] = d.match(/^M([-\d.]+),([-\d.]+)/);
+  const [, x1, y1] = d.match(/ ([-\d.]+),([-\d.]+)$/);
+  // Both ends sit on the diameter; the arc's top is the smaller screen y.
+  assert.ok(Math.abs(+y0 - +y1) < 0.5, 'ends on the same line');
+  assert.ok(/ 0 0 0 /.test(svg), 'counter-clockwise half turn');
+});
+
+test('polygons take a fill; the default stays unfilled', () => {
+  const base = { kind: 'geometry', points: { A: [0, 0], B: [4, 0], C: [2, 3] }, polygons: [{ vertices: ['A', 'B', 'C'] }] };
+  assert.ok(F.render(base).includes('fill="none"'));
+  assert.ok(F.render({ ...base, polygons: [{ vertices: ['A', 'B', 'C'], fill: 'solid' }] }).includes('fill="#000"'));
+  assert.ok(F.validate({ ...base, polygons: [{ vertices: ['A', 'B', 'C'], fill: 'neon' }] }).length > 0);
+});

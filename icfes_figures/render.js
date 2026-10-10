@@ -160,7 +160,10 @@
       if (!spec.points || typeof spec.points !== 'object') errs.push('points must be an object of name: [x, y]');
       Object.entries(pts).forEach(([k, v]) => { if (!Array.isArray(v) || v.length !== 2 || !isNum(v[0]) || !isNum(v[1])) errs.push(`points.${k} must be [x, y]`); });
       (spec.segments || []).forEach((g, i) => { if (!ok(g.a) || !ok(g.b)) errs.push(`segments[${i}] needs known endpoints a and b`); });
-      (spec.polygons || []).forEach((g, i) => { if (!Array.isArray(g.vertices) || g.vertices.length < 3 || !g.vertices.every(ok)) errs.push(`polygons[${i}] needs at least three known vertices`); });
+      (spec.polygons || []).forEach((g, i) => {
+        if (!Array.isArray(g.vertices) || g.vertices.length < 3 || !g.vertices.every(ok)) errs.push(`polygons[${i}] needs at least three known vertices`);
+        if (g.fill != null && !FILLS.includes(g.fill)) errs.push(`polygons[${i}].fill must be one of ${FILLS.join(', ')}`);
+      });
       (spec.circles || []).forEach((g, i) => { if (!ok(g.center) || !isNum(g.r) || g.r <= 0) errs.push(`circles[${i}] needs a center and a positive r`); });
       (spec.ellipses || []).forEach((g, i) => { if (!ok(g.center) || !isNum(g.rx) || !isNum(g.ry)) errs.push(`ellipses[${i}] needs a center, rx and ry`); });
       (spec.arcs || []).forEach((g, i) => { if (!ok(g.center) || !isNum(g.r) || !isNum(g.from) || !isNum(g.to)) errs.push(`arcs[${i}] needs center, r, from and to (degrees)`); });
@@ -742,7 +745,7 @@
     const line = (a, b, d) => `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="#000" stroke-width="1.6"${dash(d)}/>`;
     (spec.polygons || []).forEach((g) => {
       const v = g.vertices.map((q) => P(at(q)));
-      out.push(`<polygon points="${v.map((q) => q.map((n) => n.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="#000" stroke-width="1.6"${dash(g.dashed)}/>`);
+      out.push(`<polygon points="${v.map((q) => q.map((n) => n.toFixed(1)).join(',')).join(' ')}" fill="${paintFor(g.fill, id)}" stroke="#000" stroke-width="1.6"${dash(g.dashed)}/>`);
     });
     (spec.segments || []).forEach((g) => {
       const a = P(at(g.a)), b = P(at(g.b));
@@ -773,8 +776,10 @@
       const rad = (d) => (d * Math.PI) / 180;
       const p0 = [c[0] + r * Math.cos(rad(from)), c[1] - r * Math.sin(rad(from))];
       const p1 = [c[0] + r * Math.cos(rad(to)), c[1] - r * Math.sin(rad(to))];
-      const sweep = to - from > 180 || to - from < 0 ? 0 : 1;
-      return `M${p0[0].toFixed(1)},${p0[1].toFixed(1)} A${r},${r} 0 ${sweep === 1 ? 0 : 1} ${sweep === 1 ? 1 : 0} ${p1[0].toFixed(1)},${p1[1].toFixed(1)}`;
+      // The arc runs counter-clockwise (as the angles increase) from `from` to `to`. In SVG, sweep 0 is counter-clockwise on screen.
+      const span = ((to - from) % 360 + 360) % 360;
+      const large = span > 180 ? 1 : 0;
+      return `M${p0[0].toFixed(1)},${p0[1].toFixed(1)} A${r},${r} 0 ${large} 0 ${p1[0].toFixed(1)},${p1[1].toFixed(1)}`;
     };
     (spec.arcs || []).forEach((g) => {
       const c = P(at(g.center));

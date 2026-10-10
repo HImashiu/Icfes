@@ -145,6 +145,8 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 - `polygons` (`vertices`), `circles` (`center`, `r`), `ellipses` (`center`, `rx`, `ry`), `arcs`
   (`center`, `r`, `from`, `to` in degrees), `angles` (`vertex`, `a`, `b`, `label`, `r`) and `labels`
   (`at`, `text`, `anchor`). Dashed outlines take `dashed: true`.
+- `polygons` take `"fill"`: `none` (default), `solid`, `white`, `hatch` or `dots`.
+- An arc runs counter-clockwise, as the angles increase, from `from` to `to`. An arc from 0 to 180 is the upper half.
 - The drawing is scaled to fit the frame. No axes are drawn.
 
 ### `table` with spans
