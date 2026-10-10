@@ -54,6 +54,9 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam }
           Por área
         </button>
       </div>
+      {!exam.sections.some((s) => s.name === "Inglés") && (
+        <p className="footnote">Este cuadernillo es de la sesión 1 y no incluye Inglés. Inglés está en los cuadernillos de la sesión 2.</p>
+      )}
 
       {scope !== "all" && (
         <div className="chips" role="radiogroup" aria-label="Área">

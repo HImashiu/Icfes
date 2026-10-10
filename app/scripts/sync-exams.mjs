@@ -45,6 +45,23 @@ if (existsSync(specDir)) {
 }
 // One spec file covers both sessions of the M booklet, so its 1ra golden uses the combined file.
 const SPEC_ALIAS = { "S11-M_1ra": "S11-M_1ra-2da", "S11-M_2da": "S11-M_1ra-2da" };
+
+// Area names as the app shows them; golden files sometimes differ in casing ("Ciencias Naturales").
+const AREA_NAMES = ["Matemáticas", "Lectura crítica", "Sociales y ciudadanas", "Ciencias naturales", "Inglés"];
+// Questions a golden left without a verified area. Inferred from the stems and the booklet's area order
+// (booklet 2 opens with Sociales y ciudadanas); the owner should confirm (see quality/english-gap.md).
+const UNVERIFIED_AREA = { "S11-M_2da": "Sociales y ciudadanas" };
+function normalizeAreas(exam, slug) {
+  const canon = (name) => {
+    if (UNVERIFIED_AREA[slug] && /^Sin sección verificada/.test(String(name))) return UNVERIFIED_AREA[slug];
+    return AREA_NAMES.find((a) => a.toLowerCase() === String(name).trim().toLowerCase()) ?? String(name);
+  };
+  for (const q of exam.questions ?? []) q.section = canon(q.section);
+  const seen = new Set();
+  exam.sections = (exam.sections ?? [])
+    .map((s) => ({ ...s, name: canon(s.name) }))
+    .filter((s) => (seen.has(s.name) ? false : seen.add(s.name)));
+}
 for (const [golden, spec] of Object.entries(SPEC_ALIAS)) {
   if (!specFiles.has(golden) && specFiles.has(spec)) specFiles.set(golden, specFiles.get(spec));
 }
@@ -283,6 +300,7 @@ for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
     console.warn(`[sync-exams] skipped ${file}: format ${exam.format}`);
     continue;
   }
+  normalizeAreas(exam, slug);
   const specPath = specFiles.has(slug) ? join(specDir, specFiles.get(slug)) : null;
   const shown = prepareExam(exam, specPath, slug, report);
   const imagesMissing = resolveImages(shown, slug);

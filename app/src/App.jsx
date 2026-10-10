@@ -95,9 +95,10 @@ export default function App() {
     }
   }, [exams]);
 
-  // Open the first exam once the index is known.
+  // Open the first exam once the index is known, preferring one that has Inglés (the 1ra booklets have none).
   useEffect(() => {
-    const first = exams?.find((e) => e.status !== "proximamente");
+    const open = exams?.filter((e) => e.status !== "proximamente") ?? [];
+    const first = open.find((e) => e.sections?.includes("Inglés")) ?? open[0];
     if (first && !selected && !opening && !openError) openExam(first.slug);
   }, [exams, selected, opening, openError, openExam]);
 
