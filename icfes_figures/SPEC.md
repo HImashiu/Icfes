@@ -138,6 +138,16 @@ Cells in `rows` (and `headers`, if given) are strings, or objects `{ "text", "co
 Each row must cover the table width exactly. `headers`, if given, is the first row. Without `headers`,
 the first row sets the width.
 
+### `bar` horizontal
+
+Set `"orientation": "horizontal"` on a `bar` figure. Categories run down the left, and `y` is the value
+axis across the bottom. Grouping and patterns work as in the vertical version. Bars take no `null`.
+
+### `line` with `area`
+
+Set `"area": true` on a `line` series to fill the space under it with the series pattern. Each run of
+non-null values is closed on the zero baseline. A single point after a gap draws nothing.
+
 ### `combo`, bars and lines on one category axis
 
 For charts where bars and a line share the same categories, such as spending bars with an income line.
@@ -210,7 +220,7 @@ as the stem figures, with the question number and option letter in `location`:
 
 ## Not supported yet
 
-Horizontal bars, stacked bars, area charts, histograms, log scales, number lines, Venn and tree diagrams, and function graphs.
+Stacked bars, histograms, log scales, number lines, Venn and tree diagrams, and function graphs.
 Geometry figures use `geometry`; anything else drawn with lines and shapes uses `diagram`.
 The `kind: "image"` crop is no longer used for new figures. Each new kind needs a fixture test.
 

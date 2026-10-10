@@ -188,3 +188,19 @@ test('combo draws one rect per bar value and one polyline per line series', () =
   assert.equal((svg.match(/<rect [^>]*stroke-width="0.8"/g) || []).length, 3);
   assert.equal((svg.match(/<polyline /g) || []).length, 1);
 });
+
+test('horizontal bars draw one bar per value, and orientation is checked', () => {
+  const h = { kind: 'bar', orientation: 'horizontal', title: 'Ventas', x: { label: 'Tienda' }, y: { label: 'Ventas', min: 0, max: 40, step: 10 },
+    categories: ['Norte', 'Centro', 'Sur'], series: [{ name: '2019', values: [12, 30, 8] }, { name: '2020', values: [20, 25, 0] }] };
+  assert.deepEqual(F.validate(h), []);
+  assert.equal((F.render(h).match(/stroke-width="0.8"/g) || []).length, 6);
+  assert.ok(F.validate({ ...h, orientation: 'diagonal' }).length > 0);
+});
+
+test('area fills under a line and skips gaps', () => {
+  const a = { kind: 'line', x: { label: 'Mes' }, y: { label: 'Casos', min: 0, max: 10, step: 2 }, categories: ['A', 'B', 'C', 'D'],
+    series: [{ name: 'x', values: [1, 4, null, 2], area: true }] };
+  assert.deepEqual(F.validate(a), []);
+  // Two runs: [1, 4] has two points so it fills; the single point after the gap does not.
+  assert.equal((F.render(a).match(/<polygon /g) || []).length, 1);
+});

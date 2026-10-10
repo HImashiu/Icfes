@@ -37,6 +37,7 @@
       if (!spec.x || typeof spec.x.label !== 'string' || !spec.x.label) errs.push('x.label is required (axis title)');
       if (!spec.y || typeof spec.y.label !== 'string' || !spec.y.label) errs.push('y.label is required (axis title)');
     }
+    if (spec.orientation != null && spec.orientation !== 'vertical' && spec.orientation !== 'horizontal') errs.push('orientation must be vertical or horizontal');
     if (spec.kind === 'bar' || spec.kind === 'line') {
       const numericLine = spec.kind === 'line' && series.some((s) => Array.isArray(s.points));
       if (numericLine) {
@@ -258,7 +259,47 @@
     return out;
   }
 
+  // Horizontal bars: categories run down the left, values run across. spec.y is the value axis.
+  function hbarSvg(spec, id) {
+    const series = spec.series;
+    const showLegend = series.length > 1 || (series[0] && series[0].name);
+    const xScale = scaleFor(spec.y, series.flatMap((s) => s.values), true);
+    const labelW = Math.min(170, Math.max(...spec.categories.map((c) => String(c).length)) * 6.5);
+    const left = 24 + labelW;
+    const right = W - 24;
+    const top = 14 + (spec.title ? 16 : 0) + (showLegend ? 18 : 0);
+    const bottom = H - 40;
+    const out = [];
+    if (spec.title) out.push(text(W / 2, 18, spec.title, { weight: 'bold' }));
+    if (showLegend) out.push(...legend(series, left, top - 6, id));
+    const xAt = (v) => left + (v - xScale.lo) / (xScale.hi - xScale.lo) * (right - left);
+    for (const t of xScale.ticks) {
+      out.push(`<line x1="${xAt(t).toFixed(1)}" x2="${xAt(t).toFixed(1)}" y1="${top}" y2="${bottom}" stroke="#e4e4e4" stroke-width="1"/>`);
+      out.push(text(xAt(t).toFixed(1), bottom + 15, fmt(t)));
+    }
+    out.push(`<line x1="${left}" x2="${left}" y1="${top}" y2="${bottom}" stroke="#000"/>`);
+    out.push(`<line x1="${left}" x2="${right}" y1="${bottom}" y2="${bottom}" stroke="#000"/>`);
+    if (spec.y && spec.y.label) out.push(text((left + right) / 2, H - 6, spec.y.label));
+    if (spec.x && spec.x.label) out.push(text(12, (top + bottom) / 2, spec.x.label, { rotate: -90 }));
+    const band = (bottom - top) / spec.categories.length;
+    const barH = Math.min(26, band * 0.7 / series.length);
+    spec.categories.forEach((cat, c) => {
+      const cy = top + band * (c + 0.5);
+      out.push(text(left - 6, (cy + 4).toFixed(1), cat, { anchor: 'end' }));
+      series.forEach((s, si) => {
+        const v = s.values[c];
+        if (!isNum(v)) return;
+        const x0 = xAt(Math.min(0, xScale.lo));
+        const x1 = xAt(Math.max(v, 0));
+        const y = cy - (barH * series.length) / 2 + si * barH;
+        out.push(`<rect x="${Math.min(x0, x1).toFixed(1)}" y="${y.toFixed(1)}" width="${Math.abs(x1 - x0).toFixed(1)}" height="${barH.toFixed(1)}" fill="${fillFor(s, si, id)}" stroke="#000" stroke-width="0.8"/>`);
+      });
+    });
+    return out;
+  }
+
   function barSvg(spec, id) {
+    if (spec.orientation === 'horizontal') return hbarSvg(spec, id);
     const series = spec.series;
     const showLegend = series.length > 1 || (series[0] && series[0].name);
     const primary = series.filter((s) => s.axis !== 2);
@@ -310,7 +351,27 @@
     spec.categories.forEach((cat, c) => {
       wrapLabel(cat, 14).forEach((line, k) => out.push(text(xAt(c).toFixed(1), fr.bottom + 15 + k * 13, line)));
     });
-    series.forEach((s, si) => out.push(...polyline(s, si, s.values.map((v, c) => (isNum(v) ? [xAt(c), fr.y(v)] : null)))));
+    series.forEach((s, si) => {
+      const pts = s.values.map((v, c) => (isNum(v) ? [xAt(c), fr.y(v)] : null));
+      if (s.area) out.push(...areaPolygons(pts, fr.y(Math.max(0, yScale.lo)), fillFor(s, si, id)));
+      out.push(...polyline(s, si, pts));
+    });
+    return out;
+  }
+
+  // Area under a line: one filled polygon per run of non-null points, closed on the baseline.
+  function areaPolygons(pts, base, fill) {
+    const out = [];
+    let run = [];
+    const flush = () => {
+      if (run.length > 1) {
+        const pl = [...run, [run[run.length - 1][0], base], [run[0][0], base]];
+        out.push(`<polygon points="${pl.map((p) => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}" fill="${fill}" stroke="none"/>`);
+      }
+      run = [];
+    };
+    for (const p of pts) { if (p) run.push(p); else flush(); }
+    flush();
     return out;
   }
 
