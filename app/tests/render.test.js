@@ -8,11 +8,12 @@ describe("renderRich", () => {
     expect(html).not.toContain("$x^2$");
   });
 
-  it("replaces images with a figure slot that keeps the alt text", () => {
-    const html = renderRich('<p>Mire</p><img alt="Figura 3" src="IMG:f3.png">');
-    expect(html).toContain('class="figure-slot"');
-    expect(html).toContain('data-alt="Figura 3"');
+  it("drops exam pictures and markdown image references (figures come from specs)", () => {
+    const html = renderRich('<p>Mire</p><img alt="Figura 3" src="IMG:f3.png"> ![Figure 8.1](figure:p0008.png)');
+    expect(html).toContain("Mire");
     expect(html).not.toContain("<img");
+    expect(html).not.toContain("figure:");
+    expect(html).not.toContain("figure-slot");
   });
 
   it("removes scripts and event handlers", () => {
