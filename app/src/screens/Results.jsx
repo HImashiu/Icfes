@@ -3,12 +3,21 @@ import { scoreAttempt } from "../lib/exam.js";
 import { areaColor, fmtInt, fmtPct } from "../lib/brand.js";
 
 // Resultados: celebrating mascot, three stats, per-area bars, the preliminary-key notice and the next steps.
-export default function Results({ title, questions, attempt, answerKey, keyStatus, onReview, onHome, onRetry }) {
+export default function Results({ title, questions, attempt, answerKey, keyStatus, onReview, onReviewAt, onHome, onRetry }) {
   const score = scoreAttempt(questions, attempt.answers, answerKey);
   const preliminary = keyStatus !== "official";
   const pct = score.keyed && score.answered > 0 ? (score.correct / score.answered) * 100 : null;
   const wrong = score.keyed ? score.answered - score.correct : 0;
   const flagged = Object.keys(attempt.flags).length;
+  // Per-question grade for the answers grid: ok or bad when a key exists, answered or blank otherwise.
+  const cellGrade = (q) => {
+    const given = attempt.answers[q.key];
+    if (!given) return "blank";
+    const correct = answerKey?.get(q.key);
+    if (!correct) return "answered";
+    return correct === given ? "ok" : "bad";
+  };
+  const GRADE_LABEL = { ok: "correcta", bad: "incorrecta", answered: "respondida", blank: "sin responder" };
 
   return (
     <section className="results">
@@ -60,6 +69,31 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
       </div>
 
       {flagged > 0 && <p className="caption">Marcó {fmtInt(flagged)} {flagged === 1 ? "pregunta" : "preguntas"} para revisar.</p>}
+
+      <div className="card answers-card">
+        <div className="section-head">
+          <span className="label">Tus {fmtInt(questions.length)} respuestas</span>
+          <span className="caption">Toca una para revisarla</span>
+        </div>
+        {score.perArea.map((a) => (
+          <div key={a.name} className="answers-area">
+            <span className="caption"><span className="dot" style={{ background: areaColor(a.name) }} /> {a.name}</span>
+            <div className="answers-grid">
+              {questions.map((q, n) => (q.section === a.name ? (
+                <button
+                  key={q.key}
+                  type="button"
+                  className={`answer-cell ${cellGrade(q)}`}
+                  onClick={() => (onReviewAt ? onReviewAt(n) : onReview())}
+                  aria-label={`Pregunta ${q.number}, ${GRADE_LABEL[cellGrade(q)]}`}
+                >
+                  {q.number}
+                </button>
+              ) : null))}
+            </div>
+          </div>
+        ))}
+      </div>
 
       <div className="results-actions">
         {score.keyed && wrong > 0 ? (

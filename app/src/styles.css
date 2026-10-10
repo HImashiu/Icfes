@@ -438,12 +438,15 @@ button.card { text-align: left; width: 100%; }
 .podium-step.first .podium-block { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 .rank-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .rank-row {
-  display: grid; grid-template-columns: 32px 1fr auto; gap: 10px; align-items: center;
+  display: grid; grid-template-columns: 28px 36px minmax(0, 1fr) auto; gap: 12px; align-items: center;
   padding: 12px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line);
 }
 .rank-row.me { background: var(--accent-soft); border-color: var(--accent); }
 .rank-n { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; color: var(--text-2); }
 .rank-name { font-weight: 600; }
+.rank-main { display: grid; gap: 4px; min-width: 0; }
+.rank-main .progress { margin-top: 4px; }
+.avatar.sm { width: 36px; height: 36px; font-size: 14px; }
 .rank-xp { font-weight: 700; font-variant-numeric: tabular-nums; }
 .tabs-row { display: flex; gap: 8px; }
 
@@ -617,7 +620,7 @@ button.card { text-align: left; width: 100%; }
   .quick-grid { grid-template-columns: 1fr; }
 }
 
-.report-link { align-self: start; }
+.report-link { justify-self: start; }
 .report-form { display: grid; gap: 8px; }
 .report-form textarea {
   width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line);
@@ -647,3 +650,67 @@ button.card { text-align: left; width: 100%; }
 
 /* Full-width teacher view on desktop. */
 .app:has(> .teacher) { max-width: none; padding: 0; }
+
+/* Results, review and league on tablet and desktop (design spec section 8). */
+.answers-card { display: grid; gap: 14px; }
+.answers-area { display: grid; gap: 6px; }
+.answers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 6px; }
+.answer-cell {
+  height: 40px; border-radius: 10px; border: 2px solid var(--line); background: var(--surface-2);
+  color: var(--text-2); font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums;
+}
+.answer-cell.ok { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+.answer-cell.bad { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.answer-cell.answered { background: var(--accent-soft); border-color: var(--accent); color: var(--text); }
+
+/* Review: list of questions on the left (desktop), the question on the right. */
+.rv-body { display: block; }
+.rv-list { display: none; }
+.rv-main { display: grid; gap: 12px; min-width: 0; }
+@media (min-width: 1024px) {
+  .review { max-width: 1200px; }
+  .rv-body { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 24px; align-items: start; }
+  .rv-list {
+    display: grid; gap: 6px; list-style: none; margin: 0; padding: 0; position: sticky; top: 24px;
+    max-height: calc(100vh - 140px); overflow-y: auto;
+  }
+  .rv-row {
+    width: 100%; display: grid; grid-template-columns: 36px minmax(0, 1fr) 20px; align-items: center; gap: 10px;
+    padding: 10px; border-radius: 14px; border: 1px solid transparent; background: transparent; color: var(--text); text-align: left;
+  }
+  .rv-row:hover { background: var(--surface-2); }
+  .rv-row.current { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+  .rv-tile {
+    width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center;
+    color: #0D110F; font-weight: 800; font-family: "Bricolage Grotesque", sans-serif; font-size: 14px;
+  }
+  .rv-text { display: grid; gap: 2px; min-width: 0; }
+  .rv-text strong { font-size: 14px; }
+  .rv-text .caption { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rv-mark { font-weight: 800; text-align: center; }
+  .rv-mark.ok { color: var(--ok); }
+  .rv-mark.bad { color: var(--bad); }
+  .rv-main .options { grid-template-columns: 1fr 1fr; }
+  .rv-main .q-split { display: block; }
+  .rv-main .q-context { position: static; max-height: none; overflow: visible; }
+  .review-strip { display: none; }
+}
+
+/* Results: area bars beside the answers grid, actions in a row. */
+@media (min-width: 768px) {
+  .answers-card { grid-column: 2; }
+  .results > .area-card { grid-column: 1; }
+  .results > .results-actions { grid-column: 1 / -1; display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .results > .results-actions .primary.big { flex: 1 1 260px; }
+  .results > .results-actions .secondary.big { flex: 1 1 200px; }
+  .results > .results-actions .link { margin-left: auto; }
+  .results > .caption { grid-column: 1 / -1; }
+}
+
+/* League: podium card beside the ranked list. */
+@media (min-width: 1024px) {
+  .league { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 20px; align-items: start; max-width: 1040px; }
+  .league-head, .league-tabs, .league-note { grid-column: 1 / -1; }
+  .league .podium { padding: 20px; margin: 0; align-self: start; }
+  .league .rank-list { margin: 0; }
+}

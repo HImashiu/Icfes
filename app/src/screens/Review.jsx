@@ -1,6 +1,7 @@
 import { useState } from "react";
 import QuestionView from "../components/QuestionView.jsx";
 import Icon from "../components/Icon.jsx";
+import { areaColor } from "../lib/brand.js";
 
 const REPORTS_KEY = "condor:reports";
 
@@ -42,9 +43,9 @@ const CONFIDENCE = { high: "alta", medium: "media", low: "baja" };
 
 // Revisión: filters with counts, a strip of colored question cells, the question card,
 // the student's pick against the key, and the preliminary-key chips.
-export default function Review({ questions, attempt, answerKey, keyStatus, notes, onBack, figures, examLabel }) {
+export default function Review({ questions, attempt, answerKey, keyStatus, notes, onBack, figures, examLabel, startIndex = 0 }) {
   const [filter, setFilter] = useState("all");
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(startIndex);
 
   const grade = (q) => {
     const given = attempt.answers[q.key];
@@ -91,6 +92,31 @@ export default function Review({ questions, attempt, answerKey, keyStatus, notes
         ))}
       </div>
 
+      <div className="rv-body">
+      <ol className="rv-list" aria-label="Preguntas">
+        {visible.map((question, n) => {
+          const g = grade(question);
+          const current = q && question.key === q.key;
+          const yours = attempt.answers[question.key];
+          const key = answerKey?.get(question.key);
+          return (
+            <li key={question.key}>
+              <button type="button" className={current ? "rv-row current" : "rv-row"} aria-current={current ? "true" : undefined} onClick={() => setIndex(n)}>
+                <span className="rv-tile" style={{ background: areaColor(question.section) }}>{question.number}</span>
+                <span className="rv-text">
+                  <strong>{question.section}</strong>
+                  <span className="caption">
+                    {yours ? `Tu respuesta ${yours}` : "Sin responder"}
+                    {key ? ` · clave ${key}` : ""}
+                  </span>
+                </span>
+                <span className={`rv-mark ${g}`} aria-hidden="true">{g === "ok" ? "✓" : g === "bad" ? "✕" : ""}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+      <div className="rv-main">
       <div className="review-strip" aria-label="Preguntas">
         {questions.map((question, n) => {
           const g = grade(question);
@@ -141,6 +167,8 @@ export default function Review({ questions, attempt, answerKey, keyStatus, notes
       ) : (
         <p className="notice">Nada que mostrar con este filtro.</p>
       )}
+      </div>
+      </div>
     </section>
   );
 }

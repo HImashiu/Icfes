@@ -42,6 +42,7 @@ export default function App() {
   const [opening, setOpening] = useState(false);
   const [openError, setOpenError] = useState(null);
   const [view, setView] = useState("home");
+  const [reviewStart, setReviewStart] = useState(0);
   const [attempt, setAttempt] = useState(null);
   const [theme, setTheme] = useState(() => currentTheme());
 
@@ -192,7 +193,8 @@ export default function App() {
           attempt={attempt}
           answerKey={selected.key}
           keyStatus={selected.keyStatus}
-          onReview={() => setView("review")}
+          onReview={() => { setReviewStart(0); setView("review"); }}
+          onReviewAt={(n) => { setReviewStart(n); setView("review"); }}
           onHome={goHome}
           onRetry={() => startAttempt(attempt.scope, attempt.mode)}
         />
@@ -207,6 +209,7 @@ export default function App() {
           notes={selected.notes}
           figures={selected.figures}
           examLabel={selected.exam.title}
+          startIndex={reviewStart}
           onBack={() => setView("results")}
         />
       )}
