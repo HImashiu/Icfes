@@ -1,11 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
 import Home from "./screens/Home.jsx";
+import Setup from "./screens/Setup.jsx";
 import Test from "./screens/Test.jsx";
 import Results from "./screens/Results.jsx";
 import Review from "./screens/Review.jsx";
+import League from "./screens/League.jsx";
+import Profile from "./screens/Profile.jsx";
+import Teacher from "./screens/Teacher.jsx";
+import BottomNav from "./components/BottomNav.jsx";
 import { parseExam, parseKey, parseKeyNotes, questionsFor, timedSeconds } from "./lib/exam.js";
 import { clearAttempt, loadAttempt, saveAttempt } from "./lib/storage.js";
 import { parseFigureSpecs, prepareExam } from "./lib/figures.js";
+import { applyTheme, currentTheme } from "./lib/theme.js";
 
 const base = import.meta.env.BASE_URL;
 
@@ -15,14 +21,33 @@ async function getJson(path) {
   return res.json();
 }
 
+// The student's unfinished attempt for this exam, across the whole exam and each area.
+function findResumable(slug, exam) {
+  const scopes = ["all", ...exam.sections.map((s) => s.name)];
+  for (const scope of scopes) {
+    const a = loadAttempt(slug, scope);
+    if (a && !a.submittedAt) {
+      const total = questionsFor(exam, scope).length;
+      const left = a.durationSec ? a.durationSec - (Date.now() - a.startedAt) / 1000 : null;
+      return { scope, mode: a.mode, answered: Object.keys(a.answers).length, total, left };
+    }
+  }
+  return null;
+}
+
 export default function App() {
   const [exams, setExams] = useState(null);
   const [loadError, setLoadError] = useState(null);
-  const [selected, setSelected] = useState(null); // { slug, exam, key }
+  const [selected, setSelected] = useState(null); // { slug, exam, key, keyStatus, notes, figures }
   const [opening, setOpening] = useState(false);
   const [openError, setOpenError] = useState(null);
   const [view, setView] = useState("home");
   const [attempt, setAttempt] = useState(null);
+  const [theme, setTheme] = useState(() => currentTheme());
+
+  useEffect(() => {
+    applyTheme(theme);
+  }, [theme]);
 
   useEffect(() => {
     getJson("exams/index.json")
@@ -33,28 +58,25 @@ export default function App() {
       });
   }, []);
 
-  // The index says whether a key exists, so a missing key is never requested.
+  // The index says whether a key and figures exist, so missing files are never requested.
   const openExam = useCallback(async (slug) => {
     setOpenError(null);
-    if (!slug) {
-      setSelected(null);
-      return;
-    }
     const entry = exams?.find((e) => e.slug === slug);
+    if (!entry) return;
     setOpening(true);
     try {
       const [raw, rawKey, rawFigures, rawSidecar] = await Promise.all([
         getJson(`exams/${slug}.json`),
-        entry?.hasKey ? getJson(`exams/${slug}.key.json`) : null,
-        entry?.hasFigures ? getJson(`exams/${slug}.figures.json`) : null,
-        entry?.hasSidecar ? getJson(`exams/${slug}.sidecar.json`) : null,
+        entry.hasKey ? getJson(`exams/${slug}.key.json`) : null,
+        entry.hasFigures ? getJson(`exams/${slug}.figures.json`) : null,
+        entry.hasSidecar ? getJson(`exams/${slug}.sidecar.json`) : null,
       ]);
       const figures = parseFigureSpecs(rawFigures);
       setSelected({
         slug,
         exam: prepareExam(parseExam(raw), figures),
         key: parseKey(rawKey),
-        keyStatus: entry?.keyStatus ?? null,
+        keyStatus: entry.keyStatus ?? null,
         notes: parseKeyNotes(rawSidecar),
         figures,
       });
@@ -65,7 +87,12 @@ export default function App() {
     }
   }, [exams]);
 
-  // Keep an unfinished or submitted attempt in this browser, so a reload does not lose answers.
+  // Open the first exam once the index is known.
+  useEffect(() => {
+    if (exams?.length && !selected && !opening) openExam(exams[0].slug);
+  }, [exams, selected, opening, openExam]);
+
+  // Keep an attempt in this browser so a reload does not lose answers.
   useEffect(() => {
     if (attempt) saveAttempt(attempt.slug, attempt.scope, attempt);
   }, [attempt]);
@@ -81,6 +108,8 @@ export default function App() {
       startedAt: Date.now(),
       answers: {},
       flags: {},
+      checked: {},
+      xp: 0,
       current: 0,
       submittedAt: null,
       auto: false,
@@ -88,8 +117,7 @@ export default function App() {
     setView("test");
   };
 
-  const resume = async (saved) => {
-    if (!selected || selected.slug !== saved.slug) await openExam(saved.slug);
+  const resume = (saved) => {
     setAttempt(saved);
     setView(saved.submittedAt ? "results" : "test");
   };
@@ -104,33 +132,52 @@ export default function App() {
     setAttempt(null);
   };
 
-  if (exams === null) return <main className="shell"><p className="muted">Cargando…</p></main>;
+  if (exams === null) return <main className="frame"><p className="muted">Cargando…</p></main>;
 
   const questions = selected && attempt ? questionsFor(selected.exam, attempt.scope) : [];
   const scopeTitle = attempt && attempt.scope !== "all" ? attempt.scope : "Examen completo";
+  const examTitle = selected ? `${selected.exam.title} · ${scopeTitle}` : "";
+  const navView = ["home", "setup", "league", "profile"].includes(view) ? view : null;
+  const resumable = selected && view === "home" ? findResumable(selected.slug, selected.exam) : null;
 
   return (
-    <main className="shell">
+    <div className={view === "test" || view === "teacher" ? "app wide" : "app"}>
       {loadError && <p className="notice error">{loadError}</p>}
-      {opening && <p className="muted">Cargando examen…</p>}
+      {openError && <p className="notice error">{openError}</p>}
+      {opening && <p className="muted pad">Cargando cuadernillo…</p>}
 
       {view === "home" && (
         <Home
+          exam={selected?.exam}
+          resumable={resumable}
+          onContinue={() => {
+            const saved = loadAttempt(selected.slug, resumable.scope);
+            if (saved) resume(saved);
+          }}
+          onPractice={() => setView("setup")}
+          onLeague={() => setView("league")}
+          onGo={setView}
+        />
+      )}
+
+      {view === "setup" && selected && (
+        <Setup
+          exam={selected.exam}
+          slug={selected.slug}
           exams={exams}
-          selected={selected}
-          onOpen={openExam}
+          onPickExam={(slug) => openExam(slug)}
+          onBack={() => setView("home")}
           onStart={startAttempt}
-          onResume={resume}
-          loading={opening}
-          error={openError}
         />
       )}
 
       {view === "test" && attempt && selected && (
         <Test
-          title={`${selected.exam.title} · ${scopeTitle}`}
+          title={examTitle}
+          examLabel={selected.exam.title}
           questions={questions}
           attempt={attempt}
+          answerKey={selected.key}
           onChange={setAttempt}
           onSubmit={submit}
           onExit={goHome}
@@ -140,12 +187,11 @@ export default function App() {
 
       {view === "results" && attempt && selected && (
         <Results
-          title={`${selected.exam.title} · ${scopeTitle}`}
+          title={examTitle}
           questions={questions}
           attempt={attempt}
           answerKey={selected.key}
           keyStatus={selected.keyStatus}
-          figures={selected.figures}
           onReview={() => setView("review")}
           onHome={goHome}
           onRetry={() => startAttempt(attempt.scope, attempt.mode)}
@@ -160,9 +206,16 @@ export default function App() {
           keyStatus={selected.keyStatus}
           notes={selected.notes}
           figures={selected.figures}
+          examLabel={selected.exam.title}
           onBack={() => setView("results")}
         />
       )}
-    </main>
+
+      {view === "league" && <League onBack={() => setView("home")} />}
+      {view === "profile" && <Profile theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} />}
+      {view === "teacher" && <Teacher onExit={() => setView("profile")} />}
+
+      {navView && <BottomNav active={navView} onGo={setView} />}
+    </div>
   );
 }
