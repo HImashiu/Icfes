@@ -77,6 +77,8 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
   "series": [ { "points": [[1, 2], [4, 6.5]] } ] }
 ```
 
+- Set `"marker"` on a series (any marker that `line` takes, such as `diamond` or `square`) to draw that shape for its points. Without one, series alternate a filled circle and square. Markers show in the legend.
+
 ### `curve`, a qualitative shape with no scale
 
 ```json

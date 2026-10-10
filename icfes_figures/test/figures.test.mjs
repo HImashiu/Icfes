@@ -431,3 +431,17 @@ test('polygons take a fill; the default stays unfilled', () => {
   assert.ok(F.render({ ...base, polygons: [{ vertices: ['A', 'B', 'C'], fill: 'solid' }] }).includes('fill="#000"'));
   assert.ok(F.validate({ ...base, polygons: [{ vertices: ['A', 'B', 'C'], fill: 'neon' }] }).length > 0);
 });
+
+test('scatter series honour their marker, and the legend shows it', () => {
+  const sc = { kind: 'scatter', x: { label: 'x' }, y: { label: 'y' }, series: [
+    { name: 'Rombos', points: [[1, 1], [2, 3]], marker: 'diamond' },
+    { name: 'Cuadros', points: [[1, 2], [3, 1]], marker: 'square' },
+  ] };
+  assert.deepEqual(F.validate(sc), []);
+  const svg = F.render(sc);
+  assert.equal((svg.match(/<polygon points="[^"]+" fill="#fff" stroke="#000" stroke-width="1.2"\/>/g) || []).length, 2 + 1, 'two diamonds plus the legend glyph');
+  assert.ok(svg.includes('>Rombos<') && svg.includes('>Cuadros<'));
+  // Without markers, scatter keeps its filled circle and square.
+  const plain = F.render({ ...sc, series: sc.series.map((s) => ({ name: s.name, points: s.points })) });
+  assert.ok(plain.includes('<circle') && plain.includes('<rect'));
+});

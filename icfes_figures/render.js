@@ -353,7 +353,8 @@
       if (!pos) return;
       const s = series[i];
       const y = top + pos.row * 18;
-      if (glyph) out.push(marker(s.marker || 'circle', pos.x + 5, y - 5));
+      // glyph true: every entry shows its marker. glyph 'auto': only entries with a marker do.
+      if (glyph === true || (glyph === 'auto' && s.marker)) out.push(marker(s.marker || 'circle', pos.x + 5, y - 5));
       else out.push(`<rect x="${pos.x}" y="${y - 10}" width="10" height="10" fill="${fillFor(s, i, id)}" stroke="#000"/>`);
       out.push(text(pos.x + 14, y - 1, legendLabel(s), { anchor: 'start' }));
     });
@@ -531,7 +532,7 @@
     const yScale = scaleFor(spec.y, pts.map((p) => p[1]), false);
     const fr = frame(spec, showLegend, yScale);
     const out = fr.out;
-    if (showLegend) out.push(...legend(legendSeries(spec), fr.left, fr.legendY, id));
+    if (showLegend) out.push(...legend(legendSeries(spec), fr.left, fr.legendY, id, 'auto'));
     for (const t of xScale.ticks) {
       const x = fr.left + (t - xScale.lo) / (xScale.hi - xScale.lo) * (fr.right - fr.left);
       out.push(text(x.toFixed(1), fr.bottom + 15, tickText(spec.x, t)));
@@ -540,7 +541,9 @@
       s.points.forEach(([px, py]) => {
         const x = fr.left + (px - xScale.lo) / (xScale.hi - xScale.lo) * (fr.right - fr.left);
         const y = fr.y(py);
-        if (si % 2 === 0) out.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="${fillFor(s, si, id)}" stroke="#000"/>`);
+        // A series with a marker draws that shape; others keep the alternating filled circle and square.
+        if (s.marker) out.push(marker(s.marker, x, y));
+        else if (si % 2 === 0) out.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="${fillFor(s, si, id)}" stroke="#000"/>`);
         else out.push(`<rect x="${(x - 3.5).toFixed(1)}" y="${(y - 3.5).toFixed(1)}" width="7" height="7" fill="${fillFor(s, si, id)}" stroke="#000"/>`);
       });
     });
