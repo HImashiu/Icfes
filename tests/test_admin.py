@@ -171,3 +171,20 @@ def test_original_pages_render_from_the_source_pdf(root, tmp_path):
     detail = store.question_detail(EXAM, 1)
     assert detail["scan"] == {"pages": [], "guess": 1, "count": 4, "estimated": True}
     assert store.question_detail(EXAM, 3)["scan"]["guess"] == 4
+
+
+def test_shared_passage_is_saved_to_passage_md(root):
+    store = Store(root)
+    gold = store.golden(EXAM)
+    gold["groups"] = [{"id": "g1", "from": 1, "to": 2, "directions": "d", "passage_md": "viejo",
+                       "stimulus_md": "", "crop": None}]
+    for q in gold["questions"]:
+        q["group_id"] = "g1" if q["number"] <= 2 else None
+    (root / "data" / f"{EXAM}.golden.json").write_text(json.dumps(gold), encoding="utf-8")
+
+    store.update_question(EXAM, 1, {"group_passage_md": "nuevo texto"})
+    saved = store.golden(EXAM)["groups"][0]
+    assert saved["passage_md"] == "nuevo texto"
+    assert saved["stimulus_md"] == ""
+    with pytest.raises(BadRequest):
+        store.update_question(EXAM, 3, {"group_passage_md": "x"})

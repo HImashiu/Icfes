@@ -28,7 +28,7 @@ EXAM_ID = re.compile(r"^[A-Za-z0-9_-]+$")
 QUESTION_PREFIX = re.compile(r"^Q(\d+):")
 PENDING_TEXT = "[Texto pendiente"
 FIGURE_NOTE = "[FIGURE"
-EDITABLE = {"stem_md", "stimulus_md", "options", "ready", "answer"}
+EDITABLE = {"stem_md", "stimulus_md", "group_passage_md", "options", "ready", "answer"}
 
 
 class NotFound(Exception):
@@ -339,6 +339,14 @@ class Store:
             q["stem_md"] = _text(patch["stem_md"], "stem_md")
         if "stimulus_md" in patch:
             q["stimulus_md"] = _text(patch["stimulus_md"], "stimulus_md")
+        if "group_passage_md" in patch:
+            # The shared passage is canonical in passage_md (stimulus_md is only the fallback), so that is the field written.
+            if not q.get("group_id"):
+                raise BadRequest(f"Q{n} has no shared text")
+            group = next((x for x in g["groups"] if x["id"] == q["group_id"]), None)
+            if group is None:
+                raise NotFound(f"no group {q['group_id']} in {exam}")
+            group["passage_md"] = _text(patch["group_passage_md"], "group_passage_md")
         if "options" in patch:
             q["options"] = _options(patch["options"], q["options"])
         if "answer" in patch and patch["answer"] not in (None, ""):

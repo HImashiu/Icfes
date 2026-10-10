@@ -268,9 +268,11 @@ function studentView(q, g, figs = []) {
       <div class="body">${render(o.text_md)}${figs.filter(f => f.target === "option" && f.option === o.letter).map(drawNative).join("")}</div>
     </div>`).join("");
   // Matches the app: matching tables put each item's stem in a row of the passage, so the stem is not shown twice.
+  // The shared passage is passage_md; stimulus_md is only the fallback when it is empty (the app uses the same rule).
+  const gText = g ? (g.passage_md || g.stimulus_md || "") : "";
   const plain = h => (h ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
-  const stemInPassage = !!g && plain(q.stem_md).length > 20 && plain(g.stimulus_md).includes(plain(q.stem_md));
-  const dir = g ? `<div class="label" style="color:var(--paper-2)">${esc(g.directions)}</div><div class="stimulus">${render(g.passage_md)}</div><hr style="border:0;border-top:1px solid #d8d6cc;margin:12px 0">` : "";
+  const stemInPassage = !!g && plain(q.stem_md).length > 20 && plain(gText).includes(plain(q.stem_md));
+  const dir = g ? `<div class="label" style="color:var(--paper-2)">${esc(g.directions)}</div><div class="stimulus">${render(gText)}</div><hr style="border:0;border-top:1px solid #d8d6cc;margin:12px 0">` : "";
   return `
     <div class="paper">
       <div class="label" style="color:var(--paper-2)">Pregunta ${q.number}</div>
@@ -325,7 +327,8 @@ function renderEditor() {
           <textarea id="f-stimulus">${esc(q.stimulus_md)}</textarea>
         </div>
         <div class="card"><div class="label">Texto compartido${g ? ` · ${esc(g.id)} (Q${g.from}–${g.to})` : ""}</div>
-          <p class="muted" style="margin-top:0">Solo lectura. Los textos literarios nunca se reescriben: usa [Texto pendiente: página N] y tools/fillpage.py.</p>
+          ${g ? `<textarea id="f-passage">${esc(g.passage_md || g.stimulus_md || "")}</textarea>
+          <p class="muted">Se guarda en el grupo y lo ven todas sus preguntas. Los textos literarios nunca se reescriben: usa [Texto pendiente: página N] y tools/fillpage.py.</p>` : `<p class="muted">Esta pregunta no tiene texto compartido.</p>`}
         </div>
       </div>
       <div>
@@ -359,9 +362,10 @@ function renderEditor() {
   const refresh = () => {
     const current = { ...q, stem_md: $("#f-stem").value, stimulus_md: $("#f-stimulus").value,
       options: [...document.querySelectorAll("#f-opts [data-letter]")].map(t => ({ letter: t.dataset.letter, text_md: t.value })) };
-    $("#preview").innerHTML = studentView(current, g, state.detail.native_figures);
+    const group = g && $("#f-passage") ? { ...g, passage_md: $("#f-passage").value } : g;
+    $("#preview").innerHTML = studentView(current, group, state.detail.native_figures);
   };
-  document.querySelectorAll("#f-stem, #f-stimulus, #f-opts textarea").forEach(t => t.oninput = refresh);
+  document.querySelectorAll("#f-stem, #f-stimulus, #f-passage, #f-opts textarea").forEach(t => t.oninput = refresh);
   $("#back").onclick = () => setTab("questions");
   $("#prev").onclick = () => prev && openQuestion(prev);
   $("#next").onclick = () => next && openQuestion(next);
@@ -378,6 +382,7 @@ async function saveQuestion() {
     ready: $("#f-ready").checked,
     answer: $("#f-answer").value || null,
   };
+  if (d.group) body.group_passage_md = $("#f-passage").value;
   const msg = $("#save-msg");
   msg.textContent = "Guardando…";
   try {
