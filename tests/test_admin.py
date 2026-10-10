@@ -366,3 +366,18 @@ def test_all_questions_come_in_one_list_with_their_exam(root):
     rows = Store(root).all_rows()
     assert [(r["exam"], r["number"]) for r in rows] == [(EXAM, 1), (EXAM, 2), (EXAM, 3)]
     assert rows[1]["hidden"] == ["not ready", "text pending"] and rows[0]["snippet"] == "Pregunta 1?"
+
+
+def test_a_proposed_box_counts_as_to_crop_and_comes_in_page_fractions(root, tmp_path):
+    _, sources = _pdf(tmp_path)
+    mp = root / "figures" / "traced" / EXAM / "manifest.json"
+    manifest = json.loads(mp.read_text(encoding="utf-8"))
+    manifest["figures"].append({"figure_id": "t-q1-fig", "question": 1, "page": 1, "spec_id": "t-q1-fig",
+                                "method": "proposed_box", "svg": None, "proposed_box_300dpi": [0, 0, 1240, 1754]})
+    mp.write_text(json.dumps(manifest), encoding="utf-8")
+    store = Store(root, sources=sources)
+    assert store.question_rows(EXAM)[0]["to_crop"] == 1
+    fig = next(f for f in store.question_detail(EXAM, 1)["figures"] if f["figure_id"] == "t-q1-fig")
+    assert fig["proposed_box_page_fraction"] == pytest.approx([0, 0, 0.5, 0.5], abs=0.001)
+    made = store.crop_page(EXAM, 1, 1, fig["proposed_box_page_fraction"], replaces="t-q1-fig")
+    assert [f["figure_id"] for f in store.question_detail(EXAM, 1)["figures"]] == [made["figure_id"]]

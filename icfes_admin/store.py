@@ -30,7 +30,8 @@ EXAM_ID = re.compile(r"^[A-Za-z0-9_-]+$")
 QUESTION_PREFIX = re.compile(r"^Q(\d+):")
 PENDING_TEXT = "[Texto pendiente"
 FIGURE_NOTE = "[FIGURE"
-MANUAL_CROP = "manual_crop_needed"  # the tracing could not cut this figure; it waits for a crop drawn by hand
+# The tracing could not cut these figures; they wait for a crop drawn by hand ("proposed_box" comes with a box to check).
+TO_CROP = {"manual_crop_needed", "proposed_box"}
 EDITABLE = {"stem_md", "stimulus_md", "group_passage_md", "section", "options", "ready", "answer"}
 
 
@@ -187,7 +188,7 @@ class Store:
                 "traced": len(traced),
                 "pending_spec": sum(1 for f in traced if f.get("pending_spec")),
                 "eyeballed": sum(1 for f in traced if "eyeball" in str(f.get("method", ""))),
-                "to_crop": sum(1 for f in traced if f.get("method") == MANUAL_CROP),
+                "to_crop": sum(1 for f in traced if f.get("method") in TO_CROP),
             },
         }
 
@@ -210,7 +211,7 @@ class Store:
                 "hidden": self.hidden_reasons(q, groups, figs.get(n, [])),
                 "errors": len(msgs["errors"]),
                 "warnings": len(msgs["warnings"]),
-                "to_crop": sum(1 for f in figs.get(n, []) if f.get("method") == MANUAL_CROP),
+                "to_crop": sum(1 for f in figs.get(n, []) if f.get("method") in TO_CROP),
                 "messages": (msgs["errors"] + msgs["warnings"])[:4],
                 "snippet": " ".join((q.get("stem_md") or q.get("stimulus_md") or "").split())[:120],
             })
@@ -226,7 +227,7 @@ class Store:
         if q is None:
             raise NotFound(f"no question {n} in {exam}")
         groups = {x["id"]: x for x in g["groups"]}
-        figs = self.figures_by_question(exam).get(n, [])
+        figs = [self._with_fraction(exam, f) for f in self.figures_by_question(exam).get(n, [])]
         _, per_q = self.validation(g)
         answers = self.answers(exam) or {}
         return {
@@ -562,7 +563,7 @@ class Store:
                  "note": "box drawn in the admin editor" if box else "picture added in the admin editor"}
         # A figure the tracing left for a hand crop is replaced by the crop; undo brings the placeholder back.
         figs = manifest.setdefault("figures", [])
-        todo = next((f for f in figs if f.get("question") == n and f.get("method") == MANUAL_CROP
+        todo = next((f for f in figs if f.get("question") == n and f.get("method") in TO_CROP
                      and replaces in (f.get("figure_id"), f.get("spec_id"))), None) if replaces else None
         if todo is not None:
             figs.remove(todo)
@@ -582,6 +583,32 @@ class Store:
         manifest["figures"] = [f for f in manifest["figures"] if f is not hit]
         self._write(mp, json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", f"{exam}.manifest")
         return {"deleted": fig_id}
+
+    def _with_fraction(self, exam, f):
+        """A proposed box comes in 300 dpi pixels; the editor draws boxes in page fractions."""
+        box = f.get("proposed_box_300dpi")
+        if f.get("method") != "proposed_box" or not box or not f.get("page"):
+            return f
+        size = self._page_size_300(exam, f["page"])
+        if not size:
+            return f
+        w, h = size
+        return {**f, "proposed_box_page_fraction": [round(min(1, max(0, v / d)), 4) for v, d in zip(box, (w, h, w, h))]}
+
+    def _page_size_300(self, exam, page):
+        """Width and height of a page rendered at 300 dpi, from the PDF or the scan PNG."""
+        fitz = _pymupdf()
+        pdf = self.sources.get(exam)
+        if fitz is not None and pdf is not None and pdf.is_file():
+            with fitz.open(pdf) as doc:
+                if 1 <= page <= doc.page_count:
+                    r = doc[page - 1].rect
+                    return r.width * 300 / 72, r.height * 300 / 72
+        path = self.scan_file(exam, page)
+        if path is not None and path.suffix.lower() == ".png":  # the scans are 300 dpi renders: read the PNG header
+            head = path.read_bytes()[:24]
+            return int.from_bytes(head[16:20], "big"), int.from_bytes(head[20:24], "big")
+        return None
 
     def _render_box(self, exam, page, box, dpi):
         """Pixels of a box on the original page (the PDF, or the scan PNG when there is no PDF)."""

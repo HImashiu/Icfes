@@ -448,13 +448,21 @@ function figProblems(f) {
   // The same problem repeated for every area or cell says nothing new.
   return [...new Set(errs.map(friendly))];
 }
-const isToCrop = (t) => t.method === "manual_crop_needed";
+const isToCrop = (t) => t.method === "manual_crop_needed" || t.method === "proposed_box";
 // Opens the figure's page and starts a box that replaces the placeholder.
 function cropMissing(id) {
   const t = state.detail.figures.find(x => x.figure_id === id);
   if (!t) return;
   if (t.page && t.page !== state.page) goPage(t.page);
   startCrop(t.figure_id, traceOption(t) || "");
+  const fb = t.proposed_box_page_fraction;
+  if (fb) {
+    state.box = [...fb];
+    drawBox(true);
+    const sc = $("#pdfscroll"), pg = $("#pdfpage");
+    if (sc && pg) sc.scrollTop = Math.max(0, pg.offsetTop + fb[1] * pg.offsetHeight - 80);
+    toast("Recuadro propuesto: Enter para usarlo, o arrastra sus bordes para ajustarlo");
+  }
 }
 const traceShown = (t) => ["azure", "eyeballed_box"].includes(t.method) && t.svg;
 // Figures whose native spec a scan picture replaces (the app drops them the same way).
@@ -628,6 +636,8 @@ async function openQuestion(n, opts = {}) {
   state.page = detail.anchor?.page ?? sc.pages[0] ?? sc.guess;
   document.body.classList.add("editing");
   renderWorkspace();
+  const proposed = !STATIC && detail.figures.find(t => t.method === "proposed_box" && t.proposed_box_page_fraction);
+  if (proposed) cropMissing(proposed.figure_id);
   status(`${state.exam} · Q${n}`, "ok");
 }
 
@@ -952,10 +962,10 @@ function drawFigs() {
         ${STATIC ? "" : `<button class="ib" type="button" onclick="cleanSaved('${esc(t.figure_id)}')" title="Quitar el fondo o tapar texto encima">✨ Limpiar</button><button class="ib warn" type="button" onclick="deleteScan('${esc(t.figure_id)}')" title="Quitar esta imagen">Quitar</button>`}</div>
       <div class="mini"><img src="${scanUrl(t)}" alt="${esc(t.figure_id)}"></div></div>`);
   const todo = d.figures.filter(isToCrop).map(t => `<div class="figcard todo">
-      <div class="head"><b>Falta recortar esta figura</b><span class="muted">${traceOption(t) ? `opción ${esc(traceOption(t))}` : "enunciado"}${t.page ? ` · página ${t.page}` : ""}</span>
+      <div class="head"><b>${t.proposed_box_page_fraction ? "Revisar el recorte propuesto" : "Falta recortar esta figura"}</b><span class="muted">${traceOption(t) ? `opción ${esc(traceOption(t))}` : "enunciado"}${t.page ? ` · página ${t.page}` : ""}</span>
         <span class="spacer"></span>
-        ${STATIC ? "" : `<button class="ib go" type="button" onclick="cropMissing('${esc(t.figure_id)}')">✂ Recortarla del PDF</button>`}</div>
-      <div class="muted" style="font-size:12px">Dibuja un recuadro sobre la figura en la página. El recorte toma su lugar.</div></div>`);
+        ${STATIC ? "" : `<button class="ib go" type="button" onclick="cropMissing('${esc(t.figure_id)}')">${t.proposed_box_page_fraction ? "✂ Ver el recuadro propuesto" : "✂ Recortarla del PDF"}</button>`}</div>
+      <div class="muted" style="font-size:12px">${t.proposed_box_page_fraction ? "Ya hay un recuadro dibujado en la página. Pulsa Enter si está bien, o arrastra sus bordes para ajustarlo." : "Dibuja un recuadro sobre la figura en la página. El recorte toma su lugar."}</div></div>`);
   const pending = d.figures.filter(t => !traceShown(t) && !isToCrop(t)).map(t => `<div class="figcard"><div class="head"><b>${esc(t.figure_id || t.spec_id)}</b><span class="badge hid">${t.pending_spec ? "pendiente" : esc(t.method || "")}</span></div></div>`);
   $("#figs").innerHTML = [...todo, ...natives, ...scans, ...pending].join("") || `<p class="muted" style="margin:0">Sin figuras. Si la pregunta tiene un dibujo, mapa o foto, recórtalo del PDF. Si es una gráfica o tabla, créala con «+ Gráfica o tabla».</p>`;
 }
@@ -1173,6 +1183,9 @@ document.addEventListener("keydown", e => {
   else if (!typing && e.key === "?") { showHelp(); }
   else if (e.altKey && e.key === "ArrowRight") { e.preventDefault(); $("#next").click(); }
   else if (e.altKey && e.key === "ArrowLeft") { e.preventDefault(); $("#prev").click(); }
+  else if (e.key === "Enter" && !typing && state.cropping && state.box && state.cropTarget?.kind === "replace" && !e.target.closest?.(".cropbar")) {
+    e.preventDefault(); cropTo(state.cropTarget.option || "", state.cropTarget.replaces);
+  }
   else if (e.key === "Escape") { cancelCrop(); }
 });
 
@@ -1507,24 +1520,48 @@ function bindPdf() {
   const ov = $("#ov");
   let start = null;
   const frac = (ev) => { const r = ov.getBoundingClientRect(); return [Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width)), Math.min(1, Math.max(0, (ev.clientY - r.top) / r.height))]; };
+  let adjust = null;  // {edges, from, box}: dragging an edge, a corner or the whole box drawn before
   ov.onpointerdown = (ev) => {
     if (!state.cropping || ev.button !== 0) return;
     ev.preventDefault();
     ov.setPointerCapture(ev.pointerId);
-    start = frac(ev);
+    const p = frac(ev);
+    const hit = state.box && boxGrip(state.box, p, ov.getBoundingClientRect());
+    if (hit) { adjust = { edges: hit, from: p, box: [...state.box] }; start = p; return; }
+    adjust = null;
+    start = p;
     state.box = [...start, ...start];
     drawBox(false);
   };
-  ov.onpointermove = (ev) => { if (!start) return; const p = frac(ev); state.box = [start[0], start[1], p[0], p[1]]; drawBox(false); };
+  ov.onpointermove = (ev) => {
+    const p = frac(ev);
+    if (!start) { if (state.cropping && state.box) ov.style.cursor = gripCursor(boxGrip(state.box, p, ov.getBoundingClientRect())); return; }
+    if (adjust) {
+      const [dx, dy] = [p[0] - adjust.from[0], p[1] - adjust.from[1]], b = [...adjust.box], e = adjust.edges;
+      if (e === "move") { const mx = Math.min(1 - b[2], Math.max(-b[0], dx)), my = Math.min(1 - b[3], Math.max(-b[1], dy)); state.box = [b[0] + mx, b[1] + my, b[2] + mx, b[3] + my]; }
+      else { if (e.includes("l")) b[0] += dx; if (e.includes("r")) b[2] += dx; if (e.includes("t")) b[1] += dy; if (e.includes("b")) b[3] += dy; state.box = b.map(v => Math.min(1, Math.max(0, v))); }
+      drawBox(false); return;
+    }
+    state.box = [start[0], start[1], p[0], p[1]]; drawBox(false);
+  };
   ov.onpointerup = () => {
     if (!start) return;
-    start = null;
+    start = null; adjust = null;
     const [x0, y0, x1, y1] = state.box;
     if (Math.abs(x1 - x0) < 0.01 || Math.abs(y1 - y0) < 0.01) { state.box = null; drawBox(false); return; }
     state.box = [Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1), Math.max(y0, y1)];
     drawBox(true);
   };
 }
+// Which part of a drawn box is under the pointer: an edge or corner ("t", "bl"…), "move" inside, or null outside.
+function boxGrip(box, p, rect) {
+  const [x0, y0, x1, y1] = box, tx = 10 / rect.width, ty = 10 / rect.height;
+  if (p[0] < x0 - tx || p[0] > x1 + tx || p[1] < y0 - ty || p[1] > y1 + ty) return null;
+  const e = (Math.abs(p[1] - y0) < ty ? "t" : Math.abs(p[1] - y1) < ty ? "b" : "") + (Math.abs(p[0] - x0) < tx ? "l" : Math.abs(p[0] - x1) < tx ? "r" : "");
+  return e || "move";
+}
+const gripCursor = (g) => !g ? "crosshair" : g === "move" ? "move" : { t: "ns-resize", b: "ns-resize", l: "ew-resize", r: "ew-resize", tl: "nwse-resize", br: "nwse-resize", tr: "nesw-resize", bl: "nesw-resize" }[g];
+
 function scrollToAnchor() {
   const a = state.detail.anchor, sc = $("#pdfscroll"), page = $("#pdfpage");
   if (!sc || !page || !a || a.page !== state.page || state.scrolled === `${state.detail.number}:${state.page}`) return;
@@ -1779,6 +1816,7 @@ function cleanerKey(e) {
   if (e.key === "Escape") { closeCleaner(); return true; }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); clUndo(); return true; }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); saveCleaner(); return true; }
+  if (e.key === "Enter" && !/INPUT|BUTTON/.test(e.target.tagName)) { e.preventDefault(); saveCleaner(); return true; }
   return true;
 }
 
