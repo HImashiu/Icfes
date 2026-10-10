@@ -13,7 +13,7 @@
   const KINDS = ['bar', 'line', 'scatter', 'curve', 'pie', 'table', 'geometry', 'diagram', 'combo', 'map'];
   const AXIS_KINDS = ['bar', 'line', 'scatter', 'curve', 'combo'];
   // Booklets print in grey-scale, so series use fill patterns, not grey shades.
-  const PATTERNS = ['hatch', 'solid', 'white', 'dots'];
+  const PATTERNS = ['hatch', 'solid', 'white', 'dots', 'vhatch', 'hhatch', 'xhatch', 'sparse', 'dense', 'grey'];
   const W = 480;
   const H = 300;
   const FONT = 'Arial, Helvetica, sans-serif';
@@ -265,6 +265,16 @@
       `<rect width="5" height="5" fill="#fff"/><line x1="0" y1="0" x2="0" y2="5" stroke="#000" stroke-width="1.6"/></pattern>` +
       `<pattern id="${id}-dots" width="5" height="5" patternUnits="userSpaceOnUse">` +
       `<rect width="5" height="5" fill="#fff"/><circle cx="2.5" cy="2.5" r="1.3" fill="#000"/></pattern>` +
+      `<pattern id="${id}-vhatch" width="4" height="4" patternUnits="userSpaceOnUse">` +
+      `<rect width="4" height="4" fill="#fff"/><line x1="2" y1="0" x2="2" y2="4" stroke="#000" stroke-width="1.2"/></pattern>` +
+      `<pattern id="${id}-hhatch" width="4" height="4" patternUnits="userSpaceOnUse">` +
+      `<rect width="4" height="4" fill="#fff"/><line x1="0" y1="2" x2="4" y2="2" stroke="#000" stroke-width="1.2"/></pattern>` +
+      `<pattern id="${id}-xhatch" width="6" height="6" patternUnits="userSpaceOnUse">` +
+      `<rect width="6" height="6" fill="#fff"/><line x1="0" y1="0" x2="6" y2="6" stroke="#000" stroke-width="1"/><line x1="6" y1="0" x2="0" y2="6" stroke="#000" stroke-width="1"/></pattern>` +
+      `<pattern id="${id}-sparse" width="9" height="9" patternUnits="userSpaceOnUse">` +
+      `<rect width="9" height="9" fill="#fff"/><circle cx="4.5" cy="4.5" r="1.6" fill="#000"/></pattern>` +
+      `<pattern id="${id}-dense" width="3.5" height="3.5" patternUnits="userSpaceOnUse">` +
+      `<rect width="3.5" height="3.5" fill="#fff"/><circle cx="1.75" cy="1.75" r="1" fill="#000"/></pattern>` +
       `</defs>`;
   }
 
@@ -279,7 +289,8 @@
     const p = series.pattern || PATTERNS[i % PATTERNS.length];
     if (p === 'solid') return '#000';
     if (p === 'white') return '#fff';
-    if (p === 'dots') return `url(#${id}-dots)`;
+    if (p === 'grey') return '#b8b8b8';
+    if (['dots', 'vhatch', 'hhatch', 'xhatch', 'sparse', 'dense'].includes(p)) return `url(#${id}-${p})`;
     return `url(#${id}-hatch)`;
   }
 
@@ -289,7 +300,7 @@
     let top = 14;
     if (spec.title) { out.push(text(W / 2, 18, spec.title, { weight: 'bold' })); top = 30; }
     let legendY = 0;
-    if (showLegend) { legendY = top + 12; top += 18 * legendRows(spec.series || [], 58); }
+    if (showLegend) { legendY = top + 12; top += 18 * legendRows(legendSeries(spec), 58); }
     const left = 58;
     const plotRight = right == null ? W - 16 : right;
     const bottom = H - 50 - (extraBottom || 0);
@@ -306,12 +317,22 @@
     return { out, left, right: plotRight, top, bottom, y, legendY };
   }
 
-  function legendLabel(s, i) { return s.name || s.label || `serie ${i + 1}`; }
+  function legendLabel(s) { return s.name || s.label || ''; }
+  // spec.legend = ["text", ...] sets each entry's text (one per series, '' hides an entry); spec.legend = false hides the legend.
+  function legendOn(spec) {
+    if (spec.legend === false) return false;
+    if (Array.isArray(spec.legend)) return spec.legend.some(Boolean);
+    return (spec.series || []).some((s) => s.name || s.label);
+  }
+  function legendSeries(spec) {
+    return (spec.series || []).map((s, i) => (Array.isArray(spec.legend) ? { ...s, name: spec.legend[i] || '', label: undefined } : s));
+  }
   // Entries flow left to right and wrap onto a new row when they reach the right edge.
   function legendLayout(series, left) {
     let x = left, row = 0;
-    return series.map((s, i) => {
-      const w = 24 + String(legendLabel(s, i)).length * 7;
+    return series.map((s) => {
+      if (!legendLabel(s)) return null;
+      const w = 24 + String(legendLabel(s)).length * 7;
       if (x > left && x + w > W - 16) { x = left; row++; }
       const pos = { x, row };
       x += w;
@@ -319,18 +340,19 @@
     });
   }
   function legendRows(series, left) {
-    const pos = legendLayout(series, left);
-    return pos.length ? pos[pos.length - 1].row + 1 : 0;
+    const shown = legendLayout(series, left).filter(Boolean);
+    return shown.length ? shown[shown.length - 1].row + 1 : 0;
   }
   // Line charts pass glyph = true: each entry shows its point marker instead of a filled swatch.
   function legend(series, left, top, id, glyph) {
     const out = [];
     legendLayout(series, left).forEach((pos, i) => {
+      if (!pos) return;
       const s = series[i];
       const y = top + pos.row * 18;
       if (glyph) out.push(marker(s.marker || 'circle', pos.x + 5, y - 5));
       else out.push(`<rect x="${pos.x}" y="${y - 10}" width="10" height="10" fill="${fillFor(s, i, id)}" stroke="#000"/>`);
-      out.push(text(pos.x + 14, y - 1, legendLabel(s, i), { anchor: 'start' }));
+      out.push(text(pos.x + 14, y - 1, legendLabel(s), { anchor: 'start' }));
     });
     return out;
   }
@@ -338,17 +360,17 @@
   // Horizontal bars: categories run down the left, values run across. spec.y is the value axis.
   function hbarSvg(spec, id) {
     const series = spec.series;
-    const showLegend = spec.legend !== false && (series.length > 1 || (series[0] && series[0].name));
+    const showLegend = legendOn(spec);
     const xScale = scaleFor(spec.y, series.flatMap((s) => s.values), true);
     const labelW = Math.min(170, Math.max(...spec.categories.map((c) => String(c).length)) * 6.5);
     const left = 24 + labelW;
     const right = W - 24;
     const legendY = 14 + (spec.title ? 16 : 0) + 12;
-    const top = 14 + (spec.title ? 16 : 0) + (showLegend ? 18 * legendRows(series, left) : 0);
+    const top = 14 + (spec.title ? 16 : 0) + (showLegend ? 18 * legendRows(legendSeries(spec), left) : 0);
     const bottom = H - 40;
     const out = [];
     if (spec.title) out.push(text(W / 2, 18, spec.title, { weight: 'bold' }));
-    if (showLegend) out.push(...legend(series, left, legendY, id));
+    if (showLegend) out.push(...legend(legendSeries(spec), left, legendY, id));
     const xAt = (v) => left + (v - xScale.lo) / (xScale.hi - xScale.lo) * (right - left);
     for (const t of xScale.ticks) {
       out.push(`<line x1="${xAt(t).toFixed(1)}" x2="${xAt(t).toFixed(1)}" y1="${top}" y2="${bottom}" stroke="#e4e4e4" stroke-width="1"/>`);
@@ -378,7 +400,7 @@
   function barSvg(spec, id) {
     if (spec.orientation === 'horizontal') return hbarSvg(spec, id);
     const series = spec.series;
-    const showLegend = spec.legend !== false && (series.length > 1 || (series[0] && series[0].name));
+    const showLegend = legendOn(spec);
     const primary = series.filter((s) => s.axis !== 2);
     const secondary = series.filter((s) => s.axis === 2);
     const yScale = scaleFor(spec.y, primary.flatMap((s) => s.values), true);
@@ -393,7 +415,7 @@
       for (const t of y2Scale.ticks) out.push(text(fr.right + 6, (yy(t) + 4).toFixed(1), fmt(t), { anchor: 'start' }));
       out.push(text(W - 12, (fr.top + fr.bottom) / 2, spec.y2.label, { rotate: 90 }));
     }
-    if (showLegend) out.push(...legend(series, fr.left, fr.legendY, id));
+    if (showLegend) out.push(...legend(legendSeries(spec), fr.left, fr.legendY, id));
     const n = spec.categories.length;
     const band = (fr.right - fr.left) / n;
     const barW = Math.min(44, band * 0.7 / series.length);
@@ -417,12 +439,12 @@
 
   function lineSvg(spec, id) {
     const series = spec.series;
-    const showLegend = spec.legend !== false && (series.length > 1 || (series[0] && series[0].name));
+    const showLegend = legendOn(spec);
     if (series.some((s) => Array.isArray(s.points))) return numericLine(spec, id, showLegend);
     const yScale = scaleFor(spec.y, series.flatMap((s) => s.values), false);
     const fr = frame(spec, showLegend, yScale);
     const out = fr.out;
-    if (showLegend) out.push(...legend(series, fr.left, fr.legendY, id, true));
+    if (showLegend) out.push(...legend(legendSeries(spec), fr.left, fr.legendY, id, true));
     const n = spec.categories.length;
     const xAt = (c) => fr.left + (fr.right - fr.left) * (n === 1 ? 0.5 : c / (n - 1));
     spec.categories.forEach((cat, c) => {
@@ -466,7 +488,7 @@
     const yScale = scaleFor(spec.y, ys, false);
     const fr = frame(spec, showLegend, yScale);
     const out = fr.out;
-    if (showLegend) out.push(...legend(series, fr.left, fr.legendY, id, true));
+    if (showLegend) out.push(...legend(legendSeries(spec), fr.left, fr.legendY, id, true));
     const xAt = (v) => fr.left + (v - xScale.lo) / (xScale.hi - xScale.lo) * (fr.right - fr.left);
     for (const t of xScale.ticks) out.push(text(xAt(t).toFixed(1), fr.bottom + 15, tickText(spec.x, t)));
     series.forEach((s, si) => out.push(...polyline(s, si, s.points.map(([x, y]) => [xAt(x), fr.y(y)]))));
@@ -500,13 +522,13 @@
 
   function scatterSvg(spec, id) {
     const series = spec.series;
-    const showLegend = spec.legend !== false && (series.length > 1 || (series[0] && series[0].name));
+    const showLegend = legendOn(spec);
     const pts = series.flatMap((s) => s.points);
     const xScale = scaleFor(spec.x, pts.map((p) => p[0]), false);
     const yScale = scaleFor(spec.y, pts.map((p) => p[1]), false);
     const fr = frame(spec, showLegend, yScale);
     const out = fr.out;
-    if (showLegend) out.push(...legend(series, fr.left, fr.legendY, id));
+    if (showLegend) out.push(...legend(legendSeries(spec), fr.left, fr.legendY, id));
     for (const t of xScale.ticks) {
       const x = fr.left + (t - xScale.lo) / (xScale.hi - xScale.lo) * (fr.right - fr.left);
       out.push(text(x.toFixed(1), fr.bottom + 15, tickText(spec.x, t)));
@@ -612,7 +634,10 @@
         angle = a2;
         const pct = Math.round(frac * 1000) / 10;
         const name = spec.rings ? (ring.name ? `${ring.name}, ${s.label}` : `anillo ${k + 1}, ${s.label}`) : s.label;
-        entries.push({ fill, text: `${name}: ${fmt(s.value)} (${fmt(pct)} %)` });
+        const parts = [];
+        if (spec.values !== false) parts.push(fmt(s.value));
+        if (spec.percent !== false) parts.push(`(${fmt(pct)} %)`);
+        entries.push({ fill, text: parts.length ? `${name}: ${parts.join(' ')}` : name });
       });
     });
     const step = Math.min(24, Math.floor((H - 100) / Math.max(1, entries.length - 1)));
@@ -788,7 +813,7 @@
   // A series with axis 2 is read against y2, so a bar and a line can carry different units.
   function comboSvg(spec, id) {
     const series = spec.series;
-    const showLegend = spec.legend !== false && (series.length > 1 || (series[0] && series[0].name));
+    const showLegend = legendOn(spec);
     const primary = series.filter((s) => s.axis !== 2);
     const secondary = series.filter((s) => s.axis === 2);
     const yScale = scaleFor(spec.y, primary.flatMap((s) => s.values), true);
@@ -802,7 +827,7 @@
       for (const t of y2Scale.ticks) out.push(text(fr.right + 6, (yy(t) + 4).toFixed(1), fmt(t), { anchor: 'start' }));
       out.push(text(W - 12, (fr.top + fr.bottom) / 2, spec.y2.label, { rotate: 90 }));
     }
-    if (showLegend) out.push(...legend(series, fr.left, fr.legendY, id));
+    if (showLegend) out.push(...legend(legendSeries(spec), fr.left, fr.legendY, id));
     const n = spec.categories.length;
     const band = (fr.right - fr.left) / n;
     const bars = series.map((s, i) => ({ s, i })).filter(({ s }) => s.type === 'bar');

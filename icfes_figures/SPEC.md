@@ -46,6 +46,7 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 ```
 
 - `categories`: one label per bar group. `series[i].values`: one non-negative number per category.
+- Legend entries come from each series' `name`. A series with no name gets no entry, so nothing is invented. Set `"legend": ["text", ...]` (one per series, `""` hides one) to print exactly the entries the scan shows.
 - A single series with no name draws no legend. `legend: false` on any chart hides the legend even with several series (use it when the scan prints none).
 
 ### `line`, a line over categorical x
@@ -105,6 +106,7 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 ```
 
 - Values are relative; the renderer shows each value and its percent of the total.
+- `"percent": false` hides the percent, and `"values": false` hides the number, when the scan prints none. Ten slices keep distinct print fills (`hatch`, `solid`, `white`, `dots`, `vhatch`, `hhatch`, `xhatch`, `sparse`, `dense`, `grey`).
 - Nested rings: give `rings` instead of `slices`, outer ring first, 1 to 3 rings. Each ring has its own
   `slices` (same fields) and an optional `name`, which prefixes its legend entries. Each ring has its own
   percentages. A ring of rings is drawn as a donut with a hole in the middle.

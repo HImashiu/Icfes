@@ -371,3 +371,29 @@ test('wide tables shrink their font to fit maxWidth and wrap long cells', () => 
   assert.ok(/font-size:8px/.test(forced), 'stops at minSize');
   assert.ok(F.validate({ ...wide, maxWidth: -1 }).length > 0);
 });
+
+test('pies keep up to ten slices distinguishable in print', () => {
+  const slices = Array.from({ length: 10 }, (_, i) => ({ label: `S${i + 1}`, value: 1 }));
+  const svg = F.render({ kind: 'pie', slices });
+  const fills = [...svg.matchAll(/<rect x="262" y="[-\d.]+" width="10" height="10" fill="([^"]+)"/g)].map((m) => m[1]);
+  assert.equal(fills.length, 10);
+  assert.equal(new Set(fills).size, 10, 'each slice has its own fill');
+});
+
+test('pie hides printed-free labels: percent and values can be turned off', () => {
+  const base = { kind: 'pie', slices: [{ label: 'A', value: 1 }, { label: 'B', value: 3 }] };
+  assert.ok(F.render(base).includes('(25 %)'));
+  const noPct = F.render({ ...base, percent: false });
+  assert.ok(!noPct.includes(' %') && noPct.includes('>A: 1<'));
+  const bare = F.render({ ...base, percent: false, values: false });
+  assert.ok(bare.includes('>A<') && !bare.includes(': 1'));
+});
+
+test('legend: a list gives the printed entries; unnamed series get no invented entry', () => {
+  const two = { kind: 'line', x: { label: 'Mes' }, y: { label: 'Casos' }, categories: ['Ene', 'Feb'], series: [{ values: [1, 2] }, { values: [2, 1] }] };
+  assert.ok(!F.render(two).includes('serie'), 'no default serie N');
+  const listed = F.render({ ...two, legend: ['Solo esta', ''] });
+  assert.ok(listed.includes('>Solo esta<'));
+  assert.ok(!listed.includes('>serie'), 'the empty entry is hidden');
+  assert.deepEqual(F.validate({ ...two, legend: ['Solo esta', ''] }), []);
+});
