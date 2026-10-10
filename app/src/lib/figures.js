@@ -1,6 +1,14 @@
 // Figure specs (icfes-figure/1) drawn by the shared renderer in icfes_figures/render.js.
 // That file is a UMD module with no imports.
 import engine from "../../../icfes_figures/render.js";
+// The browser build has no require(), so the engine gets its map outlines here (it looks them up by region key).
+import colombiaDepartamentos from "../../../icfes_figures/maps/colombia-departamentos.json";
+import colombiaPais from "../../../icfes_figures/maps/colombia-pais.json";
+import sudamerica from "../../../icfes_figures/maps/sudamerica.json";
+import mundo from "../../../icfes_figures/maps/mundo.json";
+for (const [key, doc] of Object.entries({ "colombia-departamentos": colombiaDepartamentos, "colombia-pais": colombiaPais, sudamerica, mundo })) {
+  engine.registerMap(key, doc);
+}
 import DOMPurify from "dompurify";
 // Both spellings come from the figure threads; the schema is the same.
 const FIGURE_FORMATS = ["icfes-figures-specs/1", "icfes-figure/1"];

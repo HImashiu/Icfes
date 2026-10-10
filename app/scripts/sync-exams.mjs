@@ -11,10 +11,13 @@
 //         answer-keys/<name>.key.json          (preliminary key: solved, not official)
 //         answer-keys/<name>.key.sidecar.json  (per-question confidence and reasons)
 // A key in the data folder counts as official; one from answer-keys is labelled preliminary.
-import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync, rmSync, copyFileSync } from "node:fs";
 import { join, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 import { normalizeField } from "../src/lib/text-normalize.js";
+// The figure engine validates specs; a spec it cannot draw hides its question (the app never shows an error box).
+const figureEngine = createRequire(import.meta.url)("../../icfes_figures/render.js");
 
 const here = dirname(fileURLToPath(import.meta.url));
 const out = join(here, "..", "public", "exams");
@@ -68,6 +71,17 @@ const FLAT_TABLE = /\[Tabla:[^\]]*\]/g;
 // Questions the owners removed until their text is fixed.
 const DROPPED = { "S11-L_1ra": [104] };
 
+// Questions whose native figures the editor's validator cannot draw: { exam slug -> question numbers }.
+// Read from the shared quality list; a missing file hides nothing extra.
+const INVALID_FIGURES_PATH = "/mnt/project-files/icfes/quality/invalid-figures.json";
+const invalidFigureQuestions = new Map();
+if (existsSync(INVALID_FIGURES_PATH)) {
+  for (const row of JSON.parse(readFileSync(INVALID_FIGURES_PATH, "utf8")).invalid ?? []) {
+    if (!invalidFigureQuestions.has(row.exam)) invalidFigureQuestions.set(row.exam, new Set());
+    invalidFigureQuestions.get(row.exam).add(row.question);
+  }
+}
+
 // Traced figures: figures/traced/<exam>/manifest.json maps a question to a scan trace (an SVG).
 // Only "azure" entries with an SVG count; each SVG is copied next to the exam files, and the
 // question gets { url, figure_id, spec_id } so the app shows the trace in place of the spec.
@@ -92,6 +106,36 @@ function loadTraced(slug) {
   return traced;
 }
 
+// Pictures pasted into goldens: <img src="IMG:<exam>/<file>"> points at data/images/<exam>/<file>.
+// The file is copied into public/exams/images/<exam>/ and the src is rewritten to that relative path.
+const IMG_TAG = /(<img\b[^>]*?\bsrc=")IMG:([^"\/]+)\/([^"]+)(")/g;
+function resolveImages(exam, slug) {
+  const copied = new Set();
+  let missing = 0;
+  const fix = (html) => {
+    if (typeof html !== "string" || !html.includes("IMG:")) return html;
+    return html.replace(IMG_TAG, (m, pre, dir, file, post) => {
+      const name = file.replace(/[^\w.-]/g, "_");
+      const from = [join(src, "images", dir, file), join(src, "images", slug.replace(/^S11-/, ""), file)].find((p) => existsSync(p));
+      if (!from) { missing++; return m; }
+      const rel = `exams/images/${slug}/${name}`;
+      if (!copied.has(name)) {
+        mkdirSync(join(out, "images", slug), { recursive: true });
+        copyFileSync(from, join(out, "images", slug, name));
+        copied.add(name);
+      }
+      return `${pre}${rel}${post}`;
+    });
+  };
+  for (const g of exam.groups ?? []) for (const k of ["passage_md", "stimulus_md", "directions"]) g[k] = fix(g[k]);
+  for (const q of exam.questions ?? []) {
+    q.stem_md = fix(q.stem_md);
+    q.stimulus_md = fix(q.stimulus_md);
+    for (const o of q.options ?? []) o.text_md = fix(o.text_md);
+  }
+  return missing;
+}
+
 function prepareExam(exam, specPath, slug, report) {
   const specFigures = specPath && existsSync(specPath) ? JSON.parse(readFileSync(specPath, "utf8")).figures ?? [] : [];
   const specIds = new Set(specFigures.map((f) => f.id));
@@ -112,6 +156,10 @@ function prepareExam(exam, specPath, slug, report) {
     const stem = list.filter((t) => !t.option);
     if (stem.length) q.traced = stem.map((t) => ({ url: t.url, figure_id: t.figure_id }));
   }
+  const badSpecIds = new Set(specFigures.filter((f) => f.spec && f.kind !== "image" && figureEngine.validate(f.spec).length).map((f) => f.id));
+  const badStemQuestions = new Set(specFigures.filter((f) => badSpecIds.has(f.id) && f.location?.question != null).map((f) => f.location.question));
+  // The editor's validator list: questions whose native figures it cannot draw (see quality/invalid-figures.json).
+  const invalidQuestions = invalidFigureQuestions.get(slug) ?? new Set();
   const groups = new Map((exam.groups ?? []).map((g) => [g.id, g]));
   const fixes = {};
   const left = {};
@@ -143,6 +191,9 @@ function prepareExam(exam, specPath, slug, report) {
     if (q.pending_spec || (q.options ?? []).some((o) => o.pending_spec)) reasons.push("pending_spec");
     const missingSpec = [].concat(q.figure ?? []).concat((q.options ?? []).flatMap((o) => [].concat(o.figure ?? [])));
     if (missingSpec.some((id) => !specIds.has(id))) reasons.push("figure_without_spec");
+    const linked = [].concat(q.figure ?? []).concat((q.options ?? []).flatMap((o) => [].concat(o.figure ?? [])));
+    if (linked.some((id) => badSpecIds.has(id)) || badStemQuestions.has(q.number)) reasons.push("figure_render_error");
+    if (invalidQuestions.has(q.number)) reasons.push("figure_render_error");
     return { q, figure, reasons };
   });
 
@@ -167,6 +218,8 @@ function prepareExam(exam, specPath, slug, report) {
       else if (key === "stimulus_md" && FIGURE_NOTE_ANY.test(t)) bump(left, "figure_note_in_group");
       g[key] = t;
     }
+    // The golden's passage_md is the group passage; the app reads stimulus_md, so it takes passage_md when set.
+    if (typeof g.passage_md === "string" && g.passage_md.trim()) g.stimulus_md = g.passage_md;
     // A passage that repeats the group's directions (the "RESPONDA LAS PREGUNTAS…" line) drops the repeat.
     const head = (s) => (s ?? "").replace(/<[^>]+>/g, " ").replace(/[#*\s]+/g, " ").trim().toLowerCase();
     if (g.directions && g.stimulus_md && head(g.directions).length > 20 && head(g.stimulus_md).startsWith(head(g.directions).slice(0, 40))) {
@@ -229,6 +282,8 @@ for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
   }
   const specPath = specFiles.has(slug) ? join(specDir, specFiles.get(slug)) : null;
   const shown = prepareExam(exam, specPath, slug, report);
+  const imagesMissing = resolveImages(shown, slug);
+  if (imagesMissing) console.warn(`[images] ${slug}: ${imagesMissing} picture(s) not found in data/images`);
   writeFileSync(join(out, `${slug}.json`), JSON.stringify(shown));
   // The same spec the catalog uses: the .full file when there is one.
   const figFile = specFiles.has(slug) ? join(specDir, specFiles.get(slug)) : null;
