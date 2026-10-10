@@ -123,7 +123,45 @@ const state = { tab: "progress", exam: null, filter: "all", n: null, detail: nul
 
 function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function status(text, cls = "") { const el = $("#status"); el.textContent = text; el.className = "pill " + cls; }
-function render(html) { return window.renderRich ? window.renderRich(html || "") : esc(html); }
+// Pictures are stored as IMG:<exam>/<file>; the page fetches them from the local server.
+function render(html) {
+  const src = (html || "").replace(/src="IMG:([^"]+)"/g, (m, rel) => `src="/api/picture/${rel}"`);
+  return window.renderRich ? window.renderRich(src) : esc(src);
+}
+
+// Pasting or dropping a picture into a question text stores it and puts its reference at the cursor.
+async function addPicture(file, textarea) {
+  const d = state.detail;
+  const msg = $("#save-msg");
+  msg.textContent = "Guardando imagen…";
+  try {
+    const res = await fetch(`/api/exams/${encodeURIComponent(d.exam)}/questions/${d.number}/pictures`, {
+      method: "POST", headers: { "Content-Type": file.type }, body: file,
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+    const tag = `<img alt="" src="${body.ref}">`;
+    const start = textarea.selectionStart ?? textarea.value.length;
+    textarea.value = textarea.value.slice(0, start) + tag + textarea.value.slice(textarea.selectionEnd ?? start);
+    textarea.setSelectionRange(start + tag.length, start + tag.length);
+    textarea.dispatchEvent(new Event("input"));
+    msg.textContent = "Imagen añadida. Guarda para conservar el cambio.";
+  } catch (err) {
+    msg.innerHTML = `<span class="bad">${esc(err.message)}</span>`;
+  }
+}
+
+document.addEventListener("paste", e => {
+  const area = e.target.closest?.("textarea");
+  const file = [...(e.clipboardData?.items || [])].find(i => i.kind === "file" && i.type.startsWith("image/"))?.getAsFile();
+  if (area && file && state.detail) { e.preventDefault(); addPicture(file, area); }
+});
+document.addEventListener("dragover", e => { if (e.target.closest?.("textarea")) e.preventDefault(); });
+document.addEventListener("drop", e => {
+  const area = e.target.closest?.("textarea");
+  const file = [...(e.dataTransfer?.files || [])].find(f => f.type.startsWith("image/"));
+  if (area && file && state.detail) { e.preventDefault(); addPicture(file, area); }
+});
 function areaColor(name) { return AREA[name] ? `var(${AREA[name]})` : "var(--text-2)"; }
 function fmt(n) { return n == null ? "—" : Number(n).toLocaleString("es-CO"); }
 

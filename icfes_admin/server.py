@@ -24,6 +24,9 @@ STATIC = Path(__file__).resolve().parent / "static"
 ROUTES = []
 
 
+MAX_BODY = 9 * 1024 * 1024
+
+
 class Raw(NamedTuple):
     content_type: str
     data: bytes
@@ -74,6 +77,19 @@ def scan(store, m, body, query):
     return Raw("image/png", path.read_bytes())
 
 
+@route("POST", r"/api/exams/([^/]+)/questions/(\d+)/pictures")
+def add_picture(store, m, body, query):
+    ctype, data = body
+    return {"ref": store.save_image(m.group(1), int(m.group(2)), data, ctype)}
+
+
+@route("GET", r"/api/picture/(.+)")
+def picture(store, m, body, query):
+    path = store.image_file(m.group(1))
+    ctype = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+    return Raw(ctype, path.read_bytes())
+
+
 @route("GET", r"/api/figure")
 def figure(store, m, body, query):
     rel = (query.get("path") or [""])[0]
@@ -94,6 +110,9 @@ class Handler(BaseHTTPRequestHandler):
     def do_PUT(self):
         self._dispatch("PUT")
 
+    def do_POST(self):
+        self._dispatch("POST")
+
     def _dispatch(self, method):
         url = urlparse(self.path)
         path = unquote(url.path)
@@ -105,7 +124,7 @@ class Handler(BaseHTTPRequestHandler):
             for verb, rx, fn in ROUTES:
                 match = rx.match(path) if verb == method else None
                 if match:
-                    body = self._read_json() if method == "PUT" else None
+                    body = self._read_json() if method == "PUT" else self._read_picture() if method == "POST" else None
                     result = fn(self.store, match, body, parse_qs(url.query))
                     if isinstance(result, Raw):
                         return self._send(200, result.content_type, result.data)
@@ -127,6 +146,12 @@ class Handler(BaseHTTPRequestHandler):
             return self._send_json(404, {"error": "not found"})
         ctype = mimetypes.guess_type(target.name)[0] or "application/octet-stream"
         return self._send(200, ctype, target.read_bytes())
+
+    def _read_picture(self):
+        length = int(self.headers.get("Content-Length") or 0)
+        if length > MAX_BODY:
+            raise BadRequest("the picture is larger than 8 MB")
+        return self.headers.get("Content-Type", "").split(";")[0].strip(), self.rfile.read(length)
 
     def _read_json(self):
         length = int(self.headers.get("Content-Length") or 0)

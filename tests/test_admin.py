@@ -188,3 +188,17 @@ def test_shared_passage_is_saved_to_passage_md(root):
     assert saved["stimulus_md"] == ""
     with pytest.raises(BadRequest):
         store.update_question(EXAM, 3, {"group_passage_md": "x"})
+
+
+def test_pasted_pictures_are_stored_and_referenced(root):
+    store = Store(root)
+    png = b"\x89PNG\r\n\x1a\n" + b"0" * 32
+    ref = store.save_image(EXAM, 1, png, "image/png")
+    assert ref.startswith(f"IMG:{EXAM}/{EXAM}-q1-") and ref.endswith(".png")
+    assert store.image_file(ref[len("IMG:"):]).read_bytes() == png
+    with pytest.raises(BadRequest):
+        store.save_image(EXAM, 1, b"not a picture", "image/png")
+    with pytest.raises(BadRequest):
+        store.save_image(EXAM, 1, png, "image/gif")
+    with pytest.raises(NotFound):
+        store.image_file(f"{EXAM}/../../data/S11-T_1ra.golden.json")

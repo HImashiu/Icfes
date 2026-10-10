@@ -16,6 +16,7 @@ import os
 import re
 import sys
 import tempfile
+import uuid
 from datetime import datetime
 from pathlib import Path
 
@@ -45,6 +46,13 @@ class Conflict(Exception):
         self.reasons = reasons
 
 
+IMAGE_TYPES = {"image/png": "png", "image/jpeg": "jpg"}
+PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
+JPEG_MAGIC = b"\xff\xd8\xff"
+MAX_IMAGE_BYTES = 8 * 1024 * 1024
+IMAGE_PATH = re.compile(r"^S11-[A-Za-z0-9_]+/[A-Za-z0-9_.-]+\.(png|jpg)$")
+
+
 def _pymupdf():
     try:
         import pymupdf
@@ -66,6 +74,7 @@ class Store:
         self.data = self.root / "data"
         self.keys = self.root / "answer-keys"
         self.figures = self.root / "figures"
+        self.images = self.root / "images"
         self.backups = self.data / ".backups"
         self.scans = Path(scans) if scans else None
         # sources: a JSON map {"S11-A_1ra": "C:/.../S11- A 1ra Sesión.pdf"} to the exam's source PDF.
@@ -307,6 +316,38 @@ class Store:
             if hit:
                 return hit
         return None
+
+    # ----- pictures pasted into questions ----------------------------------
+
+    def save_image(self, exam, n, data, ctype):
+        """Store a pasted picture under images/<exam>/ and return the reference the golden uses: IMG:<exam>/<file>."""
+        exam = self._exam(exam)
+        golden = self.golden(exam)
+        if not any(q["number"] == n for q in golden["questions"]):
+            raise NotFound(f"no question {n} in {exam}")
+        ext = IMAGE_TYPES.get(ctype)
+        if ext is None:
+            raise BadRequest(f"{ctype or 'this type'} is not a picture the editor stores (use PNG or JPEG)")
+        if not data:
+            raise BadRequest("the picture is empty")
+        if len(data) > MAX_IMAGE_BYTES:
+            raise BadRequest("the picture is larger than 8 MB")
+        magic = PNG_MAGIC if ext == "png" else JPEG_MAGIC
+        if not data.startswith(magic):
+            raise BadRequest("the data is not a PNG or JPEG picture")
+        name = f"{exam}-q{n}-{uuid.uuid4().hex[:8]}.{ext}"
+        folder = self.images / exam
+        folder.mkdir(parents=True, exist_ok=True)
+        tmp = folder / (name + ".tmp")
+        tmp.write_bytes(data)
+        os.replace(tmp, folder / name)
+        return f"IMG:{exam}/{name}"
+
+    def image_file(self, rel):
+        target = (self.images / rel).resolve()
+        if not IMAGE_PATH.match(rel) or self.images.resolve() not in target.parents or not target.is_file():
+            raise NotFound(f"no picture {rel}")
+        return target
 
     def figure_file(self, rel):
         target = (self.figures / rel).resolve()
