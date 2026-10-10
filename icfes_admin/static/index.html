@@ -142,6 +142,20 @@ body.editing main{padding:0;max-width:none}
 .fld{margin-bottom:14px}
 .fld > .label{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
 .fld textarea{min-height:44px;overflow:hidden;font:400 14px/1.45 Figtree,system-ui,sans-serif}
+.rich{display:none}
+#form.visual textarea.src{display:none}
+#form.visual .rich{display:block;min-height:44px;background:var(--paper);color:var(--paper-ink);border:2px solid var(--line);border-radius:12px;padding:8px 12px;font:400 16px/1.5 Georgia,'Times New Roman',serif;outline:none;overflow-wrap:anywhere}
+#form.visual .rich:focus{border-color:var(--accent)}
+#form.visual .rich.empty::before{content:attr(data-ph);color:#8a8a8a;pointer-events:none}
+.rich ul,.rich ol{margin:4px 0;padding-left:26px}
+.rich ul{list-style:disc}.rich ol{list-style:decimal}
+.rich table{border-collapse:collapse;margin:6px 0;width:auto;background:#fff;border:0;border-radius:0}
+.rich th,.rich td{border:1px solid #000;padding:3px 8px;min-width:40px;color:#000;background:#fff;font:inherit;font-size:15px;text-transform:none;letter-spacing:0}
+.rich th{font-weight:700}
+.fgroup{display:inline-flex;gap:2px;padding:0 4px;border-left:1px solid var(--line)}
+.fgroup[hidden]{display:none}
+.fbar .ib.on{background:var(--accent-soft);border-color:var(--accent)}
+.fbar .seg button{padding:4px 10px}
 textarea:focus,input:focus,select:focus{outline:none;border-color:var(--accent)}
 .orow{display:grid;grid-template-columns:40px 1fr auto;gap:8px;align-items:start;margin-bottom:8px}
 .ltile{width:40px;height:40px;border-radius:10px;border:2px solid var(--line);background:var(--surface-2);font-weight:800;cursor:pointer;position:relative;color:var(--text)}
@@ -178,6 +192,12 @@ table.help{border:0}
 table.help td{border-bottom:1px solid var(--line);padding:8px}
 select.ib{padding:0 8px}
 /* Native tables keep the app's print look inside the editor's own table styles. */
+table.exam-table{border-collapse:collapse;width:auto;border:0;border-radius:0;overflow:visible;background:#fff;margin:8px 0}
+table.exam-table th,table.exam-table td{border:1px solid #000;padding:4px 10px;color:#000;background:#fff;font:inherit;font-size:15px;text-transform:none;letter-spacing:0;text-align:left}
+table.exam-table th{font-weight:700}
+.fbar .ib{min-height:30px;padding:3px 9px}
+.fbar .seg{padding:2px}
+.fbar .seg button{min-height:28px}
 table.icfes-table{width:auto;border:0;border-radius:0;overflow:visible;background:#fff;margin:8px auto}
 table.icfes-table th,table.icfes-table td{border:1px solid #000;padding:4px 10px;text-align:center;color:#000;background:#fff;font:400 14px/1.3 Arial,Helvetica,sans-serif;text-transform:none;letter-spacing:0;vertical-align:middle}
 table.icfes-table th{font-weight:700}
@@ -530,6 +550,8 @@ function renderWorkspace() {
   bindPdf();
   refreshPreview();
   document.querySelectorAll("#form textarea").forEach(fit);
+  attachAllRich();
+  $("#form").classList.toggle("visual", state.visual);
   $("#back").onclick = () => leave(() => setTab("questions"));
   $("#prev").onclick = () => prev && leave(() => openQuestion(prev));
   $("#next").onclick = () => next && leave(() => openQuestion(next));
@@ -573,12 +595,36 @@ function formPane(q, g) {
   const notes = (q.provenance?.notes || []).slice(-6).map(f => `<li>${esc(f)}</li>`).join("");
   const msgs = [...state.detail.messages.errors.map(m => `<div class="note bad">${esc(m)}</div>`), ...state.detail.messages.warnings.map(m => `<div class="note warn">${esc(m)}</div>`)].join("");
   return `
-    <div class="fbar">
-      <button class="ib" type="button" onclick="fmtInsert('bold')" title="Negrita"><b>B</b></button>
-      <button class="ib" type="button" onclick="fmtInsert('italic')" title="Cursiva"><i>I</i></button>
-      <button class="ib" type="button" onclick="fmtInsert('math')" title="Fórmula">x²</button>
+    <div class="fbar" onmousedown="if (event.target.closest('button')) event.preventDefault()">
+      <span class="seg" id="fmode">${fmodeHtml()}</span>
+      <span class="fgroup">
+        <button class="ib" type="button" data-cmd="bold" onclick="richCmd('bold')" title="Negrita (Ctrl+B)"><b>B</b></button>
+        <button class="ib" type="button" data-cmd="italic" onclick="richCmd('italic')" title="Cursiva (Ctrl+I)"><i>I</i></button>
+        <button class="ib" type="button" data-cmd="underline" onclick="richCmd('underline')" title="Subrayado (Ctrl+U)"><u>S</u></button>
+        <button class="ib" type="button" data-cmd="subscript" onclick="richCmd('subscript')" title="Subíndice, como en H₂O">x₂</button>
+        <button class="ib" type="button" data-cmd="superscript" onclick="richCmd('superscript')" title="Superíndice, como en m²">x²</button>
+      </span>
+      <span class="fgroup">
+        <button class="ib" type="button" data-cmd="insertUnorderedList" onclick="richCmd('insertUnorderedList')" title="Lista con viñetas">• Lista</button>
+        <button class="ib" type="button" data-cmd="insertOrderedList" onclick="richCmd('insertOrderedList')" title="Lista numerada">1. Lista</button>
+      </span>
+      <span class="fgroup">
+        <button class="ib" type="button" data-cmd="justifyLeft" onclick="richCmd('justifyLeft')" title="Alinear a la izquierda"><svg viewBox="0 0 16 12" width="16" height="12"><path d="M0 1h16M0 4.5h10M0 8h16M0 11.5h10" stroke="currentColor" stroke-width="1.6"/></svg></button>
+        <button class="ib" type="button" data-cmd="justifyCenter" onclick="richCmd('justifyCenter')" title="Centrar"><svg viewBox="0 0 16 12" width="16" height="12"><path d="M0 1h16M3 4.5h10M0 8h16M3 11.5h10" stroke="currentColor" stroke-width="1.6"/></svg></button>
+        <button class="ib" type="button" data-cmd="justifyRight" onclick="richCmd('justifyRight')" title="Alinear a la derecha"><svg viewBox="0 0 16 12" width="16" height="12"><path d="M0 1h16M6 4.5h10M0 8h16M6 11.5h10" stroke="currentColor" stroke-width="1.6"/></svg></button>
+        <button class="ib" type="button" data-cmd="justifyFull" onclick="richCmd('justifyFull')" title="Justificar"><svg viewBox="0 0 16 12" width="16" height="12"><path d="M0 1h16M0 4.5h16M0 8h16M0 11.5h16" stroke="currentColor" stroke-width="1.6"/></svg></button>
+      </span>
+      <button class="ib" type="button" onclick="richCmd('table')" title="Insertar una tabla de texto">▦ Tabla</button>
+      <span class="fgroup" id="ftable" hidden>
+        <button class="ib" type="button" onclick="richTable('row+')" title="Fila debajo">+ fila</button>
+        <button class="ib" type="button" onclick="richTable('col+')" title="Columna a la derecha">+ col</button>
+        <button class="ib" type="button" onclick="richTable('row-')" title="Quitar esta fila">− fila</button>
+        <button class="ib" type="button" onclick="richTable('col-')" title="Quitar esta columna">− col</button>
+        <button class="ib warn" type="button" onclick="richTable('del')" title="Quitar la tabla">✕</button>
+      </span>
+      <button class="ib" type="button" onclick="fmtInsert('math')" title="Fórmula (se dibuja en la vista del estudiante)">ƒx</button>
       <button class="ib" type="button" onclick="fmtInsert('frac')" title="Fracción">a/b</button>
-      <button class="ib" type="button" onclick="fmtInsert('table')" title="Tabla de texto">Tabla</button>
+      <button class="ib" type="button" onclick="richCmd('clear')" title="Quitar formato de la selección">T̸</button>
       <select class="ib" onchange="if (this.value) { fmtInsert('sym', this.value); this.value = ''; }" title="Símbolos">
         <option value="">Ω símbolo</option>${SYMBOLS.map(x => `<option>${x}</option>`).join("")}</select>
       <button class="ib" type="button" onclick="cleanField()" title="Une líneas cortadas, quita guiones de corte y espacios dobles en el campo activo">🧹 Limpiar</button>
@@ -627,6 +673,7 @@ function drawOpts() {
     </div>`).join("") + `<button class="ib" type="button" onclick="addOpt()">+ Opción</button>
     <span class="muted" style="font-size:12px;margin-left:8px">Respuesta: <b>${esc(state.answer || "sin clave")}</b>${state.answer ? ` <a href="#" onclick="setAnswer('');return false">quitar</a>` : ""}</span>`;
   document.querySelectorAll("#f-opts textarea").forEach(fit);
+  attachAllRich();
 }
 function setAnswer(letter) { syncOpts(); state.answer = state.answer === letter ? "" : letter; drawOpts(); markDirty(); }
 function addOpt() {
@@ -902,6 +949,8 @@ document.addEventListener("focusin", e => { if (e.target.tagName === "TEXTAREA" 
 
 // Typing through execCommand keeps Ctrl+Z working for inserted text.
 function insertAt(area, text, selectInserted = false) {
+  const rich = state.visual && richOf(area);
+  if (rich) { richInsert(rich, text); return; }
   const start = area.selectionStart ?? area.value.length, end = area.selectionEnd ?? start;
   area.focus();
   area.setSelectionRange(start, end);
@@ -909,11 +958,252 @@ function insertAt(area, text, selectInserted = false) {
   if (selectInserted) area.setSelectionRange(start, start + text.length); else area.setSelectionRange(start + text.length, start + text.length);
   area.dispatchEvent(new Event("input", { bubbles: true }));
 }
+// ----- Word-style text fields ------------------------------------------------------------------
+// Each text field shows formatted text you edit as in Word; the hidden textarea keeps the exam text the app reads.
+// Only formatting the student app's renderer shows is stored: **bold**, <em>, <u>, <sub>, <sup>, lists,
+// aligned paragraphs and tables. Math stays as $...$ and is drawn in the student view.
+
+state.visual = recall("visual") ?? true;
+const RICH_BLOCK = /^(DIV|P|UL|OL|TABLE|H[1-6]|BLOCKQUOTE|PRE|FIGURE|FIGCAPTION)$/;
+const MATH_SPLIT = /(\$[^$\n]+?\$)/;
+
+// Exam text to editable HTML.
+function toVisual(src) {
+  if (!src) return "";
+  const blocks = pipeTables(src).split(/\n\s*\n/).map(b => b.trim()).filter(Boolean)
+    .map(b => (/^<(p|div|ul|ol|table|h\d)\b/i.test(b) ? b : `<div>${b.replace(/\n/g, "<br>")}</div>`));
+  const html = blocks.join("").split(MATH_SPLIT).map((part, i) => (i % 2 ? part
+    : part.replace(/\*\*([^*\n]+)\*\*/g, "<b>$1</b>").replace(/(^|[^*\w])\*([^*\n]+?)\*(?![*\w])/g, (m, pre, body) => (/<\/?(t[dhr]|div|p)\b/i.test(body) ? m : `${pre}<i>${body}</i>`)))).join("");
+  return window.DOMPurify.sanitize(html);
+}
+function pipeTables(text) {
+  const lines = text.split("\n"), out = [];
+  const cells = (l) => l.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map(c => c.trim());
+  const row = (l) => /^\s*\|.*\|\s*$/.test(l), sep = (l) => /^\s*\|[\s:|-]+\|\s*$/.test(l) && l.includes("-");
+  for (let i = 0; i < lines.length;) {
+    if (row(lines[i]) && i + 1 < lines.length && sep(lines[i + 1])) {
+      const head = cells(lines[i]); i += 2;
+      const body = [];
+      while (i < lines.length && row(lines[i])) body.push(cells(lines[i++]));
+      out.push("", `<table class="exam-table"><thead><tr>${head.map(c => `<th>${c}</th>`).join("")}</tr></thead><tbody>${body.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table>`, "");
+    } else out.push(lines[i++]);
+  }
+  return out.join("\n");
+}
+
+// Editable HTML back to exam text. Unknown markup (from Word or a web page) keeps only its text.
+function toSource(root) {
+  const blocks = [];
+  let inline = "";
+  const flush = () => { const t = inline.replace(/[ \t]+\n/g, "\n").replace(/\n+$/, "").trim(); if (t) blocks.push(t); inline = ""; };
+  root.childNodes.forEach(n => {
+    if (n.nodeType === 1 && RICH_BLOCK.test(n.tagName)) { flush(); const b = blockSource(n); if (b) blocks.push(b); }
+    else inline += inlineSource(n);
+  });
+  flush();
+  return blocks.join("\n\n");
+}
+function blockSource(el) {
+  const tag = el.tagName;
+  // Figure notes left by the scan reading are kept as they are; the app uses them to hide unfinished questions.
+  if (tag === "FIGURE" || tag === "FIGCAPTION") return `<${tag.toLowerCase()}>${toSource(el)}</${tag.toLowerCase()}>`;
+  if (tag === "UL" || tag === "OL") {
+    const items = [...el.children].filter(li => li.tagName === "LI").map(li => `<li>${inlineHtml(li)}</li>`).join("");
+    return items ? `<${tag.toLowerCase()}>${items}</${tag.toLowerCase()}>` : "";
+  }
+  if (tag === "TABLE") {
+    const rows = [...el.querySelectorAll("tr")].map(tr => `<tr>${[...tr.children].map(c => {
+      const t = c.tagName === "TH" ? "th" : "td";
+      const span = (c.colSpan > 1 ? ` colspan="${c.colSpan}"` : "") + (c.rowSpan > 1 ? ` rowspan="${c.rowSpan}"` : "");
+      return `<${t}${span}>${inlineHtml(c)}</${t}>`;
+    }).join("")}</tr>`).join("");
+    const cap = el.querySelector("caption") ? inlineHtml(el.querySelector("caption")) : "";
+    return rows ? `<table class="exam-table">${cap ? `<caption>${cap}</caption>` : ""}<tbody>${rows}</tbody></table>` : "";
+  }
+  if ([...el.children].some(c => RICH_BLOCK.test(c.tagName))) return toSource(el);
+  const align = (el.style.textAlign || el.getAttribute("align") || "").toLowerCase();
+  const inner = [...el.childNodes].map(inlineSource).join("").replace(/\n+$/, "");
+  if (["center", "right", "justify"].includes(align) && inner.trim()) return `<p style="text-align:${align}">${inner.trim().replace(/\n/g, "<br>")}</p>`;
+  return inner.trim();
+}
+const inlineHtml = (el) => [...el.childNodes].map(inlineSource).join("").replace(/\n+$/, "").trim().replace(/\n/g, "<br>");
+function inlineSource(n) {
+  // A typed asterisk stays an asterisk: written as &#42; so the app never reads it as italics.
+  if (n.nodeType === 3) return n.nodeValue.replace(/\u00a0/g, " ").replace(/<(?=[A-Za-z/!])/g, "&lt;")
+    .split(MATH_SPLIT).map((part, i) => (i % 2 ? part : part.replace(/\*/g, "&#42;"))).join("");
+  if (n.nodeType !== 1) return "";
+  const tag = n.tagName;
+  if (tag === "BR") return "\n";
+  if (RICH_BLOCK.test(tag)) return "\n" + blockSource(n) + "\n";
+  let inner = [...n.childNodes].map(inlineSource).join("");
+  const st = n.style || {};
+  const bold = tag === "B" || tag === "STRONG" || /^(bold|[6-9]00)$/.test(st.fontWeight || "");
+  const italic = tag === "I" || tag === "EM" || st.fontStyle === "italic";
+  const under = tag === "U" || /underline/.test(st.textDecoration || st.textDecorationLine || "");
+  const sub = tag === "SUB" || st.verticalAlign === "sub", sup = tag === "SUP" || st.verticalAlign === "super";
+  if (!inner.trim()) return inner;
+  if (sub) inner = `<sub>${inner}</sub>`;
+  if (sup) inner = `<sup>${inner}</sup>`;
+  if (under) inner = `<u>${inner}</u>`;
+  if (italic) inner = `<em>${inner}</em>`;
+  if (bold) {
+    const [, lead, core, trail] = /^(\s*)([\s\S]*?)(\s*)$/.exec(inner);
+    inner = /[*\n]/.test(core) ? `${lead}<strong>${core}</strong>${trail}` : `${lead}**${core}**${trail}`;
+  }
+  return inner;
+}
+
+const richOf = (ta) => (ta && ta.nextElementSibling?.classList.contains("rich") ? ta.nextElementSibling : null);
+// Gives a textarea its Word-style twin. The textarea stays the source of truth for saving and the preview.
+function attachRich(ta) {
+  if (!ta || richOf(ta)) return;
+  ta.classList.add("src");
+  const rich = Object.assign(document.createElement("div"), { className: "rich", contentEditable: "true", spellcheck: true });
+  rich.lang = "es";
+  rich.dataset.ph = ta.placeholder || "";
+  rich.innerHTML = toVisual(ta.value);
+  ta.after(rich);
+  rich.addEventListener("input", e => {
+    e.stopPropagation();
+    ta._fromRich = true;
+    ta.value = toSource(rich);
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
+    ta._fromRich = false;
+    rich.classList.toggle("empty", !rich.textContent.trim() && !rich.querySelector("table,li"));
+  });
+  ta.addEventListener("input", () => { if (!ta._fromRich) { rich.innerHTML = toVisual(ta.value); } });
+  rich.addEventListener("focus", () => { state.lastArea = ta; });
+  rich.addEventListener("paste", e => {
+    const html = e.clipboardData?.getData("text/html"), text = e.clipboardData?.getData("text/plain");
+    if (e.clipboardData?.files?.length) return;
+    e.preventDefault();
+    // Pasted Word or web text keeps bold, italics, lists and tables, and drops the rest.
+    let src = text || "";
+    if (html) { const tmp = document.createElement("div"); tmp.innerHTML = window.DOMPurify.sanitize(html); src = toSource(tmp); }
+    document.execCommand("insertHTML", false, toVisual(src));
+  });
+  rich.addEventListener("keydown", e => {
+    const cell = window.getSelection()?.anchorNode?.parentElement?.closest?.("td,th");
+    if (e.key === "Tab" && cell && rich.contains(cell)) {
+      e.preventDefault();
+      const all = [...rich.querySelectorAll("td,th")];
+      const next = all[all.indexOf(cell) + (e.shiftKey ? -1 : 1)];
+      if (next) { const r = document.createRange(); r.selectNodeContents(next); const s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+      else if (!e.shiftKey) {
+        richTable("row+");
+        const first = cell.parentElement.nextElementSibling?.firstElementChild;
+        if (first) { const r = document.createRange(); r.selectNodeContents(first); const s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+      }
+    }
+  });
+  rich.classList.toggle("empty", !rich.textContent.trim() && !rich.querySelector("table,li"));
+}
+function attachAllRich() { document.querySelectorAll("#form #f-stem, #form #f-stimulus, #form #f-passage, #f-opts textarea[data-letter]").forEach(attachRich); }
+
+// Remembers where the caret was in each Word-style field, so OCR and symbols land there.
+document.addEventListener("selectionchange", () => {
+  const s = window.getSelection();
+  if (!s?.rangeCount) return;
+  const rich = s.anchorNode?.parentElement?.closest?.(".rich") || (s.anchorNode?.classList?.contains?.("rich") ? s.anchorNode : null);
+  if (rich) rich._range = s.getRangeAt(0).cloneRange();
+  richToolbarState();
+});
+function richFocus(rich) {
+  rich.focus();
+  const s = window.getSelection();
+  if (s.rangeCount && rich.contains(s.anchorNode)) return;
+  const r = rich._range && rich.contains(rich._range.startContainer) ? rich._range : (() => { const x = document.createRange(); x.selectNodeContents(rich); x.collapse(false); return x; })();
+  s.removeAllRanges();
+  s.addRange(r);
+}
+function richInsert(rich, text) {
+  richFocus(rich);
+  if (/\n|\*\*|<|\|/.test(text)) document.execCommand("insertHTML", false, toVisual(text));
+  else document.execCommand("insertText", false, text);
+}
+function selectAllField(area) {
+  const rich = state.visual && richOf(area);
+  if (!rich) { area.focus(); area.select(); return; }
+  rich.focus();
+  const r = document.createRange(); r.selectNodeContents(rich);
+  const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+}
+
+function setVisual(on) {
+  state.visual = on;
+  remember("visual", on);
+  $("#form")?.classList.toggle("visual", on);
+  document.querySelectorAll("#form textarea.src").forEach(ta => { const r = richOf(ta); if (r) r.innerHTML = toVisual(ta.value); fit(ta); });
+  document.querySelectorAll(".fbar .vis-only").forEach(b => { b.hidden = !on; });
+  $("#fmode").innerHTML = fmodeHtml();
+}
+const fmodeHtml = () => `<button class="${state.visual ? "on" : ""}" type="button" onclick="setVisual(true)" title="Ver el texto con formato, como en Word">Aa Formato</button><button class="${state.visual ? "" : "on"}" type="button" onclick="setVisual(false)" title="Ver el texto como se guarda (marcas ** y $)">‹/› Código</button>`;
+
+// Format commands. In the Word-style view they act on the selection; in the code view they wrap it in markup.
+function richCmd(cmd, arg) {
+  const area = state.lastArea;
+  if (!area || !area.isConnected) { toast("Primero haz clic en un campo de texto"); return; }
+  const rich = state.visual && richOf(area);
+  if (rich) {
+    richFocus(rich);
+    if (cmd === "table") {
+      const mark = "tbl" + Date.now();
+      document.execCommand("insertHTML", false, `<table class="exam-table" data-new="${mark}"><tbody><tr><th>Columna 1</th><th>Columna 2</th></tr><tr><td>&nbsp;</td><td>&nbsp;</td></tr></tbody></table><div><br></div>`);
+      // The caret starts in the first cell, ready to type over it.
+      const t = rich.querySelector(`[data-new="${mark}"]`);
+      if (t) { t.removeAttribute("data-new"); const r = document.createRange(); r.selectNodeContents(t.querySelector("th,td")); const s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+      return;
+    }
+    if (cmd === "clear") { document.execCommand("removeFormat"); document.execCommand("justifyLeft"); return; }
+    document.execCommand(cmd, false, arg ?? null);
+    return;
+  }
+  const sel = area.value.slice(area.selectionStart, area.selectionEnd) || "texto";
+  const wrap = {
+    bold: `**${sel}**`, italic: `<em>${sel}</em>`, underline: `<u>${sel}</u>`, subscript: `<sub>${sel}</sub>`, superscript: `<sup>${sel}</sup>`,
+    insertUnorderedList: `\n\n<ul>${sel.split("\n").map(l => `<li>${l}</li>`).join("")}</ul>\n\n`,
+    insertOrderedList: `\n\n<ol>${sel.split("\n").map(l => `<li>${l}</li>`).join("")}</ol>\n\n`,
+    justifyCenter: `\n\n<p style="text-align:center">${sel}</p>\n\n`, justifyRight: `\n\n<p style="text-align:right">${sel}</p>\n\n`,
+    justifyFull: `\n\n<p style="text-align:justify">${sel}</p>\n\n`, justifyLeft: sel,
+    table: "\n| Columna 1 | Columna 2 |\n|---|---|\n| | |\n", clear: sel.replace(/<[^>]+>|\*\*/g, ""),
+  }[cmd];
+  if (wrap != null) insertAt(area, wrap);
+}
+
+// Rows and columns of a table being edited in a text field.
+function richTable(op) {
+  const s = window.getSelection();
+  const cell = s?.anchorNode && (s.anchorNode.nodeType === 1 ? s.anchorNode : s.anchorNode.parentElement)?.closest("td,th");
+  const rich = cell?.closest(".rich");
+  if (!cell || !rich) { toast("Pon el cursor dentro de una celda de la tabla"); return; }
+  const tr = cell.parentElement, table = cell.closest("table"), k = [...tr.children].indexOf(cell);
+  if (op === "row+") { const n = tr.cloneNode(true); n.querySelectorAll("th,td").forEach(c => { const td = document.createElement("td"); td.innerHTML = "&nbsp;"; c.replaceWith(td); }); tr.after(n); }
+  if (op === "row-" && table.querySelectorAll("tr").length > 1) tr.remove();
+  if (op === "col+") table.querySelectorAll("tr").forEach(r => { const c = r.children[k]; const n = document.createElement(c?.tagName === "TH" ? "th" : "td"); n.innerHTML = "&nbsp;"; (c ? c.after(n) : r.appendChild(n)); });
+  if (op === "col-" && tr.children.length > 1) table.querySelectorAll("tr").forEach(r => r.children[k]?.remove());
+  if (op === "del") table.remove();
+  rich.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+// Lights up the buttons for the formatting under the caret, and shows the table buttons inside a table.
+function richToolbarState() {
+  const bar = $(".fbar");
+  if (!bar || !state.visual) return;
+  const s = window.getSelection();
+  const inRich = s?.anchorNode && (s.anchorNode.nodeType === 1 ? s.anchorNode : s.anchorNode.parentElement)?.closest(".rich");
+  bar.querySelectorAll("[data-cmd]").forEach(b => { let on = false; try { on = !!inRich && document.queryCommandState(b.dataset.cmd); } catch (e) { /* not a state command */ } b.classList.toggle("on", on); });
+  const inTable = !!inRich && !!(s.anchorNode.nodeType === 1 ? s.anchorNode : s.anchorNode.parentElement).closest("td,th");
+  const tb = $("#ftable");
+  if (tb) tb.hidden = !inTable;
+}
+
 const SYMBOLS = ["≤", "≥", "≠", "≈", "±", "×", "÷", "√", "π", "°", "²", "³", "½", "¼", "∞", "→", "←", "↔", "α", "β", "Δ", "θ", "λ", "μ", "Ω", "%", "€", "—"];
 function fmtInsert(kind) {
   const area = state.lastArea;
   if (!area || !area.isConnected) { toast("Primero haz clic en un campo de texto"); return; }
-  const sel = area.value.slice(area.selectionStart, area.selectionEnd);
+  const rich = state.visual && richOf(area);
+  if (rich) richFocus(rich);
+  const sel = rich ? window.getSelection().toString() : area.value.slice(area.selectionStart, area.selectionEnd);
   insertAt(area, {
     bold: `**${sel || "texto"}**`,
     italic: `*${sel || "texto"}*`,
@@ -1115,7 +1405,7 @@ async function ocrTo(dest) {
       toast(`Opciones ${Object.keys(parts).join(", ")} escritas (${via}); revísalas con la página`);
     } else {
       const area = dest === "last" ? (state.lastArea && state.lastArea.isConnected ? state.lastArea : $("#f-stem")) : $("#" + dest);
-      if (!area.value.trim() || dest !== "last") { area.focus(); area.select(); }
+      if (!area.value.trim() || dest !== "last") selectAllField(area);
       insertAt(area, text, true);
       fit(area);
       toast(`Texto escrito en ${fieldName(area)} (${via}); revísalo con la página`);
@@ -1166,6 +1456,8 @@ function cleanField() {
   if (!area || !area.isConnected) { toast("Primero haz clic en un campo de texto"); return; }
   const before = area.value, after = cleanText(before);
   if (after === before) { toast("El texto ya estaba limpio"); return; }
+  const rich = state.visual && richOf(area);
+  if (rich) { selectAllField(area); document.execCommand("insertHTML", false, toVisual(after)); toast("Texto limpiado (Ctrl+Z lo deshace)"); return; }
   area.focus();
   area.select();
   document.execCommand("insertText", false, after) || (area.value = after);
