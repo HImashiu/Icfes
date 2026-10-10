@@ -46,6 +46,7 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 ```
 
 - `categories`: one label per bar group. `series[i].values`: one non-negative number per category.
+- Legend entries come from each series' `name`. A series with no name gets no entry, so nothing is invented. Set `"legend": ["text", ...]` (one per series, `""` hides one) to print exactly the entries the scan shows.
 - A single series with no name draws no legend. `legend: false` on any chart hides the legend even with several series (use it when the scan prints none).
 
 ### `line`, a line over categorical x
@@ -55,8 +56,9 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 ```
 
 - `null` leaves a gap, and the line breaks there. Lines are solid unless a series sets `"style": "dashed"`.
-- Set `"marker"` per series to `"circle"` (default), `"square"` or `"triangle"`, so series stay
-  apart in grey-scale print.
+- Set `"marker"` per series to `"circle"` (default), `"square"`, `"triangle"`, `"dot"` (filled circle),
+  `"star"`, `"diamond"` or `"cross"`, so series stay apart in grey-scale print. On line charts the legend
+  shows each series' marker in place of its colour swatch, so the marker is the key.
 
 ### `line` with numeric x
 
@@ -68,12 +70,16 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 - Use `points` instead of `categories` when the x values are uneven numbers (for example time at
   half hours). Each point sits at its real x.
 
+- A series can carry a printed `note` on one of its points, for example a label on a dashed reference line. `noteAt` is the point index (default: the middle point), and `noteSide` is `above` (default), `right` or `left` of it. A note is text on the plot and never a legend entry.
+
 ### `scatter`, points on numeric axes
 
 ```json
 { "kind": "scatter", "x": { "label": "Horas", "min": 0, "max": 10, "step": 2 }, "y": { "label": "Nota" },
   "series": [ { "points": [[1, 2], [4, 6.5]] } ] }
 ```
+
+- Set `"marker"` on a series (any marker that `line` takes, such as `diamond` or `square`) to draw that shape for its points. Without one, series alternate a filled circle and square. Markers show in the legend.
 
 ### `curve`, a qualitative shape with no scale
 
@@ -84,6 +90,10 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 
 - For graphs that show only the shape. The points are sketch positions, with no tick values drawn.
 - Points are joined with a smooth curve. `label` is printed near point `labelAt` (default: middle).
+
+- `"ticks": true` on an axis prints its tick values, from that axis' `min`, `max` and `step`, as the other charts do. Without it a curve stays shape-only.
+
+- `"inverted": true` on a `line` or `curve` draws a dark panel with light strokes and text, for prints that are black with white lines. The grid turns dark grey. Only `line` and `curve` take it.
 
 ### `bar` with a second y axis
 
@@ -104,6 +114,17 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 ```
 
 - Values are relative; the renderer shows each value and its percent of the total.
+- `"percent": false` hides the percent, and `"values": false` hides the number, when the scan prints none. Ten slices keep distinct print fills (`hatch`, `solid`, `white`, `dots`, `vhatch`, `hhatch`, `xhatch`, `sparse`, `dense`, `grey`).
+- Nested rings: give `rings` instead of `slices`, outer ring first, 1 to 3 rings. Each ring has its own
+  `slices` (same fields) and an optional `name`, which prefixes its legend entries. Each ring has its own
+  percentages. A ring of rings is drawn as a donut with a hole in the middle.
+
+```json
+{ "kind": "pie", "rings": [
+  { "name": "Interno", "slices": [ { "label": "A", "value": 1 }, { "label": "B", "value": 3 } ] },
+  { "name": "Externo", "slices": [ { "label": "C", "value": 2 }, { "label": "D", "value": 2 }, { "label": "E", "value": 4 } ] }
+] }
+```
 
 ### `table`, rendered as an HTML table
 
@@ -115,6 +136,8 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 - Empty cells stay empty. Copy the scan as printed; do not fill gaps.
 - `TABLE_CSS` is exported, so a page can style the table the same way in a browser.
 - Table rendering is checked in Chromium (screenshot), not only by reading the HTML.
+
+- Wide tables fit their width: the font steps down from 14 px to `minSize` (default 10 px) until the table fits `maxWidth` (default 640 px), and long cell text wraps. Set `maxWidth` or `minSize` to change either.
 
 ### `geometry`, points, segments and arcs in a coordinate frame
 
@@ -130,6 +153,8 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 - `polygons` (`vertices`), `circles` (`center`, `r`), `ellipses` (`center`, `rx`, `ry`), `arcs`
   (`center`, `r`, `from`, `to` in degrees), `angles` (`vertex`, `a`, `b`, `label`, `r`) and `labels`
   (`at`, `text`, `anchor`). Dashed outlines take `dashed: true`.
+- `polygons` take `"fill"`: `none` (default), `solid`, `white`, `hatch` or `dots`.
+- An arc runs counter-clockwise, as the angles increase, from `from` to `to`. An arc from 0 to 180 is the upper half.
 - The drawing is scaled to fit the frame. No axes are drawn.
 
 ### `table` with spans

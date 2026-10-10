@@ -309,3 +309,177 @@ test('legend: false hides the legend for several series', () => {
   assert.ok(F.render(two).includes('>Zeta leyenda<'));
   assert.ok(!F.render({ ...two, legend: false }).includes('>Zeta leyenda<'));
 });
+
+test('pie rings: nested rings draw one annulus per slice and list every slice', () => {
+  const rings = { kind: 'pie', title: 'Dos anillos', rings: [
+    { name: 'Interno', slices: [{ label: 'A', value: 1 }, { label: 'B', value: 3 }] },
+    { name: 'Externo', slices: [{ label: 'C', value: 2 }, { label: 'D', value: 2 }, { label: 'E', value: 4 }] },
+  ] };
+  assert.deepEqual(F.validate(rings), []);
+  const svg = F.render(rings);
+  assert.equal((svg.match(/<path /g) || []).length, 5);
+  assert.ok(svg.includes('Interno, A: 1 (25 %)'));
+  assert.ok(svg.includes('Externo, E: 4 (50 %)'));
+  assert.ok(F.validate({ kind: 'pie', rings: [] }).length > 0);
+  assert.ok(F.validate({ kind: 'pie', rings: [{ slices: [{ label: 'x', value: 0 }] }] }).length > 0);
+  assert.ok(F.validate({ kind: 'pie', rings: [{ slices: [] }] }).length > 0);
+});
+
+test('pie without rings is unchanged: one circle, wedges from the centre', () => {
+  const svg = F.render(pie);
+  assert.ok(!svg.includes('anillo'));
+  assert.equal((svg.match(/<path /g) || []).length, 2);
+});
+
+test('line markers: every named marker validates, unknown ones are rejected', () => {
+  for (const m of ['circle', 'square', 'triangle', 'dot', 'star', 'diamond', 'cross']) {
+    assert.deepEqual(F.validate({ ...line, series: [{ values: [1, 2, 3, 4], marker: m }, { values: [2, 1, 2, 1] }] }), [], m);
+  }
+  assert.ok(F.validate({ ...line, series: [{ values: [1, 2, 3, 4], marker: 'hexagon' }] }).length > 0);
+});
+
+test('line legend shows each series marker; a star is a ten-point polygon', () => {
+  const s = { kind: 'line', x: { label: 'Mes' }, y: { label: 'Casos' }, categories: ['Ene', 'Feb'], series: [{ name: 'Con estrella', values: [1, 2], marker: 'star' }, { name: 'Con punto', values: [2, 1], marker: 'dot' }] };
+  const svg = F.render(s);
+  const polys = [...svg.matchAll(/<polygon points="([^"]+)"/g)].map((m) => m[1]);
+  assert.ok(polys.some((p) => p.split(' ').length === 10), 'star polygon present');
+  assert.ok(svg.includes('>Con estrella<') && svg.includes('>Con punto<'));
+  assert.ok(svg.includes('<circle') && svg.includes('fill="#000"'), 'filled dot present');
+});
+
+test('textBox: a rotated label is measured along its rotated direction', () => {
+  // A vertical axis label, centred at y = 150 and placed near the left edge.
+  const v = F.textBox({ type: 'text', text: 'Gráfica 1', x: 12, y: 150, size: 12, anchor: 'middle', rotate: -90 });
+  const h = F.textBox({ type: 'text', text: 'Gráfica 1', x: 12, y: 150, size: 12, anchor: 'middle' });
+  assert.ok(v.y1 - v.y0 > v.x1 - v.x0, 'taller than wide when rotated');
+  assert.ok(h.x1 - h.x0 > h.y1 - h.y0, 'wider than tall when horizontal');
+  assert.ok(v.x0 >= 0, 'stays inside a view that starts at 0');
+  const far = F.textBox({ type: 'text', text: 'Gráfica 1', x: 2, y: 150, size: 12, anchor: 'middle', rotate: -90 });
+  assert.ok(far.x0 < 0, 'a label placed at x = 2 runs past the left edge');
+});
+
+test('wide tables shrink their font to fit maxWidth and wrap long cells', () => {
+  const wide = { kind: 'table', headers: ['Muestra', 'Color', 'Prueba de solubilidad en agua', 'Prueba de Lucas', 'Prueba de Jones', 'Tipo de alcohol', 'Sustancia'],
+    rows: [['1', 'Incoloro', '(+)', '(-)', '(+)', 'Primario', 'Etanol'], ['2', 'Incoloro', '(+)', '(+)', '(+)', 'Secundario', '2-propanol'], ['3', 'Blanco', '(-)', '(+)', '(-)', 'Terciario', '2-metil-2-propanol'], ['4', 'Incoloro', '(+)', '(-)', '(+)', 'Primario', 'Metanol']] };
+  assert.deepEqual(F.validate(wide), []);
+  const html = F.render(wide);
+  const size = +html.match(/font-size:(\d+)px/)[1];
+  assert.ok(size < 14 && size >= 10, `font size ${size}`);
+  const narrow = { kind: 'table', headers: ['Año', 'Total'], rows: [['2019', '12'], ['2020', '30']] };
+  assert.ok(!/font-size/.test(F.render(narrow)), 'a small table keeps the default size');
+  const forced = F.render({ ...wide, minSize: 8, maxWidth: 200 });
+  assert.ok(/font-size:8px/.test(forced), 'stops at minSize');
+  assert.ok(F.validate({ ...wide, maxWidth: -1 }).length > 0);
+});
+
+test('pies keep up to ten slices distinguishable in print', () => {
+  const slices = Array.from({ length: 10 }, (_, i) => ({ label: `S${i + 1}`, value: 1 }));
+  const svg = F.render({ kind: 'pie', slices });
+  const fills = [...svg.matchAll(/<rect x="262" y="[-\d.]+" width="10" height="10" fill="([^"]+)"/g)].map((m) => m[1]);
+  assert.equal(fills.length, 10);
+  assert.equal(new Set(fills).size, 10, 'each slice has its own fill');
+});
+
+test('pie hides printed-free labels: percent and values can be turned off', () => {
+  const base = { kind: 'pie', slices: [{ label: 'A', value: 1 }, { label: 'B', value: 3 }] };
+  assert.ok(F.render(base).includes('(25 %)'));
+  const noPct = F.render({ ...base, percent: false });
+  assert.ok(!noPct.includes(' %') && noPct.includes('>A: 1<'));
+  const bare = F.render({ ...base, percent: false, values: false });
+  assert.ok(bare.includes('>A<') && !bare.includes(': 1'));
+});
+
+test('legend: a list gives the printed entries; unnamed series get no invented entry', () => {
+  const two = { kind: 'line', x: { label: 'Mes' }, y: { label: 'Casos' }, categories: ['Ene', 'Feb'], series: [{ values: [1, 2] }, { values: [2, 1] }] };
+  assert.ok(!F.render(two).includes('serie'), 'no default serie N');
+  const listed = F.render({ ...two, legend: ['Solo esta', ''] });
+  assert.ok(listed.includes('>Solo esta<'));
+  assert.ok(!listed.includes('>serie'), 'the empty entry is hidden');
+  assert.deepEqual(F.validate({ ...two, legend: ['Solo esta', ''] }), []);
+});
+
+test('arcs run counter-clockwise from `from` to `to`, on the side the angles give', () => {
+  const arcFlags = (svg) => {
+    const m = svg.match(/<path d="M[^"]*A[\d.]+,[\d.]+ 0 (\d) (\d) /);
+    return m ? { large: +m[1], sweep: +m[2] } : null;
+  };
+  const geo = (arc) => ({ kind: 'geometry', points: { O: [0, 0], A: [1, 0], B: [0, 1], C: [-1, 0] }, arcs: [{ center: 'O', r: 1, ...arc }] });
+  assert.deepEqual(arcFlags(F.render(geo({ from: 0, to: 90 }))), { large: 0, sweep: 0 }, 'quarter arc');
+  assert.deepEqual(arcFlags(F.render(geo({ from: 0, to: 180 }))), { large: 0, sweep: 0 }, 'half arc');
+  assert.deepEqual(arcFlags(F.render(geo({ from: 0, to: 270 }))), { large: 1, sweep: 0 }, 'three-quarter arc');
+  assert.deepEqual(arcFlags(F.render(geo({ from: 90, to: 0 }))), { large: 1, sweep: 0 }, 'from above to 0 runs the long way round');
+});
+
+test('the semicircle in S11-G1 2da Q46 is drawn above its diameter', () => {
+  const spec = {
+    kind: 'geometry',
+    points: { A: [0, 0], B: [5, 0], C: [3.2, 2.4], _O: [2.5, 0] },
+    arcs: [{ center: [2.5, 0], r: 2.5, from: 0, to: 180 }],
+  };
+  const svg = F.render(spec);
+  const d = svg.match(/<path d="(M[^"]+)"/)[1];
+  const [, x0, y0] = d.match(/^M([-\d.]+),([-\d.]+)/);
+  const [, x1, y1] = d.match(/ ([-\d.]+),([-\d.]+)$/);
+  // Both ends sit on the diameter; the arc's top is the smaller screen y.
+  assert.ok(Math.abs(+y0 - +y1) < 0.5, 'ends on the same line');
+  assert.ok(/ 0 0 0 /.test(svg), 'counter-clockwise half turn');
+});
+
+test('polygons take a fill; the default stays unfilled', () => {
+  const base = { kind: 'geometry', points: { A: [0, 0], B: [4, 0], C: [2, 3] }, polygons: [{ vertices: ['A', 'B', 'C'] }] };
+  assert.ok(F.render(base).includes('fill="none"'));
+  assert.ok(F.render({ ...base, polygons: [{ vertices: ['A', 'B', 'C'], fill: 'solid' }] }).includes('fill="#000"'));
+  assert.ok(F.validate({ ...base, polygons: [{ vertices: ['A', 'B', 'C'], fill: 'neon' }] }).length > 0);
+});
+
+test('scatter series honour their marker, and the legend shows it', () => {
+  const sc = { kind: 'scatter', x: { label: 'x' }, y: { label: 'y' }, series: [
+    { name: 'Rombos', points: [[1, 1], [2, 3]], marker: 'diamond' },
+    { name: 'Cuadros', points: [[1, 2], [3, 1]], marker: 'square' },
+  ] };
+  assert.deepEqual(F.validate(sc), []);
+  const svg = F.render(sc);
+  assert.equal((svg.match(/<polygon points="[^"]+" fill="#fff" stroke="#000" stroke-width="1.2"\/>/g) || []).length, 2 + 1, 'two diamonds plus the legend glyph');
+  assert.ok(svg.includes('>Rombos<') && svg.includes('>Cuadros<'));
+  // Without markers, scatter keeps its filled circle and square.
+  const plain = F.render({ ...sc, series: sc.series.map((s) => ({ name: s.name, points: s.points })) });
+  assert.ok(plain.includes('<circle') && plain.includes('<rect'));
+});
+
+test('curve axes print tick values only when the axis asks for them', () => {
+  const c = { kind: 'curve', x: { label: 'Hora', min: 0, max: 24, step: 3, ticks: true }, y: { label: 'Pulsos', min: 0, max: 60, step: 20, ticks: true }, series: [{ points: [[0, 0], [12, 40], [24, 10]] }] };
+  assert.deepEqual(F.validate(c), []);
+  const svg = F.render(c);
+  for (const t of ['>0<', '>3<', '>12<', '>24<', '>20<', '>60<']) assert.ok(svg.includes(t), `tick ${t}`);
+  // The same curve without "ticks": true stays shape-only.
+  const plain = F.render({ ...c, x: { ...c.x, ticks: undefined }, y: { ...c.y, ticks: undefined } });
+  assert.ok(!plain.includes('>12<'));
+});
+
+test('a line series can carry a printed note at a point, to the side of a reference line', () => {
+  // A dashed vertical reference line at x = 40.8, labelled at its bottom point on the right, as S11-D 2da Q56 prints it.
+  const spec = { kind: 'line', x: { label: 'Tiempo', min: 0, max: 50, step: 10 }, y: { label: 'Temperatura', min: 0, max: 45, step: 5 },
+    series: [
+      { points: [[0, 17.8], [40.8, 37.4]], marker: 'dot' },
+      { points: [[40.8, 0], [40.8, 45]], style: 'dashed', note: 'Explosión globo', noteAt: 0, noteSide: 'right' },
+    ] };
+  assert.deepEqual(F.validate(spec), []);
+  const svg = F.render(spec);
+  assert.ok(svg.includes('>Explosión globo<'));
+  assert.ok(F.validate({ ...spec, series: [{ points: [[0, 1], [1, 2]], note: 'x', noteSide: 'top' }] }).length > 0);
+  assert.ok(F.validate({ ...spec, series: [{ points: [[0, 1], [1, 2]], note: 'x', noteAt: 1.5 }] }).length > 0);
+});
+
+test('an inverted curve is a dark panel with light strokes and text', () => {
+  const c = { kind: 'curve', title: 'Luz', x: { label: 'Altura' }, y: { label: 'Luz' }, series: [{ points: [[0, 0], [1, 2], [2, 3]] }] };
+  const dark = F.render({ ...c, inverted: true });
+  assert.ok(dark.includes('<rect width="480" height="300" fill="#000"/>'), 'dark background');
+  assert.ok(dark.includes('<path d="M') && dark.includes('stroke="#fff"'), 'light stroke');
+  assert.ok(!dark.includes('stroke="#000"'), 'no black stroke left');
+  assert.ok(dark.includes('fill="#fff"') && /<text [^>]*fill="#fff"/.test(dark), 'light text');
+  // The default stays a black-on-white figure.
+  const plain = F.render(c);
+  assert.ok(plain.includes('<rect width="480" height="300" fill="#fff"/>'));
+  assert.ok(F.validate({ kind: 'bar', inverted: true, x: { label: 'a' }, y: { label: 'b' }, categories: ['x'], series: [{ values: [1] }] }).length > 0);
+  assert.ok(F.validate({ ...c, inverted: 'yes' }).length > 0);
+});

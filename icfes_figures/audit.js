@@ -38,9 +38,14 @@ function overlappingText(spec) {
   const boxes = [];
   (spec.shapes || []).forEach((t, i) => {
     if (t.type !== 'text') return;
-    const size = t.size || 12;
-    const lines = t.maxWidth != null ? F.textLayout(t).lines : [String(t.text)];
-    const sz = t.maxWidth != null ? F.textLayout(t).size : size;
+    if (t.maxWidth == null) {
+      // Unboxed text: its rotated bounding box, so a vertical axis title is measured on its own direction.
+      const b = F.textBox(t);
+      boxes.push({ i, text: String(t.text), x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1 });
+      return;
+    }
+    const sz = F.textLayout(t).size;
+    const lines = F.textLayout(t).lines;
     const w = Math.max(...lines.map((l) => l.length)) * 0.55 * sz;
     const h = lines.length * 1.15 * sz;
     const left = t.anchor === 'end' ? t.x - w : t.anchor === 'start' ? t.x : t.x - w / 2;
@@ -73,20 +78,18 @@ function auditFigure(f) {
     try { F.render(spec); } catch (e) { issues.push('render: ' + e.message.slice(0, 120)); }
   }
   // A figure marked text_only is a sign, ad or poster that is really text in a frame: not a stand-in, but listed for spot checks.
-  if (kind === 'diagram' && spec.shapes && onlyBoxesAndText(spec) && f.text_only !== true) issues.push('diagram is only boxes and text (check for a photo drawn as an empty box)');
+  // Options checked against the scan (options_verified) may be boxes and text on purpose, so they are not stand-ins.
+  if (kind === 'diagram' && spec.shapes && onlyBoxesAndText(spec) && f.text_only !== true && f.options_verified !== true) issues.push('diagram is only boxes and text (check for a photo drawn as an empty box)');
   if (kind === 'diagram' && spec.shapes) {
     for (const o of F.textOverflows(spec)) issues.push('text overflow: ' + o);
     for (const o of overlappingText(spec)) issues.push('text overlap: ' + o);
-    // Unboxed text that would run past the view: estimate its width from the glyph count.
+    // Unboxed text that would run past the view: its rotated bounding box, from the glyph count.
     if (Array.isArray(spec.view)) {
       const [vx, vy, vw, vh] = spec.view;
       spec.shapes.forEach((t, i) => {
         if (t.type !== 'text' || t.maxWidth != null) return;
-        const size = t.size || 12;
-        const w = String(t.text).length * 0.55 * size;
-        const left = t.anchor === 'end' ? t.x - w : t.anchor === 'start' ? t.x : t.x - w / 2;
-        const right = left + w;
-        if (left < vx - 1 || right > vx + vw + 1 || t.y < vy - 1 || t.y > vy + vh + 1) issues.push(`text runs outside the view: shapes[${i}] ${t.text}`);
+        const b = F.textBox(t);
+        if (b.x0 < vx - 1 || b.x1 > vx + vw + 1 || b.y0 < vy - 1 || b.y1 > vy + vh + 1) issues.push(`text runs outside the view: shapes[${i}] ${t.text}`);
       });
     }
   }
