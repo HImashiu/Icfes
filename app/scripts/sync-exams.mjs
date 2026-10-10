@@ -59,8 +59,17 @@ for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
   // Questions with a missing passage or a pending figure are hidden, so students never see a gap.
   // They come back on a later sync, once the golden text is filled in.
   const gap = (text) => typeof text === "string" && text.includes("Texto pendiente");
+  // A figure id with no spec behind it is a gap too.
+  const specPath = specFiles.has(slug) ? join(specDir, specFiles.get(slug)) : null;
+  const specIds = new Set(specPath && existsSync(specPath) ? JSON.parse(readFileSync(specPath, "utf8")).figures.map((f) => f.id) : []);
+  const missingFigure = (id) => !specIds.has(id);
   const hidden = (q) =>
-    gap(q.stimulus_md) || gap(q.group?.stimulus_md) || q.pending_spec || (q.options ?? []).some((o) => o.pending_spec);
+    gap(q.stimulus_md) ||
+    gap(q.group?.stimulus_md) ||
+    q.pending_spec ||
+    (q.options ?? []).some((o) => o.pending_spec) ||
+    [].concat(q.figure ?? []).some(missingFigure) ||
+    (q.options ?? []).some((o) => [].concat(o.figure ?? []).some(missingFigure));
   const shown = { ...exam, questions: (exam.questions ?? []).filter((q) => !hidden(q)) };
   if (shown.questions.length < (exam.questions ?? []).length) {
     console.log(`[sync-exams] ${slug}: ${(exam.questions ?? []).length - shown.questions.length} question(s) hidden (gap)`);
