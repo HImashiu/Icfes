@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cóndor · Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="katex/katex.min.css">
+<style>
+/* Tokens from the student app's design spec (design/spec.md §2). Dark is the default. */
+:root{--bg:#0D110F;--surface:#161B18;--surface-2:#20271F;--line:#2D3630;--text:#F2F5EF;--text-2:#A7B1AA;
+ --accent:#C8F04A;--accent-ink:#C8F04A;--on-accent:#0D110F;--accent-soft:rgba(200,240,74,.14);--accent-shadow:#8DB01E;
+ --flame:#FF9F43;--ok:#5FD48A;--ok-soft:rgba(95,212,138,.14);--bad:#FF7F6E;--bad-soft:rgba(255,127,110,.14);
+ --paper:#FBFAF5;--paper-ink:#1B1B19;--paper-2:#5B5A55;--side:#090C0A;
+ --area-lectura:#8AB4FF;--area-mate:#FFB547;--area-sociales:#F59EC4;--area-ciencias:#5ED3B4;--area-ingles:#C79BFF}
+:root[data-theme="light"]{--bg:#F3F5EF;--surface:#FFFFFF;--surface-2:#E9EDE4;--line:#D8DED3;--text:#121612;--text-2:#545E57;
+ --accent-ink:#4A6600;--on-accent:#121612;--accent-soft:#EEF8CF;--flame:#C25A00;--ok:#1B7F45;--ok-soft:#DDF3E5;--bad:#C2372B;--bad-soft:#FBE3E0;--side:#FFFFFF}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:400 14px/1.4 Figtree,system-ui,sans-serif;min-height:100vh}
+button,select,input,textarea{font:inherit;color:inherit}
+.top{position:sticky;top:0;z-index:5;display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 24px;background:var(--side);border-bottom:1px solid var(--line)}
+.brand{font:800 20px/1 "Bricolage Grotesque",sans-serif;letter-spacing:-.01em}
+.brand small{display:block;font:700 11px/1 Figtree;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2);margin-top:4px}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:14px;padding:4px;gap:4px}
+.seg button{border:0;background:transparent;border-radius:10px;padding:8px 14px;min-height:36px;cursor:pointer;color:var(--text-2);font-weight:600}
+.seg button.on{background:var(--surface);color:var(--text)}
+.spacer{flex:1}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px;color:var(--text-2)}
+main{padding:20px 24px;max-width:1280px;margin:0 auto}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:12px}
+.label{font:700 12px/1 Figtree;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2);margin:0 0 10px}
+.display{font:800 30px/1.05 "Bricolage Grotesque",sans-serif}
+.title{font:600 22px/1.2 "Bricolage Grotesque",sans-serif;margin:0 0 12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:12px}
+.stats .card{margin:0}
+.muted{color:var(--text-2)} .ok{color:var(--ok)} .bad{color:var(--bad)} .flame{color:var(--flame)} .acc{color:var(--accent-ink)}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:20px;overflow:hidden}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font:700 11px/1 Figtree;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2)}
+tr.row{cursor:pointer} tr.row:hover td{background:var(--surface-2)}
+.num{font-variant-numeric:tabular-nums}
+.bar{height:8px;background:var(--surface-2);border-radius:999px;overflow:hidden;min-width:90px}
+.bar i{display:block;height:100%;background:var(--accent)}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+select,input[type=text],textarea{background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:8px 10px}
+textarea{width:100%;min-height:110px;font:400 14px/1.45 ui-monospace,Menlo,monospace;resize:vertical}
+.chip{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border:2px solid var(--line);background:var(--surface);border-radius:999px;cursor:pointer;font-weight:600}
+.chip.on{border-color:var(--accent);background:var(--accent-soft)}
+.chip i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.map{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:8px}
+.cell{min-height:44px;border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--text-2);font-weight:700;cursor:pointer;padding:0}
+.cell.ready{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.cell.hidden{border-style:dashed;color:var(--text-2)}
+.cell.err{border-color:var(--bad);color:var(--bad)}
+.cell.cur{border-width:3px;border-color:var(--text)}
+.btn{min-height:52px;padding:0 20px;border-radius:16px;border:2px solid var(--line);background:transparent;cursor:pointer;font-weight:700}
+.btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);box-shadow:0 4px 0 var(--accent-shadow)}
+.btn.primary:active{box-shadow:0 0 0 var(--accent-shadow);transform:translateY(4px)}
+.btn:disabled{background:var(--surface-2);color:var(--text-2);border-color:transparent;box-shadow:none;cursor:not-allowed}
+.btn.sm{min-height:44px;padding:0 14px}
+/* The question is paper: stimulus, stem and source sit on a light card in both themes. */
+.paper{background:var(--paper);color:var(--paper-ink);border-radius:20px;padding:18px;margin-bottom:12px}
+.paper .stimulus,.paper .stem{font:400 17px/1.45 Newsreader,Georgia,serif}
+.paper .stem{font-weight:500;margin-top:12px}
+.paper .stimulus table,.paper .stem table{border-collapse:collapse;font-size:14px}
+.paper td,.paper th{border:1px solid #c9c7bd;padding:4px 8px;background:transparent;color:inherit}
+.paper .src{font:400 12px/1.4 Figtree;color:var(--paper-2);margin-top:12px}
+.paper p{margin:0 0 8px}
+.opt{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:start;min-height:60px;padding:12px;border:2px solid var(--line);border-bottom-width:3px;border-radius:16px;background:var(--surface);margin-bottom:10px}
+.opt .tile{width:34px;height:34px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;font-weight:700}
+.opt .body{font:600 16px/1.4 Figtree}
+.opt.marked{border-color:var(--flame)}
+.opt.marked .tile{background:var(--flame);color:#0D110F}
+.opt .body table{font-size:13px;border-collapse:collapse}
+.opt .body td,.opt .body th{border:1px solid var(--line);padding:3px 6px}
+.note{padding:10px 12px;border-radius:12px;margin:6px 0;font-size:13px}
+.note.bad{background:var(--bad-soft)} .note.warn{background:rgba(255,159,67,.14)} .note.ok{background:var(--ok-soft)}
+.badge{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600;border:1px solid var(--line);margin:2px 4px 2px 0;color:var(--text-2)}
+.badge.ok{color:var(--ok);border-color:var(--ok)} .badge.hid{color:var(--flame);border-color:var(--flame)}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+@media (max-width:920px){.grid2{grid-template-columns:1fr} main{padding:16px}.top{padding:12px 16px}}
+img.scan{width:100%;border-radius:12px;border:1px solid var(--line)}
+.pager{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.pager button{min-width:36px;padding:4px 10px}
+img.fig{max-width:100%;background:#fff;border-radius:12px;margin:4px 0}
+.figure.native{background:transparent}
+.figure.native svg{max-width:100%;height:auto}
+.figure-slot{display:block;padding:12px;border:1px dashed #c9c7bd;border-radius:12px;color:var(--paper-2);font-size:13px}
+.figure-slot.bad{color:#b42318;border-color:#b42318}
+.opt .figure{background:var(--paper);color:var(--paper-ink);border-radius:12px;padding:8px;margin-top:8px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (min-width:1200px){
+ body{display:grid;grid-template-columns:232px minmax(0,1fr)}
+ .top{position:sticky;top:0;height:100vh;flex-direction:column;align-items:stretch;gap:16px;padding:20px 16px;border-right:1px solid var(--line);border-bottom:0}
+ .top .seg{flex-direction:column}
+ .top .seg button{text-align:left;min-height:44px}
+ .top .spacer{flex:1}
+ .top .pill{justify-content:center}
+ main{max-width:none;padding:24px 28px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">Cóndor<small>Editor de preguntas</small></div>
+  <div class="seg" role="tablist">
+    <button id="tab-progress" data-tab="progress" role="tab">Progreso</button>
+    <button id="tab-questions" data-tab="questions" role="tab">Preguntas</button>
+  </div>
+  <span class="spacer"></span>
+  <span id="status" class="pill">Cargando…</span>
+  <button class="pill" id="theme" title="Tema">Tema</button>
+</header>
+<main id="app"></main>
+<script src="figures-render.js"></script>
+<script src="render.bundle.js"></script>
+<script>
+const $ = (s) => document.querySelector(s);
+const app = $("#app");
+const AREA = { "Lectura crítica": "--area-lectura", "Matemáticas": "--area-mate", "Sociales y ciudadanas": "--area-sociales", "Ciencias naturales": "--area-ciencias", "Inglés": "--area-ingles" };
+const state = { tab: "progress", exam: null, filter: "all", n: null, detail: null, exams: [], scanPage: null };
+
+function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function status(text, cls = "") { const el = $("#status"); el.textContent = text; el.className = "pill " + cls; }
+// Pictures are stored as IMG:<exam>/<file>; the page fetches them from the local server.
+function render(html) {
+  const src = (html || "").replace(/src="IMG:([^"]+)"/g, (m, rel) => `src="/api/picture/${rel}"`);
+  return window.renderRich ? window.renderRich(src) : esc(src);
+}
+
+// Pasting or dropping a picture into a question text stores it and puts its reference at the cursor.
+async function addPicture(file, textarea) {
+  const d = state.detail;
+  const msg = $("#save-msg");
+  msg.textContent = "Guardando imagen…";
+  try {
+    const res = await fetch(`/api/exams/${encodeURIComponent(d.exam)}/questions/${d.number}/pictures`, {
+      method: "POST", headers: { "Content-Type": file.type }, body: file,
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+    const tag = `<img alt="" src="${body.ref}">`;
+    const start = textarea.selectionStart ?? textarea.value.length;
+    textarea.value = textarea.value.slice(0, start) + tag + textarea.value.slice(textarea.selectionEnd ?? start);
+    textarea.setSelectionRange(start + tag.length, start + tag.length);
+    textarea.dispatchEvent(new Event("input"));
+    msg.textContent = "Imagen añadida. Guarda para conservar el cambio.";
+  } catch (err) {
+    msg.innerHTML = `<span class="bad">${esc(err.message)}</span>`;
+  }
+}
+
+document.addEventListener("paste", e => {
+  const area = e.target.closest?.("textarea");
+  const file = [...(e.clipboardData?.items || [])].find(i => i.kind === "file" && i.type.startsWith("image/"))?.getAsFile();
+  if (area && file && state.detail) { e.preventDefault(); addPicture(file, area); }
+});
+document.addEventListener("dragover", e => { if (e.target.closest?.("textarea")) e.preventDefault(); });
+document.addEventListener("drop", e => {
+  const area = e.target.closest?.("textarea");
+  const file = [...(e.dataTransfer?.files || [])].find(f => f.type.startsWith("image/"));
+  if (area && file && state.detail) { e.preventDefault(); addPicture(file, area); }
+});
+function areaColor(name) { return AREA[name] ? `var(${AREA[name]})` : "var(--text-2)"; }
+function fmt(n) { return n == null ? "—" : Number(n).toLocaleString("es-CO"); }
+
+async function api(path, opts) {
+  if (window.ICFES_STATIC) return window.ICFES_STATIC(path, opts);
+  const res = await fetch(path, opts);
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) { const err = new Error(body.error || res.statusText); err.body = body; err.status = res.status; throw err; }
+  return body;
+}
+
+function setTab(tab) {
+  state.tab = tab;
+  document.querySelectorAll(".seg button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+  if (tab === "progress") showProgress(); else showQuestions();
+}
+document.querySelectorAll(".seg button").forEach(b => b.onclick = () => setTab(b.dataset.tab));
+$("#theme").onclick = () => {
+  const root = document.documentElement;
+  const dark = root.dataset.theme !== "light";
+  root.dataset.theme = dark ? "light" : "dark";
+};
+
+// ----- progress --------------------------------------------------------------
+
+async function showProgress() {
+  status("Leyendo…");
+  state.exams = await api("/api/exams");
+  status(`${state.exams.length} exámenes`, "ok");
+  const t = state.exams.reduce((a, e) => ({ q: a.q + e.questions, r: a.r + e.ready, h: a.h + e.hidden, er: a.er + e.errors, k: a.k + (e.key.present ? 1 : 0) }), { q: 0, r: 0, h: 0, er: 0, k: 0 });
+  const rows = state.exams.map(e => {
+    const pct = e.questions ? Math.round(100 * e.ready / e.questions) : 0;
+    return `<tr class="row" data-exam="${esc(e.exam)}">
+      <td><b>${esc(e.exam)}</b><div class="muted">${esc(e.title)}</div></td>
+      <td class="num">${fmt(e.questions)}${e.expected != null && e.expected !== e.questions ? ` <span class="flame">/ ${fmt(e.expected)}</span>` : ""}</td>
+      <td><div class="bar"><i style="width:${pct}%"></i></div><span class="num">${fmt(e.ready)}</span></td>
+      <td class="num ${e.hidden ? "flame" : ""}">${fmt(e.hidden)}</td>
+      <td class="num ${e.errors ? "bad" : "ok"}">${fmt(e.errors)}</td>
+      <td class="num muted">${fmt(e.warnings)}</td>
+      <td>${e.key.present ? `<span class="num">${fmt(e.key.answers)}</span> claves${e.key.disputed ? ` <span class="flame">· ${e.key.disputed} disputadas</span>` : ""}` : '<span class="bad">sin clave</span>'}</td>
+      <td>${e.figures.traced ? `${e.figures.traced} trazadas${e.figures.pending_spec ? ` <span class="flame">· ${e.figures.pending_spec} pendientes</span>` : ""}` : '<span class="muted">ninguna</span>'}</td>
+    </tr>`;
+  }).join("");
+  app.innerHTML = `
+    <div class="stats">
+      <div class="card"><div class="label">Preguntas</div><div class="display num">${fmt(t.q)}</div></div>
+      <div class="card"><div class="label">Listas</div><div class="display num acc">${fmt(t.r)}</div><div class="muted">${Math.round(100 * t.r / (t.q || 1))} % de ${fmt(t.q)}</div></div>
+      <div class="card"><div class="label">Ocultas a estudiantes</div><div class="display num flame">${fmt(t.h)}</div></div>
+      <div class="card"><div class="label">Errores del validador</div><div class="display num bad">${fmt(t.er)}</div></div>
+      <div class="card"><div class="label">Con clave</div><div class="display num">${t.k}<span class="muted" style="font-size:16px"> / ${state.exams.length}</span></div></div>
+    </div>
+    <table>
+      <thead><tr><th>Examen</th><th>Preguntas</th><th>Listas</th><th>Ocultas</th><th>Errores</th><th>Avisos</th><th>Clave</th><th>Figuras</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <p class="muted">Toca un examen para ver sus preguntas.</p>`;
+  app.querySelectorAll("tr[data-exam]").forEach(tr => tr.onclick = () => { state.exam = tr.dataset.exam; state.n = null; setTab("questions"); });
+}
+
+// ----- question map ----------------------------------------------------------
+
+const FILTERS = [["all", "Todas"], ["hidden", "Ocultas"], ["errors", "Con errores"], ["warnings", "Avisos"], ["notready", "No listas"]];
+
+async function showQuestions() {
+  if (!state.exams.length) state.exams = await api("/api/exams");
+  if (!state.exam) state.exam = state.exams[0]?.exam;
+  status("Leyendo…");
+  const rows = await api(`/api/exams/${encodeURIComponent(state.exam)}/questions`);
+  const pass = rows.filter(r => ({
+    all: true, hidden: r.hidden.length > 0, errors: r.errors > 0, warnings: r.warnings > 0, notready: !r.ready,
+  })[state.filter]);
+  status(`${rows.length} preguntas`, "ok");
+  const opts = state.exams.map(e => `<option value="${esc(e.exam)}" ${e.exam === state.exam ? "selected" : ""}>${esc(e.exam)}</option>`).join("");
+  const sections = [...new Set(rows.map(r => r.section).filter(Boolean))];
+  app.innerHTML = `
+    <div class="toolbar">
+      <select id="pick-exam" aria-label="Examen">${opts}</select>
+      ${FILTERS.map(([v, l]) => `<button class="chip ${v === state.filter ? "on" : ""}" data-filter="${v}">${l}</button>`).join("")}
+      <span class="muted num">${pass.length} de ${rows.length}</span>
+    </div>
+    <div class="toolbar">
+      ${sections.map(s => `<span class="chip" style="cursor:default"><i style="background:${areaColor(s)}"></i>${esc(s)}</span>`).join("")}
+    </div>
+    <div class="card">
+      <div class="label">Mapa de preguntas</div>
+      <div class="map">
+        ${pass.map(r => `<button class="cell ${r.errors ? "err" : r.hidden.length ? "hidden" : "ready"}" data-n="${r.number}" title="${esc(r.hidden.join(", ") || "visible para estudiantes")}">${r.number}</button>`).join("")}
+      </div>
+      <div class="muted" style="margin-top:12px">Relleno verde: visible para estudiantes. Borde punteado: oculta. Borde rojo: error del validador.</div>
+    </div>`;
+  $("#pick-exam").onchange = (e) => { state.exam = e.target.value; state.n = null; showQuestions(); };
+  app.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { state.filter = b.dataset.filter; showQuestions(); });
+  app.querySelectorAll("button[data-n]").forEach(b => b.onclick = () => openQuestion(Number(b.dataset.n)));
+}
+
+// ----- editor ----------------------------------------------------------------
+
+async function openQuestion(n) {
+  state.n = n;
+  state.scanPage = null;
+  status("Cargando…");
+  state.detail = await api(`/api/exams/${encodeURIComponent(state.exam)}/questions/${n}`);
+  status(`${state.exam} · Q${n}`, "ok");
+  renderEditor();
+}
+
+// Moves the original-PDF view one page; the form keeps what was typed.
+function turnScan(delta) {
+  const d = state.detail, max = d.scan.count || Infinity;
+  const cur = state.scanPage ?? (d.scan.pages[0] ?? d.scan.guess);
+  state.scanPage = Math.min(max, Math.max(1, cur + delta));
+  $("#scan-page").textContent = state.scanPage;
+  $("#scan-img").src = `/api/scan/${encodeURIComponent(d.exam)}/${state.scanPage}`;
+}
+
+function scanError(img) {
+  const p = document.createElement("p");
+  p.className = "muted";
+  p.textContent = "No se pudo cargar esta página. Instala PyMuPDF en el equipo: python -m pip install pymupdf";
+  img.replaceWith(p);
+}
+
+// Draws one native figure with the app's engine, the same way the student app does. Invalid or missing specs show as pending.
+function drawNative(f) {
+  const E = window.ICFESFigures;
+  if (!E || !f.spec) return `<span class="figure-slot">Figura pendiente de dibujar${f.id ? `: ${esc(f.id)}` : ""}</span>`;
+  const errs = E.validate(f.spec);
+  if (errs.length) return `<span class="figure-slot bad">Figura inválida: ${esc(errs.join("; "))}</span>`;
+  try {
+    const markup = window.DOMPurify.sanitize(E.render(f.spec), { USE_PROFILES: { svg: true, svgFilters: true, html: true } });
+    return `<div class="figure native">${markup}</div>`;
+  } catch (e) {
+    return `<span class="figure-slot bad">${esc(e.message)}</span>`;
+  }
+}
+
+function studentView(q, g, figs = []) {
+  const stemFigs = figs.filter(f => f.target !== "option").map(drawNative).join("");
+  const opts = q.options.map(o => `
+    <div class="opt" style="pointer-events:none">
+      <span class="tile">${esc(o.letter)}</span>
+      <div class="body">${render(o.text_md)}${figs.filter(f => f.target === "option" && f.option === o.letter).map(drawNative).join("")}</div>
+    </div>`).join("");
+  // Matches the app: matching tables put each item's stem in a row of the passage, so the stem is not shown twice.
+  // The shared passage is passage_md; stimulus_md is only the fallback when it is empty (the app uses the same rule).
+  const gText = g ? (g.passage_md || g.stimulus_md || "") : "";
+  const plain = h => (h ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
+  const stemInPassage = !!g && plain(q.stem_md).length > 20 && plain(gText).includes(plain(q.stem_md));
+  const dir = g ? `<div class="label" style="color:var(--paper-2)">${esc(g.directions)}</div><div class="stimulus">${render(gText)}</div><hr style="border:0;border-top:1px solid #d8d6cc;margin:12px 0">` : "";
+  return `
+    <div class="paper">
+      <div class="label" style="color:var(--paper-2)">Pregunta ${q.number}</div>
+      ${dir}
+      ${q.stimulus_md ? `<div class="stimulus">${render(q.stimulus_md)}</div>` : ""}
+      ${stemFigs}
+      ${stemInPassage ? "" : `<div class="stem">${render(q.stem_md)}</div>`}
+      <div class="src">Fuente: ICFES, Saber 11 · ${esc(state.exam)}</div>
+    </div>
+    ${opts}`;
+}
+
+// Options are edited as a list: add, remove, move, and change text. Letters stay with their option, so answer keys keep working.
+function syncOpts() {
+  const old = Object.fromEntries((state.opts || []).map(o => [o.letter, o]));
+  state.opts = [...document.querySelectorAll("#f-opts [data-letter]")].map(t => ({
+    letter: t.dataset.letter, text_md: t.value, marked_in_scan: old[t.dataset.letter]?.marked_in_scan ?? false }));
+}
+
+function drawOpts() {
+  $("#f-opts").innerHTML = (state.opts || []).map((o, i) => `
+    <div style="display:grid;grid-template-columns:34px 1fr auto;gap:8px;margin-bottom:8px;align-items:start">
+      <b style="padding-top:10px">${esc(o.letter)}</b>
+      <textarea data-letter="${esc(o.letter)}" style="min-height:44px">${esc(o.text_md)}</textarea>
+      <span style="display:flex;gap:4px">
+        <button type="button" onclick="moveOpt(${i}, -1)" ${i === 0 ? "disabled" : ""}>↑</button>
+        <button type="button" onclick="moveOpt(${i}, 1)" ${i === state.opts.length - 1 ? "disabled" : ""}>↓</button>
+        <button type="button" onclick="removeOpt(${i})">✕</button>
+      </span>
+    </div>`).join("") + `<button type="button" onclick="addOpt()">+ Añadir opción</button>`;
+  document.querySelectorAll("#f-opts textarea").forEach(t => t.oninput = () => { syncOpts(); refreshPreview(); });
+}
+
+function addOpt() {
+  syncOpts();
+  const used = state.opts.map(o => o.letter);
+  const letter = "ABCDEFGHIJ".split("").find(l => !used.includes(l)) || "?";
+  state.opts.push({ letter, text_md: "", marked_in_scan: false });
+  drawOpts(); refreshPreview();
+}
+
+function removeOpt(i) {
+  syncOpts();
+  state.opts.splice(i, 1);
+  drawOpts(); refreshPreview();
+}
+
+function moveOpt(i, delta) {
+  syncOpts();
+  const j = i + delta;
+  if (j < 0 || j >= state.opts.length) return;
+  [state.opts[i], state.opts[j]] = [state.opts[j], state.opts[i]];
+  drawOpts(); refreshPreview();
+}
+
+function renderEditor() {
+  const d = state.detail, q = d.question, g = d.group;
+  const idx = d.numbers.indexOf(d.number);
+  const prev = d.numbers[idx - 1], next = d.numbers[idx + 1];
+  const sc = d.scan, shown = sc.pages[0] ?? sc.guess;
+  const scan = `<div class="pager"><button type="button" onclick="turnScan(-1)">‹</button>
+      <span class="muted">página <b id="scan-page">${shown}</b>${sc.count ? " de " + sc.count : ""}${sc.estimated ? " · estimada, ajusta con ‹ ›" : ""}</span>
+      <button type="button" onclick="turnScan(1)">›</button></div>
+    <img id="scan-img" class="scan" alt="página original" src="/api/scan/${encodeURIComponent(d.exam)}/${shown}" onerror="scanError(this)">`;
+  const figs = d.figures.map(f => `
+    <div class="muted" style="margin-top:8px"><b>${esc(f.spec_id || f.figure_id)}</b> · ${esc(f.method)}${f.pending_spec ? ' · <span class="flame">pendiente</span>' : ""}</div>
+    ${f.svg ? `<img class="fig" src="/api/figure?path=${encodeURIComponent(f.svg)}" alt="${esc(f.figure_id)}">` : ""}`).join("") || `<p class="muted">Sin figura trazada.</p>`;
+  const msgs = [...d.messages.errors.map(m => `<div class="note bad">${esc(m)}</div>`), ...d.messages.warnings.map(m => `<div class="note warn">${esc(m)}</div>`)].join("") || `<div class="note ok">Validador limpio.</div>`;
+  const flags = (q.provenance.flags || []).map(f => `<li>${esc(f)}</li>`).join("");
+  const notes = (q.provenance.notes || []).map(f => `<li>${esc(f)}</li>`).join("");
+  const keyOpts = `<option value="">— ninguna —</option>` + q.options.map(o => `<option value="${esc(o.letter)}" ${d.key === o.letter ? "selected" : ""}>${esc(o.letter)}</option>`).join("");
+  const hidden = d.hidden_reasons.length
+    ? d.hidden_reasons.map(r => `<span class="badge hid">oculta: ${esc(r)}</span>`).join("")
+    : `<span class="badge ok">visible para estudiantes</span>`;
+
+  app.innerHTML = `
+    <div class="toolbar">
+      <button class="btn sm" id="back">← Mapa</button>
+      <button class="btn sm" id="prev" ${prev ? "" : "disabled"}>← Q${prev ?? ""}</button>
+      <button class="btn sm" id="next" ${next ? "" : "disabled"}>Q${next ?? ""} →</button>
+      <span class="title" style="margin:0 0 0 8px;font-size:18px">${esc(d.exam)} · Q${d.number}</span>
+      <span class="muted">${esc(q.section || "")}${q.part ? " · " + esc(q.part) : ""}</span>
+    </div>
+    <div class="toolbar">${hidden}</div>
+    <div class="grid2">
+      <div>
+        <div class="card"><div class="label">Enunciado</div>
+          <textarea id="f-stem">${esc(q.stem_md)}</textarea>
+        </div>
+        <div class="card"><div class="label">Formato</div>
+          <div class="pager" id="fmt">
+            <button type="button" onclick="fmtInsert('bold')"><b>B</b></button>
+            <button type="button" onclick="fmtInsert('italic')"><i>I</i></button>
+            <button type="button" onclick="fmtInsert('math')">$x$</button>
+            <button type="button" onclick="fmtInsert('table')">Tabla</button>
+          </div>
+          <p class="muted" style="margin:0">Selecciona texto en cualquier campo y pulsa un botón. Pega o arrastra una imagen para insertarla.</p>
+        </div>
+        <div class="card"><div class="label">Opciones</div>
+          <div id="f-opts"></div>
+          <div class="muted">Marcada en el escaneo: ${esc(q.scan_marked_option || "—")} · opciones esperadas: ${esc(q.expected_options ?? "—")}</div>
+        </div>
+        <div class="card"><div class="label">Texto propio de la pregunta</div>
+          <textarea id="f-stimulus">${esc(q.stimulus_md)}</textarea>
+        </div>
+        <div class="card"><div class="label">Texto compartido${g ? ` · ${esc(g.id)} (Q${g.from}–${g.to})` : ""}</div>
+          ${g ? `<textarea id="f-passage">${esc(g.passage_md || g.stimulus_md || "")}</textarea>
+          <p class="muted">Se guarda en el grupo y lo ven todas sus preguntas. Los textos literarios nunca se reescriben: usa [Texto pendiente: página N] y tools/fillpage.py.</p>` : `<p class="muted">Esta pregunta no tiene texto compartido.</p>`}
+        </div>
+      </div>
+      <div>
+        <div class="card"><div class="label">Vista del estudiante</div>
+          <div id="preview">${studentView(q, g, d.native_figures)}</div>
+        </div>
+        <div class="card">
+          <div class="label">Guardar</div>
+          <label>Área<input id="f-section" value="${esc(q.section || "")}"></label>
+          <label style="display:flex;gap:10px;align-items:center;min-height:44px"><input type="checkbox" id="f-ready" ${q.ready ? "checked" : ""} style="width:20px;height:20px"> Lista (visible para estudiantes)</label>
+          <div style="display:flex;gap:10px;align-items:center;margin:10px 0;flex-wrap:wrap">
+            <span class="muted">Respuesta</span>
+            <select id="f-answer">${keyOpts}</select>
+            <span class="muted">clave de answer-keys/${esc(d.exam)}.key.json</span>
+          </div>
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="btn primary" id="save">Guardar</button><span id="save-msg" class="muted"></span></div>
+        </div>
+        <div class="card"><div class="label">Validador y avisos</div>
+          ${msgs}
+          ${flags ? `<div class="label" style="margin-top:12px">Marcas de revisión</div><ul class="muted">${flags}</ul>` : ""}
+          ${notes ? `<div class="label" style="margin-top:12px">Notas</div><ul class="muted">${notes}</ul>` : ""}
+        </div>
+        <div class="card"><div class="label">Pregunta original (PDF)</div>${scan}</div>
+        <div class="card" id="figcard" oninput="figChanged(event)" onchange="figChanged(event)"></div>
+        <div class="card"><div class="label">Figuras trazadas (escaneo)</div>${figs}</div>
+      </div>
+    </div>`;
+
+  // The preview re-renders with the app's renderer as the editor changes, so it shows what students will see.
+  state.opts = q.options.map(o => ({ ...o }));
+  drawOpts();
+  state.figDraft = null;
+  drawFigCard();
+  const refresh = () => refreshPreview();
+  document.querySelectorAll("#f-stem, #f-stimulus, #f-passage").forEach(t => t.oninput = refresh);
+  $("#back").onclick = () => setTab("questions");
+  $("#prev").onclick = () => prev && openQuestion(prev);
+  $("#next").onclick = () => next && openQuestion(next);
+  $("#save").onclick = saveQuestion;
+}
+
+// ----- native figure editor: form fields for the common specs, JSON for the rest ---------------
+
+const FIG_KINDS = ["bar", "line", "pie", "scatter", "table", "curve", "diagram"];
+
+function figBlock(f) {
+  const sp = f.spec || {};
+  const sel = (vals, cur) => vals.map(v => `<option ${v === cur ? "selected" : ""}>${v}</option>`).join("");
+  const series = (sp.series || []).map(se => seriesRow(se)).join("");
+  return `
+    <details class="figblock" data-fig="${esc(f.id)}" data-orig="${esc(JSON.stringify(sp))}" ${f.id === "new" ? "open" : ""} style="border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:10px">
+      <summary><b>${esc(f.id)}</b> · ${esc(f.kind || "—")} · ${esc(f.target || "stem")}${f.option ? " " + esc(f.option) : ""}</summary>
+      <div class="figgrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:8px">
+        <label>Tipo<select data-k="kind">${sel(FIG_KINDS, f.kind)}</select></label>
+        <label>Lugar<select data-k="target">${sel(["stem", "option"], f.target || "stem")}</select></label>
+        <label>Opción<input data-k="option" maxlength="1" value="${esc(f.option || "")}"></label>
+        <label>Fidelidad<select data-k="fidelity">${sel(["draft", "checked", "final"], f.fidelity || "draft")}</select></label>
+        <label>Título<input data-k="title" value="${esc(sp.title || "")}"></label>
+        <label>Eje X<input data-k="xlabel" value="${esc(sp.x?.label || "")}"></label>
+        <label>Eje Y<input data-k="ylabel" value="${esc(sp.y?.label || "")}"></label>
+        <label>Y mín<input data-k="ymin" type="number" value="${sp.y?.min ?? ""}"></label>
+        <label>Y máx<input data-k="ymax" type="number" value="${sp.y?.max ?? ""}"></label>
+        <label>Paso Y<input data-k="ystep" type="number" value="${sp.y?.step ?? ""}"></label>
+        <label style="grid-column:span 2">Categorías (coma)<input data-k="categories" value="${esc((sp.categories || []).join(", "))}"></label>
+      </div>
+      <div class="muted" style="margin-top:8px">Series: nombre y valores separados por coma</div>
+      <div data-series>${series}</div>
+      <button type="button" onclick="addSeries(this)">+ Serie</button>
+      <details style="margin-top:8px"><summary>JSON avanzado (ticks, leyenda, estilos)</summary>
+        <textarea data-k="json" style="min-height:160px;font-family:monospace">${esc(JSON.stringify(sp, null, 2))}</textarea>
+      </details>
+      <div class="figprev" style="margin-top:10px">${f.spec ? drawNative({ kind: f.kind, spec: f.spec }) : ""}</div>
+      <div style="margin-top:10px;display:flex;gap:10px;align-items:center">
+        <button type="button" class="primary" onclick="saveFig(this)">Guardar figura</button>
+        <span class="muted" data-msg></span>
+      </div>
+    </details>`;
+}
+
+function seriesRow(se) {
+  return `<div class="ser" style="display:grid;grid-template-columns:1fr 2fr auto;gap:6px;margin-top:6px">
+    <input data-s="name" value="${esc(se.name || "")}" placeholder="nombre">
+    <input data-s="values" value="${esc((se.values || []).join(", "))}" placeholder="valores">
+    <button type="button" onclick="this.parentElement.remove()">✕</button></div>`;
+}
+
+function addSeries(btn) {
+  btn.previousElementSibling.insertAdjacentHTML("beforeend", seriesRow({ name: "", values: [] }));
+}
+
+// Builds the spec from the form; the JSON box wins once it has been edited, and fields it lacks keep their engine options.
+function readFig(block) {
+  const jsonBox = block.querySelector('[data-k="json"]');
+  if (block.dataset.jsonDirty === "1") return JSON.parse(jsonBox.value);
+  const spec = JSON.parse(block.dataset.orig || "{}");
+  const v = k => block.querySelector(`[data-k="${k}"]`).value.trim();
+  const num = k => (v(k) === "" ? undefined : Number(v(k)));
+  spec.title = v("title") || undefined;
+  spec.x = { ...(spec.x || {}), label: v("xlabel") || undefined };
+  spec.y = { ...(spec.y || {}), label: v("ylabel") || undefined, min: num("ymin"), max: num("ymax"), step: num("ystep") };
+  spec.categories = v("categories") ? v("categories").split(",").map(x => x.trim()).filter(Boolean) : undefined;
+  spec.series = [...block.querySelectorAll("[data-series] .ser")].map(row => ({
+    name: row.querySelector('[data-s="name"]').value.trim(),
+    values: row.querySelector('[data-s="values"]').value.split(",").map(x => x.trim()).filter(x => x !== "").map(Number),
+  }));
+  return JSON.parse(JSON.stringify(spec));
+}
+
+function figChanged(event) {
+  const block = event.target.closest?.(".figblock");
+  if (!block) return;
+  if (event.target.dataset.k === "json") block.dataset.jsonDirty = "1";
+  try {
+    const spec = readFig(block);
+    const kind = block.querySelector('[data-k="kind"]').value;
+    block.querySelector(".figprev").innerHTML = drawNative({ kind, spec });
+    block.querySelector("[data-msg]").textContent = "";
+    if (event.target.dataset.k !== "json") block.querySelector('[data-k="json"]').value = JSON.stringify(spec, null, 2);
+  } catch (err) {
+    block.querySelector("[data-msg]").innerHTML = `<span class="bad">${esc(err.message)}</span>`;
+  }
+}
+
+async function saveFig(btn) {
+  const block = btn.closest(".figblock"), d = state.detail;
+  const msg = block.querySelector("[data-msg]");
+  try {
+    const body = {
+      kind: block.querySelector('[data-k="kind"]').value,
+      target: block.querySelector('[data-k="target"]').value,
+      option: block.querySelector('[data-k="option"]').value.trim() || null,
+      fidelity: block.querySelector('[data-k="fidelity"]').value,
+      spec: readFig(block),
+    };
+    await api(`/api/exams/${encodeURIComponent(d.exam)}/questions/${d.number}/figures/${encodeURIComponent(block.dataset.fig)}`,
+      { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    state.figDraft = null;
+    await openQuestion(d.number);
+    msg.textContent = "";
+    $("#save-msg").textContent = "Figura guardada.";
+  } catch (err) {
+    msg.innerHTML = `<span class="bad">${esc(err.message)}</span>`;
+  }
+}
+
+function drawFigCard() {
+  const d = state.detail;
+  const figs = d.native_figures.map(f => figBlock(f));
+  const draft = state.figDraft ? figBlock(state.figDraft) : "";
+  $("#figcard").innerHTML = `<div class="label">Figuras nativas (motor de la app)</div>
+    ${figs.join("") || '<p class="muted">Sin figura nativa para esta pregunta.</p>'}
+    ${draft}
+    <button type="button" style="margin-top:12px" onclick="newFig()">+ Nueva figura</button>`;
+}
+
+function newFig() {
+  state.figDraft = { id: "new", kind: "bar", target: "stem", option: null, fidelity: "draft", spec: { categories: [], series: [] } };
+  drawFigCard();
+}
+
+// Remembers the text field last used, so the format buttons know where to write.
+document.addEventListener("focusin", e => { if (e.target.tagName === "TEXTAREA") state.lastArea = e.target; });
+
+function fmtInsert(kind) {
+  const area = state.lastArea;
+  if (!area || !area.isConnected) return;
+  const start = area.selectionStart ?? area.value.length, end = area.selectionEnd ?? start;
+  const sel = area.value.slice(start, end);
+  const text = {
+    bold: `**${sel || "texto"}**`,
+    italic: `*${sel || "texto"}*`,
+    math: `$${sel || "x^2"}$`,
+    table: "\n| Columna 1 | Columna 2 |\n|---|---|\n| | |\n",
+  }[kind];
+  area.value = area.value.slice(0, start) + text + area.value.slice(end);
+  area.focus();
+  area.setSelectionRange(start + text.length, start + text.length);
+  area.dispatchEvent(new Event("input"));
+}
+
+function refreshPreview() {
+  const d = state.detail, q = d.question, g = d.group;
+  const current = { ...q, stem_md: $("#f-stem").value, stimulus_md: $("#f-stimulus").value, options: state.opts };
+  const group = g && $("#f-passage") ? { ...g, passage_md: $("#f-passage").value } : g;
+  $("#preview").innerHTML = studentView(current, group, d.native_figures);
+}
+
+async function saveQuestion() {
+  const d = state.detail;
+  syncOpts();
+  const options = state.opts.map(o => ({ letter: o.letter, text_md: o.text_md }));
+  const body = {
+    stem_md: $("#f-stem").value,
+    stimulus_md: $("#f-stimulus").value,
+    options,
+    ready: $("#f-ready").checked,
+    answer: $("#f-answer").value || null,
+    section: $("#f-section").value.trim(),
+  };
+  if (d.group) body.group_passage_md = $("#f-passage").value;
+  const msg = $("#save-msg");
+  msg.textContent = "Guardando…";
+  try {
+    state.detail = await api(`/api/exams/${encodeURIComponent(d.exam)}/questions/${d.number}`, {
+      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+    });
+    status("Guardado", "ok");
+    renderEditor();
+    $("#save-msg").textContent = "Guardado";
+  } catch (err) {
+    if (err.status === 409) {
+      msg.innerHTML = `<span class="bad">No se guardó. No se puede marcar como lista todavía: ${esc((err.body.reasons || []).join(", "))}. Corrige eso o desmarca «Lista».</span>`;
+    } else {
+      msg.innerHTML = `<span class="bad">${esc(err.message)}</span>`;
+    }
+  }
+}
+
+setTab("progress");
+</script>
+</body>
+</html>

@@ -236,3 +236,32 @@ tested with a fake client** (no Anthropic key was available while building it).
 - **Run live against Azure** on `S11-O 2da sesión` (several variants, ~100 pages billed in total). Not yet run live: the
   Claude stage, chunking of very large PDFs, 429 throttling, resume after a real interruption.
 - Fourteen exams have been processed; only one is human/Claude-verified. The gold set is a draft.
+
+## Admin editor (progress, question editing, debugging)
+
+A local web page for the question data. It runs on your laptop, reads one data folder and writes back to it, so no exam content is committed here.
+
+```
+python -m icfes_admin --data /path/to/icfes [--sources pdf-sources.json] [--scans "C:/Users/you/Downloads/icfes-hi300-check"] [--port 8765]
+```
+
+Open http://127.0.0.1:8765. The data folder is the one that holds `data/`, `answer-keys/` and `figures/`.
+
+- **Progress**: per exam, questions and ready count, hidden count, validator errors and warnings, answer key and disputed items, traced figures.
+- **Questions**: filter by hidden, validator errors, warnings or not ready. The hidden reasons match the student app's gate: not ready, `[Texto pendiente`, `[FIGURE`, a traced figure with `pending_spec`, a blank option.
+- **Editor**: stem, question passage, options, answer (writes `answer-keys/<exam>.key.json`) and the ready flag. Marking a question ready is refused while it has validator errors or a hidden reason, and the refusal lists them. Shared passages are read-only; literary text is never retyped.
+- **Saving**: every save first copies the old file to `data/.backups/`, then replaces the file atomically. Each save adds a line to the question's provenance notes. The page does not mark anything as `human_verified`.
+- `--sources` is a JSON map from exam id to its source PDF (for example `{"S11-C16_1ra": "C:/.../S11- C16  1ra sesion.pdf"}`). The editor renders the original page at 300 dpi with PyMuPDF (`python -m pip install pymupdf`), caches it, and shows the page next to the form. The page is the one recorded in the golden, or estimated from the question's place in the exam; step with the arrows.
+- `--scans` is optional. Scan pages are looked up by the render names used so far (`o1-10-10.png` = letter + session + page); pages not found are reported as missing.
+
+Tests: `python -m pytest tests/test_admin.py`.
+
+### Round trip with the shared folder
+
+The shared icfes folder (the one the app and other threads read) is not on the laptop. The laptop uses a copy at `C:\Icfes\icfes`:
+
+1. Copy the shared `data/`, `answer-keys/` and `figures/traced/` into `C:\Icfes\icfes` (the Claude thread does this).
+2. Run the editor on the copy: `python -m icfes_admin --data C:\Icfes\icfes`.
+3. When you are done, ask for a sync. It copies changed files back to the shared folder, but only goldens that do not add validator errors. Each replaced file is backed up in `data/.backups/`.
+
+To preview or apply the sync by hand: `python -m icfes_admin.sync --from C:\Icfes\icfes --to <shared folder> [--write]`.
