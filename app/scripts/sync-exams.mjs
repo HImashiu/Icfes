@@ -14,6 +14,7 @@
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { normalizeField } from "../src/lib/text-normalize.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const out = join(here, "..", "public", "exams");
@@ -53,7 +54,126 @@ const booklet = (t) =>
     .replace(/^(S11-)\s+/i, "$1")
     .replace(/\s+(\d)(?:da|ra|a)?\s+sesi[oó]n\b/i, (m, n) => ` · ${ORDINAL[n] ?? n} sesión`)
     .replace(/\s+(\d)(?:da|ra)$/i, (m, n) => ` · ${ORDINAL[n] ?? n} sesión`);
+// Cleans one exam's text for the app and decides which questions are shown.
+// A question is hidden when something it needs is missing (a passage, a picture, a figure
+// without a spec); a note standing in for a picture that is drawn is stripped instead.
+// Every fix is counted in report[slug] so the sync log shows what is left in the data.
+const PENDING_TEXT = /\[Texto pendiente/;
+const FIGURE_NOTE = /\[(?:Figura pendiente|FIGURE)[^\]]*\]|(?:^|\n)[ \t]*Figura pendiente:[^\n]*/g;
+const FIGURE_NOTE_ANY = /\[(?:Figura pendiente|FIGURE)|(?:^|\n)[ \t]*Figura pendiente:/;
+const PICTURE = /!\[[^\]]*\]\([^)]*\)|<img\b[^>]*>/gi;
+const PICTURE_ANY = /!\[|<img\b/i;
+const FLAT_TABLE = /\[Tabla:[^\]]*\]/g;
+
+function prepareExam(exam, specPath, slug, report) {
+  const specFigures = specPath && existsSync(specPath) ? JSON.parse(readFileSync(specPath, "utf8")).figures ?? [] : [];
+  const specIds = new Set(specFigures.map((f) => f.id));
+  const groups = new Map((exam.groups ?? []).map((g) => [g.id, g]));
+  const fixes = {};
+  const left = {};
+  const hiddenBy = {};
+  const bump = (bag, key, n = 1) => {
+    if (n) bag[key] = (bag[key] ?? 0) + n;
+  };
+  const textOf = (q) => {
+    const g = groups.get(q.group_id);
+    return [q.stem_md, q.stimulus_md, g?.stimulus_md, g?.directions, ...(q.options ?? []).map((o) => o.text_md)]
+      .filter((t) => typeof t === "string");
+  };
+  const hasFigure = (q) =>
+    [].concat(q.figure ?? []).length > 0 ||
+    (q.options ?? []).some((o) => [].concat(o.figure ?? []).length > 0);
+
+  // Decide each question first: a question with any gap is hidden and does not count as shown.
+  const decisions = (exam.questions ?? []).map((q) => {
+    const texts = textOf(q).join("\n");
+    const figure = hasFigure(q);
+    const reasons = [];
+    if (PENDING_TEXT.test(texts)) reasons.push("texto_pendiente");
+    if (FIGURE_NOTE_ANY.test(texts) && !figure) reasons.push("figura_pendiente");
+    if (PICTURE_ANY.test(texts) && !figure) reasons.push("picture_without_figure");
+    // A table flattened into text stands in for a drawn table; without its link it is a gap.
+    if (/\[Tabla:/.test(texts) && !figure) reasons.push("flattened_table_unlinked");
+    if (q.pending_spec || (q.options ?? []).some((o) => o.pending_spec)) reasons.push("pending_spec");
+    const missingSpec = [].concat(q.figure ?? []).concat((q.options ?? []).flatMap((o) => [].concat(o.figure ?? [])));
+    if (missingSpec.some((id) => !specIds.has(id))) reasons.push("figure_without_spec");
+    return { q, figure, reasons };
+  });
+
+  const shownQuestions = [];
+  const shownByGroup = new Map();
+  for (const { q, figure, reasons } of decisions) {
+    if (reasons.length) {
+      bump(hiddenBy, reasons[0]);
+      continue;
+    }
+    shownQuestions.push({ q, figure });
+    if (q.group_id) shownByGroup.set(q.group_id, (shownByGroup.get(q.group_id) ?? true) && figure);
+  }
+
+  // Groups: text fixes once; notes and pictures go only when every shown question of the group has its figure.
+  for (const g of exam.groups ?? []) {
+    const allFigures = shownByGroup.get(g.id) === true;
+    for (const key of ["stimulus_md", "directions", "passage_md"]) {
+      if (typeof g[key] !== "string") continue;
+      let t = normalizeField(g[key], { counts: fixes });
+      if (allFigures) t = stripFigureMarks(t, fixes);
+      else if (key === "stimulus_md" && FIGURE_NOTE_ANY.test(t)) bump(left, "figure_note_in_group");
+      g[key] = t;
+    }
+    // A passage that repeats the group's directions (the "RESPONDA LAS PREGUNTAS…" line) drops the repeat.
+    const head = (s) => (s ?? "").replace(/<[^>]+>/g, " ").replace(/[#*\s]+/g, " ").trim().toLowerCase();
+    if (g.directions && g.stimulus_md && head(g.directions).length > 20 && head(g.stimulus_md).startsWith(head(g.directions).slice(0, 40))) {
+      g.stimulus_md = g.stimulus_md.replace(/^[^\n]*\n*/, "");
+      bump(fixes, "directions_repeat_removed");
+    }
+  }
+
+  for (const { q, figure } of shownQuestions) {
+    const n = q.number;
+    for (const key of ["stem_md", "stimulus_md"]) {
+      if (typeof q[key] !== "string") continue;
+      let t = normalizeField(q[key], { number: n, leadingNumber: key === "stem_md", counts: fixes });
+      if (figure) t = stripFigureMarks(t, fixes);
+      else if (FIGURE_NOTE_ANY.test(t)) bump(left, "figure_note_left");
+      if (figure && FLAT_TABLE.test(t)) {
+        t = t.replace(FLAT_TABLE, "").trim();
+        bump(fixes, "flattened_table_removed");
+      }
+      q[key] = t;
+    }
+    for (const o of q.options ?? []) {
+      if (typeof o.text_md === "string") o.text_md = normalizeField(o.text_md, { counts: fixes });
+    }
+    if (!(q.stem_md ?? "").trim() && !figure && !(q.stimulus_md ?? "").trim()) bump(left, "empty_stem");
+    if ((q.options ?? []).some((o) => !(o.text_md ?? "").trim() && !o.figure)) bump(left, "empty_option_no_figure");
+    if (q.expected_options && q.options?.length !== q.expected_options) bump(left, "option_count_differs");
+  }
+
+  const hidden = Object.values(hiddenBy).reduce((a, b) => a + b, 0);
+  report[slug] = { total: (exam.questions ?? []).length, shown: shownQuestions.length, hidden: hiddenBy, fixes, left };
+  const fixText = Object.entries(fixes).map(([k, v]) => `${k} ${v}`).join(", ");
+  const hideText = Object.entries(hiddenBy).map(([k, v]) => `${k} ${v}`).join(", ");
+  console.log(`[normalize] ${slug}: shown ${shownQuestions.length}/${(exam.questions ?? []).length}${fixText ? `; ${fixText}` : ""}${hidden ? `; hidden ${hideText}` : ""}`);
+  return { ...exam, questions: shownQuestions.map((x) => x.q) };
+}
+
+// Figure notes and picture references are removed once a native figure stands in for them.
+function stripFigureMarks(text, fixes) {
+  let t = text;
+  t = t.replace(FIGURE_NOTE, () => {
+    fixes.placeholders_stripped = (fixes.placeholders_stripped ?? 0) + 1;
+    return "";
+  });
+  t = t.replace(PICTURE, () => {
+    fixes.pictures_stripped = (fixes.pictures_stripped ?? 0) + 1;
+    return "";
+  });
+  return t.trim();
+}
+
 const exams = [];
+const report = {};
 for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
   const slug = file.replace(/\.golden\.json$/, "");
   const exam = JSON.parse(readFileSync(join(src, file), "utf8"));
@@ -61,29 +181,8 @@ for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
     console.warn(`[sync-exams] skipped ${file}: format ${exam.format}`);
     continue;
   }
-  // Questions with a missing passage or a pending figure are hidden, so students never see a gap.
-  // They come back on a later sync, once the golden text is filled in.
-  const gap = (text) => typeof text === "string" && text.includes("Texto pendiente");
-  // A figure id with no spec behind it is a gap too.
   const specPath = specFiles.has(slug) ? join(specDir, specFiles.get(slug)) : null;
-  const specIds = new Set(specPath && existsSync(specPath) ? JSON.parse(readFileSync(specPath, "utf8")).figures.map((f) => f.id) : []);
-  const missingFigure = (id) => !specIds.has(id);
-  // An inline [FIGURE: ...] note with no linked figure is a drawing that does not exist yet.
-  const figureNote = (text) => typeof text === "string" && text.includes("[FIGURE");
-  const hidden = (q) =>
-    gap(q.stimulus_md) ||
-    figureNote(q.stem_md) ||
-    figureNote(q.stimulus_md) ||
-    figureNote(q.group?.stimulus_md) ||
-    gap(q.group?.stimulus_md) ||
-    q.pending_spec ||
-    (q.options ?? []).some((o) => o.pending_spec) ||
-    [].concat(q.figure ?? []).some(missingFigure) ||
-    (q.options ?? []).some((o) => [].concat(o.figure ?? []).some(missingFigure));
-  const shown = { ...exam, questions: (exam.questions ?? []).filter((q) => !hidden(q)) };
-  if (shown.questions.length < (exam.questions ?? []).length) {
-    console.log(`[sync-exams] ${slug}: ${(exam.questions ?? []).length - shown.questions.length} question(s) hidden (gap)`);
-  }
+  const shown = prepareExam(exam, specPath, slug, report);
   writeFileSync(join(out, `${slug}.json`), JSON.stringify(shown));
   // The same spec the catalog uses: the .full file when there is one.
   const figFile = specFiles.has(slug) ? join(specDir, specFiles.get(slug)) : null;
@@ -196,6 +295,7 @@ const review = [...specFiles].map(([slug, file]) => {
 writeFileSync(join(out, "figures-review.json"), JSON.stringify({ exams: review }));
 // Scan crops are not copied: figures are drawn natively from their specs (no crops in the app).
 writeFileSync(join(out, "index.json"), JSON.stringify({ exams }, null, 2));
+writeFileSync(join(out, "normalize-report.json"), JSON.stringify(report, null, 2));
 
 // Dev check page (#figuras): one real figure per engine kind, taken from the batch specs.
 const CHECKS = [

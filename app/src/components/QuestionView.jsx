@@ -97,7 +97,7 @@ export default function QuestionView({
         <section className="paper-card q-context" aria-label="Texto y gráfica de la pregunta">
           {passage && (collapsed ? (
             <details className="group-collapse" open={groupOpen} onToggle={(e) => setGroupOpen(e.currentTarget.open)}>
-              <summary>Ver texto y gráfica</summary>
+              <summary>{stemFigures.length ? "Ver texto y gráfica" : "Ver texto"}</summary>
               {passage}
             </details>
           ) : passage)}

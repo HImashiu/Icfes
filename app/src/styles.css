@@ -881,3 +881,8 @@ details.answers-area > summary::-webkit-details-marker { display: none; }
   .quick-wide { grid-column: auto; }
 }
 .pending-fig { color: var(--text-2); font-style: italic; }
+
+/* Markdown tables from the exam text, drawn as real tables (see text-normalize.js). */
+.exam-table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+.exam-table th, .exam-table td { padding: 6px 10px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+.exam-table th { font-weight: 600; background: var(--surface-2); }
