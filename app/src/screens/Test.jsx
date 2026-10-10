@@ -153,11 +153,9 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
             <Icon name="flag" />
           </button>
           <span className="clock-pill desk-only" aria-hidden="true">
-            {timed ? formatClock(remaining) : `${fmtInt(attempt.xp ?? 0)} XP`}
+            {timed ? formatClock(remaining) : "Práctica"}
           </span>
-          {timed && (
-            <button type="button" className="secondary desk-only desk-submit" onClick={submit}>Entregar</button>
-          )}
+          <button type="button" className="secondary desk-only desk-submit" onClick={submit}>Entregar</button>
         </div>
         <div className="test-meta">
           <span className="meta-area">
