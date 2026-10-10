@@ -76,7 +76,8 @@ function loadTraced(slug) {
   const manifest = join(root, "figures", "traced", slug, "manifest.json");
   if (!existsSync(manifest)) return traced;
   for (const e of JSON.parse(readFileSync(manifest, "utf8")).figures ?? []) {
-    if (e.method !== "azure" || !e.svg) continue;
+    // "azure" traces come from Azure regions; "eyeballed_box" traces come from a box drawn by eye on the scan.
+    if (!["azure", "eyeballed_box"].includes(e.method) || !e.svg) continue;
     const from = join(root, "figures", e.svg);
     if (!existsSync(from)) continue;
     const file = basename(e.svg);
