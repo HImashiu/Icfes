@@ -14,6 +14,23 @@ function optionState({ letter, answer, correctLetter, graded }) {
 
 const STATE_LABEL = { correct: "Respuesta según la clave", incorrect: "Tu respuesta" };
 
+// Long stimuli on phone: the first lines show with a fade, and "Leer texto completo" opens the rest.
+const LONG_TEXT = 600;
+function LongText({ html, className, long }) {
+  const [open, setOpen] = useState(false);
+  if (!long) return <RichText html={html} className={className} />;
+  return (
+    <div className="long-text">
+      <div className={open ? "clamp open" : "clamp"}>
+        <RichText html={html} className={className} />
+      </div>
+      <button type="button" className="link" onClick={() => setOpen(!open)} aria-expanded={open}>
+        {open ? "Mostrar menos" : "Leer texto completo"}
+      </button>
+    </div>
+  );
+}
+
 // True on desktop, where the context (passage, figure) sits in its own column and is never collapsed.
 function useWide() {
   const query = "(min-width: 1200px)";
@@ -45,6 +62,7 @@ export default function QuestionView({
   feedback,
   flagged = false,
   onToggleFlag,
+  report = true,
 }) {
   const { group } = question;
   const wide = useWide();
@@ -66,7 +84,7 @@ export default function QuestionView({
   const passage = group && (
     <section className="passage paper-passage" aria-label={`Texto para las preguntas ${group.from} a ${group.to}`}>
       {group.directions && <p className="directions">{group.directions}</p>}
-      <RichText html={group.stimulus_md} className="stimulus" />
+      <LongText html={group.stimulus_md} className="stimulus" long={!wide && (group.stimulus_md ?? "").length > LONG_TEXT} />
     </section>
   );
 
@@ -83,7 +101,7 @@ export default function QuestionView({
               {passage}
             </details>
           ) : passage)}
-          {ownStimulus && <RichText html={question.stimulus_md} className="stimulus" />}
+          {ownStimulus && <LongText html={question.stimulus_md} className="stimulus" long={!wide && question.stimulus_md.length > LONG_TEXT} />}
           {stemFigures.map((f) => (
             <FigureBlock key={f.id} figure={f} alt={f.id} />
           ))}
@@ -147,7 +165,7 @@ export default function QuestionView({
           })}
         </ul>
         {feedback}
-        <ReportError question={question} examLabel={examLabel} />
+        {report && <ReportError question={question} examLabel={examLabel} />}
         {footer}
       </div>
     </div>

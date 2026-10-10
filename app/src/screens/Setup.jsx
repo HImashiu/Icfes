@@ -6,6 +6,15 @@ import { areaColor, fmtInt } from "../lib/brand.js";
 import { WEAKEST_AREA } from "../data/mock.js";
 
 // Nuevo simulacro: booklet, scope (whole exam or one area), mode, and a sticky start button.
+// 225 min reads as "3 h 45 min".
+function formatDuration(minutes) {
+  const total = Math.round(minutes);
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  if (h === 0) return `${m} min`;
+  return m === 0 ? `${h} h` : `${h} h ${m} min`;
+}
+
 export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam }) {
   const [scope, setScope] = useState("all");
   const [mode, setMode] = useState("practice");
@@ -69,7 +78,7 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam }
         <button type="button" role="radio" aria-checked={mode === "timed"} className={mode === "timed" ? "mode-card on" : "mode-card"} onClick={() => setMode("timed")}>
           <Icon name="clock" />
           <strong>Cronometrado</strong>
-          <span className="caption">Resultados al entregar · {Math.round(minutes)} min</span>
+          <span className="caption">Resultados al entregar · {formatDuration(minutes)}</span>
         </button>
       </div>
 

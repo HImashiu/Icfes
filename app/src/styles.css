@@ -738,3 +738,91 @@ button.card { text-align: left; width: 100%; }
 .nav-collapsed .nav-bar { grid-column: 1 / -1; }
 .nav-bar { display: block; height: 4px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
 .nav-bar > span { display: block; height: 100%; background: var(--accent-ink); border-radius: inherit; }
+
+/* Round 2 of the design review (v12/v13): legend, toast, nav labels, results, history, review, league */
+.legend { list-style: none; margin: 0; }
+.legend span, .answers-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw {
+  display: inline-block; width: 10px; height: 10px; border-radius: 3px; flex: none;
+  border: 1.5px solid var(--text-2); background: transparent;
+}
+.sw-answered { background: var(--accent); border-color: var(--accent); }
+.sw-flagged { border-color: var(--flame); }
+.sw-ok { background: var(--ok-soft); border-color: var(--ok); }
+.sw-bad { background: var(--bad-soft); border-color: var(--bad); }
+.map-title { display: block; margin-bottom: 8px; }
+
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(96px + env(safe-area-inset-bottom));
+  z-index: 30; display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px;
+  background: var(--surface-2); color: var(--text); border: 1px solid var(--line); font-size: 14px; white-space: nowrap;
+}
+.toast-check { color: var(--ok); font-weight: 800; }
+@media (min-width: 1200px) { .toast { bottom: 24px; } }
+
+.nav-item .nav-long { display: none; }
+.nav-brand { display: none; }
+@media (min-width: 1200px) {
+  .nav-brand { display: flex; align-items: center; gap: 8px; padding: 4px 8px 14px; font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 18px; color: var(--text); }
+  .nav-item .nav-long { display: inline; }
+  .nav-item .nav-short { display: none; }
+}
+@media (min-width: 768px) and (max-width: 1199px) {
+  .bottom-nav .nav-item.active { background: var(--accent-soft); }
+}
+
+.clamp { max-height: calc(8 * 1.6em); overflow: hidden; position: relative; }
+.clamp:not(.open)::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3em;
+  background: linear-gradient(transparent, var(--paper));
+}
+.clamp.open { max-height: none; }
+.long-text .link { margin-top: 6px; }
+.directions {
+  font-family: Figtree, sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; font-style: normal; color: var(--paper-2);
+}
+
+.results-hero { display: grid; gap: 16px; grid-template-columns: 1fr; }
+.hero-row { display: flex; align-items: center; gap: 16px; text-align: left; }
+.hero-text { display: grid; gap: 4px; min-width: 0; }
+.results-hero .stat { background: var(--surface-2); border-radius: 14px; }
+.footnote { margin: 8px 0 0; font-size: 13px; color: var(--text-2); }
+.answers-legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--text-2); margin-bottom: 8px; }
+.answer-cell.blank { color: var(--text-2); }
+details.answers-area > summary {
+  list-style: none; display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 4px 0;
+}
+details.answers-area > summary::-webkit-details-marker { display: none; }
+.results > .results-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: flex-start; }
+.results > .results-actions .primary.big,
+.results > .results-actions .secondary.big { flex: 0 0 auto; width: auto; padding: 0 28px; }
+.results > .results-actions .text-btn { margin-left: 0; }
+.text-btn {
+  background: none; border: 0; padding: 0; min-height: 44px; font: inherit; font-weight: 700;
+  color: var(--text-2); text-decoration: none; cursor: pointer;
+}
+
+.review .rv-main .q-split { display: grid; gap: 12px; }
+@media (min-width: 1024px) {
+  .rv-list { position: sticky; top: 124px; max-height: calc(100vh - 160px); overflow-y: auto; }
+}
+
+.history-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.chip-mode, .chip-status {
+  font-size: 12px; color: var(--text-2); background: var(--surface-2); padding: 2px 10px; border-radius: 999px; justify-self: start;
+}
+.area-segments { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 6px; }
+.seg-track { display: block; height: 4px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+.seg-track > span { display: block; height: 100%; border-radius: inherit; }
+.score-pct { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 22px; color: var(--text); }
+.empty-state { display: grid; justify-items: center; text-align: center; gap: 12px; }
+.empty-state p { margin: 0; color: var(--text-2); }
+
+.quick-wide { grid-column: 1 / -1; }
+.week-chart { height: 200px; width: 100%; }
+
+.podium-step .podium-av { width: 60px; height: 60px; font-size: 20px; }
+.podium-step.first .podium-av { width: 76px; height: 76px; font-size: 26px; box-shadow: 0 0 0 4px var(--accent); }
+/* Marcar on desktop: the base rule above hides it, so the desktop state is repeated after it. */
+@media (min-width: 1200px) { .mark-btn { display: inline-flex; } }

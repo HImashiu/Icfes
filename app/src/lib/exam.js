@@ -7,6 +7,12 @@ export const KEY_FORMAT = "icfes-key/1";
 // Shown on every question. The questions are a free resource; the platform is the product.
 export const SOURCE_LINE = "Fuente: ICFES, Saber 11";
 
+const ORDINAL = { 1: "Primera", 2: "Segunda" };
+// The booklet name students see: "S11-O 2da sesion" becomes "S11-O · Segunda sesión".
+export function formatBooklet(title) {
+  return title.replace(/\s+(\d)(?:da|ra|a)?\s+sesi[oó]n\b/i, (m, n) => ` · ${ORDINAL[n] ?? n} sesión`);
+}
+
 export class ExamFormatError extends Error {}
 
 export function parseExam(raw) {
@@ -38,7 +44,7 @@ export function parseExam(raw) {
   }
 
   return {
-    title: raw.exam?.title ?? "Examen",
+    title: formatBooklet(raw.exam?.title ?? "Examen"),
     docId: raw.exam?.doc_id ?? null,
     warnings: raw.exam?.warnings ?? [],
     sections,

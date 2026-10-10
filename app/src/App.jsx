@@ -143,7 +143,8 @@ export default function App() {
   const questions = selected && attempt ? questionsFor(selected.exam, attempt.scope) : [];
   const scopeTitle = attempt && attempt.scope !== "all" ? attempt.scope : "Examen completo";
   const examTitle = selected ? `${selected.exam.title} · ${scopeTitle}` : "";
-  const navView = ["home", "setup", "history", "league", "profile"].includes(view) ? view : null;
+  // The sidebar stays on every screen except the test; results and review belong to Practicar, reports to Perfil.
+  const navView = { home: "home", setup: "setup", results: "setup", review: "setup", history: "history", league: "league", profile: "profile", reports: "profile" }[view] ?? null;
   const resumable = selected && view === "home" ? findResumable(selected.slug, selected.exam) : null;
 
   return (
@@ -221,8 +222,8 @@ export default function App() {
 
       {view === "league" && <League onBack={() => setView("home")} />}
       {view === "profile" && <Profile theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} onReports={() => setView("reports")} />}
-      {view === "history" && <History onBack={() => setView("home")} />}
-      {view === "reports" && <Reports onBack={() => setView("profile")} />}
+      {view === "history" && <History onBack={() => setView("home")} onNew={() => setView("setup")} />}
+      {view === "reports" && <Reports onBack={() => setView("profile")} onPractice={() => setView("setup")} />}
       {view === "teacher" && <Teacher onExit={() => setView("profile")} />}
 
       {navView && <BottomNav active={navView} onGo={setView} />}

@@ -1,8 +1,9 @@
 import Icon from "../components/Icon.jsx";
+import Mascot from "../components/Mascot.jsx";
 import { loadReports } from "../lib/local.js";
 
 // Mis reportes: the error reports saved in this browser. There is no review team behind them yet.
-export default function Reports({ onBack }) {
+export default function Reports({ onBack, onPractice }) {
   const reports = loadReports().slice().reverse();
   return (
     <section className="reports">
@@ -13,17 +14,21 @@ export default function Reports({ onBack }) {
         <h1>Mis reportes</h1>
       </header>
       {reports.length === 0 ? (
-        <p className="card muted">Todavía no has reportado errores. Puedes hacerlo desde cualquier pregunta.</p>
+        <div className="card empty-state">
+          <Mascot size={72} />
+          <p>No has reportado preguntas. Si encuentras un error en una pregunta, usa “Reportar error” debajo de ella.</p>
+          <button type="button" className="secondary" onClick={onPractice}>Ir a practicar</button>
+        </div>
       ) : (
         <ul className="report-list">
           {reports.map((r) => (
             <li key={r.at + r.question} className="card report-item">
               <div className="section-head">
-                <strong>Pregunta {r.number}</strong>
+                <strong>{r.exam} · Pregunta {r.number}</strong>
                 <span className="caption">{new Date(r.at).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}</span>
               </div>
-              <span className="caption">{r.exam} · id {r.question}</span>
               <p>{r.note}</p>
+              <span className="chip-status">Guardado en este navegador</span>
             </li>
           ))}
         </ul>

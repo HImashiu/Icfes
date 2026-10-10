@@ -191,6 +191,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
           )}
         </main>
         <aside className="test-side" aria-label="Mapa de preguntas">
+          <span className="label map-title">Mapa de preguntas</span>
           {mapCells}
         </aside>
       </div>

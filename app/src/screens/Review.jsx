@@ -1,5 +1,6 @@
 import { useState } from "react";
 import QuestionView from "../components/QuestionView.jsx";
+import ReportError from "../components/ReportError.jsx";
 import Icon from "../components/Icon.jsx";
 import { areaColor } from "../lib/brand.js";
 
@@ -78,7 +79,7 @@ export default function Review({ questions, attempt, answerKey, keyStatus, notes
                     {key ? ` · clave ${key}` : ""}
                   </span>
                 </span>
-                <span className={`rv-mark ${g}`} aria-hidden="true">{g === "ok" ? "✓" : g === "bad" ? "✕" : ""}</span>
+                <span className={`rv-mark ${g}`} aria-hidden="true">{g === "ok" ? "✓" : g === "bad" ? "✕" : "–"}</span>
               </button>
             </li>
           );
@@ -111,22 +112,22 @@ export default function Review({ questions, attempt, answerKey, keyStatus, notes
             review={{ correctLetter: answerKey?.get(q.key) ?? null }}
             figures={figures}
             examLabel={examLabel}
+            report={false}
           />
-          <div className="chips-row">
-            {keyStatus !== "official" && <span className="badge pending">Clave preliminar, no oficial</span>}
-            {note?.confidence && <span className={`badge confidence ${note.confidence}`}>Confianza {CONFIDENCE[note.confidence] ?? note.confidence}</span>}
-            {note?.status === "verified_by_scan" && <span className="badge ok">Verificada en el escaneo</span>}
-            {!attempt.answers[q.key] && <span className="badge pending">Sin responder</span>}
-          </div>
-          {note?.reason && answerKey && looksSpanish(note.reason) && (
-            <div className="card why">
-              <span className="label">Por qué</span>
-              <p>{note.reason}</p>
+          <div className="card why">
+            <span className="label">{note?.reason && answerKey && looksSpanish(note.reason) ? "Por qué" : "Detalles"}</span>
+            {note?.reason && answerKey && looksSpanish(note.reason) && <p>{note.reason}</p>}
+            <div className="chips-row">
+              {keyStatus !== "official" && <span className="badge pending">Clave preliminar, no oficial</span>}
+              {note?.confidence && <span className={`badge confidence ${note.confidence}`}>Confianza {CONFIDENCE[note.confidence] ?? note.confidence}</span>}
+              {note?.status === "verified_by_scan" && <span className="badge ok">Verificada en el escaneo</span>}
+              {!attempt.answers[q.key] && <span className="badge pending">Sin responder</span>}
             </div>
-          )}
+            <ReportError question={q} examLabel={examLabel} />
+          </div>
           <div className="test-controls">
             <button type="button" className="secondary" onClick={() => setIndex(i - 1)} disabled={i === 0}>Anterior</button>
-            <button type="button" className="secondary" onClick={() => setIndex(i + 1)} disabled={i >= visible.length - 1}>
+            <button type="button" className="primary" onClick={() => setIndex(i + 1)} disabled={i >= visible.length - 1}>
               {filter === "wrong" ? "Siguiente error" : "Siguiente"}
             </button>
           </div>

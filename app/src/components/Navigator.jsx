@@ -54,11 +54,11 @@ export default function Navigator({ questions, answers, flags, current, onGo, gr
         </div>
         );
       })}
-      <ul className="legend">
-        <li><span className="nav-btn answered" /> Respondida</li>
-        <li><span className="nav-btn flagged" /> Marcada</li>
-        <li><span className="nav-btn" /> Sin responder</li>
-      </ul>
+      <div className="legend">
+        <span><i className="sw sw-answered" /> Respondida</span>
+        <span><i className="sw sw-flagged" /> Marcada</span>
+        <span><i className="sw" /> Sin responder</span>
+      </div>
     </nav>
   );
 }

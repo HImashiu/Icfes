@@ -80,6 +80,11 @@ export default function Home({ exam, resumable, onContinue, onPractice, onLeague
           <strong>Practicar por área</strong>
           <span className="caption">Escoge un área y empieza</span>
         </button>
+        <button type="button" className="card quick quick-wide" onClick={() => onGo("setup")}>
+          <Icon name="clock" />
+          <strong>Simulacro completo</strong>
+          <span className="caption">Las 119 preguntas, con o sin tiempo</span>
+        </button>
       </div>
 
       <div className="card">
@@ -87,7 +92,8 @@ export default function Home({ exam, resumable, onContinue, onPractice, onLeague
           <span className="label">Progreso semanal</span>
           <span className="caption">XP por día · <span className="accent-text">tú</span> · <span className="muted">promedio</span></span>
         </div>
-        <svg className="week-chart" viewBox={`0 0 ${w} ${h}`} role="img" aria-label="XP de la semana frente al promedio del curso">
+        <svg className="week-chart" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" role="img" aria-label="XP de la semana frente al promedio del curso">
+          {[30, 60, 90].map((y) => <line key={y} x1="0" x2={w} y1={y} y2={y} stroke="var(--line)" strokeWidth="1" />)}
           <polyline points={avg} fill="none" stroke="var(--text-2)" strokeWidth="2" strokeDasharray="4 4" />
           <polyline points={mine} fill="none" stroke="var(--accent-ink)" strokeWidth="3" strokeLinejoin="round" />
         </svg>

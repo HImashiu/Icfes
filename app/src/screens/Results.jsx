@@ -5,6 +5,9 @@ import { scoreAttempt } from "../lib/exam.js";
 import { areaColor, fmtInt, fmtPct } from "../lib/brand.js";
 
 // Resultados: celebrating mascot, three stats, per-area bars, the preliminary-key notice and the next steps.
+// Phone: each area folds to one line; the areas with errors start open. Desktop shows every area.
+const isPhone = typeof window !== "undefined" && !window.matchMedia?.("(min-width: 768px)").matches;
+
 export default function Results({ title, questions, attempt, answerKey, keyStatus, onReview, onReviewAt, onHome, onRetry }) {
   const score = scoreAttempt(questions, attempt.answers, answerKey);
   const preliminary = keyStatus !== "official";
@@ -26,6 +29,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
       keyed: score.keyed,
       correct: score.correct,
       percent: pct ?? 0,
+      perArea: score.perArea.map((a) => ({ name: a.name, correct: a.correct, answered: a.answered, total: a.total })),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [delivered, attempt.startedAt]);
@@ -42,33 +46,32 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
   return (
     <section className="results">
       <div className="results-hero card">
-        <Mascot pose="celebrating" size={96} />
-        <h1>{!delivered ? "Intento sin entregar" : pct && pct > 0 ? "¡Buen trabajo!" : "¡Sesión entregada!"}</h1>
-        <span className="caption">{title}</span>
-        {attempt.auto && <span className="caption">El tiempo se acabó y el examen se entregó automáticamente.</span>}
+        <div className="hero-row">
+          <Mascot pose="celebrating" size={84} />
+          <div className="hero-text">
+            <h1>{!delivered ? "Intento sin entregar" : pct && pct > 0 ? "¡Buen trabajo!" : "¡Sesión entregada!"}</h1>
+            <span className="caption">{title}</span>
+            {attempt.auto && <span className="caption">El tiempo se acabó y el examen se entregó automáticamente.</span>}
+          </div>
+        </div>
+        <div className="stat-grid">
+          <div className="stat">
+            <span className="label">Correctas</span>
+            <strong className="display">{score.keyed ? fmtPct(pct ?? 0) : "—"}</strong>
+            <span className="caption">{score.keyed ? `${fmtInt(score.correct)} de ${fmtInt(score.answered)}` : "Clave pendiente"}</span>
+          </div>
+          <div className="stat">
+            <span className="label">XP ganado</span>
+            <strong className="display accent">{fmtInt(attempt.xp ?? 0)}</strong>
+            <span className="caption">Solo en modo práctica</span>
+          </div>
+          <div className="stat">
+            <span className="label">Respondidas</span>
+            <strong className="display">{fmtInt(score.answered)}</strong>
+            <span className="caption">de {fmtInt(score.total)} preguntas</span>
+          </div>
+        </div>
       </div>
-
-      <div className="stat-grid">
-        <div className="stat card">
-          <span className="label">Correctas</span>
-          <strong className="display">{score.keyed ? fmtPct(pct ?? 0) : "—"}</strong>
-          <span className="caption">{score.keyed ? `${fmtInt(score.correct)} de ${fmtInt(score.answered)}` : "Clave pendiente"}</span>
-        </div>
-        <div className="stat card">
-          <span className="label">XP ganado</span>
-          <strong className="display accent">{fmtInt(attempt.xp ?? 0)}</strong>
-          <span className="caption">Sólo modo práctica</span>
-        </div>
-        <div className="stat card">
-          <span className="label">Respondidas</span>
-          <strong className="display">{fmtInt(score.answered)}</strong>
-          <span className="caption">de {fmtInt(score.total)} preguntas</span>
-        </div>
-      </div>
-
-      {preliminary && (
-        <p className="notice">Clave preliminar, no oficial: el puntaje es orientativo.</p>
-      )}
 
       <div className="card area-card">
         <span className="label">Por área</span>
@@ -86,6 +89,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
             </div>
           );
         })}
+        {preliminary && <p className="footnote">Clave preliminar, no oficial: el puntaje es orientativo.</p>}
       </div>
 
       {flagged > 0 && <p className="caption">Marcó {fmtInt(flagged)} {flagged === 1 ? "pregunta" : "preguntas"} para revisar.</p>}
@@ -95,9 +99,19 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
           <span className="label">Tus {fmtInt(questions.length)} respuestas</span>
           <span className="caption">Toca una para revisarla</span>
         </div>
-        {score.perArea.map((a) => (
-          <div key={a.name} className="answers-area">
-            <span className="caption"><span className="dot" style={{ background: areaColor(a.name) }} /> {a.name}</span>
+        <div className="answers-legend">
+          <span><i className="sw sw-ok" /> Correcta</span>
+          <span><i className="sw sw-bad" /> Incorrecta</span>
+          <span><i className="sw" /> Sin responder</span>
+        </div>
+        {score.perArea.map((a) => {
+          const hasErrors = questions.some((q) => q.section === a.name && cellGrade(q) === "bad");
+          return (
+          <details key={a.name} className="answers-area" open={hasErrors || !isPhone}>
+            <summary>
+              <span className="caption"><span className="dot" style={{ background: areaColor(a.name) }} /> {a.name}</span>
+              <span className="caption">{a.answered} de {a.total}</span>
+            </summary>
             <div className="answers-grid">
               {questions.map((q, n) => (q.section === a.name ? (
                 <button
@@ -111,8 +125,9 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
                 </button>
               ) : null))}
             </div>
-          </div>
-        ))}
+          </details>
+          );
+        })}
       </div>
 
       <div className="results-actions">
@@ -122,7 +137,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
           <button type="button" className="primary big" onClick={onReview}>Revisar respuestas</button>
         )}
         <button type="button" className="secondary big" onClick={onRetry}>Practicar de nuevo</button>
-        <button type="button" className="link" onClick={onHome}>Volver al inicio</button>
+        <button type="button" className="text-btn" onClick={onHome}>Volver al inicio</button>
       </div>
     </section>
   );

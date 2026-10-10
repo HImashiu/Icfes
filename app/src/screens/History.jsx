@@ -1,11 +1,15 @@
 import Icon from "../components/Icon.jsx";
+import Mascot from "../components/Mascot.jsx";
 import { loadHistory } from "../lib/local.js";
-import { fmtInt, fmtPct } from "../lib/brand.js";
+import { areaColor, fmtInt, fmtPct } from "../lib/brand.js";
 
 const MODE = { practice: "Práctica", timed: "Cronometrado" };
 
+// Share of one area that was right (only meaningful when the attempt has a key).
+const areaShare = (a) => (a.answered ? (a.correct / a.answered) * 100 : 0);
+
 // Mis simulacros: finished attempts with their score and date, stored in this browser.
-export default function History({ onBack }) {
+export default function History({ onBack, onNew }) {
   const rows = loadHistory();
   return (
     <section className="history">
@@ -16,26 +20,42 @@ export default function History({ onBack }) {
         <h1>Mis simulacros</h1>
       </header>
       {rows.length === 0 ? (
-        <p className="card muted">Aún no has entregado un simulacro. Cuando lo hagas, aparecerá aquí con su puntaje.</p>
+        <div className="card empty-state">
+          <Mascot size={72} />
+          <p>Aún no tienes simulacros. Empieza uno y aquí verás tu progreso.</p>
+          <button type="button" className="primary" onClick={onNew}>Nuevo simulacro</button>
+        </div>
       ) : (
         <ul className="history-list">
           {rows.map((r) => (
             <li key={r.id} className="card history-item">
               <div className="history-main">
-                <strong>{r.title}</strong>
+                <div className="history-top">
+                  <strong>{r.title}</strong>
+                  <span className="chip-mode">{MODE[r.mode] ?? r.mode}</span>
+                </div>
                 <span className="caption">
-                  {new Date(r.at).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })} · {MODE[r.mode] ?? r.mode}
+                  {new Date(r.at).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}
                 </span>
+                {r.perArea?.length > 0 && (
+                  <div className="area-segments" aria-label="Puntaje por área">
+                    {r.perArea.map((a) => (
+                      <span key={a.name} className="seg-track" title={`${a.name}: ${a.correct ?? 0} de ${a.answered}`}>
+                        <span style={{ width: `${r.keyed ? areaShare(a) : (a.answered / a.total) * 100}%`, background: areaColor(a.name) }} />
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="history-score">
                 {r.keyed ? (
                   <>
-                    <strong className="display">{fmtPct(r.percent)}</strong>
+                    <strong className="score-pct">{fmtPct(r.percent)}</strong>
                     <span className="caption">{fmtInt(r.correct)} de {fmtInt(r.answered)} correctas</span>
                   </>
                 ) : (
                   <>
-                    <strong className="display">{fmtInt(r.answered)}</strong>
+                    <strong className="score-pct">{fmtInt(r.answered)}</strong>
                     <span className="caption">respondidas, sin clave</span>
                   </>
                 )}

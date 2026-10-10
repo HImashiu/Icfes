@@ -6,7 +6,7 @@ export const MASCOT_NAME = "Cóndi";
 export const AREA_COLORS = {
   "Lectura crítica": "#8AB4FF",
   "Matemáticas": "#FFB547",
-  "Sociales y ciudadanas": "#FF8A7A",
+  "Sociales y ciudadanas": "#F59EC4",
   "Ciencias naturales": "#5ED3B4",
   "Inglés": "#C79BFF",
 };
