@@ -30,6 +30,7 @@ EXAM_ID = re.compile(r"^[A-Za-z0-9_-]+$")
 QUESTION_PREFIX = re.compile(r"^Q(\d+):")
 PENDING_TEXT = "[Texto pendiente"
 FIGURE_NOTE = "[FIGURE"
+MANUAL_CROP = "manual_crop_needed"  # the tracing could not cut this figure; it waits for a crop drawn by hand
 EDITABLE = {"stem_md", "stimulus_md", "group_passage_md", "section", "options", "ready", "answer"}
 
 
@@ -186,6 +187,7 @@ class Store:
                 "traced": len(traced),
                 "pending_spec": sum(1 for f in traced if f.get("pending_spec")),
                 "eyeballed": sum(1 for f in traced if "eyeball" in str(f.get("method", ""))),
+                "to_crop": sum(1 for f in traced if f.get("method") == MANUAL_CROP),
             },
         }
 
@@ -208,8 +210,15 @@ class Store:
                 "hidden": self.hidden_reasons(q, groups, figs.get(n, [])),
                 "errors": len(msgs["errors"]),
                 "warnings": len(msgs["warnings"]),
+                "to_crop": sum(1 for f in figs.get(n, []) if f.get("method") == MANUAL_CROP),
+                "messages": (msgs["errors"] + msgs["warnings"])[:4],
+                "snippet": " ".join((q.get("stem_md") or q.get("stimulus_md") or "").split())[:120],
             })
         return rows
+
+    def all_rows(self):
+        """Every question of every exam in one list, for the admin view without exam tabs."""
+        return [{"exam": e, **r} for e in self.exam_ids() for r in self.question_rows(e)]
 
     def question_detail(self, exam, n):
         g = self.golden(exam)
@@ -515,6 +524,11 @@ class Store:
         return self.add_scan_figure(exam, n, data, option=option, replaces=replaces, page=page,
                                     box=[round(v, 4) for v in (x0, y0, x1, y1)])
 
+    def crop_image(self, exam, page, box, dpi=200):
+        """The PNG of a box on the original page, for the clean-up step before it is saved."""
+        exam = self._exam(exam)
+        return self._render_box(exam, page, self._box(box), dpi).tobytes("png")
+
     def add_scan_figure(self, exam, n, data, option=None, replaces=None, page=None, box=None, ctype="image/png"):
         """Stores a picture of the scan as the figure of question n (or of one option) in figures/traced/<exam>/manifest.json.
 
@@ -546,8 +560,14 @@ class Store:
                  "method": "eyeballed_box", "svg": f"traced/{exam}/{fid}.{ext}", "crop_png": None, "pending_spec": False,
                  "box_page_fraction": box, "option": option,
                  "note": "box drawn in the admin editor" if box else "picture added in the admin editor"}
-        manifest.setdefault("figures", []).append(entry)
-        self._remember(exam, n, {"type": "scan", "id": fid, "before": None})
+        # A figure the tracing left for a hand crop is replaced by the crop; undo brings the placeholder back.
+        figs = manifest.setdefault("figures", [])
+        todo = next((f for f in figs if f.get("question") == n and f.get("method") == MANUAL_CROP
+                     and replaces in (f.get("figure_id"), f.get("spec_id"))), None) if replaces else None
+        if todo is not None:
+            figs.remove(todo)
+        figs.append(entry)
+        self._remember(exam, n, {"type": "scan", "id": fid, "before": todo})
         self._write(mp, json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", f"{exam}.manifest")
         return entry
 

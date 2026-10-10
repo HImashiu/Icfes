@@ -319,3 +319,50 @@ def test_reading_falls_back_to_the_next_engine(root, monkeypatch):
         store.ocr_box(EXAM, 3, [0, 0, 1, 1], engine="local", want="table")
     with pytest.raises(BadRequest):
         store.ocr_box(EXAM, 3, [0, 0, 1, 1], engine="paper")
+
+
+def test_a_cleaned_crop_is_fetched_then_saved_with_its_place_on_the_page(root, tmp_path):
+    _, sources = _pdf(tmp_path)
+    server = make_server(root, port=0, sources=sources)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{server.server_address[1]}/api/exams/{EXAM}"
+    try:
+        req = urllib.request.Request(base + "/crop-image", method="POST", headers={"Content-Type": "application/json"},
+                                     data=json.dumps({"page": 1, "box": [0.1, 0.05, 0.6, 0.3]}).encode())
+        with urllib.request.urlopen(req) as r:
+            png = r.read()
+            assert r.headers["Content-Type"] == "image/png" and png[:4] == b"\x89PNG"
+        # The page edits the picture, then sends it back with the page, box and the native figure it replaces.
+        req = urllib.request.Request(base + "/questions/1/scan-figures?option=b&replaces=t-q1-chart&page=1&box=0.1,0.05,0.6,0.3",
+                                     method="POST", data=png, headers={"Content-Type": "image/png"})
+        with urllib.request.urlopen(req) as r:
+            made = json.loads(r.read())
+        assert "-opt-b-" in made["figure_id"] and made["spec_id"] == "t-q1-chart"
+        assert made["page"] == 1 and made["box_page_fraction"] == [0.1, 0.05, 0.6, 0.3]
+    finally:
+        server.shutdown()
+
+
+def test_a_crop_takes_the_place_of_a_figure_left_for_a_hand_crop(root, tmp_path):
+    _, sources = _pdf(tmp_path)
+    mp = root / "figures" / "traced" / EXAM / "manifest.json"
+    manifest = json.loads(mp.read_text(encoding="utf-8"))
+    manifest["figures"].append({"figure_id": "t-q1-opt-a", "question": 1, "page": 1, "kind": "diagram",
+                                "spec_id": "t-q1-opt-a", "method": "manual_crop_needed", "svg": None})
+    mp.write_text(json.dumps(manifest), encoding="utf-8")
+    store = Store(root, sources=sources)
+    assert store.progress(EXAM)["figures"]["to_crop"] == 1
+    assert [r["to_crop"] for r in store.question_rows(EXAM)] == [1, 0, 0]
+    made = store.crop_page(EXAM, 1, 1, [0.1, 0.1, 0.5, 0.4], option="a", replaces="t-q1-opt-a")
+    assert made["spec_id"] == "t-q1-opt-a"
+    ids = [f["figure_id"] for f in store.question_detail(EXAM, 1)["figures"]]
+    assert ids == [made["figure_id"]]
+    assert store.progress(EXAM)["figures"]["to_crop"] == 0
+    store.undo(EXAM, 1)
+    assert [f["figure_id"] for f in store.question_detail(EXAM, 1)["figures"]] == ["t-q1-opt-a"]
+
+
+def test_all_questions_come_in_one_list_with_their_exam(root):
+    rows = Store(root).all_rows()
+    assert [(r["exam"], r["number"]) for r in rows] == [(EXAM, 1), (EXAM, 2), (EXAM, 3)]
+    assert rows[1]["hidden"] == ["not ready", "text pending"] and rows[0]["snippet"] == "Pregunta 1?"

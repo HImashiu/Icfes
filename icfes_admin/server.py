@@ -52,6 +52,11 @@ def list_questions(store, m, body, query):
     return store.question_rows(m.group(1))
 
 
+@route("GET", r"/api/questions")
+def all_questions(store, m, body, query):
+    return store.all_rows()
+
+
 @route("GET", r"/api/exams/([^/]+)/questions/(\d+)")
 def get_question(store, m, body, query):
     return store.question_detail(m.group(1), int(m.group(2)))
@@ -108,10 +113,19 @@ def crop(store, m, body, query):
                            option=body.get("option"), replaces=body.get("replaces"))
 
 
+@route("POST", r"/api/exams/([^/]+)/crop-image")
+def crop_image(store, m, body, query):
+    body = _json_body(body)
+    return Raw("image/png", store.crop_image(m.group(1), int(body.get("page") or 0), body.get("box")))
+
+
 @route("POST", r"/api/exams/([^/]+)/questions/(\d+)/scan-figures")
 def add_scan_figure(store, m, body, query):
     ctype, data = body
-    return store.add_scan_figure(m.group(1), int(m.group(2)), data, option=(query.get("option") or [None])[0], ctype=ctype)
+    q = lambda k: (query.get(k) or [None])[0]
+    box = [float(v) for v in q("box").split(",")] if q("box") else None
+    return store.add_scan_figure(m.group(1), int(m.group(2)), data, option=q("option"), replaces=q("replaces") or None,
+                                 page=int(q("page")) if q("page") else None, box=box, ctype=ctype)
 
 
 @route("DELETE", r"/api/exams/([^/]+)/questions/(\d+)/scan-figures/([^/]+)")

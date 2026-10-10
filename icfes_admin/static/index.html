@@ -54,6 +54,12 @@ textarea{width:100%;min-height:110px;font:400 14px/1.45 ui-monospace,Menlo,monos
 .cell.hidden{border-style:dashed;color:var(--text-2)}
 .cell.err{border-color:var(--bad);color:var(--bad)}
 .cell.cur{border-width:3px;border-color:var(--text)}
+.cell.crop,.qstrip button.crop{position:relative}
+table.flat td{padding:8px 10px}
+table.flat td:first-child{white-space:nowrap}
+table.flat .badge{margin:1px 4px 1px 0}
+.cell.crop::after,.qstrip button.crop::after{content:"✂";position:absolute;top:-7px;right:-6px;font-size:11px;line-height:16px;width:16px;border-radius:50%;background:var(--flame);color:#0D110F}
+.figcard.todo{border:2px dashed var(--flame)}
 .btn{min-height:52px;padding:0 20px;border-radius:16px;border:2px solid var(--line);background:transparent;cursor:pointer;font-weight:700}
 .btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);box-shadow:0 4px 0 var(--accent-shadow)}
 .btn.primary:active{box-shadow:0 0 0 var(--accent-shadow);transform:translateY(4px)}
@@ -113,6 +119,23 @@ body.editing main{padding:0;max-width:none}
 .ib.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
 .ib.go{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
 .ib.warn{border-color:var(--bad);color:var(--bad)}
+.more{position:relative}
+.menu{position:absolute;right:0;top:calc(100% + 6px);z-index:15;min-width:280px;display:flex;flex-direction:column;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.menu[hidden]{display:none}
+.menu button{display:flex;justify-content:space-between;gap:12px;text-align:left;padding:9px 10px;border:0;border-radius:8px;background:none;color:var(--text);font:inherit;cursor:pointer}
+.menu button:hover:not(:disabled){background:var(--surface-2)}
+.menu button:disabled{opacity:.45;cursor:default}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+.menu kbd{font-size:11px;color:var(--text-2)}
+.nextstep{position:sticky;bottom:-12px;z-index:2;margin:14px -14px -12px;padding:12px 14px;background:var(--bg);border-top:1px solid var(--line)}
+.nextstep .nsrow{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.nextstep .nsmiss{font-size:13px;color:var(--flame);margin-bottom:8px}
+.ib.big{min-height:46px;padding:0 18px;font-size:15px}
+#tour{position:fixed;inset:0;z-index:40}
+#tour .tspot{position:fixed;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.6);outline:2px solid var(--accent);pointer-events:none}
+#tour .tbub{position:fixed;width:360px;padding:14px 16px;background:var(--surface);border:1px solid var(--accent);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#tour .tbub p{margin:6px 0 12px;line-height:1.45}
+#tour .row{display:flex;gap:6px;align-items:center}
 .savestate{font-size:13px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);color:var(--text-2)}
 .savestate.dirty{color:var(--flame);border-color:var(--flame)}
 .savestate.ok{color:var(--ok);border-color:var(--ok)}
@@ -162,7 +185,7 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:var(--accent)}
 .ltile.key{background:var(--ok);border-color:var(--ok);color:#0D110F}
 .ltile .mk{position:absolute;right:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--flame)}
 .otools{display:flex;flex-direction:column;gap:2px}
-.otools button{min-height:20px;min-width:26px;padding:0 4px;font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:6px;cursor:pointer;color:var(--text-2)}
+.otools button{min-height:20px;min-width:26px;white-space:nowrap;padding:0 4px;font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:6px;cursor:pointer;color:var(--text-2)}
 .figs{display:grid;gap:8px}
 .figcard{border:1px solid var(--line);border-radius:14px;padding:10px;background:var(--surface)}
 .figcard .head{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px;font-size:13px}
@@ -195,7 +218,7 @@ select.ib{padding:0 8px}
 table.exam-table{border-collapse:collapse;width:auto;border:0;border-radius:0;overflow:visible;background:#fff;margin:8px 0}
 table.exam-table th,table.exam-table td{border:1px solid #000;padding:4px 10px;color:#000;background:#fff;font:inherit;font-size:15px;text-transform:none;letter-spacing:0;text-align:left}
 table.exam-table th{font-weight:700}
-.fbar .ib{min-height:30px;padding:3px 9px}
+.fbar .ib{min-height:30px;padding:3px 9px;white-space:nowrap}
 .fbar .seg{padding:2px}
 .fbar .seg button{min-height:28px}
 table.icfes-table{width:auto;border:0;border-radius:0;overflow:visible;background:#fff;margin:8px auto}
@@ -206,6 +229,14 @@ table.icfes-table caption{font-weight:700;color:#000;margin-bottom:4px}
 .studio{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column}
 .stbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--side)}
 .stgrid{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,28%) minmax(0,42%) minmax(0,30%)}
+.clgrid{flex:1;min-height:0;display:grid;grid-template-columns:260px 1fr}
+.cltools{padding:14px;border-right:1px solid var(--line);overflow:auto;display:flex;flex-direction:column;gap:8px}
+.cltools .row{display:flex;gap:6px;flex-wrap:wrap}
+.cltools .ib.on{background:var(--accent-soft);border-color:var(--accent)}
+.cltools .sw{width:30px;height:30px;border-radius:8px;border:2px solid var(--line);cursor:pointer}
+.cltools .sw.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.clstage{overflow:auto;padding:20px;display:flex;align-items:flex-start;justify-content:center;background:repeating-conic-gradient(#d8d8d8 0 25%,#f4f4f4 0 50%) 0 0/16px 16px}
+#cl-canvas{max-width:100%;height:auto;box-shadow:0 4px 24px rgba(0,0,0,.35);cursor:crosshair;touch-action:none;image-rendering:auto}
 .cvbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
 .cvbar .sw{width:26px;height:26px;border-radius:6px;border:2px solid var(--line);cursor:pointer;padding:0}
 .cvbar .sw.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
@@ -354,7 +385,7 @@ async function showProgress() {
       <td class="num ${e.errors ? "bad" : "ok"}">${fmt(e.errors)}</td>
       <td class="num muted">${fmt(e.warnings)}</td>
       <td>${e.key.present ? `<span class="num">${fmt(e.key.answers)}</span> claves${e.key.disputed ? ` <span class="flame">· ${e.key.disputed} disputadas</span>` : ""}` : '<span class="bad">sin clave</span>'}</td>
-      <td>${e.figures.traced ? `${e.figures.traced} del escaneo${e.figures.pending_spec ? ` <span class="flame">· ${e.figures.pending_spec} pendientes</span>` : ""}` : '<span class="muted">ninguna</span>'}</td>
+      <td>${e.figures.traced ? `${e.figures.traced} del escaneo${e.figures.pending_spec ? ` <span class="flame">· ${e.figures.pending_spec} pendientes</span>` : ""}${e.figures.to_crop ? ` <span class="flame">· ✂ ${e.figures.to_crop} por recortar</span>` : ""}` : '<span class="muted">ninguna</span>'}</td>
     </tr>`;
   }).join("");
   const last = recall("last");
@@ -381,7 +412,7 @@ async function showProgress() {
 
 // ----- question map ----------------------------------------------------------
 
-const FILTERS = [["all", "Todas"], ["hidden", "Ocultas"], ["errors", "Con errores"], ["badfig", "Figura inválida"], ["warnings", "Avisos"], ["notready", "No listas"]];
+const FILTERS = [["all", "Todas"], ["hidden", "Ocultas"], ["errors", "Con errores"], ["badfig", "Figura inválida"], ["crop", "Por recortar"], ["warnings", "Avisos"], ["notready", "No listas"]];
 
 // Problems of one native figure, in plain words. An empty list means the engine can draw it.
 const MSG = [
@@ -417,6 +448,14 @@ function figProblems(f) {
   // The same problem repeated for every area or cell says nothing new.
   return [...new Set(errs.map(friendly))];
 }
+const isToCrop = (t) => t.method === "manual_crop_needed";
+// Opens the figure's page and starts a box that replaces the placeholder.
+function cropMissing(id) {
+  const t = state.detail.figures.find(x => x.figure_id === id);
+  if (!t) return;
+  if (t.page && t.page !== state.page) goPage(t.page);
+  startCrop(t.figure_id, traceOption(t) || "");
+}
 const traceShown = (t) => ["azure", "eyeballed_box"].includes(t.method) && t.svg;
 // Figures whose native spec a scan picture replaces (the app drops them the same way).
 function replacedIds(traced) { return new Set(traced.filter(traceShown).flatMap(t => [t.spec_id, t.figure_id])); }
@@ -437,22 +476,111 @@ async function loadExam() {
   state.rows = rows;
   state.natives = natives;
 }
+// ----- all questions together: one list across every exam, for finding and fixing problems -----
+
+state.flat = !!recall("flat");
+state.sort = recall("sort") || "exam";
+const viewSwitch = () => STATIC ? "" : `<div class="toolbar"><span class="seg" style="display:inline-flex">
+    <button class="${state.flat ? "" : "on"}" data-flat="0">Por examen</button><button class="${state.flat ? "on" : ""}" data-flat="1">Todo junto</button></span>
+    <span class="muted" style="font-size:13px">${state.flat ? `Todas las preguntas de los ${state.exams.length || ""} exámenes en una sola lista.` : "Una prueba a la vez, como la ven los estudiantes."}</span></div>`;
+function bindViewSwitch() {
+  app.querySelectorAll("[data-flat]").forEach(b => b.onclick = () => { state.flat = b.dataset.flat === "1"; remember("flat", state.flat); state.queue = null; showQuestions(); });
+}
+// What is wrong with one row, in plain words.
+function rowProblems(r, bad) {
+  return [...r.hidden.map(x => REASONS[x] || x), ...(bad ? ["figura inválida"] : []), ...(r.to_crop ? [`✂ ${r.to_crop} por recortar`] : [])];
+}
+async function loadAll() {
+  if (!state.exams.length) state.exams = await api("/api/exams");
+  const [rows, ...natives] = await Promise.all([api("/api/questions"),
+    ...state.exams.map(e => api(`/api/exams/${encodeURIComponent(e.exam)}/figures`).catch(() => ({})))]);
+  await mapsReady;
+  state.allNatives = Object.fromEntries(state.exams.map((e, i) => [e.exam, natives[i]]));
+  const badIn = (exam, n) => (state.allNatives[exam]?.[String(n)] || []).some(f => figProblems(f).length);
+  state.all = rows.map(r => ({ ...r, bad: badIn(r.exam, r.number) }));
+}
+const FLAT_PASS = {
+  all: () => true, hidden: r => r.hidden.length > 0 || r.bad, errors: r => r.errors > 0, badfig: r => r.bad,
+  crop: r => r.to_crop > 0, warnings: r => r.warnings > 0, notready: r => !r.ready,
+};
+const weight = r => r.errors * 10 + r.hidden.length * 3 + (r.bad ? 3 : 0) + (r.to_crop ? 2 : 0) + r.warnings;
+async function showFlat() {
+  status("Leyendo…");
+  if (!state.all || state.allStale) { await loadAll(); state.allStale = false; }
+  const q = (state.flatText || "").trim().toLowerCase();
+  let rows = state.all.filter(FLAT_PASS[state.filter] || FLAT_PASS.all)
+    .filter(r => !state.flatArea || r.section === state.flatArea)
+    .filter(r => !q || `${r.exam} ${r.number} ${r.snippet}`.toLowerCase().includes(q));
+  if (state.sort === "worst") rows = [...rows].sort((a, b) => weight(b) - weight(a));
+  if (state.sort === "area") rows = [...rows].sort((a, b) => (a.section || "").localeCompare(b.section || ""));
+  state.queue = rows.map(r => [r.exam, r.number]);
+  status(`${fmt(rows.length)} preguntas`, "ok");
+  const areas = [...new Set(state.all.map(r => r.section).filter(Boolean))].sort();
+  const shown = rows.slice(0, state.flatLimit || 300);
+  app.innerHTML = `${viewSwitch()}
+    <div class="toolbar">
+      ${FILTERS.map(([v, l]) => `<button class="chip ${v === state.filter ? "on" : ""}" data-filter="${v}">${l} <span class="muted num">${fmt(state.all.filter(FLAT_PASS[v]).length)}</span></button>`).join("")}
+    </div>
+    <div class="toolbar">
+      <input id="flat-q" placeholder="Buscar por examen, número o texto" value="${esc(state.flatText || "")}" style="flex:1;min-width:220px;padding:10px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--text)">
+      <select id="flat-area" aria-label="Área"><option value="">Todas las áreas</option>${areas.map(a => `<option ${a === state.flatArea ? "selected" : ""}>${esc(a)}</option>`).join("")}</select>
+      <select id="flat-sort" aria-label="Orden">${[["exam", "Por examen y número"], ["worst", "Más problemas primero"], ["area", "Por área"]].map(([v, l]) => `<option value="${v}" ${v === state.sort ? "selected" : ""}>${l}</option>`).join("")}</select>
+      <span class="muted num">${fmt(rows.length)} de ${fmt(state.all.length)}</span>
+    </div>
+    <table class="flat">
+      <thead><tr><th>Examen</th><th>Pregunta</th><th>Área</th><th>Qué le falta</th><th>Comienza así</th></tr></thead>
+      <tbody>${shown.map(r => {
+        const probs = rowProblems(r, r.bad);
+        return `<tr class="row" data-exam="${esc(r.exam)}" data-n="${r.number}">
+          <td><b>${esc(r.exam)}</b></td><td class="num">${r.number}</td>
+          <td><span class="chip" style="min-height:0;padding:2px 8px;border:0;cursor:inherit"><i style="background:${areaColor(r.section)}"></i>${esc(r.section || "—")}</span></td>
+          <td>${probs.length ? probs.map(p => `<span class="badge hid">${esc(p)}</span>`).join("") : '<span class="badge ok">visible</span>'}
+            ${r.messages.map(m => `<div class="${r.errors ? "bad" : "muted"}" style="font-size:12px">${esc(checkMsg(m))}</div>`).join("")}</td>
+          <td class="muted" style="font-size:13px">${esc(r.snippet)}</td></tr>`;
+      }).join("")}</tbody>
+    </table>
+    ${rows.length > shown.length ? `<p><button class="btn sm" id="flat-more">Mostrar ${fmt(Math.min(300, rows.length - shown.length))} más</button> <span class="muted">(${fmt(rows.length - shown.length)} sin mostrar)</span></p>` : ""}`;
+  bindViewSwitch();
+  app.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { state.filter = b.dataset.filter; state.flatLimit = 300; showFlat(); });
+  $("#flat-sort").onchange = e => { state.sort = e.target.value; remember("sort", state.sort); showFlat(); };
+  $("#flat-area").onchange = e => { state.flatArea = e.target.value; showFlat(); };
+  let t; $("#flat-q").oninput = e => { clearTimeout(t); t = setTimeout(() => { state.flatText = e.target.value; state.flatLimit = 300; showFlat().then(() => { const i = $("#flat-q"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }); }, 250); };
+  if ($("#flat-more")) $("#flat-more").onclick = () => { state.flatLimit = (state.flatLimit || 300) + 300; showFlat(); };
+  app.querySelectorAll("tr[data-exam]").forEach(tr => tr.onclick = () => openFrom(tr.dataset.exam, Number(tr.dataset.n)));
+}
+async function openFrom(exam, n) {
+  const change = state.exam !== exam;
+  state.exam = exam;
+  await openQuestion(n, { reloadExam: change });
+}
+// In the all-together view, "Siguiente por arreglar" walks that list (across exams) instead of one exam.
+function nextInQueue() {
+  const q = state.queue || [], i = q.findIndex(([e, n]) => e === state.exam && n === state.n);
+  const left = q.slice(i + 1).filter(([e, n]) => {
+    const r = state.all?.find(x => x.exam === e && x.number === n);
+    return r && (r.errors || r.hidden.length || r.bad || r.to_crop);
+  });
+  return left[0] || null;
+}
+
 function cellClass(r) {
   const bad = badFigure(r.number);
-  return r.errors || bad ? "err" : r.hidden.length ? "hidden" : "ready";
+  return (r.errors || bad ? "err" : r.hidden.length ? "hidden" : "ready") + (r.to_crop ? " crop" : "");
 }
 
 async function showQuestions() {
+  if (state.flat && !STATIC) return showFlat();
   status("Leyendo…");
   await loadExam();
   const rows = state.rows;
   const pass = rows.filter(r => ({
-    all: true, hidden: r.hidden.length > 0 || badFigure(r.number), errors: r.errors > 0, warnings: r.warnings > 0, notready: !r.ready, badfig: badFigure(r.number),
+    all: true, hidden: r.hidden.length > 0 || badFigure(r.number), errors: r.errors > 0, warnings: r.warnings > 0, notready: !r.ready, badfig: badFigure(r.number), crop: r.to_crop > 0,
   })[state.filter]);
   status(`${rows.length} preguntas`, "ok");
   const opts = state.exams.map(e => `<option value="${esc(e.exam)}" ${e.exam === state.exam ? "selected" : ""}>${esc(e.exam)}</option>`).join("");
   const sections = [...new Set(rows.map(r => r.section).filter(Boolean))];
   app.innerHTML = `
+    ${viewSwitch()}
     <div class="toolbar">
       <select id="pick-exam" aria-label="Examen">${opts}</select>
       ${FILTERS.map(([v, l]) => `<button class="chip ${v === state.filter ? "on" : ""}" data-filter="${v}">${l}</button>`).join("")}
@@ -464,10 +592,11 @@ async function showQuestions() {
     <div class="card">
       <div class="label">Mapa de preguntas</div>
       <div class="map">
-        ${pass.map(r => `<button class="cell ${cellClass(r)}" data-n="${r.number}" title="${esc([...r.hidden.map(x => REASONS[x] || x), ...(badFigure(r.number) ? ["figura inválida"] : [])].join(", ") || "visible para estudiantes")}">${r.number}</button>`).join("")}
+        ${pass.map(r => `<button class="cell ${cellClass(r)}" data-n="${r.number}" title="${esc([...r.hidden.map(x => REASONS[x] || x), ...(badFigure(r.number) ? ["figura inválida"] : []), ...(r.to_crop ? [`${r.to_crop} figura(s) por recortar`] : [])].join(", ") || "visible para estudiantes")}">${r.number}</button>`).join("")}
       </div>
-      <div class="muted" style="margin-top:12px">Relleno verde: visible para estudiantes. Borde punteado: oculta. Borde rojo: error del validador o figura que no se puede dibujar (los estudiantes no la ven).</div>
+      <div class="muted" style="margin-top:12px">Relleno verde: visible para estudiantes. Borde punteado: oculta. Borde rojo: error del validador o figura que no se puede dibujar (los estudiantes no la ven). ✂: tiene una figura por recortar del PDF.</div>
     </div>`;
+  bindViewSwitch();
   $("#pick-exam").onchange = (e) => { state.exam = e.target.value; state.n = null; showQuestions(); };
   app.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { state.filter = b.dataset.filter; showQuestions(); });
   app.querySelectorAll("button[data-n]").forEach(b => b.onclick = () => openQuestion(Number(b.dataset.n)));
@@ -518,21 +647,28 @@ function renderWorkspace() {
   app.innerHTML = `
   <div class="ed">
     <div class="edbar">
-      <button class="ib" id="back" title="Volver al mapa">← Mapa</button>
+      <button class="ib" id="back" title="Volver a la lista de preguntas">← Volver</button>
       <select id="ed-exam" aria-label="Examen">${exams}</select>
-      <button class="ib" id="prev" ${prev ? "" : "disabled"} title="Anterior (Alt+←)">‹</button>
-      <span class="qnum">Q${d.number}</span>
-      <button class="ib" id="next" ${next ? "" : "disabled"} title="Siguiente (Alt+→)">›</button>
-      <span class="chip" style="min-height:32px;cursor:default"><i style="background:${areaColor(q.section)}"></i>${esc(q.section || "sin área")}</span>
+      <button class="ib" id="prev" ${prev ? "" : "disabled"} title="Pregunta anterior (Alt+←)">‹ Anterior</button>
+      <span class="qnum">Pregunta ${d.number}</span>
+      <button class="ib" id="next" ${next ? "" : "disabled"} title="Pregunta siguiente (Alt+→)">Siguiente ›</button>
       <span id="vis">${visBadges(reasons)}</span>
       <span class="spacer"></span>
-      <button class="ib" id="fixnext" title="Siguiente pregunta oculta, con errores o con figura inválida (Alt+N)">⚑ Siguiente por arreglar</button>
-      <button class="ib" onclick="openSearch()" title="Buscar en todas las preguntas (Ctrl+K)">🔍</button>
-      <button class="ib" onclick="showHelp()" title="Atajos de teclado (?)">?</button>
-      <button class="ib" id="toggle-prev" title="Mostrar u ocultar la vista del estudiante">Vista ${state.preview ? "✓" : "✕"}</button>
-      ${STATIC ? "" : `<button class="ib" id="undo" ${d.undo ? "" : "disabled"} title="Deshace el último cambio guardado de esta pregunta">↶ Deshacer${d.undo ? ` (${d.undo})` : ""}</button>`}
+      <button class="ib" id="fixnext" title="Salta a la próxima pregunta oculta o con errores (Alt+N)">⚑ Siguiente por arreglar</button>
       <span id="savestate" class="savestate">Sin cambios</span>
-      <button class="ib go" id="save">Guardar</button>
+      <button class="ib go" id="save" title="Ctrl+S">Guardar</button>
+      <span class="more">
+        <button class="ib" id="morebtn" onclick="toggleMenu('moremenu', event)" aria-haspopup="true">Más ▾</button>
+        <div class="menu" id="moremenu" hidden>
+          <button onclick="openSearch()">🔍 Buscar preguntas <kbd>Ctrl+K</kbd></button>
+          ${STATIC ? "" : `<button id="undo" ${d.undo ? "" : "disabled"}>${undoLabel(d.undo)}</button>`}
+          <button id="toggle-prev">${prevLabel()}</button>
+          <button onclick="setVisual(!state.visual)">‹/› Ver el texto como código</button>
+          <hr>
+          <button onclick="startTour()">💡 Ver la guía otra vez</button>
+          <button onclick="showHelp()">⌨ Atajos de teclado</button>
+        </div>
+      </span>
     </div>
     <div class="edgrid ${state.preview ? "" : "noprev"}" id="edgrid">
       <section class="pane pdf" id="pdfpane">${pdfPane()}</section>
@@ -557,9 +693,15 @@ function renderWorkspace() {
   $("#next").onclick = () => next && leave(() => openQuestion(next));
   $("#ed-exam").onchange = (e) => leave(async () => { state.exam = e.target.value; await loadExam(); openQuestion(state.rows[0].number); });
   $("#save").onclick = saveQuestion;
-  $("#fixnext").onclick = () => { const n = nextToFix(); if (n == null) toast("No queda nada por arreglar en este examen 🎉"); else leave(() => openQuestion(n)); };
+  $("#fixnext").onclick = () => {
+    if (state.flat && state.queue) {
+      const nx = nextInQueue();
+      return nx ? leave(() => openFrom(nx[0], nx[1])) : toast("No queda nada por arreglar en esta lista 🎉");
+    }
+    const n = nextToFix(); if (n == null) toast("No queda nada por arreglar en este examen 🎉"); else leave(() => openQuestion(n));
+  };
   remember("last", { exam: state.exam, n: d.number });
-  $("#toggle-prev").onclick = () => { state.preview = !state.preview; $("#edgrid").classList.toggle("noprev", !state.preview); $("#toggle-prev").textContent = `Vista ${state.preview ? "✓" : "✕"}`; };
+  $("#toggle-prev").onclick = () => { state.preview = !state.preview; $("#edgrid").classList.toggle("noprev", !state.preview); $("#toggle-prev").textContent = prevLabel(); };
   if ($("#undo")) $("#undo").onclick = undo;
   $("#qstrip").querySelectorAll("button").forEach(b => b.onclick = () => leave(() => openQuestion(Number(b.dataset.n))));
   $("#qstrip").querySelector(".cur")?.scrollIntoView({ inline: "center", block: "nearest" });
@@ -571,13 +713,37 @@ function renderWorkspace() {
   });
   $("#form").addEventListener("change", e => { if (e.target.id === "f-section" || e.target.id === "f-ready") { markDirty(); refreshPreview(); } });
   bindSplit();
+  if (!recall("tourDone")) setTimeout(startTour, 400);
 }
+const undoLabel = (n) => `↶ Deshacer el último guardado${n ? ` (${n})` : ""}`;
+const prevLabel = () => state.preview ? "👁 Ocultar la vista del estudiante" : "👁 Mostrar la vista del estudiante";
+
+// One small drop-down menu at a time; a click anywhere else closes it.
+function toggleMenu(id, e) {
+  e?.stopPropagation();
+  const m = $("#" + id), open = m.hidden;
+  document.querySelectorAll(".menu").forEach(x => { x.hidden = true; });
+  m.hidden = !open;
+}
+document.addEventListener("click", e => { if (!e.target.closest(".menu hr")) document.querySelectorAll(".menu").forEach(x => { x.hidden = true; }); });
 
 const REASONS = { "not ready": "no está marcada como lista", "text pending": "texto pendiente", "[FIGURE] note": "nota [FIGURE] en el texto", "figure pending spec": "figura pendiente", "blank option": "opción vacía" };
 function visBadges(reasons) {
   return reasons.length
-    ? reasons.map(r => `<span class="badge hid">oculta: ${esc(REASONS[r] || r)}</span>`).join("")
-    : `<span class="badge ok">visible para estudiantes</span>`;
+    ? `<span class="badge hid" title="${esc(reasons.map(r => REASONS[r] || r).join(", "))}">Oculta a estudiantes</span>`
+    : `<span class="badge ok">Visible para estudiantes</span>`;
+}
+// The one next step, at the bottom of the form: what is still missing, and the button that finishes the question.
+function nsMissHtml() {
+  const missing = hiddenNow().filter(r => r !== "not ready").map(r => REASONS[r] || r);
+  const crops = (state.detail.figures || []).filter(isToCrop).length;
+  if (crops) missing.push(crops === 1 ? "recortar 1 figura del PDF" : `recortar ${crops} figuras del PDF`);
+  return missing.length ? `<div class="nsmiss"><b>Antes de publicarla falta:</b> ${missing.map(esc).join(" · ")}</div>` : "";
+}
+function nextStepHtml() {
+  return `<div id="nsmiss">${nsMissHtml()}</div>
+    <div class="nsrow"><button class="ib go big" type="button" onclick="readyAndNext()" title="Ctrl+Enter">✓ Está bien: guardar y pasar a la siguiente</button>
+    <label class="switch muted" style="font-size:13px"><input type="checkbox" id="f-ready" ${state.detail.question.ready ? "checked" : ""}> Lista para estudiantes</label></div>`;
 }
 
 function fit(t) { t.style.height = "auto"; t.style.height = (t.scrollHeight + 4) + "px"; }
@@ -593,10 +759,10 @@ function formPane(q, g) {
   if (q.section && !sections.includes(q.section)) sections.push(q.section);
   const flags = (q.provenance?.flags || []).map(f => `<li>${esc(f)}</li>`).join("");
   const notes = (q.provenance?.notes || []).slice(-6).map(f => `<li>${esc(f)}</li>`).join("");
-  const msgs = [...state.detail.messages.errors.map(m => `<div class="note bad">${esc(m)}</div>`), ...state.detail.messages.warnings.map(m => `<div class="note warn">${esc(m)}</div>`)].join("");
+  const msgs = [...state.detail.messages.errors.map(m => `<div class="note bad">${esc(checkMsg(m))}</div>`), ...state.detail.messages.warnings.map(m => `<div class="note warn">${esc(checkMsg(m))}</div>`)].join("");
   return `
     <div class="fbar" onmousedown="if (event.target.closest('button')) event.preventDefault()">
-      <span class="seg" id="fmode">${fmodeHtml()}</span>
+      <span id="fmode">${fmodeHtml()}</span>
       <span class="fgroup">
         <button class="ib" type="button" data-cmd="bold" onclick="richCmd('bold')" title="Negrita (Ctrl+B)"><b>B</b></button>
         <button class="ib" type="button" data-cmd="italic" onclick="richCmd('italic')" title="Cursiva (Ctrl+I)"><i>I</i></button>
@@ -604,30 +770,30 @@ function formPane(q, g) {
         <button class="ib" type="button" data-cmd="subscript" onclick="richCmd('subscript')" title="Subíndice, como en H₂O">x₂</button>
         <button class="ib" type="button" data-cmd="superscript" onclick="richCmd('superscript')" title="Superíndice, como en m²">x²</button>
       </span>
-      <span class="fgroup">
-        <button class="ib" type="button" data-cmd="insertUnorderedList" onclick="richCmd('insertUnorderedList')" title="Lista con viñetas">• Lista</button>
-        <button class="ib" type="button" data-cmd="insertOrderedList" onclick="richCmd('insertOrderedList')" title="Lista numerada">1. Lista</button>
+      <button class="ib" type="button" data-cmd="insertUnorderedList" onclick="richCmd('insertUnorderedList')" title="Lista con viñetas">• Lista</button>
+      <button class="ib" type="button" onclick="richCmd('table')" title="Insertar una tabla de texto">▦ Tabla</button>
+      <button class="ib" type="button" onclick="fmtInsert('math')" title="Fórmula (se dibuja en la vista del estudiante)">ƒx Fórmula</button>
+      <select class="ib" onchange="if (this.value) { fmtInsert('sym', this.value); this.value = ''; }" title="Símbolos">
+        <option value="">Ω Símbolo</option>${SYMBOLS.map(x => `<option>${x}</option>`).join("")}</select>
+      <button class="ib" type="button" onclick="cleanField()" title="Une líneas cortadas, quita guiones de corte y espacios dobles en el campo activo">🧹 Limpiar</button>
+      <button class="ib" type="button" onclick="this.classList.toggle('on'); $('#fmore').hidden = !$('#fmore').hidden" title="Más botones de formato">Más ▾</button>
+      <span class="fgroup" id="ftable" hidden>
+        <span class="muted" style="font-size:12px">Tabla:</span>
+        <button class="ib" type="button" onclick="richTable('row+')" title="Fila debajo">+ fila</button>
+        <button class="ib" type="button" onclick="richTable('col+')" title="Columna a la derecha">+ columna</button>
+        <button class="ib" type="button" onclick="richTable('row-')" title="Quitar esta fila">− fila</button>
+        <button class="ib" type="button" onclick="richTable('col-')" title="Quitar esta columna">− columna</button>
+        <button class="ib warn" type="button" onclick="richTable('del')" title="Quitar la tabla">Quitar tabla</button>
       </span>
-      <span class="fgroup">
+      <span class="fgroup" id="fmore" hidden>
+        <button class="ib" type="button" data-cmd="insertOrderedList" onclick="richCmd('insertOrderedList')" title="Lista numerada">1. Lista</button>
         <button class="ib" type="button" data-cmd="justifyLeft" onclick="richCmd('justifyLeft')" title="Alinear a la izquierda"><svg viewBox="0 0 16 12" width="16" height="12"><path d="M0 1h16M0 4.5h10M0 8h16M0 11.5h10" stroke="currentColor" stroke-width="1.6"/></svg></button>
         <button class="ib" type="button" data-cmd="justifyCenter" onclick="richCmd('justifyCenter')" title="Centrar"><svg viewBox="0 0 16 12" width="16" height="12"><path d="M0 1h16M3 4.5h10M0 8h16M3 11.5h10" stroke="currentColor" stroke-width="1.6"/></svg></button>
         <button class="ib" type="button" data-cmd="justifyRight" onclick="richCmd('justifyRight')" title="Alinear a la derecha"><svg viewBox="0 0 16 12" width="16" height="12"><path d="M0 1h16M6 4.5h10M0 8h16M6 11.5h10" stroke="currentColor" stroke-width="1.6"/></svg></button>
         <button class="ib" type="button" data-cmd="justifyFull" onclick="richCmd('justifyFull')" title="Justificar"><svg viewBox="0 0 16 12" width="16" height="12"><path d="M0 1h16M0 4.5h16M0 8h16M0 11.5h16" stroke="currentColor" stroke-width="1.6"/></svg></button>
+        <button class="ib" type="button" onclick="fmtInsert('frac')" title="Fracción">a/b Fracción</button>
+        <button class="ib" type="button" onclick="richCmd('clear')" title="Quitar formato de la selección">T̸ Quitar formato</button>
       </span>
-      <button class="ib" type="button" onclick="richCmd('table')" title="Insertar una tabla de texto">▦ Tabla</button>
-      <span class="fgroup" id="ftable" hidden>
-        <button class="ib" type="button" onclick="richTable('row+')" title="Fila debajo">+ fila</button>
-        <button class="ib" type="button" onclick="richTable('col+')" title="Columna a la derecha">+ col</button>
-        <button class="ib" type="button" onclick="richTable('row-')" title="Quitar esta fila">− fila</button>
-        <button class="ib" type="button" onclick="richTable('col-')" title="Quitar esta columna">− col</button>
-        <button class="ib warn" type="button" onclick="richTable('del')" title="Quitar la tabla">✕</button>
-      </span>
-      <button class="ib" type="button" onclick="fmtInsert('math')" title="Fórmula (se dibuja en la vista del estudiante)">ƒx</button>
-      <button class="ib" type="button" onclick="fmtInsert('frac')" title="Fracción">a/b</button>
-      <button class="ib" type="button" onclick="richCmd('clear')" title="Quitar formato de la selección">T̸</button>
-      <select class="ib" onchange="if (this.value) { fmtInsert('sym', this.value); this.value = ''; }" title="Símbolos">
-        <option value="">Ω símbolo</option>${SYMBOLS.map(x => `<option>${x}</option>`).join("")}</select>
-      <button class="ib" type="button" onclick="cleanField()" title="Une líneas cortadas, quita guiones de corte y espacios dobles en el campo activo">🧹 Limpiar</button>
     </div>
     ${msgs ? `<div class="fld">${msgs}</div>` : ""}
     ${!(q.stem_md || "").trim() ? `<div class="note warn fld">Falta el enunciado. ${STATIC ? "" : `<button class="ib" type="button" onclick="readInto('f-stem')">⌖ Leerlo del PDF</button>`}</div>` : ""}
@@ -644,13 +810,68 @@ function formPane(q, g) {
       <div id="f-opts"></div></div>
     <div class="fld card" style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
       <label class="switch">Área <select id="f-section">${sections.map(s => `<option ${s === q.section ? "selected" : ""}>${esc(s)}</option>`).join("")}</select></label>
-      <label class="switch"><input type="checkbox" id="f-ready" ${q.ready ? "checked" : ""}> Lista para estudiantes</label>
-      <button class="ib go" type="button" onclick="readyAndNext()" title="Marca la pregunta como lista, guarda y pasa a la siguiente (Ctrl+Enter)">✓ Lista y siguiente</button>
       <span class="muted" style="font-size:12px">Marcada en el escaneo: ${esc(q.scan_marked_option || "—")}</span>
     </div>
     ${flags || notes ? `<details class="fld"><summary class="muted">Marcas de revisión y notas</summary>
-      ${flags ? `<ul class="muted">${flags}</ul>` : ""}${notes ? `<ul class="muted">${notes}</ul>` : ""}</details>` : ""}`;
+      ${flags ? `<ul class="muted">${flags}</ul>` : ""}${notes ? `<ul class="muted">${notes}</ul>` : ""}</details>` : ""}
+    <div class="nextstep" id="nextstep">${nextStepHtml()}</div>`;
 }
+
+// The checker's messages, in plain Spanish.
+const CHECK = [
+  [/still has review flags: (.+)/, m => `Marca de revisión pendiente: ${m[1].replace("pending_figure", "falta la figura")}`],
+  [/duplicate question number/, () => "El número de la pregunta está repetido"],
+  [/out of order after Q(\d+)/, m => `Está fuera de orden después de la pregunta ${m[1]}`],
+  [/empty question text/, () => "La pregunta no tiene texto"],
+  [/(\d+) options, expected (\d+)/, m => `Tiene ${m[1]} opciones y deberían ser ${m[2]}`],
+  [/option letters are not/, () => "Las letras de las opciones no van A, B, C… en orden"],
+  [/an option has no text/, () => "Una opción está vacía"],
+  [/OCR\/layout artifacts/, () => "Quedan restos del OCR en el texto (marcas raras de la página). Usa 🧹 Limpiar."],
+  [/unknown group/, () => "Apunta a un texto compartido que no existe"],
+  [/unbalanced \$/, () => "Una fórmula tiene un $ sin cerrar"],
+  [/two options have identical text/, () => "Dos opciones tienen el mismo texto"],
+  [/more than one option carries a scan mark/, () => "Más de una opción está marcada en el escaneo"],
+];
+function checkMsg(msg) {
+  for (const [rx, f] of CHECK) { const m = rx.exec(msg); if (m) return f(m); }
+  return msg.replace(/^Q\d+:\s*/, "");
+}
+
+// ----- first-run guide: a few spotlights on the real screen, closable at any step -------------
+const TOUR = [
+  ["#pdfpane", "La página original", "Aquí ves el examen tal como está en el PDF. La línea naranja marca dónde empieza la pregunta."],
+  ["#cropbtn", "Recortar o leer", "Dibuja un recuadro sobre la página. Puedes guardar lo que encierra como figura (y limpiarle el fondo) o copiar su texto a un campo."],
+  ["#form", "Corregir la pregunta", "Escribe aquí como en Word. Si falta un texto, pulsa «⌖ Leer del PDF» junto al campo y encierra ese texto en la página."],
+  ["#f-opts", "La respuesta", "Toca la letra de una opción para marcarla como respuesta correcta."],
+  [".pane.prev", "Lo que ve el estudiante", "Así queda la pregunta en la aplicación. Cambia mientras escribes."],
+  ["#nextstep", "El siguiente paso", "Cuando la pregunta esté bien, pulsa este botón: se guarda, queda visible para los estudiantes y pasas a la siguiente."],
+  ["#morebtn", "Lo demás", "Buscar, deshacer, el código del texto y esta guía están en «Más»."],
+];
+function startTour(i = 0) {
+  document.querySelectorAll(".menu").forEach(x => { x.hidden = true; });
+  $("#tour")?.remove();
+  const steps = TOUR.filter(([sel]) => $(sel));
+  const step = steps[i];
+  if (!step) return endTour();
+  const el = $(step[0]);
+  el.scrollIntoView?.({ block: "nearest" });
+  const r = el.getBoundingClientRect(), pad = 6;
+  const below = r.top + r.height / 2 < innerHeight / 2;
+  const left = Math.max(12, Math.min(innerWidth - 372, r.left + r.width / 2 - 180));
+  const top = below ? Math.min(innerHeight - 220, r.bottom + 14) : null;
+  const bottom = below ? null : Math.min(innerHeight - 220, innerHeight - r.top + 14);
+  document.body.insertAdjacentHTML("beforeend", `<div id="tour">
+    <div class="tspot" style="left:${r.left - pad}px;top:${r.top - pad}px;width:${r.width + 2 * pad}px;height:${r.height + 2 * pad}px"></div>
+    <div class="tbub" style="left:${left}px;${top != null ? `top:${Math.max(12, top)}px` : `bottom:${Math.max(12, bottom)}px`}">
+      <div class="muted" style="font-size:12px">Paso ${i + 1} de ${steps.length}</div>
+      <b style="font:700 17px 'Bricolage Grotesque'">${step[1]}</b>
+      <p>${step[2]}</p>
+      <div class="row"><button class="ib" onclick="endTour()">Cerrar la guía</button><span class="spacer"></span>
+        ${i ? `<button class="ib" onclick="startTour(${i - 1})">Atrás</button>` : ""}
+        <button class="ib go" onclick="startTour(${i + 1})">${i + 1 < steps.length ? "Siguiente" : "Entendido"}</button></div>
+    </div></div>`);
+}
+function endTour() { $("#tour")?.remove(); $("#form")?.scrollTo(0, 0); remember("tourDone", true); }
 
 // ----- options: tap a letter to set the key ------------------------------------------
 
@@ -666,11 +887,11 @@ function drawOpts() {
       <button type="button" class="ltile ${state.answer === o.letter ? "key" : ""}" onclick="setAnswer('${esc(o.letter)}')" title="${state.answer === o.letter ? "Respuesta correcta" : "Marcar como respuesta correcta"}">${esc(o.letter)}${o.marked_in_scan ? '<i class="mk" title="marcada en el escaneo"></i>' : ""}</button>
       <textarea data-letter="${esc(o.letter)}" spellcheck="true" lang="es" placeholder="Texto de la opción ${esc(o.letter)}">${esc(o.text_md)}</textarea>
       <span class="otools">
-        <button type="button" onclick="moveOpt(${i}, -1)" ${i === 0 ? "disabled" : ""} title="Subir">↑</button>
-        <button type="button" onclick="moveOpt(${i}, 1)" ${i === state.opts.length - 1 ? "disabled" : ""} title="Bajar">↓</button>
-        <button type="button" onclick="removeOpt(${i})" title="Quitar opción">✕</button>
+        <button type="button" onclick="moveOpt(${i}, -1)" ${i === 0 ? "disabled" : ""} title="Mover esta opción arriba">↑ Subir</button>
+        <button type="button" onclick="moveOpt(${i}, 1)" ${i === state.opts.length - 1 ? "disabled" : ""} title="Mover esta opción abajo">↓ Bajar</button>
+        <button type="button" onclick="removeOpt(${i})" title="Quitar esta opción">Quitar</button>
       </span>
-    </div>`).join("") + `<button class="ib" type="button" onclick="addOpt()">+ Opción</button>
+    </div>`).join("") + `<button class="ib" type="button" onclick="addOpt()">+ Agregar opción</button>
     <span class="muted" style="font-size:12px;margin-left:8px">Respuesta: <b>${esc(state.answer || "sin clave")}</b>${state.answer ? ` <a href="#" onclick="setAnswer('');return false">quitar</a>` : ""}</span>`;
   document.querySelectorAll("#f-opts textarea").forEach(fit);
   attachAllRich();
@@ -716,11 +937,11 @@ function drawFigs() {
     return `<div class="figcard">
       <div class="head"><b>${esc(KIND_NAMES[f.kind] || f.kind)}</b>
         <span class="muted">${f.target === "option" ? `opción ${esc(f.option)}` : "enunciado"}</span>
-        ${replaced ? '<span class="badge">reemplazada por un recorte</span>' : problems.length ? '<span class="badge hid">oculta a estudiantes</span>' : '<span class="badge ok">se dibuja</span>'}
+        ${replaced ? '<span class="badge">reemplazada por un recorte</span>' : problems.length ? '<span class="badge hid">no se puede dibujar</span>' : '<span class="badge ok">se ve bien</span>'}
         <span class="spacer"></span>
         <button class="ib" type="button" onclick="openStudio('${esc(f.id)}')">Editar</button>
         ${STATIC ? "" : `<button class="ib" type="button" onclick="startCrop('${esc(f.id)}', '${f.target === "option" ? esc(f.option) : ""}')" title="Cambiar esta figura por un recorte de la página">✂ Usar recorte</button>
-        <button class="ib warn" type="button" onclick="deleteNative('${esc(f.id)}')" title="Quitar">✕</button>`}
+        <button class="ib warn" type="button" onclick="deleteNative('${esc(f.id)}')" title="Quitar esta figura">Quitar</button>`}
       </div>
       ${problems.length && !replaced ? `<ul class="problems">${problems.slice(0, 4).map(p => `<li>${esc(p)}</li>`).join("")}${problems.length > 4 ? `<li>y ${problems.length - 4} más</li>` : ""}</ul>` : `<div class="mini">${drawNative(f)}</div>`}
     </div>`;
@@ -728,10 +949,15 @@ function drawFigs() {
   const scans = d.figures.filter(traceShown).map(t => `<div class="figcard">
       <div class="head"><b>Imagen del escaneo</b><span class="muted">${traceOption(t) ? `opción ${esc(traceOption(t))}` : "enunciado"}</span>
         <span class="spacer"></span>
-        ${STATIC ? "" : `<button class="ib warn" type="button" onclick="deleteScan('${esc(t.figure_id)}')" title="Quitar">✕</button>`}</div>
+        ${STATIC ? "" : `<button class="ib" type="button" onclick="cleanSaved('${esc(t.figure_id)}')" title="Quitar el fondo o tapar texto encima">✨ Limpiar</button><button class="ib warn" type="button" onclick="deleteScan('${esc(t.figure_id)}')" title="Quitar esta imagen">Quitar</button>`}</div>
       <div class="mini"><img src="${scanUrl(t)}" alt="${esc(t.figure_id)}"></div></div>`);
-  const pending = d.figures.filter(t => !traceShown(t)).map(t => `<div class="figcard"><div class="head"><b>${esc(t.figure_id || t.spec_id)}</b><span class="badge hid">${t.pending_spec ? "pendiente" : esc(t.method || "")}</span></div></div>`);
-  $("#figs").innerHTML = [...natives, ...scans, ...pending].join("") || `<p class="muted" style="margin:0">Sin figuras. Si la pregunta tiene un dibujo, mapa o foto, recórtalo del PDF. Si es una gráfica o tabla, créala con «+ Gráfica o tabla».</p>`;
+  const todo = d.figures.filter(isToCrop).map(t => `<div class="figcard todo">
+      <div class="head"><b>Falta recortar esta figura</b><span class="muted">${traceOption(t) ? `opción ${esc(traceOption(t))}` : "enunciado"}${t.page ? ` · página ${t.page}` : ""}</span>
+        <span class="spacer"></span>
+        ${STATIC ? "" : `<button class="ib go" type="button" onclick="cropMissing('${esc(t.figure_id)}')">✂ Recortarla del PDF</button>`}</div>
+      <div class="muted" style="font-size:12px">Dibuja un recuadro sobre la figura en la página. El recorte toma su lugar.</div></div>`);
+  const pending = d.figures.filter(t => !traceShown(t) && !isToCrop(t)).map(t => `<div class="figcard"><div class="head"><b>${esc(t.figure_id || t.spec_id)}</b><span class="badge hid">${t.pending_spec ? "pendiente" : esc(t.method || "")}</span></div></div>`);
+  $("#figs").innerHTML = [...todo, ...natives, ...scans, ...pending].join("") || `<p class="muted" style="margin:0">Sin figuras. Si la pregunta tiene un dibujo, mapa o foto, recórtalo del PDF. Si es una gráfica o tabla, créala con «+ Gráfica o tabla».</p>`;
 }
 
 async function deleteNative(id) {
@@ -762,8 +988,12 @@ function refreshChrome() {
   const d = state.detail;
   $("#vis").innerHTML = visBadges(hiddenNow());
   const u = $("#undo");
-  if (u) { u.disabled = !d.undo; u.textContent = `↶ Deshacer${d.undo ? ` (${d.undo})` : ""}`; }
+  if (u) { u.disabled = !d.undo; u.textContent = undoLabel(d.undo); }
+  if ($("#nsmiss")) $("#nsmiss").innerHTML = nsMissHtml();
   const r = state.rows.find(x => x.number === d.number);
+  if (r) r.to_crop = d.figures.filter(isToCrop).length;
+  const a = state.all?.find(x => x.exam === d.exam && x.number === d.number);
+  if (a) { Object.assign(a, { hidden: d.hidden_reasons, to_crop: d.figures.filter(isToCrop).length, bad: badFigure(d.number) }); state.allStale = true; }
   const cell = $(`#qstrip button[data-n="${d.number}"]`);
   if (r && cell) cell.className = `${cellClass(r)} cur`;
 }
@@ -863,7 +1093,7 @@ async function readyAndNext() {
 
 function nextToFix() {
   const rows = state.rows, cur = rows.findIndex(r => r.number === state.n);
-  const needs = r => r.errors || r.hidden.length || badFigure(r.number);
+  const needs = r => r.errors || r.hidden.length || badFigure(r.number) || r.to_crop;
   for (let k = 1; k <= rows.length; k++) { const r = rows[(cur + k) % rows.length]; if (needs(r)) return r.number; }
   return null;
 }
@@ -925,6 +1155,8 @@ async function undo() {
 
 document.addEventListener("keydown", e => {
   if (!document.body.classList.contains("editing")) return;
+  if ($("#tour")) { if (e.key === "Escape") endTour(); return; }
+  if ($("#cleaner")) { cleanerKey(e); return; }
   if ($(".studio")) {
     if (cvKey(e)) return;
     if (e.key === "Escape") closeStudio();
@@ -1137,7 +1369,7 @@ function setVisual(on) {
   document.querySelectorAll(".fbar .vis-only").forEach(b => { b.hidden = !on; });
   $("#fmode").innerHTML = fmodeHtml();
 }
-const fmodeHtml = () => `<button class="${state.visual ? "on" : ""}" type="button" onclick="setVisual(true)" title="Ver el texto con formato, como en Word">Aa Formato</button><button class="${state.visual ? "" : "on"}" type="button" onclick="setVisual(false)" title="Ver el texto como se guarda (marcas ** y $)">‹/› Código</button>`;
+const fmodeHtml = () => state.visual ? "" : `<button class="ib on" type="button" onclick="setVisual(true)" title="Estás viendo el texto como se guarda (marcas ** y $)">‹/› Código · volver al formato</button>`;
 
 // Format commands. In the Word-style view they act on the selection; in the code view they wrap it in markup.
 function richCmd(cmd, arg) {
@@ -1244,10 +1476,11 @@ function pdfPane() {
       <span class="muted">pág.</span><input id="pg" type="number" min="1" value="${state.page}"><span class="muted">${sc.count ? "de " + sc.count : ""}</span>
       <button class="ib" onclick="turnPage(1)" title="Página siguiente">›</button>
       <span class="spacer"></span>
+      <span class="muted">Zoom</span>
       <button class="ib" onclick="zoomBy(1/1.25)" title="Alejar">−</button>
-      <button class="ib" onclick="zoomBy(0)" title="Ajustar al ancho">Ancho</button>
+      <button class="ib" onclick="zoomBy(0)" title="Ajustar al ancho del panel">Ajustar</button>
       <button class="ib" onclick="zoomBy(1.25)" title="Acercar">+</button>
-      ${STATIC ? "" : `<button class="ib ${state.cropping ? "on" : ""}" id="cropbtn" onclick="state.cropping ? cancelCrop() : startCrop()" title="Dibuja un recuadro para recortar una figura o copiar su texto">✂ Recuadro</button>`}
+      ${STATIC ? "" : `<button class="ib ${state.cropping ? "on" : ""}" id="cropbtn" onclick="state.cropping ? cancelCrop() : startCrop()" title="Dibuja un recuadro en la página para recortar una figura o copiar su texto (Alt+R)">✂ Recortar o leer</button>`}
     </div>
     ${est ? `<div class="note warn" style="margin:8px 10px 0">Página estimada: busca la pregunta con ‹ ›.</div>` : ""}
     <div class="pdfscroll" id="pdfscroll">
@@ -1299,6 +1532,7 @@ function scrollToAnchor() {
   sc.scrollTop = Math.max(0, page.offsetTop + a.y * page.offsetHeight - 40);
 }
 
+const cleanToggle = () => `<label class="switch" style="width:100%;font-size:12px" title="Antes de guardar, quita el fondo o tapa texto encima del dibujo"><input type="checkbox" ${state.cleanCrop ? "checked" : ""} onchange="state.cleanCrop = this.checked; remember('cleanCrop', this.checked)"> ✨ Limpiar la imagen antes de guardarla</label>`;
 function drawBox(withBar) {
   const ov = $("#ov");
   ov.innerHTML = anchorMark();
@@ -1317,13 +1551,14 @@ function drawBox(withBar) {
   const eng = `<select class="ib" title="Motor de OCR" onchange="setEngine(this.value)">${sel(ENGINES, state.engine)}</select>`;
   if (tgt?.kind === "replace") bar.innerHTML = `<span class="lbl">Cambiar la figura por este recorte</span>
        <button class="ib go" onclick="cropTo('${esc(tgt.option || "")}', '${esc(tgt.replaces)}')">Usar este recorte</button>
-       <button class="ib" onclick="cancelCrop()">Cancelar</button>`;
+       <button class="ib" onclick="cancelCrop()">Cancelar</button>${cleanToggle()}`;
   else if (tgt?.kind === "field") bar.innerHTML = `<span class="lbl">Leer el texto del recuadro</span>
        <button class="ib go" onclick="ocrTo('${tgt.field}')">${tgt.field === "opts" ? "Repartir en opciones A–D" : `Escribir en ${esc(fieldName($("#" + tgt.field)))}`}</button>
        ${eng}<button class="ib" onclick="cancelCrop()">✕</button>`;
   else bar.innerHTML = `<span class="lbl">Imagen del recuadro en…</span>
        <button class="ib" onclick="cropTo('')">Enunciado</button>
        ${letters.map(l => `<button class="ib" onclick="cropTo('${esc(l)}')">Opción ${esc(l)}</button>`).join("")}
+       ${cleanToggle()}
        <span class="lbl">Texto del recuadro (OCR)</span>
        <button class="ib go" onclick="ocrTo('last')" title="Escribe el texto en el último campo que usaste">→ ${esc(fieldName(state.lastArea))}</button>
        <button class="ib" onclick="ocrTo('opts')">Repartir en A–D</button>
@@ -1355,12 +1590,198 @@ function cancelCrop() {
   if ($("#ov")) drawBox(false);
 }
 async function cropTo(option, replaces = null) {
+  if (state.cleanCrop) { openCleaner({ page: state.page, box: state.box, option: option || null, replaces }); return; }
   try {
     await api(`${qpath()}/crop`, J("POST", { page: state.page, box: state.box, option: option || null, replaces }));
     cancelCrop();
     await reloadFigures(option ? `Imagen guardada en la opción ${option}` : "Imagen guardada en el enunciado");
   } catch (e) { toast(e.message, true); }
 }
+// ----- cleaning a crop before it is saved --------------------------------------------------------------
+// The crop opens on a canvas: one click turns the paper white or transparent, and a brush, a cover box and an
+// eraser hide text printed over the drawing. The eraser brings back the original pixels. The result is saved as the crop PNG.
+
+state.cleanCrop = recall("cleanCrop") ?? true;
+const cleaner = { orig: null, hist: [], tool: "rect", color: "#ffffff", size: 14, bg: null, level: 200 };
+
+async function openCleaner(target) {
+  try {
+    let blob;
+    if (target.src) blob = await (await fetch(target.src)).blob();
+    else {
+      const res = await fetch(`/api/exams/${encodeURIComponent(state.exam)}/crop-image`, J("POST", { page: target.page, box: target.box }));
+      if (!res.ok) throw new Error((await res.json()).error || `HTTP ${res.status}`);
+      blob = await res.blob();
+    }
+    const img = await createImageBitmap(blob);
+    Object.assign(cleaner, { target, hist: [], bg: null });
+    document.body.insertAdjacentHTML("beforeend", `<div class="studio" id="cleaner">
+      <div class="stbar">
+        <b style="font:700 18px 'Bricolage Grotesque'">Limpiar recorte · Q${state.detail.number}${target.option ? ` · opción ${esc(target.option)}` : ""}</b>
+        <span class="spacer"></span>
+        <button class="ib" onclick="closeCleaner()">Cancelar (Esc)</button>
+        <button class="ib go" onclick="saveCleaner()">Guardar imagen</button>
+      </div>
+      <div class="clgrid">
+        <div class="cltools" id="cl-tools"></div>
+        <div class="clstage" id="cl-stage"><canvas id="cl-canvas"></canvas></div>
+      </div></div>`);
+    const cv = $("#cl-canvas");
+    cv.width = img.width; cv.height = img.height;
+    const ctx = cv.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0);
+    cleaner.orig = ctx.getImageData(0, 0, cv.width, cv.height);
+    cleaner.base = cleaner.orig;
+    clTools();
+    clBind(cv);
+  } catch (e) { toast(e.message, true); }
+}
+function closeCleaner() { $("#cleaner")?.remove(); cleaner.orig = null; }
+
+function clTools() {
+  const t = (id, label, title) => `<button class="ib ${cleaner.tool === id ? "on" : ""}" onclick="clTool('${id}')" title="${title}">${label}</button>`;
+  $("#cl-tools").innerHTML = `
+    <div class="label">Fondo</div>
+    <div class="row"><button class="ib ${cleaner.bg === "white" ? "on" : ""}" onclick="clBackground('white')" title="El papel gris o amarillento queda blanco">Fondo blanco</button>
+      <button class="ib ${cleaner.bg === "clear" ? "on" : ""}" onclick="clBackground('clear')" title="El papel desaparece; solo queda el dibujo">Fondo transparente</button></div>
+    <label class="muted" style="font-size:12px">Cuánto quitar <input type="range" min="120" max="250" value="${cleaner.level}" oninput="clLevel(this.value)" style="width:100%"></label>
+    <div class="label" style="margin-top:12px">Tapar y dibujar</div>
+    <div class="row">${t("rect", "▭ Tapar", "Arrastra un recuadro sobre el texto que quieres tapar")}${t("brush", "✎ Pincel", "Pinta con el color elegido")}${t("erase", "⌫ Borrador", "Devuelve la imagen original donde pasas")}</div>
+    <div class="row">${[["#ffffff", "Blanco"], ["#000000", "Negro"], ["clear", "Transparente"]].map(([v, l]) => `<button class="sw ${cleaner.color === v ? "on" : ""}" title="${l}" style="background:${v === "clear" ? "repeating-conic-gradient(#ccc 0 25%,#fff 0 50%) 0 0/10px 10px" : v}" onclick="clColor('${v}')"></button>`).join("")}</div>
+    <label class="muted" style="font-size:12px">Grosor <input type="range" min="2" max="60" value="${cleaner.size}" oninput="cleaner.size=+this.value" style="width:100%"></label>
+    <div class="row" style="margin-top:12px"><button class="ib" onclick="clUndo()" ${cleaner.hist.length ? "" : "disabled"} title="Ctrl+Z">↶ Deshacer</button>
+      <button class="ib" onclick="clReset()" title="Vuelve al recorte original">Empezar de nuevo</button></div>
+    <p class="muted" style="font-size:12px">El fondo a cuadros es transparente. La imagen se guarda tal como se ve aquí.</p>`;
+}
+function clTool(t) { cleaner.tool = t; clTools(); }
+function clColor(c) { cleaner.color = c; if (cleaner.tool === "erase") cleaner.tool = "brush"; clTools(); }
+const clCtx = () => $("#cl-canvas").getContext("2d", { willReadFrequently: true });
+function clPush() {
+  const cv = $("#cl-canvas");
+  cleaner.hist.push(clCtx().getImageData(0, 0, cv.width, cv.height));
+  if (cleaner.hist.length > 40) cleaner.hist.shift();
+  clTools();
+}
+function clUndo() { const last = cleaner.hist.pop(); if (last) clCtx().putImageData(last, 0, 0); clTools(); }
+function clReset() { clPush(); cleaner.bg = null; cleaner.base = cleaner.orig; clCtx().putImageData(cleaner.orig, 0, 0); clTools(); }
+
+// Paper is every pixel lighter than the level: it turns white, or transparent. Strokes and drawing stay as they are.
+function clPaper(src, mode, level) {
+  const out = new ImageData(new Uint8ClampedArray(src.data), src.width, src.height), d = out.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const light = Math.min(d[i], d[i + 1], d[i + 2]);
+    if (light >= level || d[i + 3] === 0) { if (mode === "white") { d[i] = d[i + 1] = d[i + 2] = d[i + 3] = 255; } else d[i + 3] = 0; }
+  }
+  return out;
+}
+function clBackground(mode) {
+  clPush();
+  cleaner.bg = mode;
+  // Applied to what is on the canvas now, so covers and strokes already made are kept.
+  cleaner.bgFrom = cleaner.hist[cleaner.hist.length - 1];
+  clCtx().putImageData(clPaper(cleaner.bgFrom, mode, cleaner.level), 0, 0);
+  cleaner.base = clPaper(cleaner.orig, mode, cleaner.level);
+  clTools();
+}
+function clLevel(v) {
+  cleaner.level = +v;
+  if (!cleaner.bg || !cleaner.bgFrom) return;
+  clCtx().putImageData(clPaper(cleaner.bgFrom, cleaner.bg, cleaner.level), 0, 0);
+  cleaner.base = clPaper(cleaner.orig, cleaner.bg, cleaner.level);
+}
+
+function clBind(cv) {
+  const at = (e) => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; };
+  let start = null, last = null, snap = null;
+  const ctx = clCtx();
+  // Pixels of the base (original, with the chosen background) inside a circle: the eraser paints these back.
+  const restore = (x, y, r) => {
+    const x0 = Math.max(0, Math.floor(x - r)), y0 = Math.max(0, Math.floor(y - r));
+    const w = Math.min(cv.width, Math.ceil(x + r)) - x0, h = Math.min(cv.height, Math.ceil(y + r)) - y0;
+    if (w <= 0 || h <= 0) return;
+    const cur = ctx.getImageData(x0, y0, w, h), b = cleaner.base.data;
+    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+      if ((x0 + i - x) ** 2 + (y0 + j - y) ** 2 > r * r) continue;
+      const s = ((y0 + j) * cv.width + x0 + i) * 4, t = (j * w + i) * 4;
+      cur.data[t] = b[s]; cur.data[t + 1] = b[s + 1]; cur.data[t + 2] = b[s + 2]; cur.data[t + 3] = b[s + 3];
+    }
+    ctx.putImageData(cur, x0, y0);
+  };
+  const stroke = (a, b) => {
+    const r = cleaner.size / 2 * (cv.width / cv.getBoundingClientRect().width);
+    if (cleaner.tool === "erase") {
+      const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / (r / 2)));
+      for (let k = 0; k <= n; k++) restore(a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n, r);
+      return;
+    }
+    ctx.save();
+    ctx.globalCompositeOperation = cleaner.color === "clear" ? "destination-out" : "source-over";
+    ctx.strokeStyle = cleaner.color === "clear" ? "#000" : cleaner.color;
+    ctx.lineWidth = r * 2; ctx.lineCap = ctx.lineJoin = "round";
+    ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b); ctx.stroke();
+    ctx.restore();
+  };
+  cv.addEventListener("pointerdown", e => {
+    cv.setPointerCapture(e.pointerId);
+    clPush();
+    start = last = at(e);
+    snap = cleaner.tool === "rect" ? ctx.getImageData(0, 0, cv.width, cv.height) : null;
+    if (cleaner.tool !== "rect") stroke(start, start);
+  });
+  cv.addEventListener("pointermove", e => {
+    if (!start) return;
+    const p = at(e);
+    if (cleaner.tool === "rect") {
+      ctx.putImageData(snap, 0, 0);
+      clCover(ctx, start, p, true);
+    } else { stroke(last, p); last = p; }
+  });
+  cv.addEventListener("pointerup", e => {
+    if (!start) return;
+    if (cleaner.tool === "rect") { ctx.putImageData(snap, 0, 0); clCover(ctx, start, at(e), false); }
+    start = last = snap = null;
+  });
+}
+// The cover box takes the background: white, or a hole when the background is transparent (or that colour is chosen).
+function clCover(ctx, a, b, outline) {
+  const x = Math.min(a[0], b[0]), y = Math.min(a[1], b[1]), w = Math.abs(b[0] - a[0]), h = Math.abs(b[1] - a[1]);
+  const hole = cleaner.color === "clear" || (cleaner.bg === "clear" && cleaner.color === "#ffffff");
+  if (hole) ctx.clearRect(x, y, w, h);
+  else { ctx.fillStyle = cleaner.color; ctx.fillRect(x, y, w, h); }
+  if (outline) { ctx.save(); ctx.setLineDash([6, 4]); ctx.strokeStyle = "#1a6ef5"; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h); ctx.restore(); }
+}
+
+async function saveCleaner() {
+  const t = cleaner.target;
+  try {
+    const blob = await new Promise(r => $("#cl-canvas").toBlob(r, "image/png"));
+    const q = new URLSearchParams();
+    if (t.option) q.set("option", t.option);
+    if (t.replaces) q.set("replaces", t.replaces);
+    if (t.page) q.set("page", t.page);
+    if (t.box) q.set("box", t.box.map(v => (+v).toFixed(4)).join(","));
+    const res = await fetch(`${qpath()}/scan-figures?${q}`, { method: "POST", headers: { "Content-Type": "image/png" }, body: blob });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+    // A cleaned copy of a saved crop takes its place.
+    if (t.oldId) await api(`${qpath()}/scan-figures/${encodeURIComponent(t.oldId)}`, { method: "DELETE" });
+    closeCleaner();
+    cancelCrop();
+    await reloadFigures(t.option ? `Imagen limpia guardada en la opción ${t.option}` : "Imagen limpia guardada en el enunciado");
+  } catch (e) { toast(e.message, true); }
+}
+function cleanSaved(id) {
+  const f = state.detail.figures.find(x => x.figure_id === id);
+  if (!f) return;
+  openCleaner({ src: scanUrl(f), option: traceOption(f), replaces: f.spec_id !== f.figure_id ? f.spec_id : null, oldId: f.figure_id, page: f.page, box: f.box_page_fraction });
+}
+function cleanerKey(e) {
+  if (e.key === "Escape") { closeCleaner(); return true; }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); clUndo(); return true; }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); saveCleaner(); return true; }
+  return true;
+}
+
 const ENGINES = [["auto", "OCR: el mejor disponible"], ["saved", "Azure (lectura guardada)"], ["azure", "Azure (leer ahora)"], ["local", "RapidOCR (sin internet)"]];
 const ENGINE_NAMES = { saved: "Azure guardado", azure: "Azure", local: "RapidOCR" };
 function setEngine(v) { state.engine = v; remember("engine", v); }
