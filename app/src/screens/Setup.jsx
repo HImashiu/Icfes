@@ -20,7 +20,7 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam }
   const [mode, setMode] = useState("practice");
   const scoped = questionsFor(exam, scope);
   const minutes = timedSeconds(scoped) / 60;
-  const hint = mode === "timed" ? `Tiempo: ${formatClock(timedSeconds(scoped))}` : `+10 XP por acierto · +20 en ${WEAKEST_AREA}`;
+  const hint = `${mode === "timed" ? `Tiempo: ${formatClock(timedSeconds(scoped))} · ` : ""}+10 XP por acierto · +20 en ${WEAKEST_AREA}`;
 
   return (
     <section className="setup">

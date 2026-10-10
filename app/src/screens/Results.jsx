@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import Mascot from "../components/Mascot.jsx";
 import { recordAttempt } from "../lib/local.js";
 import { scoreAttempt } from "../lib/exam.js";
+import { attemptXp } from "../lib/xp.js";
+import { WEAKEST_AREA } from "../data/mock.js";
 import { areaColor, fmtInt, fmtPct } from "../lib/brand.js";
 
 // Resultados: celebrating mascot, three stats, per-area bars, the preliminary-key notice and the next steps.
@@ -15,6 +17,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
   const wrong = score.keyed ? score.answered - score.correct : 0;
   const flagged = Object.keys(attempt.flags).length;
   const delivered = Boolean(attempt.submittedAt);
+  const xpEarned = attemptXp(questions, attempt, answerKey);
 
   // Keep the finished attempt in "Mis simulacros" (once per attempt, stored in this browser).
   useEffect(() => {
@@ -30,6 +33,19 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
       correct: score.correct,
       percent: pct ?? 0,
       perArea: score.perArea.map((a) => ({ name: a.name, correct: a.correct, answered: a.answered, total: a.total })),
+      xp: xpEarned,
+      // What "Abrir" needs to show this attempt again (its answers and flags, no key).
+      snapshot: {
+        slug: attempt.slug,
+        scope: attempt.scope,
+        mode: attempt.mode,
+        answers: attempt.answers,
+        flags: attempt.flags,
+        startedAt: attempt.startedAt,
+        submittedAt: attempt.submittedAt,
+        auto: attempt.auto,
+        xp: xpEarned,
+      },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [delivered, attempt.startedAt]);
@@ -62,8 +78,8 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
           </div>
           <div className="stat">
             <span className="label">XP ganado</span>
-            <strong className="display accent">{fmtInt(attempt.xp ?? 0)}</strong>
-            <span className="caption">Solo en modo práctica</span>
+            <strong className="display accent">{fmtInt(xpEarned)}</strong>
+            <span className="caption">+10 por acierto · +20 en {WEAKEST_AREA}</span>
           </div>
           <div className="stat">
             <span className="label">Respondidas</span>

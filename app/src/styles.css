@@ -826,3 +826,33 @@ details.answers-area > summary::-webkit-details-marker { display: none; }
 .podium-step.first .podium-av { width: 76px; height: 76px; font-size: 26px; box-shadow: 0 0 0 4px var(--accent); }
 /* Marcar on desktop: the base rule above hides it, so the desktop state is repeated after it. */
 @media (min-width: 1200px) { .mark-btn { display: inline-flex; } }
+.stimulus p { margin: 0 0 0.8em; }
+.stimulus p:last-child { margin-bottom: 0; }
+.stem p, .option-text p { margin: 0; }
+
+/* Round 3: review filter pills, history and report rows as buttons, attempt chevron */
+.review > .segmented { display: flex; justify-content: flex-end; gap: 8px; background: none; border: 0; padding: 0; }
+.review > .segmented .seg { flex: 0 0 auto; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; background: var(--surface); color: var(--text-2); font-size: 13px; }
+.review > .segmented .seg.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+.history-item, .report-item { width: 100%; text-align: left; font: inherit; color: var(--text); cursor: pointer; }
+.history-item:disabled, .report-item:disabled { cursor: default; }
+.history-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.history-chevron { font-size: 22px; color: var(--text-2); line-height: 1; margin-left: 6px; }
+
+/* Teacher demo: clickable rows, assignment form, filters and results by area */
+.t-row-link { cursor: pointer; }
+.t-row-link:hover td, .t-row-link.selected td { background: var(--accent-soft); }
+.t-row-link.selected td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+.assign-form { display: grid; gap: 12px; }
+.assign-form .field { display: grid; gap: 6px; }
+.assign-form select, .assign-form input, .course-filter {
+  min-height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line);
+  background: var(--surface-2); color: var(--text); font: inherit;
+}
+.course-filter { min-height: 36px; }
+.avg-row td { border-top: 2px solid var(--line); }
+.area-cell {
+  display: block; padding: 6px 8px; border-radius: 8px; font-weight: 700; color: #0D110F; min-width: 64px;
+  background: linear-gradient(90deg, var(--cell) var(--pct), var(--surface-2) var(--pct));
+}
+.t-side nav { display: grid; gap: 4px; }

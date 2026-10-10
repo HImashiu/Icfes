@@ -9,7 +9,7 @@ const MODE = { practice: "Práctica", timed: "Cronometrado" };
 const areaShare = (a) => (a.answered ? (a.correct / a.answered) * 100 : 0);
 
 // Mis simulacros: finished attempts with their score and date, stored in this browser.
-export default function History({ onBack, onNew }) {
+export default function History({ onBack, onNew, onOpen }) {
   const rows = loadHistory();
   return (
     <section className="history">
@@ -28,7 +28,8 @@ export default function History({ onBack, onNew }) {
       ) : (
         <ul className="history-list">
           {rows.map((r) => (
-            <li key={r.id} className="card history-item">
+            <li key={r.id}>
+            <button type="button" className="card history-item" onClick={() => onOpen(r)} disabled={!r.snapshot} aria-label={`Ver resultados: ${r.title}`}>
               <div className="history-main">
                 <div className="history-top">
                   <strong>{r.title}</strong>
@@ -36,6 +37,7 @@ export default function History({ onBack, onNew }) {
                 </div>
                 <span className="caption">
                   {new Date(r.at).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}
+                  {r.xp ? ` · +${fmtInt(r.xp)} XP` : ""}
                 </span>
                 {r.perArea?.length > 0 && (
                   <div className="area-segments" aria-label="Puntaje por área">
@@ -59,7 +61,9 @@ export default function History({ onBack, onNew }) {
                     <span className="caption">respondidas, sin clave</span>
                   </>
                 )}
+                {r.snapshot && <span className="history-chevron" aria-hidden="true">›</span>}
               </div>
+            </button>
             </li>
           ))}
         </ul>

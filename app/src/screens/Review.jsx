@@ -12,9 +12,10 @@ const CONFIDENCE = { high: "alta", medium: "media", low: "baja" };
 
 // Revisión: filters with counts, a strip of colored question cells, the question card,
 // the student's pick against the key, and the preliminary-key chips.
-export default function Review({ questions, attempt, answerKey, keyStatus, notes, onBack, figures, examLabel, startIndex = 0 }) {
+export default function Review({ questions, attempt, answerKey, keyStatus, notes, onBack, figures, examLabel, startIndex = 0, startNumber = null }) {
   const [filter, setFilter] = useState("all");
-  const [index, setIndex] = useState(startIndex);
+  // A saved report opens on its own question; otherwise the review starts at startIndex.
+  const [index, setIndex] = useState(() => (startNumber != null ? Math.max(0, questions.findIndex((q) => q.number === startNumber)) : startIndex));
 
   const grade = (q) => {
     const given = attempt.answers[q.key];

@@ -11,6 +11,7 @@ import History from "./screens/History.jsx";
 import Reports from "./screens/Reports.jsx";
 import FigureCheck from "./screens/FigureCheck.jsx";
 import BottomNav from "./components/BottomNav.jsx";
+import { ExamContext } from "./lib/exam-context.js";
 import { parseExam, parseKey, parseKeyNotes, questionsFor, timedSeconds } from "./lib/exam.js";
 import { clearAttempt, loadAttempt, saveAttempt } from "./lib/storage.js";
 import { parseFigureSpecs, prepareExam } from "./lib/figures.js";
@@ -46,6 +47,7 @@ export default function App() {
   const [openError, setOpenError] = useState(null);
   const [view, setView] = useState("home");
   const [reviewStart, setReviewStart] = useState(0);
+  const [reviewNumber, setReviewNumber] = useState(null);
   const [attempt, setAttempt] = useState(null);
   const [theme, setTheme] = useState(() => currentTheme());
 
@@ -97,8 +99,9 @@ export default function App() {
   }, [exams, selected, opening, openExam]);
 
   // Keep an attempt in this browser so a reload does not lose answers.
+  // Attempts opened from history or reports are read-only and are never written back.
   useEffect(() => {
-    if (attempt) saveAttempt(attempt.slug, attempt.scope, attempt);
+    if (attempt && !attempt.readOnly) saveAttempt(attempt.slug, attempt.scope, attempt);
   }, [attempt]);
 
   const startAttempt = (scope, mode) => {
@@ -131,6 +134,28 @@ export default function App() {
     setView("results");
   }, []);
 
+  // "Mis simulacros": reopen a finished attempt on its results, exactly as it was delivered.
+  const openFromHistory = (entry) => {
+    if (!entry.snapshot) return;
+    setAttempt({ ...entry.snapshot, checked: {}, current: 0, durationSec: null, readOnly: true, from: "history" });
+    setReviewNumber(null);
+    setView("results");
+    openExam(entry.snapshot.slug);
+  };
+
+  // "Mis reportes": open the reported question in review. It has no answers, only the key and the explanation.
+  const openFromReport = (report) => {
+    if (!report.slug) return;
+    const now = Date.now();
+    setAttempt({
+      slug: report.slug, scope: "all", mode: "practice", answers: {}, flags: {}, checked: {}, xp: 0, current: 0,
+      startedAt: now, submittedAt: now, auto: false, durationSec: null, readOnly: true, from: "reports",
+    });
+    setReviewNumber(report.number);
+    setView("review");
+    openExam(report.slug);
+  };
+
   const goHome = () => {
     setView("home");
     setAttempt(null);
@@ -148,6 +173,7 @@ export default function App() {
   const resumable = selected && view === "home" ? findResumable(selected.slug, selected.exam) : null;
 
   return (
+    <ExamContext.Provider value={selected?.slug ?? null}>
     <div className={view === "test" || view === "teacher" ? "app wide" : "app"}>
       {loadError && <p className="notice error">{loadError}</p>}
       {openError && <p className="notice error">{openError}</p>}
@@ -216,17 +242,19 @@ export default function App() {
           figures={selected.figures}
           examLabel={selected.exam.title}
           startIndex={reviewStart}
-          onBack={() => setView("results")}
+          startNumber={reviewNumber}
+          onBack={() => setView(attempt.from === "reports" ? "reports" : "results")}
         />
       )}
 
       {view === "league" && <League onBack={() => setView("home")} />}
       {view === "profile" && <Profile theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} onReports={() => setView("reports")} />}
-      {view === "history" && <History onBack={() => setView("home")} onNew={() => setView("setup")} />}
-      {view === "reports" && <Reports onBack={() => setView("profile")} onPractice={() => setView("setup")} />}
+      {view === "history" && <History onBack={() => setView("home")} onNew={() => setView("setup")} onOpen={openFromHistory} />}
+      {view === "reports" && <Reports onBack={() => setView("profile")} onPractice={() => setView("setup")} onOpen={openFromReport} />}
       {view === "teacher" && <Teacher onExit={() => setView("profile")} />}
 
       {navView && <BottomNav active={navView} onGo={setView} />}
     </div>
+    </ExamContext.Provider>
   );
 }

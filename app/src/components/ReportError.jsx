@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { addReport } from "../lib/local.js";
+import { ExamContext } from "../lib/exam-context.js";
 
 // "Reportar error" on a question. Saves the question id, the exam and a short note in this browser.
 export default function ReportError({ question, examLabel }) {
@@ -7,11 +8,12 @@ export default function ReportError({ question, examLabel }) {
   const [text, setText] = useState("");
   const [toast, setToast] = useState(false);
   const id = `report-${question.key}`;
+  const slug = useContext(ExamContext);
 
   const submit = (e) => {
     e.preventDefault();
     if (!text.trim()) return;
-    const saved = addReport({ question: question.key, number: question.number, exam: examLabel ?? "", note: text.trim() });
+    const saved = addReport({ slug, question: question.key, number: question.number, exam: examLabel ?? "", note: text.trim() });
     if (saved) setToast(true);
     setOpen(false);
     setText("");

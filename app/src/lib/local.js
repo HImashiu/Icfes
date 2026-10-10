@@ -27,8 +27,8 @@ export function loadReports() {
   return read(REPORTS_KEY);
 }
 
-export function addReport({ question, number, exam, note }) {
-  return write(REPORTS_KEY, [...read(REPORTS_KEY), { question, number, exam, note, at: new Date().toISOString() }]);
+export function addReport({ slug, question, number, exam, note }) {
+  return write(REPORTS_KEY, [...read(REPORTS_KEY), { slug, question, number, exam, note, at: new Date().toISOString() }]);
 }
 
 export function loadHistory() {
@@ -39,4 +39,16 @@ export function loadHistory() {
 export function recordAttempt(entry) {
   const list = read(HISTORY_KEY).filter((e) => e.id !== entry.id);
   return write(HISTORY_KEY, [...list, entry]);
+}
+
+// Teacher demo: assignments made in this browser (sample data, no accounts yet).
+const ASSIGN_KEY = "condor:teacher:assignments";
+
+export function loadAssignments() {
+  return read(ASSIGN_KEY);
+}
+
+export function addAssignment(entry) {
+  const item = { ...entry, id: String(Date.now()), createdAt: new Date().toISOString() };
+  return write(ASSIGN_KEY, [...read(ASSIGN_KEY), item]) ? item : null;
 }
