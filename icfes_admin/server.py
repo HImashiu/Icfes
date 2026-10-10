@@ -1,6 +1,7 @@
 """Local web editor for the ICFES question data. Serves on 127.0.0.1 only.
 
     python -m icfes_admin --data /path/to/icfes [--sources pdf-sources.json] [--scans "C:/Users/you/Downloads/icfes-hi300-check"]
+        [--ocr "C:/Users/you/Downloads/icfes-azure-data/json"]
 
 The data folder is read on every request, so the page always shows what is on disk.
 """
@@ -90,6 +91,68 @@ def put_figure(store, m, body, query):
     return store.save_native_figure(m.group(1), int(m.group(2)), m.group(3), body)
 
 
+@route("DELETE", r"/api/exams/([^/]+)/questions/(\d+)/figures/([^/]+)")
+def delete_figure(store, m, body, query):
+    return store.delete_native_figure(m.group(1), int(m.group(2)), m.group(3))
+
+
+@route("GET", r"/api/exams/([^/]+)/figures")
+def exam_figures(store, m, body, query):
+    return store.all_native_figures(m.group(1))
+
+
+@route("POST", r"/api/exams/([^/]+)/questions/(\d+)/crop")
+def crop(store, m, body, query):
+    body = _json_body(body)
+    return store.crop_page(m.group(1), int(m.group(2)), int(body.get("page") or 0), body.get("box"),
+                           option=body.get("option"), replaces=body.get("replaces"))
+
+
+@route("POST", r"/api/exams/([^/]+)/questions/(\d+)/scan-figures")
+def add_scan_figure(store, m, body, query):
+    ctype, data = body
+    return store.add_scan_figure(m.group(1), int(m.group(2)), data, option=(query.get("option") or [None])[0], ctype=ctype)
+
+
+@route("DELETE", r"/api/exams/([^/]+)/questions/(\d+)/scan-figures/([^/]+)")
+def delete_scan_figure(store, m, body, query):
+    return store.delete_scan_figure(m.group(1), int(m.group(2)), m.group(3))
+
+
+@route("POST", r"/api/exams/([^/]+)/ocr")
+def ocr(store, m, body, query):
+    body = _json_body(body)
+    return store.ocr_text(m.group(1), int(body.get("page") or 0), body.get("box"))
+
+
+@route("POST", r"/api/exams/([^/]+)/read")
+def read_box(store, m, body, query):
+    body = _json_body(body)
+    return store.ocr_box(m.group(1), int(body.get("page") or 0), body.get("box"),
+                         engine=body.get("engine") or "auto", want=body.get("want") or "text")
+
+
+@route("GET", r"/api/search")
+def search(store, m, body, query):
+    return store.search((query.get("q") or [""])[0], (query.get("exam") or [None])[0])
+
+
+@route("POST", r"/api/exams/([^/]+)/questions/(\d+)/undo")
+def undo(store, m, body, query):
+    return store.undo(m.group(1), int(m.group(2)))
+
+
+def _json_body(body):
+    ctype, data = body
+    try:
+        value = json.loads(data.decode("utf-8") or "{}")
+    except ValueError as e:
+        raise BadRequest(f"body is not JSON: {e}")
+    if not isinstance(value, dict):
+        raise BadRequest("send a JSON object")
+    return value
+
+
 @route("GET", r"/api/picture/(.+)")
 def picture(store, m, body, query):
     path = store.image_file(m.group(1))
@@ -119,6 +182,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         self._dispatch("POST")
+
+    def do_DELETE(self):
+        self._dispatch("DELETE")
 
     def _dispatch(self, method):
         url = urlparse(self.path)
@@ -182,8 +248,8 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
 
-def make_server(data, scans=None, port=0, sources=None):
-    store = Store(data, scans, sources)
+def make_server(data, scans=None, port=0, sources=None, ocr=None):
+    store = Store(data, scans, sources, ocr)
     handler = type("BoundHandler", (Handler,), {"store": store})
     return ThreadingHTTPServer(("127.0.0.1", port), handler)
 
@@ -196,11 +262,13 @@ def main(argv=None):
                     help="folder of 300 dpi page renders (optional); default $ICFES_SCANS")
     ap.add_argument("--sources", default=os.environ.get("ICFES_SOURCES"),
                     help="JSON map from exam id to its source PDF (renders the original pages); default $ICFES_SOURCES")
+    ap.add_argument("--ocr", default=os.environ.get("ICFES_OCR"),
+                    help="folder of raw Azure layout results (icfes-azure-data/json), to copy text from a box on the page")
     ap.add_argument("--port", type=int, default=8765)
     args = ap.parse_args(argv)
     if not args.data:
         ap.error("pass --data or set ICFES_DATA")
-    server = make_server(args.data, args.scans, args.port, args.sources)
+    server = make_server(args.data, args.scans, args.port, args.sources, args.ocr)
     print(f"ICFES editor on http://127.0.0.1:{server.server_address[1]}  (data: {args.data})")
     try:
         server.serve_forever()

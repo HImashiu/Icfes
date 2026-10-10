@@ -22,7 +22,7 @@ from pathlib import Path
 from icfes_view.golden import validate_golden
 
 SYNCED = ("data/*.golden.json", "answer-keys/*.key.json", "figures/specs/*.json",
-          "figures/traced/*/manifest.json", "images/*/*")
+          "figures/traced/*/manifest.json", "figures/traced/*/*-recorte-*.png", "figures/traced/*/*-recorte-*.jpg", "images/*/*")
 
 
 def changed_files(src: Path, dst: Path):

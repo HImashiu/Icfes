@@ -99,6 +99,167 @@ img.fig{max-width:100%;background:#fff;border-radius:12px;margin:4px 0}
  .top .pill{justify-content:center}
  main{max-width:none;padding:24px 28px}
 }
+/* ----- question workspace: page, form and preview side by side ----- */
+body.editing{display:block}
+body.editing .top{display:none}
+body.editing main{padding:0;max-width:none}
+.ed{display:flex;flex-direction:column;height:100vh}
+.edbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 14px;background:var(--side);border-bottom:1px solid var(--line)}
+.edbar .qnum{font:800 20px/1 "Bricolage Grotesque",sans-serif;margin:0 4px}
+.edbar select{padding:6px 8px}
+.ib{min-height:36px;min-width:36px;padding:0 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:600;color:var(--text)}
+.ib:hover{border-color:var(--text-2)}
+.ib:disabled{opacity:.45;cursor:not-allowed}
+.ib.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
+.ib.go{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.ib.warn{border-color:var(--bad);color:var(--bad)}
+.savestate{font-size:13px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);color:var(--text-2)}
+.savestate.dirty{color:var(--flame);border-color:var(--flame)}
+.savestate.ok{color:var(--ok);border-color:var(--ok)}
+.savestate.bad{color:var(--bad);border-color:var(--bad)}
+.edgrid{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,var(--pdfw,42%)) 6px minmax(0,1fr) minmax(0,1fr)}
+.edgrid.noprev{grid-template-columns:minmax(0,var(--pdfw,42%)) 6px minmax(0,1fr) 0}
+.edgrid.noprev .pane.prev{display:none}
+.split{cursor:col-resize;background:var(--line)}
+.split:hover{background:var(--accent)}
+.pane{min-height:0;overflow:auto;padding:12px 14px}
+.pane.form{border-right:1px solid var(--line)}
+.pane.pdf{padding:0;display:flex;flex-direction:column;background:var(--surface-2)}
+.pdfbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:8px 10px;border-bottom:1px solid var(--line);background:var(--surface)}
+.pdfbar input{width:52px;padding:4px 6px;border-radius:8px;border:1px solid var(--line);background:var(--surface)}
+.pdfscroll{flex:1;overflow:auto;position:relative}
+.pdfpage{position:relative;margin:10px auto;user-select:none}
+.pdfpage img{display:block;width:100%;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.35)}
+.pdfpage .ov{position:absolute;inset:0}
+.pdfpage.cropping .ov{cursor:crosshair}
+.box{position:absolute;border:2px solid var(--accent);background:rgba(200,240,74,.18);box-shadow:0 0 0 9999px rgba(0,0,0,.25)}
+.anchor{position:absolute;left:0;right:0;height:0;border-top:2px dashed var(--flame);pointer-events:none}
+.anchor span{position:absolute;left:4px;top:-20px;background:var(--flame);color:#0D110F;font-size:11px;font-weight:700;padding:1px 6px;border-radius:6px}
+.cropbar{position:absolute;z-index:3;display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.4);max-width:420px}
+.cropbar .ib{min-height:32px;font-size:13px}
+.cropbar .lbl{width:100%;font-size:12px;color:var(--text-2)}
+.fbar{position:sticky;top:-12px;z-index:2;display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:8px 0;background:var(--bg)}
+.fld{margin-bottom:14px}
+.fld > .label{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.fld textarea{min-height:44px;overflow:hidden;font:400 14px/1.45 Figtree,system-ui,sans-serif}
+.rich{display:none}
+#form.visual textarea.src{display:none}
+#form.visual .rich{display:block;min-height:44px;background:var(--paper);color:var(--paper-ink);border:2px solid var(--line);border-radius:12px;padding:8px 12px;font:400 16px/1.5 Georgia,'Times New Roman',serif;outline:none;overflow-wrap:anywhere}
+#form.visual .rich:focus{border-color:var(--accent)}
+#form.visual .rich.empty::before{content:attr(data-ph);color:#8a8a8a;pointer-events:none}
+.rich ul,.rich ol{margin:4px 0;padding-left:26px}
+.rich ul{list-style:disc}.rich ol{list-style:decimal}
+.rich table{border-collapse:collapse;margin:6px 0;width:auto;background:#fff;border:0;border-radius:0}
+.rich th,.rich td{border:1px solid #000;padding:3px 8px;min-width:40px;color:#000;background:#fff;font:inherit;font-size:15px;text-transform:none;letter-spacing:0}
+.rich th{font-weight:700}
+.fgroup{display:inline-flex;gap:2px;padding:0 4px;border-left:1px solid var(--line)}
+.fgroup[hidden]{display:none}
+.fbar .ib.on{background:var(--accent-soft);border-color:var(--accent)}
+.fbar .seg button{padding:4px 10px}
+textarea:focus,input:focus,select:focus{outline:none;border-color:var(--accent)}
+.orow{display:grid;grid-template-columns:40px 1fr auto;gap:8px;align-items:start;margin-bottom:8px}
+.ltile{width:40px;height:40px;border-radius:10px;border:2px solid var(--line);background:var(--surface-2);font-weight:800;cursor:pointer;position:relative;color:var(--text)}
+.ltile.key{background:var(--ok);border-color:var(--ok);color:#0D110F}
+.ltile .mk{position:absolute;right:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--flame)}
+.otools{display:flex;flex-direction:column;gap:2px}
+.otools button{min-height:20px;min-width:26px;padding:0 4px;font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:6px;cursor:pointer;color:var(--text-2)}
+.figs{display:grid;gap:8px}
+.figcard{border:1px solid var(--line);border-radius:14px;padding:10px;background:var(--surface)}
+.figcard .head{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px;font-size:13px}
+.figcard .mini{background:var(--paper);color:var(--paper-ink);border-radius:10px;padding:6px;max-height:220px;overflow:hidden}
+.figcard .mini svg,.figcard .mini img{max-width:100%;max-height:200px;display:block;margin:0 auto}
+.problems{margin:6px 0 0;padding-left:18px;color:var(--bad);font-size:13px}
+.switch{display:inline-flex;gap:8px;align-items:center;cursor:pointer;font-weight:600}
+.switch input{width:18px;height:18px}
+.qstrip{display:flex;gap:4px;overflow-x:auto;padding:6px 10px;border-top:1px solid var(--line);background:var(--side)}
+.qstrip button{flex:0 0 auto;min-width:34px;height:28px;border-radius:8px;border:2px solid var(--line);background:var(--surface);color:var(--text-2);font-weight:700;font-size:12px;cursor:pointer;padding:0 4px}
+.qstrip button.ready{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.qstrip button.hidden{border-style:dashed}
+.qstrip button.err{border-color:var(--bad);color:var(--bad)}
+.qstrip button.cur{outline:3px solid var(--text);outline-offset:1px}
+.toast{position:fixed;left:50%;bottom:56px;transform:translateX(-50%);z-index:50;background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.4);max-width:80vw}
+.toast.bad{background:var(--bad);color:#fff}
+.keys{font-size:12px;color:var(--text-2)}
+kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 4px;font:600 11px Figtree}
+.paper img.scanfig{max-width:100%;display:block;margin:8px auto}
+.opt img.scanfig{max-width:100%;background:#fff}
+.overlay{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.55);display:grid;place-items:start center;padding-top:8vh}
+.sheet{width:min(720px,92vw);max-height:80vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px}
+.hits{display:grid;gap:6px}
+.hit{text-align:left;border:1px solid var(--line);background:var(--surface-2);border-radius:12px;padding:10px;cursor:pointer;color:var(--text);font:400 13px/1.4 Figtree}
+.hit:hover{border-color:var(--accent)}
+table.help{border:0}
+table.help td{border-bottom:1px solid var(--line);padding:8px}
+select.ib{padding:0 8px}
+/* Native tables keep the app's print look inside the editor's own table styles. */
+table.exam-table{border-collapse:collapse;width:auto;border:0;border-radius:0;overflow:visible;background:#fff;margin:8px 0}
+table.exam-table th,table.exam-table td{border:1px solid #000;padding:4px 10px;color:#000;background:#fff;font:inherit;font-size:15px;text-transform:none;letter-spacing:0;text-align:left}
+table.exam-table th{font-weight:700}
+.fbar .ib{min-height:30px;padding:3px 9px}
+.fbar .seg{padding:2px}
+.fbar .seg button{min-height:28px}
+table.icfes-table{width:auto;border:0;border-radius:0;overflow:visible;background:#fff;margin:8px auto}
+table.icfes-table th,table.icfes-table td{border:1px solid #000;padding:4px 10px;text-align:center;color:#000;background:#fff;font:400 14px/1.3 Arial,Helvetica,sans-serif;text-transform:none;letter-spacing:0;vertical-align:middle}
+table.icfes-table th{font-weight:700}
+table.icfes-table caption{font-weight:700;color:#000;margin-bottom:4px}
+/* ----- chart and table studio ----- */
+.studio{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column}
+.stbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--side)}
+.stgrid{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,28%) minmax(0,42%) minmax(0,30%)}
+.cvbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
+.cvbar .sw{width:26px;height:26px;border-radius:6px;border:2px solid var(--line);cursor:pointer;padding:0}
+.cvbar .sw.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.cvwrap{position:relative}
+.cvhint{font-size:12px;color:var(--text-2);margin-top:6px;min-height:16px}
+#st-prev svg .cv-t{cursor:text}
+#st-prev svg .cv-t:hover{fill:#1a6ef5}
+#st-prev svg .cv-v{cursor:ns-resize}
+#st-prev svg .cv-h{cursor:ew-resize}
+#st-prev svg .cv-c{cursor:pointer}
+#st-prev svg .cv-v:hover,#st-prev svg .cv-h:hover,#st-prev svg .cv-c:hover{stroke:#1a6ef5;stroke-width:2.5}
+#st-prev svg .cv-pt{fill:rgba(26,110,245,.08);stroke:#1a6ef5;stroke-width:1.2;cursor:move}
+#st-prev svg .cv-pt.v{cursor:ns-resize}
+#st-prev svg .cv-pt:hover,#st-prev svg .cv-pt.sel{fill:rgba(26,110,245,.35)}
+#st-prev svg .cv-sel{fill:none;stroke:#1a6ef5;stroke-width:2;stroke-dasharray:4 2;pointer-events:none}
+#st-prev svg .cv-plot{fill:transparent;cursor:crosshair}
+#st-prev td[contenteditable],#st-prev th[contenteditable],#st-prev caption[contenteditable]{cursor:text;outline:none}
+#st-prev td[contenteditable]:focus,#st-prev th[contenteditable]:focus{box-shadow:inset 0 0 0 2px #1a6ef5}
+.cvpop{position:absolute;z-index:5;width:250px;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.45);padding:10px;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.cvpop label{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--text-2)}
+.cvpop input,.cvpop select{padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--text);font-size:14px}
+.cvpop .row{display:flex;gap:6px;flex-wrap:wrap}
+.cvpop .row .ib{min-height:30px;font-size:12px}
+.cvpop b{font-size:13px}
+.cvedit{position:absolute;z-index:6;min-width:120px;padding:3px 6px;border:2px solid #1a6ef5;border-radius:6px;background:#fff;color:#000;font:14px Arial,Helvetica,sans-serif}
+.stgrid > div{min-height:0;overflow:auto;padding:12px 14px;border-right:1px solid var(--line)}
+.kinds{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.kinds button{display:flex;flex-direction:column;align-items:center;gap:2px;width:78px;padding:6px 4px;border-radius:12px;border:2px solid var(--line);background:var(--surface);cursor:pointer;font-size:11px;font-weight:600;color:var(--text)}
+.kinds button svg{width:34px;height:26px}
+.kinds button.on{border-color:var(--accent);background:var(--accent-soft)}
+.frow{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:10px}
+.frow label,.fcol label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--text-2);font-weight:600}
+.frow input,.frow select,.fcol input,.fcol select{padding:6px 8px;border-radius:8px;border:2px solid var(--line);background:var(--surface);color:var(--text)}
+.sec{border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:12px;background:var(--surface)}
+.sec > .label{margin-bottom:8px}
+.grid{overflow:auto;max-height:52vh;border:1px solid var(--line);border-radius:10px}
+.grid table{border:0;border-radius:0;background:transparent}
+.grid td,.grid th{padding:0;border:1px solid var(--line);min-width:70px}
+.grid th{background:var(--surface-2);padding:0}
+.grid input{width:100%;min-width:64px;border:0;background:transparent;padding:6px 7px;color:var(--text);font:400 13px Figtree}
+.grid th input{font-weight:700}
+.grid input:focus{background:var(--accent-soft)}
+.grid .rh{width:26px;min-width:26px;text-align:center;color:var(--text-2);font-size:11px;background:var(--surface-2)}
+.grid .x{border:0;background:transparent;color:var(--text-2);cursor:pointer;font-size:12px;padding:2px 4px}
+.grid .x:hover{color:var(--bad)}
+.gbtns{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.serrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:6px;padding:8px;border:1px dashed var(--line);border-radius:10px;margin-top:6px}
+.prevbox{background:var(--paper);color:var(--paper-ink);border-radius:14px;padding:12px}
+.prevbox svg{max-width:100%;height:auto}
+.arealist{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;max-height:46vh;overflow:auto}
+.arealist label{display:grid;grid-template-columns:1fr 120px;align-items:center;gap:6px;font-size:12px}
+.arealist select{padding:3px 6px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--text)}
+.sw{display:inline-block;width:12px;height:12px;border:1px solid #000;vertical-align:middle}
+@media (max-width:1100px){.edgrid{grid-template-columns:1fr;grid-template-rows:45vh auto auto}.split{display:none}.stgrid{grid-template-columns:1fr}.pane{overflow:visible}}
 </style>
 </head>
 <body>
@@ -119,71 +280,62 @@ img.fig{max-width:100%;background:#fff;border-radius:12px;margin:4px 0}
 const $ = (s) => document.querySelector(s);
 const app = $("#app");
 const AREA = { "Lectura crítica": "--area-lectura", "Matemáticas": "--area-mate", "Sociales y ciudadanas": "--area-sociales", "Ciencias naturales": "--area-ciencias", "Inglés": "--area-ingles" };
-const state = { tab: "progress", exam: null, filter: "all", n: null, detail: null, exams: [], scanPage: null };
+const state = { tab: "progress", exam: null, filter: "all", n: null, detail: null, exams: [], rows: [], natives: {},
+  page: 1, zoom: 1, engine: "auto", cropping: false, box: null, dirty: false, opts: [], lastArea: null, preview: true };
+const STATIC = !!window.ICFES_STATIC;
+try { state.engine = JSON.parse(localStorage.getItem("icfes-editor:engine")) || "auto"; } catch (e) { /* default */ }
 
 function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
-function status(text, cls = "") { const el = $("#status"); el.textContent = text; el.className = "pill " + cls; }
-// Pictures are stored as IMG:<exam>/<file>; the page fetches them from the local server.
-function render(html) {
-  const src = (html || "").replace(/src="IMG:([^"]+)"/g, (m, rel) => `src="/api/picture/${rel}"`);
-  return window.renderRich ? window.renderRich(src) : esc(src);
-}
-
-// Pasting or dropping a picture into a question text stores it and puts its reference at the cursor.
-async function addPicture(file, textarea) {
-  const d = state.detail;
-  const msg = $("#save-msg");
-  msg.textContent = "Guardando imagen…";
-  try {
-    const res = await fetch(`/api/exams/${encodeURIComponent(d.exam)}/questions/${d.number}/pictures`, {
-      method: "POST", headers: { "Content-Type": file.type }, body: file,
-    });
-    const body = await res.json();
-    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
-    const tag = `<img alt="" src="${body.ref}">`;
-    const start = textarea.selectionStart ?? textarea.value.length;
-    textarea.value = textarea.value.slice(0, start) + tag + textarea.value.slice(textarea.selectionEnd ?? start);
-    textarea.setSelectionRange(start + tag.length, start + tag.length);
-    textarea.dispatchEvent(new Event("input"));
-    msg.textContent = "Imagen añadida. Guarda para conservar el cambio.";
-  } catch (err) {
-    msg.innerHTML = `<span class="bad">${esc(err.message)}</span>`;
-  }
-}
-
-document.addEventListener("paste", e => {
-  const area = e.target.closest?.("textarea");
-  const file = [...(e.clipboardData?.items || [])].find(i => i.kind === "file" && i.type.startsWith("image/"))?.getAsFile();
-  if (area && file && state.detail) { e.preventDefault(); addPicture(file, area); }
-});
-document.addEventListener("dragover", e => { if (e.target.closest?.("textarea")) e.preventDefault(); });
-document.addEventListener("drop", e => {
-  const area = e.target.closest?.("textarea");
-  const file = [...(e.dataTransfer?.files || [])].find(f => f.type.startsWith("image/"));
-  if (area && file && state.detail) { e.preventDefault(); addPicture(file, area); }
-});
+function status(text, cls = "") { const el = $("#status"); if (el) { el.textContent = text; el.className = "pill " + cls; } }
+function render(html) { return window.renderRich ? window.renderRich(html || "") : esc(html); }
 function areaColor(name) { return AREA[name] ? `var(${AREA[name]})` : "var(--text-2)"; }
 function fmt(n) { return n == null ? "—" : Number(n).toLocaleString("es-CO"); }
+let toastTimer;
+function toast(text, bad = false) {
+  document.querySelector(".toast")?.remove();
+  const t = document.createElement("div");
+  t.className = "toast" + (bad ? " bad" : "");
+  t.textContent = text;
+  document.body.appendChild(t);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.remove(), bad ? 6000 : 2600);
+}
 
 async function api(path, opts) {
-  if (window.ICFES_STATIC) return window.ICFES_STATIC(path, opts);
+  if (STATIC) return window.ICFES_STATIC(path, opts);
   const res = await fetch(path, opts);
   const body = await res.json().catch(() => ({}));
   if (!res.ok) { const err = new Error(body.error || res.statusText); err.body = body; err.status = res.status; throw err; }
   return body;
 }
+const J = (method, body) => ({ method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body ?? {}) });
+const qpath = (d = state.detail) => `/api/exams/${encodeURIComponent(d.exam)}/questions/${d.number}`;
+
+// Map outlines for the figure engine (the browser cannot load them by itself).
+const MAPDOCS = {};
+const mapsReady = STATIC ? Promise.resolve() : Promise.all((window.ICFESFigures?.MAP_KEYS || []).map(async k => {
+  try {
+    const res = await fetch(`maps/${k}.json`);
+    if (!res.ok) return;
+    MAPDOCS[k] = await res.json();
+    window.ICFESFigures.registerMap(k, MAPDOCS[k]);
+  } catch (e) { /* the map stays unavailable and shows as a problem */ }
+}));
 
 function setTab(tab) {
   state.tab = tab;
+  document.body.classList.remove("editing");
   document.querySelectorAll(".seg button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
   if (tab === "progress") showProgress(); else showQuestions();
 }
-document.querySelectorAll(".seg button").forEach(b => b.onclick = () => setTab(b.dataset.tab));
+document.querySelectorAll(".seg button").forEach(b => b.onclick = () => leave(() => setTab(b.dataset.tab)));
 $("#theme").onclick = () => {
   const root = document.documentElement;
-  const dark = root.dataset.theme !== "light";
-  root.dataset.theme = dark ? "light" : "dark";
+  root.dataset.theme = root.dataset.theme !== "light" ? "light" : "dark";
+  remember("theme", root.dataset.theme);
 };
+if (recall("theme")) document.documentElement.dataset.theme = recall("theme");
+window.addEventListener("beforeunload", e => { if (state.dirty) { e.preventDefault(); e.returnValue = ""; } });
 
 // ----- progress --------------------------------------------------------------
 
@@ -202,10 +354,15 @@ async function showProgress() {
       <td class="num ${e.errors ? "bad" : "ok"}">${fmt(e.errors)}</td>
       <td class="num muted">${fmt(e.warnings)}</td>
       <td>${e.key.present ? `<span class="num">${fmt(e.key.answers)}</span> claves${e.key.disputed ? ` <span class="flame">· ${e.key.disputed} disputadas</span>` : ""}` : '<span class="bad">sin clave</span>'}</td>
-      <td>${e.figures.traced ? `${e.figures.traced} trazadas${e.figures.pending_spec ? ` <span class="flame">· ${e.figures.pending_spec} pendientes</span>` : ""}` : '<span class="muted">ninguna</span>'}</td>
+      <td>${e.figures.traced ? `${e.figures.traced} del escaneo${e.figures.pending_spec ? ` <span class="flame">· ${e.figures.pending_spec} pendientes</span>` : ""}` : '<span class="muted">ninguna</span>'}</td>
     </tr>`;
   }).join("");
-  app.innerHTML = `
+  const last = recall("last");
+  const resume = last && state.exams.some(e => e.exam === last.exam)
+    ? `<div class="card" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><b>Seguir donde quedaste:</b> ${esc(last.exam)} · Q${last.n}
+       <button class="btn sm primary" id="resume">Abrir</button>
+       <button class="btn sm" onclick="openSearch()">🔍 Buscar una pregunta</button></div>` : "";
+  app.innerHTML = resume + `
     <div class="stats">
       <div class="card"><div class="label">Preguntas</div><div class="display num">${fmt(t.q)}</div></div>
       <div class="card"><div class="label">Listas</div><div class="display num acc">${fmt(t.r)}</div><div class="muted">${Math.round(100 * t.r / (t.q || 1))} % de ${fmt(t.q)}</div></div>
@@ -219,19 +376,78 @@ async function showProgress() {
     </table>
     <p class="muted">Toca un examen para ver sus preguntas.</p>`;
   app.querySelectorAll("tr[data-exam]").forEach(tr => tr.onclick = () => { state.exam = tr.dataset.exam; state.n = null; setTab("questions"); });
+  if ($("#resume")) $("#resume").onclick = () => { state.exam = last.exam; openQuestion(last.n, { reloadExam: true }); };
 }
 
 // ----- question map ----------------------------------------------------------
 
-const FILTERS = [["all", "Todas"], ["hidden", "Ocultas"], ["errors", "Con errores"], ["warnings", "Avisos"], ["notready", "No listas"]];
+const FILTERS = [["all", "Todas"], ["hidden", "Ocultas"], ["errors", "Con errores"], ["badfig", "Figura inválida"], ["warnings", "Avisos"], ["notready", "No listas"]];
 
-async function showQuestions() {
+// Problems of one native figure, in plain words. An empty list means the engine can draw it.
+const MSG = [
+  [/^x\.label is required/, () => "Falta el título del eje X"],
+  [/^y\.label is required/, () => "Falta el título del eje Y"],
+  [/^y2.*label.*required/, () => "Falta el título del segundo eje Y"],
+  [/^categories must be a non-empty array/, () => "Agrega al menos una categoría (fila)"],
+  [/^series must be a non-empty array/, () => "Agrega al menos una serie"],
+  [/^series\[(\d+)\]\.values must have one entry per category/, m => `La serie ${+m[1] + 1} necesita un valor en cada fila`],
+  [/^series\[(\d+)\]\.values\[(\d+)\] must be a number/, m => `Serie ${+m[1] + 1}, fila ${+m[2] + 1}: escribe un número`],
+  [/^series\[(\d+)\]\.values\[(\d+)\] must not be negative/, m => `Serie ${+m[1] + 1}, fila ${+m[2] + 1}: las barras no pueden ser negativas`],
+  [/^series\[(\d+)\]\.points\[(\d+)\] must be \[x, y\]/, m => `Serie ${+m[1] + 1}, punto ${+m[2] + 1}: faltan x o y`],
+  [/^series\[(\d+)\]\.points needs at least two/, m => `Serie ${+m[1] + 1}: la curva necesita al menos dos puntos`],
+  [/^slices needs at least two/, () => "La torta necesita al menos dos partes"],
+  [/^slices\[(\d+)\]\.value/, m => `Parte ${+m[1] + 1}: el valor debe ser un número mayor o igual a 0`],
+  [/^row (\d+) covers (\d+) columns, expected (\d+)/, m => `La fila ${+m[1] + 1} tiene ${m[2]} celdas y deberían ser ${m[3]}`],
+  [/^(\w+): min must be below max/, m => `Eje ${m[1].toUpperCase()}: el mínimo debe ser menor que el máximo`],
+  [/^fills: unknown area (.+)/, m => `El mapa no tiene el área «${m[1]}»`],
+  [/^region .* could not be loaded/, () => "No se pudo cargar el contorno del mapa"],
+  [/^shapes must be a non-empty array/, () => "El diagrama no tiene formas"],
+];
+function friendly(msg) {
+  for (const [rx, f] of MSG) { const m = rx.exec(msg); if (m) return f(m); }
+  return msg;
+}
+function figProblems(f) {
+  const E = window.ICFESFigures;
+  if (!f.spec) return ["Figura sin dibujar todavía"];
+  if (!E) return [];
+  const spec = { ...f.spec, kind: f.kind || f.spec.kind };
+  let errs = E.validate(spec);
+  if (!errs.length) { try { E.render(spec); } catch (e) { errs = [e.message]; } }
+  // The same problem repeated for every area or cell says nothing new.
+  return [...new Set(errs.map(friendly))];
+}
+const traceShown = (t) => ["azure", "eyeballed_box"].includes(t.method) && t.svg;
+// Figures whose native spec a scan picture replaces (the app drops them the same way).
+function replacedIds(traced) { return new Set(traced.filter(traceShown).flatMap(t => [t.spec_id, t.figure_id])); }
+function badFigure(n) {
+  const traced = (state.detail && state.detail.number === n) ? state.detail.figures : [];
+  const gone = replacedIds(traced || []);
+  return (state.natives[String(n)] || []).some(f => !gone.has(f.id) && figProblems(f).length);
+}
+
+async function loadExam() {
   if (!state.exams.length) state.exams = await api("/api/exams");
   if (!state.exam) state.exam = state.exams[0]?.exam;
+  const [rows, natives] = await Promise.all([
+    api(`/api/exams/${encodeURIComponent(state.exam)}/questions`),
+    STATIC ? Promise.resolve({}) : api(`/api/exams/${encodeURIComponent(state.exam)}/figures`).catch(() => ({})),
+  ]);
+  await mapsReady;
+  state.rows = rows;
+  state.natives = natives;
+}
+function cellClass(r) {
+  const bad = badFigure(r.number);
+  return r.errors || bad ? "err" : r.hidden.length ? "hidden" : "ready";
+}
+
+async function showQuestions() {
   status("Leyendo…");
-  const rows = await api(`/api/exams/${encodeURIComponent(state.exam)}/questions`);
+  await loadExam();
+  const rows = state.rows;
   const pass = rows.filter(r => ({
-    all: true, hidden: r.hidden.length > 0, errors: r.errors > 0, warnings: r.warnings > 0, notready: !r.ready,
+    all: true, hidden: r.hidden.length > 0 || badFigure(r.number), errors: r.errors > 0, warnings: r.warnings > 0, notready: !r.ready, badfig: badFigure(r.number),
   })[state.filter]);
   status(`${rows.length} preguntas`, "ok");
   const opts = state.exams.map(e => `<option value="${esc(e.exam)}" ${e.exam === state.exam ? "selected" : ""}>${esc(e.exam)}</option>`).join("");
@@ -248,65 +464,324 @@ async function showQuestions() {
     <div class="card">
       <div class="label">Mapa de preguntas</div>
       <div class="map">
-        ${pass.map(r => `<button class="cell ${r.errors ? "err" : r.hidden.length ? "hidden" : "ready"}" data-n="${r.number}" title="${esc(r.hidden.join(", ") || "visible para estudiantes")}">${r.number}</button>`).join("")}
+        ${pass.map(r => `<button class="cell ${cellClass(r)}" data-n="${r.number}" title="${esc([...r.hidden.map(x => REASONS[x] || x), ...(badFigure(r.number) ? ["figura inválida"] : [])].join(", ") || "visible para estudiantes")}">${r.number}</button>`).join("")}
       </div>
-      <div class="muted" style="margin-top:12px">Relleno verde: visible para estudiantes. Borde punteado: oculta. Borde rojo: error del validador.</div>
+      <div class="muted" style="margin-top:12px">Relleno verde: visible para estudiantes. Borde punteado: oculta. Borde rojo: error del validador o figura que no se puede dibujar (los estudiantes no la ven).</div>
     </div>`;
   $("#pick-exam").onchange = (e) => { state.exam = e.target.value; state.n = null; showQuestions(); };
   app.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { state.filter = b.dataset.filter; showQuestions(); });
   app.querySelectorAll("button[data-n]").forEach(b => b.onclick = () => openQuestion(Number(b.dataset.n)));
 }
 
-// ----- editor ----------------------------------------------------------------
+// ----- the question workspace ---------------------------------------------------
 
-async function openQuestion(n) {
-  state.n = n;
-  state.scanPage = null;
+// Leaving a question with changes saves them first; a failed save keeps you on the question.
+async function leave(go) {
+  if (state.dirty && state.detail && document.body.classList.contains("editing")) {
+    const ok = await saveQuestion();
+    if (!ok) return;
+  }
+  go();
+}
+
+async function openQuestion(n, opts = {}) {
   status("Cargando…");
-  state.detail = await api(`/api/exams/${encodeURIComponent(state.exam)}/questions/${n}`);
+  if (!state.rows.length || opts.reloadExam) await loadExam();
+  const detail = await api(`/api/exams/${encodeURIComponent(state.exam)}/questions/${n}`);
+  state.n = n;
+  state.detail = detail;
+  state.natives[String(n)] = detail.native_figures;
+  state.dirty = false;
+  state.box = null;
+  state.cropping = false;
+  state.cropTarget = null;
+  const sc = detail.scan;
+  state.page = detail.anchor?.page ?? sc.pages[0] ?? sc.guess;
+  document.body.classList.add("editing");
+  renderWorkspace();
   status(`${state.exam} · Q${n}`, "ok");
-  renderEditor();
 }
 
-// Moves the original-PDF view one page; the form keeps what was typed.
-function turnScan(delta) {
-  const d = state.detail, max = d.scan.count || Infinity;
-  const cur = state.scanPage ?? (d.scan.pages[0] ?? d.scan.guess);
-  state.scanPage = Math.min(max, Math.max(1, cur + delta));
-  $("#scan-page").textContent = state.scanPage;
-  $("#scan-img").src = `/api/scan/${encodeURIComponent(d.exam)}/${state.scanPage}`;
+function hiddenNow() {
+  const d = state.detail;
+  const reasons = [...d.hidden_reasons];
+  if (badFigure(d.number)) reasons.push("figura inválida");
+  return reasons;
 }
 
-function scanError(img) {
-  const p = document.createElement("p");
-  p.className = "muted";
-  p.textContent = "No se pudo cargar esta página. Instala PyMuPDF en el equipo: python -m pip install pymupdf";
-  img.replaceWith(p);
+function renderWorkspace() {
+  const d = state.detail, q = d.question, g = d.group;
+  const idx = d.numbers.indexOf(d.number);
+  const prev = d.numbers[idx - 1], next = d.numbers[idx + 1];
+  const exams = state.exams.map(e => `<option ${e.exam === state.exam ? "selected" : ""}>${esc(e.exam)}</option>`).join("");
+  const reasons = hiddenNow();
+  app.innerHTML = `
+  <div class="ed">
+    <div class="edbar">
+      <button class="ib" id="back" title="Volver al mapa">← Mapa</button>
+      <select id="ed-exam" aria-label="Examen">${exams}</select>
+      <button class="ib" id="prev" ${prev ? "" : "disabled"} title="Anterior (Alt+←)">‹</button>
+      <span class="qnum">Q${d.number}</span>
+      <button class="ib" id="next" ${next ? "" : "disabled"} title="Siguiente (Alt+→)">›</button>
+      <span class="chip" style="min-height:32px;cursor:default"><i style="background:${areaColor(q.section)}"></i>${esc(q.section || "sin área")}</span>
+      <span id="vis">${visBadges(reasons)}</span>
+      <span class="spacer"></span>
+      <button class="ib" id="fixnext" title="Siguiente pregunta oculta, con errores o con figura inválida (Alt+N)">⚑ Siguiente por arreglar</button>
+      <button class="ib" onclick="openSearch()" title="Buscar en todas las preguntas (Ctrl+K)">🔍</button>
+      <button class="ib" onclick="showHelp()" title="Atajos de teclado (?)">?</button>
+      <button class="ib" id="toggle-prev" title="Mostrar u ocultar la vista del estudiante">Vista ${state.preview ? "✓" : "✕"}</button>
+      ${STATIC ? "" : `<button class="ib" id="undo" ${d.undo ? "" : "disabled"} title="Deshace el último cambio guardado de esta pregunta">↶ Deshacer${d.undo ? ` (${d.undo})` : ""}</button>`}
+      <span id="savestate" class="savestate">Sin cambios</span>
+      <button class="ib go" id="save">Guardar</button>
+    </div>
+    <div class="edgrid ${state.preview ? "" : "noprev"}" id="edgrid">
+      <section class="pane pdf" id="pdfpane">${pdfPane()}</section>
+      <div class="split" id="split" title="Arrastra para cambiar el ancho"></div>
+      <section class="pane form" id="form">${formPane(q, g)}</section>
+      <section class="pane prev"><div class="label">Vista del estudiante</div><div id="preview"></div></section>
+    </div>
+    <div class="qstrip" id="qstrip">${state.rows.map(r => `<button class="${cellClass(r)} ${r.number === d.number ? "cur" : ""}" data-n="${r.number}" title="${esc(r.hidden.map(x => REASONS[x] || x).join(", ") || "visible")}">${r.number}</button>`).join("")}</div>
+  </div>`;
+
+  state.opts = q.options.map(o => ({ ...o }));
+  state.answer = d.key || "";
+  drawOpts();
+  drawFigs();
+  bindPdf();
+  refreshPreview();
+  document.querySelectorAll("#form textarea").forEach(fit);
+  attachAllRich();
+  $("#form").classList.toggle("visual", state.visual);
+  $("#back").onclick = () => leave(() => setTab("questions"));
+  $("#prev").onclick = () => prev && leave(() => openQuestion(prev));
+  $("#next").onclick = () => next && leave(() => openQuestion(next));
+  $("#ed-exam").onchange = (e) => leave(async () => { state.exam = e.target.value; await loadExam(); openQuestion(state.rows[0].number); });
+  $("#save").onclick = saveQuestion;
+  $("#fixnext").onclick = () => { const n = nextToFix(); if (n == null) toast("No queda nada por arreglar en este examen 🎉"); else leave(() => openQuestion(n)); };
+  remember("last", { exam: state.exam, n: d.number });
+  $("#toggle-prev").onclick = () => { state.preview = !state.preview; $("#edgrid").classList.toggle("noprev", !state.preview); $("#toggle-prev").textContent = `Vista ${state.preview ? "✓" : "✕"}`; };
+  if ($("#undo")) $("#undo").onclick = undo;
+  $("#qstrip").querySelectorAll("button").forEach(b => b.onclick = () => leave(() => openQuestion(Number(b.dataset.n))));
+  $("#qstrip").querySelector(".cur")?.scrollIntoView({ inline: "center", block: "nearest" });
+  $("#form").addEventListener("input", e => {
+    if (e.target.tagName === "TEXTAREA") fit(e.target);
+    if (e.target.dataset.letter) syncOpts();
+    markDirty();
+    refreshPreview();
+  });
+  $("#form").addEventListener("change", e => { if (e.target.id === "f-section" || e.target.id === "f-ready") { markDirty(); refreshPreview(); } });
+  bindSplit();
 }
 
-// Draws one native figure with the app's engine, the same way the student app does. Invalid or missing specs show as pending.
-function drawNative(f) {
+const REASONS = { "not ready": "no está marcada como lista", "text pending": "texto pendiente", "[FIGURE] note": "nota [FIGURE] en el texto", "figure pending spec": "figura pendiente", "blank option": "opción vacía" };
+function visBadges(reasons) {
+  return reasons.length
+    ? reasons.map(r => `<span class="badge hid">oculta: ${esc(REASONS[r] || r)}</span>`).join("")
+    : `<span class="badge ok">visible para estudiantes</span>`;
+}
+
+function fit(t) { t.style.height = "auto"; t.style.height = (t.scrollHeight + 4) + "px"; }
+
+function markDirty() {
+  state.dirty = true;
+  const s = $("#savestate");
+  if (s) { s.textContent = "Cambios sin guardar"; s.className = "savestate dirty"; }
+}
+
+function formPane(q, g) {
+  const sections = Object.keys(AREA);
+  if (q.section && !sections.includes(q.section)) sections.push(q.section);
+  const flags = (q.provenance?.flags || []).map(f => `<li>${esc(f)}</li>`).join("");
+  const notes = (q.provenance?.notes || []).slice(-6).map(f => `<li>${esc(f)}</li>`).join("");
+  const msgs = [...state.detail.messages.errors.map(m => `<div class="note bad">${esc(m)}</div>`), ...state.detail.messages.warnings.map(m => `<div class="note warn">${esc(m)}</div>`)].join("");
+  return `
+    <div class="fbar" onmousedown="if (event.target.closest('button')) event.preventDefault()">
+      <span class="seg" id="fmode">${fmodeHtml()}</span>
+      <span class="fgroup">
+        <button class="ib" type="button" data-cmd="bold" onclick="richCmd('bold')" title="Negrita (Ctrl+B)"><b>B</b></button>
+        <button class="ib" type="button" data-cmd="italic" onclick="richCmd('italic')" title="Cursiva (Ctrl+I)"><i>I</i></button>
+        <button class="ib" type="button" data-cmd="underline" onclick="richCmd('underline')" title="Subrayado (Ctrl+U)"><u>S</u></button>
+        <button class="ib" type="button" data-cmd="subscript" onclick="richCmd('subscript')" title="Subíndice, como en H₂O">x₂</button>
+        <button class="ib" type="button" data-cmd="superscript" onclick="richCmd('superscript')" title="Superíndice, como en m²">x²</button>
+      </span>
+      <span class="fgroup">
+        <button class="ib" type="button" data-cmd="insertUnorderedList" onclick="richCmd('insertUnorderedList')" title="Lista con viñetas">• Lista</button>
+        <button class="ib" type="button" data-cmd="insertOrderedList" onclick="richCmd('insertOrderedList')" title="Lista numerada">1. Lista</button>
+      </span>
+      <span class="fgroup">
+        <button class="ib" type="button" data-cmd="justifyLeft" onclick="richCmd('justifyLeft')" title="Alinear a la izquierda"><svg viewBox="0 0 16 12" width="16" height="12"><path d="M0 1h16M0 4.5h10M0 8h16M0 11.5h10" stroke="currentColor" stroke-width="1.6"/></svg></button>
+        <button class="ib" type="button" data-cmd="justifyCenter" onclick="richCmd('justifyCenter')" title="Centrar"><svg viewBox="0 0 16 12" width="16" height="12"><path d="M0 1h16M3 4.5h10M0 8h16M3 11.5h10" stroke="currentColor" stroke-width="1.6"/></svg></button>
+        <button class="ib" type="button" data-cmd="justifyRight" onclick="richCmd('justifyRight')" title="Alinear a la derecha"><svg viewBox="0 0 16 12" width="16" height="12"><path d="M0 1h16M6 4.5h10M0 8h16M6 11.5h10" stroke="currentColor" stroke-width="1.6"/></svg></button>
+        <button class="ib" type="button" data-cmd="justifyFull" onclick="richCmd('justifyFull')" title="Justificar"><svg viewBox="0 0 16 12" width="16" height="12"><path d="M0 1h16M0 4.5h16M0 8h16M0 11.5h16" stroke="currentColor" stroke-width="1.6"/></svg></button>
+      </span>
+      <button class="ib" type="button" onclick="richCmd('table')" title="Insertar una tabla de texto">▦ Tabla</button>
+      <span class="fgroup" id="ftable" hidden>
+        <button class="ib" type="button" onclick="richTable('row+')" title="Fila debajo">+ fila</button>
+        <button class="ib" type="button" onclick="richTable('col+')" title="Columna a la derecha">+ col</button>
+        <button class="ib" type="button" onclick="richTable('row-')" title="Quitar esta fila">− fila</button>
+        <button class="ib" type="button" onclick="richTable('col-')" title="Quitar esta columna">− col</button>
+        <button class="ib warn" type="button" onclick="richTable('del')" title="Quitar la tabla">✕</button>
+      </span>
+      <button class="ib" type="button" onclick="fmtInsert('math')" title="Fórmula (se dibuja en la vista del estudiante)">ƒx</button>
+      <button class="ib" type="button" onclick="fmtInsert('frac')" title="Fracción">a/b</button>
+      <button class="ib" type="button" onclick="richCmd('clear')" title="Quitar formato de la selección">T̸</button>
+      <select class="ib" onchange="if (this.value) { fmtInsert('sym', this.value); this.value = ''; }" title="Símbolos">
+        <option value="">Ω símbolo</option>${SYMBOLS.map(x => `<option>${x}</option>`).join("")}</select>
+      <button class="ib" type="button" onclick="cleanField()" title="Une líneas cortadas, quita guiones de corte y espacios dobles en el campo activo">🧹 Limpiar</button>
+    </div>
+    ${msgs ? `<div class="fld">${msgs}</div>` : ""}
+    ${!(q.stem_md || "").trim() ? `<div class="note warn fld">Falta el enunciado. ${STATIC ? "" : `<button class="ib" type="button" onclick="readInto('f-stem')">⌖ Leerlo del PDF</button>`}</div>` : ""}
+    ${g ? `<div class="fld"><div class="label"><span>Texto compartido · Q${g.from}–${g.to} <span class="muted" style="text-transform:none;letter-spacing:0">· lo ven todas sus preguntas</span></span>${STATIC ? "" : `<button class="ib" type="button" onclick="readInto('f-passage')" title="Dibuja un recuadro en la página y su texto se escribe aquí">⌖ Leer del PDF</button>`}</div>
+      <textarea id="f-passage" spellcheck="true" lang="es">${esc(g.passage_md || g.stimulus_md || "")}</textarea>
+      <div class="muted" style="font-size:12px;margin-top:4px">Textos literarios: no los reescribas; deja [Texto pendiente: página N].</div></div>` : ""}
+    <div class="fld"><div class="label"><span>Texto propio (contexto)</span>${STATIC ? "" : `<button class="ib" type="button" onclick="readInto('f-stimulus')" title="Dibuja un recuadro en la página y su texto se escribe aquí">⌖ Leer del PDF</button>`}</div><textarea id="f-stimulus" spellcheck="true" lang="es" placeholder="Texto o descripción antes del enunciado (opcional)">${esc(q.stimulus_md)}</textarea></div>
+    <div class="fld"><div class="label"><span>Figuras</span><span>
+      ${STATIC ? "" : `<button class="ib" type="button" onclick="startCrop()" title="Dibuja un recuadro sobre la página">✂ Recortar del PDF</button>`}
+      <button class="ib" type="button" onclick="openStudio('new')">+ Gráfica o tabla</button></span></div>
+      <div class="figs" id="figs"></div></div>
+    <div class="fld"><div class="label"><span>Enunciado</span>${STATIC ? "" : `<button class="ib" type="button" onclick="readInto('f-stem')" title="Dibuja un recuadro en la página y su texto se escribe aquí">⌖ Leer del PDF</button>`}</div><textarea id="f-stem" spellcheck="true" lang="es">${esc(q.stem_md)}</textarea></div>
+    <div class="fld"><div class="label"><span>Opciones <span class="muted" style="text-transform:none;letter-spacing:0">· toca la letra para marcar la respuesta</span></span>${STATIC ? "" : `<button class="ib" type="button" onclick="readInto('opts')" title="Dibuja un recuadro en la página y su texto se escribe aquí">⌖ Leer A–D del PDF</button>`}</div>
+      <div id="f-opts"></div></div>
+    <div class="fld card" style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+      <label class="switch">Área <select id="f-section">${sections.map(s => `<option ${s === q.section ? "selected" : ""}>${esc(s)}</option>`).join("")}</select></label>
+      <label class="switch"><input type="checkbox" id="f-ready" ${q.ready ? "checked" : ""}> Lista para estudiantes</label>
+      <button class="ib go" type="button" onclick="readyAndNext()" title="Marca la pregunta como lista, guarda y pasa a la siguiente (Ctrl+Enter)">✓ Lista y siguiente</button>
+      <span class="muted" style="font-size:12px">Marcada en el escaneo: ${esc(q.scan_marked_option || "—")}</span>
+    </div>
+    ${flags || notes ? `<details class="fld"><summary class="muted">Marcas de revisión y notas</summary>
+      ${flags ? `<ul class="muted">${flags}</ul>` : ""}${notes ? `<ul class="muted">${notes}</ul>` : ""}</details>` : ""}`;
+}
+
+// ----- options: tap a letter to set the key ------------------------------------------
+
+function syncOpts() {
+  const old = Object.fromEntries((state.opts || []).map(o => [o.letter, o]));
+  state.opts = [...document.querySelectorAll("#f-opts [data-letter]")].map(t => ({
+    letter: t.dataset.letter, text_md: t.value, marked_in_scan: old[t.dataset.letter]?.marked_in_scan ?? false }));
+}
+
+function drawOpts() {
+  $("#f-opts").innerHTML = state.opts.map((o, i) => `
+    <div class="orow">
+      <button type="button" class="ltile ${state.answer === o.letter ? "key" : ""}" onclick="setAnswer('${esc(o.letter)}')" title="${state.answer === o.letter ? "Respuesta correcta" : "Marcar como respuesta correcta"}">${esc(o.letter)}${o.marked_in_scan ? '<i class="mk" title="marcada en el escaneo"></i>' : ""}</button>
+      <textarea data-letter="${esc(o.letter)}" spellcheck="true" lang="es" placeholder="Texto de la opción ${esc(o.letter)}">${esc(o.text_md)}</textarea>
+      <span class="otools">
+        <button type="button" onclick="moveOpt(${i}, -1)" ${i === 0 ? "disabled" : ""} title="Subir">↑</button>
+        <button type="button" onclick="moveOpt(${i}, 1)" ${i === state.opts.length - 1 ? "disabled" : ""} title="Bajar">↓</button>
+        <button type="button" onclick="removeOpt(${i})" title="Quitar opción">✕</button>
+      </span>
+    </div>`).join("") + `<button class="ib" type="button" onclick="addOpt()">+ Opción</button>
+    <span class="muted" style="font-size:12px;margin-left:8px">Respuesta: <b>${esc(state.answer || "sin clave")}</b>${state.answer ? ` <a href="#" onclick="setAnswer('');return false">quitar</a>` : ""}</span>`;
+  document.querySelectorAll("#f-opts textarea").forEach(fit);
+  attachAllRich();
+}
+function setAnswer(letter) { syncOpts(); state.answer = state.answer === letter ? "" : letter; drawOpts(); markDirty(); }
+function addOpt() {
+  syncOpts();
+  const used = state.opts.map(o => o.letter);
+  state.opts.push({ letter: "ABCDEFGHIJ".split("").find(l => !used.includes(l)) || "?", text_md: "", marked_in_scan: false });
+  drawOpts(); markDirty(); refreshPreview();
+}
+function removeOpt(i) { syncOpts(); state.opts.splice(i, 1); drawOpts(); markDirty(); refreshPreview(); }
+function moveOpt(i, delta) {
+  syncOpts();
+  const j = i + delta;
+  if (j < 0 || j >= state.opts.length) return;
+  [state.opts[i], state.opts[j]] = [state.opts[j], state.opts[i]];
+  drawOpts(); markDirty(); refreshPreview();
+}
+
+// ----- figures: native charts and tables, and pictures cut from the scan ---------------
+
+function drawNative(f, slot = true) {
   const E = window.ICFESFigures;
-  if (!E || !f.spec) return `<span class="figure-slot">Figura pendiente de dibujar${f.id ? `: ${esc(f.id)}` : ""}</span>`;
-  const errs = E.validate(f.spec);
-  if (errs.length) return `<span class="figure-slot bad">Figura inválida: ${esc(errs.join("; "))}</span>`;
+  const problems = figProblems(f);
+  if (problems.length) return slot ? `<span class="figure-slot bad">No se puede dibujar: ${esc(problems.slice(0, 3).join("; "))}${problems.length > 3 ? "…" : ""}</span>` : "";
   try {
-    const markup = window.DOMPurify.sanitize(E.render(f.spec), { USE_PROFILES: { svg: true, svgFilters: true, html: true } });
+    const markup = window.DOMPurify.sanitize(E.render({ ...f.spec, kind: f.kind || f.spec.kind }), { USE_PROFILES: { svg: true, svgFilters: true, html: true } });
     return `<div class="figure native">${markup}</div>`;
   } catch (e) {
-    return `<span class="figure-slot bad">${esc(e.message)}</span>`;
+    return slot ? `<span class="figure-slot bad">${esc(e.message)}</span>` : "";
   }
 }
+const scanUrl = (t) => `/api/figure?path=${encodeURIComponent(t.svg)}`;
+function traceOption(t) { return t.option || (/[-_](?:opt|opcion|opción)[-_]([a-d])(?=[-_]|$)/i.exec(t.figure_id || "")?.[1]?.toUpperCase() ?? null); }
 
-function studentView(q, g, figs = []) {
-  const stemFigs = figs.filter(f => f.target !== "option").map(drawNative).join("");
-  const opts = q.options.map(o => `
-    <div class="opt" style="pointer-events:none">
-      <span class="tile">${esc(o.letter)}</span>
-      <div class="body">${render(o.text_md)}${figs.filter(f => f.target === "option" && f.option === o.letter).map(drawNative).join("")}</div>
-    </div>`).join("");
-  // Matches the app: matching tables put each item's stem in a row of the passage, so the stem is not shown twice.
-  // The shared passage is passage_md; stimulus_md is only the fallback when it is empty (the app uses the same rule).
+function drawFigs() {
+  const d = state.detail;
+  const gone = replacedIds(d.figures);
+  const natives = d.native_figures.map(f => {
+    const problems = figProblems(f);
+    const replaced = gone.has(f.id);
+    return `<div class="figcard">
+      <div class="head"><b>${esc(KIND_NAMES[f.kind] || f.kind)}</b>
+        <span class="muted">${f.target === "option" ? `opción ${esc(f.option)}` : "enunciado"}</span>
+        ${replaced ? '<span class="badge">reemplazada por un recorte</span>' : problems.length ? '<span class="badge hid">oculta a estudiantes</span>' : '<span class="badge ok">se dibuja</span>'}
+        <span class="spacer"></span>
+        <button class="ib" type="button" onclick="openStudio('${esc(f.id)}')">Editar</button>
+        ${STATIC ? "" : `<button class="ib" type="button" onclick="startCrop('${esc(f.id)}', '${f.target === "option" ? esc(f.option) : ""}')" title="Cambiar esta figura por un recorte de la página">✂ Usar recorte</button>
+        <button class="ib warn" type="button" onclick="deleteNative('${esc(f.id)}')" title="Quitar">✕</button>`}
+      </div>
+      ${problems.length && !replaced ? `<ul class="problems">${problems.slice(0, 4).map(p => `<li>${esc(p)}</li>`).join("")}${problems.length > 4 ? `<li>y ${problems.length - 4} más</li>` : ""}</ul>` : `<div class="mini">${drawNative(f)}</div>`}
+    </div>`;
+  });
+  const scans = d.figures.filter(traceShown).map(t => `<div class="figcard">
+      <div class="head"><b>Imagen del escaneo</b><span class="muted">${traceOption(t) ? `opción ${esc(traceOption(t))}` : "enunciado"}</span>
+        <span class="spacer"></span>
+        ${STATIC ? "" : `<button class="ib warn" type="button" onclick="deleteScan('${esc(t.figure_id)}')" title="Quitar">✕</button>`}</div>
+      <div class="mini"><img src="${scanUrl(t)}" alt="${esc(t.figure_id)}"></div></div>`);
+  const pending = d.figures.filter(t => !traceShown(t)).map(t => `<div class="figcard"><div class="head"><b>${esc(t.figure_id || t.spec_id)}</b><span class="badge hid">${t.pending_spec ? "pendiente" : esc(t.method || "")}</span></div></div>`);
+  $("#figs").innerHTML = [...natives, ...scans, ...pending].join("") || `<p class="muted" style="margin:0">Sin figuras. Si la pregunta tiene un dibujo, mapa o foto, recórtalo del PDF. Si es una gráfica o tabla, créala con «+ Gráfica o tabla».</p>`;
+}
+
+async function deleteNative(id) {
+  if (!confirm("¿Quitar esta figura? Puedes deshacerlo con «Deshacer».")) return;
+  try {
+    await api(`${qpath()}/figures/${encodeURIComponent(id)}`, { method: "DELETE" });
+    await reloadFigures("Figura quitada");
+  } catch (e) { toast(e.message, true); }
+}
+async function deleteScan(id) {
+  try {
+    await api(`${qpath()}/scan-figures/${encodeURIComponent(id)}`, { method: "DELETE" });
+    await reloadFigures("Imagen quitada");
+  } catch (e) { toast(e.message, true); }
+}
+
+// Figures save on their own; the form keeps what was typed and is not redrawn.
+async function reloadFigures(msg) {
+  const fresh = await api(qpath());
+  const d = state.detail;
+  d.figures = fresh.figures; d.native_figures = fresh.native_figures; d.undo = fresh.undo; d.hidden_reasons = fresh.hidden_reasons;
+  state.natives[String(d.number)] = fresh.native_figures;
+  drawFigs(); refreshPreview(); refreshChrome();
+  if (msg) toast(msg);
+}
+
+function refreshChrome() {
+  const d = state.detail;
+  $("#vis").innerHTML = visBadges(hiddenNow());
+  const u = $("#undo");
+  if (u) { u.disabled = !d.undo; u.textContent = `↶ Deshacer${d.undo ? ` (${d.undo})` : ""}`; }
+  const r = state.rows.find(x => x.number === d.number);
+  const cell = $(`#qstrip button[data-n="${d.number}"]`);
+  if (r && cell) cell.className = `${cellClass(r)} cur`;
+}
+
+// ----- student preview (same renderer and figure engine as the app) -------------------
+
+function studentView(q, g, d) {
+  const gone = replacedIds(d.figures);
+  const natives = d.native_figures.filter(f => !gone.has(f.id));
+  const scans = d.figures.filter(traceShown);
+  const stemFigs = natives.filter(f => f.target !== "option").map(f => drawNative(f)).join("");
+  const stemScans = scans.filter(t => !traceOption(t)).map(t => `<img class="scanfig" src="${scanUrl(t)}" alt="">`).join("");
+  const opts = q.options.map(o => {
+    const nat = natives.find(f => f.target === "option" && f.option === o.letter);
+    const sc = scans.find(t => traceOption(t) === o.letter);
+    const body = nat ? drawNative(nat) : sc ? `<img class="scanfig" src="${scanUrl(sc)}" alt="">` : render(o.text_md);
+    return `<div class="opt ${state.answer === o.letter ? "marked" : ""}" style="pointer-events:none"><span class="tile">${esc(o.letter)}</span><div class="body">${body}</div></div>`;
+  }).join("");
   const gText = g ? (g.passage_md || g.stimulus_md || "") : "";
   const plain = h => (h ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
   const stemInPassage = !!g && plain(q.stem_md).length > 20 && plain(gText).includes(plain(q.stem_md));
@@ -316,325 +791,1808 @@ function studentView(q, g, figs = []) {
       <div class="label" style="color:var(--paper-2)">Pregunta ${q.number}</div>
       ${dir}
       ${q.stimulus_md ? `<div class="stimulus">${render(q.stimulus_md)}</div>` : ""}
-      ${stemFigs}
+      ${stemScans}${stemFigs}
       ${stemInPassage ? "" : `<div class="stem">${render(q.stem_md)}</div>`}
       <div class="src">Fuente: ICFES, Saber 11 · ${esc(state.exam)}</div>
     </div>
-    ${opts}`;
+    ${opts}
+    <p class="muted" style="font-size:12px">El borde naranja marca la respuesta de la clave (solo en el editor).</p>`;
 }
 
-// Options are edited as a list: add, remove, move, and change text. Letters stay with their option, so answer keys keep working.
-function syncOpts() {
-  const old = Object.fromEntries((state.opts || []).map(o => [o.letter, o]));
-  state.opts = [...document.querySelectorAll("#f-opts [data-letter]")].map(t => ({
-    letter: t.dataset.letter, text_md: t.value, marked_in_scan: old[t.dataset.letter]?.marked_in_scan ?? false }));
-}
-
-function drawOpts() {
-  $("#f-opts").innerHTML = (state.opts || []).map((o, i) => `
-    <div style="display:grid;grid-template-columns:34px 1fr auto;gap:8px;margin-bottom:8px;align-items:start">
-      <b style="padding-top:10px">${esc(o.letter)}</b>
-      <textarea data-letter="${esc(o.letter)}" style="min-height:44px">${esc(o.text_md)}</textarea>
-      <span style="display:flex;gap:4px">
-        <button type="button" onclick="moveOpt(${i}, -1)" ${i === 0 ? "disabled" : ""}>↑</button>
-        <button type="button" onclick="moveOpt(${i}, 1)" ${i === state.opts.length - 1 ? "disabled" : ""}>↓</button>
-        <button type="button" onclick="removeOpt(${i})">✕</button>
-      </span>
-    </div>`).join("") + `<button type="button" onclick="addOpt()">+ Añadir opción</button>`;
-  document.querySelectorAll("#f-opts textarea").forEach(t => t.oninput = () => { syncOpts(); refreshPreview(); });
-}
-
-function addOpt() {
-  syncOpts();
-  const used = state.opts.map(o => o.letter);
-  const letter = "ABCDEFGHIJ".split("").find(l => !used.includes(l)) || "?";
-  state.opts.push({ letter, text_md: "", marked_in_scan: false });
-  drawOpts(); refreshPreview();
-}
-
-function removeOpt(i) {
-  syncOpts();
-  state.opts.splice(i, 1);
-  drawOpts(); refreshPreview();
-}
-
-function moveOpt(i, delta) {
-  syncOpts();
-  const j = i + delta;
-  if (j < 0 || j >= state.opts.length) return;
-  [state.opts[i], state.opts[j]] = [state.opts[j], state.opts[i]];
-  drawOpts(); refreshPreview();
-}
-
-function renderEditor() {
-  const d = state.detail, q = d.question, g = d.group;
-  const idx = d.numbers.indexOf(d.number);
-  const prev = d.numbers[idx - 1], next = d.numbers[idx + 1];
-  const sc = d.scan, shown = sc.pages[0] ?? sc.guess;
-  const scan = `<div class="pager"><button type="button" onclick="turnScan(-1)">‹</button>
-      <span class="muted">página <b id="scan-page">${shown}</b>${sc.count ? " de " + sc.count : ""}${sc.estimated ? " · estimada, ajusta con ‹ ›" : ""}</span>
-      <button type="button" onclick="turnScan(1)">›</button></div>
-    <img id="scan-img" class="scan" alt="página original" src="/api/scan/${encodeURIComponent(d.exam)}/${shown}" onerror="scanError(this)">`;
-  const figs = d.figures.map(f => `
-    <div class="muted" style="margin-top:8px"><b>${esc(f.spec_id || f.figure_id)}</b> · ${esc(f.method)}${f.pending_spec ? ' · <span class="flame">pendiente</span>' : ""}</div>
-    ${f.svg ? `<img class="fig" src="/api/figure?path=${encodeURIComponent(f.svg)}" alt="${esc(f.figure_id)}">` : ""}`).join("") || `<p class="muted">Sin figura trazada.</p>`;
-  const msgs = [...d.messages.errors.map(m => `<div class="note bad">${esc(m)}</div>`), ...d.messages.warnings.map(m => `<div class="note warn">${esc(m)}</div>`)].join("") || `<div class="note ok">Validador limpio.</div>`;
-  const flags = (q.provenance.flags || []).map(f => `<li>${esc(f)}</li>`).join("");
-  const notes = (q.provenance.notes || []).map(f => `<li>${esc(f)}</li>`).join("");
-  const keyOpts = `<option value="">— ninguna —</option>` + q.options.map(o => `<option value="${esc(o.letter)}" ${d.key === o.letter ? "selected" : ""}>${esc(o.letter)}</option>`).join("");
-  const hidden = d.hidden_reasons.length
-    ? d.hidden_reasons.map(r => `<span class="badge hid">oculta: ${esc(r)}</span>`).join("")
-    : `<span class="badge ok">visible para estudiantes</span>`;
-
-  app.innerHTML = `
-    <div class="toolbar">
-      <button class="btn sm" id="back">← Mapa</button>
-      <button class="btn sm" id="prev" ${prev ? "" : "disabled"}>← Q${prev ?? ""}</button>
-      <button class="btn sm" id="next" ${next ? "" : "disabled"}>Q${next ?? ""} →</button>
-      <span class="title" style="margin:0 0 0 8px;font-size:18px">${esc(d.exam)} · Q${d.number}</span>
-      <span class="muted">${esc(q.section || "")}${q.part ? " · " + esc(q.part) : ""}</span>
-    </div>
-    <div class="toolbar">${hidden}</div>
-    <div class="grid2">
-      <div>
-        <div class="card"><div class="label">Enunciado</div>
-          <textarea id="f-stem">${esc(q.stem_md)}</textarea>
-        </div>
-        <div class="card"><div class="label">Formato</div>
-          <div class="pager" id="fmt">
-            <button type="button" onclick="fmtInsert('bold')"><b>B</b></button>
-            <button type="button" onclick="fmtInsert('italic')"><i>I</i></button>
-            <button type="button" onclick="fmtInsert('math')">$x$</button>
-            <button type="button" onclick="fmtInsert('table')">Tabla</button>
-          </div>
-          <p class="muted" style="margin:0">Selecciona texto en cualquier campo y pulsa un botón. Pega o arrastra una imagen para insertarla.</p>
-        </div>
-        <div class="card"><div class="label">Opciones</div>
-          <div id="f-opts"></div>
-          <div class="muted">Marcada en el escaneo: ${esc(q.scan_marked_option || "—")} · opciones esperadas: ${esc(q.expected_options ?? "—")}</div>
-        </div>
-        <div class="card"><div class="label">Texto propio de la pregunta</div>
-          <textarea id="f-stimulus">${esc(q.stimulus_md)}</textarea>
-        </div>
-        <div class="card"><div class="label">Texto compartido${g ? ` · ${esc(g.id)} (Q${g.from}–${g.to})` : ""}</div>
-          ${g ? `<textarea id="f-passage">${esc(g.passage_md || g.stimulus_md || "")}</textarea>
-          <p class="muted">Se guarda en el grupo y lo ven todas sus preguntas. Los textos literarios nunca se reescriben: usa [Texto pendiente: página N] y tools/fillpage.py.</p>` : `<p class="muted">Esta pregunta no tiene texto compartido.</p>`}
-        </div>
-      </div>
-      <div>
-        <div class="card"><div class="label">Vista del estudiante</div>
-          <div id="preview">${studentView(q, g, d.native_figures)}</div>
-        </div>
-        <div class="card">
-          <div class="label">Guardar</div>
-          <label>Área<input id="f-section" value="${esc(q.section || "")}"></label>
-          <label style="display:flex;gap:10px;align-items:center;min-height:44px"><input type="checkbox" id="f-ready" ${q.ready ? "checked" : ""} style="width:20px;height:20px"> Lista (visible para estudiantes)</label>
-          <div style="display:flex;gap:10px;align-items:center;margin:10px 0;flex-wrap:wrap">
-            <span class="muted">Respuesta</span>
-            <select id="f-answer">${keyOpts}</select>
-            <span class="muted">clave de answer-keys/${esc(d.exam)}.key.json</span>
-          </div>
-          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="btn primary" id="save">Guardar</button><span id="save-msg" class="muted"></span></div>
-        </div>
-        <div class="card"><div class="label">Validador y avisos</div>
-          ${msgs}
-          ${flags ? `<div class="label" style="margin-top:12px">Marcas de revisión</div><ul class="muted">${flags}</ul>` : ""}
-          ${notes ? `<div class="label" style="margin-top:12px">Notas</div><ul class="muted">${notes}</ul>` : ""}
-        </div>
-        <div class="card"><div class="label">Pregunta original (PDF)</div>${scan}</div>
-        <div class="card" id="figcard" oninput="figChanged(event)" onchange="figChanged(event)"></div>
-        <div class="card"><div class="label">Figuras trazadas (escaneo)</div>${figs}</div>
-      </div>
-    </div>`;
-
-  // The preview re-renders with the app's renderer as the editor changes, so it shows what students will see.
-  state.opts = q.options.map(o => ({ ...o }));
-  drawOpts();
-  state.figDraft = null;
-  drawFigCard();
-  const refresh = () => refreshPreview();
-  document.querySelectorAll("#f-stem, #f-stimulus, #f-passage").forEach(t => t.oninput = refresh);
-  $("#back").onclick = () => setTab("questions");
-  $("#prev").onclick = () => prev && openQuestion(prev);
-  $("#next").onclick = () => next && openQuestion(next);
-  $("#save").onclick = saveQuestion;
-}
-
-// ----- native figure editor: form fields for the common specs, JSON for the rest ---------------
-
-const FIG_KINDS = ["bar", "line", "pie", "scatter", "table", "curve", "diagram"];
-
-function figBlock(f) {
-  const sp = f.spec || {};
-  const sel = (vals, cur) => vals.map(v => `<option ${v === cur ? "selected" : ""}>${v}</option>`).join("");
-  const series = (sp.series || []).map(se => seriesRow(se)).join("");
-  return `
-    <details class="figblock" data-fig="${esc(f.id)}" data-orig="${esc(JSON.stringify(sp))}" ${f.id === "new" ? "open" : ""} style="border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:10px">
-      <summary><b>${esc(f.id)}</b> · ${esc(f.kind || "—")} · ${esc(f.target || "stem")}${f.option ? " " + esc(f.option) : ""}</summary>
-      <div class="figgrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:8px">
-        <label>Tipo<select data-k="kind">${sel(FIG_KINDS, f.kind)}</select></label>
-        <label>Lugar<select data-k="target">${sel(["stem", "option"], f.target || "stem")}</select></label>
-        <label>Opción<input data-k="option" maxlength="1" value="${esc(f.option || "")}"></label>
-        <label>Fidelidad<select data-k="fidelity">${sel(["draft", "checked", "final"], f.fidelity || "draft")}</select></label>
-        <label>Título<input data-k="title" value="${esc(sp.title || "")}"></label>
-        <label>Eje X<input data-k="xlabel" value="${esc(sp.x?.label || "")}"></label>
-        <label>Eje Y<input data-k="ylabel" value="${esc(sp.y?.label || "")}"></label>
-        <label>Y mín<input data-k="ymin" type="number" value="${sp.y?.min ?? ""}"></label>
-        <label>Y máx<input data-k="ymax" type="number" value="${sp.y?.max ?? ""}"></label>
-        <label>Paso Y<input data-k="ystep" type="number" value="${sp.y?.step ?? ""}"></label>
-        <label style="grid-column:span 2">Categorías (coma)<input data-k="categories" value="${esc((sp.categories || []).join(", "))}"></label>
-      </div>
-      <div class="muted" style="margin-top:8px">Series: nombre y valores separados por coma</div>
-      <div data-series>${series}</div>
-      <button type="button" onclick="addSeries(this)">+ Serie</button>
-      <details style="margin-top:8px"><summary>JSON avanzado (ticks, leyenda, estilos)</summary>
-        <textarea data-k="json" style="min-height:160px;font-family:monospace">${esc(JSON.stringify(sp, null, 2))}</textarea>
-      </details>
-      <div class="figprev" style="margin-top:10px">${f.spec ? drawNative({ kind: f.kind, spec: f.spec }) : ""}</div>
-      <div style="margin-top:10px;display:flex;gap:10px;align-items:center">
-        <button type="button" class="primary" onclick="saveFig(this)">Guardar figura</button>
-        <span class="muted" data-msg></span>
-      </div>
-    </details>`;
-}
-
-function seriesRow(se) {
-  return `<div class="ser" style="display:grid;grid-template-columns:1fr 2fr auto;gap:6px;margin-top:6px">
-    <input data-s="name" value="${esc(se.name || "")}" placeholder="nombre">
-    <input data-s="values" value="${esc((se.values || []).join(", "))}" placeholder="valores">
-    <button type="button" onclick="this.parentElement.remove()">✕</button></div>`;
-}
-
-function addSeries(btn) {
-  btn.previousElementSibling.insertAdjacentHTML("beforeend", seriesRow({ name: "", values: [] }));
-}
-
-// Builds the spec from the form; the JSON box wins once it has been edited, and fields it lacks keep their engine options.
-function readFig(block) {
-  const jsonBox = block.querySelector('[data-k="json"]');
-  if (block.dataset.jsonDirty === "1") return JSON.parse(jsonBox.value);
-  const spec = JSON.parse(block.dataset.orig || "{}");
-  const v = k => block.querySelector(`[data-k="${k}"]`).value.trim();
-  const num = k => (v(k) === "" ? undefined : Number(v(k)));
-  spec.title = v("title") || undefined;
-  spec.x = { ...(spec.x || {}), label: v("xlabel") || undefined };
-  spec.y = { ...(spec.y || {}), label: v("ylabel") || undefined, min: num("ymin"), max: num("ymax"), step: num("ystep") };
-  spec.categories = v("categories") ? v("categories").split(",").map(x => x.trim()).filter(Boolean) : undefined;
-  spec.series = [...block.querySelectorAll("[data-series] .ser")].map(row => ({
-    name: row.querySelector('[data-s="name"]').value.trim(),
-    values: row.querySelector('[data-s="values"]').value.split(",").map(x => x.trim()).filter(x => x !== "").map(Number),
-  }));
-  return JSON.parse(JSON.stringify(spec));
-}
-
-function figChanged(event) {
-  const block = event.target.closest?.(".figblock");
-  if (!block) return;
-  if (event.target.dataset.k === "json") block.dataset.jsonDirty = "1";
-  try {
-    const spec = readFig(block);
-    const kind = block.querySelector('[data-k="kind"]').value;
-    block.querySelector(".figprev").innerHTML = drawNative({ kind, spec });
-    block.querySelector("[data-msg]").textContent = "";
-    if (event.target.dataset.k !== "json") block.querySelector('[data-k="json"]').value = JSON.stringify(spec, null, 2);
-  } catch (err) {
-    block.querySelector("[data-msg]").innerHTML = `<span class="bad">${esc(err.message)}</span>`;
-  }
-}
-
-async function saveFig(btn) {
-  const block = btn.closest(".figblock"), d = state.detail;
-  const msg = block.querySelector("[data-msg]");
-  try {
-    const body = {
-      kind: block.querySelector('[data-k="kind"]').value,
-      target: block.querySelector('[data-k="target"]').value,
-      option: block.querySelector('[data-k="option"]').value.trim() || null,
-      fidelity: block.querySelector('[data-k="fidelity"]').value,
-      spec: readFig(block),
-    };
-    await api(`/api/exams/${encodeURIComponent(d.exam)}/questions/${d.number}/figures/${encodeURIComponent(block.dataset.fig)}`,
-      { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    state.figDraft = null;
-    await openQuestion(d.number);
-    msg.textContent = "";
-    $("#save-msg").textContent = "Figura guardada.";
-  } catch (err) {
-    msg.innerHTML = `<span class="bad">${esc(err.message)}</span>`;
-  }
-}
-
-function drawFigCard() {
-  const d = state.detail;
-  const figs = d.native_figures.map(f => figBlock(f));
-  const draft = state.figDraft ? figBlock(state.figDraft) : "";
-  $("#figcard").innerHTML = `<div class="label">Figuras nativas (motor de la app)</div>
-    ${figs.join("") || '<p class="muted">Sin figura nativa para esta pregunta.</p>'}
-    ${draft}
-    <button type="button" style="margin-top:12px" onclick="newFig()">+ Nueva figura</button>`;
-}
-
-function newFig() {
-  state.figDraft = { id: "new", kind: "bar", target: "stem", option: null, fidelity: "draft", spec: { categories: [], series: [] } };
-  drawFigCard();
-}
-
-// Remembers the text field last used, so the format buttons know where to write.
-document.addEventListener("focusin", e => { if (e.target.tagName === "TEXTAREA") state.lastArea = e.target; });
-
-function fmtInsert(kind) {
-  const area = state.lastArea;
-  if (!area || !area.isConnected) return;
-  const start = area.selectionStart ?? area.value.length, end = area.selectionEnd ?? start;
-  const sel = area.value.slice(start, end);
-  const text = {
-    bold: `**${sel || "texto"}**`,
-    italic: `*${sel || "texto"}*`,
-    math: `$${sel || "x^2"}$`,
-    table: "\n| Columna 1 | Columna 2 |\n|---|---|\n| | |\n",
-  }[kind];
-  area.value = area.value.slice(0, start) + text + area.value.slice(end);
-  area.focus();
-  area.setSelectionRange(start + text.length, start + text.length);
-  area.dispatchEvent(new Event("input"));
-}
-
+let previewQueued = false;
 function refreshPreview() {
-  const d = state.detail, q = d.question, g = d.group;
-  const current = { ...q, stem_md: $("#f-stem").value, stimulus_md: $("#f-stimulus").value, options: state.opts };
-  const group = g && $("#f-passage") ? { ...g, passage_md: $("#f-passage").value } : g;
-  $("#preview").innerHTML = studentView(current, group, d.native_figures);
+  if (previewQueued) return;
+  previewQueued = true;
+  requestAnimationFrame(() => {
+    previewQueued = false;
+    const d = state.detail; if (!d || !$("#preview")) return;
+    const q = { ...d.question, stem_md: $("#f-stem").value, stimulus_md: $("#f-stimulus").value, options: state.opts };
+    const g = d.group && $("#f-passage") ? { ...d.group, passage_md: $("#f-passage").value } : d.group;
+    $("#preview").innerHTML = studentView(q, g, d);
+  });
 }
+
+// ----- saving, undo and keys ---------------------------------------------------------
 
 async function saveQuestion() {
   const d = state.detail;
+  if (!d) return false;
   syncOpts();
-  const options = state.opts.map(o => ({ letter: o.letter, text_md: o.text_md }));
+  const ready = $("#f-ready").checked;
+  if (ready && badFigure(d.number)) {
+    setSave("No se guardó: una figura no se puede dibujar. Arréglala, recórtala del PDF o desmarca «Lista».", "bad");
+    toast("Una figura no se puede dibujar; los estudiantes no deben verla así.", true);
+    return false;
+  }
   const body = {
     stem_md: $("#f-stem").value,
     stimulus_md: $("#f-stimulus").value,
-    options,
-    ready: $("#f-ready").checked,
-    answer: $("#f-answer").value || null,
+    options: state.opts.map(o => ({ letter: o.letter, text_md: o.text_md })),
+    ready,
+    answer: state.answer || null,
     section: $("#f-section").value.trim(),
   };
   if (d.group) body.group_passage_md = $("#f-passage").value;
-  const msg = $("#save-msg");
-  msg.textContent = "Guardando…";
+  setSave("Guardando…", "");
   try {
-    state.detail = await api(`/api/exams/${encodeURIComponent(d.exam)}/questions/${d.number}`, {
-      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
-    });
-    status("Guardado", "ok");
-    renderEditor();
-    $("#save-msg").textContent = "Guardado";
-  } catch (err) {
-    if (err.status === 409) {
-      msg.innerHTML = `<span class="bad">No se guardó. No se puede marcar como lista todavía: ${esc((err.body.reasons || []).join(", "))}. Corrige eso o desmarca «Lista».</span>`;
-    } else {
-      msg.innerHTML = `<span class="bad">${esc(err.message)}</span>`;
+    const fresh = await api(qpath(d), J("PUT", body));
+    state.detail = { ...fresh };
+    state.dirty = false;
+    const r = state.rows.find(x => x.number === d.number);
+    if (r) { r.ready = fresh.question.ready; r.hidden = fresh.hidden_reasons; r.errors = fresh.messages.errors.length; r.warnings = fresh.messages.warnings.length; }
+    if (document.body.classList.contains("editing") && state.n === d.number) {
+      state.detail.question.options = fresh.question.options;
+      refreshChrome();
+      setSave(`Guardado ${new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}`, "ok");
     }
+    return true;
+  } catch (err) {
+    if (err.status === 409) setSave(`No se guardó: no puede estar lista todavía (${(err.body.reasons || []).join(", ")}). Corrige eso o desmarca «Lista».`, "bad");
+    else setSave(`No se guardó: ${err.message}`, "bad");
+    toast("No se guardó. Mira el aviso arriba.", true);
+    return false;
   }
+}
+function setSave(text, cls) { const s = $("#savestate"); if (s) { s.textContent = text; s.className = "savestate " + cls; } }
+
+async function readyAndNext() {
+  $("#f-ready").checked = true;
+  markDirty();
+  if (await saveQuestion()) $("#next").disabled ? toast("Era la última pregunta del examen") : $("#next").click();
+}
+
+function nextToFix() {
+  const rows = state.rows, cur = rows.findIndex(r => r.number === state.n);
+  const needs = r => r.errors || r.hidden.length || badFigure(r.number);
+  for (let k = 1; k <= rows.length; k++) { const r = rows[(cur + k) % rows.length]; if (needs(r)) return r.number; }
+  return null;
+}
+
+// Small per-viewer memory: theme, OCR engine and the last question opened.
+function remember(key, value) { try { localStorage.setItem("icfes-editor:" + key, JSON.stringify(value)); } catch (e) { /* private window */ } }
+function recall(key) { try { return JSON.parse(localStorage.getItem("icfes-editor:" + key)); } catch (e) { return null; } }
+
+function closeOverlay() { $("#overlay")?.remove(); }
+function overlay(html) {
+  closeOverlay();
+  document.body.insertAdjacentHTML("beforeend", `<div id="overlay" class="overlay" onclick="if (event.target === this) closeOverlay()"><div class="sheet">${html}</div></div>`);
+}
+function showHelp() {
+  const k = (a, b) => `<tr><td>${a}</td><td>${b}</td></tr>`;
+  overlay(`<div class="label">Atajos y trucos</div><table class="help">
+    ${k("<kbd>Ctrl</kbd>+<kbd>S</kbd>", "Guardar")}
+    ${k("<kbd>Ctrl</kbd>+<kbd>Enter</kbd>", "Marcar lista, guardar y pasar a la siguiente")}
+    ${k("<kbd>Alt</kbd>+<kbd>→</kbd> / <kbd>←</kbd>", "Siguiente / anterior (guarda antes de salir)")}
+    ${k("<kbd>Alt</kbd>+<kbd>N</kbd>", "Siguiente pregunta por arreglar")}
+    ${k("<kbd>Alt</kbd>+<kbd>R</kbd>", "Dibujar un recuadro en la página")}
+    ${k("<kbd>Ctrl</kbd>+<kbd>K</kbd>", "Buscar en todas las preguntas")}
+    ${k("<kbd>Ctrl</kbd>+rueda", "Acercar o alejar la página")}
+    ${k("<kbd>Ctrl</kbd>+<kbd>Z</kbd>", "Deshacer lo escrito en un campo (↶ Deshacer revierte lo guardado)")}
+    ${k("<kbd>Esc</kbd>", "Cerrar el recuadro o la ventana")}
+    ${k("⌖ Leer del PDF", "Dibuja un recuadro y su texto (OCR) se escribe en ese campo")}
+    ${k("Pegar imagen", "Pega o arrastra una imagen al formulario y queda como figura")}
+    ${k("Excel → tabla", "En el editor de gráficas, pega celdas copiadas de Excel en la cuadrícula")}
+  </table><button class="ib" style="margin-top:12px" onclick="closeOverlay()">Cerrar</button>`);
+}
+
+let searchTimer;
+function openSearch() {
+  overlay(`<div class="label">Buscar preguntas</div>
+    <input id="q-search" placeholder="Palabras del enunciado, opciones o texto (sin importar tildes)" style="width:100%;padding:10px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--text)">
+    <label class="switch" style="margin:8px 0;font-size:13px"><input type="checkbox" id="q-all"> En todos los exámenes</label>
+    <div id="q-hits" class="hits"></div>`);
+  const run = async () => {
+    const q = $("#q-search").value.trim();
+    if (q.length < 3) { $("#q-hits").innerHTML = '<p class="muted">Escribe al menos 3 letras.</p>'; return; }
+    const hits = await api(`/api/search?q=${encodeURIComponent(q)}${$("#q-all").checked ? "" : `&exam=${encodeURIComponent(state.exam)}`}`);
+    $("#q-hits").innerHTML = hits.length ? hits.map(h => `<button class="hit" data-exam="${esc(h.exam)}" data-n="${h.number}"><b>${esc(h.exam)} · Q${h.number}</b> <span class="muted">${esc(h.section || "")}</span><br><span>${esc(h.snippet)}</span></button>`).join("") : '<p class="muted">Sin resultados.</p>';
+    $("#q-hits").querySelectorAll(".hit").forEach(b => b.onclick = () => { closeOverlay(); leave(async () => { const ch = state.exam !== b.dataset.exam; state.exam = b.dataset.exam; await openQuestion(Number(b.dataset.n), { reloadExam: ch }); }); });
+  };
+  $("#q-search").oninput = () => { clearTimeout(searchTimer); searchTimer = setTimeout(run, 250); };
+  $("#q-all").onchange = run;
+  $("#q-search").focus();
+}
+
+async function undo() {
+  if (state.dirty && !confirm("Tienes cambios sin guardar. Deshacer los descarta y vuelve al último guardado anterior. ¿Seguir?")) return;
+  try {
+    await api(`${qpath()}/undo`, J("POST", {}));
+    state.dirty = false;
+    await openQuestion(state.n, { reloadExam: true });
+    toast("Cambio deshecho");
+  } catch (e) { toast(e.message, true); }
+}
+
+document.addEventListener("keydown", e => {
+  if (!document.body.classList.contains("editing")) return;
+  if ($(".studio")) {
+    if (cvKey(e)) return;
+    if (e.key === "Escape") closeStudio();
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); saveStudio(); }
+    return;
+  }
+  if ($("#overlay")) { if (e.key === "Escape") closeOverlay(); return; }
+  const typing = /TEXTAREA|INPUT|SELECT/.test(e.target.tagName);
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); saveQuestion(); }
+  else if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); readyAndNext(); }
+  else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openSearch(); }
+  else if (e.altKey && e.key.toLowerCase() === "n") { e.preventDefault(); $("#fixnext").click(); }
+  else if (e.altKey && e.key.toLowerCase() === "r") { e.preventDefault(); state.cropping ? cancelCrop() : startCrop(); }
+  else if (!typing && e.key === "?") { showHelp(); }
+  else if (e.altKey && e.key === "ArrowRight") { e.preventDefault(); $("#next").click(); }
+  else if (e.altKey && e.key === "ArrowLeft") { e.preventDefault(); $("#prev").click(); }
+  else if (e.key === "Escape") { cancelCrop(); }
+});
+
+// Remembers the text field last used, so the format buttons and OCR know where to write.
+document.addEventListener("focusin", e => { if (e.target.tagName === "TEXTAREA" && e.target.closest("#form")) state.lastArea = e.target; });
+
+// Typing through execCommand keeps Ctrl+Z working for inserted text.
+function insertAt(area, text, selectInserted = false) {
+  const rich = state.visual && richOf(area);
+  if (rich) { richInsert(rich, text); return; }
+  const start = area.selectionStart ?? area.value.length, end = area.selectionEnd ?? start;
+  area.focus();
+  area.setSelectionRange(start, end);
+  if (!document.execCommand("insertText", false, text)) area.value = area.value.slice(0, start) + text + area.value.slice(end);
+  if (selectInserted) area.setSelectionRange(start, start + text.length); else area.setSelectionRange(start + text.length, start + text.length);
+  area.dispatchEvent(new Event("input", { bubbles: true }));
+}
+// ----- Word-style text fields ------------------------------------------------------------------
+// Each text field shows formatted text you edit as in Word; the hidden textarea keeps the exam text the app reads.
+// Only formatting the student app's renderer shows is stored: **bold**, <em>, <u>, <sub>, <sup>, lists,
+// aligned paragraphs and tables. Math stays as $...$ and is drawn in the student view.
+
+state.visual = recall("visual") ?? true;
+const RICH_BLOCK = /^(DIV|P|UL|OL|TABLE|H[1-6]|BLOCKQUOTE|PRE|FIGURE|FIGCAPTION)$/;
+const MATH_SPLIT = /(\$[^$\n]+?\$)/;
+
+// Exam text to editable HTML.
+function toVisual(src) {
+  if (!src) return "";
+  const blocks = pipeTables(src).split(/\n\s*\n/).map(b => b.trim()).filter(Boolean)
+    .map(b => (/^<(p|div|ul|ol|table|h\d)\b/i.test(b) ? b : `<div>${b.replace(/\n/g, "<br>")}</div>`));
+  const html = blocks.join("").split(MATH_SPLIT).map((part, i) => (i % 2 ? part
+    : part.replace(/\*\*([^*\n]+)\*\*/g, "<b>$1</b>").replace(/(^|[^*\w])\*([^*\n]+?)\*(?![*\w])/g, (m, pre, body) => (/<\/?(t[dhr]|div|p)\b/i.test(body) ? m : `${pre}<i>${body}</i>`)))).join("");
+  return window.DOMPurify.sanitize(html);
+}
+function pipeTables(text) {
+  const lines = text.split("\n"), out = [];
+  const cells = (l) => l.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map(c => c.trim());
+  const row = (l) => /^\s*\|.*\|\s*$/.test(l), sep = (l) => /^\s*\|[\s:|-]+\|\s*$/.test(l) && l.includes("-");
+  for (let i = 0; i < lines.length;) {
+    if (row(lines[i]) && i + 1 < lines.length && sep(lines[i + 1])) {
+      const head = cells(lines[i]); i += 2;
+      const body = [];
+      while (i < lines.length && row(lines[i])) body.push(cells(lines[i++]));
+      out.push("", `<table class="exam-table"><thead><tr>${head.map(c => `<th>${c}</th>`).join("")}</tr></thead><tbody>${body.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table>`, "");
+    } else out.push(lines[i++]);
+  }
+  return out.join("\n");
+}
+
+// Editable HTML back to exam text. Unknown markup (from Word or a web page) keeps only its text.
+function toSource(root) {
+  const blocks = [];
+  let inline = "";
+  const flush = () => { const t = inline.replace(/[ \t]+\n/g, "\n").replace(/\n+$/, "").trim(); if (t) blocks.push(t); inline = ""; };
+  root.childNodes.forEach(n => {
+    if (n.nodeType === 1 && RICH_BLOCK.test(n.tagName)) { flush(); const b = blockSource(n); if (b) blocks.push(b); }
+    else inline += inlineSource(n);
+  });
+  flush();
+  return blocks.join("\n\n");
+}
+function blockSource(el) {
+  const tag = el.tagName;
+  // Figure notes left by the scan reading are kept as they are; the app uses them to hide unfinished questions.
+  if (tag === "FIGURE" || tag === "FIGCAPTION") return `<${tag.toLowerCase()}>${toSource(el)}</${tag.toLowerCase()}>`;
+  if (tag === "UL" || tag === "OL") {
+    const items = [...el.children].filter(li => li.tagName === "LI").map(li => `<li>${inlineHtml(li)}</li>`).join("");
+    return items ? `<${tag.toLowerCase()}>${items}</${tag.toLowerCase()}>` : "";
+  }
+  if (tag === "TABLE") {
+    const rows = [...el.querySelectorAll("tr")].map(tr => `<tr>${[...tr.children].map(c => {
+      const t = c.tagName === "TH" ? "th" : "td";
+      const span = (c.colSpan > 1 ? ` colspan="${c.colSpan}"` : "") + (c.rowSpan > 1 ? ` rowspan="${c.rowSpan}"` : "");
+      return `<${t}${span}>${inlineHtml(c)}</${t}>`;
+    }).join("")}</tr>`).join("");
+    const cap = el.querySelector("caption") ? inlineHtml(el.querySelector("caption")) : "";
+    return rows ? `<table class="exam-table">${cap ? `<caption>${cap}</caption>` : ""}<tbody>${rows}</tbody></table>` : "";
+  }
+  if ([...el.children].some(c => RICH_BLOCK.test(c.tagName))) return toSource(el);
+  const align = (el.style.textAlign || el.getAttribute("align") || "").toLowerCase();
+  const inner = [...el.childNodes].map(inlineSource).join("").replace(/\n+$/, "");
+  if (["center", "right", "justify"].includes(align) && inner.trim()) return `<p style="text-align:${align}">${inner.trim().replace(/\n/g, "<br>")}</p>`;
+  return inner.trim();
+}
+const inlineHtml = (el) => [...el.childNodes].map(inlineSource).join("").replace(/\n+$/, "").trim().replace(/\n/g, "<br>");
+function inlineSource(n) {
+  // A typed asterisk stays an asterisk: written as &#42; so the app never reads it as italics.
+  if (n.nodeType === 3) return n.nodeValue.replace(/\u00a0/g, " ").replace(/<(?=[A-Za-z/!])/g, "&lt;")
+    .split(MATH_SPLIT).map((part, i) => (i % 2 ? part : part.replace(/\*/g, "&#42;"))).join("");
+  if (n.nodeType !== 1) return "";
+  const tag = n.tagName;
+  if (tag === "BR") return "\n";
+  if (RICH_BLOCK.test(tag)) return "\n" + blockSource(n) + "\n";
+  let inner = [...n.childNodes].map(inlineSource).join("");
+  const st = n.style || {};
+  const bold = tag === "B" || tag === "STRONG" || /^(bold|[6-9]00)$/.test(st.fontWeight || "");
+  const italic = tag === "I" || tag === "EM" || st.fontStyle === "italic";
+  const under = tag === "U" || /underline/.test(st.textDecoration || st.textDecorationLine || "");
+  const sub = tag === "SUB" || st.verticalAlign === "sub", sup = tag === "SUP" || st.verticalAlign === "super";
+  if (!inner.trim()) return inner;
+  if (sub) inner = `<sub>${inner}</sub>`;
+  if (sup) inner = `<sup>${inner}</sup>`;
+  if (under) inner = `<u>${inner}</u>`;
+  if (italic) inner = `<em>${inner}</em>`;
+  if (bold) {
+    const [, lead, core, trail] = /^(\s*)([\s\S]*?)(\s*)$/.exec(inner);
+    inner = /[*\n]/.test(core) ? `${lead}<strong>${core}</strong>${trail}` : `${lead}**${core}**${trail}`;
+  }
+  return inner;
+}
+
+const richOf = (ta) => (ta && ta.nextElementSibling?.classList.contains("rich") ? ta.nextElementSibling : null);
+// Gives a textarea its Word-style twin. The textarea stays the source of truth for saving and the preview.
+function attachRich(ta) {
+  if (!ta || richOf(ta)) return;
+  ta.classList.add("src");
+  const rich = Object.assign(document.createElement("div"), { className: "rich", contentEditable: "true", spellcheck: true });
+  rich.lang = "es";
+  rich.dataset.ph = ta.placeholder || "";
+  rich.innerHTML = toVisual(ta.value);
+  ta.after(rich);
+  rich.addEventListener("input", e => {
+    e.stopPropagation();
+    ta._fromRich = true;
+    ta.value = toSource(rich);
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
+    ta._fromRich = false;
+    rich.classList.toggle("empty", !rich.textContent.trim() && !rich.querySelector("table,li"));
+  });
+  ta.addEventListener("input", () => { if (!ta._fromRich) { rich.innerHTML = toVisual(ta.value); } });
+  rich.addEventListener("focus", () => { state.lastArea = ta; });
+  rich.addEventListener("paste", e => {
+    const html = e.clipboardData?.getData("text/html"), text = e.clipboardData?.getData("text/plain");
+    if (e.clipboardData?.files?.length) return;
+    e.preventDefault();
+    // Pasted Word or web text keeps bold, italics, lists and tables, and drops the rest.
+    let src = text || "";
+    if (html) { const tmp = document.createElement("div"); tmp.innerHTML = window.DOMPurify.sanitize(html); src = toSource(tmp); }
+    document.execCommand("insertHTML", false, toVisual(src));
+  });
+  rich.addEventListener("keydown", e => {
+    const cell = window.getSelection()?.anchorNode?.parentElement?.closest?.("td,th");
+    if (e.key === "Tab" && cell && rich.contains(cell)) {
+      e.preventDefault();
+      const all = [...rich.querySelectorAll("td,th")];
+      const next = all[all.indexOf(cell) + (e.shiftKey ? -1 : 1)];
+      if (next) { const r = document.createRange(); r.selectNodeContents(next); const s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+      else if (!e.shiftKey) {
+        richTable("row+");
+        const first = cell.parentElement.nextElementSibling?.firstElementChild;
+        if (first) { const r = document.createRange(); r.selectNodeContents(first); const s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+      }
+    }
+  });
+  rich.classList.toggle("empty", !rich.textContent.trim() && !rich.querySelector("table,li"));
+}
+function attachAllRich() { document.querySelectorAll("#form #f-stem, #form #f-stimulus, #form #f-passage, #f-opts textarea[data-letter]").forEach(attachRich); }
+
+// Remembers where the caret was in each Word-style field, so OCR and symbols land there.
+document.addEventListener("selectionchange", () => {
+  const s = window.getSelection();
+  if (!s?.rangeCount) return;
+  const rich = s.anchorNode?.parentElement?.closest?.(".rich") || (s.anchorNode?.classList?.contains?.("rich") ? s.anchorNode : null);
+  if (rich) rich._range = s.getRangeAt(0).cloneRange();
+  richToolbarState();
+});
+function richFocus(rich) {
+  rich.focus();
+  const s = window.getSelection();
+  if (s.rangeCount && rich.contains(s.anchorNode)) return;
+  const r = rich._range && rich.contains(rich._range.startContainer) ? rich._range : (() => { const x = document.createRange(); x.selectNodeContents(rich); x.collapse(false); return x; })();
+  s.removeAllRanges();
+  s.addRange(r);
+}
+function richInsert(rich, text) {
+  richFocus(rich);
+  if (/\n|\*\*|<|\|/.test(text)) document.execCommand("insertHTML", false, toVisual(text));
+  else document.execCommand("insertText", false, text);
+}
+function selectAllField(area) {
+  const rich = state.visual && richOf(area);
+  if (!rich) { area.focus(); area.select(); return; }
+  rich.focus();
+  const r = document.createRange(); r.selectNodeContents(rich);
+  const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+}
+
+function setVisual(on) {
+  state.visual = on;
+  remember("visual", on);
+  $("#form")?.classList.toggle("visual", on);
+  document.querySelectorAll("#form textarea.src").forEach(ta => { const r = richOf(ta); if (r) r.innerHTML = toVisual(ta.value); fit(ta); });
+  document.querySelectorAll(".fbar .vis-only").forEach(b => { b.hidden = !on; });
+  $("#fmode").innerHTML = fmodeHtml();
+}
+const fmodeHtml = () => `<button class="${state.visual ? "on" : ""}" type="button" onclick="setVisual(true)" title="Ver el texto con formato, como en Word">Aa Formato</button><button class="${state.visual ? "" : "on"}" type="button" onclick="setVisual(false)" title="Ver el texto como se guarda (marcas ** y $)">‹/› Código</button>`;
+
+// Format commands. In the Word-style view they act on the selection; in the code view they wrap it in markup.
+function richCmd(cmd, arg) {
+  const area = state.lastArea;
+  if (!area || !area.isConnected) { toast("Primero haz clic en un campo de texto"); return; }
+  const rich = state.visual && richOf(area);
+  if (rich) {
+    richFocus(rich);
+    if (cmd === "table") {
+      const mark = "tbl" + Date.now();
+      document.execCommand("insertHTML", false, `<table class="exam-table" data-new="${mark}"><tbody><tr><th>Columna 1</th><th>Columna 2</th></tr><tr><td>&nbsp;</td><td>&nbsp;</td></tr></tbody></table><div><br></div>`);
+      // The caret starts in the first cell, ready to type over it.
+      const t = rich.querySelector(`[data-new="${mark}"]`);
+      if (t) { t.removeAttribute("data-new"); const r = document.createRange(); r.selectNodeContents(t.querySelector("th,td")); const s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+      return;
+    }
+    if (cmd === "clear") { document.execCommand("removeFormat"); document.execCommand("justifyLeft"); return; }
+    document.execCommand(cmd, false, arg ?? null);
+    return;
+  }
+  const sel = area.value.slice(area.selectionStart, area.selectionEnd) || "texto";
+  const wrap = {
+    bold: `**${sel}**`, italic: `<em>${sel}</em>`, underline: `<u>${sel}</u>`, subscript: `<sub>${sel}</sub>`, superscript: `<sup>${sel}</sup>`,
+    insertUnorderedList: `\n\n<ul>${sel.split("\n").map(l => `<li>${l}</li>`).join("")}</ul>\n\n`,
+    insertOrderedList: `\n\n<ol>${sel.split("\n").map(l => `<li>${l}</li>`).join("")}</ol>\n\n`,
+    justifyCenter: `\n\n<p style="text-align:center">${sel}</p>\n\n`, justifyRight: `\n\n<p style="text-align:right">${sel}</p>\n\n`,
+    justifyFull: `\n\n<p style="text-align:justify">${sel}</p>\n\n`, justifyLeft: sel,
+    table: "\n| Columna 1 | Columna 2 |\n|---|---|\n| | |\n", clear: sel.replace(/<[^>]+>|\*\*/g, ""),
+  }[cmd];
+  if (wrap != null) insertAt(area, wrap);
+}
+
+// Rows and columns of a table being edited in a text field.
+function richTable(op) {
+  const s = window.getSelection();
+  const cell = s?.anchorNode && (s.anchorNode.nodeType === 1 ? s.anchorNode : s.anchorNode.parentElement)?.closest("td,th");
+  const rich = cell?.closest(".rich");
+  if (!cell || !rich) { toast("Pon el cursor dentro de una celda de la tabla"); return; }
+  const tr = cell.parentElement, table = cell.closest("table"), k = [...tr.children].indexOf(cell);
+  if (op === "row+") { const n = tr.cloneNode(true); n.querySelectorAll("th,td").forEach(c => { const td = document.createElement("td"); td.innerHTML = "&nbsp;"; c.replaceWith(td); }); tr.after(n); }
+  if (op === "row-" && table.querySelectorAll("tr").length > 1) tr.remove();
+  if (op === "col+") table.querySelectorAll("tr").forEach(r => { const c = r.children[k]; const n = document.createElement(c?.tagName === "TH" ? "th" : "td"); n.innerHTML = "&nbsp;"; (c ? c.after(n) : r.appendChild(n)); });
+  if (op === "col-" && tr.children.length > 1) table.querySelectorAll("tr").forEach(r => r.children[k]?.remove());
+  if (op === "del") table.remove();
+  rich.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+// Lights up the buttons for the formatting under the caret, and shows the table buttons inside a table.
+function richToolbarState() {
+  const bar = $(".fbar");
+  if (!bar || !state.visual) return;
+  const s = window.getSelection();
+  const inRich = s?.anchorNode && (s.anchorNode.nodeType === 1 ? s.anchorNode : s.anchorNode.parentElement)?.closest(".rich");
+  bar.querySelectorAll("[data-cmd]").forEach(b => { let on = false; try { on = !!inRich && document.queryCommandState(b.dataset.cmd); } catch (e) { /* not a state command */ } b.classList.toggle("on", on); });
+  const inTable = !!inRich && !!(s.anchorNode.nodeType === 1 ? s.anchorNode : s.anchorNode.parentElement).closest("td,th");
+  const tb = $("#ftable");
+  if (tb) tb.hidden = !inTable;
+}
+
+const SYMBOLS = ["≤", "≥", "≠", "≈", "±", "×", "÷", "√", "π", "°", "²", "³", "½", "¼", "∞", "→", "←", "↔", "α", "β", "Δ", "θ", "λ", "μ", "Ω", "%", "€", "—"];
+function fmtInsert(kind) {
+  const area = state.lastArea;
+  if (!area || !area.isConnected) { toast("Primero haz clic en un campo de texto"); return; }
+  const rich = state.visual && richOf(area);
+  if (rich) richFocus(rich);
+  const sel = rich ? window.getSelection().toString() : area.value.slice(area.selectionStart, area.selectionEnd);
+  insertAt(area, {
+    bold: `**${sel || "texto"}**`,
+    italic: `*${sel || "texto"}*`,
+    math: `$${sel || "x^2"}$`,
+    frac: `$\\frac{${sel || "a"}}{b}$`,
+    table: "\n| Columna 1 | Columna 2 |\n|---|---|\n| | |\n",
+    sym: arguments[1],
+  }[kind]);
+}
+
+// Pasting or dropping a picture into the form adds it as a figure of the question.
+async function addPictureFile(file, option = null) {
+  try {
+    const res = await fetch(`${qpath()}/scan-figures${option ? `?option=${option}` : ""}`, { method: "POST", headers: { "Content-Type": file.type }, body: file });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+    await reloadFigures("Imagen añadida como figura");
+  } catch (err) { toast(err.message, true); }
+}
+document.addEventListener("paste", e => {
+  if (!document.body.classList.contains("editing") || $(".studio") || STATIC) return;
+  const file = [...(e.clipboardData?.items || [])].find(i => i.kind === "file" && i.type.startsWith("image/"))?.getAsFile();
+  if (file) { e.preventDefault(); addPictureFile(file, e.target.dataset?.letter || null); }
+});
+document.addEventListener("dragover", e => { if (e.target.closest?.("#form")) e.preventDefault(); });
+document.addEventListener("drop", e => {
+  const file = [...(e.dataTransfer?.files || [])].find(f => f.type.startsWith("image/"));
+  if (file && e.target.closest?.("#form") && !STATIC) { e.preventDefault(); addPictureFile(file, e.target.dataset?.letter || null); }
+});
+
+// ----- the PDF page: zoom, turn pages, draw a box ---------------------------------------
+
+function pdfPane() {
+  const d = state.detail, sc = d.scan;
+  const est = sc.estimated && !d.anchor;
+  return `<div class="pdfbar">
+      <button class="ib" onclick="turnPage(-1)" title="Página anterior">‹</button>
+      <span class="muted">pág.</span><input id="pg" type="number" min="1" value="${state.page}"><span class="muted">${sc.count ? "de " + sc.count : ""}</span>
+      <button class="ib" onclick="turnPage(1)" title="Página siguiente">›</button>
+      <span class="spacer"></span>
+      <button class="ib" onclick="zoomBy(1/1.25)" title="Alejar">−</button>
+      <button class="ib" onclick="zoomBy(0)" title="Ajustar al ancho">Ancho</button>
+      <button class="ib" onclick="zoomBy(1.25)" title="Acercar">+</button>
+      ${STATIC ? "" : `<button class="ib ${state.cropping ? "on" : ""}" id="cropbtn" onclick="state.cropping ? cancelCrop() : startCrop()" title="Dibuja un recuadro para recortar una figura o copiar su texto">✂ Recuadro</button>`}
+    </div>
+    ${est ? `<div class="note warn" style="margin:8px 10px 0">Página estimada: busca la pregunta con ‹ ›.</div>` : ""}
+    <div class="pdfscroll" id="pdfscroll">
+      <div class="pdfpage ${state.cropping ? "cropping" : ""}" id="pdfpage" style="width:${Math.round(state.zoom * 100)}%">
+        <img id="pdfimg" alt="página ${state.page} del PDF original" src="/api/scan/${encodeURIComponent(d.exam)}/${state.page}" draggable="false" onerror="pageMissing(this)">
+        <div class="ov" id="ov">${anchorMark()}</div>
+      </div>
+    </div>`;
+}
+function pageMissing(img) {
+  img.replaceWith(Object.assign(document.createElement("div"), { className: "note warn", textContent: "La página original no se pudo abrir. En esta copia en línea no hay PDF: ábrela con el editor del computador." }));
+}
+function anchorMark() {
+  const a = state.detail.anchor;
+  return a && a.page === state.page ? `<div class="anchor" style="top:${a.y * 100}%"><span>Q${state.detail.number}</span></div>` : "";
+}
+
+function bindPdf() {
+  const img = $("#pdfimg");
+  img.onerror = () => { img.replaceWith(Object.assign(document.createElement("p"), { className: "muted", style: "padding:16px", textContent: "No se pudo cargar esta página. Revisa pdf-sources.json, o instala PyMuPDF: python -m pip install pymupdf" })); };
+  img.onload = () => scrollToAnchor();
+  $("#pg").onchange = (e) => goPage(Number(e.target.value));
+  $("#pdfscroll").addEventListener("wheel", (e) => { if (!e.ctrlKey) return; e.preventDefault(); zoomBy(e.deltaY < 0 ? 1.1 : 1 / 1.1); }, { passive: false });
+  const ov = $("#ov");
+  let start = null;
+  const frac = (ev) => { const r = ov.getBoundingClientRect(); return [Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width)), Math.min(1, Math.max(0, (ev.clientY - r.top) / r.height))]; };
+  ov.onpointerdown = (ev) => {
+    if (!state.cropping || ev.button !== 0) return;
+    ev.preventDefault();
+    ov.setPointerCapture(ev.pointerId);
+    start = frac(ev);
+    state.box = [...start, ...start];
+    drawBox(false);
+  };
+  ov.onpointermove = (ev) => { if (!start) return; const p = frac(ev); state.box = [start[0], start[1], p[0], p[1]]; drawBox(false); };
+  ov.onpointerup = () => {
+    if (!start) return;
+    start = null;
+    const [x0, y0, x1, y1] = state.box;
+    if (Math.abs(x1 - x0) < 0.01 || Math.abs(y1 - y0) < 0.01) { state.box = null; drawBox(false); return; }
+    state.box = [Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1), Math.max(y0, y1)];
+    drawBox(true);
+  };
+}
+function scrollToAnchor() {
+  const a = state.detail.anchor, sc = $("#pdfscroll"), page = $("#pdfpage");
+  if (!sc || !page || !a || a.page !== state.page || state.scrolled === `${state.detail.number}:${state.page}`) return;
+  state.scrolled = `${state.detail.number}:${state.page}`;
+  sc.scrollTop = Math.max(0, page.offsetTop + a.y * page.offsetHeight - 40);
+}
+
+function drawBox(withBar) {
+  const ov = $("#ov");
+  ov.innerHTML = anchorMark();
+  if (!state.box) return;
+  const [x0, y0, x1, y1] = state.box;
+  const l = Math.min(x0, x1), t = Math.min(y0, y1), w = Math.abs(x1 - x0), h = Math.abs(y1 - y0);
+  ov.insertAdjacentHTML("beforeend", `<div class="box" style="left:${l * 100}%;top:${t * 100}%;width:${w * 100}%;height:${h * 100}%"></div>`);
+  if (!withBar) return;
+  const letters = state.opts.map(o => o.letter);
+  const tgt = state.cropTarget;
+  const bar = document.createElement("div");
+  bar.className = "cropbar";
+  bar.style.left = `${l * 100}%`;
+  // Near the bottom of the page the bar goes above the box, so it stays reachable.
+  if (t + h > 0.7) { bar.style.bottom = `calc(${(1 - t) * 100}% + 6px)`; } else { bar.style.top = `calc(${(t + h) * 100}% + 6px)`; }
+  const eng = `<select class="ib" title="Motor de OCR" onchange="setEngine(this.value)">${sel(ENGINES, state.engine)}</select>`;
+  if (tgt?.kind === "replace") bar.innerHTML = `<span class="lbl">Cambiar la figura por este recorte</span>
+       <button class="ib go" onclick="cropTo('${esc(tgt.option || "")}', '${esc(tgt.replaces)}')">Usar este recorte</button>
+       <button class="ib" onclick="cancelCrop()">Cancelar</button>`;
+  else if (tgt?.kind === "field") bar.innerHTML = `<span class="lbl">Leer el texto del recuadro</span>
+       <button class="ib go" onclick="ocrTo('${tgt.field}')">${tgt.field === "opts" ? "Repartir en opciones A–D" : `Escribir en ${esc(fieldName($("#" + tgt.field)))}`}</button>
+       ${eng}<button class="ib" onclick="cancelCrop()">✕</button>`;
+  else bar.innerHTML = `<span class="lbl">Imagen del recuadro en…</span>
+       <button class="ib" onclick="cropTo('')">Enunciado</button>
+       ${letters.map(l => `<button class="ib" onclick="cropTo('${esc(l)}')">Opción ${esc(l)}</button>`).join("")}
+       <span class="lbl">Texto del recuadro (OCR)</span>
+       <button class="ib go" onclick="ocrTo('last')" title="Escribe el texto en el último campo que usaste">→ ${esc(fieldName(state.lastArea))}</button>
+       <button class="ib" onclick="ocrTo('opts')">Repartir en A–D</button>
+       <button class="ib" onclick="ocrTo('copy')">Copiar</button>
+       <button class="ib" onclick="tableFromBox()" title="Convierte la tabla del recuadro en una tabla editable">▦ Tabla</button>
+       ${eng}<button class="ib" onclick="cancelCrop()">✕</button>`;
+  ov.appendChild(bar);
+  bar.addEventListener("pointerdown", e => e.stopPropagation());
+}
+function fieldName(area) {
+  if (!area || !area.isConnected) return "enunciado";
+  if (area.dataset.letter) return `opción ${area.dataset.letter}`;
+  return { "f-stem": "enunciado", "f-stimulus": "texto propio", "f-passage": "texto compartido" }[area.id] || "campo";
+}
+
+function startCrop(replaces = null, option = "") {
+  state.cropping = true;
+  state.cropTarget = replaces ? { kind: "replace", replaces, option } : null;
+  state.box = null;
+  $("#pdfpage")?.classList.add("cropping");
+  $("#cropbtn")?.classList.add("on");
+  drawBox(false);
+  toast(replaces ? "Dibuja un recuadro sobre la figura en la página" : "Dibuja un recuadro sobre la página");
+}
+function cancelCrop() {
+  state.cropping = false; state.box = null; state.cropTarget = null;
+  $("#pdfpage")?.classList.remove("cropping");
+  $("#cropbtn")?.classList.remove("on");
+  if ($("#ov")) drawBox(false);
+}
+async function cropTo(option, replaces = null) {
+  try {
+    await api(`${qpath()}/crop`, J("POST", { page: state.page, box: state.box, option: option || null, replaces }));
+    cancelCrop();
+    await reloadFigures(option ? `Imagen guardada en la opción ${option}` : "Imagen guardada en el enunciado");
+  } catch (e) { toast(e.message, true); }
+}
+const ENGINES = [["auto", "OCR: el mejor disponible"], ["saved", "Azure (lectura guardada)"], ["azure", "Azure (leer ahora)"], ["local", "RapidOCR (sin internet)"]];
+const ENGINE_NAMES = { saved: "Azure guardado", azure: "Azure", local: "RapidOCR" };
+function setEngine(v) { state.engine = v; remember("engine", v); }
+
+// Starts a box whose text goes straight into one field (or is split into the options).
+function readInto(field) {
+  if (field !== "opts") state.lastArea = $("#" + field);
+  state.cropping = true;
+  state.cropTarget = { kind: "field", field };
+  state.box = null;
+  $("#pdfpage")?.classList.add("cropping");
+  $("#cropbtn")?.classList.add("on");
+  drawBox(false);
+  toast(field === "opts" ? "Dibuja un recuadro sobre las opciones A–D" : `Dibuja un recuadro sobre el texto del ${fieldName($("#" + field))}`);
+}
+
+async function readBox(want) {
+  setSave(want === "table" ? "Leyendo la tabla…" : "Leyendo el texto…", "");
+  try {
+    return await api(`/api/exams/${encodeURIComponent(state.detail.exam)}/read`, J("POST", { page: state.page, box: state.box, engine: state.engine, want }));
+  } finally {
+    setSave(state.dirty ? "Cambios sin guardar" : "Sin cambios", state.dirty ? "dirty" : "");
+  }
+}
+
+async function ocrTo(dest) {
+  try {
+    const { text, engine } = await readBox("text");
+    const via = ENGINE_NAMES[engine] || engine;
+    if (dest === "copy") { await navigator.clipboard.writeText(text); toast(`Texto copiado (${via})`); }
+    else if (dest === "opts") {
+      const parts = splitOptions(text);
+      if (!parts) { toast("No encontré las letras A, B, C… en el recuadro. Prueba con un recuadro solo sobre las opciones.", true); return; }
+      syncOpts();
+      const byLetter = Object.fromEntries(state.opts.map(o => [o.letter, o]));
+      for (const [letter, t] of Object.entries(parts)) {
+        if (byLetter[letter]) byLetter[letter].text_md = t;
+        else state.opts.push({ letter, text_md: t, marked_in_scan: false });
+      }
+      state.opts.sort((x, y) => x.letter.localeCompare(y.letter));
+      drawOpts(); markDirty(); refreshPreview();
+      toast(`Opciones ${Object.keys(parts).join(", ")} escritas (${via}); revísalas con la página`);
+    } else {
+      const area = dest === "last" ? (state.lastArea && state.lastArea.isConnected ? state.lastArea : $("#f-stem")) : $("#" + dest);
+      if (!area.value.trim() || dest !== "last") selectAllField(area);
+      insertAt(area, text, true);
+      fit(area);
+      toast(`Texto escrito en ${fieldName(area)} (${via}); revísalo con la página`);
+    }
+    cancelCrop();
+  } catch (e) { toast(e.message, true); }
+}
+
+// "A. uno B. dos…" split by option letter. The first option's letter is often lost under the answer bubble, so text
+// before the first letter found is the option just before it.
+function splitOptions(text) {
+  const rx = /(^|\n|\s)([A-E])[.)]\s+/g;
+  const marks = [];
+  let m;
+  while ((m = rx.exec(text))) marks.push({ letter: m[2], at: m.index + m[1].length, start: rx.lastIndex });
+  const seq = [];
+  for (const mk of marks) { const want = seq.length ? String.fromCharCode(seq[seq.length - 1].letter.charCodeAt(0) + 1) : null; if (!want || mk.letter === want) seq.push(mk); }
+  if (seq.length < 2) return null;
+  const out = {};
+  const head = text.slice(0, seq[0].at).replace(/^[^A-Za-zÁÉÍÓÚÑáéíóúñ¿¡0-9$(]+/, "").trim();
+  if (head && seq[0].letter !== "A") out[String.fromCharCode(seq[0].letter.charCodeAt(0) - 1)] = head;
+  seq.forEach((mk, i) => { out[mk.letter] = text.slice(mk.start, i + 1 < seq.length ? seq[i + 1].at : undefined).replace(/\s+/g, " ").trim(); });
+  return out;
+}
+
+async function tableFromBox() {
+  try {
+    const { spec, engine } = await readBox("table");
+    cancelCrop();
+    openStudio("new", spec);
+    toast(`Tabla leída con ${ENGINE_NAMES[engine] || engine}; revisa cada celda con la página`);
+  } catch (e) { toast(e.message, true); }
+}
+
+// Joins lines cut by the scan: hyphenated word breaks, single line breaks inside a paragraph, doubled spaces.
+function cleanText(t) {
+  return t.replace(/\r/g, "")
+    .replace(/(\p{L})-\n(\p{Ll})/gu, "$1$2")
+    .replace(/([^\n])\n(?!\n|\s*[A-E][.)]\s|\s*[-•*|]|\s*\d+[.)]\s)/g, "$1 ")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/ +([,.;:?!)])/g, "$1")
+    .replace(/([¿¡(]) +/g, "$1")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+function cleanField() {
+  const area = state.lastArea;
+  if (!area || !area.isConnected) { toast("Primero haz clic en un campo de texto"); return; }
+  const before = area.value, after = cleanText(before);
+  if (after === before) { toast("El texto ya estaba limpio"); return; }
+  const rich = state.visual && richOf(area);
+  if (rich) { selectAllField(area); document.execCommand("insertHTML", false, toVisual(after)); toast("Texto limpiado (Ctrl+Z lo deshace)"); return; }
+  area.focus();
+  area.select();
+  document.execCommand("insertText", false, after) || (area.value = after);
+  area.dispatchEvent(new Event("input", { bubbles: true }));
+  toast("Texto limpiado (Ctrl+Z lo deshace)");
+}
+
+function goPage(p) {
+  const max = state.detail.scan.count || Infinity;
+  state.page = Math.min(max, Math.max(1, p || 1));
+  state.box = null;
+  $("#pdfpane").innerHTML = pdfPane();
+  bindPdf();
+}
+function turnPage(delta) { goPage(state.page + delta); }
+function zoomBy(f) {
+  const sc = $("#pdfscroll"), keep = sc.scrollTop / (sc.scrollHeight || 1);
+  state.zoom = f === 0 ? 1 : Math.min(4, Math.max(0.5, state.zoom * f));
+  $("#pdfpage").style.width = `${Math.round(state.zoom * 100)}%`;
+  sc.scrollTop = keep * sc.scrollHeight;
+}
+
+function bindSplit() {
+  const split = $("#split"), grid = $("#edgrid");
+  if (!split) return;
+  split.onpointerdown = (e) => {
+    split.setPointerCapture(e.pointerId);
+    split.onpointermove = (ev) => {
+      const r = grid.getBoundingClientRect();
+      const pct = Math.min(70, Math.max(20, (ev.clientX - r.left) / r.width * 100));
+      grid.style.setProperty("--pdfw", pct + "%");
+    };
+    split.onpointerup = () => { split.onpointermove = null; };
+  };
+}
+
+// ----- chart and table studio ------------------------------------------------------------
+
+const KIND_NAMES = { bar: "Barras", line: "Líneas", combo: "Barras + línea", scatter: "Dispersión", curve: "Curva", pie: "Torta", table: "Tabla", map: "Mapa", geometry: "Geometría", diagram: "Diagrama" };
+const KIND_ICONS = {
+  bar: '<rect x="4" y="12" width="6" height="12"/><rect x="14" y="6" width="6" height="18"/><rect x="24" y="15" width="6" height="9"/>',
+  line: '<polyline points="3,20 12,10 20,15 31,4" fill="none" stroke-width="2.5"/>',
+  combo: '<rect x="4" y="14" width="6" height="10"/><rect x="14" y="10" width="6" height="14"/><rect x="24" y="16" width="6" height="8"/><polyline points="3,10 17,4 31,8" fill="none" stroke-width="2"/>',
+  scatter: '<circle cx="7" cy="18" r="2.5"/><circle cx="13" cy="12" r="2.5"/><circle cx="21" cy="14" r="2.5"/><circle cx="28" cy="6" r="2.5"/>',
+  curve: '<path d="M3 22 C 12 -4, 20 30, 31 6" fill="none" stroke-width="2.5"/>',
+  pie: '<circle cx="17" cy="13" r="10" fill="none" stroke-width="2"/><path d="M17 13 L17 3 A10 10 0 0 1 26 17 Z"/>',
+  table: '<rect x="3" y="4" width="28" height="18" fill="none" stroke-width="2"/><line x1="3" y1="10" x2="31" y2="10" stroke-width="2"/><line x1="17" y1="4" x2="17" y2="22" stroke-width="2"/>',
+  map: '<path d="M8 3 L20 5 L27 12 L22 23 L12 22 L6 14 Z" fill="none" stroke-width="2"/><path d="M14 8 L20 10 L18 16 L12 15 Z"/>',
+  geometry: '<polygon points="4,22 30,22 12,4" fill="none" stroke-width="2"/><path d="M8 22 A4 4 0 0 0 7 19" fill="none" stroke-width="1.5"/>',
+  diagram: '<rect x="3" y="14" width="12" height="9" fill="none" stroke-width="2"/><circle cx="24" cy="9" r="6" fill="none" stroke-width="2"/><line x1="15" y1="18" x2="19" y2="13" stroke-width="2"/>',
+};
+const CAT_KINDS = ["bar", "line", "combo"];
+const PT_KINDS = ["scatter", "curve"];
+const PATTERNS = [["", "Automático"], ["hatch", "Rayado"], ["solid", "Negro"], ["white", "Blanco"], ["dots", "Puntos"], ["vhatch", "Rayas verticales"], ["hhatch", "Rayas horizontales"], ["xhatch", "Cuadriculado"], ["sparse", "Puntos sueltos"], ["dense", "Denso"], ["lightgrey", "Gris claro"], ["grey", "Gris"], ["darkgrey", "Gris oscuro"]];
+const MARKERS = [["", "Automático"], ["circle", "Círculo"], ["square", "Cuadrado"], ["triangle", "Triángulo"], ["dot", "Punto lleno"], ["diamond", "Rombo"], ["star", "Estrella"], ["cross", "Cruz"], ["none", "Sin marcador"]];
+const STYLES = [["", "Continua"], ["dashed", "Discontinua"], ["dotted", "Punteada"], ["dashdot", "Raya y punto"]];
+const MAP_FILLS = [["", "Sin relleno"], ["#ffffff", "Blanco"], ["#eeeeee", "Gris muy claro"], ["#bbbbbb", "Gris claro"], ["#888888", "Gris medio"], ["#666666", "Gris oscuro"], ["#222222", "Casi negro"], ["solid", "Negro"], ["white", "Blanco (patrón)"], ["hatch", "Rayado"], ["dots", "Puntos"]];
+const REGIONS = { "colombia-departamentos": "Colombia por departamentos", "colombia-pais": "Colombia (país)", "sudamerica": "Suramérica", "mundo": "Mundo", "europa": "Europa", "europa-1914": "Europa 1914" };
+
+function starter(kind) {
+  const xy = { x: { label: "Eje X" }, y: { label: "Eje Y" } };
+  return {
+    bar: { kind, categories: ["A", "B", "C"], series: [{ name: "", values: [10, 20, 15] }], ...xy },
+    line: { kind, categories: ["2019", "2020", "2021"], series: [{ name: "", values: [10, 20, 15] }], ...xy },
+    combo: { kind, categories: ["A", "B", "C"], series: [{ name: "Barras", type: "bar", values: [10, 20, 15] }, { name: "Línea", type: "line", values: [12, 18, 22] }], ...xy },
+    scatter: { kind, series: [{ points: [[1, 2], [2, 3], [3, 5]] }], ...xy },
+    curve: { kind, series: [{ points: [[0, 0.2], [0.5, 0.8], [1, 0.4]] }], ...xy },
+    pie: { kind, slices: [{ label: "Parte 1", value: 1 }, { label: "Parte 2", value: 3 }] },
+    table: { kind, headers: ["Columna 1", "Columna 2"], rows: [["", ""], ["", ""]] },
+    map: { kind, region: "colombia-departamentos", fills: {} },
+    geometry: { kind, points: { A: [0, 0], B: [4, 0], C: [1, 3] }, segments: [{ a: "A", b: "B" }, { a: "B", b: "C" }, { a: "C", b: "A" }] },
+    diagram: { kind, shapes: [{ type: "rect", x: 10, y: 10, w: 80, h: 40 }, { type: "text", x: 50, y: 34, text: "texto", anchor: "middle" }] },
+  }[kind];
+}
+
+// Moving between kinds keeps the data that fits: categories and series, or the table's cells.
+function convert(spec, to) {
+  const from = spec.kind;
+  if (from === to) return spec;
+  const keep = { title: spec.title };
+  const base = starter(to);
+  let cats = null, series = null;
+  if (CAT_KINDS.includes(from)) { cats = spec.categories || []; series = spec.series || []; }
+  if (from === "table") {
+    const rows = spec.rows || [];
+    const head = spec.headers || [];
+    cats = rows.map(r => String(typeof r[0] === "object" ? r[0]?.text ?? "" : r[0] ?? ""));
+    series = head.slice(1).map((h, i) => ({ name: String(typeof h === "object" ? h.text ?? "" : h), values: rows.map(r => parseNum(typeof r[i + 1] === "object" ? r[i + 1]?.text : r[i + 1])) }));
+  }
+  if (from === "pie" && spec.slices) { cats = spec.slices.map(s => s.label); series = [{ name: "", values: spec.slices.map(s => s.value) }]; }
+  if (cats && series) {
+    if (CAT_KINDS.includes(to)) {
+      const s = series.map((x, i) => {
+        const out = { name: x.name ?? "", values: x.values };
+        if (to === "combo") out.type = i === 0 ? "bar" : "line";
+        if (to !== "combo" && x.pattern && to === "bar") out.pattern = x.pattern;
+        return out;
+      });
+      return { ...base, ...keep, x: spec.x || base.x, y: spec.y || base.y, categories: cats, series: s };
+    }
+    if (to === "table") return { ...base, ...keep, headers: [spec.x?.label || "", ...series.map(s => s.name || "")], rows: cats.map((c, j) => [c, ...series.map(s => numText(s.values?.[j]))]) };
+    if (to === "pie") return { ...base, ...keep, slices: cats.map((c, j) => ({ label: c, value: series[0]?.values?.[j] ?? 0 })) };
+  }
+  return { ...base, ...keep };
+}
+
+// Numbers as typed in Colombia: 1.200 is twelve hundred and 12,5 is twelve and a half.
+function parseNum(v) {
+  if (v == null) return null;
+  let s = String(v).trim().replace(/\s|%/g, "");
+  if (s === "") return null;
+  if (s.includes(",") && s.includes(".")) s = s.replace(/\./g, "").replace(",", ".");
+  else if (s.includes(",")) s = s.replace(",", ".");
+  else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+  const n = Number(s);
+  return Number.isFinite(n) ? n : v;
+}
+const numText = (v) => (v == null ? "" : typeof v === "number" ? String(v).replace(".", ",") : String(v));
+
+const studio = { draft: null, mode: "form" };
+
+function openStudio(id, given = null) {
+  const d = state.detail;
+  const f = id === "new" ? null : d.native_figures.find(x => x.id === id);
+  const spec = given || (f?.spec ? JSON.parse(JSON.stringify(f.spec)) : starter(f?.kind || "bar"));
+  if (f && !spec.kind) spec.kind = f.kind;
+  studio.draft = { id, target: f?.target || "stem", option: f?.option || "", fidelity: f?.fidelity || "draft", spec };
+  Object.assign(studio, { hist: [], sel: null, brush: null, view: null, drag: false, cell: null });
+  studio.mode = "form";
+  studio.page = state.page;
+  document.body.insertAdjacentHTML("beforeend", `<div class="studio" id="studio"></div>`);
+  drawStudio();
+}
+function closeStudio() { $("#studio")?.remove(); studio.draft = null; }
+
+function drawStudio() {
+  const dr = studio.draft, sp = dr.spec, d = state.detail;
+  const letters = state.opts.map(o => o.letter);
+  $("#studio").innerHTML = `
+    <div class="stbar">
+      <b style="font:700 18px 'Bricolage Grotesque'">${dr.id === "new" ? "Nueva figura" : "Editar figura"} · Q${d.number}</b>
+      <label class="switch">Va en <select id="st-target">
+        <option value="stem" ${dr.target === "stem" ? "selected" : ""}>el enunciado</option>
+        ${letters.map(l => `<option value="opt:${esc(l)}" ${dr.target === "option" && dr.option === l ? "selected" : ""}>la opción ${esc(l)}</option>`).join("")}
+      </select></label>
+      <label class="switch">Revisión <select id="st-fid">${[["draft", "Borrador"], ["checked", "Revisada"], ["final", "Final"]].map(([v, l]) => `<option value="${v}" ${dr.fidelity === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+      <span class="spacer"></span>
+      <div class="seg"><button class="${studio.mode === "form" ? "on" : ""}" onclick="studioMode('form')">Formulario</button><button class="${studio.mode === "json" ? "on" : ""}" onclick="studioMode('json')">JSON</button></div>
+      <button class="ib" onclick="closeStudio()">Cancelar (Esc)</button>
+      <button class="ib go" onclick="saveStudio()">Guardar figura</button>
+    </div>
+    <div class="stgrid">
+      <div>
+        <div class="pdfbar" style="margin:-12px -14px 8px;position:sticky;top:-12px;z-index:2">
+          <button class="ib" onclick="studioPage(-1)">‹</button><span class="muted">página ${studio.page}</span><button class="ib" onclick="studioPage(1)">›</button>
+          <span class="muted" style="font-size:12px">Copia los datos de aquí</span>
+        </div>
+        <img src="/api/scan/${encodeURIComponent(d.exam)}/${studio.page}" style="width:100%;background:#fff" alt="página original" onload="studioScroll(this)">
+      </div>
+      <div id="st-cv"><div class="label">Así la verán los estudiantes · edítala aquí mismo</div>
+        <div class="cvbar" id="cv-bar"></div>
+        <div class="cvwrap" id="cv-wrap"><div class="prevbox" id="st-prev"></div></div>
+        <div class="cvhint" id="cv-hint"></div><div id="st-probs"></div></div>
+      <div id="st-form"></div>
+    </div>`;
+  $("#st-target").onchange = (e) => { const v = e.target.value; dr.target = v === "stem" ? "stem" : "option"; dr.option = v.startsWith("opt:") ? v.slice(4) : ""; };
+  $("#st-fid").onchange = (e) => { dr.fidelity = e.target.value; };
+  drawStudioForm();
+}
+function studioScroll(img) {
+  const a = state.detail.anchor;
+  if (a && a.page === studio.page) img.parentElement.scrollTop = Math.max(0, img.offsetTop + a.y * img.offsetHeight - 60);
+}
+function studioPage(delta) {
+  studio.page = Math.max(1, Math.min(state.detail.scan.count || 999, studio.page + delta));
+  const img = $("#studio .stgrid img");
+  img.src = `/api/scan/${encodeURIComponent(state.detail.exam)}/${studio.page}`;
+  $("#studio .pdfbar .muted").textContent = `página ${studio.page}`;
+}
+function studioMode(mode) {
+  if (mode === studio.mode) return;
+  if (studio.mode === "json") { try { studio.draft.spec = JSON.parse($("#st-json").value); } catch (e) { toast("El JSON no es válido: " + e.message, true); return; } }
+  studio.mode = mode;
+  $("#studio .seg").innerHTML = `<button class="${mode === "form" ? "on" : ""}" onclick="studioMode('form')">Formulario</button><button class="${mode === "json" ? "on" : ""}" onclick="studioMode('json')">JSON</button>`;
+  drawStudioForm();
+}
+
+function studioPreview() {
+  const sp = studio.draft.spec;
+  const f = { kind: sp.kind, spec: sp };
+  const problems = figProblems(f);
+  $("#st-prev").innerHTML = problems.length ? `<p class="muted" style="color:var(--paper-2)">Todavía no se puede dibujar.</p>` : drawNative(studio.view ? { kind: sp.kind, spec: studio.view } : f);
+  if (!problems.length) bindCanvas();
+  $("#st-probs").innerHTML = problems.length
+    ? `<div class="note bad" style="margin-top:10px"><b>Falta arreglar</b><ul class="problems" style="color:inherit">${problems.slice(0, 8).map(p => `<li>${esc(p)}</li>`).join("")}</ul></div>`
+    : `<div class="note ok" style="margin-top:10px">Lista: el motor de la app la dibuja así.</div>`;
+}
+
+const sel = (opts, cur) => opts.map(([v, l]) => `<option value="${esc(v)}" ${String(cur ?? "") === v ? "selected" : ""}>${esc(l)}</option>`).join("");
+const inp = (path, label, val, type = "text", extra = "") => `<label>${label}<input data-p="${path}" data-t="${type === "number" ? "num" : "str"}" value="${esc(val ?? "")}" ${extra}></label>`;
+function getPath(o, path) { return path.split(".").reduce((a, k) => (a == null ? a : a[k]), o); }
+function setPath(o, path, v) {
+  const keys = path.split(".");
+  let cur = o;
+  keys.slice(0, -1).forEach(k => { if (cur[k] == null || typeof cur[k] !== "object") cur[k] = {}; cur = cur[k]; });
+  const last = keys[keys.length - 1];
+  if (v === undefined || v === "" || v === null) delete cur[last]; else cur[last] = v;
+}
+
+function drawStudioForm() {
+  const sp = studio.draft.spec, box = $("#st-form");
+  if (studio.mode === "json") {
+    box.innerHTML = `<div class="sec"><div class="label">JSON de la figura</div><textarea id="st-json" style="min-height:60vh;font:13px/1.4 ui-monospace,Menlo,monospace">${esc(JSON.stringify(sp, null, 2))}</textarea>
+      <p class="muted" style="font-size:12px">Para opciones avanzadas (notas, celdas combinadas, formas). La vista previa se actualiza al escribir.</p></div>`;
+    $("#st-json").oninput = (e) => { try { studio.draft.spec = JSON.parse(e.target.value); studioPreview(); } catch (err) { $("#st-probs").innerHTML = `<div class="note bad">JSON: ${esc(err.message)}</div>`; } };
+    studioPreview();
+    return;
+  }
+  const kinds = Object.keys(KIND_NAMES).map(k => `<button class="${sp.kind === k ? "on" : ""}" onclick="setKind('${k}')"><svg viewBox="0 0 34 26" fill="currentColor" stroke="currentColor">${KIND_ICONS[k]}</svg>${KIND_NAMES[k]}</button>`).join("");
+  let body = "";
+  if (CAT_KINDS.includes(sp.kind) && !(sp.series || []).some(s => Array.isArray(s.points))) body = catForm(sp);
+  else if (PT_KINDS.includes(sp.kind) || sp.kind === "line") body = ptForm(sp);
+  else if (sp.kind === "pie") body = pieForm(sp);
+  else if (sp.kind === "table") body = tableForm(sp);
+  else if (sp.kind === "map") body = mapForm(sp);
+  else body = `<div class="sec"><div class="label">${esc(KIND_NAMES[sp.kind] || sp.kind)}</div>
+    <p class="muted">Las figuras de ${sp.kind === "geometry" ? "geometría" : "diagrama"} se dibujan con coordenadas. Ajústalas en la pestaña JSON viendo la vista previa.
+    Si es un dibujo, foto o esquema complejo, es más rápido cerrarlo y usar «✂ Recortar del PDF».</p>
+    <div class="frow">${inp("title", "Título", sp.title)}</div></div>`;
+  box.innerHTML = `<div class="kinds">${kinds}</div>${body}`;
+  box.oninput = box.onchange = (e) => {
+    const t = e.target;
+    if (t.dataset.p) {
+      const v = t.type === "checkbox" ? (t.dataset.inv ? (t.checked ? undefined : false) : (t.checked || undefined)) : t.dataset.t === "num" ? parseNum(t.value) ?? undefined : t.value;
+      setPath(sp, t.dataset.p, v);
+      if (["x", "y", "y2"].includes(t.dataset.p.split(".")[0])) { const ax = t.dataset.p.split(".")[0]; if (sp[ax] && !Object.keys(sp[ax]).length) delete sp[ax]; }
+    }
+    if (t.dataset.s != null) {
+      const s = sp.series[+t.dataset.s];
+      const v = t.type === "checkbox" ? (t.checked || undefined) : t.value;
+      if (t.dataset.k === "axis") setPath(s, "axis", v === "2" ? 2 : undefined);
+      else if (t.dataset.k === "name") { s.name = v; }
+      else setPath(s, t.dataset.k, v);
+      if (t.dataset.k === "type" && e.type === "change") { drawStudioForm(); return; }
+    }
+    if (t.dataset.area != null) { sp.fills = sp.fills || {}; if (t.value) sp.fills[t.dataset.area] = t.value; else delete sp.fills[t.dataset.area]; }
+    studioPreview();
+  };
+  bindGrids();
+  studioPreview();
+}
+function setKind(kind) { studio.draft.spec = convert(studio.draft.spec, kind); drawStudioForm(); }
+
+function axisBlock(sp, { x = true, xnum = false, y = true, y2 = false } = {}) {
+  return `<div class="sec"><div class="label">Títulos y ejes</div>
+    <div class="frow">${inp("title", "Título de la gráfica", sp.title)}</div>
+    <div class="frow">${x ? inp("x.label", "Título del eje X", sp.x?.label) : ""}${y ? inp("y.label", sp.orientation === "horizontal" ? "Título del eje de valores" : "Título del eje Y", sp.y?.label) : ""}</div>
+    ${y ? `<div class="frow">${inp("y.min", "Y mínimo", numText(sp.y?.min), "number")}${inp("y.max", "Y máximo", numText(sp.y?.max), "number")}${inp("y.step", "Y cada", numText(sp.y?.step), "number")}
+      <label>Números Y<select data-p="y.format">${sel([["", "Normal"], ["grouped", "Miles con punto"]], sp.y?.format)}</select></label></div>` : ""}
+    ${xnum ? `<div class="frow">${inp("x.min", "X mínimo", numText(sp.x?.min), "number")}${inp("x.max", "X máximo", numText(sp.x?.max), "number")}${inp("x.step", "X cada", numText(sp.x?.step), "number")}</div>` : ""}
+    ${y2 ? `<div class="frow">${inp("y2.label", "Título del 2.º eje Y", sp.y2?.label)}${inp("y2.min", "mín", numText(sp.y2?.min), "number")}${inp("y2.max", "máx", numText(sp.y2?.max), "number")}${inp("y2.step", "cada", numText(sp.y2?.step), "number")}</div>` : ""}
+    <div class="frow"><label>Leyenda<select data-legend onchange="studio.draft.spec.legend = this.value === 'off' ? false : undefined; if (this.value !== 'off') delete studio.draft.spec.legend;">${sel([["", "Automática (nombres de serie)"], ["off", "Sin leyenda"]], sp.legend === false ? "off" : "")}</select></label>
+      ${sp.kind === "bar" ? `<label>Barras<select data-p="orientation">${sel([["", "Verticales"], ["horizontal", "Horizontales"]], sp.orientation === "horizontal" ? "horizontal" : "")}</select></label>` : ""}
+      ${["line", "curve"].includes(sp.kind) ? `<label class="switch" style="flex-direction:row;align-items:center"><input type="checkbox" data-p="inverted" ${sp.inverted ? "checked" : ""}> Fondo negro</label>` : ""}
+      ${sp.kind === "curve" ? `<label class="switch" style="flex-direction:row;align-items:center"><input type="checkbox" data-p="y.ticks" ${sp.y?.ticks ? "checked" : ""}> Números en Y</label><label class="switch" style="flex-direction:row;align-items:center"><input type="checkbox" data-p="x.ticks" ${sp.x?.ticks ? "checked" : ""}> Números en X</label>` : ""}
+    </div></div>`;
+}
+
+function seriesOpts(sp, i) {
+  const s = sp.series[i];
+  const isBar = sp.kind === "bar" || (sp.kind === "combo" && s.type === "bar");
+  const isLine = sp.kind === "line" || sp.kind === "curve" || sp.kind === "scatter" || (sp.kind === "combo" && s.type === "line");
+  return `<div class="serrow"><b style="grid-column:1/-1;font-size:12px">${esc(s.name || `Serie ${i + 1}`)}</b>
+    ${sp.kind === "combo" ? `<span class="fcol"><label>Tipo<select data-s="${i}" data-k="type">${sel([["bar", "Barras"], ["line", "Línea"]], s.type)}</select></label></span>` : ""}
+    ${isBar ? `<span class="fcol"><label>Relleno<select data-s="${i}" data-k="pattern">${sel(PATTERNS, s.pattern)}</select></label></span>` : ""}
+    ${isLine ? `<span class="fcol"><label>Marcador<select data-s="${i}" data-k="marker">${sel(MARKERS, s.marker)}</select></label></span>
+      <span class="fcol"><label>Trazo<select data-s="${i}" data-k="style">${sel(STYLES, s.style)}</select></label></span>` : ""}
+    ${sp.kind === "scatter" ? `<label class="switch" style="font-size:12px"><input type="checkbox" data-s="${i}" data-k="lines" ${s.lines ? "checked" : ""}> Unir puntos</label>` : ""}
+    ${sp.kind === "line" ? `<label class="switch" style="font-size:12px"><input type="checkbox" data-s="${i}" data-k="area" ${s.area ? "checked" : ""}> Área rellena</label>` : ""}
+    ${sp.kind === "curve" ? `<span class="fcol"><label>Rótulo en la curva<input data-s="${i}" data-k="label" value="${esc(s.label || "")}"></label></span>` : ""}
+    ${["bar", "combo"].includes(sp.kind) ? `<span class="fcol"><label>Eje<select data-s="${i}" data-k="axis">${sel([["", "Principal"], ["2", "Segundo eje"]], s.axis === 2 ? "2" : "")}</select></label></span>` : ""}
+  </div>`;
+}
+
+// Bars, lines and combos: one row per category, one column per series. Paste straight from Excel.
+function catForm(sp) {
+  sp.categories = sp.categories || [];
+  sp.series = sp.series || [];
+  const matrix = [["Categoría", ...sp.series.map(s => s.name ?? "")], ...sp.categories.map((c, j) => [c, ...sp.series.map(s => numText(s.values?.[j]))])];
+  const y2 = sp.series.some(s => s.axis === 2) || sp.y2;
+  return `<div class="sec"><div class="label">Datos · cada fila es una categoría, cada columna una serie</div>
+      <div class="grid" data-grid="cat" data-matrix="${esc(JSON.stringify(matrix))}"></div>
+      <p class="muted" style="font-size:12px;margin:6px 0 0">Puedes pegar celdas copiadas de Excel o Sheets. La primera fila son los nombres de las series (déjalo vacío si el escaneo no muestra leyenda). Usa coma para decimales.</p>
+      ${sp.series.map((_, i) => seriesOpts(sp, i)).join("")}
+    </div>${axisBlock(sp, { y2 })}`;
+}
+
+// Scatter, curves and lines with numeric x: each series is a list of (x, y) points.
+function ptForm(sp) {
+  sp.series = sp.series || [];
+  const blocks = sp.series.map((s, i) => `<div style="margin-bottom:10px">
+      <div class="frow" style="align-items:end"><label>Nombre de la serie ${i + 1}<input data-s="${i}" data-k="name" value="${esc(s.name || "")}"></label>
+        <button class="ib warn" onclick="dropSeries(${i})" style="justify-self:start">Quitar serie</button></div>
+      <div class="grid" data-grid="pts" data-series="${i}" data-matrix="${esc(JSON.stringify([["x", "y"], ...(s.points || []).map(p => [numText(p[0]), numText(p[1])])]))}"></div>
+      ${seriesOpts(sp, i)}</div>`).join("");
+  return `<div class="sec"><div class="label">Puntos (x, y) por serie</div>${blocks}
+      <button class="ib" onclick="addPtSeries()">+ Serie</button>
+      ${sp.kind === "curve" ? `<p class="muted" style="font-size:12px">En una curva los puntos son la forma (de 0 a 1 sirve); no se imprimen números salvo que actives «Números».</p>` : ""}</div>
+    ${axisBlock(sp, { xnum: true })}`;
+}
+function addPtSeries() { studio.draft.spec.series.push({ name: "", points: [[0, 0], [1, 1]] }); drawStudioForm(); }
+function dropSeries(i) { studio.draft.spec.series.splice(i, 1); drawStudioForm(); }
+
+function pieForm(sp) {
+  if (sp.rings) return `<div class="sec"><div class="label">Torta con anillos</div><p class="muted">Esta torta tiene anillos: edítala en la pestaña JSON.</p></div>`;
+  sp.slices = sp.slices || [];
+  const matrix = [["Etiqueta", "Valor"], ...sp.slices.map(s => [s.label ?? "", numText(s.value)])];
+  return `<div class="sec"><div class="label">Partes de la torta</div>
+      <div class="grid" data-grid="pie" data-matrix="${esc(JSON.stringify(matrix))}"></div>
+      <div class="frow" style="margin-top:8px">
+        <label class="switch" style="flex-direction:row;align-items:center"><input type="checkbox" data-p="percent" data-inv="1" ${sp.percent === false ? "" : "checked"}> Mostrar %</label>
+        <label class="switch" style="flex-direction:row;align-items:center"><input type="checkbox" data-p="values" data-inv="1" ${sp.values === false ? "" : "checked"}> Mostrar valores</label>
+      </div></div>
+    <div class="sec"><div class="frow">${inp("title", "Título", sp.title)}</div></div>`;
+}
+
+function tableForm(sp) {
+  const spans = [...(sp.headers || []), ...(sp.rows || []).flat()].some(c => c && typeof c === "object");
+  if (spans) return `<div class="sec"><div class="label">Tabla con celdas combinadas</div><p class="muted">Esta tabla une celdas: edítala en la pestaña JSON (cada celda combinada es {"text", "colspan", "rowspan"}).</p></div>
+    <div class="sec"><div class="frow">${inp("title", "Título", sp.title)}</div></div>`;
+  const head = sp.headers && sp.headers.length;
+  const matrix = [...(head ? [sp.headers.map(String)] : []), ...(sp.rows || []).map(r => r.map(c => String(c ?? "")))];
+  return `<div class="sec"><div class="label">Celdas</div>
+      <label class="switch" style="margin-bottom:8px"><input type="checkbox" id="st-head" ${head ? "checked" : ""}> La primera fila es el encabezado</label>
+      <div class="grid" data-grid="table" data-matrix="${esc(JSON.stringify(matrix.length ? matrix : [["", ""]]))}"></div>
+      <p class="muted" style="font-size:12px;margin:6px 0 0">Copia la tabla tal como está impresa; deja vacías las celdas vacías. Puedes pegar desde Excel.</p></div>
+    <div class="sec"><div class="frow">${inp("title", "Título", sp.title)}${inp("maxWidth", "Ancho máximo (px)", numText(sp.maxWidth), "number")}</div></div>`;
+}
+
+function mapForm(sp) {
+  const doc = MAPDOCS[sp.region];
+  const names = doc ? doc.features.map(f => f.name).sort((a, b) => a.localeCompare(b, "es")) : [];
+  const fills = sp.fills || {};
+  const unknown = Object.keys(fills).filter(n => !names.includes(n));
+  const fillOpts = (cur) => sel(MAP_FILLS.some(([v]) => v === (cur ?? "")) ? MAP_FILLS : [...MAP_FILLS, [cur, cur]], cur ?? "");
+  const legend = (sp.legend || []).map((l, i) => `<div class="frow" style="grid-template-columns:1fr 140px auto;align-items:end">
+      <label>Texto<input data-p="legend.${i}.label" value="${esc(l.label)}"></label><label>Relleno<select data-p="legend.${i}.fill">${fillOpts(l.fill)}</select></label>
+      <button class="ib warn" onclick="studio.draft.spec.legend.splice(${i},1);drawStudioForm()">✕</button></div>`).join("");
+  return `<div class="sec"><div class="label">Mapa</div>
+      <div class="frow"><label>Región<select onchange="studio.draft.spec.region = this.value; drawStudioForm()">${sel(Object.entries(REGIONS), sp.region)}</select></label>${inp("title", "Título", sp.title)}</div>
+      ${doc ? "" : `<div class="note bad">No se cargó el contorno de esta región.</div>`}
+      ${unknown.length ? `<div class="note warn">Áreas que el mapa no tiene: ${esc(unknown.join(", "))}. <a href="#" onclick="unknownOut();return false">Quitarlas</a></div>` : ""}
+    </div>
+    <div class="sec"><div class="label">Relleno de cada área (como en el escaneo)</div>
+      <div class="frow" style="grid-template-columns:1fr auto auto"><label>Pintar todas con<select id="st-allfill">${sel(MAP_FILLS, "")}</select></label>
+        <button class="ib" style="align-self:end" onclick="fillAll()">Aplicar a todas</button></div>
+      <div class="arealist">${names.map(n => `<label><span>${esc(n)}</span><select data-area="${esc(n)}">${fillOpts(fills[n])}</select></label>`).join("")}</div>
+    </div>
+    <div class="sec"><div class="label">Leyenda</div>${legend}<button class="ib" onclick="(studio.draft.spec.legend = studio.draft.spec.legend || []).push({label:'', fill:'#bbbbbb'});drawStudioForm()">+ Entrada</button>
+      <p class="muted" style="font-size:12px">Puntos y rótulos (ciudades, nombres) van en la pestaña JSON: points y labels con lon y lat.</p></div>`;
+}
+function unknownOut() { const sp = studio.draft.spec, names = new Set((MAPDOCS[sp.region]?.features || []).map(f => f.name)); Object.keys(sp.fills || {}).forEach(n => { if (!names.has(n)) delete sp.fills[n]; }); drawStudioForm(); }
+function fillAll() { const v = $("#st-allfill").value, sp = studio.draft.spec; sp.fills = {}; if (v) (MAPDOCS[sp.region]?.features || []).forEach(f => { sp.fills[f.name] = v; }); drawStudioForm(); }
+
+// A small spreadsheet: edit cells, add or remove rows and columns, paste a block from Excel.
+function bindGrids() {
+  document.querySelectorAll("#st-form [data-grid]").forEach(el => {
+    const kind = el.dataset.grid;
+    let m = JSON.parse(el.dataset.matrix);
+    const fixedCols = kind === "pts" || kind === "pie";
+    const hasHead = () => kind !== "table" || $("#st-head")?.checked;
+    const draw = () => {
+      const cols = Math.max(...m.map(r => r.length));
+      m = m.map(r => [...r, ...Array(cols - r.length).fill("")]);
+      el.innerHTML = `<table><tbody>${m.map((r, i) => `<tr>
+        <td class="rh">${i === 0 && hasHead() ? "" : `<button class="x" title="Quitar fila" data-delrow="${i}">✕</button>`}</td>
+        ${r.map((c, j) => { const head = i === 0 && hasHead(); const tag = head ? "th" : "td";
+          const ro = head && fixedCols ? "readonly" : "";
+          return `<${tag}><input ${head ? `data-hcol="${j}"` : ""} data-r="${i}" data-c="${j}" value="${esc(c)}" ${ro} ${head && j === 0 && kind === "cat" ? "readonly" : ""} placeholder="${head && kind === "cat" && j > 0 ? `Serie ${j}` : ""}"></${tag}>`; }).join("")}
+        ${i === 0 && !fixedCols && cols > 1 ? "" : ""}</tr>`).join("")}
+        ${!fixedCols ? `<tr><td class="rh"></td>${m[0].map((_, j) => `<td style="text-align:center">${(kind === "cat" && j === 0) || m[0].length <= 1 ? "" : `<button class="x" data-delcol="${j}" title="Quitar columna">✕ col</button>`}</td>`).join("")}</tr>` : ""}
+        </tbody></table>`;
+      const btns = el.nextElementSibling?.classList?.contains("gbtns") ? el.nextElementSibling : el.insertAdjacentElement("afterend", Object.assign(document.createElement("div"), { className: "gbtns" }));
+      btns.innerHTML = `<button class="ib" data-addrow>+ Fila</button>${fixedCols ? "" : `<button class="ib" data-addcol>+ ${kind === "cat" ? "Serie" : "Columna"}</button>`}`;
+      btns.querySelector("[data-addrow]").onclick = () => { m.push(Array(m[0].length).fill("")); commit(true); };
+      const ac = btns.querySelector("[data-addcol]"); if (ac) ac.onclick = () => { m = m.map(r => [...r, ""]); commit(true); };
+    };
+    const commit = (redraw) => { apply(kind, m, el); if (redraw && (kind === "cat")) { drawStudioForm(); return; } if (redraw) draw(); studioPreview(); };
+    el.addEventListener("input", e => {
+      const t = e.target; if (t.dataset.r == null) return;
+      m[+t.dataset.r][+t.dataset.c] = t.value;
+      commit(false);
+      if (kind === "cat" && t.dataset.hcol) { const b = document.querySelectorAll("#st-form .serrow > b")[+t.dataset.hcol - 1]; if (b) b.textContent = t.value || `Serie ${t.dataset.hcol}`; }
+    });
+    el.addEventListener("click", e => {
+      const t = e.target;
+      if (t.dataset.delrow != null) { m.splice(+t.dataset.delrow, 1); if (!m.length) m = [Array(2).fill("")]; commit(true); }
+      if (t.dataset.delcol != null) { const j = +t.dataset.delcol; m = m.map(r => r.filter((_, k) => k !== j)); commit(true); }
+    });
+    el.addEventListener("keydown", e => {
+      const t = e.target;
+      if (e.key === "Enter" && t.dataset.r != null) {
+        e.preventDefault();
+        const r = +t.dataset.r + 1, c = +t.dataset.c;
+        if (r >= m.length) { m.push(Array(m[0].length).fill("")); commit(true); }
+        el.querySelector(`[data-r="${r}"][data-c="${c}"]`)?.focus();
+      }
+    });
+    el.addEventListener("paste", e => {
+      const t = e.target, text = e.clipboardData?.getData("text/plain") || "";
+      if (t.dataset.r == null || !/[\t\n]/.test(text.trim())) return;
+      e.preventDefault();
+      const rows = text.replace(/\r/g, "").replace(/\n$/, "").split("\n").map(l => l.split("\t"));
+      const r0 = +t.dataset.r, c0 = +t.dataset.c;
+      rows.forEach((row, i) => row.forEach((v, j) => {
+        const r = r0 + i, c = c0 + j;
+        if (fixedCols && c >= m[0].length) return;
+        while (m.length <= r) m.push(Array(m[0].length).fill(""));
+        if (c >= m[0].length) m = m.map(x => [...x, ""]);
+        m[r][c] = v.trim();
+      }));
+      commit(true);
+      toast(`${rows.length} filas pegadas`);
+    });
+    if (kind === "table") $("#st-head").onchange = () => { apply(kind, m, el); draw(); studioPreview(); };
+    draw();
+  });
+}
+
+// Writes the grid back into the spec. Blank rows at the end are ignored.
+function apply(kind, m, el) {
+  const sp = studio.draft.spec;
+  const blank = r => r.every(c => String(c).trim() === "");
+  const body = m.slice(1);
+  while (body.length && blank(body[body.length - 1])) body.pop();
+  if (kind === "cat") {
+    const names = m[0].slice(1);
+    sp.categories = body.map(r => r[0]);
+    sp.series = names.map((nm, i) => {
+      const old = sp.series[i] || (sp.kind === "combo" ? { type: "line" } : {});
+      return { ...old, name: nm, values: body.map(r => { const v = parseNum(r[i + 1]); return v === null && sp.kind === "bar" ? 0 : v; }) };
+    });
+  } else if (kind === "pts") {
+    const s = sp.series[+el.dataset.series];
+    s.points = body.filter(r => !blank(r)).map(r => [parseNum(r[0]), parseNum(r[1])]);
+  } else if (kind === "pie") {
+    sp.slices = body.filter(r => !blank(r)).map((r, i) => ({ ...(sp.slices?.[i] || {}), label: r[0], value: parseNum(r[1]) }));
+  } else if (kind === "table") {
+    const all = [...m];
+    while (all.length > 1 && blank(all[all.length - 1])) all.pop();
+    if ($("#st-head")?.checked) { sp.headers = all[0]; sp.rows = all.slice(1); }
+    else { delete sp.headers; sp.rows = all; }
+  }
+}
+
+// ----- editing on the chart itself ----------------------------------------------------------
+// The preview is the editor: drag a bar or point to change its value, tap a text to retype it, tap a bar,
+// slice or area for its options, paint map areas with a brush, and type straight into table cells.
+// Elements are matched to the spec by the order the engine draws them in; values come from the engine's own scales.
+
+const CV_HINTS = {
+  bar: "Arrastra una barra para cambiar su valor · toca una barra para más opciones · toca cualquier texto para cambiarlo",
+  combo: "Arrastra las barras y los puntos de la línea · toca un texto para cambiarlo",
+  line: "Arrastra un punto para cambiar su valor · toca un texto para cambiarlo",
+  scatter: "Arrastra un punto para moverlo · doble clic en un espacio vacío añade un punto · Supr quita el punto elegido",
+  curve: "Arrastra los puntos para dar forma a la curva · doble clic añade un punto · Supr quita el punto elegido",
+  pie: "Toca una parte o su leyenda para cambiar valor, texto y relleno",
+  map: "Elige un relleno y toca los departamentos para pintarlos · sin relleno elegido, tocar uno muestra su nombre y opciones",
+  table: "Escribe directamente en las celdas · Tab pasa a la siguiente",
+  geometry: "Toca un texto para cambiarlo · las coordenadas van en la pestaña JSON",
+  diagram: "Toca un texto para cambiarlo · las formas van en la pestaña JSON",
+};
+
+function cvSnapshot() {
+  studio.hist = studio.hist || [];
+  studio.hist.push(JSON.stringify(studio.draft.spec));
+  if (studio.hist.length > 80) studio.hist.shift();
+}
+// Every change made on the chart goes through here, so it can be undone and the data panel stays in sync.
+function cvCommit(fn) {
+  cvSnapshot();
+  fn(studio.draft.spec);
+  drawStudioForm();
+}
+function cvUndo() {
+  const last = studio.hist?.pop();
+  if (!last) { toast("No hay cambios de la gráfica para deshacer"); return; }
+  studio.draft.spec = JSON.parse(last);
+  cvPopClose();
+  drawStudioForm();
+}
+
+// Sets a value at "a.b.0.c"; array slots are emptied, never deleted, so the indexes stay put.
+function cvSet(o, path, v) {
+  const keys = path.split(".");
+  let cur = o;
+  keys.slice(0, -1).forEach((k, i) => {
+    if (cur[k] == null || typeof cur[k] !== "object") cur[k] = /^\d+$/.test(keys[i + 1]) ? [] : {};
+    cur = cur[k];
+  });
+  const last = keys[keys.length - 1];
+  if (Array.isArray(cur)) cur[+last] = v ?? "";
+  else if (v === undefined || v === "" || v === null) delete cur[last];
+  else cur[last] = v;
+}
+
+const cvNum = (v) => typeof v === "number" && Number.isFinite(v);
+const cvSvgPoint = (svg, e) => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
+const cvAttr = (el, a) => parseFloat(el.getAttribute(a));
+
+// The plot area from the engine's own axis lines: the longest black vertical and horizontal lines.
+function cvPlotBox(svg) {
+  let v = null, h = null;
+  svg.querySelectorAll("line").forEach(l => {
+    const st = (l.getAttribute("stroke") || "").toLowerCase();
+    if (st !== "#000" && st !== "#fff") return;
+    const x1 = cvAttr(l, "x1"), x2 = cvAttr(l, "x2"), y1 = cvAttr(l, "y1"), y2 = cvAttr(l, "y2");
+    if (x1 === x2 && (!v || Math.abs(y2 - y1) > v.len || (Math.abs(y2 - y1) === v.len && x1 < v.x))) v = { x: x1, top: Math.min(y1, y2), bottom: Math.max(y1, y2), len: Math.abs(y2 - y1) };
+    if (y1 === y2 && (!h || Math.abs(x2 - x1) > h.len)) h = { y: y1, left: Math.min(x1, x2), right: Math.max(x1, x2), len: Math.abs(x2 - x1) };
+  });
+  if (!v || !h) return null;
+  return { left: v.x, top: v.top, bottom: v.bottom, right: h.right };
+}
+
+// The same scales the engine draws with. Curves without printed numbers pad their range by 4 %.
+function cvScales(sp) {
+  const E = window.ICFESFigures;
+  const series = sp.series || [];
+  const vals = (list) => list.flatMap(s => s.values || []);
+  const curveRange = (a, v) => {
+    const lo = a && cvNum(a.min) ? a.min : Math.min(...v), hi = a && cvNum(a.max) ? a.max : Math.max(...v);
+    const pad = (hi - lo || 1) * 0.04;
+    return { lo: a && cvNum(a.min) ? a.min : lo - pad, hi: a && cvNum(a.max) ? a.max : hi + pad, step: (hi - lo || 1) / 10 };
+  };
+  if (sp.kind === "bar" || sp.kind === "combo") {
+    return { y: E.scaleFor(sp.y, vals(series.filter(s => s.axis !== 2)), true), y2: sp.y2 ? E.scaleFor(sp.y2, vals(series.filter(s => s.axis === 2)), true) : null };
+  }
+  if (sp.kind === "line" && !series.some(s => Array.isArray(s.points))) return { y: E.scaleFor(sp.y, vals(series), false) };
+  const pts = series.flatMap(s => s.points || []);
+  if (sp.kind === "curve") {
+    return { x: sp.x?.ticks === true ? E.scaleFor(sp.x, pts.map(p => p[0]), false) : curveRange(sp.x, pts.map(p => p[0])),
+             y: sp.y?.ticks === true ? E.scaleFor(sp.y, pts.map(p => p[1]), false) : curveRange(sp.y, pts.map(p => p[1])) };
+  }
+  return { x: E.scaleFor(sp.x, pts.map(p => p[0]), false), y: E.scaleFor(sp.y, pts.map(p => p[1]), false) };
+}
+// Value to pixel between a (at lo) and b (at hi), and back.
+function cvToPx(sc, v, a, b) { const t = sc.log ? Math.log10 : (x) => x; return a + (t(v) - t(sc.lo)) / (t(sc.hi) - t(sc.lo)) * (b - a); }
+function cvFromPx(sc, p, a, b) {
+  const f = (p - a) / (b - a);
+  return sc.log ? Math.pow(10, Math.log10(sc.lo) + f * (Math.log10(sc.hi) - Math.log10(sc.lo))) : sc.lo + f * (sc.hi - sc.lo);
+}
+// Rounds a dragged value to a tenth of the axis step (a hundredth with Shift), keeping the number clean.
+function cvSnap(v, sc, fine) {
+  if (sc.log) return +v.toPrecision(fine ? 3 : 2);
+  const unit = (sc.step || 1) / (fine ? 100 : 10);
+  return +(Math.round(v / unit) * unit).toPrecision(12);
+}
+
+function cvSvgEl(tag, attrs) {
+  const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+  return el;
+}
+
+// Draws the bar and options above the chart, then wires every part of the drawing.
+function bindCanvas() {
+  const sp = studio.draft.spec;
+  if (!studio.drag) cvBar(sp);
+  $("#cv-hint").textContent = CV_HINTS[sp.kind] || "";
+  if (sp.kind === "table") { cvTable(sp); return; }
+  const svg = $("#st-prev svg");
+  if (!svg) return;
+  const ov = cvSvgEl("g", { id: "cv-ov" });
+  svg.appendChild(ov);
+  const ctx = { sp, svg, ov, box: cvPlotBox(svg) };
+  try {
+    if (["bar", "combo", "line"].includes(sp.kind) && !(sp.series || []).some(s => Array.isArray(s.points))) cvCategoryChart(ctx);
+    else if (["scatter", "curve", "line"].includes(sp.kind)) cvPointChart(ctx);
+    else if (sp.kind === "pie") cvPie(ctx);
+    else if (sp.kind === "map") cvMap(ctx);
+  } catch (e) { console.warn("canvas", e); }
+  cvTexts(ctx);
+  cvMarkSelection(ctx);
+}
+
+function cvBar(sp) {
+  const bar = $("#cv-bar");
+  if (!bar) return;
+  const undo = `<button class="ib" onclick="cvUndo()" title="Deshace el último cambio hecho en la gráfica (Ctrl+Z)" ${studio.hist?.length ? "" : "disabled"}>↶ Deshacer</button>`;
+  let extra = "";
+  if (["bar", "combo", "line"].includes(sp.kind) && !(sp.series || []).some(s => Array.isArray(s.points))) {
+    extra = `<button class="ib" onclick="cvAddCategory()">+ ${sp.kind === "line" ? "Punto" : "Barra"} (categoría)</button><button class="ib" onclick="cvAddSeries()">+ Serie</button>`;
+  } else if (["scatter", "curve", "line"].includes(sp.kind)) {
+    extra = `<button class="ib" onclick="cvAddSeries()">+ Serie</button>`;
+  } else if (sp.kind === "pie" && !sp.rings) {
+    extra = `<button class="ib" onclick="cvCommit(s => s.slices.push({ label: 'Parte ' + (s.slices.length + 1), value: 1 }))">+ Parte</button>`;
+  } else if (sp.kind === "table") {
+    const spans = cvTableSpans(sp);
+    extra = spans ? `<span class="muted" style="font-size:12px">Tabla con celdas combinadas: filas y columnas en la pestaña JSON</span>`
+      : `<button class="ib" onclick="cvTableOp('row+')">+ Fila</button><button class="ib" onclick="cvTableOp('col+')">+ Columna</button>
+         <button class="ib" onclick="cvTableOp('row-')" title="Quita la fila de la celda elegida">− Fila</button><button class="ib" onclick="cvTableOp('col-')" title="Quita la columna de la celda elegida">− Columna</button>`;
+  } else if (sp.kind === "map") {
+    const fills = [...(sp.legend || []).map(l => [l.fill, l.label || l.fill]), ...MAP_FILLS.filter(([v]) => v && !(sp.legend || []).some(l => l.fill === v))];
+    const swatch = (v) => v.startsWith("#") ? v : v === "solid" ? "#000" : v === "white" ? "#fff" : v === "hatch" ? "repeating-linear-gradient(45deg,#000 0 2px,#fff 2px 5px)" : "radial-gradient(#000 1px,#fff 1.5px) 0 0/5px 5px";
+    extra = `<span class="muted" style="font-size:12px">Pincel:</span>${fills.map(([v, l]) => `<button class="sw ${studio.brush === v ? "on" : ""}" style="background:${swatch(v)}" title="${esc(l)}" onclick="cvBrush('${esc(v)}')"></button>`).join("")}
+      <button class="ib ${studio.brush === "" ? "on" : ""}" onclick="cvBrush('')" title="Toca áreas para quitarles el relleno">Borrador</button>
+      ${studio.brush != null ? `<button class="ib" onclick="cvBrush(null)">Soltar pincel</button>` : ""}`;
+  }
+  bar.innerHTML = undo + extra;
+}
+function cvBrush(v) { studio.brush = studio.brush === v ? null : v; cvBar(studio.draft.spec); }
+
+// ----- bars, lines and combos with categories ------------------------------------------------
+
+function cvCategoryChart(ctx) {
+  const { sp, svg, ov, box } = ctx;
+  if (!box) return;
+  const sc = cvScales(sp);
+  const n = sp.categories.length;
+  const horizontal = sp.kind === "bar" && sp.orientation === "horizontal";
+  const barSeries = sp.series.map((s, i) => ({ s, i })).filter(({ s }) => sp.kind === "bar" || (sp.kind === "combo" && s.type === "bar"));
+  // Bars: the engine draws them category by category, series by series, skipping empty values.
+  const rects = [...svg.querySelectorAll('rect[stroke-width="0.8"]')];
+  let k = 0;
+  sp.categories.forEach((_, c) => barSeries.forEach(({ s, i }) => {
+    if (!cvNum(s.values?.[c])) return;
+    const r = rects[k++];
+    if (!r) return;
+    r.classList.add(horizontal ? "cv-h" : "cv-v");
+    r.dataset.cv = `${i}:${c}`;
+    r.addEventListener("pointerdown", e => cvStartValueDrag(e, ctx, sc, i, c, horizontal));
+  }));
+  // Line points get round handles over the engine's markers.
+  const lineSeries = sp.series.map((s, i) => ({ s, i })).filter(({ s }) => sp.kind === "line" || (sp.kind === "combo" && s.type === "line"));
+  const band = (box.right - box.left) / n;
+  const xAt = (c) => sp.kind === "line" ? box.left + (box.right - box.left) * (n === 1 ? 0.5 : c / (n - 1)) : box.left + band * (c + 0.5);
+  lineSeries.forEach(({ s, i }) => (s.values || []).forEach((v, c) => {
+    if (!cvNum(v)) return;
+    const axisSc = s.axis === 2 && sc.y2 ? sc.y2 : sc.y;
+    const h = cvSvgEl("circle", { cx: xAt(c), cy: cvToPx(axisSc, v, box.bottom, box.top), r: 7, class: "cv-pt v" });
+    h.dataset.cv = `${i}:${c}`;
+    h.addEventListener("pointerdown", e => cvStartValueDrag(e, ctx, sc, i, c, false));
+    ov.appendChild(h);
+  }));
+  ctx.catCenter = (c) => horizontal ? box.top + (box.bottom - box.top) / n * (c + 0.5) : xAt(c);
+  ctx.horizontal = horizontal;
+}
+
+// Dragging a bar or a line point: the axis stays still while dragging, so the bar follows the pointer;
+// it rescales when the pointer is released. A press without movement opens the options instead.
+function cvStartValueDrag(e, ctx, sc, si, c, horizontal) {
+  e.preventDefault();
+  e.stopPropagation();
+  const sp = studio.draft.spec, s = sp.series[si];
+  const second = s.axis === 2 && sc.y2;
+  const axisSc = second ? sc.y2 : sc.y;
+  const { box } = ctx;
+  const start = { x: e.clientX, y: e.clientY, before: JSON.stringify(sp) };
+  let moved = false;
+  const view = JSON.parse(JSON.stringify(sp));
+  const ax = second ? "y2" : "y";
+  if (!axisSc.log) view[ax] = { ...(view[ax] || {}), min: axisSc.ticks[0], max: axisSc.ticks[axisSc.ticks.length - 1], step: axisSc.step };
+  const move = (ev) => {
+    if (!moved && Math.hypot(ev.clientX - start.x, ev.clientY - start.y) < 4) return;
+    if (!moved) { moved = true; studio.drag = true; cvPopClose(); }
+    const svg = $("#st-prev svg");
+    const p = cvSvgPoint(svg, ev);
+    const v = horizontal ? cvFromPx(axisSc, p.x, box.left, box.right) : cvFromPx(axisSc, p.y, box.bottom, box.top);
+    const val = cvSnap(v, axisSc, ev.shiftKey);
+    s.values[c] = val;
+    view.series[si].values[c] = val;
+    studio.view = view;
+    studioPreview();
+    $("#cv-hint").textContent = `${s.name || sp.categories[c] || ""}: ${numText(val)}  (Mayús para afinar)`;
+  };
+  const up = () => {
+    window.removeEventListener("pointermove", move);
+    window.removeEventListener("pointerup", up);
+    studio.view = null;
+    studio.drag = false;
+    if (moved) { studio.hist = studio.hist || []; studio.hist.push(start.before); studio.sel = { type: "val", si, c }; drawStudioForm(); }
+    else { studio.sel = { type: "val", si, c }; studioPreview(); cvPopValue(si, c); }
+  };
+  window.addEventListener("pointermove", move);
+  window.addEventListener("pointerup", up);
+}
+
+function cvAddCategory(after = null) {
+  cvCommit(sp => {
+    const at = after == null ? sp.categories.length : after + 1;
+    sp.categories.splice(at, 0, `Nueva ${sp.categories.length + 1}`);
+    sp.series.forEach(s => { s.values = s.values || []; const near = s.values[at - 1] ?? s.values[at] ?? 0; s.values.splice(at, 0, cvNum(near) ? near : 0); });
+    studio.sel = { type: "val", si: 0, c: at };
+  });
+}
+function cvAddSeries() {
+  cvCommit(sp => {
+    const pts = (sp.series || []).some(s => Array.isArray(s.points)) || ["scatter", "curve"].includes(sp.kind);
+    const base = sp.series[sp.series.length - 1];
+    const s = pts ? { name: `Serie ${sp.series.length + 1}`, points: (base?.points || [[0, 0], [1, 1]]).map(([x, y]) => [x, y]) }
+      : { name: `Serie ${sp.series.length + 1}`, values: (base?.values || sp.categories.map(() => 0)).slice() };
+    if (sp.kind === "combo") s.type = "line";
+    sp.series.push(s);
+  });
+}
+
+// ----- scatter, curves and lines with numeric x ------------------------------------------------
+
+function cvPointChart(ctx) {
+  const { sp, svg, ov, box } = ctx;
+  if (!box) return;
+  const sc = cvScales(sp);
+  const right = sp.kind === "curve" ? box.right : box.right;
+  const P = ([x, y]) => [cvToPx(sc.x, x, box.left, right), cvToPx(sc.y, y, box.bottom, box.top)];
+  // An invisible plot area under the handles: double-click adds a point to the chosen series.
+  const plot = cvSvgEl("rect", { x: box.left, y: box.top, width: right - box.left, height: box.bottom - box.top, class: "cv-plot" });
+  plot.addEventListener("dblclick", e => {
+    const p = cvSvgPoint(svg, e);
+    const si = studio.sel?.si ?? 0;
+    const pt = [cvSnap(cvFromPx(sc.x, p.x, box.left, right), sc.x), cvSnap(cvFromPx(sc.y, p.y, box.bottom, box.top), sc.y)];
+    cvCommit(s => {
+      const list = s.series[si].points;
+      if (s.kind === "scatter") list.push(pt);
+      else { const at = list.findIndex(q => q[0] > pt[0]); list.splice(at < 0 ? list.length : at, 0, pt); }
+      studio.sel = { type: "pt", si, k: s.kind === "scatter" ? list.length - 1 : list.indexOf(pt) };
+    });
+  });
+  ov.appendChild(plot);
+  sp.series.forEach((s, si) => (s.points || []).forEach((pt, k) => {
+    if (!cvNum(pt[0]) || !cvNum(pt[1])) return;
+    const [x, y] = P(pt);
+    const h = cvSvgEl("circle", { cx: x, cy: y, r: 7, class: "cv-pt" });
+    h.dataset.cv = `${si}:${k}`;
+    h.addEventListener("pointerdown", e => cvStartPointDrag(e, ctx, sc, si, k, right));
+    ov.appendChild(h);
+  }));
+}
+
+function cvStartPointDrag(e, ctx, sc, si, k, right) {
+  e.preventDefault();
+  e.stopPropagation();
+  const sp = studio.draft.spec, { box } = ctx;
+  const before = JSON.stringify(sp);
+  const start = { x: e.clientX, y: e.clientY };
+  let moved = false;
+  // The axes stay still while dragging, as with bars.
+  const view = JSON.parse(JSON.stringify(sp));
+  const freeze = (ax, s) => {
+    if (s.log) return;
+    if (sp.kind === "curve" && sp[ax]?.ticks !== true) view[ax] = { ...(view[ax] || {}), min: s.lo, max: s.hi };
+    else view[ax] = { ...(view[ax] || {}), min: s.ticks[0], max: s.ticks[s.ticks.length - 1], step: s.step };
+  };
+  freeze("x", sc.x); freeze("y", sc.y);
+  const move = (ev) => {
+    if (!moved && Math.hypot(ev.clientX - start.x, ev.clientY - start.y) < 4) return;
+    if (!moved) { moved = true; studio.drag = true; cvPopClose(); }
+    const p = cvSvgPoint($("#st-prev svg"), ev);
+    const pt = [cvSnap(cvFromPx(sc.x, p.x, box.left, right), sc.x, ev.shiftKey), cvSnap(cvFromPx(sc.y, p.y, box.bottom, box.top), sc.y, ev.shiftKey)];
+    sp.series[si].points[k] = pt;
+    view.series[si].points[k] = pt;
+    studio.view = view;
+    studioPreview();
+    $("#cv-hint").textContent = `(${numText(pt[0])}; ${numText(pt[1])})  (Mayús para afinar)`;
+  };
+  const up = () => {
+    window.removeEventListener("pointermove", move);
+    window.removeEventListener("pointerup", up);
+    studio.view = null;
+    studio.drag = false;
+    studio.sel = { type: "pt", si, k };
+    if (moved) {
+      // Lines and curves keep their points in x order.
+      if (sp.kind !== "scatter") { const list = sp.series[si].points, pt = list[k]; list.sort((a, b) => a[0] - b[0]); studio.sel.k = list.indexOf(pt); }
+      studio.hist = studio.hist || []; studio.hist.push(before); drawStudioForm();
+    } else { studioPreview(); cvPopPoint(si, k); }
+  };
+  window.addEventListener("pointermove", move);
+  window.addEventListener("pointerup", up);
+}
+
+// ----- pies -----------------------------------------------------------------------------------
+
+function cvPie(ctx) {
+  const { sp, svg } = ctx;
+  const rings = sp.rings || [{ slices: sp.slices }];
+  const shapes = [...svg.querySelectorAll(":scope > path, :scope > circle")];
+  const legend = [...svg.querySelectorAll('rect[x="262"]')];
+  const texts = [...svg.querySelectorAll('text[x="278"]')];
+  let k = 0, idx = 0;
+  rings.forEach((ring, r) => {
+    const total = ring.slices.reduce((t, s) => t + (cvNum(s.value) ? s.value : 0), 0);
+    ring.slices.forEach((s, j) => {
+      const frac = total ? s.value / total : 0;
+      const tag = (el) => { if (!el) return; el.classList.add("cv-c"); el.dataset.cv = `${r}:${j}`; el.addEventListener("click", ev => { ev.stopPropagation(); studio.sel = { type: "slice", r, j }; cvMarkSelection(ctx); cvPopSlice(r, j); }); };
+      if (frac > 0) { tag(shapes[k++]); if (frac >= 0.9999 && sp.rings) k++; }
+      tag(legend[idx]);
+      if (texts[idx]) { texts[idx].dataset.slice = `${r}:${j}`; tag(texts[idx]); }
+      idx++;
+    });
+  });
+}
+
+// ----- maps -----------------------------------------------------------------------------------
+
+function cvMap(ctx) {
+  const { sp, svg } = ctx;
+  const doc = MAPDOCS[sp.region];
+  if (!doc) return;
+  const paths = [...svg.querySelectorAll('path[stroke-width="0.7"]')];
+  doc.features.forEach((f, i) => {
+    const p = paths[i];
+    if (!p) return;
+    p.classList.add("cv-c");
+    p.setAttribute("pointer-events", "all");
+    p.addEventListener("pointerenter", () => { $("#cv-hint").textContent = f.name + (sp.fills?.[f.name] ? ` · ${cvFillName(sp, sp.fills[f.name])}` : " · sin relleno"); });
+    p.addEventListener("click", e => {
+      e.stopPropagation();
+      if (studio.brush != null) { cvCommit(s => { s.fills = s.fills || {}; if (studio.brush) s.fills[f.name] = studio.brush; else delete s.fills[f.name]; }); return; }
+      studio.sel = { type: "area", name: f.name };
+      cvPopArea(f.name);
+    });
+  });
+  // Tapping a legend box picks up its fill as the brush.
+  [...svg.querySelectorAll('rect[width="10"]')].forEach((r, i) => {
+    const l = (sp.legend || [])[i];
+    if (!l) return;
+    r.classList.add("cv-c");
+    r.addEventListener("click", e => { e.stopPropagation(); studio.brush = l.fill; cvBar(sp); toast(`Pincel: ${l.label || l.fill}. Toca los departamentos para pintarlos`); });
+  });
+}
+function cvFillName(sp, v) { return (sp.legend || []).find(l => l.fill === v)?.label || MAP_FILLS.find(([x]) => x === v)?.[1] || v; }
+
+// ----- texts ------------------------------------------------------------------------------------
+
+// Every printed text that comes from the spec can be retyped in place. Category labels may be wrapped
+// over several lines, so they are matched by position; everything else by its exact text.
+function cvTexts(ctx) {
+  const { sp, svg } = ctx;
+  const strings = [];
+  const walk = (o, path) => {
+    if (typeof o === "string") { if (o.trim()) strings.push([o, path]); return; }
+    if (Array.isArray(o)) o.forEach((v, i) => walk(v, path ? `${path}.${i}` : String(i)));
+    else if (o && typeof o === "object") Object.entries(o).forEach(([k, v]) => { if (!["kind", "region", "pattern", "marker", "style", "fill", "type", "format", "orientation", "anchor", "scale", "fills"].includes(k)) walk(v, path ? `${path}.${k}` : k); });
+  };
+  walk(sp, "");
+  const box = ctx.box;
+  const sc = box && cvScales(sp);
+  svg.querySelectorAll("text").forEach(t => {
+    if (t.dataset.slice) return;
+    const txt = t.textContent;
+    let path = strings.find(([s]) => s === txt)?.[1];
+    // Wrapped category lines.
+    if (!path && sp.categories && ctx.catCenter) {
+      const near = sp.categories.map((c, i) => [i, String(c)]).filter(([, c]) => c.replace(/\s+/g, " ").includes(txt));
+      if (near.length) {
+        const at = ctx.horizontal ? cvAttr(t, "y") : cvAttr(t, "x");
+        path = `categories.${near.sort((a, b) => Math.abs(ctx.catCenter(a[0]) - at) - Math.abs(ctx.catCenter(b[0]) - at))[0][0]}`;
+      }
+    }
+    if (path && /^categories\.\d+$/.test(path) && ctx.catCenter) {
+      // Two categories can share a text; the closest one wins.
+      const at = ctx.horizontal ? cvAttr(t, "y") : cvAttr(t, "x");
+      const same = sp.categories.map((c, i) => [i, String(c)]).filter(([, c]) => c === txt);
+      if (same.length > 1) path = `categories.${same.sort((a, b) => Math.abs(ctx.catCenter(a[0]) - at) - Math.abs(ctx.catCenter(b[0]) - at))[0][0]}`;
+    }
+    if (path) {
+      t.classList.add("cv-t");
+      t.addEventListener("click", e => { e.stopPropagation(); cvEditText(t, path); });
+      return;
+    }
+    // Axis numbers open the axis options.
+    if (box && sc && /^-?[\d.,]+$/.test(txt.trim())) {
+      const x = cvAttr(t, "x"), y = cvAttr(t, "y");
+      const ax = y > box.bottom ? (ctx.horizontal ? "y" : "x") : x < box.left ? "y" : x > box.right ? "y2" : null;
+      if (!ax) return;
+      t.classList.add("cv-t");
+      t.addEventListener("click", e => { e.stopPropagation(); cvPopAxis(ax); });
+    }
+  });
+  // Missing titles can be added by clicking where they go.
+  if (["bar", "line", "combo", "scatter", "curve", "pie", "map"].includes(sp.kind) && !sp.title) {
+    const add = cvSvgEl("text", { x: 240, y: 14, "text-anchor": "middle", "font-size": 11, fill: "#1a6ef5", class: "cv-t", "font-family": "Arial" });
+    add.textContent = "+ título";
+    add.addEventListener("click", e => { e.stopPropagation(); cvEditText(add, "title", ""); });
+    ctx.ov.appendChild(add);
+  }
+}
+
+function cvEditText(t, path, initial = null) {
+  cvPopClose();
+  const wrap = $("#cv-wrap"), r = t.getBoundingClientRect(), w = wrap.getBoundingClientRect();
+  const cur = initial ?? getPath(studio.draft.spec, path) ?? "";
+  const inp = Object.assign(document.createElement("input"), { className: "cvedit", value: String(cur) });
+  inp.style.left = `${Math.max(0, r.left - w.left - 8)}px`;
+  inp.style.top = `${Math.max(0, r.top - w.top - 6)}px`;
+  inp.style.width = `${Math.max(140, r.width + 40)}px`;
+  wrap.appendChild(inp);
+  inp.focus();
+  inp.select();
+  let done = false;
+  const finish = (keep) => {
+    if (done) return;
+    done = true;
+    inp.remove();
+    if (keep && inp.value !== String(cur)) cvCommit(sp => cvSet(sp, path, inp.value.trim()));
+  };
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); finish(true); } if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); finish(false); } });
+  inp.addEventListener("blur", () => finish(true));
+}
+
+// ----- option panels -------------------------------------------------------------------------------
+
+function cvPopClose() { $("#cv-pop")?.remove(); }
+function cvPop(html, anchor) {
+  cvPopClose();
+  const wrap = $("#cv-wrap");
+  const pop = Object.assign(document.createElement("div"), { className: "cvpop", id: "cv-pop", innerHTML: html + `<div class="row" style="justify-content:flex-end"><button class="ib" onclick="cvPopClose()">Listo</button></div>` });
+  wrap.appendChild(pop);
+  const w = wrap.getBoundingClientRect();
+  const a = anchor?.getBoundingClientRect?.();
+  const left = a ? Math.min(w.width - 256, Math.max(0, a.right - w.left + 8)) : 8;
+  const top = a ? Math.max(0, Math.min(a.top - w.top, w.height - 40)) : 8;
+  pop.style.left = `${left}px`;
+  pop.style.top = `${top}px`;
+  // Typing in the panel changes the chart as you type; each field is one undo step.
+  pop.addEventListener("focusin", e => { if (e.target.matches("input,select")) cvSnapshot(); });
+  return pop;
+}
+const cvField = (label, attrs, val) => `<label>${label}<input ${attrs} value="${esc(val ?? "")}"></label>`;
+function cvLive(pop, apply) {
+  pop.addEventListener("input", e => { apply(e.target, studio.draft.spec); drawStudioForm(); });
+  pop.addEventListener("change", e => { if (e.target.tagName === "SELECT") { apply(e.target, studio.draft.spec); drawStudioForm(); } });
+}
+
+function cvPopValue(si, c) {
+  const sp = studio.draft.spec, s = sp.series[si];
+  const isBar = sp.kind === "bar" || (sp.kind === "combo" && s.type === "bar");
+  const pop = cvPop(`<b>${esc(sp.categories[c] || "")} · ${esc(s.name || `Serie ${si + 1}`)}</b>
+    ${cvField("Valor", 'data-k="v" inputmode="decimal"', numText(s.values[c]))}
+    ${cvField("Categoría", 'data-k="cat"', sp.categories[c])}
+    ${cvField("Nombre de la serie (leyenda)", 'data-k="name"', s.name)}
+    ${isBar ? `<label>Relleno<select data-k="pattern">${sel(PATTERNS, s.pattern)}</select></label>`
+      : `<label>Marcador<select data-k="marker">${sel(MARKERS, s.marker)}</select></label><label>Trazo<select data-k="style">${sel(STYLES, s.style)}</select></label>`}
+    <div class="row"><button class="ib" onclick="cvAddCategory(${c})">+ Categoría después</button>
+      <button class="ib warn" onclick="cvDropCategory(${c})">Quitar categoría</button>
+      ${sp.series.length > 1 ? `<button class="ib warn" onclick="cvDropSeries(${si})">Quitar serie</button>` : ""}</div>`,
+    document.querySelector(`#st-prev [data-cv="${si}:${c}"]`));
+  cvLive(pop, (t, spec) => {
+    const ss = spec.series[si];
+    if (t.dataset.k === "v") { const v = parseNum(t.value); if (cvNum(v)) ss.values[c] = v; }
+    if (t.dataset.k === "cat") spec.categories[c] = t.value;
+    if (t.dataset.k === "name") ss.name = t.value;
+    if (["pattern", "marker", "style"].includes(t.dataset.k)) cvSet(ss, t.dataset.k, t.value || undefined);
+  });
+}
+function cvDropCategory(c) {
+  cvPopClose();
+  cvCommit(sp => { sp.categories.splice(c, 1); sp.series.forEach(s => s.values?.splice(c, 1)); studio.sel = null; });
+}
+function cvDropSeries(si) { cvPopClose(); cvCommit(sp => { sp.series.splice(si, 1); studio.sel = null; }); }
+
+function cvPopPoint(si, k) {
+  const sp = studio.draft.spec, s = sp.series[si], pt = s.points[k];
+  const pop = cvPop(`<b>Punto ${k + 1} · ${esc(s.name || `Serie ${si + 1}`)}</b>
+    <div class="row">${cvField("x", 'data-k="x" inputmode="decimal" style="width:100px"', numText(pt[0]))}${cvField("y", 'data-k="y" inputmode="decimal" style="width:100px"', numText(pt[1]))}</div>
+    ${cvField("Nombre de la serie (leyenda)", 'data-k="name"', s.name)}
+    ${sp.kind === "curve" ? cvField("Rótulo sobre la curva", 'data-k="label"', s.label) : `<label>Marcador<select data-k="marker">${sel(MARKERS, s.marker)}</select></label>`}
+    <label>Trazo<select data-k="style">${sel(STYLES, s.style)}</select></label>
+    <div class="row"><button class="ib warn" onclick="cvDropPoint(${si}, ${k})">Quitar punto (Supr)</button>
+      ${sp.series.length > 1 ? `<button class="ib warn" onclick="cvDropSeries(${si})">Quitar serie</button>` : ""}</div>`,
+    document.querySelector(`#st-prev [data-cv="${si}:${k}"]`));
+  cvLive(pop, (t, spec) => {
+    const ss = spec.series[si];
+    if (t.dataset.k === "x" || t.dataset.k === "y") { const v = parseNum(t.value); if (cvNum(v)) ss.points[k][t.dataset.k === "x" ? 0 : 1] = v; }
+    if (t.dataset.k === "name") ss.name = t.value;
+    if (["label", "marker", "style"].includes(t.dataset.k)) cvSet(ss, t.dataset.k, t.value || undefined);
+  });
+}
+function cvDropPoint(si, k) {
+  const pts = studio.draft.spec.series[si].points;
+  if (pts.length <= 2) { toast("Una serie necesita al menos dos puntos", true); return; }
+  cvPopClose();
+  cvCommit(sp => { sp.series[si].points.splice(k, 1); studio.sel = null; });
+}
+
+function cvPopSlice(r, j) {
+  const sp = studio.draft.spec;
+  const ring = sp.rings ? sp.rings[r] : { slices: sp.slices };
+  const s = ring.slices[j];
+  const base = sp.rings ? `rings.${r}.slices.${j}` : `slices.${j}`;
+  const pop = cvPop(`<b>${esc(s.label || `Parte ${j + 1}`)}</b>
+    ${cvField("Texto", 'data-k="label"', s.label)}
+    ${cvField("Valor", 'data-k="value" inputmode="decimal"', numText(s.value))}
+    <label>Relleno<select data-k="pattern">${sel(PATTERNS, s.pattern)}</select></label>
+    ${sp.rings ? "" : `<div class="row"><button class="ib warn" onclick="cvDropSlice(${j})">Quitar parte</button></div>`}`,
+    document.querySelector(`#st-prev path[data-cv="${r}:${j}"], #st-prev circle[data-cv="${r}:${j}"]`) || document.querySelector(`#st-prev [data-cv="${r}:${j}"]`));
+  cvLive(pop, (t, spec) => {
+    if (t.dataset.k === "value") { const v = parseNum(t.value); if (cvNum(v)) cvSet(spec, `${base}.value`, v); }
+    else cvSet(getPath(spec, base), t.dataset.k, t.value || undefined);
+  });
+}
+function cvDropSlice(j) {
+  if (studio.draft.spec.slices.length <= 1) return;
+  cvPopClose();
+  cvCommit(sp => { sp.slices.splice(j, 1); studio.sel = null; });
+}
+
+function cvPopArea(name) {
+  const sp = studio.draft.spec;
+  const cur = sp.fills?.[name] || "";
+  const opts = [...(sp.legend || []).map(l => [l.fill, `${l.label} (leyenda)`]), ...MAP_FILLS];
+  const pop = cvPop(`<b>${esc(name)}</b><label>Relleno<select data-k="fill">${sel(opts.some(([v]) => v === cur) ? opts : [...opts, [cur, cur]], cur)}</select></label>
+    <p class="muted" style="font-size:12px;margin:0">Para pintar varias seguidas, elige un pincel arriba.</p>`,
+    document.querySelector(`#st-prev`));
+  cvLive(pop, (t, spec) => { spec.fills = spec.fills || {}; if (t.value) spec.fills[name] = t.value; else delete spec.fills[name]; });
+}
+
+function cvPopAxis(ax) {
+  const sp = studio.draft.spec, a = sp[ax] || {};
+  const name = { x: "Eje X", y: sp.orientation === "horizontal" ? "Eje de valores" : "Eje Y", y2: "Segundo eje Y" }[ax];
+  const pop = cvPop(`<b>${name}</b>
+    ${cvField("Título del eje", 'data-k="label"', a.label)}
+    <div class="row">${cvField("Mínimo", 'data-k="min" inputmode="decimal" style="width:68px"', numText(a.min))}${cvField("Máximo", 'data-k="max" inputmode="decimal" style="width:68px"', numText(a.max))}${cvField("Cada", 'data-k="step" inputmode="decimal" style="width:68px"', numText(a.step))}</div>
+    <p class="muted" style="font-size:12px;margin:0">Vacío = automático.</p>`, document.querySelector("#st-prev"));
+  cvLive(pop, (t, spec) => {
+    const k = t.dataset.k;
+    const v = k === "label" ? t.value : parseNum(t.value);
+    if (k !== "label" && t.value.trim() && !cvNum(v)) return;
+    cvSet(spec, `${ax}.${k}`, k === "label" ? (v || undefined) : (t.value.trim() ? v : undefined));
+    if (spec[ax] && !Object.keys(spec[ax]).length) delete spec[ax];
+  });
+}
+
+// ----- the chosen element stays outlined -------------------------------------------------------------
+
+function cvMarkSelection(ctx) {
+  ctx.ov.querySelectorAll(".cv-sel").forEach(x => x.remove());
+  ctx.svg.querySelectorAll(".cv-pt.sel").forEach(x => x.classList.remove("sel"));
+  const s = studio.sel;
+  if (!s) return;
+  const key = s.type === "val" ? `${s.si}:${s.c}` : s.type === "pt" ? `${s.si}:${s.k}` : s.type === "slice" ? `${s.r}:${s.j}` : null;
+  if (!key) return;
+  const el = ctx.svg.querySelector(`[data-cv="${key}"]:not(text):not(rect[x="262"])`);
+  if (!el) return;
+  if (el.classList.contains("cv-pt")) { el.classList.add("sel"); return; }
+  const b = el.getBBox();
+  ctx.ov.appendChild(cvSvgEl("rect", { x: b.x - 3, y: b.y - 3, width: b.width + 6, height: b.height + 6, class: "cv-sel" }));
+}
+
+// ----- tables: type straight into the cells -------------------------------------------------------------
+
+function cvTableSpans(sp) { return [...(sp.headers || []), ...(sp.rows || []).flat()].some(c => c && typeof c === "object"); }
+function cvTable(sp) {
+  const table = $("#st-prev table");
+  if (!table) return;
+  const rows = [...(sp.headers && sp.headers.length ? [{ path: "headers" }] : []), ...(sp.rows || []).map((_, i) => ({ path: `rows.${i}` }))];
+  [...table.querySelectorAll("tr")].forEach((tr, r) => {
+    const row = rows[r];
+    if (!row) return;
+    [...tr.children].forEach((cell, k) => {
+      cell.contentEditable = "true";
+      cell.dataset.cell = `${row.path}.${k}`;
+      cell.dataset.r = r;
+      cell.dataset.k = k;
+    });
+  });
+  const cap = table.querySelector("caption");
+  if (cap) { cap.contentEditable = "true"; cap.dataset.cell = "title"; }
+  let before = null;
+  table.addEventListener("focusin", e => {
+    before = JSON.stringify(sp);
+    studio.cell = e.target.dataset.cell ? { r: +e.target.dataset.r, k: +e.target.dataset.k } : null;
+    // Typing replaces the cell, as in a spreadsheet.
+    const range = document.createRange();
+    range.selectNodeContents(e.target);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  });
+  table.addEventListener("input", e => {
+    const p = e.target.dataset.cell;
+    if (!p) return;
+    const text = e.target.innerText.replace(/\n+/g, " ").trim();
+    const cur = getPath(sp, p);
+    if (cur && typeof cur === "object") cur.text = text;
+    else cvSet(sp, p, text);
+  });
+  table.addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); e.target.blur(); }
+    if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); if (before) studio.draft.spec = JSON.parse(before); before = null; drawStudioForm(); }
+  });
+  table.addEventListener("focusout", e => {
+    if (before && before !== JSON.stringify(sp)) { studio.hist = studio.hist || []; studio.hist.push(before); }
+    before = null;
+    // Redraw after focus moves on, so Tab still lands in the next cell.
+    setTimeout(() => { if (!$("#st-prev table")?.contains(document.activeElement)) drawStudioForm(); }, 0);
+  });
+}
+function cvTableOp(op) {
+  const sp = studio.draft.spec;
+  if (cvTableSpans(sp)) return;
+  const head = sp.headers && sp.headers.length ? 1 : 0;
+  const at = studio.cell || { r: (sp.rows || []).length - 1 + head, k: Math.max(0, (sp.headers || sp.rows?.[0] || [""]).length - 1) };
+  cvCommit(s => {
+    s.rows = s.rows || [];
+    const width = Math.max((s.headers || []).length, ...s.rows.map(r => r.length), 1);
+    if (op === "row+") s.rows.splice(Math.max(0, at.r - head + 1), 0, Array(width).fill(""));
+    if (op === "row-" && at.r >= head && s.rows.length > 1) s.rows.splice(at.r - head, 1);
+    if (op === "col+") { if (head) s.headers.splice(at.k + 1, 0, ""); s.rows.forEach(r => r.splice(at.k + 1, 0, "")); }
+    if (op === "col-" && width > 1) { if (head) s.headers.splice(at.k, 1); s.rows.forEach(r => r.splice(at.k, 1)); }
+  });
+  studio.cell = null;
+}
+
+// Studio keys: Ctrl+Z undoes a chart change, Supr removes the chosen point, Esc closes a panel first.
+function cvKey(e) {
+  const typing = /TEXTAREA|INPUT|SELECT/.test(e.target.tagName) || e.target.isContentEditable;
+  if (e.key === "Escape" && $("#cv-pop")) { cvPopClose(); return true; }
+  if (typing) return false;
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); cvUndo(); return true; }
+  if ((e.key === "Delete" || e.key === "Backspace") && studio.sel?.type === "pt") { e.preventDefault(); cvDropPoint(studio.sel.si, studio.sel.k); return true; }
+  return false;
+}
+
+async function saveStudio() {
+  const dr = studio.draft;
+  if (!dr) return;
+  if (studio.mode === "json") { try { dr.spec = JSON.parse($("#st-json").value); } catch (e) { toast("El JSON no es válido: " + e.message, true); return; } }
+  const problems = figProblems({ kind: dr.spec.kind, spec: dr.spec });
+  if (problems.length && !confirm(`La figura todavía tiene problemas y la pregunta seguirá oculta:\n\n• ${problems.slice(0, 5).join("\n• ")}\n\n¿Guardar de todos modos?`)) return;
+  try {
+    await api(`${qpath()}/figures/${encodeURIComponent(dr.id)}`, J("PUT", { kind: dr.spec.kind, target: dr.target, option: dr.option || null, fidelity: dr.fidelity, spec: dr.spec }));
+    closeStudio();
+    await reloadFigures("Figura guardada");
+  } catch (e) { toast(e.message, true); }
 }
 
 setTab("progress");

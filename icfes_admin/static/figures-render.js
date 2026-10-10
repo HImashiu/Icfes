@@ -40,9 +40,10 @@
       if (a.domain != null && (!Array.isArray(a.domain) || a.domain.length !== 2 || !isNum(a.domain[0]) || !isNum(a.domain[1]) || a.domain[0] >= a.domain[1])) errs.push(`${name}.domain must be [lo, hi] with lo below hi`);
     };
     const series = Array.isArray(spec.series) ? spec.series : [];
-    series.forEach((s, i) => { if (s && s.style != null && !['solid', 'dashed', 'dotted'].includes(s.style)) errs.push(`series[${i}].style must be solid, dashed or dotted`); });
+    series.forEach((s, i) => { if (s && s.style != null && !['solid', 'dashed', 'dotted', 'dashdot'].includes(s.style)) errs.push(`series[${i}].style must be solid, dashed, dotted or dashdot`); });
     series.forEach((s, i) => { if (s && s.marker != null && !MARKERS.includes(s.marker)) errs.push(`series[${i}].marker must be one of ${MARKERS.join(', ')}`); });
     series.forEach((s, i) => { if (s && s.marker === 'none' && spec.kind !== 'line' && spec.kind !== 'curve') errs.push(`series[${i}].marker none is only for line and curve charts`); });
+    series.forEach((s, i) => { if (s && s.lines != null && (typeof s.lines !== 'boolean' || spec.kind !== 'scatter')) errs.push(`series[${i}].lines must be true or false, for scatter charts`); });
     series.forEach((s, i) => { if (s && s.pattern != null && !SERIES_PATTERNS.includes(s.pattern)) errs.push(`series[${i}].pattern must be one of ${SERIES_PATTERNS.join(', ')}`); });
     series.forEach((s, i) => {
       if (!s || s.note == null) return;
@@ -126,6 +127,7 @@
         errs.push(...g.errors);
       }
     }
+    if (spec.kind === 'map' && spec.bounds != null && !(Array.isArray(spec.bounds) && spec.bounds.length === 4 && spec.bounds.every(isNum) && spec.bounds[0] < spec.bounds[2] && spec.bounds[1] < spec.bounds[3])) errs.push('bounds must be [minLon, minLat, maxLon, maxLat]');
     if (spec.kind === 'map') {
       if (!MAP_KEYS.includes(spec.region)) errs.push(`region must be one of ${MAP_KEYS.join(', ')}`);
       else {
@@ -531,7 +533,7 @@
   // Open markers keep grey-scale legibility.
   function polyline(s, si, pts) {
     const out = [];
-    const dash = s.style === 'dashed' ? ' stroke-dasharray="5 3"' : s.style === 'dotted' ? ' stroke-dasharray="1 3" stroke-linecap="round"' : '';
+    const dash = s.style === 'dashed' ? ' stroke-dasharray="5 3"' : s.style === 'dotted' ? ' stroke-dasharray="1 3" stroke-linecap="round"' : s.style === 'dashdot' ? ' stroke-dasharray="6 3 1 3" stroke-linecap="round"' : '';
     const real = pts.filter(Boolean);
     if (real.length > 1) out.push(`<polyline points="${real.map((p) => p.map((v) => v.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="#000" stroke-width="1.8"${dash}/>`);
     if (s.marker !== 'none') for (const [x, y] of real) out.push(marker(s.marker, x, y));
@@ -565,9 +567,14 @@
       out.push(text(x.toFixed(1), fr.bottom + 15, tickText(spec.x, t)));
     }
     series.forEach((s, si) => {
-      s.points.forEach(([px, py]) => {
-        const x = fr.left + (px - xScale.lo) / (xScale.hi - xScale.lo) * (fr.right - fr.left);
-        const y = fr.y(py);
+      const at = ([px, py]) => [fr.left + (px - xScale.lo) / (xScale.hi - xScale.lo) * (fr.right - fr.left), fr.y(py)];
+      // "lines": true joins the points in the order given, in the series' style, under the markers.
+      if (s.lines === true && s.points.length > 1) {
+        const dash = s.style === 'dashed' ? ' stroke-dasharray="6 4"' : s.style === 'dotted' ? ' stroke-dasharray="1 3" stroke-linecap="round"' : s.style === 'dashdot' ? ' stroke-dasharray="6 3 1 3" stroke-linecap="round"' : '';
+        out.push(`<polyline points="${s.points.map((q) => at(q).map((n) => n.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="#000" stroke-width="1.6"${dash}/>`);
+      }
+      s.points.forEach((pt) => {
+        const [x, y] = at(pt);
         // A series with a marker draws that shape; others keep the alternating filled circle and square.
         if (s.marker) out.push(marker(s.marker, x, y));
         else if (si % 2 === 0) out.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="${fillFor(s, si, id)}" stroke="#000"/>`);
@@ -596,7 +603,11 @@
     const yr = yScale ? { lo: yScale.lo, hi: yScale.hi } : range(spec.y, pts.map((p) => p[1]));
     const left = 58;
     const right = W - 24;
-    const top = spec.title ? 34 : 18;
+    // The legend sits in rows above the plot, one line sample per series, so its dash shows.
+    const showLegend = legendOn(spec);
+    const legendY = spec.title ? 34 : 18;
+    const legendRowsN = showLegend ? legendRows(legendSeries(spec), left) : 0;
+    const top = showLegend ? legendY + 14 + 18 * legendRowsN + 4 : legendY;
     const bottom = H - 40;
     const sx = (v) => left + (v - xr.lo) / (xr.hi - xr.lo) * (right - left);
     const sy = (v) => bottom - (v - yr.lo) / (yr.hi - yr.lo) * (bottom - top);
@@ -633,14 +644,30 @@
         const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
         d += ` C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
       }
-      const dash = s.style === 'dashed' ? ' stroke-dasharray="6 4"' : s.style === 'dotted' ? ' stroke-dasharray="1 3" stroke-linecap="round"' : '';
+      const dash = s.style === 'dashed' ? ' stroke-dasharray="6 4"' : s.style === 'dotted' ? ' stroke-dasharray="1 3" stroke-linecap="round"' : s.style === 'dashdot' ? ' stroke-dasharray="6 3 1 3" stroke-linecap="round"' : '';
       out.push(`<path d="${d}" fill="none" stroke="#000" stroke-width="2"${dash}/>`);
       if (s.label) {
         const at = Math.min(P.length - 1, s.labelAt != null ? s.labelAt : Math.floor(P.length / 2));
         out.push(text(P[at][0].toFixed(1), (P[at][1] - 8).toFixed(1), s.label));
       }
     });
+    if (showLegend) out.push(...curveLegend(spec, left, legendY + 14));
     void id;
+    return out;
+  }
+
+  // Curve legend: one row per entry, a short line sample in the series' style, then its name.
+  function curveLegend(spec, left, top) {
+    const out = [];
+    const ser = legendSeries(spec);
+    legendLayout(ser, left).forEach((pos, i) => {
+      if (!pos) return;
+      const s = ser[i];
+      const y = top + pos.row * 18;
+      const dash = s.style === 'dashed' ? ' stroke-dasharray="6 4"' : s.style === 'dotted' ? ' stroke-dasharray="1 3" stroke-linecap="round"' : s.style === 'dashdot' ? ' stroke-dasharray="6 3 1 3" stroke-linecap="round"' : '';
+      out.push(`<line x1="${pos.x}" x2="${pos.x + 18}" y1="${y - 5}" y2="${y - 5}" stroke="#000" stroke-width="2"${dash}/>`);
+      out.push(text(pos.x + 24, y - 1, legendLabel(s), { anchor: 'start' }));
+    });
     return out;
   }
 
@@ -912,7 +939,7 @@
 
   // Maps: simplified public-domain outlines (Natural Earth), bundled in maps/. Node loads them from there;
   // a browser build calls registerMap(key, doc) with the same JSON.
-  const MAP_KEYS = ['colombia-departamentos', 'colombia-pais', 'sudamerica', 'mundo'];
+  const MAP_KEYS = ['colombia-departamentos', 'colombia-pais', 'sudamerica', 'mundo', 'europa', 'europa-1914'];
   const MAPS = {};
   function registerMap(key, doc) { MAPS[key] = doc; }
   function mapDoc(key) {
@@ -938,12 +965,20 @@
 
   function mapSvg(spec, id) {
     const doc = mapDoc(spec.region);
-    const fit = spec.select ? doc.features.filter((f) => spec.select.includes(f.name)) : doc.features;
-    const P = mapProjector(fit, [0, spec.title ? 26 : 6, W, H - (spec.title ? 26 : 6) - (spec.legend ? 22 : 0)]);
+    const fit = spec.bounds
+      // A lon/lat box, given as [minLon, minLat, maxLon, maxLat], sets the view; the map is clipped to it.
+      ? [{ polygons: [[[[spec.bounds[0], spec.bounds[1]], [spec.bounds[2], spec.bounds[1]], [spec.bounds[2], spec.bounds[3]], [spec.bounds[0], spec.bounds[3]]]]] }]
+      : spec.select ? doc.features.filter((f) => spec.select.includes(f.name)) : doc.features;
+    const legendRows = spec.legend ? legendLines(spec.legend).length : 0;
+    const P = mapProjector(fit, [0, spec.title ? 26 : 6, W, H - (spec.title ? 26 : 6) - (legendRows ? 16 + 14 * legendRows : 0)]);
     const fills = spec.fills || {};
     const paint = (v) => (String(v).startsWith('#') ? v : paintFor(v, id));
     const out = [];
     if (spec.title) out.push(text(W / 2, 18, spec.title, { weight: 'bold' }));
+    // The shapes are clipped to the plot box, so a view that spills past it does not run over the title or legend.
+    const top = spec.title ? 26 : 6;
+    const plotH = H - top - (legendRows ? 16 + 14 * legendRows : 0);
+    out.push(`<clipPath id="${id}-plot"><rect x="0" y="${top}" width="${W}" height="${plotH}"/></clipPath><g clip-path="url(#${id}-plot)">`);
     doc.features.forEach((f) => {
       const d = f.polygons.map((poly) => poly.map((ring) =>
         'M' + ring.map((p) => P(p).map((n) => n.toFixed(1)).join(' ')).join('L') + 'Z').join(' ')).join(' ');
@@ -955,16 +990,32 @@
       out.push(marker(p.marker, q[0], q[1]));
       if (p.label) out.push(text((q[0] + 7).toFixed(1), (q[1] - 5).toFixed(1), p.label, { anchor: 'start', size: 10 }));
     });
+    out.push('</g>');
     if (spec.legend) {
-      let x = 16;
-      const y = H - 10;
-      spec.legend.forEach((l) => {
-        out.push(`<rect x="${x}" y="${y - 9}" width="10" height="10" fill="${paint(l.fill)}" stroke="#000"/>`);
-        out.push(text(x + 14, y, l.label, { anchor: 'start', size: 11 }));
-        x += 28 + String(l.label).length * 6.5;
+      // Entries flow left to right and wrap onto the row above when they reach the right edge.
+      const lines = legendLines(spec.legend);
+      lines.forEach((line, r) => {
+        const y = H - 10 - (lines.length - 1 - r) * 14;
+        line.forEach((e) => {
+          out.push(`<rect x="${e.x}" y="${y - 9}" width="10" height="10" fill="${paint(e.fill)}" stroke="#000"/>`);
+          out.push(text(e.x + 14, y, e.label, { anchor: 'start', size: 11 }));
+        });
       });
     }
     return out;
+  }
+
+  // Map legend entries laid out in rows that fit the view width.
+  function legendLines(entries) {
+    const rows = [[]];
+    let x = 16;
+    for (const l of entries) {
+      const w = 28 + String(l.label).length * 6.5;
+      if (x > 16 && x + w > W - 10) { rows.push([]); x = 16; }
+      rows[rows.length - 1].push({ x, fill: l.fill, label: l.label });
+      x += w;
+    }
+    return rows;
   }
 
   // Diagram: a free vector scene in SVG coordinates (y grows downward). Covers anything no chart kind does.
