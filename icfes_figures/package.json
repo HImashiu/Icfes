@@ -1,0 +1,12 @@
+{
+  "name": "icfes-figures",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dependency-free renderer for ICFES figure specs, with a spec audit.",
+  "main": "render.js",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "audit": "node audit.js /mnt/project-files/icfes/figures/specs /mnt/project-files/icfes/figures/audit.md"
+  },
+  "license": "UNLICENSED"
+}

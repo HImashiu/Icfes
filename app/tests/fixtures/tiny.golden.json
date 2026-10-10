@@ -1,0 +1,45 @@
+{
+  "format": "icfes-golden/1",
+  "exam": { "doc_id": "TEST_tiny", "title": "Examen de prueba (datos inventados)", "warnings": [] },
+  "sections": [
+    { "name": "Área A", "first": 1, "last": 2, "found": 2, "expected": 2 },
+    { "name": "Área B", "first": 3, "last": 3, "found": 1, "expected": 1 }
+  ],
+  "groups": [
+    { "id": "g1-2", "from": 1, "to": 2, "directions": "Responda las preguntas 1 y 2.", "stimulus_md": "<p>Texto inventado con $x^2$.</p><img alt=\"Figura de prueba\" src=\"IMG:demo.png\">", "crop": null }
+  ],
+  "questions": [
+    {
+      "number": 1, "section": "Área A", "part": null, "item_type": "reading", "group_id": "g1-2",
+      "stimulus_md": "", "stem_md": "<p>¿Cuánto es $1+1$?</p>", "expected_options": 3,
+      "options": [
+        { "letter": "A", "text_md": "1" },
+        { "letter": "B", "text_md": "2" },
+        { "letter": "C", "text_md": "3" }
+      ],
+      "scan_marked_option": null, "source": { "pages": [], "crop": null },
+      "provenance": { "status": "auto", "trusted": false, "notes": [], "flags": [] }, "ready": true
+    },
+    {
+      "number": 2, "section": "Área A", "part": null, "item_type": "standard", "group_id": "g1-2",
+      "stimulus_md": "", "stem_md": "<p>Elija la opción de color.</p>", "expected_options": 2,
+      "options": [
+        { "letter": "A", "text_md": "Rojo" },
+        { "letter": "B", "text_md": "<script>alert(1)</script>Azul" }
+      ],
+      "scan_marked_option": null, "source": { "pages": [], "crop": null },
+      "provenance": { "status": "auto", "trusted": false, "notes": [], "flags": [] }, "ready": true
+    },
+    {
+      "number": 3, "section": "Área B", "part": "PARTE 1", "item_type": "standard", "group_id": null,
+      "stimulus_md": "<p>Observe la figura.</p><img alt=\"Dibujo inventado\" src=\"IMG:x.png\">", "stem_md": "<p>¿Cuál es la respuesta?</p>", "expected_options": 2,
+      "options": [
+        { "letter": "A", "text_md": "Sí" },
+        { "letter": "B", "text_md": "No" }
+      ],
+      "scan_marked_option": null, "source": { "pages": [], "crop": null },
+      "provenance": { "status": "auto", "trusted": false, "notes": [], "flags": [] }, "ready": true
+    }
+  ],
+  "note": "Synthetic fixture for unit tests. Not exam content."
+}
