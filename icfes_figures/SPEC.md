@@ -138,6 +138,32 @@ Cells in `rows` (and `headers`, if given) are strings, or objects `{ "text", "co
 Each row must cover the table width exactly. `headers`, if given, is the first row. Without `headers`,
 the first row sets the width.
 
+### `diagram`, a free vector scene
+
+For anything no chart kind covers: experiment set-ups, apparatus, maps, routes, cells, simple sketches.
+Coordinates are SVG units with y growing downward. The view fits the shapes unless `view` is given.
+
+```json
+{ "kind": "diagram", "title": "Montaje", "view": [0, 0, 200, 120],
+  "shapes": [
+    { "type": "rect", "x": 10, "y": 80, "w": 180, "h": 30, "fill": "hatch" },
+    { "type": "circle", "cx": 60, "cy": 60, "r": 14, "fill": "white" },
+    { "type": "line", "x1": 60, "y1": 74, "x2": 60, "y2": 40, "arrow": "end", "dash": true },
+    { "type": "polyline", "points": [[100, 40], [150, 40], [150, 80]] },
+    { "type": "polygon", "points": [[20, 20], [40, 20], [30, 5]], "fill": "dots" },
+    { "type": "path", "d": "M 20 100 Q 60 120 100 100", "extent": [[20, 100], [100, 110]] },
+    { "type": "text", "x": 60, "y": 30, "text": "agua", "size": 12, "anchor": "middle" }
+  ] }
+```
+
+- Shape types: `rect` (x, y, w, h, optional rx), `circle` (cx, cy, r), `ellipse` (cx, cy, rx, ry),
+  `line` (x1, y1, x2, y2), `polyline` and `polygon` (points, at least 2 and 3), `path` (d, plus `extent`
+  to fit the view), `text` (x, y, text, optional size, anchor, weight, rotate).
+- Style on any shape: `stroke` is black; `width` (default 1.6); `dash: true` for dashed lines;
+  `fill` one of `none` (default), `solid`, `white`, `hatch`, `dots`.
+- `arrow` on `line` or `polyline`: `end`, `start` or `both`.
+- Text is escaped; write the characters as they appear.
+
 ## Axes
 
 Set `domain: [lo, hi]` on an axis to widen the drawn scale past the printed range (for example to
@@ -166,8 +192,8 @@ as the stem figures, with the question number and option letter in `location`:
 ## Not supported yet
 
 Horizontal bars, stacked bars, histograms, number lines, Venn and tree diagrams, and function graphs.
-Geometry figures are drawn with the `geometry` kind; biology and chemistry diagrams and circuits stay
-as crops (`kind: "image"`, `src` relative to the figures folder).  Each of these stays an image until a kind is added here with a fixture.
+Geometry figures use `geometry`; anything else drawn with lines and shapes uses `diagram`.
+The `kind: "image"` crop is no longer used for new figures. Each new kind needs a fixture test.
 
 ## Validation
 

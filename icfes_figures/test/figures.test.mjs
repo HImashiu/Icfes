@@ -127,3 +127,47 @@ test('geometry kind draws segments, ticks and angle marks; hidden points get no 
   assert.ok(!svg.includes('>_h<'));
   assert.ok(F.validate({ kind: 'geometry', points: { A: [0, 0] }, segments: [{ a: 'A', b: 'Z' }] }).length > 0);
 });
+
+const diagram = { kind: 'diagram', title: 'Circuito', shapes: [
+  { type: 'rect', x: 0, y: 0, w: 60, h: 30, fill: 'hatch' },
+  { type: 'circle', cx: 30, cy: 15, r: 8, fill: 'white' },
+  { type: 'ellipse', cx: 90, cy: 15, rx: 10, ry: 6 },
+  { type: 'line', x1: 0, y1: 40, x2: 60, y2: 40, arrow: 'end', dash: true },
+  { type: 'polyline', points: [[0, 50], [20, 50], [20, 60]], arrow: 'both' },
+  { type: 'polygon', points: [[70, 50], [80, 60], [60, 60]], fill: 'dots' },
+  { type: 'path', d: 'M 0 70 Q 20 90 40 70', extent: [[0, 70], [40, 80]] },
+  { type: 'text', x: 30, y: 25, text: 'R<1>' },
+] };
+
+test('diagram validates and renders every shape type', () => {
+  assert.deepEqual(F.validate(diagram), []);
+  const svg = F.render(diagram);
+  for (const tag of ['<rect ', '<circle ', '<ellipse ', '<line ', '<polyline ', '<polygon ', '<path ']) assert.ok(svg.includes(tag), tag);
+  assert.ok(svg.includes('R&lt;1&gt;'), 'text is escaped');
+  assert.ok(svg.includes('stroke-dasharray'), 'dashed style applied');
+  assert.ok(svg.includes('url(#icf'), 'pattern fill applied');
+});
+
+test('diagram arrows add arrowheads at the requested ends', () => {
+  const one = (arrow) => F.render({ kind: 'diagram', shapes: [{ type: 'line', x1: 0, y1: 0, x2: 10, y2: 0, arrow }] });
+  const heads = (svg) => (svg.match(/<polygon points=/g) || []).length;
+  assert.equal(heads(one(undefined)), 0);
+  assert.equal(heads(one('end')), 1);
+  assert.equal(heads(one('both')), 2);
+});
+
+test('diagram fits the view to its shapes unless view is given', () => {
+  const fitted = F.render({ kind: 'diagram', shapes: [{ type: 'circle', cx: 0, cy: 0, r: 10 }] });
+  assert.match(fitted, /viewBox="-22 -22 44 44"/);
+  const fixed = F.render({ kind: 'diagram', view: [0, 0, 100, 50], shapes: [{ type: 'circle', cx: 5, cy: 5, r: 1 }] });
+  assert.match(fixed, /viewBox="0 0 100 50"/);
+});
+
+test('invalid diagrams are reported', () => {
+  assert.ok(F.validate({ kind: 'diagram', shapes: [] }).length > 0);
+  assert.ok(F.validate({ kind: 'diagram', shapes: [{ type: 'star' }] }).length > 0);
+  assert.ok(F.validate({ kind: 'diagram', shapes: [{ type: 'rect', x: 0, y: 0, w: 5 }] }).length > 0);
+  assert.ok(F.validate({ kind: 'diagram', shapes: [{ type: 'path', d: '<script>', extent: [[0, 0], [1, 1]] }] }).length > 0);
+  assert.ok(F.validate({ kind: 'diagram', shapes: [{ type: 'line', x1: 0, y1: 0, x2: 1, y2: 1, arrow: 'up' }] }).length > 0);
+  assert.ok(F.validate({ kind: 'diagram', shapes: [{ type: 'rect', x: 0, y: 0, w: 5, h: 5, fill: 'red' }] }).length > 0);
+});

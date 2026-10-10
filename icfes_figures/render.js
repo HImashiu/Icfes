@@ -9,7 +9,7 @@
 })(typeof self !== 'undefined' ? self : globalThis, function () {
   'use strict';
 
-  const KINDS = ['bar', 'line', 'scatter', 'curve', 'pie', 'table', 'geometry'];
+  const KINDS = ['bar', 'line', 'scatter', 'curve', 'pie', 'table', 'geometry', 'diagram'];
   const AXIS_KINDS = ['bar', 'line', 'scatter', 'curve'];
   // Booklets print in grey-scale, so series use fill patterns, not grey shades.
   const PATTERNS = ['hatch', 'solid', 'white', 'dots'];
@@ -100,6 +100,11 @@
         errs.push(...g.errors);
       }
     }
+    if (spec.kind === 'diagram') {
+      if (!Array.isArray(spec.shapes) || spec.shapes.length === 0) errs.push('shapes must be a non-empty array');
+      else spec.shapes.forEach((s, i) => errs.push(...diagramShapeErrors(s, i)));
+      if (spec.view != null && (!Array.isArray(spec.view) || spec.view.length !== 4 || !spec.view.every(isNum) || spec.view[2] <= 0 || spec.view[3] <= 0)) errs.push('view must be [x, y, width, height] with positive size');
+    }
     if (spec.kind === 'geometry') {
       const pts = spec.points || {};
       const ok = (v) => (typeof v === 'string' ? pts[v] != null : Array.isArray(v) && v.length === 2 && isNum(v[0]) && isNum(v[1]));
@@ -178,16 +183,19 @@
     return `<text ${attrs.join(' ')}>${esc(s)}</text>`;
   }
 
-  // Each chart gets its own id prefix, so several charts can share a page.
-  function svgOpen(title, id) {
-    const defs = `<defs>` +
+  function patternDefs(id) {
+    return `<defs>` +
       `<pattern id="${id}-hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">` +
       `<rect width="5" height="5" fill="#fff"/><line x1="0" y1="0" x2="0" y2="5" stroke="#000" stroke-width="1.6"/></pattern>` +
       `<pattern id="${id}-dots" width="5" height="5" patternUnits="userSpaceOnUse">` +
       `<rect width="5" height="5" fill="#fff"/><circle cx="2.5" cy="2.5" r="1.3" fill="#000"/></pattern>` +
       `</defs>`;
+  }
+
+  // Each chart gets its own id prefix, so several charts can share a page.
+  function svgOpen(title, id) {
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(title || 'gráfica')}">` +
-      `<rect width="${W}" height="${H}" fill="#fff"/>${defs}`;
+      `<rect width="${W}" height="${H}" fill="#fff"/>${patternDefs(id)}`;
   }
 
   // Fill for series i: printed grey-scale, so patterns, not tints.
@@ -560,11 +568,118 @@
     return out;
   }
 
+  // Diagram: a free vector scene in SVG coordinates (y grows downward). Covers anything no chart kind does.
+  const SHAPES = ['rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'path', 'text'];
+  const FILLS = ['none', 'solid', 'white', 'hatch', 'dots'];
+  const SHAPE_NUMS = { rect: ['x', 'y', 'w', 'h'], circle: ['cx', 'cy', 'r'], ellipse: ['cx', 'cy', 'rx', 'ry'], line: ['x1', 'y1', 'x2', 'y2'], text: ['x', 'y'] };
+  const isPt = (p) => Array.isArray(p) && p.length === 2 && isNum(p[0]) && isNum(p[1]);
+
+  function diagramShapeErrors(s, i) {
+    if (!s || !SHAPES.includes(s.type)) return [`shapes[${i}].type must be one of ${SHAPES.join(', ')}`];
+    const e = [];
+    (SHAPE_NUMS[s.type] || []).forEach((k) => { if (!isNum(s[k])) e.push(`shapes[${i}].${k} must be a number`); });
+    if ((s.type === 'circle' && s.r <= 0) || (s.type === 'rect' && (s.w <= 0 || s.h <= 0))) e.push(`shapes[${i}] needs a positive size`);
+    if (s.type === 'polyline' || s.type === 'polygon') {
+      const min = s.type === 'polygon' ? 3 : 2;
+      if (!Array.isArray(s.points) || s.points.length < min || !s.points.every(isPt)) e.push(`shapes[${i}].points needs at least ${min} [x, y] pairs`);
+    }
+    if (s.type === 'path') {
+      if (typeof s.d !== 'string' || !/^[MLHVCSQTAZmlhvcsqtaz0-9.,\s+-]+$/.test(s.d)) e.push(`shapes[${i}].d must be SVG path data`);
+      if (!Array.isArray(s.extent) || s.extent.length !== 2 || !s.extent.every(isPt)) e.push(`shapes[${i}].extent needs [[x, y], [x, y]] for fitting`);
+    }
+    if (s.type === 'text' && typeof s.text !== 'string') e.push(`shapes[${i}].text must be a string`);
+    if (s.fill != null && !FILLS.includes(s.fill)) e.push(`shapes[${i}].fill must be one of ${FILLS.join(', ')}`);
+    if (s.arrow != null && !['end', 'start', 'both'].includes(s.arrow)) e.push(`shapes[${i}].arrow must be end, start or both`);
+    return e;
+  }
+
+  // Points used to fit the view when the spec gives none.
+  function diagramPoints(s) {
+    switch (s.type) {
+      case 'rect': return [[s.x, s.y], [s.x + s.w, s.y + s.h]];
+      case 'circle': return [[s.cx - s.r, s.cy - s.r], [s.cx + s.r, s.cy + s.r]];
+      case 'ellipse': return [[s.cx - s.rx, s.cy - s.ry], [s.cx + s.rx, s.cy + s.ry]];
+      case 'line': return [[s.x1, s.y1], [s.x2, s.y2]];
+      case 'polyline': case 'polygon': return s.points;
+      case 'path': return s.extent;
+      default: return [[s.x, s.y]];
+    }
+  }
+
+  function paintFor(fill, id) {
+    if (!fill || fill === 'none') return 'none';
+    if (fill === 'solid') return '#000';
+    if (fill === 'white') return '#fff';
+    if (fill === 'dots') return `url(#${id}-dots)`;
+    return `url(#${id}-hatch)`;
+  }
+
+  // Filled triangle at tip, pointing away from `from`.
+  function arrowHead(tip, from) {
+    const a = Math.atan2(tip[1] - from[1], tip[0] - from[0]);
+    const L = 9, hw = 4;
+    const bx = tip[0] - L * Math.cos(a), by = tip[1] - L * Math.sin(a);
+    const p1 = [bx - hw * Math.sin(a), by + hw * Math.cos(a)];
+    const p2 = [bx + hw * Math.sin(a), by - hw * Math.cos(a)];
+    return `<polygon points="${[tip, p1, p2].map((p) => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}" fill="#000"/>`;
+  }
+
+  function arrowsFor(s, pts) {
+    const n = pts.length;
+    const first = s.arrow === 'start' || s.arrow === 'both';
+    const last = s.arrow === 'end' || s.arrow === 'both';
+    return (last ? arrowHead(pts[n - 1], pts[n - 2]) : '') + (first ? arrowHead(pts[0], pts[1]) : '');
+  }
+
+  function diagramShape(s, id) {
+    const st = `stroke="#000" stroke-width="${s.width || 1.6}"${s.dash ? ' stroke-dasharray="5 4"' : ''}`;
+    const fill = paintFor(s.fill, id);
+    const pl = (pts) => pts.map((p) => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+    switch (s.type) {
+      case 'rect':
+        return `<rect x="${s.x}" y="${s.y}" width="${s.w}" height="${s.h}" rx="${s.rx || 0}" fill="${fill}" ${st}/>`;
+      case 'circle':
+        return `<circle cx="${s.cx}" cy="${s.cy}" r="${s.r}" fill="${fill}" ${st}/>`;
+      case 'ellipse':
+        return `<ellipse cx="${s.cx}" cy="${s.cy}" rx="${s.rx}" ry="${s.ry}" fill="${fill}" ${st}/>`;
+      case 'line': {
+        const pts = [[s.x1, s.y1], [s.x2, s.y2]];
+        return `<line x1="${s.x1}" y1="${s.y1}" x2="${s.x2}" y2="${s.y2}" fill="none" ${st}/>` + arrowsFor(s, pts);
+      }
+      case 'polyline':
+        return `<polyline points="${pl(s.points)}" fill="none" ${st}/>` + arrowsFor(s, s.points);
+      case 'polygon':
+        return `<polygon points="${pl(s.points)}" fill="${fill}" ${st}/>`;
+      case 'path':
+        return `<path d="${s.d}" fill="${fill}" ${st}/>`;
+      case 'text':
+        return text(s.x, s.y, s.text, { size: s.size, anchor: s.anchor, weight: s.weight, rotate: s.rotate });
+    }
+    return '';
+  }
+
+  function diagramSvg(spec, id) {
+    let [x, y, w, h] = spec.view || [];
+    if (!spec.view) {
+      const pts = spec.shapes.flatMap(diagramPoints);
+      const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+      const pad = 12;
+      x = Math.min(...xs) - pad;
+      y = Math.min(...ys) - pad;
+      w = Math.max(Math.max(...xs) - x + pad, 1);
+      h = Math.max(Math.max(...ys) - y + pad, 1);
+    }
+    const body = spec.shapes.map((s) => diagramShape(s, id)).join('');
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x} ${y} ${w} ${h}" width="100%" role="img" aria-label="${esc(spec.title || 'diagrama')}">` +
+      `${patternDefs(id)}<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff"/>${body}</svg>`;
+  }
+
   // Charts return an SVG string; tables return an HTML string. Invalid specs throw, so callers can fall back to the crop.
   function render(spec) {
     const errs = validate(spec);
     if (errs.length) throw new Error('invalid figure spec: ' + errs.join('; '));
     if (spec.kind === 'table') return tableHtml(spec);
+    if (spec.kind === 'diagram') return diagramSvg(spec, `icf${++seq}`);
     const id = `icf${++seq}`;
     if (spec.kind === 'geometry') return svgOpen(spec.title, id) + geometrySvg(spec, id).join('') + '</svg>';
     const body = spec.kind === 'bar' ? barSvg(spec, id)
