@@ -194,6 +194,13 @@ Coordinates are SVG units with y growing downward. The view fits the shapes unle
 - Text is escaped; write the characters as they appear.
 
 ## Axes
+### Axis options
+
+- `scale`: `linear` (default) or `log`. A log axis needs positive `min`, `max` and data. Each decade gets one tick
+  (1, 10, 100, ...), so bounds snap to powers of ten. Works on the y axis of `line` with numeric x, and `scatter`.
+- `format`: `plain` keeps integers ungrouped (1995, not 1.995). `grouped` forces Spanish thousands dots.
+  Without `format`, an axis whose label contains "año" or "year" is plain; all other axes are grouped.
+
 
 Set `domain: [lo, hi]` on an axis to widen the drawn scale past the printed range (for example to
 hold a point at -0.5) without drawing ticks outside `min`..`max`. Category labels rotate when they

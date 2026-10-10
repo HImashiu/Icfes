@@ -204,3 +204,26 @@ test('area fills under a line and skips gaps', () => {
   // Two runs: [1, 4] has two points so it fills; the single point after the gap does not.
   assert.equal((F.render(a).match(/<polygon /g) || []).length, 1);
 });
+
+test('year axes are not grouped: 1995 stays 1995, not 1.995', () => {
+  const yr = { kind: 'line', x: { label: 'Año', min: 1990, max: 2000, step: 5 }, y: { label: 'Tasa' }, series: [{ name: 'a', points: [[1990, 1], [2000, 3]] }] };
+  const svg = F.render(yr);
+  assert.ok(svg.includes('>1990<') && svg.includes('>2000<'));
+  assert.ok(!svg.includes('1.990'));
+  // An explicit format wins, and a non-year label keeps the grouped default.
+  const grouped = { ...yr, x: { label: 'Año', min: 1990, max: 2000, step: 5, format: 'grouped' } };
+  assert.ok(F.render(grouped).includes('1.990'));
+  const money = { kind: 'line', x: { label: 'Pesos', min: 1000, max: 2000, step: 500 }, y: { label: 'Tasa' }, series: [{ name: 'a', points: [[1000, 1], [2000, 3]] }] };
+  assert.ok(F.render(money).includes('1.000'));
+});
+
+test('log y axis places decades evenly and rejects zero or negative values', () => {
+  const log = { kind: 'scatter', x: { label: 'Profundidad', min: 0, max: 10, step: 2 }, y: { label: 'Intensidad', scale: 'log' }, series: [{ points: [[1, 2], [4, 300], [8, 50000]] }] };
+  assert.deepEqual(F.validate(log), []);
+  const svg = F.render(log);
+  // Decades 1, 10, 100, 1.000, 10.000, 100.000 each get a tick label.
+  for (const t of ['>1<', '>10<', '>100<', '>1.000<', '>10.000<', '>100.000<']) assert.ok(svg.includes(t), t);
+  assert.ok(F.validate({ ...log, series: [{ points: [[1, 0], [4, 3]] }] }).length > 0);
+  assert.ok(F.validate({ ...log, y: { label: 'I', scale: 'log', min: 0 } }).length > 0);
+  assert.ok(F.validate({ ...log, y: { label: 'I', scale: 'sqrt' } }).length > 0);
+});

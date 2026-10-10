@@ -30,6 +30,9 @@
       for (const k of ['min', 'max', 'step']) if (a[k] != null && !isNum(a[k])) errs.push(`${name}.${k} must be a number`);
       if (isNum(a.min) && isNum(a.max) && a.min >= a.max) errs.push(`${name}: min must be below max`);
       if (isNum(a.step) && a.step <= 0) errs.push(`${name}.step must be positive`);
+      if (a.scale != null && a.scale !== 'linear' && a.scale !== 'log') errs.push(`${name}.scale must be linear or log`);
+      if (a.scale === 'log' && ((isNum(a.min) && a.min <= 0) || (isNum(a.max) && a.max <= 0))) errs.push(`${name}: a log axis needs positive min and max`);
+      if (a.format != null && a.format !== 'plain' && a.format !== 'grouped') errs.push(`${name}.format must be plain or grouped`);
       if (a.domain != null && (!Array.isArray(a.domain) || a.domain.length !== 2 || !isNum(a.domain[0]) || !isNum(a.domain[1]) || a.domain[0] >= a.domain[1])) errs.push(`${name}.domain must be [lo, hi] with lo below hi`);
     };
     const series = Array.isArray(spec.series) ? spec.series : [];
@@ -137,6 +140,11 @@
       (spec.angles || []).forEach((g, i) => { if (!ok(g.vertex) || !ok(g.a) || !ok(g.b)) errs.push(`angles[${i}] needs known vertex, a and b`); });
       (spec.labels || []).forEach((g, i) => { if (!ok(g.at) || typeof g.text !== 'string') errs.push(`labels[${i}] needs at and text`); });
     }
+    ['x', 'y'].forEach((k) => {
+      if (!spec[k] || spec[k].scale !== 'log') return;
+      const vals = series.flatMap((s) => (s.points ? s.points.map((p) => (Array.isArray(p) ? p[k === 'x' ? 0 : 1] : NaN)) : (s.values || [])));
+      if (vals.some((v) => v !== null && (!isNum(v) || v <= 0))) errs.push(`${k} is a log axis, so every value must be above 0`);
+    });
     return errs;
   }
 
@@ -152,6 +160,12 @@
     return (Math.abs(n) >= 1000 ? group(whole) : whole) + (frac ? ',' + frac : '');
   }
 
+  // Years and other plain numbers are not grouped: 1995 must not read 1.995.
+  function tickText(axis, v) {
+    const plain = axis && (axis.format === 'plain' || (axis.format == null && /a[ñn]o|year/i.test(axis.label || '')));
+    return plain ? String(v).replace('.', ',') : fmt(v);
+  }
+
   function niceStep(span, target) {
     const raw = span / (target || 5);
     const mag = Math.pow(10, Math.floor(Math.log10(raw)));
@@ -163,6 +177,7 @@
   // Linear scale from a data extent, honouring explicit min/max/step from the spec.
   // axis.domain = [lo, hi] widens the drawn scale without adding ticks outside min..max.
   function scaleFor(axis, values, forceZero) {
+    if (axis && axis.scale === 'log') return logScale(axis, values);
     const vals = values.filter(isNum);
     let lo = vals.length ? Math.min(...vals) : 0;
     let hi = vals.length ? Math.max(...vals) : 1;
@@ -179,6 +194,18 @@
     const ticks = [];
     for (let v = tickLo; v <= tickHi + step * 1e-9; v += step) ticks.push(Math.round(v / step * 1e9) / 1e9 * step);
     return { lo, hi, step, ticks };
+  }
+
+  // Log axis: bounds snap to powers of ten and every decade gets a tick.
+  function logScale(axis, values) {
+    const vals = values.filter((v) => isNum(v) && v > 0);
+    const lo0 = isNum(axis.min) ? axis.min : (vals.length ? Math.min(...vals) : 1);
+    const hi0 = isNum(axis.max) ? axis.max : (vals.length ? Math.max(...vals) : 10);
+    const e0 = Math.floor(Math.log10(lo0));
+    const e1 = Math.max(Math.ceil(Math.log10(hi0)), e0 + 1);
+    const ticks = [];
+    for (let e = e0; e <= e1; e++) ticks.push(Math.pow(10, e));
+    return { lo: Math.pow(10, e0), hi: Math.pow(10, e1), step: 1, ticks, log: true };
   }
 
   function wrapLabel(text, max) {
@@ -235,10 +262,11 @@
     const left = 58;
     const plotRight = right == null ? W - 16 : right;
     const bottom = H - 50 - (extraBottom || 0);
-    const y = (v) => bottom - (v - yScale.lo) / (yScale.hi - yScale.lo) * (bottom - top);
+    const tf = yScale.log ? Math.log10 : (v) => v;
+    const y = (v) => bottom - (tf(v) - tf(yScale.lo)) / (tf(yScale.hi) - tf(yScale.lo)) * (bottom - top);
     for (const t of yScale.ticks) {
       out.push(`<line x1="${left}" x2="${plotRight}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}" stroke="#e4e4e4" stroke-width="1"/>`);
-      out.push(text(left - 6, (y(t) + 4).toFixed(1), fmt(t), { anchor: 'end' }));
+      out.push(text(left - 6, (y(t) + 4).toFixed(1), tickText(spec.y, t), { anchor: 'end' }));
     }
     out.push(`<line x1="${left}" x2="${left}" y1="${top}" y2="${bottom}" stroke="#000"/>`);
     out.push(`<line x1="${left}" x2="${plotRight}" y1="${bottom}" y2="${bottom}" stroke="#000"/>`);
@@ -386,7 +414,7 @@
     const out = fr.out;
     if (showLegend) out.push(...legend(series, fr.left, fr.top - 6, id));
     const xAt = (v) => fr.left + (v - xScale.lo) / (xScale.hi - xScale.lo) * (fr.right - fr.left);
-    for (const t of xScale.ticks) out.push(text(xAt(t).toFixed(1), fr.bottom + 15, fmt(t)));
+    for (const t of xScale.ticks) out.push(text(xAt(t).toFixed(1), fr.bottom + 15, tickText(spec.x, t)));
     series.forEach((s, si) => out.push(...polyline(s, si, s.points.map(([x, y]) => [xAt(x), fr.y(y)]))));
     return out;
   }
@@ -419,7 +447,7 @@
     if (showLegend) out.push(...legend(series, fr.left, fr.top - 6, id));
     for (const t of xScale.ticks) {
       const x = fr.left + (t - xScale.lo) / (xScale.hi - xScale.lo) * (fr.right - fr.left);
-      out.push(text(x.toFixed(1), fr.bottom + 15, fmt(t)));
+      out.push(text(x.toFixed(1), fr.bottom + 15, tickText(spec.x, t)));
     }
     series.forEach((s, si) => {
       s.points.forEach(([px, py]) => {
