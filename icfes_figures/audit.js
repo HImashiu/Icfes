@@ -29,7 +29,8 @@ function auditFigure(f) {
   else if (kind !== 'table') {
     try { F.render(spec); } catch (e) { issues.push('render: ' + e.message.slice(0, 120)); }
   }
-  if (kind === 'diagram' && spec.shapes && onlyBoxesAndText(spec)) issues.push('diagram is only boxes and text (check for a photo drawn as an empty box)');
+  // A figure marked text_only is a sign, ad or poster that is really text in a frame: not a stand-in, but listed for spot checks.
+  if (kind === 'diagram' && spec.shapes && onlyBoxesAndText(spec) && f.text_only !== true) issues.push('diagram is only boxes and text (check for a photo drawn as an empty box)');
   if (kind === 'diagram' && spec.shapes) {
     for (const o of F.textOverflows(spec)) issues.push('text overflow: ' + o);
     // Unboxed text that would run past the view: estimate its width from the glyph count.
@@ -82,6 +83,7 @@ for (const [exam, names] of groups) {
     const r = auditFigure(f);
     counts[r.kind] = (counts[r.kind] || 0) + 1;
     for (const i of r.issues) problems.push(`${f.id}: ${i}`);
+    if (f.text_only === true) textOnly.push(`${exam} ${f.id}`);
   }
   for (const x of pendingList) notRep.push({ exam, ...x });
   rows.push({ exam, files: names, counts, pending: pendingList.length, problems, figures: figures.length });
@@ -116,6 +118,11 @@ for (const r of withProblems) {
   for (const p of r.problems || []) lines.push('- ' + p);
   lines.push('');
 }
+lines.push(`## Text-only figures (${textOnly.length}, spot-check that the label is not misused)`);
+lines.push('');
+if (!textOnly.length) lines.push('None.');
+for (const t of textOnly) lines.push('- ' + t);
+lines.push('');
 lines.push('## Not representable');
 lines.push('');
 if (!notRep.length) lines.push('None.');
