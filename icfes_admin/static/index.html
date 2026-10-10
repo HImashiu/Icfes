@@ -126,6 +126,7 @@ function areaColor(name) { return AREA[name] ? `var(${AREA[name]})` : "var(--tex
 function fmt(n) { return n == null ? "—" : Number(n).toLocaleString("es-CO"); }
 
 async function api(path, opts) {
+  if (window.ICFES_STATIC) return window.ICFES_STATIC(path, opts);
   const res = await fetch(path, opts);
   const body = await res.json().catch(() => ({}));
   if (!res.ok) { const err = new Error(body.error || res.statusText); err.body = body; err.status = res.status; throw err; }
