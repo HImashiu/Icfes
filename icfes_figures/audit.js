@@ -100,6 +100,7 @@ const rows = [];
 const notRep = [];
 const textOnly = [];
 const similar = [];
+const verifiedSimilar = [];
 const files = fs.readdirSync(dir).filter((n) => n.endsWith('.json')).sort();
 const groups = new Map();
 for (const name of files) {
@@ -144,7 +145,9 @@ for (const [exam, names] of groups) {
     for (let a = 0; a < opts.length; a++) {
       for (let b = a + 1; b < opts.length; b++) {
         const sim = similarity(tokens(opts[a].spec), tokens(opts[b].spec));
-        if (sim >= 0.95) {
+        if (sim >= 0.95 && opts[a].options_verified === true && opts[b].options_verified === true) {
+          verifiedSimilar.push(`${exam} Q${q} ${opts[a].location.option}/${opts[b].location.option} ${Math.round(sim * 100)}%`);
+        } else if (sim >= 0.95) {
           problems.push(`Q${q}: options ${opts[a].location.option} and ${opts[b].location.option} look the same (${Math.round(sim * 100)}% alike)`);
           similar.push(`${exam} Q${q} ${opts[a].location.option}/${opts[b].location.option} ${Math.round(sim * 100)}%`);
         }
@@ -193,6 +196,11 @@ lines.push(`## Similar option figures (${similar.length})`);
 lines.push('');
 if (!similar.length) lines.push('None.');
 for (const t of similar) lines.push('- ' + t);
+lines.push('');
+lines.push(`## Verified similar options (${verifiedSimilar.length}, confirmed against a 300 dpi scan)`);
+lines.push('');
+if (!verifiedSimilar.length) lines.push('None.');
+for (const t of verifiedSimilar) lines.push('- ' + t);
 lines.push('');
 lines.push('## Not representable');
 lines.push('');
