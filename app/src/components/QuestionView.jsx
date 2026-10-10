@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import RichText from "./RichText.jsx";
 import FigureBlock from "./FigureBlock.jsx";
 import { SOURCE_LINE } from "../lib/exam.js";
@@ -13,12 +13,43 @@ function optionState({ letter, answer, correctLetter, graded }) {
 
 const STATE_LABEL = { correct: "Respuesta según la clave", incorrect: "Tu respuesta" };
 
-// The question always sits on a light paper card; options sit outside it on the app surface.
+// True on desktop, where the context (passage, figure) sits in its own column and is never collapsed.
+function useWide() {
+  const query = "(min-width: 1200px)";
+  const [wide, setWide] = useState(() => window.matchMedia?.(query).matches ?? false);
+  useEffect(() => {
+    const mql = window.matchMedia?.(query);
+    if (!mql) return undefined;
+    const onChange = (e) => setWide(e.matches);
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
+  return wide;
+}
+
+// Two columns on desktop: the context (passage, stimulus, figure, source) and the question (stem, options).
+// On phone they stack: context first, then the question. A question with no context spans both.
 // `review` holds { correctLetter } when a key exists; `graded` turns on the correct/incorrect states.
-export default function QuestionView({ question, answer, onAnswer, graded = false, review, figures, collapsedGroup = false, examLabel }) {
+// `footer` and `feedback` are placed under the options; `flagged` and `onToggleFlag` drive the desktop "Marcar" toggle.
+export default function QuestionView({
+  question,
+  answer,
+  onAnswer,
+  graded = false,
+  review,
+  figures,
+  collapsedGroup = false,
+  examLabel,
+  footer,
+  feedback,
+  flagged = false,
+  onToggleFlag,
+}) {
   const { group } = question;
+  const wide = useWide();
   const [groupOpen, setGroupOpen] = useState(!collapsedGroup);
   const correctLetter = review?.correctLetter ?? null;
+  const collapsed = collapsedGroup && !wide;
 
   const stemFigures = [
     ...(figures?.get(question.key) ?? []),
@@ -38,62 +69,85 @@ export default function QuestionView({ question, answer, onAnswer, graded = fals
     </section>
   );
 
-  return (
-    <>
-      <article className="paper-card" aria-labelledby={`q-${question.key}`}>
-        <span className="card-label" id={`q-${question.key}`}>
-          Pregunta {question.number} · {question.section}
-          {question.part ? ` · ${question.part}` : ""}
-        </span>
-        {group && collapsedGroup ? (
-          <details className="group-collapse" open={groupOpen} onToggle={(e) => setGroupOpen(e.currentTarget.open)}>
-            <summary>Ver texto y gráfica</summary>
-            {passage}
-          </details>
-        ) : (
-          passage
-        )}
-        {ownStimulus && <RichText html={question.stimulus_md} className="stimulus" />}
-        {stemFigures.map((f) => (
-          <FigureBlock key={f.id} figure={f} alt={f.id} />
-        ))}
-        <RichText html={question.stem_md} className="stem" />
-        <span className="source">{examLabel ? `${SOURCE_LINE} · ${examLabel}` : SOURCE_LINE}</span>
-      </article>
+  const hasContext = Boolean(passage || ownStimulus || stemFigures.length);
+  const source = <span className="source">{examLabel ? `${SOURCE_LINE} · ${examLabel}` : SOURCE_LINE}</span>;
 
-      <ul className={chartOptions ? "options charts" : "options"} role="radiogroup" aria-label={`Opciones de la pregunta ${question.number}`}>
-        {question.options.map((opt) => {
-          const state = optionState({ letter: opt.letter, answer, correctLetter, graded });
-          const figure = optionFigure(opt.letter);
-          const inner = (
-            <>
-              <span className="letter-tile">{opt.letter}</span>
-              {figure ? (
-                <FigureBlock figure={figure} alt={`Opción ${opt.letter}`} />
-              ) : (
-                <RichText html={opt.text_md} className="option-text" />
-              )}
-              {STATE_LABEL[state] && <span className="option-tag">{STATE_LABEL[state]}</span>}
-            </>
-          );
-          const disabled = !onAnswer;
-          return (
-            <li key={opt.letter}>
+  return (
+    <div className={hasContext ? "q-split" : "q-split solo"}>
+      {hasContext && (
+        <section className="paper-card q-context" aria-label="Texto y gráfica de la pregunta">
+          {passage && (collapsed ? (
+            <details className="group-collapse" open={groupOpen} onToggle={(e) => setGroupOpen(e.currentTarget.open)}>
+              <summary>Ver texto y gráfica</summary>
+              {passage}
+            </details>
+          ) : passage)}
+          {ownStimulus && <RichText html={question.stimulus_md} className="stimulus" />}
+          {stemFigures.map((f) => (
+            <FigureBlock key={f.id} figure={f} alt={f.id} />
+          ))}
+          {source}
+        </section>
+      )}
+
+      <div className="q-main">
+        <article className="paper-card q-question" aria-labelledby={`q-${question.key}`}>
+          <div className="card-row">
+            <span className="card-label" id={`q-${question.key}`}>
+              Pregunta {question.number} · {question.section}
+              {question.part ? ` · ${question.part}` : ""}
+            </span>
+            {onToggleFlag && (
               <button
                 type="button"
-                role="radio"
-                aria-checked={answer === opt.letter}
-                aria-label={`Opción ${opt.letter}`}
-                disabled={disabled}
-                className={`option ${state}`}
-                onClick={() => onAnswer?.(opt.letter)}
+                className={flagged ? "mark-btn on" : "mark-btn"}
+                aria-pressed={flagged}
+                onClick={onToggleFlag}
               >
-                {inner}
+                {flagged ? "Marcada" : "Marcar"}
               </button>
-            </li>
-          );
-        })}
-      </ul>
-    </>
+            )}
+          </div>
+          <RichText html={question.stem_md} className="stem" />
+          {!hasContext && source}
+        </article>
+
+        <ul className={chartOptions ? "options charts" : "options"} role="radiogroup" aria-label={`Opciones de la pregunta ${question.number}`}>
+          {question.options.map((opt) => {
+            const state = optionState({ letter: opt.letter, answer, correctLetter, graded });
+            const figure = optionFigure(opt.letter);
+            const inner = (
+              <>
+                <span className="letter-tile">{opt.letter}</span>
+                {figure ? (
+                  <FigureBlock figure={figure} alt={`Opción ${opt.letter}`} />
+                ) : (
+                  <RichText html={opt.text_md} className="option-text" />
+                )}
+                {STATE_LABEL[state] && <span className="option-tag">{STATE_LABEL[state]}</span>}
+              </>
+            );
+            const disabled = !onAnswer;
+            return (
+              <li key={opt.letter}>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={answer === opt.letter}
+                  aria-label={`Opción ${opt.letter}`}
+                  disabled={disabled}
+                  className={`option ${state}`}
+                  onClick={() => onAnswer?.(opt.letter)}
+                >
+                  {inner}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        {feedback}
+        {footer}
+      </div>
+    </div>
   );
 }

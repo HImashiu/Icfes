@@ -1,4 +1,5 @@
 import Icon from "./Icon.jsx";
+import { SAMPLE_STUDENT } from "../data/mock.js";
 
 const ITEMS = [
   { id: "home", label: "Inicio", icon: "home" },
@@ -7,7 +8,8 @@ const ITEMS = [
   { id: "profile", label: "Perfil", icon: "user" },
 ];
 
-// Student bottom navigation for phone widths. The active item uses the accent ink color.
+// Student navigation: bottom nav on phone, icon rail on tablet, labelled sidebar on desktop.
+// The active item uses the accent ink color.
 export default function BottomNav({ active, onGo }) {
   return (
     <nav className="bottom-nav" aria-label="Navegación principal">
@@ -23,6 +25,13 @@ export default function BottomNav({ active, onGo }) {
           <span>{item.label}</span>
         </button>
       ))}
+      <div className="nav-me" aria-label="Estudiante">
+        <span className="avatar" aria-hidden="true">E</span>
+        <div>
+          <strong>Estudiante</strong>
+          <span className="caption">{SAMPLE_STUDENT.course} · datos de muestra</span>
+        </div>
+      </div>
     </nav>
   );
 }

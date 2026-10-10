@@ -208,6 +208,7 @@ button.card { text-align: left; width: 100%; }
   font-size: 12px; font-weight: 700; border-radius: 12px;
 }
 .nav-item.active { color: var(--accent-ink); }
+.nav-me { display: none; }
 
 /* Home */
 .home { display: grid; gap: 14px; }
@@ -492,47 +493,29 @@ button.card { text-align: left; width: 100%; }
   .t-main { padding: 16px; }
 }
 
-/* Responsive: test screen gets the map as a side panel on desktop */
-@media (min-width: 1024px) {
-  .app.wide .test-top { padding: 12px 24px 10px; }
-  .test-body {
-    display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 32px; align-items: start;
-    max-width: 1100px; margin: 0 auto; padding: 24px 0 40px;
-  }
-  .test-main { margin: 0; max-width: 760px; }
-  .test-side {
-    display: block; position: sticky; top: 110px; background: var(--surface); border: 1px solid var(--line);
-    border-radius: 20px; padding: 16px; max-height: calc(100vh - 140px); overflow-y: auto;
-  }
-  .test-bottom { position: sticky; bottom: 0; left: auto; right: auto; max-width: 1100px; margin: 0 auto; padding: 12px 0; background: var(--bg); border-top: 1px solid var(--line); }
-  .test-bottom .map-btn { display: none; }
-  .test-bottom .primary.big { flex: 0 0 280px; margin-left: auto; }
-  .sheet-backdrop { display: none; }
-}
-/* Tablet and desktop: the phone column widens, and the bottom nav becomes a left rail on desktop. */
+/* Shell breakpoints (design spec section 8):
+   phone < 768: bottom nav, single column.
+   tablet 768–1199: 72px icon rail in place of the bottom nav; content max 880.
+   desktop >= 1200: 232px sidebar with labels and the student card; content up to 1600. */
 @media (min-width: 768px) {
-  .app { max-width: 760px; }
-  .app.wide { max-width: 1200px; }
-  .bottom-nav { max-width: 760px; }
-}
-@media (min-width: 1024px) {
   .bottom-nav {
-    top: 0; right: auto; bottom: 0; width: 220px; max-width: none; margin: 0;
-    grid-template-columns: 1fr; align-content: start; gap: 4px;
-    padding: 24px 12px; border-top: 0; border-right: 1px solid var(--line);
+    top: 0; right: auto; bottom: 0; width: 72px; max-width: none; margin: 0;
+    grid-template-columns: 1fr; align-content: start; gap: 6px;
+    padding: 16px 8px; border-top: 0; border-right: 1px solid var(--line);
   }
-  .nav-item { flex-direction: row; justify-content: flex-start; min-height: 48px; padding: 0 14px; font-size: 15px; gap: 12px; }
-  .app { max-width: 1200px; padding: 24px 32px 48px 252px; }
-  .app.wide { padding: 0 24px; }
-  .app:has(> .teacher) { padding: 0; }
-  .sticky-cta { left: 220px; right: 0; bottom: 0; max-width: none; margin: 0; transform: none; }
+  .nav-item { min-height: 52px; }
+  .nav-item span { display: none; }
+  .nav-me { display: none; }
+  .app { max-width: 880px; padding: 24px 24px 48px 104px; }
+  .app.wide { max-width: 1600px; padding: 0 24px; }
+  .app:has(> .teacher) { max-width: none; padding: 0; }
+  .sticky-cta { left: 72px; right: 0; bottom: 0; max-width: none; margin: 0; transform: none; }
   .sticky-cta .primary { max-width: 480px; margin: 0 auto; }
   .sticky-cta > .caption { max-width: 480px; margin: 0 auto; }
 
-  .home { grid-template-columns: 1fr 1fr; gap: 16px; max-width: 1000px; margin: 0 auto; }
+  .home { grid-template-columns: 1fr 1fr; gap: 16px; max-width: 880px; margin: 0 auto; }
   .home-head, .quick-grid, .league-teaser, .sample-note { grid-column: 1 / -1; }
-
-  .setup, .results, .review, .league, .profile { max-width: 960px; margin: 0 auto; }
+  .setup, .results, .review, .league, .profile { max-width: 880px; margin: 0 auto; }
   .setup .mode-cards { grid-template-columns: 1fr 1fr; }
   .results { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
   .results-hero, .stat-grid, .notice { grid-column: 1 / -1; }
@@ -541,6 +524,92 @@ button.card { text-align: left; width: 100%; }
   .profile { max-width: 720px; }
   .podium { max-width: 560px; margin: 0 auto; width: 100%; }
 }
+@media (min-width: 1200px) {
+  .bottom-nav {
+    display: flex; flex-direction: column; align-items: stretch;
+    width: 232px; padding: 24px 14px; gap: 4px;
+  }
+  .nav-item {
+    flex-direction: row; justify-content: flex-start; min-height: 48px; padding: 0 14px;
+    font-size: 15px; gap: 12px; border-radius: 12px;
+  }
+  .nav-item span { display: inline; }
+  .nav-me {
+    display: flex; align-items: center; gap: 12px; margin-top: auto; padding: 12px;
+    border: 1px solid var(--line); border-radius: 16px; background: var(--surface);
+  }
+  .nav-me strong { display: block; font-size: 14px; }
+  .nav-me .caption { font-size: 12px; }
+  .app { max-width: 1600px; padding: 28px 32px 48px 264px; }
+  .app.wide { max-width: 1600px; padding: 0 28px; }
+  .app:has(> .teacher) { max-width: none; padding: 0; }
+  .sticky-cta { left: 232px; }
+  .home { max-width: 1040px; }
+  .setup, .results, .review, .league, .profile { max-width: 1040px; }
+  .review { max-width: 1040px; }
+  .league { max-width: 760px; }
+  .profile { max-width: 760px; }
+}
+
+/* Desktop-only and phone-only parts of the test screen */
+.desk-only { display: none; }
+@media (min-width: 1200px) {
+  .test-title.desk-only { display: grid; min-width: 0; gap: 2px; max-width: 460px; }
+  .clock-pill.desk-only { display: inline-flex; }
+  .kbd-hint.desk-only { display: block; }
+  .secondary.desk-only { display: inline-flex; }
+  .desk-submit.desk-only { min-height: 44px; }
+  .flag-top { display: none; }
+  .test-meta { display: none; }
+  .mark-btn { display: inline-flex; }
+}
+
+/* Test screen on desktop (focus mode, no sidebar): top bar, then context | question | map panel. */
+@media (min-width: 1200px) {
+  .app.wide .test-top { padding: 14px 28px 12px; }
+  .test-row { gap: 16px; }
+  .test-row .progress { flex: 1; }
+  .test-title strong { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .test-title .caption { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .clock-pill {
+    min-width: 104px; height: 40px; padding: 0 14px; justify-content: center; align-items: center;
+    border-radius: 999px; background: var(--surface); border: 1px solid var(--line);
+    font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 16px; font-variant-numeric: tabular-nums;
+  }
+  .test-body {
+    display: flex; flex-wrap: wrap; align-items: flex-start; gap: 24px;
+    max-width: 1600px; margin: 0 auto; padding: 24px 28px 40px;
+  }
+  .test-main { flex: 999 1 560px; min-width: 0; max-width: none; margin: 0; display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .q-split { display: contents; }
+  .q-context {
+    flex: 1 1 380px; min-width: 0; position: sticky; top: 124px;
+    max-height: calc(100vh - 160px); overflow-y: auto;
+  }
+  .q-main { flex: 1 1 380px; min-width: 0; display: grid; gap: 12px; align-content: start; }
+  .q-main > .paper-card { max-width: none; }
+  .test-side {
+    display: block; flex: 0 0 280px; position: sticky; top: 124px; background: var(--surface);
+    border: 1px solid var(--line); border-radius: 20px; padding: 16px;
+    max-height: calc(100vh - 160px); overflow-y: auto;
+  }
+  .test-bottom {
+    position: static; left: auto; right: auto; bottom: auto; z-index: auto; max-width: none; margin: 0;
+    padding: 4px 0 0; background: none; border: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  }
+  .test-bottom .map-btn { display: none; }
+  .test-bottom .submit-link { display: none; }
+  .test-bottom .primary.big { flex: 1 1 220px; min-width: 0; }
+  .test-bottom .secondary.desk-only { min-height: 54px; flex: 0 0 auto; }
+  .test-bottom .kbd-hint { flex: 0 0 100%; font-size: 12px; color: var(--text-2); }
+  .sheet-backdrop { display: none; }
+}
+.mark-btn {
+  display: none; align-items: center; min-height: 36px; padding: 0 14px; border-radius: 999px;
+  border: 1px solid #cfccbf; background: transparent; color: var(--paper-ink); font-size: 13px; font-weight: 700;
+}
+.mark-btn.on { background: var(--flame); border-color: var(--flame); color: #0D110F; }
+.card-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 
 /* Phone tweaks */
 @media (max-width: 380px) {

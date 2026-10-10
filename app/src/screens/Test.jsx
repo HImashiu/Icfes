@@ -46,11 +46,15 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // Keyboard (desktop): A–D answer, ←/→ move, M flags. Inputs are left alone.
   useEffect(() => {
     const onKey = (e) => {
-      if (e.target.closest?.("input, textarea, select")) return;
+      if (e.target.closest?.("input, textarea, select") || e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === "ArrowRight") go(current + 1);
       if (e.key === "ArrowLeft") go(current - 1);
+      if (e.key === "m" || e.key === "M") toggleFlag();
+      const letter = e.key.toUpperCase();
+      if (["A", "B", "C", "D"].includes(letter) && q && !checked && q.options.some((o) => o.letter === letter)) setAnswer(letter);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -103,10 +107,26 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
     </button>
   );
 
-  const progress = (answered / questions.length) * 100;
   const flagged = Boolean(attempt.flags[q?.key]);
+  const progress = (answered / questions.length) * 100;
   const mapCells = (
     <Navigator questions={questions} answers={attempt.answers} flags={attempt.flags} current={current} onGo={go} />
+  );
+
+  const footer = (
+    <footer className="test-bottom">
+      <button type="button" className="secondary map-btn" onClick={() => setSheetOpen(true)} aria-label="Mapa de preguntas">
+        <Icon name="map" />
+      </button>
+      <button type="button" className="secondary desk-only" onClick={() => go(current - 1)} disabled={current === 0}>
+        <Icon name="left" size={18} /> Anterior
+      </button>
+      {mainAction}
+      {!practice && (
+        <button type="button" className="link submit-link" onClick={submit}>Entregar</button>
+      )}
+      <span className="kbd-hint desk-only">A–D responder · ← → mover · M marcar</span>
+    </footer>
   );
 
   return (
@@ -116,18 +136,28 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
           <button type="button" className="icon-btn" onClick={onExit} aria-label="Salir del simulacro">
             <Icon name="close" />
           </button>
+          <div className="test-title desk-only">
+            <strong>{title}</strong>
+            <span className="caption">{area} · pregunta {fmtInt(current + 1)} de {fmtInt(questions.length)} · {fmtInt(answered)} respondidas</span>
+          </div>
           <div className="progress" role="progressbar" aria-valuemin={0} aria-valuemax={questions.length} aria-valuenow={answered} aria-label="Progreso">
             <span style={{ width: `${progress}%` }} />
           </div>
           <button
             type="button"
-            className={flagged ? "icon-btn flag on" : "icon-btn flag"}
+            className={flagged ? "icon-btn flag on flag-top" : "icon-btn flag flag-top"}
             onClick={toggleFlag}
             aria-pressed={flagged}
             aria-label="Marcar para revisar"
           >
             <Icon name="flag" />
           </button>
+          <span className="clock-pill desk-only" aria-hidden="true">
+            {timed ? formatClock(remaining) : `${fmtInt(attempt.xp ?? 0)} XP`}
+          </span>
+          {timed && (
+            <button type="button" className="secondary desk-only desk-submit" onClick={submit}>Entregar</button>
+          )}
         </div>
         <div className="test-meta">
           <span className="meta-area">
@@ -155,24 +185,17 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
               figures={figures}
               collapsedGroup={Boolean(q.group && prev?.group?.id === q.group.id)}
               examLabel={examLabel}
+              flagged={flagged}
+              onToggleFlag={toggleFlag}
+              feedback={feedback}
+              footer={footer}
             />
           )}
-          {feedback}
         </main>
         <aside className="test-side" aria-label="Mapa de preguntas">
           {mapCells}
         </aside>
       </div>
-
-      <footer className="test-bottom">
-        <button type="button" className="secondary map-btn" onClick={() => setSheetOpen(true)} aria-label="Mapa de preguntas">
-          <Icon name="map" />
-        </button>
-        {mainAction}
-        {!practice && (
-          <button type="button" className="link submit-link" onClick={submit}>Entregar</button>
-        )}
-      </footer>
 
       {sheetOpen && (
         <div className="sheet-backdrop" onClick={() => setSheetOpen(false)}>
