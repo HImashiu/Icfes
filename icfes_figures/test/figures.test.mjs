@@ -258,3 +258,54 @@ test('boxed text that cannot fit even at minSize is flagged, and short text is l
   assert.equal(F.textLayout(ok).size, 12);
   assert.ok(F.validate({ kind: 'diagram', shapes: [{ ...ok, maxWidth: -3 }] }).length > 0);
 });
+
+test('map draws bundled outlines, fills, points and labels, and validates its names', () => {
+  const m = { kind: 'map', region: 'colombia-departamentos', fills: { Antioquia: 'hatch', Bolívar: '#bbbbbb' },
+    points: [{ lon: -75.5, lat: 6.2, label: 'Medellín', marker: 'square' }], labels: [{ lon: -74.1, lat: 4.6, text: 'Bogotá' }] };
+  assert.deepEqual(F.validate(m), []);
+  const svg = F.render(m);
+  assert.equal((svg.match(/<path /g) || []).length, 33);
+  assert.ok(svg.includes('fill="#bbbbbb"'));
+  assert.ok(svg.includes('>Bogotá<'));
+  assert.ok(F.validate({ ...m, fills: { Narnia: 'solid' } }).length > 0);
+  assert.ok(F.validate({ ...m, region: 'marte' }).length > 0);
+  assert.deepEqual(F.validate({ kind: 'map', region: 'colombia-pais' }), []);
+});
+
+// Long category and legend labels must stay inside the 480 x 300 view (no clipping at the edges).
+function textOutside(svg, W = 480, H = 300) {
+  const out = [];
+  const re = /<text ([^>]*)>([^<]*)<\/text>/g;
+  let m;
+  while ((m = re.exec(svg))) {
+    const a = m[1];
+    const x = +a.match(/(?:^| )x="([-\d.]+)"/)[1], y = +a.match(/(?:^| )y="([-\d.]+)"/)[1];
+    const size = +((a.match(/font-size="(\d+)"/) || [0, 12])[1]);
+    const anchor = (a.match(/text-anchor="(\w+)"/) || [0, 'middle'])[1];
+    const w = m[2].length * 0.55 * size;
+    let l = anchor === 'end' ? x - w : anchor === 'start' ? x : x - w / 2, r = l + w, t = y - size * 0.8, b = y + size * 0.25;
+    if (/rotate\(/.test(a)) { const hw = size * 0.8; l = x - hw; r = x + hw; t = y - w; b = y; }
+    if (l < 0 || r > W || t < 0 || b > H) out.push(m[2]);
+  }
+  return out;
+}
+
+test('long category and legend labels stay inside the view', () => {
+  const long = ['Hogares con ingresos muy altos', 'Hogares de clase media alta', 'Hogares con ingresos bajos', 'Otros hogares del país'];
+  const specs = [
+    { kind: 'combo', title: 'Gasto', x: { label: 'Mes' }, y: { label: 'Gasto (miles)' }, y2: { label: 'Ingreso (miles)', min: 0, max: 100, step: 20 }, categories: long, series: [{ name: 'Gasto mensual de los hogares', type: 'bar', values: [40, 55, 30, 20] }, { name: 'Ingreso anual promedio de la región', type: 'line', values: [60, 70, 50, 80], axis: 2 }] },
+    { kind: 'line', title: 'Casos', x: { label: 'Mes' }, y: { label: 'Casos', min: 0, max: 10, step: 2 }, categories: long, series: [{ name: 'Casos confirmados en la semana', values: [1, 4, 3, 2], area: true }, { name: 'Otra serie con nombre largo', values: [2, 3, 2, 1] }] },
+    { kind: 'line', x: { label: 'Año' }, y: { label: 'Tasa de desempleo' }, categories: long, series: [{ name: 'Serie uno con nombre largo', values: [1, 4, 3, 2] }, { name: 'Serie dos con nombre largo', values: [2, 3, 2, 1] }, { name: 'Serie tres con nombre largo', values: [2, 2, 2, 2] }] },
+    { kind: 'bar', title: 'Ventas por región', x: { label: 'Región' }, y: { label: 'Ventas' }, categories: long, series: [{ name: 'Ventas del primer trimestre', values: [40, 55, 30, 20] }, { name: 'Ventas del segundo trimestre', values: [30, 45, 20, 10] }] },
+  ];
+  for (const s of specs) {
+    assert.deepEqual(F.validate(s), [], s.kind);
+    assert.deepEqual(textOutside(F.render(s)), [], s.kind);
+  }
+});
+
+test('legend: false hides the legend for several series', () => {
+  const two = { kind: 'line', x: { label: 'Mes' }, y: { label: 'Casos' }, categories: ['Ene', 'Feb'], series: [{ name: 'Zeta leyenda', values: [1, 2] }, { name: 'Omega leyenda', values: [2, 1] }] };
+  assert.ok(F.render(two).includes('>Zeta leyenda<'));
+  assert.ok(!F.render({ ...two, legend: false }).includes('>Zeta leyenda<'));
+});

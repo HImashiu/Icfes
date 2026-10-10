@@ -9,7 +9,7 @@
 })(typeof self !== 'undefined' ? self : globalThis, function () {
   'use strict';
 
-  const KINDS = ['bar', 'line', 'scatter', 'curve', 'pie', 'table', 'geometry', 'diagram', 'combo'];
+  const KINDS = ['bar', 'line', 'scatter', 'curve', 'pie', 'table', 'geometry', 'diagram', 'combo', 'map'];
   const AXIS_KINDS = ['bar', 'line', 'scatter', 'curve', 'combo'];
   // Booklets print in grey-scale, so series use fill patterns, not grey shades.
   const PATTERNS = ['hatch', 'solid', 'white', 'dots'];
@@ -103,6 +103,22 @@
         const g = layoutTable(spec);
         errs.push(...g.errors);
       }
+    }
+    if (spec.kind === 'map') {
+      if (!MAP_KEYS.includes(spec.region)) errs.push(`region must be one of ${MAP_KEYS.join(', ')}`);
+      else {
+        const doc = mapDoc(spec.region);
+        const names = new Set(doc ? doc.features.map((f) => f.name) : []);
+        if (!doc) errs.push(`region ${spec.region} could not be loaded`);
+        if (spec.select) (Array.isArray(spec.select) ? spec.select : []).forEach((n) => { if (!names.has(n)) errs.push(`select: unknown area ${n}`); });
+        else if (!Array.isArray(spec.select) && spec.select != null) errs.push('select must be an array of area names');
+        for (const [n, v] of Object.entries(spec.fills || {})) {
+          if (!names.has(n)) errs.push(`fills: unknown area ${n}`);
+          if (!FILLS.includes(v) && !/^#[0-9a-fA-F]{3,6}$/.test(String(v))) errs.push(`fills.${n} must be a fill name or a hex grey/colour`);
+        }
+      }
+      (spec.points || []).forEach((p, i) => { if (!isNum(p.lon) || !isNum(p.lat)) errs.push(`points[${i}] needs numeric lon and lat`); });
+      (spec.labels || []).forEach((l, i) => { if (!isNum(l.lon) || !isNum(l.lat) || typeof l.text !== 'string') errs.push(`labels[${i}] needs lon, lat and text`); });
     }
     if (spec.kind === 'combo') {
       if (!Array.isArray(spec.categories) || spec.categories.length === 0) errs.push('categories must be a non-empty array');
@@ -208,6 +224,9 @@
     return { lo: Math.pow(10, e0), hi: Math.pow(10, e1), step: 1, ticks, log: true };
   }
 
+  // Characters that fit a category band at the axis label size (about 6.6 px a glyph).
+  function catChars(band) { return Math.max(5, Math.min(14, Math.floor(band / 6.6))); }
+
   function wrapLabel(text, max) {
     const words = String(text).split(/\s+/);
     const lines = [];
@@ -258,7 +277,8 @@
     const out = [];
     let top = 14;
     if (spec.title) { out.push(text(W / 2, 18, spec.title, { weight: 'bold' })); top = 30; }
-    if (showLegend) top += 18;
+    let legendY = 0;
+    if (showLegend) { legendY = top + 12; top += 18 * legendRows(spec.series || [], 58); }
     const left = 58;
     const plotRight = right == null ? W - 16 : right;
     const bottom = H - 50 - (extraBottom || 0);
@@ -272,17 +292,32 @@
     out.push(`<line x1="${left}" x2="${plotRight}" y1="${bottom}" y2="${bottom}" stroke="#000"/>`);
     if (spec.y && spec.y.label) out.push(text(14, (top + bottom) / 2, spec.y.label, { rotate: -90 }));
     if (spec.x && spec.x.label) out.push(text((left + plotRight) / 2, H - 6, spec.x.label));
-    return { out, left, right: plotRight, top, bottom, y };
+    return { out, left, right: plotRight, top, bottom, y, legendY };
   }
 
+  function legendLabel(s, i) { return s.name || s.label || `serie ${i + 1}`; }
+  // Entries flow left to right and wrap onto a new row when they reach the right edge.
+  function legendLayout(series, left) {
+    let x = left, row = 0;
+    return series.map((s, i) => {
+      const w = 24 + String(legendLabel(s, i)).length * 7;
+      if (x > left && x + w > W - 16) { x = left; row++; }
+      const pos = { x, row };
+      x += w;
+      return pos;
+    });
+  }
+  function legendRows(series, left) {
+    const pos = legendLayout(series, left);
+    return pos.length ? pos[pos.length - 1].row + 1 : 0;
+  }
   function legend(series, left, top, id) {
     const out = [];
-    let x = left;
-    series.forEach((s, i) => {
-      const label = s.name || s.label || `serie ${i + 1}`;
-      out.push(`<rect x="${x}" y="${top - 10}" width="10" height="10" fill="${fillFor(s, i, id)}" stroke="#000"/>`);
-      out.push(text(x + 14, top - 1, label, { anchor: 'start' }));
-      x += 24 + String(label).length * 7;
+    legendLayout(series, left).forEach((pos, i) => {
+      const s = series[i];
+      const y = top + pos.row * 18;
+      out.push(`<rect x="${pos.x}" y="${y - 10}" width="10" height="10" fill="${fillFor(s, i, id)}" stroke="#000"/>`);
+      out.push(text(pos.x + 14, y - 1, legendLabel(s, i), { anchor: 'start' }));
     });
     return out;
   }
@@ -290,16 +325,17 @@
   // Horizontal bars: categories run down the left, values run across. spec.y is the value axis.
   function hbarSvg(spec, id) {
     const series = spec.series;
-    const showLegend = series.length > 1 || (series[0] && series[0].name);
+    const showLegend = spec.legend !== false && (series.length > 1 || (series[0] && series[0].name));
     const xScale = scaleFor(spec.y, series.flatMap((s) => s.values), true);
     const labelW = Math.min(170, Math.max(...spec.categories.map((c) => String(c).length)) * 6.5);
     const left = 24 + labelW;
     const right = W - 24;
-    const top = 14 + (spec.title ? 16 : 0) + (showLegend ? 18 : 0);
+    const legendY = 14 + (spec.title ? 16 : 0) + 12;
+    const top = 14 + (spec.title ? 16 : 0) + (showLegend ? 18 * legendRows(series, left) : 0);
     const bottom = H - 40;
     const out = [];
     if (spec.title) out.push(text(W / 2, 18, spec.title, { weight: 'bold' }));
-    if (showLegend) out.push(...legend(series, left, top - 6, id));
+    if (showLegend) out.push(...legend(series, left, legendY, id));
     const xAt = (v) => left + (v - xScale.lo) / (xScale.hi - xScale.lo) * (right - left);
     for (const t of xScale.ticks) {
       out.push(`<line x1="${xAt(t).toFixed(1)}" x2="${xAt(t).toFixed(1)}" y1="${top}" y2="${bottom}" stroke="#e4e4e4" stroke-width="1"/>`);
@@ -329,7 +365,7 @@
   function barSvg(spec, id) {
     if (spec.orientation === 'horizontal') return hbarSvg(spec, id);
     const series = spec.series;
-    const showLegend = series.length > 1 || (series[0] && series[0].name);
+    const showLegend = spec.legend !== false && (series.length > 1 || (series[0] && series[0].name));
     const primary = series.filter((s) => s.axis !== 2);
     const secondary = series.filter((s) => s.axis === 2);
     const yScale = scaleFor(spec.y, primary.flatMap((s) => s.values), true);
@@ -344,7 +380,7 @@
       for (const t of y2Scale.ticks) out.push(text(fr.right + 6, (yy(t) + 4).toFixed(1), fmt(t), { anchor: 'start' }));
       out.push(text(W - 12, (fr.top + fr.bottom) / 2, spec.y2.label, { rotate: 90 }));
     }
-    if (showLegend) out.push(...legend(series, fr.left, fr.top - 6, id));
+    if (showLegend) out.push(...legend(series, fr.left, fr.legendY, id));
     const n = spec.categories.length;
     const band = (fr.right - fr.left) / n;
     const barW = Math.min(44, band * 0.7 / series.length);
@@ -361,23 +397,28 @@
         out.push(`<rect x="${x.toFixed(1)}" y="${yTop.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(0, yBase - yTop).toFixed(1)}" fill="${fillFor(s, si, id)}" stroke="#000" stroke-width="0.8"/>`);
       });
       if (rotateLabels) out.push(text(cx.toFixed(1), fr.bottom + 12, cat, { anchor: 'end', rotate: -45 }));
-      else wrapLabel(cat, 14).forEach((line, k) => out.push(text(cx.toFixed(1), fr.bottom + 15 + k * 13, line)));
+      else wrapLabel(cat, catChars(band)).forEach((line, k) => out.push(text(cx.toFixed(1), fr.bottom + 15 + k * 13, line)));
     });
     return out;
   }
 
   function lineSvg(spec, id) {
     const series = spec.series;
-    const showLegend = series.length > 1 || (series[0] && series[0].name);
+    const showLegend = spec.legend !== false && (series.length > 1 || (series[0] && series[0].name));
     if (series.some((s) => Array.isArray(s.points))) return numericLine(spec, id, showLegend);
     const yScale = scaleFor(spec.y, series.flatMap((s) => s.values), false);
     const fr = frame(spec, showLegend, yScale);
     const out = fr.out;
-    if (showLegend) out.push(...legend(series, fr.left, fr.top - 6, id));
+    if (showLegend) out.push(...legend(series, fr.left, fr.legendY, id));
     const n = spec.categories.length;
     const xAt = (c) => fr.left + (fr.right - fr.left) * (n === 1 ? 0.5 : c / (n - 1));
     spec.categories.forEach((cat, c) => {
-      wrapLabel(cat, 14).forEach((line, k) => out.push(text(xAt(c).toFixed(1), fr.bottom + 15 + k * 13, line)));
+      // Points at the edges put their labels at the edges: clamp each label so it stays inside the view.
+      wrapLabel(cat, catChars((fr.right - fr.left) / n)).forEach((line, k) => {
+        const half = line.length * 0.55 * 12 / 2;
+        const lx = Math.min(W - 4 - half, Math.max(4 + half, xAt(c)));
+        out.push(text(lx.toFixed(1), fr.bottom + 15 + k * 13, line));
+      });
     });
     series.forEach((s, si) => {
       const pts = s.values.map((v, c) => (isNum(v) ? [xAt(c), fr.y(v)] : null));
@@ -412,7 +453,7 @@
     const yScale = scaleFor(spec.y, ys, false);
     const fr = frame(spec, showLegend, yScale);
     const out = fr.out;
-    if (showLegend) out.push(...legend(series, fr.left, fr.top - 6, id));
+    if (showLegend) out.push(...legend(series, fr.left, fr.legendY, id));
     const xAt = (v) => fr.left + (v - xScale.lo) / (xScale.hi - xScale.lo) * (fr.right - fr.left);
     for (const t of xScale.ticks) out.push(text(xAt(t).toFixed(1), fr.bottom + 15, tickText(spec.x, t)));
     series.forEach((s, si) => out.push(...polyline(s, si, s.points.map(([x, y]) => [xAt(x), fr.y(y)]))));
@@ -438,13 +479,13 @@
 
   function scatterSvg(spec, id) {
     const series = spec.series;
-    const showLegend = series.length > 1 || (series[0] && series[0].name);
+    const showLegend = spec.legend !== false && (series.length > 1 || (series[0] && series[0].name));
     const pts = series.flatMap((s) => s.points);
     const xScale = scaleFor(spec.x, pts.map((p) => p[0]), false);
     const yScale = scaleFor(spec.y, pts.map((p) => p[1]), false);
     const fr = frame(spec, showLegend, yScale);
     const out = fr.out;
-    if (showLegend) out.push(...legend(series, fr.left, fr.top - 6, id));
+    if (showLegend) out.push(...legend(series, fr.left, fr.legendY, id));
     for (const t of xScale.ticks) {
       const x = fr.left + (t - xScale.lo) / (xScale.hi - xScale.lo) * (fr.right - fr.left);
       out.push(text(x.toFixed(1), fr.bottom + 15, tickText(spec.x, t)));
@@ -679,7 +720,7 @@
   // A series with axis 2 is read against y2, so a bar and a line can carry different units.
   function comboSvg(spec, id) {
     const series = spec.series;
-    const showLegend = series.length > 1 || (series[0] && series[0].name);
+    const showLegend = spec.legend !== false && (series.length > 1 || (series[0] && series[0].name));
     const primary = series.filter((s) => s.axis !== 2);
     const secondary = series.filter((s) => s.axis === 2);
     const yScale = scaleFor(spec.y, primary.flatMap((s) => s.values), true);
@@ -693,7 +734,7 @@
       for (const t of y2Scale.ticks) out.push(text(fr.right + 6, (yy(t) + 4).toFixed(1), fmt(t), { anchor: 'start' }));
       out.push(text(W - 12, (fr.top + fr.bottom) / 2, spec.y2.label, { rotate: 90 }));
     }
-    if (showLegend) out.push(...legend(series, fr.left, fr.top - 6, id));
+    if (showLegend) out.push(...legend(series, fr.left, fr.legendY, id));
     const n = spec.categories.length;
     const band = (fr.right - fr.left) / n;
     const bars = series.map((s, i) => ({ s, i })).filter(({ s }) => s.type === 'bar');
@@ -713,13 +754,70 @@
         out.push(`<rect x="${x.toFixed(1)}" y="${yTop.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(0, yBase - yTop).toFixed(1)}" fill="${fillFor(s, i, id)}" stroke="#000" stroke-width="0.8"/>`);
       });
       if (rotateLabels) out.push(text(cx.toFixed(1), fr.bottom + 12, cat, { anchor: 'end', rotate: -45 }));
-      else wrapLabel(cat, 14).forEach((line, k) => out.push(text(cx.toFixed(1), fr.bottom + 15 + k * 13, line)));
+      else wrapLabel(cat, catChars(band)).forEach((line, k) => out.push(text(cx.toFixed(1), fr.bottom + 15 + k * 13, line)));
     });
     series.forEach((s, si) => {
       if (s.type !== 'line') return;
       const pts = s.values.map((v, c) => (isNum(v) ? [fr.left + band * (c + 0.5), yAt(s, v)] : null));
       out.push(...polyline(s, si, pts));
     });
+    return out;
+  }
+
+  // Maps: simplified public-domain outlines (Natural Earth), bundled in maps/. Node loads them from there;
+  // a browser build calls registerMap(key, doc) with the same JSON.
+  const MAP_KEYS = ['colombia-departamentos', 'colombia-pais', 'sudamerica', 'mundo'];
+  const MAPS = {};
+  function registerMap(key, doc) { MAPS[key] = doc; }
+  function mapDoc(key) {
+    if (!MAPS[key] && typeof require === 'function') {
+      try { MAPS[key] = require('./maps/' + key + '.json'); } catch (e) { return null; }
+    }
+    return MAPS[key] || null;
+  }
+
+  // Equirectangular with a cosine correction for latitude; fits the given features into the frame.
+  function mapProjector(features, box) {
+    const [bx, by, bw, bh] = box;
+    const pts = features.flatMap((f) => f.polygons.flatMap((poly) => poly.flatMap((ring) => ring)));
+    const lats = pts.map((p) => p[1]);
+    const k = Math.cos(((Math.min(...lats) + Math.max(...lats)) / 2) * Math.PI / 180);
+    const xs = pts.map((p) => p[0] * k), ys = pts.map((p) => p[1]);
+    const minx = Math.min(...xs), maxx = Math.max(...xs), miny = Math.min(...ys), maxy = Math.max(...ys);
+    const pad = 10;
+    const sc = Math.min((bw - 2 * pad) / ((maxx - minx) || 1), (bh - 2 * pad) / ((maxy - miny) || 1));
+    const offx = bx + (bw - (maxx - minx) * sc) / 2, offy = by + (bh - (maxy - miny) * sc) / 2;
+    return ([lon, lat]) => [offx + (lon * k - minx) * sc, offy + (maxy - lat) * sc];
+  }
+
+  function mapSvg(spec, id) {
+    const doc = mapDoc(spec.region);
+    const fit = spec.select ? doc.features.filter((f) => spec.select.includes(f.name)) : doc.features;
+    const P = mapProjector(fit, [0, spec.title ? 26 : 6, W, H - (spec.title ? 26 : 6) - (spec.legend ? 22 : 0)]);
+    const fills = spec.fills || {};
+    const paint = (v) => (String(v).startsWith('#') ? v : paintFor(v, id));
+    const out = [];
+    if (spec.title) out.push(text(W / 2, 18, spec.title, { weight: 'bold' }));
+    doc.features.forEach((f) => {
+      const d = f.polygons.map((poly) => poly.map((ring) =>
+        'M' + ring.map((p) => P(p).map((n) => n.toFixed(1)).join(' ')).join('L') + 'Z').join(' ')).join(' ');
+      out.push(`<path d="${d}" fill="${paint(fills[f.name] || 'none')}" fill-rule="evenodd" stroke="#000" stroke-width="0.7"/>`);
+    });
+    (spec.labels || []).forEach((l) => { const q = P([l.lon, l.lat]); out.push(text(q[0].toFixed(1), q[1].toFixed(1), l.text, { size: 10 })); });
+    (spec.points || []).forEach((p) => {
+      const q = P([p.lon, p.lat]);
+      out.push(marker(p.marker, q[0], q[1]));
+      if (p.label) out.push(text((q[0] + 7).toFixed(1), (q[1] - 5).toFixed(1), p.label, { anchor: 'start', size: 10 }));
+    });
+    if (spec.legend) {
+      let x = 16;
+      const y = H - 10;
+      spec.legend.forEach((l) => {
+        out.push(`<rect x="${x}" y="${y - 9}" width="10" height="10" fill="${paint(l.fill)}" stroke="#000"/>`);
+        out.push(text(x + 14, y, l.label, { anchor: 'start', size: 11 }));
+        x += 28 + String(l.label).length * 6.5;
+      });
+    }
     return out;
   }
 
@@ -882,6 +980,7 @@
     if (spec.kind === 'table') return tableHtml(spec);
     if (spec.kind === 'diagram') return diagramSvg(spec, `icf${++seq}`);
     const id = `icf${++seq}`;
+    if (spec.kind === 'map') return svgOpen(spec.title, id) + mapSvg(spec, id).join('') + '</svg>';
     if (spec.kind === 'geometry') return svgOpen(spec.title, id) + geometrySvg(spec, id).join('') + '</svg>';
     const body = spec.kind === 'combo' ? comboSvg(spec, id)
       : spec.kind === 'bar' ? barSvg(spec, id)
@@ -892,5 +991,5 @@
     return svgOpen(spec.title, id) + body.join('') + '</svg>';
   }
 
-  return { KINDS, PATTERNS, validate, render, fmt, niceStep, scaleFor, TABLE_CSS, textLayout, textOverflows };
+  return { KINDS, PATTERNS, MAP_KEYS, validate, render, fmt, niceStep, scaleFor, TABLE_CSS, textLayout, textOverflows, registerMap };
 });

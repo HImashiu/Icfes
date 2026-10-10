@@ -46,7 +46,7 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 ```
 
 - `categories`: one label per bar group. `series[i].values`: one non-negative number per category.
-- A single series with no name draws no legend.
+- A single series with no name draws no legend. `legend: false` on any chart hides the legend even with several series (use it when the scan prints none).
 
 ### `line`, a line over categorical x
 
@@ -198,6 +198,9 @@ Coordinates are SVG units with y growing downward. The view fits the shapes unle
   cut off silently. Use boxed text for comic bubbles, infographic labels and anything inside a shape.
 - The audit also flags option figures in one question that are the same or at least 95% alike, comparing
   the specs token by token in order (title ignored), and diagram text boxes that overlap by more than 20%.
+- `options_verified: true` on option figures means a batch thread checked them against a 300 dpi scan and they
+  really do differ as printed. When both figures of a pair carry it, the audit lists the pair under
+  "Verified similar options" and does not flag it.
 - `text_only: true` on a figure entry marks a sign, ad or poster that is really text in a frame. The audit
   skips the photo stand-in flag for it and lists it under "Text-only figures" for a spot check, so the label
   is not used to hide real drawings.
@@ -206,6 +209,20 @@ Coordinates are SVG units with y growing downward. The view fits the shapes unle
   boxes and no line work (possible photo stand-ins).
 
 ## Axes
+### `map`, bundled outlines of Colombia, South America and the world
+
+`region` names a bundled outline: `colombia-departamentos` (33 departments), `colombia-pais`, `sudamerica`
+or `mundo` (all countries, with a `continent` field, so Europe is `mundo` with `select` on its names).
+Optional: `select` (areas to fit the frame to), `fills` (area name to a fill name or a hex grey like
+`#bbbbbb`), `points` (`lon`, `lat`, `label`, `marker`), `labels` (`lon`, `lat`, `text`), `legend`
+(`label`, `fill`). Coordinates are longitude and latitude; the projection is equirectangular with a
+cosine correction, fitted to `select` or to the whole region.
+
+Source and licence: Natural Earth (naturalearthdata.com), public domain. Taken from
+github.com/nvkelso/natural-earth-vector: `ne_10m_admin_1_states_provinces` for the departments and
+`ne_110m_admin_0_countries` for the countries. Simplified with Douglas-Peucker (0.02 degrees for the
+departments, 0.25 for the countries). The build script is `maps/build_maps.py`; the outputs are in `maps/`.
+
 ### Line styles
 
 `style` on a `line`, `curve` or numeric `line` series: `solid` (default), `dashed` or `dotted`.
