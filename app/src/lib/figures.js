@@ -16,7 +16,7 @@ export function parseFigureSpecs(raw) {
     const keys = [];
     if (loc.question != null) keys.push(String(loc.question));
     if (loc.group) keys.push(`group:${loc.group}`);
-    // A kind "image" figure is a picture (map, photo, geometry) shown as its crop, referenced by src.
+    // A kind "image" figure has no native spec yet: it is listed as pending, never shown as a scan crop.
     const isImage = fig.kind === "image";
     const errors = isImage || !fig.spec ? [] : engine.validate(fig.spec);
     if (!isImage && !fig.spec) errors.push("no spec");

@@ -6,12 +6,10 @@
 //         <name>.key.json     (optional answer key, icfes-key/1)
 // Optional, from the icfes root (the parent of the data folder):
 //         figures/specs/<name>.json  (figure specs, icfes-figures-specs/1)
-//         crops/                      (original figure crops, used when a spec is missing)
-//         figures/crops/              (crops for figures of kind "image", referenced by src)
 //         answer-keys/<name>.key.json          (preliminary key: solved, not official)
 //         answer-keys/<name>.key.sidecar.json  (per-question confidence and reasons)
 // A key in the data folder counts as official; one from answer-keys is labelled preliminary.
-import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync, rmSync, cpSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -75,9 +73,6 @@ for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
     hasFigures,
   });
 }
-const crops = join(root, "crops");
-if (existsSync(crops)) cpSync(crops, join(out, "crops"), { recursive: true });
-const figureCrops = join(root, "figures", "crops");
-if (existsSync(figureCrops)) cpSync(figureCrops, join(out, "figures", "crops"), { recursive: true });
+// Scan crops are not copied: figures are drawn natively from their specs (no crops in the app).
 writeFileSync(join(out, "index.json"), JSON.stringify({ exams }, null, 2));
 console.log(`[sync-exams] ${exams.length} exam(s) from ${src}`);
