@@ -145,3 +145,29 @@ def test_http_round_trip(root):
         assert err.value.code == 404
     finally:
         server.shutdown()
+
+
+def test_original_pages_render_from_the_source_pdf(root, tmp_path):
+    fitz = pytest.importorskip("fitz")
+    pdf = tmp_path / "source.pdf"
+    doc = fitz.open()
+    for i in range(4):
+        doc.new_page().insert_text((72, 72), f"pagina {i + 1}")
+    doc.save(pdf)
+    sources = tmp_path / "pdf-sources.json"
+    sources.write_text(json.dumps({EXAM: str(pdf)}), encoding="utf-8")
+    store = Store(root, sources=sources)
+
+    assert store.page_count(EXAM) == 4
+    png = store.page_png(EXAM, 2)
+    assert png.read_bytes()[:4] == b"\x89PNG"
+    with pytest.raises(NotFound):
+        store.page_png(EXAM, 9)
+
+    # Question 1 has no recorded page: its page is estimated from its place in the exam (3 questions, 4 pages).
+    gold = dict(store.golden(EXAM))
+    gold["questions"] = [dict(q, source={"pages": [], "crop": None}) for q in gold["questions"]]
+    (root / "data" / f"{EXAM}.golden.json").write_text(json.dumps(gold), encoding="utf-8")
+    detail = store.question_detail(EXAM, 1)
+    assert detail["scan"] == {"pages": [], "guess": 1, "count": 4, "estimated": True}
+    assert store.question_detail(EXAM, 3)["scan"]["guess"] == 4

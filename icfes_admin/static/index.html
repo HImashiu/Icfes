@@ -81,6 +81,8 @@ textarea{width:100%;min-height:110px;font:400 14px/1.45 ui-monospace,Menlo,monos
 .grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
 @media (max-width:920px){.grid2{grid-template-columns:1fr} main{padding:16px}.top{padding:12px 16px}}
 img.scan{width:100%;border-radius:12px;border:1px solid var(--line)}
+.pager{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.pager button{min-width:36px;padding:4px 10px}
 img.fig{max-width:100%;background:#fff;border-radius:12px;margin:4px 0}
 .figure.native{background:transparent}
 .figure.native svg{max-width:100%;height:auto}
@@ -117,7 +119,7 @@ img.fig{max-width:100%;background:#fff;border-radius:12px;margin:4px 0}
 const $ = (s) => document.querySelector(s);
 const app = $("#app");
 const AREA = { "Lectura crítica": "--area-lectura", "Matemáticas": "--area-mate", "Sociales y ciudadanas": "--area-sociales", "Ciencias naturales": "--area-ciencias", "Inglés": "--area-ingles" };
-const state = { tab: "progress", exam: null, filter: "all", n: null, detail: null, exams: [] };
+const state = { tab: "progress", exam: null, filter: "all", n: null, detail: null, exams: [], scanPage: null };
 
 function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function status(text, cls = "") { const el = $("#status"); el.textContent = text; el.className = "pill " + cls; }
@@ -221,10 +223,27 @@ async function showQuestions() {
 
 async function openQuestion(n) {
   state.n = n;
+  state.scanPage = null;
   status("Cargando…");
   state.detail = await api(`/api/exams/${encodeURIComponent(state.exam)}/questions/${n}`);
   status(`${state.exam} · Q${n}`, "ok");
   renderEditor();
+}
+
+// Moves the original-PDF view one page; the form keeps what was typed.
+function turnScan(delta) {
+  const d = state.detail, max = d.scan.count || Infinity;
+  const cur = state.scanPage ?? (d.scan.pages[0] ?? d.scan.guess);
+  state.scanPage = Math.min(max, Math.max(1, cur + delta));
+  $("#scan-page").textContent = state.scanPage;
+  $("#scan-img").src = `/api/scan/${encodeURIComponent(d.exam)}/${state.scanPage}`;
+}
+
+function scanError(img) {
+  const p = document.createElement("p");
+  p.className = "muted";
+  p.textContent = "No se pudo cargar esta página. Instala PyMuPDF en el equipo: python -m pip install pymupdf";
+  img.replaceWith(p);
 }
 
 // Draws one native figure with the app's engine, the same way the student app does. Invalid or missing specs show as pending.
@@ -265,7 +284,11 @@ function renderEditor() {
   const d = state.detail, q = d.question, g = d.group;
   const idx = d.numbers.indexOf(d.number);
   const prev = d.numbers[idx - 1], next = d.numbers[idx + 1];
-  const scan = d.scan_pages.length ? `<img class="scan" src="/api/scan/${encodeURIComponent(d.exam)}/${d.scan_pages[0]}" alt="página ${d.scan_pages[0]}" loading="lazy">` : `<p class="muted">Sin página de escaneo registrada.</p>`;
+  const sc = d.scan, shown = sc.pages[0] ?? sc.guess;
+  const scan = `<div class="pager"><button type="button" onclick="turnScan(-1)">‹</button>
+      <span class="muted">página <b id="scan-page">${shown}</b>${sc.count ? " de " + sc.count : ""}${sc.estimated ? " · estimada, ajusta con ‹ ›" : ""}</span>
+      <button type="button" onclick="turnScan(1)">›</button></div>
+    <img id="scan-img" class="scan" alt="página original" src="/api/scan/${encodeURIComponent(d.exam)}/${shown}" onerror="scanError(this)">`;
   const figs = d.figures.map(f => `
     <div class="muted" style="margin-top:8px"><b>${esc(f.spec_id || f.figure_id)}</b> · ${esc(f.method)}${f.pending_spec ? ' · <span class="flame">pendiente</span>' : ""}</div>
     ${f.svg ? `<img class="fig" src="/api/figure?path=${encodeURIComponent(f.svg)}" alt="${esc(f.figure_id)}">` : ""}`).join("") || `<p class="muted">Sin figura trazada.</p>`;
@@ -321,7 +344,7 @@ function renderEditor() {
           ${flags ? `<div class="label" style="margin-top:12px">Marcas de revisión</div><ul class="muted">${flags}</ul>` : ""}
           ${notes ? `<div class="label" style="margin-top:12px">Notas</div><ul class="muted">${notes}</ul>` : ""}
         </div>
-        <div class="card"><div class="label">Escaneo (primera página)</div>${scan}</div>
+        <div class="card"><div class="label">Pregunta original (PDF)</div>${scan}</div>
         <div class="card"><div class="label">Figuras nativas (motor de la app)</div>
           ${d.native_figures.length ? d.native_figures.map(f => `<div class="muted" style="margin-top:8px"><b>${esc(f.id)}</b> · ${esc(f.kind)} · ${esc(f.target)}${f.option ? " " + esc(f.option) : ""} · ${esc(f.fidelity)}</div>${drawNative(f)}`).join("") : `<p class="muted">Sin figura nativa para esta pregunta.</p>`}
         </div>

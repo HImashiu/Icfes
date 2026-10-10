@@ -1,6 +1,6 @@
 """Local web editor for the ICFES question data. Serves on 127.0.0.1 only.
 
-    python -m icfes_admin --data /path/to/icfes [--scans "C:/Users/you/Downloads/icfes-hi300-check"]
+    python -m icfes_admin --data /path/to/icfes [--sources pdf-sources.json] [--scans "C:/Users/you/Downloads/icfes-hi300-check"]
 
 The data folder is read on every request, so the page always shows what is on disk.
 """
@@ -68,7 +68,7 @@ def validation(store, m, body, query):
 
 @route("GET", r"/api/scan/([^/]+)/(\d+)")
 def scan(store, m, body, query):
-    path = store.scan_file(m.group(1), int(m.group(2)))
+    path = store.page_png(m.group(1), int(m.group(2)))
     if path is None:
         raise NotFound("no scan page for that exam and page")
     return Raw("image/png", path.read_bytes())
@@ -150,8 +150,8 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
 
-def make_server(data, scans=None, port=0):
-    store = Store(data, scans)
+def make_server(data, scans=None, port=0, sources=None):
+    store = Store(data, scans, sources)
     handler = type("BoundHandler", (Handler,), {"store": store})
     return ThreadingHTTPServer(("127.0.0.1", port), handler)
 
@@ -162,11 +162,13 @@ def main(argv=None):
                     help="the icfes folder (contains data/, answer-keys/, figures/); default $ICFES_DATA")
     ap.add_argument("--scans", default=os.environ.get("ICFES_SCANS"),
                     help="folder of 300 dpi page renders (optional); default $ICFES_SCANS")
+    ap.add_argument("--sources", default=os.environ.get("ICFES_SOURCES"),
+                    help="JSON map from exam id to its source PDF (renders the original pages); default $ICFES_SOURCES")
     ap.add_argument("--port", type=int, default=8765)
     args = ap.parse_args(argv)
     if not args.data:
         ap.error("pass --data or set ICFES_DATA")
-    server = make_server(args.data, args.scans, args.port)
+    server = make_server(args.data, args.scans, args.port, args.sources)
     print(f"ICFES editor on http://127.0.0.1:{server.server_address[1]}  (data: {args.data})")
     try:
         server.serve_forever()

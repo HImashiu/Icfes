@@ -15,6 +15,7 @@ import json
 import os
 import re
 import sys
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -44,18 +45,34 @@ class Conflict(Exception):
         self.reasons = reasons
 
 
+def _pymupdf():
+    try:
+        import pymupdf
+    except ImportError:
+        try:
+            import fitz as pymupdf
+        except ImportError:
+            return None
+    return pymupdf
+
+
 def _count(value):
     return len(value) if isinstance(value, (list, dict)) else value
 
 
 class Store:
-    def __init__(self, root, scans=None):
+    def __init__(self, root, scans=None, sources=None):
         self.root = Path(root)
         self.data = self.root / "data"
         self.keys = self.root / "answer-keys"
         self.figures = self.root / "figures"
         self.backups = self.data / ".backups"
         self.scans = Path(scans) if scans else None
+        # sources: a JSON map {"S11-A_1ra": "C:/.../S11- A 1ra Sesión.pdf"} to the exam's source PDF.
+        self.sources = {}
+        if sources:
+            self.sources = {k: Path(v) for k, v in json.loads(Path(sources).read_text(encoding="utf-8")).items()}
+        self.page_cache = Path(tempfile.gettempdir()) / "icfes-admin-pages"
         if not self.data.is_dir():
             raise FileNotFoundError(f"no data/ folder under {self.root}")
 
@@ -199,6 +216,7 @@ class Store:
             "native_figures": self.native_figures(exam, n),
             "key": answers.get(str(n)),
             "scan_pages": q.get("source", {}).get("pages", []),
+            "scan": self.scan_info(exam, n, q, len(g["questions"])),
             "numbers": [x["number"] for x in g["questions"]],
         }
 
@@ -233,6 +251,48 @@ class Store:
                 "spec": fig.get("spec"),
                 "fidelity": fig.get("fidelity", "draft"),
             })
+        return out
+
+    def scan_info(self, exam, n, q, total):
+        """Which PDF page shows question n. Known pages come from the golden; otherwise the page is estimated from its position."""
+        pages = q.get("source", {}).get("pages", []) or []
+        count = self.page_count(exam)
+        if pages:
+            guess = pages[0]
+        elif count:
+            guess = 1 + round((n - 1) / max(total - 1, 1) * (count - 1))
+        else:
+            guess = 1
+        return {"pages": pages, "guess": guess, "count": count, "estimated": not pages}
+
+    def page_count(self, exam):
+        pdf = self.sources.get(self._exam(exam))
+        if pdf is None or not pdf.is_file():
+            return None
+        fitz = _pymupdf()
+        if fitz is None:
+            return None
+        with fitz.open(pdf) as doc:
+            return doc.page_count
+
+    def page_png(self, exam, page):
+        """Path to one PDF page rendered at 300 dpi (cached). Falls back to the scan folder when the exam has no source PDF."""
+        exam = self._exam(exam)
+        pdf = self.sources.get(exam)
+        if pdf is None or not pdf.is_file():
+            return self.scan_file(exam, page)
+        fitz = _pymupdf()
+        if fitz is None:
+            raise NotFound("para ver las páginas originales instala PyMuPDF: python -m pip install pymupdf")
+        out = self.page_cache / exam / f"p{page:03d}.png"
+        if not out.is_file():
+            with fitz.open(pdf) as doc:
+                if not 1 <= page <= doc.page_count:
+                    raise NotFound(f"{exam} has pages 1-{doc.page_count}")
+                out.parent.mkdir(parents=True, exist_ok=True)
+                tmp = out.with_name(out.name + ".tmp")
+                tmp.write_bytes(doc[page - 1].get_pixmap(dpi=300).tobytes("png"))
+                os.replace(tmp, out)
         return out
 
     def scan_file(self, exam, page):
