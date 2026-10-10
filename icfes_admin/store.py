@@ -30,6 +30,7 @@ EXAM_ID = re.compile(r"^[A-Za-z0-9_-]+$")
 QUESTION_PREFIX = re.compile(r"^Q(\d+):")
 PENDING_TEXT = "[Texto pendiente"
 FIGURE_NOTE = "[FIGURE"
+MANUAL_CROP = "manual_crop_needed"  # the tracing could not cut this figure; it waits for a crop drawn by hand
 EDITABLE = {"stem_md", "stimulus_md", "group_passage_md", "section", "options", "ready", "answer"}
 
 
@@ -186,6 +187,7 @@ class Store:
                 "traced": len(traced),
                 "pending_spec": sum(1 for f in traced if f.get("pending_spec")),
                 "eyeballed": sum(1 for f in traced if "eyeball" in str(f.get("method", ""))),
+                "to_crop": sum(1 for f in traced if f.get("method") == MANUAL_CROP),
             },
         }
 
@@ -208,6 +210,7 @@ class Store:
                 "hidden": self.hidden_reasons(q, groups, figs.get(n, [])),
                 "errors": len(msgs["errors"]),
                 "warnings": len(msgs["warnings"]),
+                "to_crop": sum(1 for f in figs.get(n, []) if f.get("method") == MANUAL_CROP),
             })
         return rows
 
@@ -551,8 +554,14 @@ class Store:
                  "method": "eyeballed_box", "svg": f"traced/{exam}/{fid}.{ext}", "crop_png": None, "pending_spec": False,
                  "box_page_fraction": box, "option": option,
                  "note": "box drawn in the admin editor" if box else "picture added in the admin editor"}
-        manifest.setdefault("figures", []).append(entry)
-        self._remember(exam, n, {"type": "scan", "id": fid, "before": None})
+        # A figure the tracing left for a hand crop is replaced by the crop; undo brings the placeholder back.
+        figs = manifest.setdefault("figures", [])
+        todo = next((f for f in figs if f.get("question") == n and f.get("method") == MANUAL_CROP
+                     and replaces in (f.get("figure_id"), f.get("spec_id"))), None) if replaces else None
+        if todo is not None:
+            figs.remove(todo)
+        figs.append(entry)
+        self._remember(exam, n, {"type": "scan", "id": fid, "before": todo})
         self._write(mp, json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", f"{exam}.manifest")
         return entry
 

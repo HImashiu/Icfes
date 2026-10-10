@@ -341,3 +341,22 @@ def test_a_cleaned_crop_is_fetched_then_saved_with_its_place_on_the_page(root, t
         assert made["page"] == 1 and made["box_page_fraction"] == [0.1, 0.05, 0.6, 0.3]
     finally:
         server.shutdown()
+
+
+def test_a_crop_takes_the_place_of_a_figure_left_for_a_hand_crop(root, tmp_path):
+    _, sources = _pdf(tmp_path)
+    mp = root / "figures" / "traced" / EXAM / "manifest.json"
+    manifest = json.loads(mp.read_text(encoding="utf-8"))
+    manifest["figures"].append({"figure_id": "t-q1-opt-a", "question": 1, "page": 1, "kind": "diagram",
+                                "spec_id": "t-q1-opt-a", "method": "manual_crop_needed", "svg": None})
+    mp.write_text(json.dumps(manifest), encoding="utf-8")
+    store = Store(root, sources=sources)
+    assert store.progress(EXAM)["figures"]["to_crop"] == 1
+    assert [r["to_crop"] for r in store.question_rows(EXAM)] == [1, 0, 0]
+    made = store.crop_page(EXAM, 1, 1, [0.1, 0.1, 0.5, 0.4], option="a", replaces="t-q1-opt-a")
+    assert made["spec_id"] == "t-q1-opt-a"
+    ids = [f["figure_id"] for f in store.question_detail(EXAM, 1)["figures"]]
+    assert ids == [made["figure_id"]]
+    assert store.progress(EXAM)["figures"]["to_crop"] == 0
+    store.undo(EXAM, 1)
+    assert [f["figure_id"] for f in store.question_detail(EXAM, 1)["figures"]] == ["t-q1-opt-a"]

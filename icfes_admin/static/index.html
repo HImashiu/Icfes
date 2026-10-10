@@ -54,6 +54,9 @@ textarea{width:100%;min-height:110px;font:400 14px/1.45 ui-monospace,Menlo,monos
 .cell.hidden{border-style:dashed;color:var(--text-2)}
 .cell.err{border-color:var(--bad);color:var(--bad)}
 .cell.cur{border-width:3px;border-color:var(--text)}
+.cell.crop,.qstrip button.crop{position:relative}
+.cell.crop::after,.qstrip button.crop::after{content:"✂";position:absolute;top:-7px;right:-6px;font-size:11px;line-height:16px;width:16px;border-radius:50%;background:var(--flame);color:#0D110F}
+.figcard.todo{border:2px dashed var(--flame)}
 .btn{min-height:52px;padding:0 20px;border-radius:16px;border:2px solid var(--line);background:transparent;cursor:pointer;font-weight:700}
 .btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);box-shadow:0 4px 0 var(--accent-shadow)}
 .btn.primary:active{box-shadow:0 0 0 var(--accent-shadow);transform:translateY(4px)}
@@ -379,7 +382,7 @@ async function showProgress() {
       <td class="num ${e.errors ? "bad" : "ok"}">${fmt(e.errors)}</td>
       <td class="num muted">${fmt(e.warnings)}</td>
       <td>${e.key.present ? `<span class="num">${fmt(e.key.answers)}</span> claves${e.key.disputed ? ` <span class="flame">· ${e.key.disputed} disputadas</span>` : ""}` : '<span class="bad">sin clave</span>'}</td>
-      <td>${e.figures.traced ? `${e.figures.traced} del escaneo${e.figures.pending_spec ? ` <span class="flame">· ${e.figures.pending_spec} pendientes</span>` : ""}` : '<span class="muted">ninguna</span>'}</td>
+      <td>${e.figures.traced ? `${e.figures.traced} del escaneo${e.figures.pending_spec ? ` <span class="flame">· ${e.figures.pending_spec} pendientes</span>` : ""}${e.figures.to_crop ? ` <span class="flame">· ✂ ${e.figures.to_crop} por recortar</span>` : ""}` : '<span class="muted">ninguna</span>'}</td>
     </tr>`;
   }).join("");
   const last = recall("last");
@@ -406,7 +409,7 @@ async function showProgress() {
 
 // ----- question map ----------------------------------------------------------
 
-const FILTERS = [["all", "Todas"], ["hidden", "Ocultas"], ["errors", "Con errores"], ["badfig", "Figura inválida"], ["warnings", "Avisos"], ["notready", "No listas"]];
+const FILTERS = [["all", "Todas"], ["hidden", "Ocultas"], ["errors", "Con errores"], ["badfig", "Figura inválida"], ["crop", "Por recortar"], ["warnings", "Avisos"], ["notready", "No listas"]];
 
 // Problems of one native figure, in plain words. An empty list means the engine can draw it.
 const MSG = [
@@ -442,6 +445,14 @@ function figProblems(f) {
   // The same problem repeated for every area or cell says nothing new.
   return [...new Set(errs.map(friendly))];
 }
+const isToCrop = (t) => t.method === "manual_crop_needed";
+// Opens the figure's page and starts a box that replaces the placeholder.
+function cropMissing(id) {
+  const t = state.detail.figures.find(x => x.figure_id === id);
+  if (!t) return;
+  if (t.page && t.page !== state.page) goPage(t.page);
+  startCrop(t.figure_id, traceOption(t) || "");
+}
 const traceShown = (t) => ["azure", "eyeballed_box"].includes(t.method) && t.svg;
 // Figures whose native spec a scan picture replaces (the app drops them the same way).
 function replacedIds(traced) { return new Set(traced.filter(traceShown).flatMap(t => [t.spec_id, t.figure_id])); }
@@ -464,7 +475,7 @@ async function loadExam() {
 }
 function cellClass(r) {
   const bad = badFigure(r.number);
-  return r.errors || bad ? "err" : r.hidden.length ? "hidden" : "ready";
+  return (r.errors || bad ? "err" : r.hidden.length ? "hidden" : "ready") + (r.to_crop ? " crop" : "");
 }
 
 async function showQuestions() {
@@ -472,7 +483,7 @@ async function showQuestions() {
   await loadExam();
   const rows = state.rows;
   const pass = rows.filter(r => ({
-    all: true, hidden: r.hidden.length > 0 || badFigure(r.number), errors: r.errors > 0, warnings: r.warnings > 0, notready: !r.ready, badfig: badFigure(r.number),
+    all: true, hidden: r.hidden.length > 0 || badFigure(r.number), errors: r.errors > 0, warnings: r.warnings > 0, notready: !r.ready, badfig: badFigure(r.number), crop: r.to_crop > 0,
   })[state.filter]);
   status(`${rows.length} preguntas`, "ok");
   const opts = state.exams.map(e => `<option value="${esc(e.exam)}" ${e.exam === state.exam ? "selected" : ""}>${esc(e.exam)}</option>`).join("");
@@ -489,9 +500,9 @@ async function showQuestions() {
     <div class="card">
       <div class="label">Mapa de preguntas</div>
       <div class="map">
-        ${pass.map(r => `<button class="cell ${cellClass(r)}" data-n="${r.number}" title="${esc([...r.hidden.map(x => REASONS[x] || x), ...(badFigure(r.number) ? ["figura inválida"] : [])].join(", ") || "visible para estudiantes")}">${r.number}</button>`).join("")}
+        ${pass.map(r => `<button class="cell ${cellClass(r)}" data-n="${r.number}" title="${esc([...r.hidden.map(x => REASONS[x] || x), ...(badFigure(r.number) ? ["figura inválida"] : []), ...(r.to_crop ? [`${r.to_crop} figura(s) por recortar`] : [])].join(", ") || "visible para estudiantes")}">${r.number}</button>`).join("")}
       </div>
-      <div class="muted" style="margin-top:12px">Relleno verde: visible para estudiantes. Borde punteado: oculta. Borde rojo: error del validador o figura que no se puede dibujar (los estudiantes no la ven).</div>
+      <div class="muted" style="margin-top:12px">Relleno verde: visible para estudiantes. Borde punteado: oculta. Borde rojo: error del validador o figura que no se puede dibujar (los estudiantes no la ven). ✂: tiene una figura por recortar del PDF.</div>
     </div>`;
   $("#pick-exam").onchange = (e) => { state.exam = e.target.value; state.n = null; showQuestions(); };
   app.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { state.filter = b.dataset.filter; showQuestions(); });
@@ -625,8 +636,10 @@ function visBadges(reasons) {
 }
 // The one next step, at the bottom of the form: what is still missing, and the button that finishes the question.
 function nsMissHtml() {
-  const missing = hiddenNow().filter(r => r !== "not ready");
-  return missing.length ? `<div class="nsmiss"><b>Antes de publicarla falta:</b> ${missing.map(r => esc(REASONS[r] || r)).join(" · ")}</div>` : "";
+  const missing = hiddenNow().filter(r => r !== "not ready").map(r => REASONS[r] || r);
+  const crops = (state.detail.figures || []).filter(isToCrop).length;
+  if (crops) missing.push(crops === 1 ? "recortar 1 figura del PDF" : `recortar ${crops} figuras del PDF`);
+  return missing.length ? `<div class="nsmiss"><b>Antes de publicarla falta:</b> ${missing.map(esc).join(" · ")}</div>` : "";
 }
 function nextStepHtml() {
   return `<div id="nsmiss">${nsMissHtml()}</div>
@@ -839,8 +852,13 @@ function drawFigs() {
         <span class="spacer"></span>
         ${STATIC ? "" : `<button class="ib" type="button" onclick="cleanSaved('${esc(t.figure_id)}')" title="Quitar el fondo o tapar texto encima">✨ Limpiar</button><button class="ib warn" type="button" onclick="deleteScan('${esc(t.figure_id)}')" title="Quitar esta imagen">Quitar</button>`}</div>
       <div class="mini"><img src="${scanUrl(t)}" alt="${esc(t.figure_id)}"></div></div>`);
-  const pending = d.figures.filter(t => !traceShown(t)).map(t => `<div class="figcard"><div class="head"><b>${esc(t.figure_id || t.spec_id)}</b><span class="badge hid">${t.pending_spec ? "pendiente" : esc(t.method || "")}</span></div></div>`);
-  $("#figs").innerHTML = [...natives, ...scans, ...pending].join("") || `<p class="muted" style="margin:0">Sin figuras. Si la pregunta tiene un dibujo, mapa o foto, recórtalo del PDF. Si es una gráfica o tabla, créala con «+ Gráfica o tabla».</p>`;
+  const todo = d.figures.filter(isToCrop).map(t => `<div class="figcard todo">
+      <div class="head"><b>Falta recortar esta figura</b><span class="muted">${traceOption(t) ? `opción ${esc(traceOption(t))}` : "enunciado"}${t.page ? ` · página ${t.page}` : ""}</span>
+        <span class="spacer"></span>
+        ${STATIC ? "" : `<button class="ib go" type="button" onclick="cropMissing('${esc(t.figure_id)}')">✂ Recortarla del PDF</button>`}</div>
+      <div class="muted" style="font-size:12px">Dibuja un recuadro sobre la figura en la página. El recorte toma su lugar.</div></div>`);
+  const pending = d.figures.filter(t => !traceShown(t) && !isToCrop(t)).map(t => `<div class="figcard"><div class="head"><b>${esc(t.figure_id || t.spec_id)}</b><span class="badge hid">${t.pending_spec ? "pendiente" : esc(t.method || "")}</span></div></div>`);
+  $("#figs").innerHTML = [...todo, ...natives, ...scans, ...pending].join("") || `<p class="muted" style="margin:0">Sin figuras. Si la pregunta tiene un dibujo, mapa o foto, recórtalo del PDF. Si es una gráfica o tabla, créala con «+ Gráfica o tabla».</p>`;
 }
 
 async function deleteNative(id) {
@@ -874,6 +892,7 @@ function refreshChrome() {
   if (u) { u.disabled = !d.undo; u.textContent = undoLabel(d.undo); }
   if ($("#nsmiss")) $("#nsmiss").innerHTML = nsMissHtml();
   const r = state.rows.find(x => x.number === d.number);
+  if (r) r.to_crop = d.figures.filter(isToCrop).length;
   const cell = $(`#qstrip button[data-n="${d.number}"]`);
   if (r && cell) cell.className = `${cellClass(r)} cur`;
 }
@@ -973,7 +992,7 @@ async function readyAndNext() {
 
 function nextToFix() {
   const rows = state.rows, cur = rows.findIndex(r => r.number === state.n);
-  const needs = r => r.errors || r.hidden.length || badFigure(r.number);
+  const needs = r => r.errors || r.hidden.length || badFigure(r.number) || r.to_crop;
   for (let k = 1; k <= rows.length; k++) { const r = rows[(cur + k) % rows.length]; if (needs(r)) return r.number; }
   return null;
 }
