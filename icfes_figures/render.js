@@ -9,6 +9,7 @@
 })(typeof self !== 'undefined' ? self : globalThis, function () {
   'use strict';
 
+  const MARKERS = ['circle', 'square', 'triangle', 'dot', 'star', 'diamond', 'cross'];
   const KINDS = ['bar', 'line', 'scatter', 'curve', 'pie', 'table', 'geometry', 'diagram', 'combo', 'map'];
   const AXIS_KINDS = ['bar', 'line', 'scatter', 'curve', 'combo'];
   // Booklets print in grey-scale, so series use fill patterns, not grey shades.
@@ -37,6 +38,7 @@
     };
     const series = Array.isArray(spec.series) ? spec.series : [];
     series.forEach((s, i) => { if (s && s.style != null && !['solid', 'dashed', 'dotted'].includes(s.style)) errs.push(`series[${i}].style must be solid, dashed or dotted`); });
+    series.forEach((s, i) => { if (s && s.marker != null && !MARKERS.includes(s.marker)) errs.push(`series[${i}].marker must be one of ${MARKERS.join(', ')}`); });
     if (AXIS_KINDS.includes(spec.kind)) {
       if (!spec.x || typeof spec.x.label !== 'string' || !spec.x.label) errs.push('x.label is required (axis title)');
       if (!spec.y || typeof spec.y.label !== 'string' || !spec.y.label) errs.push('y.label is required (axis title)');
@@ -88,6 +90,13 @@
       series.forEach((s, i) => {
         if (!Array.isArray(s.points) || s.points.length < 2) return errs.push(`series[${i}].points needs at least two [x, y] pairs`);
         s.points.forEach((p, j) => { if (!Array.isArray(p) || p.length !== 2 || !isNum(p[0]) || !isNum(p[1])) errs.push(`series[${i}].points[${j}] must be [x, y]`); });
+      });
+    } else if (spec.kind === 'pie' && spec.rings != null) {
+      if (!Array.isArray(spec.rings) || spec.rings.length < 1 || spec.rings.length > 3) errs.push('rings must be an array of 1 to 3 rings, outer ring first');
+      else spec.rings.forEach((ring, k) => {
+        if (!ring || !Array.isArray(ring.slices) || ring.slices.length < 1) return errs.push(`rings[${k}].slices needs at least one entry`);
+        ring.slices.forEach((s, i) => { if (!isNum(s.value) || s.value < 0) errs.push(`rings[${k}].slices[${i}].value must be a number >= 0`); });
+        if (!(ring.slices.reduce((t, s) => t + (isNum(s.value) ? s.value : 0), 0) > 0)) errs.push(`rings[${k}] values must add up to more than 0`);
       });
     } else if (spec.kind === 'pie') {
       if (!Array.isArray(spec.slices) || spec.slices.length < 2) errs.push('slices needs at least two entries');
@@ -311,12 +320,14 @@
     const pos = legendLayout(series, left);
     return pos.length ? pos[pos.length - 1].row + 1 : 0;
   }
-  function legend(series, left, top, id) {
+  // Line charts pass glyph = true: each entry shows its point marker instead of a filled swatch.
+  function legend(series, left, top, id, glyph) {
     const out = [];
     legendLayout(series, left).forEach((pos, i) => {
       const s = series[i];
       const y = top + pos.row * 18;
-      out.push(`<rect x="${pos.x}" y="${y - 10}" width="10" height="10" fill="${fillFor(s, i, id)}" stroke="#000"/>`);
+      if (glyph) out.push(marker(s.marker || 'circle', pos.x + 5, y - 5));
+      else out.push(`<rect x="${pos.x}" y="${y - 10}" width="10" height="10" fill="${fillFor(s, i, id)}" stroke="#000"/>`);
       out.push(text(pos.x + 14, y - 1, legendLabel(s, i), { anchor: 'start' }));
     });
     return out;
@@ -409,7 +420,7 @@
     const yScale = scaleFor(spec.y, series.flatMap((s) => s.values), false);
     const fr = frame(spec, showLegend, yScale);
     const out = fr.out;
-    if (showLegend) out.push(...legend(series, fr.left, fr.legendY, id));
+    if (showLegend) out.push(...legend(series, fr.left, fr.legendY, id, true));
     const n = spec.categories.length;
     const xAt = (c) => fr.left + (fr.right - fr.left) * (n === 1 ? 0.5 : c / (n - 1));
     spec.categories.forEach((cat, c) => {
@@ -453,7 +464,7 @@
     const yScale = scaleFor(spec.y, ys, false);
     const fr = frame(spec, showLegend, yScale);
     const out = fr.out;
-    if (showLegend) out.push(...legend(series, fr.left, fr.legendY, id));
+    if (showLegend) out.push(...legend(series, fr.left, fr.legendY, id, true));
     const xAt = (v) => fr.left + (v - xScale.lo) / (xScale.hi - xScale.lo) * (fr.right - fr.left);
     for (const t of xScale.ticks) out.push(text(xAt(t).toFixed(1), fr.bottom + 15, tickText(spec.x, t)));
     series.forEach((s, si) => out.push(...polyline(s, si, s.points.map(([x, y]) => [xAt(x), fr.y(y)]))));
@@ -465,6 +476,14 @@
     const f = (v) => v.toFixed(1);
     if (kind === 'square') return `<rect x="${f(x - 3)}" y="${f(y - 3)}" width="6" height="6" fill="#000"/>`;
     if (kind === 'triangle') return `<polygon points="${f(x)},${f(y - 4)} ${f(x - 4)},${f(y + 3)} ${f(x + 4)},${f(y + 3)}" fill="#fff" stroke="#000" stroke-width="1.2"/>`;
+    if (kind === 'dot') return `<circle cx="${f(x)}" cy="${f(y)}" r="3.5" fill="#000"/>`;
+    if (kind === 'diamond') return `<polygon points="${f(x)},${f(y - 4.5)} ${f(x + 4.5)},${f(y)} ${f(x)},${f(y + 4.5)} ${f(x - 4.5)},${f(y)}" fill="#fff" stroke="#000" stroke-width="1.2"/>`;
+    if (kind === 'cross') return `<path d="M${f(x - 4)},${f(y - 4)} L${f(x + 4)},${f(y + 4)} M${f(x + 4)},${f(y - 4)} L${f(x - 4)},${f(y + 4)}" stroke="#000" stroke-width="1.8" fill="none"/>`;
+    if (kind === 'star') {
+      const pts = [];
+      for (let k = 0; k < 10; k++) { const rr = k % 2 ? 2 : 5, a = -Math.PI / 2 + k * Math.PI / 5; pts.push(`${f(x + rr * Math.cos(a))},${f(y + rr * Math.sin(a))}`); }
+      return `<polygon points="${pts.join(' ')}" fill="#fff" stroke="#000" stroke-width="1.2"/>`;
+    }
     return `<circle cx="${f(x)}" cy="${f(y)}" r="3" fill="#fff" stroke="#000" stroke-width="1.5"/>`;
   }
   // Open markers keep grey-scale legibility.
@@ -550,31 +569,55 @@
     return out;
   }
 
+  // One slice of a pie or ring: an annular sector from radius r (0 = a wedge from the centre) out to R.
+  function sectorPath(cx, cy, R, r, a1, a2, frac, fill) {
+    const at = (rad, a) => [cx + rad * Math.cos(a), cy + rad * Math.sin(a)];
+    if (frac >= 0.9999) {
+      return `<circle cx="${cx}" cy="${cy}" r="${R}" fill="${fill}" stroke="#000"/>` +
+        (r > 0 ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#fff" stroke="#000"/>` : '');
+    }
+    if (frac <= 0) return '';
+    const large = frac > 0.5 ? 1 : 0;
+    const [x1, y1] = at(R, a1), [x2, y2] = at(R, a2);
+    if (r <= 0) return `<path d="M${cx},${cy} L${x1.toFixed(1)},${y1.toFixed(1)} A${R},${R} 0 ${large} 1 ${x2.toFixed(1)},${y2.toFixed(1)} Z" fill="${fill}" stroke="#000"/>`;
+    const [x3, y3] = at(r, a2), [x4, y4] = at(r, a1);
+    return `<path d="M${x1.toFixed(1)},${y1.toFixed(1)} A${R},${R} 0 ${large} 1 ${x2.toFixed(1)},${y2.toFixed(1)} L${x3.toFixed(1)},${y3.toFixed(1)} A${r},${r} 0 ${large} 0 ${x4.toFixed(1)},${y4.toFixed(1)} Z" fill="${fill}" stroke="#000"/>`;
+  }
+
+  // spec.slices draws one circle. spec.rings draws 1 to 3 concentric rings, outer ring first;
+  // each ring has its own slices and percentages, and the legend lists every slice.
   function pieSvg(spec, id) {
     const out = [];
-    const total = spec.slices.reduce((t, s) => t + s.value, 0);
+    const rings = spec.rings || [{ slices: spec.slices }];
     const cx = 130;
     const cy = H / 2 + (spec.title ? 8 : 0);
     const r = 100;
+    const hole = spec.rings ? 30 : 0;
+    const band = (r - hole) / rings.length;
     if (spec.title) out.push(text(W / 2, 18, spec.title, { weight: 'bold' }));
-    let angle = -Math.PI / 2;
-    spec.slices.forEach((s, i) => {
-      const frac = s.value / total;
-      const a2 = angle + frac * 2 * Math.PI;
-      const fill = fillFor(spec.slices[i], i, id);
-      if (frac >= 0.9999) {
-        out.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="#000"/>`);
-      } else if (frac > 0) {
-        const x1 = cx + r * Math.cos(angle), y1 = cy + r * Math.sin(angle);
-        const x2 = cx + r * Math.cos(a2), y2 = cy + r * Math.sin(a2);
-        const large = frac > 0.5 ? 1 : 0;
-        out.push(`<path d="M${cx},${cy} L${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r} 0 ${large} 1 ${x2.toFixed(1)},${y2.toFixed(1)} Z" fill="${fill}" stroke="#000"/>`);
-      }
-      angle = a2;
-      const ly = 80 + i * 24;
-      out.push(`<rect x="262" y="${ly - 10}" width="10" height="10" fill="${fill}" stroke="#000"/>`);
-      const pct = Math.round(frac * 1000) / 10;
-      out.push(text(278, ly - 1, `${s.label}: ${fmt(s.value)} (${fmt(pct)} %)`, { anchor: 'start' }));
+    const entries = [];
+    let idx = 0;
+    rings.forEach((ring, k) => {
+      const total = ring.slices.reduce((t, s) => t + s.value, 0);
+      const outerR = r - k * band, innerR = outerR - band;
+      let angle = -Math.PI / 2;
+      ring.slices.forEach((s) => {
+        const i = idx++;
+        const frac = s.value / total;
+        const a2 = angle + frac * 2 * Math.PI;
+        const fill = fillFor(s, i, id);
+        out.push(sectorPath(cx, cy, outerR, innerR, angle, a2, frac, fill));
+        angle = a2;
+        const pct = Math.round(frac * 1000) / 10;
+        const name = spec.rings ? (ring.name ? `${ring.name}, ${s.label}` : `anillo ${k + 1}, ${s.label}`) : s.label;
+        entries.push({ fill, text: `${name}: ${fmt(s.value)} (${fmt(pct)} %)` });
+      });
+    });
+    const step = Math.min(24, Math.floor((H - 100) / Math.max(1, entries.length - 1)));
+    entries.forEach((e, i) => {
+      const ly = 80 + i * step;
+      out.push(`<rect x="262" y="${ly - 10}" width="10" height="10" fill="${e.fill}" stroke="#000"/>`);
+      out.push(text(278, ly - 1, e.text, { anchor: 'start' }));
     });
     return out;
   }
@@ -948,6 +991,18 @@
     return '';
   }
 
+  // Bounding box, in view units, of an unboxed text shape: width from the glyph count, turned by its rotate angle about the anchor.
+  function textBox(s) {
+    const size = s.size || 12;
+    const w = String(s.text).length * CHAR_EM * size;
+    const a0 = s.anchor === 'end' ? -w : s.anchor === 'start' ? 0 : -w / 2;
+    const corners = [[a0, -0.8 * size], [a0 + w, -0.8 * size], [a0 + w, 0.25 * size], [a0, 0.25 * size]];
+    const th = (s.rotate || 0) * Math.PI / 180, c = Math.cos(th), sn = Math.sin(th);
+    const pts = corners.map(([px, py]) => [s.x + px * c - py * sn, s.y + px * sn + py * c]);
+    const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+    return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
+  }
+
   // Text shapes that cannot fit their box even at minSize. Used by the audit.
   function textOverflows(spec) {
     const out = [];
@@ -991,5 +1046,5 @@
     return svgOpen(spec.title, id) + body.join('') + '</svg>';
   }
 
-  return { KINDS, PATTERNS, MAP_KEYS, validate, render, fmt, niceStep, scaleFor, TABLE_CSS, textLayout, textOverflows, registerMap };
+  return { KINDS, PATTERNS, MAP_KEYS, validate, render, fmt, niceStep, scaleFor, TABLE_CSS, textLayout, textOverflows, textBox, registerMap };
 });

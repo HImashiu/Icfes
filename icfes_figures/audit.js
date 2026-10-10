@@ -77,16 +77,13 @@ function auditFigure(f) {
   if (kind === 'diagram' && spec.shapes) {
     for (const o of F.textOverflows(spec)) issues.push('text overflow: ' + o);
     for (const o of overlappingText(spec)) issues.push('text overlap: ' + o);
-    // Unboxed text that would run past the view: estimate its width from the glyph count.
+    // Unboxed text that would run past the view: its rotated bounding box, from the glyph count.
     if (Array.isArray(spec.view)) {
       const [vx, vy, vw, vh] = spec.view;
       spec.shapes.forEach((t, i) => {
         if (t.type !== 'text' || t.maxWidth != null) return;
-        const size = t.size || 12;
-        const w = String(t.text).length * 0.55 * size;
-        const left = t.anchor === 'end' ? t.x - w : t.anchor === 'start' ? t.x : t.x - w / 2;
-        const right = left + w;
-        if (left < vx - 1 || right > vx + vw + 1 || t.y < vy - 1 || t.y > vy + vh + 1) issues.push(`text runs outside the view: shapes[${i}] ${t.text}`);
+        const b = F.textBox(t);
+        if (b.x0 < vx - 1 || b.x1 > vx + vw + 1 || b.y0 < vy - 1 || b.y1 > vy + vh + 1) issues.push(`text runs outside the view: shapes[${i}] ${t.text}`);
       });
     }
   }

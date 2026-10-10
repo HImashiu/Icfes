@@ -55,8 +55,9 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 ```
 
 - `null` leaves a gap, and the line breaks there. Lines are solid unless a series sets `"style": "dashed"`.
-- Set `"marker"` per series to `"circle"` (default), `"square"` or `"triangle"`, so series stay
-  apart in grey-scale print.
+- Set `"marker"` per series to `"circle"` (default), `"square"`, `"triangle"`, `"dot"` (filled circle),
+  `"star"`, `"diamond"` or `"cross"`, so series stay apart in grey-scale print. On line charts the legend
+  shows each series' marker in place of its colour swatch, so the marker is the key.
 
 ### `line` with numeric x
 
@@ -104,6 +105,16 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 ```
 
 - Values are relative; the renderer shows each value and its percent of the total.
+- Nested rings: give `rings` instead of `slices`, outer ring first, 1 to 3 rings. Each ring has its own
+  `slices` (same fields) and an optional `name`, which prefixes its legend entries. Each ring has its own
+  percentages. A ring of rings is drawn as a donut with a hole in the middle.
+
+```json
+{ "kind": "pie", "rings": [
+  { "name": "Interno", "slices": [ { "label": "A", "value": 1 }, { "label": "B", "value": 3 } ] },
+  { "name": "Externo", "slices": [ { "label": "C", "value": 2 }, { "label": "D", "value": 2 }, { "label": "E", "value": 4 } ] }
+] }
+```
 
 ### `table`, rendered as an HTML table
 

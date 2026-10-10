@@ -309,3 +309,51 @@ test('legend: false hides the legend for several series', () => {
   assert.ok(F.render(two).includes('>Zeta leyenda<'));
   assert.ok(!F.render({ ...two, legend: false }).includes('>Zeta leyenda<'));
 });
+
+test('pie rings: nested rings draw one annulus per slice and list every slice', () => {
+  const rings = { kind: 'pie', title: 'Dos anillos', rings: [
+    { name: 'Interno', slices: [{ label: 'A', value: 1 }, { label: 'B', value: 3 }] },
+    { name: 'Externo', slices: [{ label: 'C', value: 2 }, { label: 'D', value: 2 }, { label: 'E', value: 4 }] },
+  ] };
+  assert.deepEqual(F.validate(rings), []);
+  const svg = F.render(rings);
+  assert.equal((svg.match(/<path /g) || []).length, 5);
+  assert.ok(svg.includes('Interno, A: 1 (25 %)'));
+  assert.ok(svg.includes('Externo, E: 4 (50 %)'));
+  assert.ok(F.validate({ kind: 'pie', rings: [] }).length > 0);
+  assert.ok(F.validate({ kind: 'pie', rings: [{ slices: [{ label: 'x', value: 0 }] }] }).length > 0);
+  assert.ok(F.validate({ kind: 'pie', rings: [{ slices: [] }] }).length > 0);
+});
+
+test('pie without rings is unchanged: one circle, wedges from the centre', () => {
+  const svg = F.render(pie);
+  assert.ok(!svg.includes('anillo'));
+  assert.equal((svg.match(/<path /g) || []).length, 2);
+});
+
+test('line markers: every named marker validates, unknown ones are rejected', () => {
+  for (const m of ['circle', 'square', 'triangle', 'dot', 'star', 'diamond', 'cross']) {
+    assert.deepEqual(F.validate({ ...line, series: [{ values: [1, 2, 3, 4], marker: m }, { values: [2, 1, 2, 1] }] }), [], m);
+  }
+  assert.ok(F.validate({ ...line, series: [{ values: [1, 2, 3, 4], marker: 'hexagon' }] }).length > 0);
+});
+
+test('line legend shows each series marker; a star is a ten-point polygon', () => {
+  const s = { kind: 'line', x: { label: 'Mes' }, y: { label: 'Casos' }, categories: ['Ene', 'Feb'], series: [{ name: 'Con estrella', values: [1, 2], marker: 'star' }, { name: 'Con punto', values: [2, 1], marker: 'dot' }] };
+  const svg = F.render(s);
+  const polys = [...svg.matchAll(/<polygon points="([^"]+)"/g)].map((m) => m[1]);
+  assert.ok(polys.some((p) => p.split(' ').length === 10), 'star polygon present');
+  assert.ok(svg.includes('>Con estrella<') && svg.includes('>Con punto<'));
+  assert.ok(svg.includes('<circle') && svg.includes('fill="#000"'), 'filled dot present');
+});
+
+test('textBox: a rotated label is measured along its rotated direction', () => {
+  // A vertical axis label, centred at y = 150 and placed near the left edge.
+  const v = F.textBox({ type: 'text', text: 'Gráfica 1', x: 12, y: 150, size: 12, anchor: 'middle', rotate: -90 });
+  const h = F.textBox({ type: 'text', text: 'Gráfica 1', x: 12, y: 150, size: 12, anchor: 'middle' });
+  assert.ok(v.y1 - v.y0 > v.x1 - v.x0, 'taller than wide when rotated');
+  assert.ok(h.x1 - h.x0 > h.y1 - h.y0, 'wider than tall when horizontal');
+  assert.ok(v.x0 >= 0, 'stays inside a view that starts at 0');
+  const far = F.textBox({ type: 'text', text: 'Gráfica 1', x: 2, y: 150, size: 12, anchor: 'middle', rotate: -90 });
+  assert.ok(far.x0 < 0, 'a label placed at x = 2 runs past the left edge');
+});
