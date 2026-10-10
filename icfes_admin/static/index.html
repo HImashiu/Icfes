@@ -185,7 +185,32 @@ table.icfes-table caption{font-weight:700;color:#000;margin-bottom:4px}
 /* ----- chart and table studio ----- */
 .studio{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column}
 .stbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--side)}
-.stgrid{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,34%) minmax(0,36%) minmax(0,30%)}
+.stgrid{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,28%) minmax(0,42%) minmax(0,30%)}
+.cvbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
+.cvbar .sw{width:26px;height:26px;border-radius:6px;border:2px solid var(--line);cursor:pointer;padding:0}
+.cvbar .sw.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.cvwrap{position:relative}
+.cvhint{font-size:12px;color:var(--text-2);margin-top:6px;min-height:16px}
+#st-prev svg .cv-t{cursor:text}
+#st-prev svg .cv-t:hover{fill:#1a6ef5}
+#st-prev svg .cv-v{cursor:ns-resize}
+#st-prev svg .cv-h{cursor:ew-resize}
+#st-prev svg .cv-c{cursor:pointer}
+#st-prev svg .cv-v:hover,#st-prev svg .cv-h:hover,#st-prev svg .cv-c:hover{stroke:#1a6ef5;stroke-width:2.5}
+#st-prev svg .cv-pt{fill:rgba(26,110,245,.08);stroke:#1a6ef5;stroke-width:1.2;cursor:move}
+#st-prev svg .cv-pt.v{cursor:ns-resize}
+#st-prev svg .cv-pt:hover,#st-prev svg .cv-pt.sel{fill:rgba(26,110,245,.35)}
+#st-prev svg .cv-sel{fill:none;stroke:#1a6ef5;stroke-width:2;stroke-dasharray:4 2;pointer-events:none}
+#st-prev svg .cv-plot{fill:transparent;cursor:crosshair}
+#st-prev td[contenteditable],#st-prev th[contenteditable],#st-prev caption[contenteditable]{cursor:text;outline:none}
+#st-prev td[contenteditable]:focus,#st-prev th[contenteditable]:focus{box-shadow:inset 0 0 0 2px #1a6ef5}
+.cvpop{position:absolute;z-index:5;width:250px;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.45);padding:10px;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.cvpop label{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--text-2)}
+.cvpop input,.cvpop select{padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--text);font-size:14px}
+.cvpop .row{display:flex;gap:6px;flex-wrap:wrap}
+.cvpop .row .ib{min-height:30px;font-size:12px}
+.cvpop b{font-size:13px}
+.cvedit{position:absolute;z-index:6;min-width:120px;padding:3px 6px;border:2px solid #1a6ef5;border-radius:6px;background:#fff;color:#000;font:14px Arial,Helvetica,sans-serif}
 .stgrid > div{min-height:0;overflow:auto;padding:12px 14px;border-right:1px solid var(--line)}
 .kinds{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
 .kinds button{display:flex;flex-direction:column;align-items:center;gap:2px;width:78px;padding:6px 4px;border-radius:12px;border:2px solid var(--line);background:var(--surface);cursor:pointer;font-size:11px;font-weight:600;color:var(--text)}
@@ -854,6 +879,7 @@ async function undo() {
 document.addEventListener("keydown", e => {
   if (!document.body.classList.contains("editing")) return;
   if ($(".studio")) {
+    if (cvKey(e)) return;
     if (e.key === "Escape") closeStudio();
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); saveStudio(); }
     return;
@@ -1267,6 +1293,7 @@ function openStudio(id, given = null) {
   const spec = given || (f?.spec ? JSON.parse(JSON.stringify(f.spec)) : starter(f?.kind || "bar"));
   if (f && !spec.kind) spec.kind = f.kind;
   studio.draft = { id, target: f?.target || "stem", option: f?.option || "", fidelity: f?.fidelity || "draft", spec };
+  Object.assign(studio, { hist: [], sel: null, brush: null, view: null, drag: false, cell: null });
   studio.mode = "form";
   studio.page = state.page;
   document.body.insertAdjacentHTML("beforeend", `<div class="studio" id="studio"></div>`);
@@ -1298,8 +1325,11 @@ function drawStudio() {
         </div>
         <img src="/api/scan/${encodeURIComponent(d.exam)}/${studio.page}" style="width:100%;background:#fff" alt="página original" onload="studioScroll(this)">
       </div>
+      <div id="st-cv"><div class="label">Así la verán los estudiantes · edítala aquí mismo</div>
+        <div class="cvbar" id="cv-bar"></div>
+        <div class="cvwrap" id="cv-wrap"><div class="prevbox" id="st-prev"></div></div>
+        <div class="cvhint" id="cv-hint"></div><div id="st-probs"></div></div>
       <div id="st-form"></div>
-      <div><div class="label">Así la verán los estudiantes</div><div class="prevbox" id="st-prev"></div><div id="st-probs"></div></div>
     </div>`;
   $("#st-target").onchange = (e) => { const v = e.target.value; dr.target = v === "stem" ? "stem" : "option"; dr.option = v.startsWith("opt:") ? v.slice(4) : ""; };
   $("#st-fid").onchange = (e) => { dr.fidelity = e.target.value; };
@@ -1327,7 +1357,8 @@ function studioPreview() {
   const sp = studio.draft.spec;
   const f = { kind: sp.kind, spec: sp };
   const problems = figProblems(f);
-  $("#st-prev").innerHTML = problems.length ? `<p class="muted" style="color:var(--paper-2)">Todavía no se puede dibujar.</p>` : drawNative(f);
+  $("#st-prev").innerHTML = problems.length ? `<p class="muted" style="color:var(--paper-2)">Todavía no se puede dibujar.</p>` : drawNative(studio.view ? { kind: sp.kind, spec: studio.view } : f);
+  if (!problems.length) bindCanvas();
   $("#st-probs").innerHTML = problems.length
     ? `<div class="note bad" style="margin-top:10px"><b>Falta arreglar</b><ul class="problems" style="color:inherit">${problems.slice(0, 8).map(p => `<li>${esc(p)}</li>`).join("")}</ul></div>`
     : `<div class="note ok" style="margin-top:10px">Lista: el motor de la app la dibuja así.</div>`;
@@ -1588,6 +1619,675 @@ function apply(kind, m, el) {
     if ($("#st-head")?.checked) { sp.headers = all[0]; sp.rows = all.slice(1); }
     else { delete sp.headers; sp.rows = all; }
   }
+}
+
+// ----- editing on the chart itself ----------------------------------------------------------
+// The preview is the editor: drag a bar or point to change its value, tap a text to retype it, tap a bar,
+// slice or area for its options, paint map areas with a brush, and type straight into table cells.
+// Elements are matched to the spec by the order the engine draws them in; values come from the engine's own scales.
+
+const CV_HINTS = {
+  bar: "Arrastra una barra para cambiar su valor · toca una barra para más opciones · toca cualquier texto para cambiarlo",
+  combo: "Arrastra las barras y los puntos de la línea · toca un texto para cambiarlo",
+  line: "Arrastra un punto para cambiar su valor · toca un texto para cambiarlo",
+  scatter: "Arrastra un punto para moverlo · doble clic en un espacio vacío añade un punto · Supr quita el punto elegido",
+  curve: "Arrastra los puntos para dar forma a la curva · doble clic añade un punto · Supr quita el punto elegido",
+  pie: "Toca una parte o su leyenda para cambiar valor, texto y relleno",
+  map: "Elige un relleno y toca los departamentos para pintarlos · sin relleno elegido, tocar uno muestra su nombre y opciones",
+  table: "Escribe directamente en las celdas · Tab pasa a la siguiente",
+  geometry: "Toca un texto para cambiarlo · las coordenadas van en la pestaña JSON",
+  diagram: "Toca un texto para cambiarlo · las formas van en la pestaña JSON",
+};
+
+function cvSnapshot() {
+  studio.hist = studio.hist || [];
+  studio.hist.push(JSON.stringify(studio.draft.spec));
+  if (studio.hist.length > 80) studio.hist.shift();
+}
+// Every change made on the chart goes through here, so it can be undone and the data panel stays in sync.
+function cvCommit(fn) {
+  cvSnapshot();
+  fn(studio.draft.spec);
+  drawStudioForm();
+}
+function cvUndo() {
+  const last = studio.hist?.pop();
+  if (!last) { toast("No hay cambios de la gráfica para deshacer"); return; }
+  studio.draft.spec = JSON.parse(last);
+  cvPopClose();
+  drawStudioForm();
+}
+
+// Sets a value at "a.b.0.c"; array slots are emptied, never deleted, so the indexes stay put.
+function cvSet(o, path, v) {
+  const keys = path.split(".");
+  let cur = o;
+  keys.slice(0, -1).forEach((k, i) => {
+    if (cur[k] == null || typeof cur[k] !== "object") cur[k] = /^\d+$/.test(keys[i + 1]) ? [] : {};
+    cur = cur[k];
+  });
+  const last = keys[keys.length - 1];
+  if (Array.isArray(cur)) cur[+last] = v ?? "";
+  else if (v === undefined || v === "" || v === null) delete cur[last];
+  else cur[last] = v;
+}
+
+const cvNum = (v) => typeof v === "number" && Number.isFinite(v);
+const cvSvgPoint = (svg, e) => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
+const cvAttr = (el, a) => parseFloat(el.getAttribute(a));
+
+// The plot area from the engine's own axis lines: the longest black vertical and horizontal lines.
+function cvPlotBox(svg) {
+  let v = null, h = null;
+  svg.querySelectorAll("line").forEach(l => {
+    const st = (l.getAttribute("stroke") || "").toLowerCase();
+    if (st !== "#000" && st !== "#fff") return;
+    const x1 = cvAttr(l, "x1"), x2 = cvAttr(l, "x2"), y1 = cvAttr(l, "y1"), y2 = cvAttr(l, "y2");
+    if (x1 === x2 && (!v || Math.abs(y2 - y1) > v.len || (Math.abs(y2 - y1) === v.len && x1 < v.x))) v = { x: x1, top: Math.min(y1, y2), bottom: Math.max(y1, y2), len: Math.abs(y2 - y1) };
+    if (y1 === y2 && (!h || Math.abs(x2 - x1) > h.len)) h = { y: y1, left: Math.min(x1, x2), right: Math.max(x1, x2), len: Math.abs(x2 - x1) };
+  });
+  if (!v || !h) return null;
+  return { left: v.x, top: v.top, bottom: v.bottom, right: h.right };
+}
+
+// The same scales the engine draws with. Curves without printed numbers pad their range by 4 %.
+function cvScales(sp) {
+  const E = window.ICFESFigures;
+  const series = sp.series || [];
+  const vals = (list) => list.flatMap(s => s.values || []);
+  const curveRange = (a, v) => {
+    const lo = a && cvNum(a.min) ? a.min : Math.min(...v), hi = a && cvNum(a.max) ? a.max : Math.max(...v);
+    const pad = (hi - lo || 1) * 0.04;
+    return { lo: a && cvNum(a.min) ? a.min : lo - pad, hi: a && cvNum(a.max) ? a.max : hi + pad, step: (hi - lo || 1) / 10 };
+  };
+  if (sp.kind === "bar" || sp.kind === "combo") {
+    return { y: E.scaleFor(sp.y, vals(series.filter(s => s.axis !== 2)), true), y2: sp.y2 ? E.scaleFor(sp.y2, vals(series.filter(s => s.axis === 2)), true) : null };
+  }
+  if (sp.kind === "line" && !series.some(s => Array.isArray(s.points))) return { y: E.scaleFor(sp.y, vals(series), false) };
+  const pts = series.flatMap(s => s.points || []);
+  if (sp.kind === "curve") {
+    return { x: sp.x?.ticks === true ? E.scaleFor(sp.x, pts.map(p => p[0]), false) : curveRange(sp.x, pts.map(p => p[0])),
+             y: sp.y?.ticks === true ? E.scaleFor(sp.y, pts.map(p => p[1]), false) : curveRange(sp.y, pts.map(p => p[1])) };
+  }
+  return { x: E.scaleFor(sp.x, pts.map(p => p[0]), false), y: E.scaleFor(sp.y, pts.map(p => p[1]), false) };
+}
+// Value to pixel between a (at lo) and b (at hi), and back.
+function cvToPx(sc, v, a, b) { const t = sc.log ? Math.log10 : (x) => x; return a + (t(v) - t(sc.lo)) / (t(sc.hi) - t(sc.lo)) * (b - a); }
+function cvFromPx(sc, p, a, b) {
+  const f = (p - a) / (b - a);
+  return sc.log ? Math.pow(10, Math.log10(sc.lo) + f * (Math.log10(sc.hi) - Math.log10(sc.lo))) : sc.lo + f * (sc.hi - sc.lo);
+}
+// Rounds a dragged value to a tenth of the axis step (a hundredth with Shift), keeping the number clean.
+function cvSnap(v, sc, fine) {
+  if (sc.log) return +v.toPrecision(fine ? 3 : 2);
+  const unit = (sc.step || 1) / (fine ? 100 : 10);
+  return +(Math.round(v / unit) * unit).toPrecision(12);
+}
+
+function cvSvgEl(tag, attrs) {
+  const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+  return el;
+}
+
+// Draws the bar and options above the chart, then wires every part of the drawing.
+function bindCanvas() {
+  const sp = studio.draft.spec;
+  if (!studio.drag) cvBar(sp);
+  $("#cv-hint").textContent = CV_HINTS[sp.kind] || "";
+  if (sp.kind === "table") { cvTable(sp); return; }
+  const svg = $("#st-prev svg");
+  if (!svg) return;
+  const ov = cvSvgEl("g", { id: "cv-ov" });
+  svg.appendChild(ov);
+  const ctx = { sp, svg, ov, box: cvPlotBox(svg) };
+  try {
+    if (["bar", "combo", "line"].includes(sp.kind) && !(sp.series || []).some(s => Array.isArray(s.points))) cvCategoryChart(ctx);
+    else if (["scatter", "curve", "line"].includes(sp.kind)) cvPointChart(ctx);
+    else if (sp.kind === "pie") cvPie(ctx);
+    else if (sp.kind === "map") cvMap(ctx);
+  } catch (e) { console.warn("canvas", e); }
+  cvTexts(ctx);
+  cvMarkSelection(ctx);
+}
+
+function cvBar(sp) {
+  const bar = $("#cv-bar");
+  if (!bar) return;
+  const undo = `<button class="ib" onclick="cvUndo()" title="Deshace el último cambio hecho en la gráfica (Ctrl+Z)" ${studio.hist?.length ? "" : "disabled"}>↶ Deshacer</button>`;
+  let extra = "";
+  if (["bar", "combo", "line"].includes(sp.kind) && !(sp.series || []).some(s => Array.isArray(s.points))) {
+    extra = `<button class="ib" onclick="cvAddCategory()">+ ${sp.kind === "line" ? "Punto" : "Barra"} (categoría)</button><button class="ib" onclick="cvAddSeries()">+ Serie</button>`;
+  } else if (["scatter", "curve", "line"].includes(sp.kind)) {
+    extra = `<button class="ib" onclick="cvAddSeries()">+ Serie</button>`;
+  } else if (sp.kind === "pie" && !sp.rings) {
+    extra = `<button class="ib" onclick="cvCommit(s => s.slices.push({ label: 'Parte ' + (s.slices.length + 1), value: 1 }))">+ Parte</button>`;
+  } else if (sp.kind === "table") {
+    const spans = cvTableSpans(sp);
+    extra = spans ? `<span class="muted" style="font-size:12px">Tabla con celdas combinadas: filas y columnas en la pestaña JSON</span>`
+      : `<button class="ib" onclick="cvTableOp('row+')">+ Fila</button><button class="ib" onclick="cvTableOp('col+')">+ Columna</button>
+         <button class="ib" onclick="cvTableOp('row-')" title="Quita la fila de la celda elegida">− Fila</button><button class="ib" onclick="cvTableOp('col-')" title="Quita la columna de la celda elegida">− Columna</button>`;
+  } else if (sp.kind === "map") {
+    const fills = [...(sp.legend || []).map(l => [l.fill, l.label || l.fill]), ...MAP_FILLS.filter(([v]) => v && !(sp.legend || []).some(l => l.fill === v))];
+    const swatch = (v) => v.startsWith("#") ? v : v === "solid" ? "#000" : v === "white" ? "#fff" : v === "hatch" ? "repeating-linear-gradient(45deg,#000 0 2px,#fff 2px 5px)" : "radial-gradient(#000 1px,#fff 1.5px) 0 0/5px 5px";
+    extra = `<span class="muted" style="font-size:12px">Pincel:</span>${fills.map(([v, l]) => `<button class="sw ${studio.brush === v ? "on" : ""}" style="background:${swatch(v)}" title="${esc(l)}" onclick="cvBrush('${esc(v)}')"></button>`).join("")}
+      <button class="ib ${studio.brush === "" ? "on" : ""}" onclick="cvBrush('')" title="Toca áreas para quitarles el relleno">Borrador</button>
+      ${studio.brush != null ? `<button class="ib" onclick="cvBrush(null)">Soltar pincel</button>` : ""}`;
+  }
+  bar.innerHTML = undo + extra;
+}
+function cvBrush(v) { studio.brush = studio.brush === v ? null : v; cvBar(studio.draft.spec); }
+
+// ----- bars, lines and combos with categories ------------------------------------------------
+
+function cvCategoryChart(ctx) {
+  const { sp, svg, ov, box } = ctx;
+  if (!box) return;
+  const sc = cvScales(sp);
+  const n = sp.categories.length;
+  const horizontal = sp.kind === "bar" && sp.orientation === "horizontal";
+  const barSeries = sp.series.map((s, i) => ({ s, i })).filter(({ s }) => sp.kind === "bar" || (sp.kind === "combo" && s.type === "bar"));
+  // Bars: the engine draws them category by category, series by series, skipping empty values.
+  const rects = [...svg.querySelectorAll('rect[stroke-width="0.8"]')];
+  let k = 0;
+  sp.categories.forEach((_, c) => barSeries.forEach(({ s, i }) => {
+    if (!cvNum(s.values?.[c])) return;
+    const r = rects[k++];
+    if (!r) return;
+    r.classList.add(horizontal ? "cv-h" : "cv-v");
+    r.dataset.cv = `${i}:${c}`;
+    r.addEventListener("pointerdown", e => cvStartValueDrag(e, ctx, sc, i, c, horizontal));
+  }));
+  // Line points get round handles over the engine's markers.
+  const lineSeries = sp.series.map((s, i) => ({ s, i })).filter(({ s }) => sp.kind === "line" || (sp.kind === "combo" && s.type === "line"));
+  const band = (box.right - box.left) / n;
+  const xAt = (c) => sp.kind === "line" ? box.left + (box.right - box.left) * (n === 1 ? 0.5 : c / (n - 1)) : box.left + band * (c + 0.5);
+  lineSeries.forEach(({ s, i }) => (s.values || []).forEach((v, c) => {
+    if (!cvNum(v)) return;
+    const axisSc = s.axis === 2 && sc.y2 ? sc.y2 : sc.y;
+    const h = cvSvgEl("circle", { cx: xAt(c), cy: cvToPx(axisSc, v, box.bottom, box.top), r: 7, class: "cv-pt v" });
+    h.dataset.cv = `${i}:${c}`;
+    h.addEventListener("pointerdown", e => cvStartValueDrag(e, ctx, sc, i, c, false));
+    ov.appendChild(h);
+  }));
+  ctx.catCenter = (c) => horizontal ? box.top + (box.bottom - box.top) / n * (c + 0.5) : xAt(c);
+  ctx.horizontal = horizontal;
+}
+
+// Dragging a bar or a line point: the axis stays still while dragging, so the bar follows the pointer;
+// it rescales when the pointer is released. A press without movement opens the options instead.
+function cvStartValueDrag(e, ctx, sc, si, c, horizontal) {
+  e.preventDefault();
+  e.stopPropagation();
+  const sp = studio.draft.spec, s = sp.series[si];
+  const second = s.axis === 2 && sc.y2;
+  const axisSc = second ? sc.y2 : sc.y;
+  const { box } = ctx;
+  const start = { x: e.clientX, y: e.clientY, before: JSON.stringify(sp) };
+  let moved = false;
+  const view = JSON.parse(JSON.stringify(sp));
+  const ax = second ? "y2" : "y";
+  if (!axisSc.log) view[ax] = { ...(view[ax] || {}), min: axisSc.ticks[0], max: axisSc.ticks[axisSc.ticks.length - 1], step: axisSc.step };
+  const move = (ev) => {
+    if (!moved && Math.hypot(ev.clientX - start.x, ev.clientY - start.y) < 4) return;
+    if (!moved) { moved = true; studio.drag = true; cvPopClose(); }
+    const svg = $("#st-prev svg");
+    const p = cvSvgPoint(svg, ev);
+    const v = horizontal ? cvFromPx(axisSc, p.x, box.left, box.right) : cvFromPx(axisSc, p.y, box.bottom, box.top);
+    const val = cvSnap(v, axisSc, ev.shiftKey);
+    s.values[c] = val;
+    view.series[si].values[c] = val;
+    studio.view = view;
+    studioPreview();
+    $("#cv-hint").textContent = `${s.name || sp.categories[c] || ""}: ${numText(val)}  (Mayús para afinar)`;
+  };
+  const up = () => {
+    window.removeEventListener("pointermove", move);
+    window.removeEventListener("pointerup", up);
+    studio.view = null;
+    studio.drag = false;
+    if (moved) { studio.hist = studio.hist || []; studio.hist.push(start.before); studio.sel = { type: "val", si, c }; drawStudioForm(); }
+    else { studio.sel = { type: "val", si, c }; studioPreview(); cvPopValue(si, c); }
+  };
+  window.addEventListener("pointermove", move);
+  window.addEventListener("pointerup", up);
+}
+
+function cvAddCategory(after = null) {
+  cvCommit(sp => {
+    const at = after == null ? sp.categories.length : after + 1;
+    sp.categories.splice(at, 0, `Nueva ${sp.categories.length + 1}`);
+    sp.series.forEach(s => { s.values = s.values || []; const near = s.values[at - 1] ?? s.values[at] ?? 0; s.values.splice(at, 0, cvNum(near) ? near : 0); });
+    studio.sel = { type: "val", si: 0, c: at };
+  });
+}
+function cvAddSeries() {
+  cvCommit(sp => {
+    const pts = (sp.series || []).some(s => Array.isArray(s.points)) || ["scatter", "curve"].includes(sp.kind);
+    const base = sp.series[sp.series.length - 1];
+    const s = pts ? { name: `Serie ${sp.series.length + 1}`, points: (base?.points || [[0, 0], [1, 1]]).map(([x, y]) => [x, y]) }
+      : { name: `Serie ${sp.series.length + 1}`, values: (base?.values || sp.categories.map(() => 0)).slice() };
+    if (sp.kind === "combo") s.type = "line";
+    sp.series.push(s);
+  });
+}
+
+// ----- scatter, curves and lines with numeric x ------------------------------------------------
+
+function cvPointChart(ctx) {
+  const { sp, svg, ov, box } = ctx;
+  if (!box) return;
+  const sc = cvScales(sp);
+  const right = sp.kind === "curve" ? box.right : box.right;
+  const P = ([x, y]) => [cvToPx(sc.x, x, box.left, right), cvToPx(sc.y, y, box.bottom, box.top)];
+  // An invisible plot area under the handles: double-click adds a point to the chosen series.
+  const plot = cvSvgEl("rect", { x: box.left, y: box.top, width: right - box.left, height: box.bottom - box.top, class: "cv-plot" });
+  plot.addEventListener("dblclick", e => {
+    const p = cvSvgPoint(svg, e);
+    const si = studio.sel?.si ?? 0;
+    const pt = [cvSnap(cvFromPx(sc.x, p.x, box.left, right), sc.x), cvSnap(cvFromPx(sc.y, p.y, box.bottom, box.top), sc.y)];
+    cvCommit(s => {
+      const list = s.series[si].points;
+      if (s.kind === "scatter") list.push(pt);
+      else { const at = list.findIndex(q => q[0] > pt[0]); list.splice(at < 0 ? list.length : at, 0, pt); }
+      studio.sel = { type: "pt", si, k: s.kind === "scatter" ? list.length - 1 : list.indexOf(pt) };
+    });
+  });
+  ov.appendChild(plot);
+  sp.series.forEach((s, si) => (s.points || []).forEach((pt, k) => {
+    if (!cvNum(pt[0]) || !cvNum(pt[1])) return;
+    const [x, y] = P(pt);
+    const h = cvSvgEl("circle", { cx: x, cy: y, r: 7, class: "cv-pt" });
+    h.dataset.cv = `${si}:${k}`;
+    h.addEventListener("pointerdown", e => cvStartPointDrag(e, ctx, sc, si, k, right));
+    ov.appendChild(h);
+  }));
+}
+
+function cvStartPointDrag(e, ctx, sc, si, k, right) {
+  e.preventDefault();
+  e.stopPropagation();
+  const sp = studio.draft.spec, { box } = ctx;
+  const before = JSON.stringify(sp);
+  const start = { x: e.clientX, y: e.clientY };
+  let moved = false;
+  // The axes stay still while dragging, as with bars.
+  const view = JSON.parse(JSON.stringify(sp));
+  const freeze = (ax, s) => {
+    if (s.log) return;
+    if (sp.kind === "curve" && sp[ax]?.ticks !== true) view[ax] = { ...(view[ax] || {}), min: s.lo, max: s.hi };
+    else view[ax] = { ...(view[ax] || {}), min: s.ticks[0], max: s.ticks[s.ticks.length - 1], step: s.step };
+  };
+  freeze("x", sc.x); freeze("y", sc.y);
+  const move = (ev) => {
+    if (!moved && Math.hypot(ev.clientX - start.x, ev.clientY - start.y) < 4) return;
+    if (!moved) { moved = true; studio.drag = true; cvPopClose(); }
+    const p = cvSvgPoint($("#st-prev svg"), ev);
+    const pt = [cvSnap(cvFromPx(sc.x, p.x, box.left, right), sc.x, ev.shiftKey), cvSnap(cvFromPx(sc.y, p.y, box.bottom, box.top), sc.y, ev.shiftKey)];
+    sp.series[si].points[k] = pt;
+    view.series[si].points[k] = pt;
+    studio.view = view;
+    studioPreview();
+    $("#cv-hint").textContent = `(${numText(pt[0])}; ${numText(pt[1])})  (Mayús para afinar)`;
+  };
+  const up = () => {
+    window.removeEventListener("pointermove", move);
+    window.removeEventListener("pointerup", up);
+    studio.view = null;
+    studio.drag = false;
+    studio.sel = { type: "pt", si, k };
+    if (moved) {
+      // Lines and curves keep their points in x order.
+      if (sp.kind !== "scatter") { const list = sp.series[si].points, pt = list[k]; list.sort((a, b) => a[0] - b[0]); studio.sel.k = list.indexOf(pt); }
+      studio.hist = studio.hist || []; studio.hist.push(before); drawStudioForm();
+    } else { studioPreview(); cvPopPoint(si, k); }
+  };
+  window.addEventListener("pointermove", move);
+  window.addEventListener("pointerup", up);
+}
+
+// ----- pies -----------------------------------------------------------------------------------
+
+function cvPie(ctx) {
+  const { sp, svg } = ctx;
+  const rings = sp.rings || [{ slices: sp.slices }];
+  const shapes = [...svg.querySelectorAll(":scope > path, :scope > circle")];
+  const legend = [...svg.querySelectorAll('rect[x="262"]')];
+  const texts = [...svg.querySelectorAll('text[x="278"]')];
+  let k = 0, idx = 0;
+  rings.forEach((ring, r) => {
+    const total = ring.slices.reduce((t, s) => t + (cvNum(s.value) ? s.value : 0), 0);
+    ring.slices.forEach((s, j) => {
+      const frac = total ? s.value / total : 0;
+      const tag = (el) => { if (!el) return; el.classList.add("cv-c"); el.dataset.cv = `${r}:${j}`; el.addEventListener("click", ev => { ev.stopPropagation(); studio.sel = { type: "slice", r, j }; cvMarkSelection(ctx); cvPopSlice(r, j); }); };
+      if (frac > 0) { tag(shapes[k++]); if (frac >= 0.9999 && sp.rings) k++; }
+      tag(legend[idx]);
+      if (texts[idx]) { texts[idx].dataset.slice = `${r}:${j}`; tag(texts[idx]); }
+      idx++;
+    });
+  });
+}
+
+// ----- maps -----------------------------------------------------------------------------------
+
+function cvMap(ctx) {
+  const { sp, svg } = ctx;
+  const doc = MAPDOCS[sp.region];
+  if (!doc) return;
+  const paths = [...svg.querySelectorAll('path[stroke-width="0.7"]')];
+  doc.features.forEach((f, i) => {
+    const p = paths[i];
+    if (!p) return;
+    p.classList.add("cv-c");
+    p.setAttribute("pointer-events", "all");
+    p.addEventListener("pointerenter", () => { $("#cv-hint").textContent = f.name + (sp.fills?.[f.name] ? ` · ${cvFillName(sp, sp.fills[f.name])}` : " · sin relleno"); });
+    p.addEventListener("click", e => {
+      e.stopPropagation();
+      if (studio.brush != null) { cvCommit(s => { s.fills = s.fills || {}; if (studio.brush) s.fills[f.name] = studio.brush; else delete s.fills[f.name]; }); return; }
+      studio.sel = { type: "area", name: f.name };
+      cvPopArea(f.name);
+    });
+  });
+  // Tapping a legend box picks up its fill as the brush.
+  [...svg.querySelectorAll('rect[width="10"]')].forEach((r, i) => {
+    const l = (sp.legend || [])[i];
+    if (!l) return;
+    r.classList.add("cv-c");
+    r.addEventListener("click", e => { e.stopPropagation(); studio.brush = l.fill; cvBar(sp); toast(`Pincel: ${l.label || l.fill}. Toca los departamentos para pintarlos`); });
+  });
+}
+function cvFillName(sp, v) { return (sp.legend || []).find(l => l.fill === v)?.label || MAP_FILLS.find(([x]) => x === v)?.[1] || v; }
+
+// ----- texts ------------------------------------------------------------------------------------
+
+// Every printed text that comes from the spec can be retyped in place. Category labels may be wrapped
+// over several lines, so they are matched by position; everything else by its exact text.
+function cvTexts(ctx) {
+  const { sp, svg } = ctx;
+  const strings = [];
+  const walk = (o, path) => {
+    if (typeof o === "string") { if (o.trim()) strings.push([o, path]); return; }
+    if (Array.isArray(o)) o.forEach((v, i) => walk(v, path ? `${path}.${i}` : String(i)));
+    else if (o && typeof o === "object") Object.entries(o).forEach(([k, v]) => { if (!["kind", "region", "pattern", "marker", "style", "fill", "type", "format", "orientation", "anchor", "scale", "fills"].includes(k)) walk(v, path ? `${path}.${k}` : k); });
+  };
+  walk(sp, "");
+  const box = ctx.box;
+  const sc = box && cvScales(sp);
+  svg.querySelectorAll("text").forEach(t => {
+    if (t.dataset.slice) return;
+    const txt = t.textContent;
+    let path = strings.find(([s]) => s === txt)?.[1];
+    // Wrapped category lines.
+    if (!path && sp.categories && ctx.catCenter) {
+      const near = sp.categories.map((c, i) => [i, String(c)]).filter(([, c]) => c.replace(/\s+/g, " ").includes(txt));
+      if (near.length) {
+        const at = ctx.horizontal ? cvAttr(t, "y") : cvAttr(t, "x");
+        path = `categories.${near.sort((a, b) => Math.abs(ctx.catCenter(a[0]) - at) - Math.abs(ctx.catCenter(b[0]) - at))[0][0]}`;
+      }
+    }
+    if (path && /^categories\.\d+$/.test(path) && ctx.catCenter) {
+      // Two categories can share a text; the closest one wins.
+      const at = ctx.horizontal ? cvAttr(t, "y") : cvAttr(t, "x");
+      const same = sp.categories.map((c, i) => [i, String(c)]).filter(([, c]) => c === txt);
+      if (same.length > 1) path = `categories.${same.sort((a, b) => Math.abs(ctx.catCenter(a[0]) - at) - Math.abs(ctx.catCenter(b[0]) - at))[0][0]}`;
+    }
+    if (path) {
+      t.classList.add("cv-t");
+      t.addEventListener("click", e => { e.stopPropagation(); cvEditText(t, path); });
+      return;
+    }
+    // Axis numbers open the axis options.
+    if (box && sc && /^-?[\d.,]+$/.test(txt.trim())) {
+      const x = cvAttr(t, "x"), y = cvAttr(t, "y");
+      const ax = y > box.bottom ? (ctx.horizontal ? "y" : "x") : x < box.left ? "y" : x > box.right ? "y2" : null;
+      if (!ax) return;
+      t.classList.add("cv-t");
+      t.addEventListener("click", e => { e.stopPropagation(); cvPopAxis(ax); });
+    }
+  });
+  // Missing titles can be added by clicking where they go.
+  if (["bar", "line", "combo", "scatter", "curve", "pie", "map"].includes(sp.kind) && !sp.title) {
+    const add = cvSvgEl("text", { x: 240, y: 14, "text-anchor": "middle", "font-size": 11, fill: "#1a6ef5", class: "cv-t", "font-family": "Arial" });
+    add.textContent = "+ título";
+    add.addEventListener("click", e => { e.stopPropagation(); cvEditText(add, "title", ""); });
+    ctx.ov.appendChild(add);
+  }
+}
+
+function cvEditText(t, path, initial = null) {
+  cvPopClose();
+  const wrap = $("#cv-wrap"), r = t.getBoundingClientRect(), w = wrap.getBoundingClientRect();
+  const cur = initial ?? getPath(studio.draft.spec, path) ?? "";
+  const inp = Object.assign(document.createElement("input"), { className: "cvedit", value: String(cur) });
+  inp.style.left = `${Math.max(0, r.left - w.left - 8)}px`;
+  inp.style.top = `${Math.max(0, r.top - w.top - 6)}px`;
+  inp.style.width = `${Math.max(140, r.width + 40)}px`;
+  wrap.appendChild(inp);
+  inp.focus();
+  inp.select();
+  let done = false;
+  const finish = (keep) => {
+    if (done) return;
+    done = true;
+    inp.remove();
+    if (keep && inp.value !== String(cur)) cvCommit(sp => cvSet(sp, path, inp.value.trim()));
+  };
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); finish(true); } if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); finish(false); } });
+  inp.addEventListener("blur", () => finish(true));
+}
+
+// ----- option panels -------------------------------------------------------------------------------
+
+function cvPopClose() { $("#cv-pop")?.remove(); }
+function cvPop(html, anchor) {
+  cvPopClose();
+  const wrap = $("#cv-wrap");
+  const pop = Object.assign(document.createElement("div"), { className: "cvpop", id: "cv-pop", innerHTML: html + `<div class="row" style="justify-content:flex-end"><button class="ib" onclick="cvPopClose()">Listo</button></div>` });
+  wrap.appendChild(pop);
+  const w = wrap.getBoundingClientRect();
+  const a = anchor?.getBoundingClientRect?.();
+  const left = a ? Math.min(w.width - 256, Math.max(0, a.right - w.left + 8)) : 8;
+  const top = a ? Math.max(0, Math.min(a.top - w.top, w.height - 40)) : 8;
+  pop.style.left = `${left}px`;
+  pop.style.top = `${top}px`;
+  // Typing in the panel changes the chart as you type; each field is one undo step.
+  pop.addEventListener("focusin", e => { if (e.target.matches("input,select")) cvSnapshot(); });
+  return pop;
+}
+const cvField = (label, attrs, val) => `<label>${label}<input ${attrs} value="${esc(val ?? "")}"></label>`;
+function cvLive(pop, apply) {
+  pop.addEventListener("input", e => { apply(e.target, studio.draft.spec); drawStudioForm(); });
+  pop.addEventListener("change", e => { if (e.target.tagName === "SELECT") { apply(e.target, studio.draft.spec); drawStudioForm(); } });
+}
+
+function cvPopValue(si, c) {
+  const sp = studio.draft.spec, s = sp.series[si];
+  const isBar = sp.kind === "bar" || (sp.kind === "combo" && s.type === "bar");
+  const pop = cvPop(`<b>${esc(sp.categories[c] || "")} · ${esc(s.name || `Serie ${si + 1}`)}</b>
+    ${cvField("Valor", 'data-k="v" inputmode="decimal"', numText(s.values[c]))}
+    ${cvField("Categoría", 'data-k="cat"', sp.categories[c])}
+    ${cvField("Nombre de la serie (leyenda)", 'data-k="name"', s.name)}
+    ${isBar ? `<label>Relleno<select data-k="pattern">${sel(PATTERNS, s.pattern)}</select></label>`
+      : `<label>Marcador<select data-k="marker">${sel(MARKERS, s.marker)}</select></label><label>Trazo<select data-k="style">${sel(STYLES, s.style)}</select></label>`}
+    <div class="row"><button class="ib" onclick="cvAddCategory(${c})">+ Categoría después</button>
+      <button class="ib warn" onclick="cvDropCategory(${c})">Quitar categoría</button>
+      ${sp.series.length > 1 ? `<button class="ib warn" onclick="cvDropSeries(${si})">Quitar serie</button>` : ""}</div>`,
+    document.querySelector(`#st-prev [data-cv="${si}:${c}"]`));
+  cvLive(pop, (t, spec) => {
+    const ss = spec.series[si];
+    if (t.dataset.k === "v") { const v = parseNum(t.value); if (cvNum(v)) ss.values[c] = v; }
+    if (t.dataset.k === "cat") spec.categories[c] = t.value;
+    if (t.dataset.k === "name") ss.name = t.value;
+    if (["pattern", "marker", "style"].includes(t.dataset.k)) cvSet(ss, t.dataset.k, t.value || undefined);
+  });
+}
+function cvDropCategory(c) {
+  cvPopClose();
+  cvCommit(sp => { sp.categories.splice(c, 1); sp.series.forEach(s => s.values?.splice(c, 1)); studio.sel = null; });
+}
+function cvDropSeries(si) { cvPopClose(); cvCommit(sp => { sp.series.splice(si, 1); studio.sel = null; }); }
+
+function cvPopPoint(si, k) {
+  const sp = studio.draft.spec, s = sp.series[si], pt = s.points[k];
+  const pop = cvPop(`<b>Punto ${k + 1} · ${esc(s.name || `Serie ${si + 1}`)}</b>
+    <div class="row">${cvField("x", 'data-k="x" inputmode="decimal" style="width:100px"', numText(pt[0]))}${cvField("y", 'data-k="y" inputmode="decimal" style="width:100px"', numText(pt[1]))}</div>
+    ${cvField("Nombre de la serie (leyenda)", 'data-k="name"', s.name)}
+    ${sp.kind === "curve" ? cvField("Rótulo sobre la curva", 'data-k="label"', s.label) : `<label>Marcador<select data-k="marker">${sel(MARKERS, s.marker)}</select></label>`}
+    <label>Trazo<select data-k="style">${sel(STYLES, s.style)}</select></label>
+    <div class="row"><button class="ib warn" onclick="cvDropPoint(${si}, ${k})">Quitar punto (Supr)</button>
+      ${sp.series.length > 1 ? `<button class="ib warn" onclick="cvDropSeries(${si})">Quitar serie</button>` : ""}</div>`,
+    document.querySelector(`#st-prev [data-cv="${si}:${k}"]`));
+  cvLive(pop, (t, spec) => {
+    const ss = spec.series[si];
+    if (t.dataset.k === "x" || t.dataset.k === "y") { const v = parseNum(t.value); if (cvNum(v)) ss.points[k][t.dataset.k === "x" ? 0 : 1] = v; }
+    if (t.dataset.k === "name") ss.name = t.value;
+    if (["label", "marker", "style"].includes(t.dataset.k)) cvSet(ss, t.dataset.k, t.value || undefined);
+  });
+}
+function cvDropPoint(si, k) {
+  const pts = studio.draft.spec.series[si].points;
+  if (pts.length <= 2) { toast("Una serie necesita al menos dos puntos", true); return; }
+  cvPopClose();
+  cvCommit(sp => { sp.series[si].points.splice(k, 1); studio.sel = null; });
+}
+
+function cvPopSlice(r, j) {
+  const sp = studio.draft.spec;
+  const ring = sp.rings ? sp.rings[r] : { slices: sp.slices };
+  const s = ring.slices[j];
+  const base = sp.rings ? `rings.${r}.slices.${j}` : `slices.${j}`;
+  const pop = cvPop(`<b>${esc(s.label || `Parte ${j + 1}`)}</b>
+    ${cvField("Texto", 'data-k="label"', s.label)}
+    ${cvField("Valor", 'data-k="value" inputmode="decimal"', numText(s.value))}
+    <label>Relleno<select data-k="pattern">${sel(PATTERNS, s.pattern)}</select></label>
+    ${sp.rings ? "" : `<div class="row"><button class="ib warn" onclick="cvDropSlice(${j})">Quitar parte</button></div>`}`,
+    document.querySelector(`#st-prev path[data-cv="${r}:${j}"], #st-prev circle[data-cv="${r}:${j}"]`) || document.querySelector(`#st-prev [data-cv="${r}:${j}"]`));
+  cvLive(pop, (t, spec) => {
+    if (t.dataset.k === "value") { const v = parseNum(t.value); if (cvNum(v)) cvSet(spec, `${base}.value`, v); }
+    else cvSet(getPath(spec, base), t.dataset.k, t.value || undefined);
+  });
+}
+function cvDropSlice(j) {
+  if (studio.draft.spec.slices.length <= 1) return;
+  cvPopClose();
+  cvCommit(sp => { sp.slices.splice(j, 1); studio.sel = null; });
+}
+
+function cvPopArea(name) {
+  const sp = studio.draft.spec;
+  const cur = sp.fills?.[name] || "";
+  const opts = [...(sp.legend || []).map(l => [l.fill, `${l.label} (leyenda)`]), ...MAP_FILLS];
+  const pop = cvPop(`<b>${esc(name)}</b><label>Relleno<select data-k="fill">${sel(opts.some(([v]) => v === cur) ? opts : [...opts, [cur, cur]], cur)}</select></label>
+    <p class="muted" style="font-size:12px;margin:0">Para pintar varias seguidas, elige un pincel arriba.</p>`,
+    document.querySelector(`#st-prev`));
+  cvLive(pop, (t, spec) => { spec.fills = spec.fills || {}; if (t.value) spec.fills[name] = t.value; else delete spec.fills[name]; });
+}
+
+function cvPopAxis(ax) {
+  const sp = studio.draft.spec, a = sp[ax] || {};
+  const name = { x: "Eje X", y: sp.orientation === "horizontal" ? "Eje de valores" : "Eje Y", y2: "Segundo eje Y" }[ax];
+  const pop = cvPop(`<b>${name}</b>
+    ${cvField("Título del eje", 'data-k="label"', a.label)}
+    <div class="row">${cvField("Mínimo", 'data-k="min" inputmode="decimal" style="width:68px"', numText(a.min))}${cvField("Máximo", 'data-k="max" inputmode="decimal" style="width:68px"', numText(a.max))}${cvField("Cada", 'data-k="step" inputmode="decimal" style="width:68px"', numText(a.step))}</div>
+    <p class="muted" style="font-size:12px;margin:0">Vacío = automático.</p>`, document.querySelector("#st-prev"));
+  cvLive(pop, (t, spec) => {
+    const k = t.dataset.k;
+    const v = k === "label" ? t.value : parseNum(t.value);
+    if (k !== "label" && t.value.trim() && !cvNum(v)) return;
+    cvSet(spec, `${ax}.${k}`, k === "label" ? (v || undefined) : (t.value.trim() ? v : undefined));
+    if (spec[ax] && !Object.keys(spec[ax]).length) delete spec[ax];
+  });
+}
+
+// ----- the chosen element stays outlined -------------------------------------------------------------
+
+function cvMarkSelection(ctx) {
+  ctx.ov.querySelectorAll(".cv-sel").forEach(x => x.remove());
+  ctx.svg.querySelectorAll(".cv-pt.sel").forEach(x => x.classList.remove("sel"));
+  const s = studio.sel;
+  if (!s) return;
+  const key = s.type === "val" ? `${s.si}:${s.c}` : s.type === "pt" ? `${s.si}:${s.k}` : s.type === "slice" ? `${s.r}:${s.j}` : null;
+  if (!key) return;
+  const el = ctx.svg.querySelector(`[data-cv="${key}"]:not(text):not(rect[x="262"])`);
+  if (!el) return;
+  if (el.classList.contains("cv-pt")) { el.classList.add("sel"); return; }
+  const b = el.getBBox();
+  ctx.ov.appendChild(cvSvgEl("rect", { x: b.x - 3, y: b.y - 3, width: b.width + 6, height: b.height + 6, class: "cv-sel" }));
+}
+
+// ----- tables: type straight into the cells -------------------------------------------------------------
+
+function cvTableSpans(sp) { return [...(sp.headers || []), ...(sp.rows || []).flat()].some(c => c && typeof c === "object"); }
+function cvTable(sp) {
+  const table = $("#st-prev table");
+  if (!table) return;
+  const rows = [...(sp.headers && sp.headers.length ? [{ path: "headers" }] : []), ...(sp.rows || []).map((_, i) => ({ path: `rows.${i}` }))];
+  [...table.querySelectorAll("tr")].forEach((tr, r) => {
+    const row = rows[r];
+    if (!row) return;
+    [...tr.children].forEach((cell, k) => {
+      cell.contentEditable = "true";
+      cell.dataset.cell = `${row.path}.${k}`;
+      cell.dataset.r = r;
+      cell.dataset.k = k;
+    });
+  });
+  const cap = table.querySelector("caption");
+  if (cap) { cap.contentEditable = "true"; cap.dataset.cell = "title"; }
+  let before = null;
+  table.addEventListener("focusin", e => {
+    before = JSON.stringify(sp);
+    studio.cell = e.target.dataset.cell ? { r: +e.target.dataset.r, k: +e.target.dataset.k } : null;
+    // Typing replaces the cell, as in a spreadsheet.
+    const range = document.createRange();
+    range.selectNodeContents(e.target);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  });
+  table.addEventListener("input", e => {
+    const p = e.target.dataset.cell;
+    if (!p) return;
+    const text = e.target.innerText.replace(/\n+/g, " ").trim();
+    const cur = getPath(sp, p);
+    if (cur && typeof cur === "object") cur.text = text;
+    else cvSet(sp, p, text);
+  });
+  table.addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); e.target.blur(); }
+    if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); if (before) studio.draft.spec = JSON.parse(before); before = null; drawStudioForm(); }
+  });
+  table.addEventListener("focusout", e => {
+    if (before && before !== JSON.stringify(sp)) { studio.hist = studio.hist || []; studio.hist.push(before); }
+    before = null;
+    // Redraw after focus moves on, so Tab still lands in the next cell.
+    setTimeout(() => { if (!$("#st-prev table")?.contains(document.activeElement)) drawStudioForm(); }, 0);
+  });
+}
+function cvTableOp(op) {
+  const sp = studio.draft.spec;
+  if (cvTableSpans(sp)) return;
+  const head = sp.headers && sp.headers.length ? 1 : 0;
+  const at = studio.cell || { r: (sp.rows || []).length - 1 + head, k: Math.max(0, (sp.headers || sp.rows?.[0] || [""]).length - 1) };
+  cvCommit(s => {
+    s.rows = s.rows || [];
+    const width = Math.max((s.headers || []).length, ...s.rows.map(r => r.length), 1);
+    if (op === "row+") s.rows.splice(Math.max(0, at.r - head + 1), 0, Array(width).fill(""));
+    if (op === "row-" && at.r >= head && s.rows.length > 1) s.rows.splice(at.r - head, 1);
+    if (op === "col+") { if (head) s.headers.splice(at.k + 1, 0, ""); s.rows.forEach(r => r.splice(at.k + 1, 0, "")); }
+    if (op === "col-" && width > 1) { if (head) s.headers.splice(at.k, 1); s.rows.forEach(r => r.splice(at.k, 1)); }
+  });
+  studio.cell = null;
+}
+
+// Studio keys: Ctrl+Z undoes a chart change, Supr removes the chosen point, Esc closes a panel first.
+function cvKey(e) {
+  const typing = /TEXTAREA|INPUT|SELECT/.test(e.target.tagName) || e.target.isContentEditable;
+  if (e.key === "Escape" && $("#cv-pop")) { cvPopClose(); return true; }
+  if (typing) return false;
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); cvUndo(); return true; }
+  if ((e.key === "Delete" || e.key === "Backspace") && studio.sel?.type === "pt") { e.preventDefault(); cvDropPoint(studio.sel.si, studio.sel.k); return true; }
+  return false;
 }
 
 async function saveStudio() {
