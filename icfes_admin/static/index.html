@@ -113,6 +113,23 @@ body.editing main{padding:0;max-width:none}
 .ib.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
 .ib.go{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
 .ib.warn{border-color:var(--bad);color:var(--bad)}
+.more{position:relative}
+.menu{position:absolute;right:0;top:calc(100% + 6px);z-index:15;min-width:280px;display:flex;flex-direction:column;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.menu[hidden]{display:none}
+.menu button{display:flex;justify-content:space-between;gap:12px;text-align:left;padding:9px 10px;border:0;border-radius:8px;background:none;color:var(--text);font:inherit;cursor:pointer}
+.menu button:hover:not(:disabled){background:var(--surface-2)}
+.menu button:disabled{opacity:.45;cursor:default}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+.menu kbd{font-size:11px;color:var(--text-2)}
+.nextstep{position:sticky;bottom:-12px;z-index:2;margin:14px -14px -12px;padding:12px 14px;background:var(--bg);border-top:1px solid var(--line)}
+.nextstep .nsrow{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.nextstep .nsmiss{font-size:13px;color:var(--flame);margin-bottom:8px}
+.ib.big{min-height:46px;padding:0 18px;font-size:15px}
+#tour{position:fixed;inset:0;z-index:40}
+#tour .tspot{position:fixed;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.6);outline:2px solid var(--accent);pointer-events:none}
+#tour .tbub{position:fixed;width:360px;padding:14px 16px;background:var(--surface);border:1px solid var(--accent);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#tour .tbub p{margin:6px 0 12px;line-height:1.45}
+#tour .row{display:flex;gap:6px;align-items:center}
 .savestate{font-size:13px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);color:var(--text-2)}
 .savestate.dirty{color:var(--flame);border-color:var(--flame)}
 .savestate.ok{color:var(--ok);border-color:var(--ok)}
@@ -162,7 +179,7 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:var(--accent)}
 .ltile.key{background:var(--ok);border-color:var(--ok);color:#0D110F}
 .ltile .mk{position:absolute;right:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--flame)}
 .otools{display:flex;flex-direction:column;gap:2px}
-.otools button{min-height:20px;min-width:26px;padding:0 4px;font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:6px;cursor:pointer;color:var(--text-2)}
+.otools button{min-height:20px;min-width:26px;white-space:nowrap;padding:0 4px;font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:6px;cursor:pointer;color:var(--text-2)}
 .figs{display:grid;gap:8px}
 .figcard{border:1px solid var(--line);border-radius:14px;padding:10px;background:var(--surface)}
 .figcard .head{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px;font-size:13px}
@@ -195,7 +212,7 @@ select.ib{padding:0 8px}
 table.exam-table{border-collapse:collapse;width:auto;border:0;border-radius:0;overflow:visible;background:#fff;margin:8px 0}
 table.exam-table th,table.exam-table td{border:1px solid #000;padding:4px 10px;color:#000;background:#fff;font:inherit;font-size:15px;text-transform:none;letter-spacing:0;text-align:left}
 table.exam-table th{font-weight:700}
-.fbar .ib{min-height:30px;padding:3px 9px}
+.fbar .ib{min-height:30px;padding:3px 9px;white-space:nowrap}
 .fbar .seg{padding:2px}
 .fbar .seg button{min-height:28px}
 table.icfes-table{width:auto;border:0;border-radius:0;overflow:visible;background:#fff;margin:8px auto}
@@ -526,21 +543,28 @@ function renderWorkspace() {
   app.innerHTML = `
   <div class="ed">
     <div class="edbar">
-      <button class="ib" id="back" title="Volver al mapa">← Mapa</button>
+      <button class="ib" id="back" title="Volver a la lista de preguntas">← Volver</button>
       <select id="ed-exam" aria-label="Examen">${exams}</select>
-      <button class="ib" id="prev" ${prev ? "" : "disabled"} title="Anterior (Alt+←)">‹</button>
-      <span class="qnum">Q${d.number}</span>
-      <button class="ib" id="next" ${next ? "" : "disabled"} title="Siguiente (Alt+→)">›</button>
-      <span class="chip" style="min-height:32px;cursor:default"><i style="background:${areaColor(q.section)}"></i>${esc(q.section || "sin área")}</span>
+      <button class="ib" id="prev" ${prev ? "" : "disabled"} title="Pregunta anterior (Alt+←)">‹ Anterior</button>
+      <span class="qnum">Pregunta ${d.number}</span>
+      <button class="ib" id="next" ${next ? "" : "disabled"} title="Pregunta siguiente (Alt+→)">Siguiente ›</button>
       <span id="vis">${visBadges(reasons)}</span>
       <span class="spacer"></span>
-      <button class="ib" id="fixnext" title="Siguiente pregunta oculta, con errores o con figura inválida (Alt+N)">⚑ Siguiente por arreglar</button>
-      <button class="ib" onclick="openSearch()" title="Buscar en todas las preguntas (Ctrl+K)">🔍</button>
-      <button class="ib" onclick="showHelp()" title="Atajos de teclado (?)">?</button>
-      <button class="ib" id="toggle-prev" title="Mostrar u ocultar la vista del estudiante">Vista ${state.preview ? "✓" : "✕"}</button>
-      ${STATIC ? "" : `<button class="ib" id="undo" ${d.undo ? "" : "disabled"} title="Deshace el último cambio guardado de esta pregunta">↶ Deshacer${d.undo ? ` (${d.undo})` : ""}</button>`}
+      <button class="ib" id="fixnext" title="Salta a la próxima pregunta oculta o con errores (Alt+N)">⚑ Siguiente por arreglar</button>
       <span id="savestate" class="savestate">Sin cambios</span>
-      <button class="ib go" id="save">Guardar</button>
+      <button class="ib go" id="save" title="Ctrl+S">Guardar</button>
+      <span class="more">
+        <button class="ib" id="morebtn" onclick="toggleMenu('moremenu', event)" aria-haspopup="true">Más ▾</button>
+        <div class="menu" id="moremenu" hidden>
+          <button onclick="openSearch()">🔍 Buscar preguntas <kbd>Ctrl+K</kbd></button>
+          ${STATIC ? "" : `<button id="undo" ${d.undo ? "" : "disabled"}>${undoLabel(d.undo)}</button>`}
+          <button id="toggle-prev">${prevLabel()}</button>
+          <button onclick="setVisual(!state.visual)">‹/› Ver el texto como código</button>
+          <hr>
+          <button onclick="startTour()">💡 Ver la guía otra vez</button>
+          <button onclick="showHelp()">⌨ Atajos de teclado</button>
+        </div>
+      </span>
     </div>
     <div class="edgrid ${state.preview ? "" : "noprev"}" id="edgrid">
       <section class="pane pdf" id="pdfpane">${pdfPane()}</section>
@@ -567,7 +591,7 @@ function renderWorkspace() {
   $("#save").onclick = saveQuestion;
   $("#fixnext").onclick = () => { const n = nextToFix(); if (n == null) toast("No queda nada por arreglar en este examen 🎉"); else leave(() => openQuestion(n)); };
   remember("last", { exam: state.exam, n: d.number });
-  $("#toggle-prev").onclick = () => { state.preview = !state.preview; $("#edgrid").classList.toggle("noprev", !state.preview); $("#toggle-prev").textContent = `Vista ${state.preview ? "✓" : "✕"}`; };
+  $("#toggle-prev").onclick = () => { state.preview = !state.preview; $("#edgrid").classList.toggle("noprev", !state.preview); $("#toggle-prev").textContent = prevLabel(); };
   if ($("#undo")) $("#undo").onclick = undo;
   $("#qstrip").querySelectorAll("button").forEach(b => b.onclick = () => leave(() => openQuestion(Number(b.dataset.n))));
   $("#qstrip").querySelector(".cur")?.scrollIntoView({ inline: "center", block: "nearest" });
@@ -579,13 +603,35 @@ function renderWorkspace() {
   });
   $("#form").addEventListener("change", e => { if (e.target.id === "f-section" || e.target.id === "f-ready") { markDirty(); refreshPreview(); } });
   bindSplit();
+  if (!recall("tourDone")) setTimeout(startTour, 400);
 }
+const undoLabel = (n) => `↶ Deshacer el último guardado${n ? ` (${n})` : ""}`;
+const prevLabel = () => state.preview ? "👁 Ocultar la vista del estudiante" : "👁 Mostrar la vista del estudiante";
+
+// One small drop-down menu at a time; a click anywhere else closes it.
+function toggleMenu(id, e) {
+  e?.stopPropagation();
+  const m = $("#" + id), open = m.hidden;
+  document.querySelectorAll(".menu").forEach(x => { x.hidden = true; });
+  m.hidden = !open;
+}
+document.addEventListener("click", e => { if (!e.target.closest(".menu hr")) document.querySelectorAll(".menu").forEach(x => { x.hidden = true; }); });
 
 const REASONS = { "not ready": "no está marcada como lista", "text pending": "texto pendiente", "[FIGURE] note": "nota [FIGURE] en el texto", "figure pending spec": "figura pendiente", "blank option": "opción vacía" };
 function visBadges(reasons) {
   return reasons.length
-    ? reasons.map(r => `<span class="badge hid">oculta: ${esc(REASONS[r] || r)}</span>`).join("")
-    : `<span class="badge ok">visible para estudiantes</span>`;
+    ? `<span class="badge hid" title="${esc(reasons.map(r => REASONS[r] || r).join(", "))}">Oculta a estudiantes</span>`
+    : `<span class="badge ok">Visible para estudiantes</span>`;
+}
+// The one next step, at the bottom of the form: what is still missing, and the button that finishes the question.
+function nsMissHtml() {
+  const missing = hiddenNow().filter(r => r !== "not ready");
+  return missing.length ? `<div class="nsmiss"><b>Antes de publicarla falta:</b> ${missing.map(r => esc(REASONS[r] || r)).join(" · ")}</div>` : "";
+}
+function nextStepHtml() {
+  return `<div id="nsmiss">${nsMissHtml()}</div>
+    <div class="nsrow"><button class="ib go big" type="button" onclick="readyAndNext()" title="Ctrl+Enter">✓ Está bien: guardar y pasar a la siguiente</button>
+    <label class="switch muted" style="font-size:13px"><input type="checkbox" id="f-ready" ${state.detail.question.ready ? "checked" : ""}> Lista para estudiantes</label></div>`;
 }
 
 function fit(t) { t.style.height = "auto"; t.style.height = (t.scrollHeight + 4) + "px"; }
@@ -601,10 +647,10 @@ function formPane(q, g) {
   if (q.section && !sections.includes(q.section)) sections.push(q.section);
   const flags = (q.provenance?.flags || []).map(f => `<li>${esc(f)}</li>`).join("");
   const notes = (q.provenance?.notes || []).slice(-6).map(f => `<li>${esc(f)}</li>`).join("");
-  const msgs = [...state.detail.messages.errors.map(m => `<div class="note bad">${esc(m)}</div>`), ...state.detail.messages.warnings.map(m => `<div class="note warn">${esc(m)}</div>`)].join("");
+  const msgs = [...state.detail.messages.errors.map(m => `<div class="note bad">${esc(checkMsg(m))}</div>`), ...state.detail.messages.warnings.map(m => `<div class="note warn">${esc(checkMsg(m))}</div>`)].join("");
   return `
     <div class="fbar" onmousedown="if (event.target.closest('button')) event.preventDefault()">
-      <span class="seg" id="fmode">${fmodeHtml()}</span>
+      <span id="fmode">${fmodeHtml()}</span>
       <span class="fgroup">
         <button class="ib" type="button" data-cmd="bold" onclick="richCmd('bold')" title="Negrita (Ctrl+B)"><b>B</b></button>
         <button class="ib" type="button" data-cmd="italic" onclick="richCmd('italic')" title="Cursiva (Ctrl+I)"><i>I</i></button>
@@ -612,30 +658,30 @@ function formPane(q, g) {
         <button class="ib" type="button" data-cmd="subscript" onclick="richCmd('subscript')" title="Subíndice, como en H₂O">x₂</button>
         <button class="ib" type="button" data-cmd="superscript" onclick="richCmd('superscript')" title="Superíndice, como en m²">x²</button>
       </span>
-      <span class="fgroup">
-        <button class="ib" type="button" data-cmd="insertUnorderedList" onclick="richCmd('insertUnorderedList')" title="Lista con viñetas">• Lista</button>
-        <button class="ib" type="button" data-cmd="insertOrderedList" onclick="richCmd('insertOrderedList')" title="Lista numerada">1. Lista</button>
+      <button class="ib" type="button" data-cmd="insertUnorderedList" onclick="richCmd('insertUnorderedList')" title="Lista con viñetas">• Lista</button>
+      <button class="ib" type="button" onclick="richCmd('table')" title="Insertar una tabla de texto">▦ Tabla</button>
+      <button class="ib" type="button" onclick="fmtInsert('math')" title="Fórmula (se dibuja en la vista del estudiante)">ƒx Fórmula</button>
+      <select class="ib" onchange="if (this.value) { fmtInsert('sym', this.value); this.value = ''; }" title="Símbolos">
+        <option value="">Ω Símbolo</option>${SYMBOLS.map(x => `<option>${x}</option>`).join("")}</select>
+      <button class="ib" type="button" onclick="cleanField()" title="Une líneas cortadas, quita guiones de corte y espacios dobles en el campo activo">🧹 Limpiar</button>
+      <button class="ib" type="button" onclick="this.classList.toggle('on'); $('#fmore').hidden = !$('#fmore').hidden" title="Más botones de formato">Más ▾</button>
+      <span class="fgroup" id="ftable" hidden>
+        <span class="muted" style="font-size:12px">Tabla:</span>
+        <button class="ib" type="button" onclick="richTable('row+')" title="Fila debajo">+ fila</button>
+        <button class="ib" type="button" onclick="richTable('col+')" title="Columna a la derecha">+ columna</button>
+        <button class="ib" type="button" onclick="richTable('row-')" title="Quitar esta fila">− fila</button>
+        <button class="ib" type="button" onclick="richTable('col-')" title="Quitar esta columna">− columna</button>
+        <button class="ib warn" type="button" onclick="richTable('del')" title="Quitar la tabla">Quitar tabla</button>
       </span>
-      <span class="fgroup">
+      <span class="fgroup" id="fmore" hidden>
+        <button class="ib" type="button" data-cmd="insertOrderedList" onclick="richCmd('insertOrderedList')" title="Lista numerada">1. Lista</button>
         <button class="ib" type="button" data-cmd="justifyLeft" onclick="richCmd('justifyLeft')" title="Alinear a la izquierda"><svg viewBox="0 0 16 12" width="16" height="12"><path d="M0 1h16M0 4.5h10M0 8h16M0 11.5h10" stroke="currentColor" stroke-width="1.6"/></svg></button>
         <button class="ib" type="button" data-cmd="justifyCenter" onclick="richCmd('justifyCenter')" title="Centrar"><svg viewBox="0 0 16 12" width="16" height="12"><path d="M0 1h16M3 4.5h10M0 8h16M3 11.5h10" stroke="currentColor" stroke-width="1.6"/></svg></button>
         <button class="ib" type="button" data-cmd="justifyRight" onclick="richCmd('justifyRight')" title="Alinear a la derecha"><svg viewBox="0 0 16 12" width="16" height="12"><path d="M0 1h16M6 4.5h10M0 8h16M6 11.5h10" stroke="currentColor" stroke-width="1.6"/></svg></button>
         <button class="ib" type="button" data-cmd="justifyFull" onclick="richCmd('justifyFull')" title="Justificar"><svg viewBox="0 0 16 12" width="16" height="12"><path d="M0 1h16M0 4.5h16M0 8h16M0 11.5h16" stroke="currentColor" stroke-width="1.6"/></svg></button>
+        <button class="ib" type="button" onclick="fmtInsert('frac')" title="Fracción">a/b Fracción</button>
+        <button class="ib" type="button" onclick="richCmd('clear')" title="Quitar formato de la selección">T̸ Quitar formato</button>
       </span>
-      <button class="ib" type="button" onclick="richCmd('table')" title="Insertar una tabla de texto">▦ Tabla</button>
-      <span class="fgroup" id="ftable" hidden>
-        <button class="ib" type="button" onclick="richTable('row+')" title="Fila debajo">+ fila</button>
-        <button class="ib" type="button" onclick="richTable('col+')" title="Columna a la derecha">+ col</button>
-        <button class="ib" type="button" onclick="richTable('row-')" title="Quitar esta fila">− fila</button>
-        <button class="ib" type="button" onclick="richTable('col-')" title="Quitar esta columna">− col</button>
-        <button class="ib warn" type="button" onclick="richTable('del')" title="Quitar la tabla">✕</button>
-      </span>
-      <button class="ib" type="button" onclick="fmtInsert('math')" title="Fórmula (se dibuja en la vista del estudiante)">ƒx</button>
-      <button class="ib" type="button" onclick="fmtInsert('frac')" title="Fracción">a/b</button>
-      <button class="ib" type="button" onclick="richCmd('clear')" title="Quitar formato de la selección">T̸</button>
-      <select class="ib" onchange="if (this.value) { fmtInsert('sym', this.value); this.value = ''; }" title="Símbolos">
-        <option value="">Ω símbolo</option>${SYMBOLS.map(x => `<option>${x}</option>`).join("")}</select>
-      <button class="ib" type="button" onclick="cleanField()" title="Une líneas cortadas, quita guiones de corte y espacios dobles en el campo activo">🧹 Limpiar</button>
     </div>
     ${msgs ? `<div class="fld">${msgs}</div>` : ""}
     ${!(q.stem_md || "").trim() ? `<div class="note warn fld">Falta el enunciado. ${STATIC ? "" : `<button class="ib" type="button" onclick="readInto('f-stem')">⌖ Leerlo del PDF</button>`}</div>` : ""}
@@ -652,13 +698,68 @@ function formPane(q, g) {
       <div id="f-opts"></div></div>
     <div class="fld card" style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
       <label class="switch">Área <select id="f-section">${sections.map(s => `<option ${s === q.section ? "selected" : ""}>${esc(s)}</option>`).join("")}</select></label>
-      <label class="switch"><input type="checkbox" id="f-ready" ${q.ready ? "checked" : ""}> Lista para estudiantes</label>
-      <button class="ib go" type="button" onclick="readyAndNext()" title="Marca la pregunta como lista, guarda y pasa a la siguiente (Ctrl+Enter)">✓ Lista y siguiente</button>
       <span class="muted" style="font-size:12px">Marcada en el escaneo: ${esc(q.scan_marked_option || "—")}</span>
     </div>
     ${flags || notes ? `<details class="fld"><summary class="muted">Marcas de revisión y notas</summary>
-      ${flags ? `<ul class="muted">${flags}</ul>` : ""}${notes ? `<ul class="muted">${notes}</ul>` : ""}</details>` : ""}`;
+      ${flags ? `<ul class="muted">${flags}</ul>` : ""}${notes ? `<ul class="muted">${notes}</ul>` : ""}</details>` : ""}
+    <div class="nextstep" id="nextstep">${nextStepHtml()}</div>`;
 }
+
+// The checker's messages, in plain Spanish.
+const CHECK = [
+  [/still has review flags: (.+)/, m => `Tiene una marca de revisión pendiente (${m[1].replace("pending_figure", "falta la figura")}). Ábrela abajo en «Marcas de revisión y notas».`],
+  [/duplicate question number/, () => "El número de la pregunta está repetido"],
+  [/out of order after Q(\d+)/, m => `Está fuera de orden después de la pregunta ${m[1]}`],
+  [/empty question text/, () => "La pregunta no tiene texto"],
+  [/(\d+) options, expected (\d+)/, m => `Tiene ${m[1]} opciones y deberían ser ${m[2]}`],
+  [/option letters are not/, () => "Las letras de las opciones no van A, B, C… en orden"],
+  [/an option has no text/, () => "Una opción está vacía"],
+  [/OCR\/layout artifacts/, () => "Quedan restos del OCR en el texto (marcas raras de la página). Usa 🧹 Limpiar."],
+  [/unknown group/, () => "Apunta a un texto compartido que no existe"],
+  [/unbalanced \$/, () => "Una fórmula tiene un $ sin cerrar"],
+  [/two options have identical text/, () => "Dos opciones tienen el mismo texto"],
+  [/more than one option carries a scan mark/, () => "Más de una opción está marcada en el escaneo"],
+];
+function checkMsg(msg) {
+  for (const [rx, f] of CHECK) { const m = rx.exec(msg); if (m) return f(m); }
+  return msg.replace(/^Q\d+:\s*/, "");
+}
+
+// ----- first-run guide: a few spotlights on the real screen, closable at any step -------------
+const TOUR = [
+  ["#pdfpane", "La página original", "Aquí ves el examen tal como está en el PDF. La línea naranja marca dónde empieza la pregunta."],
+  ["#cropbtn", "Recortar o leer", "Dibuja un recuadro sobre la página. Puedes guardar lo que encierra como figura (y limpiarle el fondo) o copiar su texto a un campo."],
+  ["#form", "Corregir la pregunta", "Escribe aquí como en Word. Si falta un texto, pulsa «⌖ Leer del PDF» junto al campo y encierra ese texto en la página."],
+  ["#f-opts", "La respuesta", "Toca la letra de una opción para marcarla como respuesta correcta."],
+  [".pane.prev", "Lo que ve el estudiante", "Así queda la pregunta en la aplicación. Cambia mientras escribes."],
+  ["#nextstep", "El siguiente paso", "Cuando la pregunta esté bien, pulsa este botón: se guarda, queda visible para los estudiantes y pasas a la siguiente."],
+  ["#morebtn", "Lo demás", "Buscar, deshacer, el código del texto y esta guía están en «Más»."],
+];
+function startTour(i = 0) {
+  document.querySelectorAll(".menu").forEach(x => { x.hidden = true; });
+  $("#tour")?.remove();
+  const steps = TOUR.filter(([sel]) => $(sel));
+  const step = steps[i];
+  if (!step) return endTour();
+  const el = $(step[0]);
+  el.scrollIntoView?.({ block: "nearest" });
+  const r = el.getBoundingClientRect(), pad = 6;
+  const below = r.top + r.height / 2 < innerHeight / 2;
+  const left = Math.max(12, Math.min(innerWidth - 372, r.left + r.width / 2 - 180));
+  const top = below ? Math.min(innerHeight - 220, r.bottom + 14) : null;
+  const bottom = below ? null : Math.min(innerHeight - 220, innerHeight - r.top + 14);
+  document.body.insertAdjacentHTML("beforeend", `<div id="tour">
+    <div class="tspot" style="left:${r.left - pad}px;top:${r.top - pad}px;width:${r.width + 2 * pad}px;height:${r.height + 2 * pad}px"></div>
+    <div class="tbub" style="left:${left}px;${top != null ? `top:${Math.max(12, top)}px` : `bottom:${Math.max(12, bottom)}px`}">
+      <div class="muted" style="font-size:12px">Paso ${i + 1} de ${steps.length}</div>
+      <b style="font:700 17px 'Bricolage Grotesque'">${step[1]}</b>
+      <p>${step[2]}</p>
+      <div class="row"><button class="ib" onclick="endTour()">Cerrar la guía</button><span class="spacer"></span>
+        ${i ? `<button class="ib" onclick="startTour(${i - 1})">Atrás</button>` : ""}
+        <button class="ib go" onclick="startTour(${i + 1})">${i + 1 < steps.length ? "Siguiente" : "Entendido"}</button></div>
+    </div></div>`);
+}
+function endTour() { $("#tour")?.remove(); $("#form")?.scrollTo(0, 0); remember("tourDone", true); }
 
 // ----- options: tap a letter to set the key ------------------------------------------
 
@@ -674,11 +775,11 @@ function drawOpts() {
       <button type="button" class="ltile ${state.answer === o.letter ? "key" : ""}" onclick="setAnswer('${esc(o.letter)}')" title="${state.answer === o.letter ? "Respuesta correcta" : "Marcar como respuesta correcta"}">${esc(o.letter)}${o.marked_in_scan ? '<i class="mk" title="marcada en el escaneo"></i>' : ""}</button>
       <textarea data-letter="${esc(o.letter)}" spellcheck="true" lang="es" placeholder="Texto de la opción ${esc(o.letter)}">${esc(o.text_md)}</textarea>
       <span class="otools">
-        <button type="button" onclick="moveOpt(${i}, -1)" ${i === 0 ? "disabled" : ""} title="Subir">↑</button>
-        <button type="button" onclick="moveOpt(${i}, 1)" ${i === state.opts.length - 1 ? "disabled" : ""} title="Bajar">↓</button>
-        <button type="button" onclick="removeOpt(${i})" title="Quitar opción">✕</button>
+        <button type="button" onclick="moveOpt(${i}, -1)" ${i === 0 ? "disabled" : ""} title="Mover esta opción arriba">↑ Subir</button>
+        <button type="button" onclick="moveOpt(${i}, 1)" ${i === state.opts.length - 1 ? "disabled" : ""} title="Mover esta opción abajo">↓ Bajar</button>
+        <button type="button" onclick="removeOpt(${i})" title="Quitar esta opción">Quitar</button>
       </span>
-    </div>`).join("") + `<button class="ib" type="button" onclick="addOpt()">+ Opción</button>
+    </div>`).join("") + `<button class="ib" type="button" onclick="addOpt()">+ Agregar opción</button>
     <span class="muted" style="font-size:12px;margin-left:8px">Respuesta: <b>${esc(state.answer || "sin clave")}</b>${state.answer ? ` <a href="#" onclick="setAnswer('');return false">quitar</a>` : ""}</span>`;
   document.querySelectorAll("#f-opts textarea").forEach(fit);
   attachAllRich();
@@ -724,11 +825,11 @@ function drawFigs() {
     return `<div class="figcard">
       <div class="head"><b>${esc(KIND_NAMES[f.kind] || f.kind)}</b>
         <span class="muted">${f.target === "option" ? `opción ${esc(f.option)}` : "enunciado"}</span>
-        ${replaced ? '<span class="badge">reemplazada por un recorte</span>' : problems.length ? '<span class="badge hid">oculta a estudiantes</span>' : '<span class="badge ok">se dibuja</span>'}
+        ${replaced ? '<span class="badge">reemplazada por un recorte</span>' : problems.length ? '<span class="badge hid">no se puede dibujar</span>' : '<span class="badge ok">se ve bien</span>'}
         <span class="spacer"></span>
         <button class="ib" type="button" onclick="openStudio('${esc(f.id)}')">Editar</button>
         ${STATIC ? "" : `<button class="ib" type="button" onclick="startCrop('${esc(f.id)}', '${f.target === "option" ? esc(f.option) : ""}')" title="Cambiar esta figura por un recorte de la página">✂ Usar recorte</button>
-        <button class="ib warn" type="button" onclick="deleteNative('${esc(f.id)}')" title="Quitar">✕</button>`}
+        <button class="ib warn" type="button" onclick="deleteNative('${esc(f.id)}')" title="Quitar esta figura">Quitar</button>`}
       </div>
       ${problems.length && !replaced ? `<ul class="problems">${problems.slice(0, 4).map(p => `<li>${esc(p)}</li>`).join("")}${problems.length > 4 ? `<li>y ${problems.length - 4} más</li>` : ""}</ul>` : `<div class="mini">${drawNative(f)}</div>`}
     </div>`;
@@ -736,7 +837,7 @@ function drawFigs() {
   const scans = d.figures.filter(traceShown).map(t => `<div class="figcard">
       <div class="head"><b>Imagen del escaneo</b><span class="muted">${traceOption(t) ? `opción ${esc(traceOption(t))}` : "enunciado"}</span>
         <span class="spacer"></span>
-        ${STATIC ? "" : `<button class="ib" type="button" onclick="cleanSaved('${esc(t.figure_id)}')" title="Quitar el fondo o tapar texto encima">✨ Limpiar</button><button class="ib warn" type="button" onclick="deleteScan('${esc(t.figure_id)}')" title="Quitar">✕</button>`}</div>
+        ${STATIC ? "" : `<button class="ib" type="button" onclick="cleanSaved('${esc(t.figure_id)}')" title="Quitar el fondo o tapar texto encima">✨ Limpiar</button><button class="ib warn" type="button" onclick="deleteScan('${esc(t.figure_id)}')" title="Quitar esta imagen">Quitar</button>`}</div>
       <div class="mini"><img src="${scanUrl(t)}" alt="${esc(t.figure_id)}"></div></div>`);
   const pending = d.figures.filter(t => !traceShown(t)).map(t => `<div class="figcard"><div class="head"><b>${esc(t.figure_id || t.spec_id)}</b><span class="badge hid">${t.pending_spec ? "pendiente" : esc(t.method || "")}</span></div></div>`);
   $("#figs").innerHTML = [...natives, ...scans, ...pending].join("") || `<p class="muted" style="margin:0">Sin figuras. Si la pregunta tiene un dibujo, mapa o foto, recórtalo del PDF. Si es una gráfica o tabla, créala con «+ Gráfica o tabla».</p>`;
@@ -770,7 +871,8 @@ function refreshChrome() {
   const d = state.detail;
   $("#vis").innerHTML = visBadges(hiddenNow());
   const u = $("#undo");
-  if (u) { u.disabled = !d.undo; u.textContent = `↶ Deshacer${d.undo ? ` (${d.undo})` : ""}`; }
+  if (u) { u.disabled = !d.undo; u.textContent = undoLabel(d.undo); }
+  if ($("#nsmiss")) $("#nsmiss").innerHTML = nsMissHtml();
   const r = state.rows.find(x => x.number === d.number);
   const cell = $(`#qstrip button[data-n="${d.number}"]`);
   if (r && cell) cell.className = `${cellClass(r)} cur`;
@@ -933,6 +1035,7 @@ async function undo() {
 
 document.addEventListener("keydown", e => {
   if (!document.body.classList.contains("editing")) return;
+  if ($("#tour")) { if (e.key === "Escape") endTour(); return; }
   if ($("#cleaner")) { cleanerKey(e); return; }
   if ($(".studio")) {
     if (cvKey(e)) return;
@@ -1146,7 +1249,7 @@ function setVisual(on) {
   document.querySelectorAll(".fbar .vis-only").forEach(b => { b.hidden = !on; });
   $("#fmode").innerHTML = fmodeHtml();
 }
-const fmodeHtml = () => `<button class="${state.visual ? "on" : ""}" type="button" onclick="setVisual(true)" title="Ver el texto con formato, como en Word">Aa Formato</button><button class="${state.visual ? "" : "on"}" type="button" onclick="setVisual(false)" title="Ver el texto como se guarda (marcas ** y $)">‹/› Código</button>`;
+const fmodeHtml = () => state.visual ? "" : `<button class="ib on" type="button" onclick="setVisual(true)" title="Estás viendo el texto como se guarda (marcas ** y $)">‹/› Código · volver al formato</button>`;
 
 // Format commands. In the Word-style view they act on the selection; in the code view they wrap it in markup.
 function richCmd(cmd, arg) {
@@ -1253,10 +1356,11 @@ function pdfPane() {
       <span class="muted">pág.</span><input id="pg" type="number" min="1" value="${state.page}"><span class="muted">${sc.count ? "de " + sc.count : ""}</span>
       <button class="ib" onclick="turnPage(1)" title="Página siguiente">›</button>
       <span class="spacer"></span>
+      <span class="muted">Zoom</span>
       <button class="ib" onclick="zoomBy(1/1.25)" title="Alejar">−</button>
-      <button class="ib" onclick="zoomBy(0)" title="Ajustar al ancho">Ancho</button>
+      <button class="ib" onclick="zoomBy(0)" title="Ajustar al ancho del panel">Ajustar</button>
       <button class="ib" onclick="zoomBy(1.25)" title="Acercar">+</button>
-      ${STATIC ? "" : `<button class="ib ${state.cropping ? "on" : ""}" id="cropbtn" onclick="state.cropping ? cancelCrop() : startCrop()" title="Dibuja un recuadro para recortar una figura o copiar su texto">✂ Recuadro</button>`}
+      ${STATIC ? "" : `<button class="ib ${state.cropping ? "on" : ""}" id="cropbtn" onclick="state.cropping ? cancelCrop() : startCrop()" title="Dibuja un recuadro en la página para recortar una figura o copiar su texto (Alt+R)">✂ Recortar o leer</button>`}
     </div>
     ${est ? `<div class="note warn" style="margin:8px 10px 0">Página estimada: busca la pregunta con ‹ ›.</div>` : ""}
     <div class="pdfscroll" id="pdfscroll">
