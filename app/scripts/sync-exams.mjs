@@ -39,6 +39,11 @@ if (existsSync(specDir)) {
     if (!specFiles.has(slug) || f.endsWith(".full.json")) specFiles.set(slug, f);
   }
 }
+// One spec file covers both sessions of the M booklet, so its 1ra golden uses the combined file.
+const SPEC_ALIAS = { "S11-M_1ra": "S11-M_1ra-2da" };
+for (const [golden, spec] of Object.entries(SPEC_ALIAS)) {
+  if (!specFiles.has(golden) && specFiles.has(spec)) specFiles.set(golden, specFiles.get(spec));
+}
 
 // "S11-A 1ra" becomes "S11-A · Primera sesión", the same name the app shows (see formatBooklet in src/lib/exam.js).
 const ORDINAL = { 1: "Primera", 2: "Segunda" };
@@ -63,8 +68,13 @@ for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
   const specPath = specFiles.has(slug) ? join(specDir, specFiles.get(slug)) : null;
   const specIds = new Set(specPath && existsSync(specPath) ? JSON.parse(readFileSync(specPath, "utf8")).figures.map((f) => f.id) : []);
   const missingFigure = (id) => !specIds.has(id);
+  // An inline [FIGURE: ...] note with no linked figure is a drawing that does not exist yet.
+  const figureNote = (text) => typeof text === "string" && text.includes("[FIGURE");
   const hidden = (q) =>
     gap(q.stimulus_md) ||
+    figureNote(q.stem_md) ||
+    figureNote(q.stimulus_md) ||
+    figureNote(q.group?.stimulus_md) ||
     gap(q.group?.stimulus_md) ||
     q.pending_spec ||
     (q.options ?? []).some((o) => o.pending_spec) ||
