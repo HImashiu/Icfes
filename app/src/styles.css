@@ -890,3 +890,4 @@ details.answers-area > summary::-webkit-details-marker { display: none; }
 /* Scan traces (SVG) drawn from figures/traced; they keep the scan look on the paper background. */
 .traced-figure { margin: 12px 0; }
 .traced-figure img { display: block; max-width: 100%; height: auto; background: #fff; border-radius: 8px; }
+.traced-option { display: block; max-width: 100%; height: auto; background: #fff; border-radius: 6px; }

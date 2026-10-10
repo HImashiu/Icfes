@@ -83,7 +83,11 @@ function loadTraced(slug) {
     const file = basename(e.svg);
     mkdirSync(join(out, "traced", slug), { recursive: true });
     writeFileSync(join(out, "traced", slug, file), readFileSync(from));
-    traced.set(e.question, { url: `exams/traced/${slug}/${file}`, figure_id: e.figure_id, spec_id: e.spec_id });
+    // A figure named for one option (for example "...-opt-A-" or "...-opcion-b-") belongs to that option.
+    const option = /[-_](?:opt|opcion|opción)[-_]([a-d])(?=[-_]|$)/i.exec(e.figure_id ?? "")?.[1]?.toUpperCase() ?? null;
+    const list = traced.get(e.question) ?? [];
+    list.push({ url: `exams/traced/${slug}/${file}`, figure_id: e.figure_id, spec_id: e.spec_id, option });
+    traced.set(e.question, list);
   }
   return traced;
 }
@@ -95,15 +99,18 @@ function prepareExam(exam, specPath, slug, report) {
   const dropped = new Set(DROPPED[slug] ?? []);
   // A traced question keeps no spec link: the trace replaces the spec figure it was drawn from.
   for (const q of exam.questions ?? []) {
-    const t = traced.get(q.number);
-    if (!t) continue;
-    q.traced = { url: t.url, figure_id: t.figure_id };
-    const replaced = new Set([t.spec_id, t.figure_id]);
+    const list = traced.get(q.number);
+    if (!list) continue;
+    const replaced = new Set(list.flatMap((t) => [t.spec_id, t.figure_id]));
     q.figure = [].concat(q.figure ?? []).filter((id) => !replaced.has(id));
     if (!q.figure.length) delete q.figure;
     for (const o of q.options ?? []) {
       if (o.figure && replaced.has(o.figure)) delete o.figure;
+      const mine = list.find((t) => t.option === o.letter);
+      if (mine) o.traced = { url: mine.url, figure_id: mine.figure_id };
     }
+    const stem = list.filter((t) => !t.option);
+    if (stem.length) q.traced = stem.map((t) => ({ url: t.url, figure_id: t.figure_id }));
   }
   const groups = new Map((exam.groups ?? []).map((g) => [g.id, g]));
   const fixes = {};

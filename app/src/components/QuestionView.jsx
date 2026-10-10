@@ -76,7 +76,7 @@ export default function QuestionView({
   ].filter((f) => f.target === "stem");
   const optionFigure = (letter) =>
     (figures?.get(question.key) ?? []).find((f) => f.target === "option" && f.option === letter);
-  const chartOptions = question.options.some((o) => optionFigure(o.letter));
+  const chartOptions = question.options.some((o) => optionFigure(o.letter) || o.traced);
 
   // Many questions repeat their passage in stimulus_md, which the group already shows.
   const ownStimulus = question.stimulus_md && question.stimulus_md.trim() !== group?.stimulus_md?.trim();
@@ -89,8 +89,8 @@ export default function QuestionView({
   );
 
   // A traced figure (a scan trace from figures/traced) stands in for the native spec it replaces.
-  const traced = question.traced ?? null;
-  const hasContext = Boolean(passage || ownStimulus || stemFigures.length || traced);
+  const traced = question.traced ?? [];
+  const hasContext = Boolean(passage || ownStimulus || stemFigures.length || traced.length);
   const source = <span className="source">{examLabel ? `${SOURCE_LINE}, ${examLabel}` : SOURCE_LINE}</span>;
 
   return (
@@ -99,16 +99,16 @@ export default function QuestionView({
         <section className="paper-card q-context" aria-label="Texto y gráfica de la pregunta">
           {passage && (collapsed ? (
             <details className="group-collapse" open={groupOpen} onToggle={(e) => setGroupOpen(e.currentTarget.open)}>
-              <summary>{stemFigures.length || traced ? "Ver texto y gráfica" : "Ver texto"}</summary>
+              <summary>{stemFigures.length || traced.length ? "Ver texto y gráfica" : "Ver texto"}</summary>
               {passage}
             </details>
           ) : passage)}
           {ownStimulus && <LongText html={question.stimulus_md} className="stimulus" long={!wide && question.stimulus_md.length > LONG_TEXT} />}
-          {traced && (
-            <figure className="traced-figure">
-              <img src={`${import.meta.env.BASE_URL}${traced.url}`} alt={traced.figure_id} />
+          {traced.map((t) => (
+            <figure className="traced-figure" key={t.url}>
+              <img src={`${import.meta.env.BASE_URL}${t.url}`} alt={t.figure_id} />
             </figure>
-          )}
+          ))}
           {stemFigures.map((f) => (
             <FigureBlock key={f.id} figure={f} alt={f.id} />
           ))}
@@ -147,6 +147,8 @@ export default function QuestionView({
                 <span className="letter-tile">{opt.letter}</span>
                 {figure ? (
                   <FigureBlock figure={figure} alt={`Opción ${opt.letter}`} />
+                ) : opt.traced ? (
+                  <img className="traced-option" src={`${import.meta.env.BASE_URL}${opt.traced.url}`} alt={`Opción ${opt.letter}`} />
                 ) : opt.pending_spec && !opt.text_md?.trim() ? (
                   // The golden file marks an option whose figure is not drawn yet: say so, never show a scan.
                   <span className="pending-fig">Figura pendiente de dibujar</span>
