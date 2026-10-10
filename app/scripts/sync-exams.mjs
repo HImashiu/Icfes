@@ -59,7 +59,15 @@ for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
   }
   let hasSidecar = false;
   if (hasKey && existsSync(sidecarFile)) {
-    writeFileSync(join(out, `${slug}.sidecar.json`), readFileSync(sidecarFile));
+    // Only student-facing fields are copied. Internal notes, blue-mark details and scan bookkeeping stay out of the app.
+    const sidecar = JSON.parse(readFileSync(sidecarFile, "utf8"));
+    const answers = Object.fromEntries(
+      Object.entries(sidecar.answers ?? {}).map(([num, a]) => [
+        num,
+        { confidence: a.confidence ?? null, reason: a.reason ?? null, status: a.status ?? null },
+      ]),
+    );
+    writeFileSync(join(out, `${slug}.sidecar.json`), JSON.stringify({ exam: sidecar.exam ?? null, source: sidecar.source ?? null, answers }, null, 2));
     hasSidecar = true;
   }
   exams.push({
