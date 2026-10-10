@@ -29,7 +29,7 @@ EXAM_ID = re.compile(r"^[A-Za-z0-9_-]+$")
 QUESTION_PREFIX = re.compile(r"^Q(\d+):")
 PENDING_TEXT = "[Texto pendiente"
 FIGURE_NOTE = "[FIGURE"
-EDITABLE = {"stem_md", "stimulus_md", "group_passage_md", "options", "ready", "answer"}
+EDITABLE = {"stem_md", "stimulus_md", "group_passage_md", "section", "options", "ready", "answer"}
 
 
 class NotFound(Exception):
@@ -46,6 +46,7 @@ class Conflict(Exception):
         self.reasons = reasons
 
 
+FIGURE_KINDS = {"bar", "line", "pie", "scatter", "table", "curve", "diagram"}
 IMAGE_TYPES = {"image/png": "png", "image/jpeg": "jpg"}
 PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 JPEG_MAGIC = b"\xff\xd8\xff"
@@ -229,6 +230,57 @@ class Store:
             "numbers": [x["number"] for x in g["questions"]],
         }
 
+    def save_native_figure(self, exam, n, fig_id, patch):
+        """Create (fig_id 'new') or update one native figure of question n in figures/specs/<exam>.json.
+
+        The spec is what the app's figure engine draws. Only the spec, its kind, its place and its fidelity can change.
+        """
+        exam = self._exam(exam)
+        p, booklet = self._specs_file(exam)
+        if p is None:
+            raise BadRequest(f"no figure spec file for {exam}")
+        raw = json.loads(p.read_text(encoding="utf-8"))
+        if raw.get("format") not in ("icfes-figures-specs/1", "icfes-figure/1"):
+            raise BadRequest(f"{p.name} has an unknown format")
+        kind = patch.get("kind")
+        if kind not in FIGURE_KINDS:
+            raise BadRequest(f"kind must be one of {', '.join(sorted(FIGURE_KINDS))}")
+        spec = patch.get("spec")
+        if not isinstance(spec, dict):
+            raise BadRequest("spec must be an object")
+        spec = dict(spec, kind=kind)
+        target = patch.get("target") or "stem"
+        if target not in ("stem", "option"):
+            raise BadRequest("target must be stem or option")
+        option = (patch.get("option") or "").strip().upper()[:1] or None
+        if target == "option" and option is None:
+            raise BadRequest("an option figure needs its letter")
+        fidelity = patch.get("fidelity") or "draft"
+        if fig_id == "new":
+            code, session = exam[len("S11-"):].split("_")
+            prefix = (booklet + "-") if booklet else ""
+            fig = {"id": f"{prefix}{code.lower()}{session[0]}-q{n}-{uuid.uuid4().hex[:6]}", "location": {}}
+            raw.setdefault("figures", []).append(fig)
+        else:
+            fig = next((f for f in raw.get("figures", []) if f.get("id") == fig_id
+                        and str((f.get("location") or {}).get("question")) == str(n)
+                        and (not booklet or str(f.get("id", "")).startswith(booklet + "-"))), None)
+            if fig is None:
+                raise NotFound(f"no figure {fig_id} on Q{n}")
+        fig.update(kind=kind, spec=spec, fidelity=fidelity,
+                   location={"page": (fig.get("location") or {}).get("page"), "question": n,
+                             "stem_or_option": target, "option": option if target == "option" else None})
+        self._write(p, json.dumps(raw, ensure_ascii=False, indent=2) + "\n", p.stem)
+        return next(f for f in self.native_figures(exam, n) if f["id"] == fig["id"])
+
+    def _specs_file(self, exam):
+        p = self.figures / "specs" / f"{exam}.json"
+        booklet = None
+        if not p.exists() and exam.startswith("S11-M_"):
+            p = self.figures / "specs" / "S11-M_1ra-2da.json"
+            booklet = "m1" if exam.endswith("1ra") else "m2"
+        return (p if p.exists() else None), booklet
+
     def native_figures(self, exam, n):
         """Figure specs for this question from figures/specs/<exam>.json (icfes-figures-specs/1).
 
@@ -380,6 +432,8 @@ class Store:
             q["stem_md"] = _text(patch["stem_md"], "stem_md")
         if "stimulus_md" in patch:
             q["stimulus_md"] = _text(patch["stimulus_md"], "stimulus_md")
+        if "section" in patch:
+            q["section"] = _text(patch["section"], "section") or None
         if "group_passage_md" in patch:
             # The shared passage is canonical in passage_md (stimulus_md is only the fallback), so that is the field written.
             if not q.get("group_id"):

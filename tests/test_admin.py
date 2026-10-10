@@ -202,3 +202,16 @@ def test_pasted_pictures_are_stored_and_referenced(root):
         store.save_image(EXAM, 1, png, "image/gif")
     with pytest.raises(NotFound):
         store.image_file(f"{EXAM}/../../data/S11-T_1ra.golden.json")
+
+
+def test_native_figure_is_created_and_updated(root):
+    specs = root / "figures" / "specs"
+    specs.mkdir(parents=True)
+    (specs / f"{EXAM}.json").write_text(json.dumps({"format": "icfes-figures-specs/1", "exam": EXAM, "figures": []}), encoding="utf-8")
+    store = Store(root)
+    made = store.save_native_figure(EXAM, 1, "new", {"kind": "bar", "target": "stem", "spec": {"categories": ["X"], "series": [{"name": "U", "values": [3]}]}})
+    assert made["kind"] == "bar" and made["target"] == "stem"
+    changed = store.save_native_figure(EXAM, 1, made["id"], {"kind": "line", "target": "option", "option": "b", "spec": {"series": []}})
+    assert changed["kind"] == "line" and changed["option"] == "B"
+    with pytest.raises(BadRequest):
+        store.save_native_figure(EXAM, 1, "new", {"kind": "cube", "spec": {}})

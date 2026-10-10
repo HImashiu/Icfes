@@ -400,6 +400,15 @@ function renderEditor() {
         <div class="card"><div class="label">Enunciado</div>
           <textarea id="f-stem">${esc(q.stem_md)}</textarea>
         </div>
+        <div class="card"><div class="label">Formato</div>
+          <div class="pager" id="fmt">
+            <button type="button" onclick="fmtInsert('bold')"><b>B</b></button>
+            <button type="button" onclick="fmtInsert('italic')"><i>I</i></button>
+            <button type="button" onclick="fmtInsert('math')">$x$</button>
+            <button type="button" onclick="fmtInsert('table')">Tabla</button>
+          </div>
+          <p class="muted" style="margin:0">Selecciona texto en cualquier campo y pulsa un botón. Pega o arrastra una imagen para insertarla.</p>
+        </div>
         <div class="card"><div class="label">Opciones</div>
           <div id="f-opts"></div>
           <div class="muted">Marcada en el escaneo: ${esc(q.scan_marked_option || "—")} · opciones esperadas: ${esc(q.expected_options ?? "—")}</div>
@@ -418,6 +427,7 @@ function renderEditor() {
         </div>
         <div class="card">
           <div class="label">Guardar</div>
+          <label>Área<input id="f-section" value="${esc(q.section || "")}"></label>
           <label style="display:flex;gap:10px;align-items:center;min-height:44px"><input type="checkbox" id="f-ready" ${q.ready ? "checked" : ""} style="width:20px;height:20px"> Lista (visible para estudiantes)</label>
           <div style="display:flex;gap:10px;align-items:center;margin:10px 0;flex-wrap:wrap">
             <span class="muted">Respuesta</span>
@@ -432,9 +442,7 @@ function renderEditor() {
           ${notes ? `<div class="label" style="margin-top:12px">Notas</div><ul class="muted">${notes}</ul>` : ""}
         </div>
         <div class="card"><div class="label">Pregunta original (PDF)</div>${scan}</div>
-        <div class="card"><div class="label">Figuras nativas (motor de la app)</div>
-          ${d.native_figures.length ? d.native_figures.map(f => `<div class="muted" style="margin-top:8px"><b>${esc(f.id)}</b> · ${esc(f.kind)} · ${esc(f.target)}${f.option ? " " + esc(f.option) : ""} · ${esc(f.fidelity)}</div>${drawNative(f)}`).join("") : `<p class="muted">Sin figura nativa para esta pregunta.</p>`}
-        </div>
+        <div class="card" id="figcard" oninput="figChanged(event)" onchange="figChanged(event)"></div>
         <div class="card"><div class="label">Figuras trazadas (escaneo)</div>${figs}</div>
       </div>
     </div>`;
@@ -442,12 +450,153 @@ function renderEditor() {
   // The preview re-renders with the app's renderer as the editor changes, so it shows what students will see.
   state.opts = q.options.map(o => ({ ...o }));
   drawOpts();
+  state.figDraft = null;
+  drawFigCard();
   const refresh = () => refreshPreview();
   document.querySelectorAll("#f-stem, #f-stimulus, #f-passage").forEach(t => t.oninput = refresh);
   $("#back").onclick = () => setTab("questions");
   $("#prev").onclick = () => prev && openQuestion(prev);
   $("#next").onclick = () => next && openQuestion(next);
   $("#save").onclick = saveQuestion;
+}
+
+// ----- native figure editor: form fields for the common specs, JSON for the rest ---------------
+
+const FIG_KINDS = ["bar", "line", "pie", "scatter", "table", "curve", "diagram"];
+
+function figBlock(f) {
+  const sp = f.spec || {};
+  const sel = (vals, cur) => vals.map(v => `<option ${v === cur ? "selected" : ""}>${v}</option>`).join("");
+  const series = (sp.series || []).map(se => seriesRow(se)).join("");
+  return `
+    <details class="figblock" data-fig="${esc(f.id)}" data-orig="${esc(JSON.stringify(sp))}" ${f.id === "new" ? "open" : ""} style="border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:10px">
+      <summary><b>${esc(f.id)}</b> · ${esc(f.kind || "—")} · ${esc(f.target || "stem")}${f.option ? " " + esc(f.option) : ""}</summary>
+      <div class="figgrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:8px">
+        <label>Tipo<select data-k="kind">${sel(FIG_KINDS, f.kind)}</select></label>
+        <label>Lugar<select data-k="target">${sel(["stem", "option"], f.target || "stem")}</select></label>
+        <label>Opción<input data-k="option" maxlength="1" value="${esc(f.option || "")}"></label>
+        <label>Fidelidad<select data-k="fidelity">${sel(["draft", "checked", "final"], f.fidelity || "draft")}</select></label>
+        <label>Título<input data-k="title" value="${esc(sp.title || "")}"></label>
+        <label>Eje X<input data-k="xlabel" value="${esc(sp.x?.label || "")}"></label>
+        <label>Eje Y<input data-k="ylabel" value="${esc(sp.y?.label || "")}"></label>
+        <label>Y mín<input data-k="ymin" type="number" value="${sp.y?.min ?? ""}"></label>
+        <label>Y máx<input data-k="ymax" type="number" value="${sp.y?.max ?? ""}"></label>
+        <label>Paso Y<input data-k="ystep" type="number" value="${sp.y?.step ?? ""}"></label>
+        <label style="grid-column:span 2">Categorías (coma)<input data-k="categories" value="${esc((sp.categories || []).join(", "))}"></label>
+      </div>
+      <div class="muted" style="margin-top:8px">Series: nombre y valores separados por coma</div>
+      <div data-series>${series}</div>
+      <button type="button" onclick="addSeries(this)">+ Serie</button>
+      <details style="margin-top:8px"><summary>JSON avanzado (ticks, leyenda, estilos)</summary>
+        <textarea data-k="json" style="min-height:160px;font-family:monospace">${esc(JSON.stringify(sp, null, 2))}</textarea>
+      </details>
+      <div class="figprev" style="margin-top:10px">${f.spec ? drawNative({ kind: f.kind, spec: f.spec }) : ""}</div>
+      <div style="margin-top:10px;display:flex;gap:10px;align-items:center">
+        <button type="button" class="primary" onclick="saveFig(this)">Guardar figura</button>
+        <span class="muted" data-msg></span>
+      </div>
+    </details>`;
+}
+
+function seriesRow(se) {
+  return `<div class="ser" style="display:grid;grid-template-columns:1fr 2fr auto;gap:6px;margin-top:6px">
+    <input data-s="name" value="${esc(se.name || "")}" placeholder="nombre">
+    <input data-s="values" value="${esc((se.values || []).join(", "))}" placeholder="valores">
+    <button type="button" onclick="this.parentElement.remove()">✕</button></div>`;
+}
+
+function addSeries(btn) {
+  btn.previousElementSibling.insertAdjacentHTML("beforeend", seriesRow({ name: "", values: [] }));
+}
+
+// Builds the spec from the form; the JSON box wins once it has been edited, and fields it lacks keep their engine options.
+function readFig(block) {
+  const jsonBox = block.querySelector('[data-k="json"]');
+  if (block.dataset.jsonDirty === "1") return JSON.parse(jsonBox.value);
+  const spec = JSON.parse(block.dataset.orig || "{}");
+  const v = k => block.querySelector(`[data-k="${k}"]`).value.trim();
+  const num = k => (v(k) === "" ? undefined : Number(v(k)));
+  spec.title = v("title") || undefined;
+  spec.x = { ...(spec.x || {}), label: v("xlabel") || undefined };
+  spec.y = { ...(spec.y || {}), label: v("ylabel") || undefined, min: num("ymin"), max: num("ymax"), step: num("ystep") };
+  spec.categories = v("categories") ? v("categories").split(",").map(x => x.trim()).filter(Boolean) : undefined;
+  spec.series = [...block.querySelectorAll("[data-series] .ser")].map(row => ({
+    name: row.querySelector('[data-s="name"]').value.trim(),
+    values: row.querySelector('[data-s="values"]').value.split(",").map(x => x.trim()).filter(x => x !== "").map(Number),
+  }));
+  return JSON.parse(JSON.stringify(spec));
+}
+
+function figChanged(event) {
+  const block = event.target.closest?.(".figblock");
+  if (!block) return;
+  if (event.target.dataset.k === "json") block.dataset.jsonDirty = "1";
+  try {
+    const spec = readFig(block);
+    const kind = block.querySelector('[data-k="kind"]').value;
+    block.querySelector(".figprev").innerHTML = drawNative({ kind, spec });
+    block.querySelector("[data-msg]").textContent = "";
+    if (event.target.dataset.k !== "json") block.querySelector('[data-k="json"]').value = JSON.stringify(spec, null, 2);
+  } catch (err) {
+    block.querySelector("[data-msg]").innerHTML = `<span class="bad">${esc(err.message)}</span>`;
+  }
+}
+
+async function saveFig(btn) {
+  const block = btn.closest(".figblock"), d = state.detail;
+  const msg = block.querySelector("[data-msg]");
+  try {
+    const body = {
+      kind: block.querySelector('[data-k="kind"]').value,
+      target: block.querySelector('[data-k="target"]').value,
+      option: block.querySelector('[data-k="option"]').value.trim() || null,
+      fidelity: block.querySelector('[data-k="fidelity"]').value,
+      spec: readFig(block),
+    };
+    await api(`/api/exams/${encodeURIComponent(d.exam)}/questions/${d.number}/figures/${encodeURIComponent(block.dataset.fig)}`,
+      { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    state.figDraft = null;
+    await openQuestion(d.number);
+    msg.textContent = "";
+    $("#save-msg").textContent = "Figura guardada.";
+  } catch (err) {
+    msg.innerHTML = `<span class="bad">${esc(err.message)}</span>`;
+  }
+}
+
+function drawFigCard() {
+  const d = state.detail;
+  const figs = d.native_figures.map(f => figBlock(f));
+  const draft = state.figDraft ? figBlock(state.figDraft) : "";
+  $("#figcard").innerHTML = `<div class="label">Figuras nativas (motor de la app)</div>
+    ${figs.join("") || '<p class="muted">Sin figura nativa para esta pregunta.</p>'}
+    ${draft}
+    <button type="button" style="margin-top:12px" onclick="newFig()">+ Nueva figura</button>`;
+}
+
+function newFig() {
+  state.figDraft = { id: "new", kind: "bar", target: "stem", option: null, fidelity: "draft", spec: { categories: [], series: [] } };
+  drawFigCard();
+}
+
+// Remembers the text field last used, so the format buttons know where to write.
+document.addEventListener("focusin", e => { if (e.target.tagName === "TEXTAREA") state.lastArea = e.target; });
+
+function fmtInsert(kind) {
+  const area = state.lastArea;
+  if (!area || !area.isConnected) return;
+  const start = area.selectionStart ?? area.value.length, end = area.selectionEnd ?? start;
+  const sel = area.value.slice(start, end);
+  const text = {
+    bold: `**${sel || "texto"}**`,
+    italic: `*${sel || "texto"}*`,
+    math: `$${sel || "x^2"}$`,
+    table: "\n| Columna 1 | Columna 2 |\n|---|---|\n| | |\n",
+  }[kind];
+  area.value = area.value.slice(0, start) + text + area.value.slice(end);
+  area.focus();
+  area.setSelectionRange(start + text.length, start + text.length);
+  area.dispatchEvent(new Event("input"));
 }
 
 function refreshPreview() {
@@ -467,6 +616,7 @@ async function saveQuestion() {
     options,
     ready: $("#f-ready").checked,
     answer: $("#f-answer").value || null,
+    section: $("#f-section").value.trim(),
   };
   if (d.group) body.group_passage_md = $("#f-passage").value;
   const msg = $("#save-msg");

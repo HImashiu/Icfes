@@ -83,6 +83,13 @@ def add_picture(store, m, body, query):
     return {"ref": store.save_image(m.group(1), int(m.group(2)), data, ctype)}
 
 
+@route("PUT", r"/api/exams/([^/]+)/questions/(\d+)/figures/([^/]+)")
+def put_figure(store, m, body, query):
+    if not isinstance(body, dict):
+        raise BadRequest("send a JSON object")
+    return store.save_native_figure(m.group(1), int(m.group(2)), m.group(3), body)
+
+
 @route("GET", r"/api/picture/(.+)")
 def picture(store, m, body, query):
     path = store.image_file(m.group(1))
