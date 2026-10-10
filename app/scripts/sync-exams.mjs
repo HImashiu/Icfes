@@ -91,6 +91,8 @@ const DROPPED = { "S11-L_1ra": [104] };
 // Questions whose native figures the editor's validator cannot draw: { exam slug -> question numbers }.
 // Read from the shared quality list; a missing file hides nothing extra.
 const INVALID_FIGURES_PATH = "/mnt/project-files/icfes/quality/invalid-figures.json";
+// Questions whose picture still needs a manual crop: hidden until the owner crops it by hand (manual_crop_needed).
+const MANUAL_HOLD = { "S11-G1_1ra": [105], "S11-I_1ra": [104], "S11-J_2da": [70] };
 const invalidFigureQuestions = new Map();
 if (existsSync(INVALID_FIGURES_PATH)) {
   for (const row of JSON.parse(readFileSync(INVALID_FIGURES_PATH, "utf8")).invalid ?? []) {
@@ -211,6 +213,7 @@ function prepareExam(exam, specPath, slug, report) {
     const linked = [].concat(q.figure ?? []).concat((q.options ?? []).flatMap((o) => [].concat(o.figure ?? [])));
     if (linked.some((id) => badSpecIds.has(id)) || badStemQuestions.has(q.number)) reasons.push("figure_render_error");
     if (invalidQuestions.has(q.number)) reasons.push("figure_render_error");
+    if ((MANUAL_HOLD[slug] ?? []).includes(q.number)) reasons.push("manual_crop_needed");
     return { q, figure, reasons };
   });
 
