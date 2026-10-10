@@ -59,7 +59,7 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 
 - `null` leaves a gap, and the line breaks there. Lines are solid unless a series sets `"style": "dashed"`.
 - Set `"marker"` per series to `"circle"` (default), `"square"`, `"triangle"`, `"dot"` (filled circle),
-  `"star"`, `"diamond"` or `"cross"`, so series stay apart in grey-scale print. On line charts the legend
+  `"star"`, `"diamond"` or `"cross"`, so series stay apart in grey-scale print. `"none"` draws the line with no point markers, for prints that show a bare curve (line and curve only). On line charts the legend
   shows each series' marker in place of its colour swatch, so the marker is the key.
 
 ### `line` with numeric x

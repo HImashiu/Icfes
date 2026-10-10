@@ -9,7 +9,7 @@
 })(typeof self !== 'undefined' ? self : globalThis, function () {
   'use strict';
 
-  const MARKERS = ['circle', 'square', 'triangle', 'dot', 'star', 'diamond', 'cross'];
+  const MARKERS = ['circle', 'square', 'triangle', 'dot', 'star', 'diamond', 'cross', 'none'];
   const KINDS = ['bar', 'line', 'scatter', 'curve', 'pie', 'table', 'geometry', 'diagram', 'combo', 'map'];
   const AXIS_KINDS = ['bar', 'line', 'scatter', 'curve', 'combo'];
   // Booklets print in grey-scale, so series use fill patterns, not grey shades.
@@ -42,6 +42,7 @@
     const series = Array.isArray(spec.series) ? spec.series : [];
     series.forEach((s, i) => { if (s && s.style != null && !['solid', 'dashed', 'dotted'].includes(s.style)) errs.push(`series[${i}].style must be solid, dashed or dotted`); });
     series.forEach((s, i) => { if (s && s.marker != null && !MARKERS.includes(s.marker)) errs.push(`series[${i}].marker must be one of ${MARKERS.join(', ')}`); });
+    series.forEach((s, i) => { if (s && s.marker === 'none' && spec.kind !== 'line' && spec.kind !== 'curve') errs.push(`series[${i}].marker none is only for line and curve charts`); });
     series.forEach((s, i) => { if (s && s.pattern != null && !SERIES_PATTERNS.includes(s.pattern)) errs.push(`series[${i}].pattern must be one of ${SERIES_PATTERNS.join(', ')}`); });
     series.forEach((s, i) => {
       if (!s || s.note == null) return;
@@ -366,7 +367,8 @@
       const s = series[i];
       const y = top + pos.row * 18;
       // glyph true: every entry shows its marker. glyph 'auto': only entries with a marker do.
-      if (glyph === true || (glyph === 'auto' && s.marker)) out.push(marker(s.marker || 'circle', pos.x + 5, y - 5));
+      const shownMarker = s.marker !== 'none' && (glyph === true || (glyph === 'auto' && s.marker));
+      if (shownMarker) out.push(marker(s.marker || 'circle', pos.x + 5, y - 5));
       else out.push(`<rect x="${pos.x}" y="${y - 10}" width="10" height="10" fill="${fillFor(s, i, id)}" stroke="#000"/>`);
       out.push(text(pos.x + 14, y - 1, legendLabel(s), { anchor: 'start' }));
     });
@@ -532,7 +534,7 @@
     const dash = s.style === 'dashed' ? ' stroke-dasharray="5 3"' : s.style === 'dotted' ? ' stroke-dasharray="1 3" stroke-linecap="round"' : '';
     const real = pts.filter(Boolean);
     if (real.length > 1) out.push(`<polyline points="${real.map((p) => p.map((v) => v.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="#000" stroke-width="1.8"${dash}/>`);
-    for (const [x, y] of real) out.push(marker(s.marker, x, y));
+    if (s.marker !== 'none') for (const [x, y] of real) out.push(marker(s.marker, x, y));
     out.push(...seriesNote(s, pts));
     return out;
   }
