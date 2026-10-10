@@ -171,3 +171,20 @@ test('invalid diagrams are reported', () => {
   assert.ok(F.validate({ kind: 'diagram', shapes: [{ type: 'line', x1: 0, y1: 0, x2: 1, y2: 1, arrow: 'up' }] }).length > 0);
   assert.ok(F.validate({ kind: 'diagram', shapes: [{ type: 'rect', x: 0, y: 0, w: 5, h: 5, fill: 'red' }] }).length > 0);
 });
+
+const combo = { kind: 'combo', title: 'Gasto e ingreso', x: { label: 'Mes' }, y: { label: 'Gasto' }, y2: { label: 'Ingreso', min: 0, max: 100, step: 20 },
+  categories: ['Ene', 'Feb', 'Mar'], series: [{ name: 'Gasto', type: 'bar', values: [40, 55, 30] }, { name: 'Ingreso', type: 'line', values: [60, 70, null], axis: 2 }] };
+
+test('combo validates bars and lines, and needs y2 when a line uses axis 2', () => {
+  assert.deepEqual(F.validate(combo), []);
+  const noY2 = { ...combo, y2: undefined };
+  assert.ok(F.validate(noY2).some((e) => /y2/.test(e)));
+  assert.ok(F.validate({ ...combo, series: [{ type: 'area', values: [1, 2, 3] }] }).length > 0);
+});
+
+test('combo draws one rect per bar value and one polyline per line series', () => {
+  const svg = F.render(combo);
+  // Legend swatches add two rects; the background adds one.
+  assert.equal((svg.match(/<rect /g) || []).length, 3 + 2 + 1);
+  assert.equal((svg.match(/<polyline /g) || []).length, 1);
+});

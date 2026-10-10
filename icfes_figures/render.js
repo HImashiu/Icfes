@@ -9,8 +9,8 @@
 })(typeof self !== 'undefined' ? self : globalThis, function () {
   'use strict';
 
-  const KINDS = ['bar', 'line', 'scatter', 'curve', 'pie', 'table', 'geometry', 'diagram'];
-  const AXIS_KINDS = ['bar', 'line', 'scatter', 'curve'];
+  const KINDS = ['bar', 'line', 'scatter', 'curve', 'pie', 'table', 'geometry', 'diagram', 'combo'];
+  const AXIS_KINDS = ['bar', 'line', 'scatter', 'curve', 'combo'];
   // Booklets print in grey-scale, so series use fill patterns, not grey shades.
   const PATTERNS = ['hatch', 'solid', 'white', 'dots'];
   const W = 480;
@@ -99,6 +99,24 @@
         const g = layoutTable(spec);
         errs.push(...g.errors);
       }
+    }
+    if (spec.kind === 'combo') {
+      if (!Array.isArray(spec.categories) || spec.categories.length === 0) errs.push('categories must be a non-empty array');
+      if (series.length === 0) errs.push('series must be a non-empty array');
+      const usesSecondAxis = series.some((s) => s.axis === 2);
+      if (usesSecondAxis && (!spec.y2 || !spec.y2.label)) errs.push('y2 with a label is required when a series uses axis 2');
+      series.forEach((s, i) => {
+        if (s.type !== 'bar' && s.type !== 'line') errs.push(`series[${i}].type must be bar or line`);
+        if (s.axis != null && s.axis !== 1 && s.axis !== 2) errs.push(`series[${i}].axis must be 1 or 2`);
+        if (!Array.isArray(s.values) || s.values.length !== (spec.categories || []).length) return errs.push(`series[${i}].values must have one entry per category`);
+        s.values.forEach((v, j) => {
+          if (v === null && s.type === 'line') return;
+          if (!isNum(v)) errs.push(`series[${i}].values[${j}] must be a number`);
+          else if (s.type === 'bar' && v < 0) errs.push(`series[${i}].values[${j}] must not be negative`);
+        });
+      });
+      axis('y', spec.y);
+      axis('y2', spec.y2);
     }
     if (spec.kind === 'diagram') {
       if (!Array.isArray(spec.shapes) || spec.shapes.length === 0) errs.push('shapes must be a non-empty array');
@@ -568,6 +586,54 @@
     return out;
   }
 
+  // Combo: bars and lines over one category axis. Bars group among themselves; lines pass through the category centres.
+  // A series with axis 2 is read against y2, so a bar and a line can carry different units.
+  function comboSvg(spec, id) {
+    const series = spec.series;
+    const showLegend = series.length > 1 || (series[0] && series[0].name);
+    const primary = series.filter((s) => s.axis !== 2);
+    const secondary = series.filter((s) => s.axis === 2);
+    const yScale = scaleFor(spec.y, primary.flatMap((s) => s.values), true);
+    const y2Scale = spec.y2 ? scaleFor(spec.y2, secondary.flatMap((s) => s.values), true) : null;
+    const rotateLabels = spec.categories.some((c) => c.length * 6.5 > (W - 74) / spec.categories.length);
+    const fr = frame(spec, showLegend, yScale, y2Scale ? W - 58 : W - 16, rotateLabels ? 36 : 0);
+    const out = fr.out;
+    if (y2Scale) {
+      const yy = (v) => fr.bottom - (v - y2Scale.lo) / (y2Scale.hi - y2Scale.lo) * (fr.bottom - fr.top);
+      out.push(`<line x1="${fr.right}" x2="${fr.right}" y1="${fr.top}" y2="${fr.bottom}" stroke="#000"/>`);
+      for (const t of y2Scale.ticks) out.push(text(fr.right + 6, (yy(t) + 4).toFixed(1), fmt(t), { anchor: 'start' }));
+      out.push(text(W - 12, (fr.top + fr.bottom) / 2, spec.y2.label, { rotate: 90 }));
+    }
+    if (showLegend) out.push(...legend(series, fr.left, fr.top - 6, id));
+    const n = spec.categories.length;
+    const band = (fr.right - fr.left) / n;
+    const bars = series.map((s, i) => ({ s, i })).filter(({ s }) => s.type === 'bar');
+    const barW = Math.min(44, band * 0.7 / Math.max(bars.length, 1));
+    const yAt = (s, val) => {
+      const sc = s.axis === 2 ? y2Scale : yScale;
+      return fr.bottom - (val - sc.lo) / (sc.hi - sc.lo) * (fr.bottom - fr.top);
+    };
+    spec.categories.forEach((cat, c) => {
+      const cx = fr.left + band * (c + 0.5);
+      bars.forEach(({ s, i }, bi) => {
+        const v = s.values[c];
+        if (!isNum(v)) return;
+        const yTop = yAt(s, Math.max(v, 0));
+        const yBase = yAt(s, Math.min(0, (s.axis === 2 ? y2Scale : yScale).lo));
+        const x = cx - (barW * bars.length) / 2 + bi * barW;
+        out.push(`<rect x="${x.toFixed(1)}" y="${yTop.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(0, yBase - yTop).toFixed(1)}" fill="${fillFor(s, i, id)}" stroke="#000" stroke-width="0.8"/>`);
+      });
+      if (rotateLabels) out.push(text(cx.toFixed(1), fr.bottom + 12, cat, { anchor: 'end', rotate: -45 }));
+      else wrapLabel(cat, 14).forEach((line, k) => out.push(text(cx.toFixed(1), fr.bottom + 15 + k * 13, line)));
+    });
+    series.forEach((s, si) => {
+      if (s.type !== 'line') return;
+      const pts = s.values.map((v, c) => (isNum(v) ? [fr.left + band * (c + 0.5), yAt(s, v)] : null));
+      out.push(...polyline(s, si, pts));
+    });
+    return out;
+  }
+
   // Diagram: a free vector scene in SVG coordinates (y grows downward). Covers anything no chart kind does.
   const SHAPES = ['rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'path', 'text'];
   const FILLS = ['none', 'solid', 'white', 'hatch', 'dots'];
@@ -682,7 +748,8 @@
     if (spec.kind === 'diagram') return diagramSvg(spec, `icf${++seq}`);
     const id = `icf${++seq}`;
     if (spec.kind === 'geometry') return svgOpen(spec.title, id) + geometrySvg(spec, id).join('') + '</svg>';
-    const body = spec.kind === 'bar' ? barSvg(spec, id)
+    const body = spec.kind === 'combo' ? comboSvg(spec, id)
+      : spec.kind === 'bar' ? barSvg(spec, id)
       : spec.kind === 'line' ? lineSvg(spec, id)
       : spec.kind === 'scatter' ? scatterSvg(spec, id)
       : spec.kind === 'curve' ? curveSvg(spec, id)

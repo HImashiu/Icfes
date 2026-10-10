@@ -138,6 +138,25 @@ Cells in `rows` (and `headers`, if given) are strings, or objects `{ "text", "co
 Each row must cover the table width exactly. `headers`, if given, is the first row. Without `headers`,
 the first row sets the width.
 
+### `combo`, bars and lines on one category axis
+
+For charts where bars and a line share the same categories, such as spending bars with an income line.
+Each series has a `type`: `bar` (grouped among the bars) or `line` (passes through the category centres,
+`null` leaves a gap). A series with `axis: 2` is read against `y2`, which needs its own label.
+
+```json
+{ "kind": "combo", "title": "Gasto e ingreso",
+  "x": { "label": "Mes" }, "y": { "label": "Gasto (miles)" },
+  "y2": { "label": "Ingreso (miles)", "min": 0, "max": 100, "step": 20 },
+  "categories": ["Ene", "Feb", "Mar"],
+  "series": [
+    { "name": "Gasto", "type": "bar", "values": [40, 55, 30] },
+    { "name": "Ingreso", "type": "line", "values": [60, 70, null], "axis": 2, "marker": "square" }
+  ] }
+```
+
+Bars keep the grey-scale patterns of the `bar` kind. Lines use the `marker` and `style` options of `line`.
+
 ### `diagram`, a free vector scene
 
 For anything no chart kind covers: experiment set-ups, apparatus, maps, routes, cells, simple sketches.
@@ -191,7 +210,7 @@ as the stem figures, with the question number and option letter in `location`:
 
 ## Not supported yet
 
-Horizontal bars, stacked bars, histograms, number lines, Venn and tree diagrams, and function graphs.
+Horizontal bars, stacked bars, area charts, histograms, log scales, number lines, Venn and tree diagrams, and function graphs.
 Geometry figures use `geometry`; anything else drawn with lines and shapes uses `diagram`.
 The `kind: "image"` crop is no longer used for new figures. Each new kind needs a fixture test.
 
