@@ -2,44 +2,73 @@
 // That file is a UMD module with no imports.
 import engine from "../../../icfes_figures/render.js";
 import DOMPurify from "dompurify";
-const FIGURE_FORMAT = "icfes-figures-specs/1";
+// Both spellings come from the figure threads; the schema is the same.
+const FIGURE_FORMATS = ["icfes-figures-specs/1", "icfes-figure/1"];
 
 // Returns Map: question number (string) -> figure entries. Group-level figures go under "group:<id>".
 // Option figures are also keyed by question; their `option` letter tells the caller which choice they belong to.
 // Entries whose spec fails validation are kept with `error` set, so the caller can fall back to the crop.
+function makeEntry(fig, target, option) {
+  // A kind "image" figure has no native spec yet: it is listed as pending, never shown as a scan crop.
+  const isImage = fig.kind === "image";
+  const errors = isImage || !fig.spec ? [] : engine.validate(fig.spec);
+  if (!isImage && !fig.spec) errors.push("no spec");
+  return {
+    id: fig.id,
+    kind: fig.kind,
+    spec: errors.length || isImage ? null : fig.spec,
+    error: errors.length ? errors.join("; ") : null,
+    src: isImage ? fig.spec?.src ?? fig.src ?? null : null,
+    fallbackCrop: fig.fallback_crop ?? null,
+    fidelity: fig.fidelity ?? "draft",
+    target,
+    option,
+  };
+}
+
 export function parseFigureSpecs(raw) {
   const byKey = new Map();
   if (!raw) return byKey;
-  if (raw.format !== FIGURE_FORMAT) throw new Error(`Expected format ${FIGURE_FORMAT}`);
+  if (!FIGURE_FORMATS.includes(raw.format)) throw new Error(`Expected format ${FIGURE_FORMATS[0]}, got ${raw.format}`);
   for (const fig of raw.figures ?? []) {
     const loc = fig.location ?? {};
     const keys = [];
     if (loc.question != null) keys.push(String(loc.question));
     if (loc.group) keys.push(`group:${loc.group}`);
-    // A kind "image" figure has no native spec yet: it is listed as pending, never shown as a scan crop.
-    const isImage = fig.kind === "image";
-    const errors = isImage || !fig.spec ? [] : engine.validate(fig.spec);
-    if (!isImage && !fig.spec) errors.push("no spec");
-    const entry = {
-      id: fig.id,
-      kind: fig.kind,
-      spec: errors.length || isImage ? null : fig.spec,
-      error: errors.length ? errors.join("; ") : null,
-      src: isImage ? fig.spec?.src ?? fig.src ?? null : null,
-      fallbackCrop: fig.fallback_crop ?? null,
-      fidelity: fig.fidelity ?? "draft",
-      target: loc.stem_or_option ?? "stem",
-      option: loc.option ?? null,
-    };
+    const entry = makeEntry(fig, loc.stem_or_option ?? "stem", loc.option ?? null);
     for (const k of keys) byKey.set(k, [...(byKey.get(k) ?? []), entry]);
   }
   return byKey;
 }
 
+// Golden questions and options name their figure by spec id: "figure": "c1-q9-opt-A" on an option,
+// or on a question (a string, or an array when several figures belong to it). Those links are added to
+// the figures map under the question, so the question screens draw them like the location-based ones.
+export function linkFigures(exam, figures, raw) {
+  const specs = new Map((raw?.figures ?? []).map((f) => [f.id, f]));
+  const out = new Map(figures);
+  const add = (key, entry) => {
+    const list = out.get(key) ?? [];
+    if (list.some((e) => e.id === entry.id && e.target === entry.target && e.option === entry.option)) return;
+    out.set(key, [...list, entry]);
+  };
+  for (const q of exam.questions) {
+    for (const id of [].concat(q.figure ?? [])) {
+      if (specs.has(id)) add(q.key, makeEntry(specs.get(id), "stem", null));
+    }
+    for (const opt of q.options ?? []) {
+      for (const id of [].concat(opt.figure ?? [])) {
+        if (specs.has(id)) add(q.key, makeEntry(specs.get(id), "option", opt.letter));
+      }
+    }
+  }
+  return out;
+}
+
 // Text that the scan printed inside a passage as chart axis labels, for example "Título eje y1".
 // It is only the chart's leftovers, so it is hidden once a native figure replaces the chart.
 const AXIS_LEAK = /t[ií]tulo eje/i;
-const stripAxisLeaks = (html) => html.replace(/<p>[\s\S]*?<\/p>/g, (p) => (AXIS_LEAK.test(p) ? "" : p));
+const stripAxisLeaks = (html) => (typeof html === "string" ? html.replace(/<p>[\s\S]*?<\/p>/g, (p) => (AXIS_LEAK.test(p) ? "" : p)) : html);
 
 // Returns the exam with passage leftovers removed from every group that has a native stem figure.
 export function prepareExam(exam, figures) {

@@ -10,7 +10,9 @@ export const SOURCE_LINE = "Fuente: ICFES, Saber 11";
 const ORDINAL = { 1: "Primera", 2: "Segunda" };
 // The booklet name students see: "S11-O 2da sesion" becomes "S11-O · Segunda sesión".
 export function formatBooklet(title) {
-  return title.replace(/\s+(\d)(?:da|ra|a)?\s+sesi[oó]n\b/i, (m, n) => ` · ${ORDINAL[n] ?? n} sesión`);
+  // Some transcriptions carry stray spaces ("S11- C     1ra Sesión"): collapse them first.
+  const clean = title.replace(/\s+/g, " ").replace(/^(S11-)\s+/i, "$1").trim();
+  return clean.replace(/\s+(\d)(?:da|ra|a)?\s+sesi[oó]n\b/i, (m, n) => ` · ${ORDINAL[n] ?? n} sesión`);
 }
 
 export class ExamFormatError extends Error {}

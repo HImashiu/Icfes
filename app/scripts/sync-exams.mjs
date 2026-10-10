@@ -44,6 +44,8 @@ if (existsSync(specDir)) {
 const ORDINAL = { 1: "Primera", 2: "Segunda" };
 const booklet = (t) =>
   t
+    .replace(/\s+/g, " ")
+    .replace(/^(S11-)\s+/i, "$1")
     .replace(/\s+(\d)(?:da|ra|a)?\s+sesi[oó]n\b/i, (m, n) => ` · ${ORDINAL[n] ?? n} sesión`)
     .replace(/\s+(\d)(?:da|ra)$/i, (m, n) => ` · ${ORDINAL[n] ?? n} sesión`);
 const exams = [];
@@ -55,9 +57,10 @@ for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
     continue;
   }
   writeFileSync(join(out, `${slug}.json`), readFileSync(join(src, file)));
-  const figFile = join(root, "figures", "specs", `${slug}.json`);
+  // The same spec the catalog uses: the .full file when there is one.
+  const figFile = specFiles.has(slug) ? join(specDir, specFiles.get(slug)) : null;
   let hasFigures = false;
-  if (existsSync(figFile)) {
+  if (figFile && existsSync(figFile)) {
     writeFileSync(join(out, `${slug}.figures.json`), readFileSync(figFile));
     hasFigures = true;
   }
@@ -97,9 +100,32 @@ for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
     keyStatus,
     hasSidecar,
     hasFigures,
-    status: "ready",
+    // Ready needs golden text, a figure spec and a key; otherwise the exam is listed as coming soon.
+    status: hasKey && hasFigures ? "ready" : "proximamente",
   });
 }
+// Check of golden figure links: every "figure" id must exist in the exam's spec, and each pending option is counted.
+for (const exam of exams.filter((e) => e.status === "ready" || e.questions > 0)) {
+  const golden = JSON.parse(readFileSync(join(src, `${exam.slug}.golden.json`), "utf8"));
+  const specFile = specFiles.get(exam.slug);
+  const ids = new Set(specFile ? JSON.parse(readFileSync(join(specDir, specFile), "utf8")).figures.map((f) => f.id) : []);
+  let refs = 0, missing = 0, pending = 0;
+  for (const q of golden.questions) {
+    for (const id of [].concat(q.figure ?? [])) { refs++; if (!ids.has(id)) missing++; }
+    for (const o of q.options ?? []) {
+      for (const id of [].concat(o.figure ?? [])) { refs++; if (!ids.has(id)) missing++; }
+      if (o.pending_spec) pending++;
+    }
+  }
+  if (refs || pending) console.log(`[figures] ${exam.slug}: ${refs} references, ${missing} unresolved, ${pending} pending options`);
+}
+
+// A slug such as S11-G_2da names its booklet when the spec file has no exam title.
+const slugBooklet = (slug) => {
+  const m = slug.match(/^(S11-[A-Z0-9]+)_(1ra|2da)$/);
+  return m ? `${m[1]} · ${m[2] === "1ra" ? "Primera" : "Segunda"} sesión` : slug;
+};
+
 // Specs without question text yet: listed as "Próximamente" so the catalog shows the whole plan.
 const goldenSlugs = new Set(exams.map((e) => e.slug));
 for (const [slug, file] of specFiles) {
@@ -107,7 +133,7 @@ for (const [slug, file] of specFiles) {
   const spec = JSON.parse(readFileSync(join(specDir, file), "utf8"));
   exams.push({
     slug,
-    title: booklet(spec.exam ?? slug),
+    title: /sesi[oó]n/i.test(booklet(spec.exam ?? "")) ? booklet(spec.exam) : slugBooklet(slug),
     questions: 0,
     sections: [],
     hasKey: false,

@@ -880,3 +880,4 @@ details.answers-area > summary::-webkit-details-marker { display: none; }
   .quick-grid { grid-template-columns: repeat(3, 1fr); }
   .quick-wide { grid-column: auto; }
 }
+.pending-fig { color: var(--text-2); font-style: italic; }

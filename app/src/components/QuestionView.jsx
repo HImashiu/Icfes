@@ -140,6 +140,9 @@ export default function QuestionView({
                 <span className="letter-tile">{opt.letter}</span>
                 {figure ? (
                   <FigureBlock figure={figure} alt={`Opción ${opt.letter}`} />
+                ) : opt.pending_spec && !opt.text_md?.trim() ? (
+                  // The golden file marks an option whose figure is not drawn yet: say so, never show a scan.
+                  <span className="pending-fig">Figura pendiente de dibujar</span>
                 ) : (
                   <RichText html={opt.text_md} className="option-text" />
                 )}

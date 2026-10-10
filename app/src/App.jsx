@@ -15,7 +15,7 @@ import BottomNav from "./components/BottomNav.jsx";
 import { ExamContext } from "./lib/exam-context.js";
 import { parseExam, parseKey, parseKeyNotes, questionsFor, timedSeconds } from "./lib/exam.js";
 import { clearAttempt, loadAttempt, saveAttempt } from "./lib/storage.js";
-import { parseFigureSpecs, prepareExam } from "./lib/figures.js";
+import { linkFigures, parseFigureSpecs, prepareExam } from "./lib/figures.js";
 import { applyTheme, currentTheme } from "./lib/theme.js";
 
 const base = import.meta.env.BASE_URL;
@@ -78,10 +78,11 @@ export default function App() {
         entry.hasFigures ? getJson(`exams/${slug}.figures.json`) : null,
         entry.hasSidecar ? getJson(`exams/${slug}.sidecar.json`) : null,
       ]);
-      const figures = parseFigureSpecs(rawFigures);
+      const parsed = parseExam(raw);
+      const figures = linkFigures(parsed, parseFigureSpecs(rawFigures), rawFigures);
       setSelected({
         slug,
-        exam: prepareExam(parseExam(raw), figures),
+        exam: prepareExam(parsed, figures),
         key: parseKey(rawKey),
         keyStatus: entry.keyStatus ?? null,
         notes: parseKeyNotes(rawSidecar),
@@ -97,8 +98,8 @@ export default function App() {
   // Open the first exam once the index is known.
   useEffect(() => {
     const first = exams?.find((e) => e.status !== "proximamente");
-    if (first && !selected && !opening) openExam(first.slug);
-  }, [exams, selected, opening, openExam]);
+    if (first && !selected && !opening && !openError) openExam(first.slug);
+  }, [exams, selected, opening, openError, openExam]);
 
   // Keep an attempt in this browser so a reload does not lose answers.
   // Attempts opened from history or reports are read-only and are never written back.
