@@ -886,3 +886,7 @@ details.answers-area > summary::-webkit-details-marker { display: none; }
 .exam-table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
 .exam-table th, .exam-table td { padding: 6px 10px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
 .exam-table th { font-weight: 600; background: var(--surface-2); }
+
+/* Scan traces (SVG) drawn from figures/traced; they keep the scan look on the paper background. */
+.traced-figure { margin: 12px 0; }
+.traced-figure img { display: block; max-width: 100%; height: auto; background: #fff; border-radius: 8px; }

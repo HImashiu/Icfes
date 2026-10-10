@@ -88,7 +88,9 @@ export default function QuestionView({
     </section>
   );
 
-  const hasContext = Boolean(passage || ownStimulus || stemFigures.length);
+  // A traced figure (a scan trace from figures/traced) stands in for the native spec it replaces.
+  const traced = question.traced ?? null;
+  const hasContext = Boolean(passage || ownStimulus || stemFigures.length || traced);
   const source = <span className="source">{examLabel ? `${SOURCE_LINE}, ${examLabel}` : SOURCE_LINE}</span>;
 
   return (
@@ -97,11 +99,16 @@ export default function QuestionView({
         <section className="paper-card q-context" aria-label="Texto y gráfica de la pregunta">
           {passage && (collapsed ? (
             <details className="group-collapse" open={groupOpen} onToggle={(e) => setGroupOpen(e.currentTarget.open)}>
-              <summary>{stemFigures.length ? "Ver texto y gráfica" : "Ver texto"}</summary>
+              <summary>{stemFigures.length || traced ? "Ver texto y gráfica" : "Ver texto"}</summary>
               {passage}
             </details>
           ) : passage)}
           {ownStimulus && <LongText html={question.stimulus_md} className="stimulus" long={!wide && question.stimulus_md.length > LONG_TEXT} />}
+          {traced && (
+            <figure className="traced-figure">
+              <img src={`${import.meta.env.BASE_URL}${traced.url}`} alt={traced.figure_id} />
+            </figure>
+          )}
           {stemFigures.map((f) => (
             <FigureBlock key={f.id} figure={f} alt={f.id} />
           ))}

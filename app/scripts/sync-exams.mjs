@@ -12,7 +12,7 @@
 //         answer-keys/<name>.key.sidecar.json  (per-question confidence and reasons)
 // A key in the data folder counts as official; one from answer-keys is labelled preliminary.
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { join, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { normalizeField } from "../src/lib/text-normalize.js";
 
@@ -65,9 +65,45 @@ const PICTURE = /!\[[^\]]*\]\([^)]*\)|<img\b[^>]*>/gi;
 const PICTURE_ANY = /!\[|<img\b/i;
 const FLAT_TABLE = /\[Tabla:[^\]]*\]/g;
 
+// Questions the owners removed until their text is fixed.
+const DROPPED = { "S11-L_1ra": [104] };
+
+// Traced figures: figures/traced/<exam>/manifest.json maps a question to a scan trace (an SVG).
+// Only "azure" entries with an SVG count; each SVG is copied next to the exam files, and the
+// question gets { url, figure_id, spec_id } so the app shows the trace in place of the spec.
+function loadTraced(slug) {
+  const traced = new Map();
+  const manifest = join(root, "figures", "traced", slug, "manifest.json");
+  if (!existsSync(manifest)) return traced;
+  for (const e of JSON.parse(readFileSync(manifest, "utf8")).figures ?? []) {
+    if (e.method !== "azure" || !e.svg) continue;
+    const from = join(root, "figures", e.svg);
+    if (!existsSync(from)) continue;
+    const file = basename(e.svg);
+    mkdirSync(join(out, "traced", slug), { recursive: true });
+    writeFileSync(join(out, "traced", slug, file), readFileSync(from));
+    traced.set(e.question, { url: `exams/traced/${slug}/${file}`, figure_id: e.figure_id, spec_id: e.spec_id });
+  }
+  return traced;
+}
+
 function prepareExam(exam, specPath, slug, report) {
   const specFigures = specPath && existsSync(specPath) ? JSON.parse(readFileSync(specPath, "utf8")).figures ?? [] : [];
   const specIds = new Set(specFigures.map((f) => f.id));
+  const traced = loadTraced(slug);
+  const dropped = new Set(DROPPED[slug] ?? []);
+  // A traced question keeps no spec link: the trace replaces the spec figure it was drawn from.
+  for (const q of exam.questions ?? []) {
+    const t = traced.get(q.number);
+    if (!t) continue;
+    q.traced = { url: t.url, figure_id: t.figure_id };
+    const replaced = new Set([t.spec_id, t.figure_id]);
+    q.figure = [].concat(q.figure ?? []).filter((id) => !replaced.has(id));
+    if (!q.figure.length) delete q.figure;
+    for (const o of q.options ?? []) {
+      if (o.figure && replaced.has(o.figure)) delete o.figure;
+    }
+  }
   const groups = new Map((exam.groups ?? []).map((g) => [g.id, g]));
   const fixes = {};
   const left = {};
@@ -81,6 +117,7 @@ function prepareExam(exam, specPath, slug, report) {
       .filter((t) => typeof t === "string");
   };
   const hasFigure = (q) =>
+    traced.has(q.number) ||
     [].concat(q.figure ?? []).length > 0 ||
     (q.options ?? []).some((o) => [].concat(o.figure ?? []).length > 0);
 
@@ -89,6 +126,7 @@ function prepareExam(exam, specPath, slug, report) {
     const texts = textOf(q).join("\n");
     const figure = hasFigure(q);
     const reasons = [];
+    if (dropped.has(q.number)) reasons.push("dropped_by_owner");
     if (PENDING_TEXT.test(texts)) reasons.push("texto_pendiente");
     if (FIGURE_NOTE_ANY.test(texts) && !figure) reasons.push("figura_pendiente");
     if (PICTURE_ANY.test(texts) && !figure) reasons.push("picture_without_figure");
