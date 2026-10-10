@@ -285,6 +285,49 @@ function studentView(q, g, figs = []) {
     ${opts}`;
 }
 
+// Options are edited as a list: add, remove, move, and change text. Letters stay with their option, so answer keys keep working.
+function syncOpts() {
+  const old = Object.fromEntries((state.opts || []).map(o => [o.letter, o]));
+  state.opts = [...document.querySelectorAll("#f-opts [data-letter]")].map(t => ({
+    letter: t.dataset.letter, text_md: t.value, marked_in_scan: old[t.dataset.letter]?.marked_in_scan ?? false }));
+}
+
+function drawOpts() {
+  $("#f-opts").innerHTML = (state.opts || []).map((o, i) => `
+    <div style="display:grid;grid-template-columns:34px 1fr auto;gap:8px;margin-bottom:8px;align-items:start">
+      <b style="padding-top:10px">${esc(o.letter)}</b>
+      <textarea data-letter="${esc(o.letter)}" style="min-height:44px">${esc(o.text_md)}</textarea>
+      <span style="display:flex;gap:4px">
+        <button type="button" onclick="moveOpt(${i}, -1)" ${i === 0 ? "disabled" : ""}>↑</button>
+        <button type="button" onclick="moveOpt(${i}, 1)" ${i === state.opts.length - 1 ? "disabled" : ""}>↓</button>
+        <button type="button" onclick="removeOpt(${i})">✕</button>
+      </span>
+    </div>`).join("") + `<button type="button" onclick="addOpt()">+ Añadir opción</button>`;
+  document.querySelectorAll("#f-opts textarea").forEach(t => t.oninput = () => { syncOpts(); refreshPreview(); });
+}
+
+function addOpt() {
+  syncOpts();
+  const used = state.opts.map(o => o.letter);
+  const letter = "ABCDEFGHIJ".split("").find(l => !used.includes(l)) || "?";
+  state.opts.push({ letter, text_md: "", marked_in_scan: false });
+  drawOpts(); refreshPreview();
+}
+
+function removeOpt(i) {
+  syncOpts();
+  state.opts.splice(i, 1);
+  drawOpts(); refreshPreview();
+}
+
+function moveOpt(i, delta) {
+  syncOpts();
+  const j = i + delta;
+  if (j < 0 || j >= state.opts.length) return;
+  [state.opts[i], state.opts[j]] = [state.opts[j], state.opts[i]];
+  drawOpts(); refreshPreview();
+}
+
 function renderEditor() {
   const d = state.detail, q = d.question, g = d.group;
   const idx = d.numbers.indexOf(d.number);
@@ -320,7 +363,7 @@ function renderEditor() {
           <textarea id="f-stem">${esc(q.stem_md)}</textarea>
         </div>
         <div class="card"><div class="label">Opciones</div>
-          <div id="f-opts">${q.options.map(o => `<div style="display:grid;grid-template-columns:34px 1fr;gap:8px;margin-bottom:8px"><b style="padding-top:10px">${esc(o.letter)}</b><textarea data-letter="${esc(o.letter)}" style="min-height:44px">${esc(o.text_md)}</textarea></div>`).join("")}</div>
+          <div id="f-opts"></div>
           <div class="muted">Marcada en el escaneo: ${esc(q.scan_marked_option || "—")} · opciones esperadas: ${esc(q.expected_options ?? "—")}</div>
         </div>
         <div class="card"><div class="label">Texto propio de la pregunta</div>
@@ -359,22 +402,27 @@ function renderEditor() {
     </div>`;
 
   // The preview re-renders with the app's renderer as the editor changes, so it shows what students will see.
-  const refresh = () => {
-    const current = { ...q, stem_md: $("#f-stem").value, stimulus_md: $("#f-stimulus").value,
-      options: [...document.querySelectorAll("#f-opts [data-letter]")].map(t => ({ letter: t.dataset.letter, text_md: t.value })) };
-    const group = g && $("#f-passage") ? { ...g, passage_md: $("#f-passage").value } : g;
-    $("#preview").innerHTML = studentView(current, group, state.detail.native_figures);
-  };
-  document.querySelectorAll("#f-stem, #f-stimulus, #f-passage, #f-opts textarea").forEach(t => t.oninput = refresh);
+  state.opts = q.options.map(o => ({ ...o }));
+  drawOpts();
+  const refresh = () => refreshPreview();
+  document.querySelectorAll("#f-stem, #f-stimulus, #f-passage").forEach(t => t.oninput = refresh);
   $("#back").onclick = () => setTab("questions");
   $("#prev").onclick = () => prev && openQuestion(prev);
   $("#next").onclick = () => next && openQuestion(next);
   $("#save").onclick = saveQuestion;
 }
 
+function refreshPreview() {
+  const d = state.detail, q = d.question, g = d.group;
+  const current = { ...q, stem_md: $("#f-stem").value, stimulus_md: $("#f-stimulus").value, options: state.opts };
+  const group = g && $("#f-passage") ? { ...g, passage_md: $("#f-passage").value } : g;
+  $("#preview").innerHTML = studentView(current, group, d.native_figures);
+}
+
 async function saveQuestion() {
   const d = state.detail;
-  const options = [...document.querySelectorAll("#f-opts [data-letter]")].map(t => ({ letter: t.dataset.letter, text_md: t.value }));
+  syncOpts();
+  const options = state.opts.map(o => ({ letter: o.letter, text_md: o.text_md }));
   const body = {
     stem_md: $("#f-stem").value,
     stimulus_md: $("#f-stimulus").value,
