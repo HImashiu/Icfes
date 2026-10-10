@@ -40,7 +40,7 @@
       if (a.domain != null && (!Array.isArray(a.domain) || a.domain.length !== 2 || !isNum(a.domain[0]) || !isNum(a.domain[1]) || a.domain[0] >= a.domain[1])) errs.push(`${name}.domain must be [lo, hi] with lo below hi`);
     };
     const series = Array.isArray(spec.series) ? spec.series : [];
-    series.forEach((s, i) => { if (s && s.style != null && !['solid', 'dashed', 'dotted'].includes(s.style)) errs.push(`series[${i}].style must be solid, dashed or dotted`); });
+    series.forEach((s, i) => { if (s && s.style != null && !['solid', 'dashed', 'dotted', 'dashdot'].includes(s.style)) errs.push(`series[${i}].style must be solid, dashed, dotted or dashdot`); });
     series.forEach((s, i) => { if (s && s.marker != null && !MARKERS.includes(s.marker)) errs.push(`series[${i}].marker must be one of ${MARKERS.join(', ')}`); });
     series.forEach((s, i) => { if (s && s.marker === 'none' && spec.kind !== 'line' && spec.kind !== 'curve') errs.push(`series[${i}].marker none is only for line and curve charts`); });
     series.forEach((s, i) => { if (s && s.pattern != null && !SERIES_PATTERNS.includes(s.pattern)) errs.push(`series[${i}].pattern must be one of ${SERIES_PATTERNS.join(', ')}`); });
@@ -532,7 +532,7 @@
   // Open markers keep grey-scale legibility.
   function polyline(s, si, pts) {
     const out = [];
-    const dash = s.style === 'dashed' ? ' stroke-dasharray="5 3"' : s.style === 'dotted' ? ' stroke-dasharray="1 3" stroke-linecap="round"' : '';
+    const dash = s.style === 'dashed' ? ' stroke-dasharray="5 3"' : s.style === 'dotted' ? ' stroke-dasharray="1 3" stroke-linecap="round"' : s.style === 'dashdot' ? ' stroke-dasharray="6 3 1 3" stroke-linecap="round"' : '';
     const real = pts.filter(Boolean);
     if (real.length > 1) out.push(`<polyline points="${real.map((p) => p.map((v) => v.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="#000" stroke-width="1.8"${dash}/>`);
     if (s.marker !== 'none') for (const [x, y] of real) out.push(marker(s.marker, x, y));
@@ -597,7 +597,11 @@
     const yr = yScale ? { lo: yScale.lo, hi: yScale.hi } : range(spec.y, pts.map((p) => p[1]));
     const left = 58;
     const right = W - 24;
-    const top = spec.title ? 34 : 18;
+    // The legend sits in rows above the plot, one line sample per series, so its dash shows.
+    const showLegend = legendOn(spec);
+    const legendY = spec.title ? 34 : 18;
+    const legendRowsN = showLegend ? legendRows(legendSeries(spec), left) : 0;
+    const top = showLegend ? legendY + 14 + 18 * legendRowsN + 4 : legendY;
     const bottom = H - 40;
     const sx = (v) => left + (v - xr.lo) / (xr.hi - xr.lo) * (right - left);
     const sy = (v) => bottom - (v - yr.lo) / (yr.hi - yr.lo) * (bottom - top);
@@ -634,14 +638,30 @@
         const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
         d += ` C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
       }
-      const dash = s.style === 'dashed' ? ' stroke-dasharray="6 4"' : s.style === 'dotted' ? ' stroke-dasharray="1 3" stroke-linecap="round"' : '';
+      const dash = s.style === 'dashed' ? ' stroke-dasharray="6 4"' : s.style === 'dotted' ? ' stroke-dasharray="1 3" stroke-linecap="round"' : s.style === 'dashdot' ? ' stroke-dasharray="6 3 1 3" stroke-linecap="round"' : '';
       out.push(`<path d="${d}" fill="none" stroke="#000" stroke-width="2"${dash}/>`);
       if (s.label) {
         const at = Math.min(P.length - 1, s.labelAt != null ? s.labelAt : Math.floor(P.length / 2));
         out.push(text(P[at][0].toFixed(1), (P[at][1] - 8).toFixed(1), s.label));
       }
     });
+    if (showLegend) out.push(...curveLegend(spec, left, legendY + 14));
     void id;
+    return out;
+  }
+
+  // Curve legend: one row per entry, a short line sample in the series' style, then its name.
+  function curveLegend(spec, left, top) {
+    const out = [];
+    const ser = legendSeries(spec);
+    legendLayout(ser, left).forEach((pos, i) => {
+      if (!pos) return;
+      const s = ser[i];
+      const y = top + pos.row * 18;
+      const dash = s.style === 'dashed' ? ' stroke-dasharray="6 4"' : s.style === 'dotted' ? ' stroke-dasharray="1 3" stroke-linecap="round"' : s.style === 'dashdot' ? ' stroke-dasharray="6 3 1 3" stroke-linecap="round"' : '';
+      out.push(`<line x1="${pos.x}" x2="${pos.x + 18}" y1="${y - 5}" y2="${y - 5}" stroke="#000" stroke-width="2"${dash}/>`);
+      out.push(text(pos.x + 24, y - 1, legendLabel(s), { anchor: 'start' }));
+    });
     return out;
   }
 

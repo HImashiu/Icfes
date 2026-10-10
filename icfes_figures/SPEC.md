@@ -57,7 +57,7 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 { "kind": "line", "categories": ["Ene", "Feb", "Mar"], "series": [ { "name": "Ventas", "values": [4, null, 7] } ] }
 ```
 
-- `null` leaves a gap, and the line breaks there. Lines are solid unless a series sets `"style": "dashed"`.
+- `null` leaves a gap, and the line breaks there. Lines are solid unless a series sets `"style": "dashed"`, `"dotted"` or `"dashdot"`.
 - Set `"marker"` per series to `"circle"` (default), `"square"`, `"triangle"`, `"dot"` (filled circle),
   `"star"`, `"diamond"` or `"cross"`, so series stay apart in grey-scale print. `"none"` draws the line with no point markers, for prints that show a bare curve (line and curve only). On line charts the legend
   shows each series' marker in place of its colour swatch, so the marker is the key.
@@ -94,6 +94,7 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 - Points are joined with a smooth curve. `label` is printed near point `labelAt` (default: middle).
 
 - `"ticks": true` on an axis prints its tick values, from that axis' `min`, `max` and `step`, as the other charts do. Without it a curve stays shape-only.
+- A curve with series names gets a legend above the plot, like the other charts: one line sample per entry, drawn in that series' style. `legend: false` hides it, and `legend` as an array sets the text of each entry.
 
 - `"inverted": true` on a `line` or `curve` draws a dark panel with light strokes and text, for prints that are black with white lines. The grid turns dark grey. Only `line` and `curve` take it.
 
@@ -289,7 +290,7 @@ Cold War Europe, as an example:
 
 ### Line styles
 
-`style` on a `line`, `curve` or numeric `line` series: `solid` (default), `dashed` or `dotted`.
+`style` on a `line`, `curve` or numeric `line` series: `solid` (default), `dashed`, `dotted` or `dashdot` (dash, dot, dash).
 Use dotted and dashed together when two series need telling apart in grey-scale.
 
 ### Axis options

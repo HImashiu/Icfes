@@ -525,6 +525,18 @@ test('europa: named unions of countries and Länder fill as one region, with a l
   assert.ok(F.validate({ ...cold, bounds: [1, 2, 3] }).length > 0, 'bounds need four numbers');
 });
 
+test('curve: ticks, a legend in the series styles, and a dash-dot style', () => {
+  const spec = { kind: 'curve', x: { label: 'Tiempo', min: 0, max: 2, step: 1, ticks: true }, y: { label: 'Posición', min: 0, max: 4, step: 2, ticks: true },
+    series: [{ name: 'Línea 1', style: 'solid', points: [[0, 0], [1, 2], [2, 3]] }, { name: 'Línea 2', style: 'dashdot', points: [[0, 1], [1, 1.5], [2, 1.2]] }] };
+  assert.deepEqual(F.validate(spec), []);
+  const svg = F.render(spec);
+  assert.ok(svg.includes('>Línea 1<') && svg.includes('>Línea 2<'), 'the legend names both series');
+  assert.ok(svg.includes('stroke-dasharray="6 3 1 3"'), 'dash-dot is drawn');
+  assert.ok(svg.includes('>2<') && svg.includes('>4<'), 'the ticks print their numbers');
+  assert.ok(!F.render({ ...spec, legend: false }).includes('>Línea 2<'), 'legend false hides the legend');
+  assert.ok(F.validate({ ...spec, series: [{ ...spec.series[0], style: 'wavy' }] }).length > 0, 'an unknown style fails');
+});
+
 test('europa: unified Germany is a union of the 16 Länder, for post-1991 maps', () => {
   const doc = require('../maps/europa.json');
   const de = doc.features.find((f) => f.name === 'Alemania');
