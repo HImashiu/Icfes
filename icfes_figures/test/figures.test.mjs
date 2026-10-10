@@ -507,3 +507,29 @@ test('marker none draws a bare line: no point markers on line or curve series', 
   assert.deepEqual(F.validate(curve), []);
   assert.ok(F.validate({ kind: 'scatter', x: { label: 'x' }, y: { label: 'y' }, series: [{ points: [[1, 2], [3, 4]], marker: 'none' }] }).length > 0);
 });
+
+test('europa: named unions of countries and Länder fill as one region, with a lon/lat view', () => {
+  const doc = require('../maps/europa.json');
+  const merged = doc.features.filter((f) => f.merged).map((f) => f.name);
+  assert.ok(merged.includes('URSS') && merged.includes('Yugoslavia') && merged.includes('Checoslovaquia'));
+  assert.ok(merged.includes('Alemania Oriental') && merged.includes('Alemania Occidental'));
+  const urss = doc.features.find((f) => f.name === 'URSS');
+  assert.equal(urss.members.length, 15, 'the USSR has 15 republics');
+  assert.ok(!doc.features.some((f) => f.name === 'Russia'), 'members are not drawn on their own');
+  assert.ok(!doc.features.some((f) => f.name === 'Germany'), 'Germany is split into its Länder');
+  const cold = { kind: 'map', region: 'europa', title: 'Guerra fría', bounds: [-12, 35, 42, 62], fills: { URSS: '#666666', Yugoslavia: '#222222' }, legend: [{ fill: '#666666', label: 'URSS' }, { fill: '#222222', label: 'Yugoslavia' }] };
+  assert.deepEqual(F.validate(cold), []);
+  const svg = F.render(cold);
+  assert.ok(svg.includes('clip-path="url(#'), 'shapes are clipped to the plot');
+  assert.ok(F.validate({ ...cold, bounds: [42, 35, -12, 62] }).length > 0, 'bounds must run west to east');
+  assert.ok(F.validate({ ...cold, bounds: [1, 2, 3] }).length > 0, 'bounds need four numbers');
+});
+
+test('map legend wraps onto a second row instead of running off the view', () => {
+  const entries = ['Alemania Occidental', 'Alemania Oriental', 'Checoslovaquia', 'Yugoslavia', 'URSS'].map((label, i) => ({ fill: ['#000', '#fff', '#888', '#444', '#ccc'][i], label }));
+  const svg = F.render({ kind: 'map', region: 'mundo', legend: entries });
+  const xs = [...svg.matchAll(/<text x="([\d.]+)" y="[\d.]+" font-family="[^"]+" font-size="11"/g)].map((m) => +m[1]);
+  assert.ok(Math.max(...xs) < 480, 'every label starts inside the view');
+  const ys = new Set([...svg.matchAll(/<text x="[\d.]+" y="([\d.]+)" font-family="[^"]+" font-size="11"/g)].map((m) => m[1]));
+  assert.ok(ys.size >= 2, 'entries use two rows');
+});

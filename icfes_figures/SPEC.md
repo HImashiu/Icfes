@@ -236,7 +236,7 @@ Coordinates are SVG units with y growing downward. The view fits the shapes unle
   boxes and no line work (possible photo stand-ins).
 
 ## Axes
-### `map`, bundled outlines of Colombia, South America and the world
+### `map`, bundled outlines of Colombia, South America, the world and Europe in periods
 
 `region` names a bundled outline: `colombia-departamentos` (33 departments), `colombia-pais`, `sudamerica`
 or `mundo` (all countries, with a `continent` field, so Europe is `mundo` with `select` on its names).
@@ -249,6 +249,35 @@ Source and licence: Natural Earth (naturalearthdata.com), public domain. Taken f
 github.com/nvkelso/natural-earth-vector: `ne_10m_admin_1_states_provinces` for the departments and
 `ne_110m_admin_0_countries` for the countries. Simplified with Douglas-Peucker (0.02 degrees for the
 departments, 0.25 for the countries). The build script is `maps/build_maps.py`; the outputs are in `maps/`.
+
+#### Period borders: `region` `europa`
+
+`europa` holds Europe, the former USSR and Turkey (Natural Earth 110m countries), with Germany split into its 16
+Länder (Natural Earth 10m admin-1). It also holds named unions that are dissolved into one shape each, so a
+period border fills as one region. Each union has `merged: true` and a `members` list. The unions are in
+`maps/europa-merges.json` and are built by `maps/build_europa.py` (needs shapely; the outputs are `maps/europa.json`).
+
+- `URSS` (15 republics), `Yugoslavia`, `Checoslovaquia`, `Alemania Oriental` (the eastern Länder and Berlin),
+  `Alemania Occidental`, `Austria-Hungría (aprox.)`.
+- Add a union by adding a line to `europa-merges.json` and rebuilding. Members must be names from the
+  Natural Earth data, as the build script reports them.
+- Unions are built ahead of time, not at render time: neighbouring Natural Earth polygons do not share exactly the
+  same edges, so joining them in the renderer would leave seams.
+- `bounds`: `[minLon, minLat, maxLon, maxLat]` sets the view instead of the fit to the whole region. The shapes are
+  clipped to the plot, so a view that runs past the frame does not cover the title or legend.
+- `legend` entries wrap onto further rows when they reach the right edge.
+
+Cold War Europe, as an example:
+
+```json
+{ "kind": "map", "region": "europa", "title": "Europa en la guerra fría (1955-1989)",
+  "bounds": [-12, 35, 42, 62],
+  "fills": { "URSS": "#666666", "Yugoslavia": "#222222", "Checoslovaquia": "#bbbbbb",
+             "Alemania Oriental": "#999999", "Alemania Occidental": "#dddddd" },
+  "legend": [ { "fill": "#666666", "label": "URSS" }, { "fill": "#222222", "label": "Yugoslavia" },
+              { "fill": "#bbbbbb", "label": "Checoslovaquia" }, { "fill": "#999999", "label": "Alemania Oriental" },
+              { "fill": "#dddddd", "label": "Alemania Occidental" } ] }
+```
 
 ### Line styles
 

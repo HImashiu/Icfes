@@ -126,6 +126,7 @@
         errs.push(...g.errors);
       }
     }
+    if (spec.kind === 'map' && spec.bounds != null && !(Array.isArray(spec.bounds) && spec.bounds.length === 4 && spec.bounds.every(isNum) && spec.bounds[0] < spec.bounds[2] && spec.bounds[1] < spec.bounds[3])) errs.push('bounds must be [minLon, minLat, maxLon, maxLat]');
     if (spec.kind === 'map') {
       if (!MAP_KEYS.includes(spec.region)) errs.push(`region must be one of ${MAP_KEYS.join(', ')}`);
       else {
@@ -912,7 +913,7 @@
 
   // Maps: simplified public-domain outlines (Natural Earth), bundled in maps/. Node loads them from there;
   // a browser build calls registerMap(key, doc) with the same JSON.
-  const MAP_KEYS = ['colombia-departamentos', 'colombia-pais', 'sudamerica', 'mundo'];
+  const MAP_KEYS = ['colombia-departamentos', 'colombia-pais', 'sudamerica', 'mundo', 'europa'];
   const MAPS = {};
   function registerMap(key, doc) { MAPS[key] = doc; }
   function mapDoc(key) {
@@ -938,12 +939,20 @@
 
   function mapSvg(spec, id) {
     const doc = mapDoc(spec.region);
-    const fit = spec.select ? doc.features.filter((f) => spec.select.includes(f.name)) : doc.features;
-    const P = mapProjector(fit, [0, spec.title ? 26 : 6, W, H - (spec.title ? 26 : 6) - (spec.legend ? 22 : 0)]);
+    const fit = spec.bounds
+      // A lon/lat box, given as [minLon, minLat, maxLon, maxLat], sets the view; the map is clipped to it.
+      ? [{ polygons: [[[[spec.bounds[0], spec.bounds[1]], [spec.bounds[2], spec.bounds[1]], [spec.bounds[2], spec.bounds[3]], [spec.bounds[0], spec.bounds[3]]]]] }]
+      : spec.select ? doc.features.filter((f) => spec.select.includes(f.name)) : doc.features;
+    const legendRows = spec.legend ? legendLines(spec.legend).length : 0;
+    const P = mapProjector(fit, [0, spec.title ? 26 : 6, W, H - (spec.title ? 26 : 6) - (legendRows ? 16 + 14 * legendRows : 0)]);
     const fills = spec.fills || {};
     const paint = (v) => (String(v).startsWith('#') ? v : paintFor(v, id));
     const out = [];
     if (spec.title) out.push(text(W / 2, 18, spec.title, { weight: 'bold' }));
+    // The shapes are clipped to the plot box, so a view that spills past it does not run over the title or legend.
+    const top = spec.title ? 26 : 6;
+    const plotH = H - top - (legendRows ? 16 + 14 * legendRows : 0);
+    out.push(`<clipPath id="${id}-plot"><rect x="0" y="${top}" width="${W}" height="${plotH}"/></clipPath><g clip-path="url(#${id}-plot)">`);
     doc.features.forEach((f) => {
       const d = f.polygons.map((poly) => poly.map((ring) =>
         'M' + ring.map((p) => P(p).map((n) => n.toFixed(1)).join(' ')).join('L') + 'Z').join(' ')).join(' ');
@@ -955,16 +964,32 @@
       out.push(marker(p.marker, q[0], q[1]));
       if (p.label) out.push(text((q[0] + 7).toFixed(1), (q[1] - 5).toFixed(1), p.label, { anchor: 'start', size: 10 }));
     });
+    out.push('</g>');
     if (spec.legend) {
-      let x = 16;
-      const y = H - 10;
-      spec.legend.forEach((l) => {
-        out.push(`<rect x="${x}" y="${y - 9}" width="10" height="10" fill="${paint(l.fill)}" stroke="#000"/>`);
-        out.push(text(x + 14, y, l.label, { anchor: 'start', size: 11 }));
-        x += 28 + String(l.label).length * 6.5;
+      // Entries flow left to right and wrap onto the row above when they reach the right edge.
+      const lines = legendLines(spec.legend);
+      lines.forEach((line, r) => {
+        const y = H - 10 - (lines.length - 1 - r) * 14;
+        line.forEach((e) => {
+          out.push(`<rect x="${e.x}" y="${y - 9}" width="10" height="10" fill="${paint(e.fill)}" stroke="#000"/>`);
+          out.push(text(e.x + 14, y, e.label, { anchor: 'start', size: 11 }));
+        });
       });
     }
     return out;
+  }
+
+  // Map legend entries laid out in rows that fit the view width.
+  function legendLines(entries) {
+    const rows = [[]];
+    let x = 16;
+    for (const l of entries) {
+      const w = 28 + String(l.label).length * 6.5;
+      if (x > 16 && x + w > W - 10) { rows.push([]); x = 16; }
+      rows[rows.length - 1].push({ x, fill: l.fill, label: l.label });
+      x += w;
+    }
+    return rows;
   }
 
   // Diagram: a free vector scene in SVG coordinates (y grows downward). Covers anything no chart kind does.
