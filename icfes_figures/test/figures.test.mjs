@@ -184,7 +184,7 @@ test('combo validates bars and lines, and needs y2 when a line uses axis 2', () 
 
 test('combo draws one rect per bar value and one polyline per line series', () => {
   const svg = F.render(combo);
-  // Legend swatches add two rects; the background adds one.
-  assert.equal((svg.match(/<rect /g) || []).length, 3 + 2 + 1);
+  // Bars are the only rects with a 0.8 stroke; the pattern tiles and the legend are not bars.
+  assert.equal((svg.match(/<rect [^>]*stroke-width="0.8"/g) || []).length, 3);
   assert.equal((svg.match(/<polyline /g) || []).length, 1);
 });
