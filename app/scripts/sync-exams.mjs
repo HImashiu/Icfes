@@ -41,7 +41,7 @@ if (existsSync(specDir)) {
   }
 }
 // One spec file covers both sessions of the M booklet, so its 1ra golden uses the combined file.
-const SPEC_ALIAS = { "S11-M_1ra": "S11-M_1ra-2da" };
+const SPEC_ALIAS = { "S11-M_1ra": "S11-M_1ra-2da", "S11-M_2da": "S11-M_1ra-2da" };
 for (const [golden, spec] of Object.entries(SPEC_ALIAS)) {
   if (!specFiles.has(golden) && specFiles.has(spec)) specFiles.set(golden, specFiles.get(spec));
 }
@@ -241,7 +241,9 @@ for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
   let hasKey = false;
   let keyStatus = null;
   const prelimKey = join(root, "answer-keys", keyFile);
-  const sidecarFile = join(root, "answer-keys", `${slug}.key.sidecar.json`);
+  // Sidecars are named either <slug>.key.sidecar.json or <slug>.sidecar.json on disk.
+  const sidecarNamed = join(root, "answer-keys", `${slug}.key.sidecar.json`);
+  const sidecarFile = existsSync(sidecarNamed) ? sidecarNamed : join(root, "answer-keys", `${slug}.sidecar.json`);
   if (files.includes(keyFile)) {
     writeFileSync(join(out, `${slug}.key.json`), readFileSync(join(src, keyFile)));
     hasKey = true;
@@ -303,6 +305,8 @@ const slugBooklet = (slug) => {
 const goldenSlugs = new Set(exams.map((e) => e.slug));
 for (const [slug, file] of specFiles) {
   if (goldenSlugs.has(slug)) continue;
+  // A shared spec file (it covers two booklets) is not an exam of its own.
+  if (Object.values(SPEC_ALIAS).some((target) => file === `${target}.json` || file === `${target}.full.json`)) continue;
   const spec = JSON.parse(readFileSync(join(specDir, file), "utf8"));
   exams.push({
     slug,

@@ -78,6 +78,11 @@ export default function QuestionView({
     (figures?.get(question.key) ?? []).find((f) => f.target === "option" && f.option === letter);
   const chartOptions = question.options.some((o) => optionFigure(o.letter) || o.traced);
 
+  // Matching tables put each item's stem in a row of the passage; showing the stem again would repeat it.
+  const plainText = (html) => (html ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
+  const stemText = plainText(question.stem_md);
+  const stemInPassage = stemText.length > 20 && plainText(group?.stimulus_md).includes(stemText);
+
   // Many questions repeat their passage in stimulus_md, which the group already shows.
   const ownStimulus = question.stimulus_md && question.stimulus_md.trim() !== group?.stimulus_md?.trim();
 
@@ -134,7 +139,7 @@ export default function QuestionView({
               </button>
             )}
           </div>
-          <RichText html={question.stem_md} className="stem" />
+          {!stemInPassage && <RichText html={question.stem_md} className="stem" />}
           {!hasContext && source}
         </article>
 
