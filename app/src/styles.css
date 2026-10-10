@@ -884,8 +884,18 @@ details.answers-area > summary::-webkit-details-marker { display: none; }
 
 /* Markdown tables from the exam text, drawn as real tables (see text-normalize.js). */
 .exam-table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
-.exam-table th, .exam-table td { padding: 6px 10px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+.exam-table th, .exam-table td { padding: 6px 10px; border: 1px solid #000; text-align: left; vertical-align: top; }
 .exam-table th { font-weight: 600; background: var(--surface-2); }
+
+/* Rich text written by the admin editor (lists, underline, sub/sup), kept visible inside question cards. */
+.paper-card .stem ul, .paper-card .stem ol, .paper-card .stimulus ul, .paper-card .stimulus ol,
+.option-text ul, .option-text ol { margin: 0.4em 0; padding-left: 1.5em; }
+.paper-card .stem ul, .paper-card .stimulus ul, .option-text ul { list-style: disc; }
+.paper-card .stem ol, .paper-card .stimulus ol, .option-text ol { list-style: decimal; }
+.paper-card .stem li, .paper-card .stimulus li, .option-text li { display: list-item; }
+.paper-card u, .option-text u { text-decoration: underline; }
+.paper-card sub, .option-text sub { font-size: 0.75em; vertical-align: sub; line-height: 0; }
+.paper-card sup, .option-text sup { font-size: 0.75em; vertical-align: super; line-height: 0; }
 
 /* Scan traces (SVG) drawn from figures/traced; they keep the scan look on the paper background. */
 .traced-figure { margin: 12px 0; }
