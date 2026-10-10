@@ -39,6 +39,12 @@
     const series = Array.isArray(spec.series) ? spec.series : [];
     series.forEach((s, i) => { if (s && s.style != null && !['solid', 'dashed', 'dotted'].includes(s.style)) errs.push(`series[${i}].style must be solid, dashed or dotted`); });
     series.forEach((s, i) => { if (s && s.marker != null && !MARKERS.includes(s.marker)) errs.push(`series[${i}].marker must be one of ${MARKERS.join(', ')}`); });
+    series.forEach((s, i) => {
+      if (!s || s.note == null) return;
+      if (typeof s.note !== 'string') errs.push(`series[${i}].note must be a string`);
+      if (s.noteSide != null && !['above', 'right', 'left'].includes(s.noteSide)) errs.push(`series[${i}].noteSide must be above, right or left`);
+      if (s.noteAt != null && !(Number.isInteger(s.noteAt) && s.noteAt >= 0)) errs.push(`series[${i}].noteAt must be a point index`);
+    });
     if (AXIS_KINDS.includes(spec.kind)) {
       if (!spec.x || typeof spec.x.label !== 'string' || !spec.x.label) errs.push('x.label is required (axis title)');
       if (!spec.y || typeof spec.y.label !== 'string' || !spec.y.label) errs.push('y.label is required (axis title)');
@@ -521,7 +527,20 @@
     const real = pts.filter(Boolean);
     if (real.length > 1) out.push(`<polyline points="${real.map((p) => p.map((v) => v.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="#000" stroke-width="1.8"${dash}/>`);
     for (const [x, y] of real) out.push(marker(s.marker, x, y));
+    out.push(...seriesNote(s, pts));
     return out;
+  }
+
+  // A printed note on a line: "note" is the text, "noteAt" the point index (default: the middle point),
+  // and "noteSide" is "above" (default), "right" or "left" of that point. Notes stay out of the legend.
+  function seriesNote(s, pts) {
+    if (!s.note) return [];
+    const idx = isNum(s.noteAt) ? s.noteAt : Math.floor((pts.length - 1) / 2);
+    const p = pts[idx];
+    if (!p) return [];
+    if (s.noteSide === 'right') return [text((p[0] + 6).toFixed(1), (p[1] + 4).toFixed(1), s.note, { anchor: 'start' })];
+    if (s.noteSide === 'left') return [text((p[0] - 6).toFixed(1), (p[1] + 4).toFixed(1), s.note, { anchor: 'end' })];
+    return [text(p[0].toFixed(1), (p[1] - 8).toFixed(1), s.note)];
   }
 
   function scatterSvg(spec, id) {

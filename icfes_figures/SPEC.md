@@ -70,6 +70,8 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 - Use `points` instead of `categories` when the x values are uneven numbers (for example time at
   half hours). Each point sits at its real x.
 
+- A series can carry a printed `note` on one of its points, for example a label on a dashed reference line. `noteAt` is the point index (default: the middle point), and `noteSide` is `above` (default), `right` or `left` of it. A note is text on the plot and never a legend entry.
+
 ### `scatter`, points on numeric axes
 
 ```json

@@ -455,3 +455,17 @@ test('curve axes print tick values only when the axis asks for them', () => {
   const plain = F.render({ ...c, x: { ...c.x, ticks: undefined }, y: { ...c.y, ticks: undefined } });
   assert.ok(!plain.includes('>12<'));
 });
+
+test('a line series can carry a printed note at a point, to the side of a reference line', () => {
+  // A dashed vertical reference line at x = 40.8, labelled at its bottom point on the right, as S11-D 2da Q56 prints it.
+  const spec = { kind: 'line', x: { label: 'Tiempo', min: 0, max: 50, step: 10 }, y: { label: 'Temperatura', min: 0, max: 45, step: 5 },
+    series: [
+      { points: [[0, 17.8], [40.8, 37.4]], marker: 'dot' },
+      { points: [[40.8, 0], [40.8, 45]], style: 'dashed', note: 'Explosión globo', noteAt: 0, noteSide: 'right' },
+    ] };
+  assert.deepEqual(F.validate(spec), []);
+  const svg = F.render(spec);
+  assert.ok(svg.includes('>Explosión globo<'));
+  assert.ok(F.validate({ ...spec, series: [{ points: [[0, 1], [1, 2]], note: 'x', noteSide: 'top' }] }).length > 0);
+  assert.ok(F.validate({ ...spec, series: [{ points: [[0, 1], [1, 2]], note: 'x', noteAt: 1.5 }] }).length > 0);
+});
