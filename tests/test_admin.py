@@ -360,3 +360,9 @@ def test_a_crop_takes_the_place_of_a_figure_left_for_a_hand_crop(root, tmp_path)
     assert store.progress(EXAM)["figures"]["to_crop"] == 0
     store.undo(EXAM, 1)
     assert [f["figure_id"] for f in store.question_detail(EXAM, 1)["figures"]] == ["t-q1-opt-a"]
+
+
+def test_all_questions_come_in_one_list_with_their_exam(root):
+    rows = Store(root).all_rows()
+    assert [(r["exam"], r["number"]) for r in rows] == [(EXAM, 1), (EXAM, 2), (EXAM, 3)]
+    assert rows[1]["hidden"] == ["not ready", "text pending"] and rows[0]["snippet"] == "Pregunta 1?"

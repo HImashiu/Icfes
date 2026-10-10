@@ -55,6 +55,9 @@ textarea{width:100%;min-height:110px;font:400 14px/1.45 ui-monospace,Menlo,monos
 .cell.err{border-color:var(--bad);color:var(--bad)}
 .cell.cur{border-width:3px;border-color:var(--text)}
 .cell.crop,.qstrip button.crop{position:relative}
+table.flat td{padding:8px 10px}
+table.flat td:first-child{white-space:nowrap}
+table.flat .badge{margin:1px 4px 1px 0}
 .cell.crop::after,.qstrip button.crop::after{content:"✂";position:absolute;top:-7px;right:-6px;font-size:11px;line-height:16px;width:16px;border-radius:50%;background:var(--flame);color:#0D110F}
 .figcard.todo{border:2px dashed var(--flame)}
 .btn{min-height:52px;padding:0 20px;border-radius:16px;border:2px solid var(--line);background:transparent;cursor:pointer;font-weight:700}
@@ -473,12 +476,100 @@ async function loadExam() {
   state.rows = rows;
   state.natives = natives;
 }
+// ----- all questions together: one list across every exam, for finding and fixing problems -----
+
+state.flat = !!recall("flat");
+state.sort = recall("sort") || "exam";
+const viewSwitch = () => STATIC ? "" : `<div class="toolbar"><span class="seg" style="display:inline-flex">
+    <button class="${state.flat ? "" : "on"}" data-flat="0">Por examen</button><button class="${state.flat ? "on" : ""}" data-flat="1">Todo junto</button></span>
+    <span class="muted" style="font-size:13px">${state.flat ? `Todas las preguntas de los ${state.exams.length || ""} exámenes en una sola lista.` : "Una prueba a la vez, como la ven los estudiantes."}</span></div>`;
+function bindViewSwitch() {
+  app.querySelectorAll("[data-flat]").forEach(b => b.onclick = () => { state.flat = b.dataset.flat === "1"; remember("flat", state.flat); state.queue = null; showQuestions(); });
+}
+// What is wrong with one row, in plain words.
+function rowProblems(r, bad) {
+  return [...r.hidden.map(x => REASONS[x] || x), ...(bad ? ["figura inválida"] : []), ...(r.to_crop ? [`✂ ${r.to_crop} por recortar`] : [])];
+}
+async function loadAll() {
+  if (!state.exams.length) state.exams = await api("/api/exams");
+  const [rows, ...natives] = await Promise.all([api("/api/questions"),
+    ...state.exams.map(e => api(`/api/exams/${encodeURIComponent(e.exam)}/figures`).catch(() => ({})))]);
+  await mapsReady;
+  state.allNatives = Object.fromEntries(state.exams.map((e, i) => [e.exam, natives[i]]));
+  const badIn = (exam, n) => (state.allNatives[exam]?.[String(n)] || []).some(f => figProblems(f).length);
+  state.all = rows.map(r => ({ ...r, bad: badIn(r.exam, r.number) }));
+}
+const FLAT_PASS = {
+  all: () => true, hidden: r => r.hidden.length > 0 || r.bad, errors: r => r.errors > 0, badfig: r => r.bad,
+  crop: r => r.to_crop > 0, warnings: r => r.warnings > 0, notready: r => !r.ready,
+};
+const weight = r => r.errors * 10 + r.hidden.length * 3 + (r.bad ? 3 : 0) + (r.to_crop ? 2 : 0) + r.warnings;
+async function showFlat() {
+  status("Leyendo…");
+  if (!state.all || state.allStale) { await loadAll(); state.allStale = false; }
+  const q = (state.flatText || "").trim().toLowerCase();
+  let rows = state.all.filter(FLAT_PASS[state.filter] || FLAT_PASS.all)
+    .filter(r => !state.flatArea || r.section === state.flatArea)
+    .filter(r => !q || `${r.exam} ${r.number} ${r.snippet}`.toLowerCase().includes(q));
+  if (state.sort === "worst") rows = [...rows].sort((a, b) => weight(b) - weight(a));
+  if (state.sort === "area") rows = [...rows].sort((a, b) => (a.section || "").localeCompare(b.section || ""));
+  state.queue = rows.map(r => [r.exam, r.number]);
+  status(`${fmt(rows.length)} preguntas`, "ok");
+  const areas = [...new Set(state.all.map(r => r.section).filter(Boolean))].sort();
+  const shown = rows.slice(0, state.flatLimit || 300);
+  app.innerHTML = `${viewSwitch()}
+    <div class="toolbar">
+      ${FILTERS.map(([v, l]) => `<button class="chip ${v === state.filter ? "on" : ""}" data-filter="${v}">${l} <span class="muted num">${fmt(state.all.filter(FLAT_PASS[v]).length)}</span></button>`).join("")}
+    </div>
+    <div class="toolbar">
+      <input id="flat-q" placeholder="Buscar por examen, número o texto" value="${esc(state.flatText || "")}" style="flex:1;min-width:220px;padding:10px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--text)">
+      <select id="flat-area" aria-label="Área"><option value="">Todas las áreas</option>${areas.map(a => `<option ${a === state.flatArea ? "selected" : ""}>${esc(a)}</option>`).join("")}</select>
+      <select id="flat-sort" aria-label="Orden">${[["exam", "Por examen y número"], ["worst", "Más problemas primero"], ["area", "Por área"]].map(([v, l]) => `<option value="${v}" ${v === state.sort ? "selected" : ""}>${l}</option>`).join("")}</select>
+      <span class="muted num">${fmt(rows.length)} de ${fmt(state.all.length)}</span>
+    </div>
+    <table class="flat">
+      <thead><tr><th>Examen</th><th>Pregunta</th><th>Área</th><th>Qué le falta</th><th>Comienza así</th></tr></thead>
+      <tbody>${shown.map(r => {
+        const probs = rowProblems(r, r.bad);
+        return `<tr class="row" data-exam="${esc(r.exam)}" data-n="${r.number}">
+          <td><b>${esc(r.exam)}</b></td><td class="num">${r.number}</td>
+          <td><span class="chip" style="min-height:0;padding:2px 8px;border:0;cursor:inherit"><i style="background:${areaColor(r.section)}"></i>${esc(r.section || "—")}</span></td>
+          <td>${probs.length ? probs.map(p => `<span class="badge hid">${esc(p)}</span>`).join("") : '<span class="badge ok">visible</span>'}
+            ${r.messages.map(m => `<div class="${r.errors ? "bad" : "muted"}" style="font-size:12px">${esc(checkMsg(m))}</div>`).join("")}</td>
+          <td class="muted" style="font-size:13px">${esc(r.snippet)}</td></tr>`;
+      }).join("")}</tbody>
+    </table>
+    ${rows.length > shown.length ? `<p><button class="btn sm" id="flat-more">Mostrar ${fmt(Math.min(300, rows.length - shown.length))} más</button> <span class="muted">(${fmt(rows.length - shown.length)} sin mostrar)</span></p>` : ""}`;
+  bindViewSwitch();
+  app.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { state.filter = b.dataset.filter; state.flatLimit = 300; showFlat(); });
+  $("#flat-sort").onchange = e => { state.sort = e.target.value; remember("sort", state.sort); showFlat(); };
+  $("#flat-area").onchange = e => { state.flatArea = e.target.value; showFlat(); };
+  let t; $("#flat-q").oninput = e => { clearTimeout(t); t = setTimeout(() => { state.flatText = e.target.value; state.flatLimit = 300; showFlat().then(() => { const i = $("#flat-q"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }); }, 250); };
+  if ($("#flat-more")) $("#flat-more").onclick = () => { state.flatLimit = (state.flatLimit || 300) + 300; showFlat(); };
+  app.querySelectorAll("tr[data-exam]").forEach(tr => tr.onclick = () => openFrom(tr.dataset.exam, Number(tr.dataset.n)));
+}
+async function openFrom(exam, n) {
+  const change = state.exam !== exam;
+  state.exam = exam;
+  await openQuestion(n, { reloadExam: change });
+}
+// In the all-together view, "Siguiente por arreglar" walks that list (across exams) instead of one exam.
+function nextInQueue() {
+  const q = state.queue || [], i = q.findIndex(([e, n]) => e === state.exam && n === state.n);
+  const left = q.slice(i + 1).filter(([e, n]) => {
+    const r = state.all?.find(x => x.exam === e && x.number === n);
+    return r && (r.errors || r.hidden.length || r.bad || r.to_crop);
+  });
+  return left[0] || null;
+}
+
 function cellClass(r) {
   const bad = badFigure(r.number);
   return (r.errors || bad ? "err" : r.hidden.length ? "hidden" : "ready") + (r.to_crop ? " crop" : "");
 }
 
 async function showQuestions() {
+  if (state.flat && !STATIC) return showFlat();
   status("Leyendo…");
   await loadExam();
   const rows = state.rows;
@@ -489,6 +580,7 @@ async function showQuestions() {
   const opts = state.exams.map(e => `<option value="${esc(e.exam)}" ${e.exam === state.exam ? "selected" : ""}>${esc(e.exam)}</option>`).join("");
   const sections = [...new Set(rows.map(r => r.section).filter(Boolean))];
   app.innerHTML = `
+    ${viewSwitch()}
     <div class="toolbar">
       <select id="pick-exam" aria-label="Examen">${opts}</select>
       ${FILTERS.map(([v, l]) => `<button class="chip ${v === state.filter ? "on" : ""}" data-filter="${v}">${l}</button>`).join("")}
@@ -504,6 +596,7 @@ async function showQuestions() {
       </div>
       <div class="muted" style="margin-top:12px">Relleno verde: visible para estudiantes. Borde punteado: oculta. Borde rojo: error del validador o figura que no se puede dibujar (los estudiantes no la ven). ✂: tiene una figura por recortar del PDF.</div>
     </div>`;
+  bindViewSwitch();
   $("#pick-exam").onchange = (e) => { state.exam = e.target.value; state.n = null; showQuestions(); };
   app.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { state.filter = b.dataset.filter; showQuestions(); });
   app.querySelectorAll("button[data-n]").forEach(b => b.onclick = () => openQuestion(Number(b.dataset.n)));
@@ -600,7 +693,13 @@ function renderWorkspace() {
   $("#next").onclick = () => next && leave(() => openQuestion(next));
   $("#ed-exam").onchange = (e) => leave(async () => { state.exam = e.target.value; await loadExam(); openQuestion(state.rows[0].number); });
   $("#save").onclick = saveQuestion;
-  $("#fixnext").onclick = () => { const n = nextToFix(); if (n == null) toast("No queda nada por arreglar en este examen 🎉"); else leave(() => openQuestion(n)); };
+  $("#fixnext").onclick = () => {
+    if (state.flat && state.queue) {
+      const nx = nextInQueue();
+      return nx ? leave(() => openFrom(nx[0], nx[1])) : toast("No queda nada por arreglar en esta lista 🎉");
+    }
+    const n = nextToFix(); if (n == null) toast("No queda nada por arreglar en este examen 🎉"); else leave(() => openQuestion(n));
+  };
   remember("last", { exam: state.exam, n: d.number });
   $("#toggle-prev").onclick = () => { state.preview = !state.preview; $("#edgrid").classList.toggle("noprev", !state.preview); $("#toggle-prev").textContent = prevLabel(); };
   if ($("#undo")) $("#undo").onclick = undo;
@@ -720,7 +819,7 @@ function formPane(q, g) {
 
 // The checker's messages, in plain Spanish.
 const CHECK = [
-  [/still has review flags: (.+)/, m => `Tiene una marca de revisión pendiente (${m[1].replace("pending_figure", "falta la figura")}). Ábrela abajo en «Marcas de revisión y notas».`],
+  [/still has review flags: (.+)/, m => `Marca de revisión pendiente: ${m[1].replace("pending_figure", "falta la figura")}`],
   [/duplicate question number/, () => "El número de la pregunta está repetido"],
   [/out of order after Q(\d+)/, m => `Está fuera de orden después de la pregunta ${m[1]}`],
   [/empty question text/, () => "La pregunta no tiene texto"],
@@ -893,6 +992,8 @@ function refreshChrome() {
   if ($("#nsmiss")) $("#nsmiss").innerHTML = nsMissHtml();
   const r = state.rows.find(x => x.number === d.number);
   if (r) r.to_crop = d.figures.filter(isToCrop).length;
+  const a = state.all?.find(x => x.exam === d.exam && x.number === d.number);
+  if (a) { Object.assign(a, { hidden: d.hidden_reasons, to_crop: d.figures.filter(isToCrop).length, bad: badFigure(d.number) }); state.allStale = true; }
   const cell = $(`#qstrip button[data-n="${d.number}"]`);
   if (r && cell) cell.className = `${cellClass(r)} cur`;
 }

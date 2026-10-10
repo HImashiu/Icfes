@@ -211,8 +211,14 @@ class Store:
                 "errors": len(msgs["errors"]),
                 "warnings": len(msgs["warnings"]),
                 "to_crop": sum(1 for f in figs.get(n, []) if f.get("method") == MANUAL_CROP),
+                "messages": (msgs["errors"] + msgs["warnings"])[:4],
+                "snippet": " ".join((q.get("stem_md") or q.get("stimulus_md") or "").split())[:120],
             })
         return rows
+
+    def all_rows(self):
+        """Every question of every exam in one list, for the admin view without exam tabs."""
+        return [{"exam": e, **r} for e in self.exam_ids() for r in self.question_rows(e)]
 
     def question_detail(self, exam, n):
         g = self.golden(exam)

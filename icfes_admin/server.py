@@ -52,6 +52,11 @@ def list_questions(store, m, body, query):
     return store.question_rows(m.group(1))
 
 
+@route("GET", r"/api/questions")
+def all_questions(store, m, body, query):
+    return store.all_rows()
+
+
 @route("GET", r"/api/exams/([^/]+)/questions/(\d+)")
 def get_question(store, m, body, query):
     return store.question_detail(m.group(1), int(m.group(2)))
