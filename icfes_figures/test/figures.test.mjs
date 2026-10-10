@@ -171,3 +171,90 @@ test('invalid diagrams are reported', () => {
   assert.ok(F.validate({ kind: 'diagram', shapes: [{ type: 'line', x1: 0, y1: 0, x2: 1, y2: 1, arrow: 'up' }] }).length > 0);
   assert.ok(F.validate({ kind: 'diagram', shapes: [{ type: 'rect', x: 0, y: 0, w: 5, h: 5, fill: 'red' }] }).length > 0);
 });
+
+const combo = { kind: 'combo', title: 'Gasto e ingreso', x: { label: 'Mes' }, y: { label: 'Gasto' }, y2: { label: 'Ingreso', min: 0, max: 100, step: 20 },
+  categories: ['Ene', 'Feb', 'Mar'], series: [{ name: 'Gasto', type: 'bar', values: [40, 55, 30] }, { name: 'Ingreso', type: 'line', values: [60, 70, null], axis: 2 }] };
+
+test('combo validates bars and lines, and needs y2 when a line uses axis 2', () => {
+  assert.deepEqual(F.validate(combo), []);
+  const noY2 = { ...combo, y2: undefined };
+  assert.ok(F.validate(noY2).some((e) => /y2/.test(e)));
+  assert.ok(F.validate({ ...combo, series: [{ type: 'area', values: [1, 2, 3] }] }).length > 0);
+});
+
+test('combo draws one rect per bar value and one polyline per line series', () => {
+  const svg = F.render(combo);
+  // Bars are the only rects with a 0.8 stroke; the pattern tiles and the legend are not bars.
+  assert.equal((svg.match(/<rect [^>]*stroke-width="0.8"/g) || []).length, 3);
+  assert.equal((svg.match(/<polyline /g) || []).length, 1);
+});
+
+test('horizontal bars draw one bar per value, and orientation is checked', () => {
+  const h = { kind: 'bar', orientation: 'horizontal', title: 'Ventas', x: { label: 'Tienda' }, y: { label: 'Ventas', min: 0, max: 40, step: 10 },
+    categories: ['Norte', 'Centro', 'Sur'], series: [{ name: '2019', values: [12, 30, 8] }, { name: '2020', values: [20, 25, 0] }] };
+  assert.deepEqual(F.validate(h), []);
+  assert.equal((F.render(h).match(/stroke-width="0.8"/g) || []).length, 6);
+  assert.ok(F.validate({ ...h, orientation: 'diagonal' }).length > 0);
+});
+
+test('area fills under a line and skips gaps', () => {
+  const a = { kind: 'line', x: { label: 'Mes' }, y: { label: 'Casos', min: 0, max: 10, step: 2 }, categories: ['A', 'B', 'C', 'D'],
+    series: [{ name: 'x', values: [1, 4, null, 2], area: true }] };
+  assert.deepEqual(F.validate(a), []);
+  // Two runs: [1, 4] has two points so it fills; the single point after the gap does not.
+  assert.equal((F.render(a).match(/<polygon /g) || []).length, 1);
+});
+
+test('year axes are not grouped: 1995 stays 1995, not 1.995', () => {
+  const yr = { kind: 'line', x: { label: 'Año', min: 1990, max: 2000, step: 5 }, y: { label: 'Tasa' }, series: [{ name: 'a', points: [[1990, 1], [2000, 3]] }] };
+  const svg = F.render(yr);
+  assert.ok(svg.includes('>1990<') && svg.includes('>2000<'));
+  assert.ok(!svg.includes('1.990'));
+  // An explicit format wins, and a non-year label keeps the grouped default.
+  const grouped = { ...yr, x: { label: 'Año', min: 1990, max: 2000, step: 5, format: 'grouped' } };
+  assert.ok(F.render(grouped).includes('1.990'));
+  const money = { kind: 'line', x: { label: 'Pesos', min: 1000, max: 2000, step: 500 }, y: { label: 'Tasa' }, series: [{ name: 'a', points: [[1000, 1], [2000, 3]] }] };
+  assert.ok(F.render(money).includes('1.000'));
+});
+
+test('log y axis places decades evenly and rejects zero or negative values', () => {
+  const log = { kind: 'scatter', x: { label: 'Profundidad', min: 0, max: 10, step: 2 }, y: { label: 'Intensidad', scale: 'log' }, series: [{ points: [[1, 2], [4, 300], [8, 50000]] }] };
+  assert.deepEqual(F.validate(log), []);
+  const svg = F.render(log);
+  // Decades 1, 10, 100, 1.000, 10.000, 100.000 each get a tick label.
+  for (const t of ['>1<', '>10<', '>100<', '>1.000<', '>10.000<', '>100.000<']) assert.ok(svg.includes(t), t);
+  assert.ok(F.validate({ ...log, series: [{ points: [[1, 0], [4, 3]] }] }).length > 0);
+  assert.ok(F.validate({ ...log, y: { label: 'I', scale: 'log', min: 0 } }).length > 0);
+  assert.ok(F.validate({ ...log, y: { label: 'I', scale: 'sqrt' } }).length > 0);
+});
+
+test('dotted style draws dotted lines on line and curve series', () => {
+  const dotted = { kind: 'line', x: { label: 'Mes' }, y: { label: 'Casos' }, categories: ['A', 'B', 'C'], series: [{ values: [1, 2, 3], style: 'dotted' }] };
+  assert.deepEqual(F.validate(dotted), []);
+  assert.ok(F.render(dotted).includes('stroke-dasharray="1 3"'));
+  const curveDotted = { kind: 'curve', x: { label: 'T' }, y: { label: 'P' }, series: [{ points: [[0, 0], [1, 2]], style: 'dotted' }] };
+  assert.deepEqual(F.validate(curveDotted), []);
+  assert.ok(F.render(curveDotted).includes('stroke-dasharray="1 3"'));
+  assert.ok(F.validate({ ...dotted, series: [{ values: [1, 2, 3], style: 'wavy' }] }).length > 0);
+});
+
+test('boxed text wraps to maxWidth and shrinks to fit maxHeight', () => {
+  const t = { type: 'text', x: 50, y: 40, text: 'Recaptación del neurotransmisor en la neurona emisora', size: 12, maxWidth: 90, maxHeight: 40 };
+  const L = F.textLayout(t);
+  assert.ok(L.lines.length >= 2, 'wraps onto several lines');
+  assert.ok(L.size < 12 && L.size >= 7, 'font shrinks but not below minSize');
+  assert.ok(L.lines.length * 1.15 * L.size <= 40 + 1e-9, 'block fits the height');
+  assert.equal(L.overflow, false);
+  const svg = F.render({ kind: 'diagram', shapes: [t] });
+  assert.equal((svg.match(/<text /g) || []).length, L.lines.length);
+});
+
+test('boxed text that cannot fit even at minSize is flagged, and short text is left alone', () => {
+  const tight = { type: 'text', x: 0, y: 0, text: 'palabraextremadamentelarga', size: 12, maxWidth: 30, minSize: 7 };
+  assert.equal(F.textLayout(tight).overflow, true);
+  assert.deepEqual(F.textOverflows({ kind: 'diagram', shapes: [tight] }).length, 1);
+  const ok = { type: 'text', x: 0, y: 0, text: 'ok', size: 12, maxWidth: 100 };
+  assert.equal(F.textLayout(ok).overflow, false);
+  assert.equal(F.textLayout(ok).size, 12);
+  assert.ok(F.validate({ kind: 'diagram', shapes: [{ ...ok, maxWidth: -3 }] }).length > 0);
+});

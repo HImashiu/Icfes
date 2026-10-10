@@ -9,8 +9,8 @@
 })(typeof self !== 'undefined' ? self : globalThis, function () {
   'use strict';
 
-  const KINDS = ['bar', 'line', 'scatter', 'curve', 'pie', 'table', 'geometry', 'diagram'];
-  const AXIS_KINDS = ['bar', 'line', 'scatter', 'curve'];
+  const KINDS = ['bar', 'line', 'scatter', 'curve', 'pie', 'table', 'geometry', 'diagram', 'combo'];
+  const AXIS_KINDS = ['bar', 'line', 'scatter', 'curve', 'combo'];
   // Booklets print in grey-scale, so series use fill patterns, not grey shades.
   const PATTERNS = ['hatch', 'solid', 'white', 'dots'];
   const W = 480;
@@ -30,13 +30,18 @@
       for (const k of ['min', 'max', 'step']) if (a[k] != null && !isNum(a[k])) errs.push(`${name}.${k} must be a number`);
       if (isNum(a.min) && isNum(a.max) && a.min >= a.max) errs.push(`${name}: min must be below max`);
       if (isNum(a.step) && a.step <= 0) errs.push(`${name}.step must be positive`);
+      if (a.scale != null && a.scale !== 'linear' && a.scale !== 'log') errs.push(`${name}.scale must be linear or log`);
+      if (a.scale === 'log' && ((isNum(a.min) && a.min <= 0) || (isNum(a.max) && a.max <= 0))) errs.push(`${name}: a log axis needs positive min and max`);
+      if (a.format != null && a.format !== 'plain' && a.format !== 'grouped') errs.push(`${name}.format must be plain or grouped`);
       if (a.domain != null && (!Array.isArray(a.domain) || a.domain.length !== 2 || !isNum(a.domain[0]) || !isNum(a.domain[1]) || a.domain[0] >= a.domain[1])) errs.push(`${name}.domain must be [lo, hi] with lo below hi`);
     };
     const series = Array.isArray(spec.series) ? spec.series : [];
+    series.forEach((s, i) => { if (s && s.style != null && !['solid', 'dashed', 'dotted'].includes(s.style)) errs.push(`series[${i}].style must be solid, dashed or dotted`); });
     if (AXIS_KINDS.includes(spec.kind)) {
       if (!spec.x || typeof spec.x.label !== 'string' || !spec.x.label) errs.push('x.label is required (axis title)');
       if (!spec.y || typeof spec.y.label !== 'string' || !spec.y.label) errs.push('y.label is required (axis title)');
     }
+    if (spec.orientation != null && spec.orientation !== 'vertical' && spec.orientation !== 'horizontal') errs.push('orientation must be vertical or horizontal');
     if (spec.kind === 'bar' || spec.kind === 'line') {
       const numericLine = spec.kind === 'line' && series.some((s) => Array.isArray(s.points));
       if (numericLine) {
@@ -83,7 +88,6 @@
       series.forEach((s, i) => {
         if (!Array.isArray(s.points) || s.points.length < 2) return errs.push(`series[${i}].points needs at least two [x, y] pairs`);
         s.points.forEach((p, j) => { if (!Array.isArray(p) || p.length !== 2 || !isNum(p[0]) || !isNum(p[1])) errs.push(`series[${i}].points[${j}] must be [x, y]`); });
-        if (s.style != null && s.style !== 'solid' && s.style !== 'dashed') errs.push(`series[${i}].style must be solid or dashed`);
       });
     } else if (spec.kind === 'pie') {
       if (!Array.isArray(spec.slices) || spec.slices.length < 2) errs.push('slices needs at least two entries');
@@ -99,6 +103,24 @@
         const g = layoutTable(spec);
         errs.push(...g.errors);
       }
+    }
+    if (spec.kind === 'combo') {
+      if (!Array.isArray(spec.categories) || spec.categories.length === 0) errs.push('categories must be a non-empty array');
+      if (series.length === 0) errs.push('series must be a non-empty array');
+      const usesSecondAxis = series.some((s) => s.axis === 2);
+      if (usesSecondAxis && (!spec.y2 || !spec.y2.label)) errs.push('y2 with a label is required when a series uses axis 2');
+      series.forEach((s, i) => {
+        if (s.type !== 'bar' && s.type !== 'line') errs.push(`series[${i}].type must be bar or line`);
+        if (s.axis != null && s.axis !== 1 && s.axis !== 2) errs.push(`series[${i}].axis must be 1 or 2`);
+        if (!Array.isArray(s.values) || s.values.length !== (spec.categories || []).length) return errs.push(`series[${i}].values must have one entry per category`);
+        s.values.forEach((v, j) => {
+          if (v === null && s.type === 'line') return;
+          if (!isNum(v)) errs.push(`series[${i}].values[${j}] must be a number`);
+          else if (s.type === 'bar' && v < 0) errs.push(`series[${i}].values[${j}] must not be negative`);
+        });
+      });
+      axis('y', spec.y);
+      axis('y2', spec.y2);
     }
     if (spec.kind === 'diagram') {
       if (!Array.isArray(spec.shapes) || spec.shapes.length === 0) errs.push('shapes must be a non-empty array');
@@ -118,6 +140,11 @@
       (spec.angles || []).forEach((g, i) => { if (!ok(g.vertex) || !ok(g.a) || !ok(g.b)) errs.push(`angles[${i}] needs known vertex, a and b`); });
       (spec.labels || []).forEach((g, i) => { if (!ok(g.at) || typeof g.text !== 'string') errs.push(`labels[${i}] needs at and text`); });
     }
+    ['x', 'y'].forEach((k) => {
+      if (!spec[k] || spec[k].scale !== 'log') return;
+      const vals = series.flatMap((s) => (s.points ? s.points.map((p) => (Array.isArray(p) ? p[k === 'x' ? 0 : 1] : NaN)) : (s.values || [])));
+      if (vals.some((v) => v !== null && (!isNum(v) || v <= 0))) errs.push(`${k} is a log axis, so every value must be above 0`);
+    });
     return errs;
   }
 
@@ -133,6 +160,12 @@
     return (Math.abs(n) >= 1000 ? group(whole) : whole) + (frac ? ',' + frac : '');
   }
 
+  // Years and other plain numbers are not grouped: 1995 must not read 1.995.
+  function tickText(axis, v) {
+    const plain = axis && (axis.format === 'plain' || (axis.format == null && /a[ñn]o|year/i.test(axis.label || '')));
+    return plain ? String(v).replace('.', ',') : fmt(v);
+  }
+
   function niceStep(span, target) {
     const raw = span / (target || 5);
     const mag = Math.pow(10, Math.floor(Math.log10(raw)));
@@ -144,6 +177,7 @@
   // Linear scale from a data extent, honouring explicit min/max/step from the spec.
   // axis.domain = [lo, hi] widens the drawn scale without adding ticks outside min..max.
   function scaleFor(axis, values, forceZero) {
+    if (axis && axis.scale === 'log') return logScale(axis, values);
     const vals = values.filter(isNum);
     let lo = vals.length ? Math.min(...vals) : 0;
     let hi = vals.length ? Math.max(...vals) : 1;
@@ -160,6 +194,18 @@
     const ticks = [];
     for (let v = tickLo; v <= tickHi + step * 1e-9; v += step) ticks.push(Math.round(v / step * 1e9) / 1e9 * step);
     return { lo, hi, step, ticks };
+  }
+
+  // Log axis: bounds snap to powers of ten and every decade gets a tick.
+  function logScale(axis, values) {
+    const vals = values.filter((v) => isNum(v) && v > 0);
+    const lo0 = isNum(axis.min) ? axis.min : (vals.length ? Math.min(...vals) : 1);
+    const hi0 = isNum(axis.max) ? axis.max : (vals.length ? Math.max(...vals) : 10);
+    const e0 = Math.floor(Math.log10(lo0));
+    const e1 = Math.max(Math.ceil(Math.log10(hi0)), e0 + 1);
+    const ticks = [];
+    for (let e = e0; e <= e1; e++) ticks.push(Math.pow(10, e));
+    return { lo: Math.pow(10, e0), hi: Math.pow(10, e1), step: 1, ticks, log: true };
   }
 
   function wrapLabel(text, max) {
@@ -216,10 +262,11 @@
     const left = 58;
     const plotRight = right == null ? W - 16 : right;
     const bottom = H - 50 - (extraBottom || 0);
-    const y = (v) => bottom - (v - yScale.lo) / (yScale.hi - yScale.lo) * (bottom - top);
+    const tf = yScale.log ? Math.log10 : (v) => v;
+    const y = (v) => bottom - (tf(v) - tf(yScale.lo)) / (tf(yScale.hi) - tf(yScale.lo)) * (bottom - top);
     for (const t of yScale.ticks) {
       out.push(`<line x1="${left}" x2="${plotRight}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}" stroke="#e4e4e4" stroke-width="1"/>`);
-      out.push(text(left - 6, (y(t) + 4).toFixed(1), fmt(t), { anchor: 'end' }));
+      out.push(text(left - 6, (y(t) + 4).toFixed(1), tickText(spec.y, t), { anchor: 'end' }));
     }
     out.push(`<line x1="${left}" x2="${left}" y1="${top}" y2="${bottom}" stroke="#000"/>`);
     out.push(`<line x1="${left}" x2="${plotRight}" y1="${bottom}" y2="${bottom}" stroke="#000"/>`);
@@ -240,7 +287,47 @@
     return out;
   }
 
+  // Horizontal bars: categories run down the left, values run across. spec.y is the value axis.
+  function hbarSvg(spec, id) {
+    const series = spec.series;
+    const showLegend = series.length > 1 || (series[0] && series[0].name);
+    const xScale = scaleFor(spec.y, series.flatMap((s) => s.values), true);
+    const labelW = Math.min(170, Math.max(...spec.categories.map((c) => String(c).length)) * 6.5);
+    const left = 24 + labelW;
+    const right = W - 24;
+    const top = 14 + (spec.title ? 16 : 0) + (showLegend ? 18 : 0);
+    const bottom = H - 40;
+    const out = [];
+    if (spec.title) out.push(text(W / 2, 18, spec.title, { weight: 'bold' }));
+    if (showLegend) out.push(...legend(series, left, top - 6, id));
+    const xAt = (v) => left + (v - xScale.lo) / (xScale.hi - xScale.lo) * (right - left);
+    for (const t of xScale.ticks) {
+      out.push(`<line x1="${xAt(t).toFixed(1)}" x2="${xAt(t).toFixed(1)}" y1="${top}" y2="${bottom}" stroke="#e4e4e4" stroke-width="1"/>`);
+      out.push(text(xAt(t).toFixed(1), bottom + 15, fmt(t)));
+    }
+    out.push(`<line x1="${left}" x2="${left}" y1="${top}" y2="${bottom}" stroke="#000"/>`);
+    out.push(`<line x1="${left}" x2="${right}" y1="${bottom}" y2="${bottom}" stroke="#000"/>`);
+    if (spec.y && spec.y.label) out.push(text((left + right) / 2, H - 6, spec.y.label));
+    if (spec.x && spec.x.label) out.push(text(12, (top + bottom) / 2, spec.x.label, { rotate: -90 }));
+    const band = (bottom - top) / spec.categories.length;
+    const barH = Math.min(26, band * 0.7 / series.length);
+    spec.categories.forEach((cat, c) => {
+      const cy = top + band * (c + 0.5);
+      out.push(text(left - 6, (cy + 4).toFixed(1), cat, { anchor: 'end' }));
+      series.forEach((s, si) => {
+        const v = s.values[c];
+        if (!isNum(v)) return;
+        const x0 = xAt(Math.min(0, xScale.lo));
+        const x1 = xAt(Math.max(v, 0));
+        const y = cy - (barH * series.length) / 2 + si * barH;
+        out.push(`<rect x="${Math.min(x0, x1).toFixed(1)}" y="${y.toFixed(1)}" width="${Math.abs(x1 - x0).toFixed(1)}" height="${barH.toFixed(1)}" fill="${fillFor(s, si, id)}" stroke="#000" stroke-width="0.8"/>`);
+      });
+    });
+    return out;
+  }
+
   function barSvg(spec, id) {
+    if (spec.orientation === 'horizontal') return hbarSvg(spec, id);
     const series = spec.series;
     const showLegend = series.length > 1 || (series[0] && series[0].name);
     const primary = series.filter((s) => s.axis !== 2);
@@ -292,7 +379,27 @@
     spec.categories.forEach((cat, c) => {
       wrapLabel(cat, 14).forEach((line, k) => out.push(text(xAt(c).toFixed(1), fr.bottom + 15 + k * 13, line)));
     });
-    series.forEach((s, si) => out.push(...polyline(s, si, s.values.map((v, c) => (isNum(v) ? [xAt(c), fr.y(v)] : null)))));
+    series.forEach((s, si) => {
+      const pts = s.values.map((v, c) => (isNum(v) ? [xAt(c), fr.y(v)] : null));
+      if (s.area) out.push(...areaPolygons(pts, fr.y(Math.max(0, yScale.lo)), fillFor(s, si, id)));
+      out.push(...polyline(s, si, pts));
+    });
+    return out;
+  }
+
+  // Area under a line: one filled polygon per run of non-null points, closed on the baseline.
+  function areaPolygons(pts, base, fill) {
+    const out = [];
+    let run = [];
+    const flush = () => {
+      if (run.length > 1) {
+        const pl = [...run, [run[run.length - 1][0], base], [run[0][0], base]];
+        out.push(`<polygon points="${pl.map((p) => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}" fill="${fill}" stroke="none"/>`);
+      }
+      run = [];
+    };
+    for (const p of pts) { if (p) run.push(p); else flush(); }
+    flush();
     return out;
   }
 
@@ -307,7 +414,7 @@
     const out = fr.out;
     if (showLegend) out.push(...legend(series, fr.left, fr.top - 6, id));
     const xAt = (v) => fr.left + (v - xScale.lo) / (xScale.hi - xScale.lo) * (fr.right - fr.left);
-    for (const t of xScale.ticks) out.push(text(xAt(t).toFixed(1), fr.bottom + 15, fmt(t)));
+    for (const t of xScale.ticks) out.push(text(xAt(t).toFixed(1), fr.bottom + 15, tickText(spec.x, t)));
     series.forEach((s, si) => out.push(...polyline(s, si, s.points.map(([x, y]) => [xAt(x), fr.y(y)]))));
     return out;
   }
@@ -322,7 +429,7 @@
   // Open markers keep grey-scale legibility.
   function polyline(s, si, pts) {
     const out = [];
-    const dash = s.style === 'dashed' ? ' stroke-dasharray="5 3"' : '';
+    const dash = s.style === 'dashed' ? ' stroke-dasharray="5 3"' : s.style === 'dotted' ? ' stroke-dasharray="1 3" stroke-linecap="round"' : '';
     const real = pts.filter(Boolean);
     if (real.length > 1) out.push(`<polyline points="${real.map((p) => p.map((v) => v.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="#000" stroke-width="1.8"${dash}/>`);
     for (const [x, y] of real) out.push(marker(s.marker, x, y));
@@ -340,7 +447,7 @@
     if (showLegend) out.push(...legend(series, fr.left, fr.top - 6, id));
     for (const t of xScale.ticks) {
       const x = fr.left + (t - xScale.lo) / (xScale.hi - xScale.lo) * (fr.right - fr.left);
-      out.push(text(x.toFixed(1), fr.bottom + 15, fmt(t)));
+      out.push(text(x.toFixed(1), fr.bottom + 15, tickText(spec.x, t)));
     }
     series.forEach((s, si) => {
       s.points.forEach(([px, py]) => {
@@ -391,7 +498,7 @@
         const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
         d += ` C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
       }
-      const dash = s.style === 'dashed' ? ' stroke-dasharray="6 4"' : '';
+      const dash = s.style === 'dashed' ? ' stroke-dasharray="6 4"' : s.style === 'dotted' ? ' stroke-dasharray="1 3" stroke-linecap="round"' : '';
       out.push(`<path d="${d}" fill="none" stroke="#000" stroke-width="2"${dash}/>`);
       if (s.label) {
         const at = Math.min(P.length - 1, s.labelAt != null ? s.labelAt : Math.floor(P.length / 2));
@@ -568,6 +675,54 @@
     return out;
   }
 
+  // Combo: bars and lines over one category axis. Bars group among themselves; lines pass through the category centres.
+  // A series with axis 2 is read against y2, so a bar and a line can carry different units.
+  function comboSvg(spec, id) {
+    const series = spec.series;
+    const showLegend = series.length > 1 || (series[0] && series[0].name);
+    const primary = series.filter((s) => s.axis !== 2);
+    const secondary = series.filter((s) => s.axis === 2);
+    const yScale = scaleFor(spec.y, primary.flatMap((s) => s.values), true);
+    const y2Scale = spec.y2 ? scaleFor(spec.y2, secondary.flatMap((s) => s.values), true) : null;
+    const rotateLabels = spec.categories.some((c) => c.length * 6.5 > (W - 74) / spec.categories.length);
+    const fr = frame(spec, showLegend, yScale, y2Scale ? W - 58 : W - 16, rotateLabels ? 36 : 0);
+    const out = fr.out;
+    if (y2Scale) {
+      const yy = (v) => fr.bottom - (v - y2Scale.lo) / (y2Scale.hi - y2Scale.lo) * (fr.bottom - fr.top);
+      out.push(`<line x1="${fr.right}" x2="${fr.right}" y1="${fr.top}" y2="${fr.bottom}" stroke="#000"/>`);
+      for (const t of y2Scale.ticks) out.push(text(fr.right + 6, (yy(t) + 4).toFixed(1), fmt(t), { anchor: 'start' }));
+      out.push(text(W - 12, (fr.top + fr.bottom) / 2, spec.y2.label, { rotate: 90 }));
+    }
+    if (showLegend) out.push(...legend(series, fr.left, fr.top - 6, id));
+    const n = spec.categories.length;
+    const band = (fr.right - fr.left) / n;
+    const bars = series.map((s, i) => ({ s, i })).filter(({ s }) => s.type === 'bar');
+    const barW = Math.min(44, band * 0.7 / Math.max(bars.length, 1));
+    const yAt = (s, val) => {
+      const sc = s.axis === 2 ? y2Scale : yScale;
+      return fr.bottom - (val - sc.lo) / (sc.hi - sc.lo) * (fr.bottom - fr.top);
+    };
+    spec.categories.forEach((cat, c) => {
+      const cx = fr.left + band * (c + 0.5);
+      bars.forEach(({ s, i }, bi) => {
+        const v = s.values[c];
+        if (!isNum(v)) return;
+        const yTop = yAt(s, Math.max(v, 0));
+        const yBase = yAt(s, Math.min(0, (s.axis === 2 ? y2Scale : yScale).lo));
+        const x = cx - (barW * bars.length) / 2 + bi * barW;
+        out.push(`<rect x="${x.toFixed(1)}" y="${yTop.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(0, yBase - yTop).toFixed(1)}" fill="${fillFor(s, i, id)}" stroke="#000" stroke-width="0.8"/>`);
+      });
+      if (rotateLabels) out.push(text(cx.toFixed(1), fr.bottom + 12, cat, { anchor: 'end', rotate: -45 }));
+      else wrapLabel(cat, 14).forEach((line, k) => out.push(text(cx.toFixed(1), fr.bottom + 15 + k * 13, line)));
+    });
+    series.forEach((s, si) => {
+      if (s.type !== 'line') return;
+      const pts = s.values.map((v, c) => (isNum(v) ? [fr.left + band * (c + 0.5), yAt(s, v)] : null));
+      out.push(...polyline(s, si, pts));
+    });
+    return out;
+  }
+
   // Diagram: a free vector scene in SVG coordinates (y grows downward). Covers anything no chart kind does.
   const SHAPES = ['rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'path', 'text'];
   const FILLS = ['none', 'solid', 'white', 'hatch', 'dots'];
@@ -588,9 +743,41 @@
       if (!Array.isArray(s.extent) || s.extent.length !== 2 || !s.extent.every(isPt)) e.push(`shapes[${i}].extent needs [[x, y], [x, y]] for fitting`);
     }
     if (s.type === 'text' && typeof s.text !== 'string') e.push(`shapes[${i}].text must be a string`);
+    if (s.type === 'text' && s.maxWidth != null && !(isNum(s.maxWidth) && s.maxWidth > 0)) e.push(`shapes[${i}].maxWidth must be a positive number`);
+    if (s.type === 'text' && s.maxHeight != null && !(isNum(s.maxHeight) && s.maxHeight > 0)) e.push(`shapes[${i}].maxHeight must be a positive number`);
+    if (s.type === 'text' && s.minSize != null && !(isNum(s.minSize) && s.minSize > 0)) e.push(`shapes[${i}].minSize must be a positive number`);
     if (s.fill != null && !FILLS.includes(s.fill)) e.push(`shapes[${i}].fill must be one of ${FILLS.join(', ')}`);
     if (s.arrow != null && !['end', 'start', 'both'].includes(s.arrow)) e.push(`shapes[${i}].arrow must be end, start or both`);
     return e;
+  }
+
+  // Text in a diagram can be boxed. maxWidth wraps the words; maxHeight shrinks the font, one point at a time,
+  // down to minSize (default 7) until the block fits. Text that still does not fit is flagged, never silently cut.
+  const CHAR_EM = 0.55; // average glyph width in em
+  const LINE_EM = 1.15; // line height in em
+  function textLayout(s) {
+    const size0 = s.size || 12;
+    if (!isNum(s.maxWidth)) return { size: size0, lines: [String(s.text)], overflow: false };
+    const minSize = s.minSize || 7;
+    const words = String(s.text).split(/\s+/).filter(Boolean);
+    const wrapAt = (size) => {
+      const max = Math.max(1, Math.floor(s.maxWidth / (CHAR_EM * size)));
+      const lines = [];
+      let cur = '';
+      for (const w of words) {
+        if (cur && (cur + ' ' + w).length > max) { lines.push(cur); cur = w; }
+        else cur = cur ? cur + ' ' + w : w;
+      }
+      if (cur) lines.push(cur);
+      return lines;
+    };
+    const widest = (size) => Math.max(0, ...words.map((w) => w.length)) * CHAR_EM * size;
+    const fits = (size, lines) => widest(size) <= s.maxWidth && (!isNum(s.maxHeight) || lines.length * LINE_EM * size <= s.maxHeight);
+    for (let size = size0; size >= minSize; size--) {
+      const lines = wrapAt(size);
+      if (fits(size, lines)) return { size, lines, overflow: false };
+    }
+    return { size: minSize, lines: wrapAt(minSize), overflow: true };
   }
 
   // Points used to fit the view when the spec gives none.
@@ -652,10 +839,24 @@
         return `<polygon points="${pl(s.points)}" fill="${fill}" ${st}/>`;
       case 'path':
         return `<path d="${s.d}" fill="${fill}" ${st}/>`;
-      case 'text':
-        return text(s.x, s.y, s.text, { size: s.size, anchor: s.anchor, weight: s.weight, rotate: s.rotate });
+      case 'text': {
+        if (!isNum(s.maxWidth)) return text(s.x, s.y, s.text, { size: s.size, anchor: s.anchor, weight: s.weight, rotate: s.rotate });
+        const L = textLayout(s);
+        const lh = LINE_EM * L.size;
+        return L.lines.map((ln, k) => text(s.x, (s.y - (L.lines.length - 1) * lh / 2 + k * lh + 0.35 * L.size).toFixed(1), ln,
+          { size: L.size, anchor: s.anchor, weight: s.weight, rotate: s.rotate })).join('');
+      }
     }
     return '';
+  }
+
+  // Text shapes that cannot fit their box even at minSize. Used by the audit.
+  function textOverflows(spec) {
+    const out = [];
+    (spec.shapes || []).forEach((s, i) => {
+      if (s.type === 'text' && textLayout(s).overflow) out.push(`shapes[${i}] text does not fit its box: ${s.text}`);
+    });
+    return out;
   }
 
   function diagramSvg(spec, id) {
@@ -682,7 +883,8 @@
     if (spec.kind === 'diagram') return diagramSvg(spec, `icf${++seq}`);
     const id = `icf${++seq}`;
     if (spec.kind === 'geometry') return svgOpen(spec.title, id) + geometrySvg(spec, id).join('') + '</svg>';
-    const body = spec.kind === 'bar' ? barSvg(spec, id)
+    const body = spec.kind === 'combo' ? comboSvg(spec, id)
+      : spec.kind === 'bar' ? barSvg(spec, id)
       : spec.kind === 'line' ? lineSvg(spec, id)
       : spec.kind === 'scatter' ? scatterSvg(spec, id)
       : spec.kind === 'curve' ? curveSvg(spec, id)
@@ -690,5 +892,5 @@
     return svgOpen(spec.title, id) + body.join('') + '</svg>';
   }
 
-  return { KINDS, PATTERNS, validate, render, fmt, niceStep, scaleFor, TABLE_CSS };
+  return { KINDS, PATTERNS, validate, render, fmt, niceStep, scaleFor, TABLE_CSS, textLayout, textOverflows };
 });

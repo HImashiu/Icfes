@@ -138,6 +138,35 @@ Cells in `rows` (and `headers`, if given) are strings, or objects `{ "text", "co
 Each row must cover the table width exactly. `headers`, if given, is the first row. Without `headers`,
 the first row sets the width.
 
+### `bar` horizontal
+
+Set `"orientation": "horizontal"` on a `bar` figure. Categories run down the left, and `y` is the value
+axis across the bottom. Grouping and patterns work as in the vertical version. Bars take no `null`.
+
+### `line` with `area`
+
+Set `"area": true` on a `line` series to fill the space under it with the series pattern. Each run of
+non-null values is closed on the zero baseline. A single point after a gap draws nothing.
+
+### `combo`, bars and lines on one category axis
+
+For charts where bars and a line share the same categories, such as spending bars with an income line.
+Each series has a `type`: `bar` (grouped among the bars) or `line` (passes through the category centres,
+`null` leaves a gap). A series with `axis: 2` is read against `y2`, which needs its own label.
+
+```json
+{ "kind": "combo", "title": "Gasto e ingreso",
+  "x": { "label": "Mes" }, "y": { "label": "Gasto (miles)" },
+  "y2": { "label": "Ingreso (miles)", "min": 0, "max": 100, "step": 20 },
+  "categories": ["Ene", "Feb", "Mar"],
+  "series": [
+    { "name": "Gasto", "type": "bar", "values": [40, 55, 30] },
+    { "name": "Ingreso", "type": "line", "values": [60, 70, null], "axis": 2, "marker": "square" }
+  ] }
+```
+
+Bars keep the grey-scale patterns of the `bar` kind. Lines use the `marker` and `style` options of `line`.
+
 ### `diagram`, a free vector scene
 
 For anything no chart kind covers: experiment set-ups, apparatus, maps, routes, cells, simple sketches.
@@ -163,8 +192,32 @@ Coordinates are SVG units with y growing downward. The view fits the shapes unle
   `fill` one of `none` (default), `solid`, `white`, `hatch`, `dots`.
 - `arrow` on `line` or `polyline`: `end`, `start` or `both`.
 - Text is escaped; write the characters as they appear.
+- Boxed text: give a `text` shape `maxWidth` to wrap its words onto several lines, and `maxHeight` to shrink
+  the font (one point at a time, from `size` down to `minSize`, default 7) until the block fits. The block is
+  centred on `y`. Text that still does not fit is flagged by `F.textOverflows(spec)` and by the audit; it is never
+  cut off silently. Use boxed text for comic bubbles, infographic labels and anything inside a shape.
+- The audit also flags option figures in one question that are the same or at least 95% alike, comparing
+  the specs token by token in order (title ignored), and diagram text boxes that overlap by more than 20%.
+- `text_only: true` on a figure entry marks a sign, ad or poster that is really text in a frame. The audit
+  skips the photo stand-in flag for it and lists it under "Text-only figures" for a spot check, so the label
+  is not used to hide real drawings.
+- `audit.js <specs-dir> [out.md]` reports per exam: figure counts by kind, pending items, validation and render
+  failures, boxed text that does not fit, unboxed text that runs outside its view, and diagrams with one or two
+  boxes and no line work (possible photo stand-ins).
 
 ## Axes
+### Line styles
+
+`style` on a `line`, `curve` or numeric `line` series: `solid` (default), `dashed` or `dotted`.
+Use dotted and dashed together when two series need telling apart in grey-scale.
+
+### Axis options
+
+- `scale`: `linear` (default) or `log`. A log axis needs positive `min`, `max` and data. Each decade gets one tick
+  (1, 10, 100, ...), so bounds snap to powers of ten. Works on the y axis of `line` with numeric x, and `scatter`.
+- `format`: `plain` keeps integers ungrouped (1995, not 1.995). `grouped` forces Spanish thousands dots.
+  Without `format`, an axis whose label contains "año" or "year" is plain; all other axes are grouped.
+
 
 Set `domain: [lo, hi]` on an axis to widen the drawn scale past the printed range (for example to
 hold a point at -0.5) without drawing ticks outside `min`..`max`. Category labels rotate when they
@@ -191,7 +244,7 @@ as the stem figures, with the question number and option letter in `location`:
 
 ## Not supported yet
 
-Horizontal bars, stacked bars, histograms, number lines, Venn and tree diagrams, and function graphs.
+Stacked bars, histograms, log scales, number lines, Venn and tree diagrams, and function graphs.
 Geometry figures use `geometry`; anything else drawn with lines and shapes uses `diagram`.
 The `kind: "image"` crop is no longer used for new figures. Each new kind needs a fixture test.
 
