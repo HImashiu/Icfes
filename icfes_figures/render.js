@@ -36,6 +36,7 @@
       if (a.domain != null && (!Array.isArray(a.domain) || a.domain.length !== 2 || !isNum(a.domain[0]) || !isNum(a.domain[1]) || a.domain[0] >= a.domain[1])) errs.push(`${name}.domain must be [lo, hi] with lo below hi`);
     };
     const series = Array.isArray(spec.series) ? spec.series : [];
+    series.forEach((s, i) => { if (s && s.style != null && !['solid', 'dashed', 'dotted'].includes(s.style)) errs.push(`series[${i}].style must be solid, dashed or dotted`); });
     if (AXIS_KINDS.includes(spec.kind)) {
       if (!spec.x || typeof spec.x.label !== 'string' || !spec.x.label) errs.push('x.label is required (axis title)');
       if (!spec.y || typeof spec.y.label !== 'string' || !spec.y.label) errs.push('y.label is required (axis title)');
@@ -87,7 +88,6 @@
       series.forEach((s, i) => {
         if (!Array.isArray(s.points) || s.points.length < 2) return errs.push(`series[${i}].points needs at least two [x, y] pairs`);
         s.points.forEach((p, j) => { if (!Array.isArray(p) || p.length !== 2 || !isNum(p[0]) || !isNum(p[1])) errs.push(`series[${i}].points[${j}] must be [x, y]`); });
-        if (s.style != null && s.style !== 'solid' && s.style !== 'dashed') errs.push(`series[${i}].style must be solid or dashed`);
       });
     } else if (spec.kind === 'pie') {
       if (!Array.isArray(spec.slices) || spec.slices.length < 2) errs.push('slices needs at least two entries');
@@ -429,7 +429,7 @@
   // Open markers keep grey-scale legibility.
   function polyline(s, si, pts) {
     const out = [];
-    const dash = s.style === 'dashed' ? ' stroke-dasharray="5 3"' : '';
+    const dash = s.style === 'dashed' ? ' stroke-dasharray="5 3"' : s.style === 'dotted' ? ' stroke-dasharray="1 3" stroke-linecap="round"' : '';
     const real = pts.filter(Boolean);
     if (real.length > 1) out.push(`<polyline points="${real.map((p) => p.map((v) => v.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="#000" stroke-width="1.8"${dash}/>`);
     for (const [x, y] of real) out.push(marker(s.marker, x, y));
@@ -498,7 +498,7 @@
         const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
         d += ` C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
       }
-      const dash = s.style === 'dashed' ? ' stroke-dasharray="6 4"' : '';
+      const dash = s.style === 'dashed' ? ' stroke-dasharray="6 4"' : s.style === 'dotted' ? ' stroke-dasharray="1 3" stroke-linecap="round"' : '';
       out.push(`<path d="${d}" fill="none" stroke="#000" stroke-width="2"${dash}/>`);
       if (s.label) {
         const at = Math.min(P.length - 1, s.labelAt != null ? s.labelAt : Math.floor(P.length / 2));
@@ -743,9 +743,41 @@
       if (!Array.isArray(s.extent) || s.extent.length !== 2 || !s.extent.every(isPt)) e.push(`shapes[${i}].extent needs [[x, y], [x, y]] for fitting`);
     }
     if (s.type === 'text' && typeof s.text !== 'string') e.push(`shapes[${i}].text must be a string`);
+    if (s.type === 'text' && s.maxWidth != null && !(isNum(s.maxWidth) && s.maxWidth > 0)) e.push(`shapes[${i}].maxWidth must be a positive number`);
+    if (s.type === 'text' && s.maxHeight != null && !(isNum(s.maxHeight) && s.maxHeight > 0)) e.push(`shapes[${i}].maxHeight must be a positive number`);
+    if (s.type === 'text' && s.minSize != null && !(isNum(s.minSize) && s.minSize > 0)) e.push(`shapes[${i}].minSize must be a positive number`);
     if (s.fill != null && !FILLS.includes(s.fill)) e.push(`shapes[${i}].fill must be one of ${FILLS.join(', ')}`);
     if (s.arrow != null && !['end', 'start', 'both'].includes(s.arrow)) e.push(`shapes[${i}].arrow must be end, start or both`);
     return e;
+  }
+
+  // Text in a diagram can be boxed. maxWidth wraps the words; maxHeight shrinks the font, one point at a time,
+  // down to minSize (default 7) until the block fits. Text that still does not fit is flagged, never silently cut.
+  const CHAR_EM = 0.55; // average glyph width in em
+  const LINE_EM = 1.15; // line height in em
+  function textLayout(s) {
+    const size0 = s.size || 12;
+    if (!isNum(s.maxWidth)) return { size: size0, lines: [String(s.text)], overflow: false };
+    const minSize = s.minSize || 7;
+    const words = String(s.text).split(/\s+/).filter(Boolean);
+    const wrapAt = (size) => {
+      const max = Math.max(1, Math.floor(s.maxWidth / (CHAR_EM * size)));
+      const lines = [];
+      let cur = '';
+      for (const w of words) {
+        if (cur && (cur + ' ' + w).length > max) { lines.push(cur); cur = w; }
+        else cur = cur ? cur + ' ' + w : w;
+      }
+      if (cur) lines.push(cur);
+      return lines;
+    };
+    const widest = (size) => Math.max(0, ...words.map((w) => w.length)) * CHAR_EM * size;
+    const fits = (size, lines) => widest(size) <= s.maxWidth && (!isNum(s.maxHeight) || lines.length * LINE_EM * size <= s.maxHeight);
+    for (let size = size0; size >= minSize; size--) {
+      const lines = wrapAt(size);
+      if (fits(size, lines)) return { size, lines, overflow: false };
+    }
+    return { size: minSize, lines: wrapAt(minSize), overflow: true };
   }
 
   // Points used to fit the view when the spec gives none.
@@ -807,10 +839,24 @@
         return `<polygon points="${pl(s.points)}" fill="${fill}" ${st}/>`;
       case 'path':
         return `<path d="${s.d}" fill="${fill}" ${st}/>`;
-      case 'text':
-        return text(s.x, s.y, s.text, { size: s.size, anchor: s.anchor, weight: s.weight, rotate: s.rotate });
+      case 'text': {
+        if (!isNum(s.maxWidth)) return text(s.x, s.y, s.text, { size: s.size, anchor: s.anchor, weight: s.weight, rotate: s.rotate });
+        const L = textLayout(s);
+        const lh = LINE_EM * L.size;
+        return L.lines.map((ln, k) => text(s.x, (s.y - (L.lines.length - 1) * lh / 2 + k * lh + 0.35 * L.size).toFixed(1), ln,
+          { size: L.size, anchor: s.anchor, weight: s.weight, rotate: s.rotate })).join('');
+      }
     }
     return '';
+  }
+
+  // Text shapes that cannot fit their box even at minSize. Used by the audit.
+  function textOverflows(spec) {
+    const out = [];
+    (spec.shapes || []).forEach((s, i) => {
+      if (s.type === 'text' && textLayout(s).overflow) out.push(`shapes[${i}] text does not fit its box: ${s.text}`);
+    });
+    return out;
   }
 
   function diagramSvg(spec, id) {
@@ -846,5 +892,5 @@
     return svgOpen(spec.title, id) + body.join('') + '</svg>';
   }
 
-  return { KINDS, PATTERNS, validate, render, fmt, niceStep, scaleFor, TABLE_CSS };
+  return { KINDS, PATTERNS, validate, render, fmt, niceStep, scaleFor, TABLE_CSS, textLayout, textOverflows };
 });

@@ -227,3 +227,34 @@ test('log y axis places decades evenly and rejects zero or negative values', () 
   assert.ok(F.validate({ ...log, y: { label: 'I', scale: 'log', min: 0 } }).length > 0);
   assert.ok(F.validate({ ...log, y: { label: 'I', scale: 'sqrt' } }).length > 0);
 });
+
+test('dotted style draws dotted lines on line and curve series', () => {
+  const dotted = { kind: 'line', x: { label: 'Mes' }, y: { label: 'Casos' }, categories: ['A', 'B', 'C'], series: [{ values: [1, 2, 3], style: 'dotted' }] };
+  assert.deepEqual(F.validate(dotted), []);
+  assert.ok(F.render(dotted).includes('stroke-dasharray="1 3"'));
+  const curveDotted = { kind: 'curve', x: { label: 'T' }, y: { label: 'P' }, series: [{ points: [[0, 0], [1, 2]], style: 'dotted' }] };
+  assert.deepEqual(F.validate(curveDotted), []);
+  assert.ok(F.render(curveDotted).includes('stroke-dasharray="1 3"'));
+  assert.ok(F.validate({ ...dotted, series: [{ values: [1, 2, 3], style: 'wavy' }] }).length > 0);
+});
+
+test('boxed text wraps to maxWidth and shrinks to fit maxHeight', () => {
+  const t = { type: 'text', x: 50, y: 40, text: 'Recaptación del neurotransmisor en la neurona emisora', size: 12, maxWidth: 90, maxHeight: 40 };
+  const L = F.textLayout(t);
+  assert.ok(L.lines.length >= 2, 'wraps onto several lines');
+  assert.ok(L.size < 12 && L.size >= 7, 'font shrinks but not below minSize');
+  assert.ok(L.lines.length * 1.15 * L.size <= 40 + 1e-9, 'block fits the height');
+  assert.equal(L.overflow, false);
+  const svg = F.render({ kind: 'diagram', shapes: [t] });
+  assert.equal((svg.match(/<text /g) || []).length, L.lines.length);
+});
+
+test('boxed text that cannot fit even at minSize is flagged, and short text is left alone', () => {
+  const tight = { type: 'text', x: 0, y: 0, text: 'palabraextremadamentelarga', size: 12, maxWidth: 30, minSize: 7 };
+  assert.equal(F.textLayout(tight).overflow, true);
+  assert.deepEqual(F.textOverflows({ kind: 'diagram', shapes: [tight] }).length, 1);
+  const ok = { type: 'text', x: 0, y: 0, text: 'ok', size: 12, maxWidth: 100 };
+  assert.equal(F.textLayout(ok).overflow, false);
+  assert.equal(F.textLayout(ok).size, 12);
+  assert.ok(F.validate({ kind: 'diagram', shapes: [{ ...ok, maxWidth: -3 }] }).length > 0);
+});

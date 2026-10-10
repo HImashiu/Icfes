@@ -192,8 +192,20 @@ Coordinates are SVG units with y growing downward. The view fits the shapes unle
   `fill` one of `none` (default), `solid`, `white`, `hatch`, `dots`.
 - `arrow` on `line` or `polyline`: `end`, `start` or `both`.
 - Text is escaped; write the characters as they appear.
+- Boxed text: give a `text` shape `maxWidth` to wrap its words onto several lines, and `maxHeight` to shrink
+  the font (one point at a time, from `size` down to `minSize`, default 7) until the block fits. The block is
+  centred on `y`. Text that still does not fit is flagged by `F.textOverflows(spec)` and by the audit; it is never
+  cut off silently. Use boxed text for comic bubbles, infographic labels and anything inside a shape.
+- `audit.js <specs-dir> [out.md]` reports per exam: figure counts by kind, pending items, validation and render
+  failures, boxed text that does not fit, unboxed text that runs outside its view, and diagrams with one or two
+  boxes and no line work (possible photo stand-ins).
 
 ## Axes
+### Line styles
+
+`style` on a `line`, `curve` or numeric `line` series: `solid` (default), `dashed` or `dotted`.
+Use dotted and dashed together when two series need telling apart in grey-scale.
+
 ### Axis options
 
 - `scale`: `linear` (default) or `log`. A log axis needs positive `min`, `max` and data. Each decade gets one tick
