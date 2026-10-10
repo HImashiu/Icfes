@@ -259,14 +259,13 @@ button.card { text-align: left; width: 100%; }
 .setup { display: grid; gap: 14px; padding-bottom: 96px; }
 .booklet { display: grid; gap: 10px; }
 .booklet-pick { display: grid; gap: 6px; }
-.booklet-pick { position: relative; }
-.booklet-pick select {
+select.booklet-pick {
   appearance: none; -webkit-appearance: none; width: 100%; min-height: 44px; padding: 0 40px 0 14px;
   border-radius: 12px; border: 1px solid var(--line); background-color: var(--surface-2); color: var(--text);
   font-family: Figtree, sans-serif; font-size: 15px; font-weight: 600; cursor: pointer;
   background-image: linear-gradient(45deg, transparent 50%, var(--text-2) 50%), linear-gradient(135deg, var(--text-2) 50%, transparent 50%);
   background-position: calc(100% - 20px) 50%, calc(100% - 15px) 50%;
-  background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
+  background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; margin: 6px 0;
 }
 .mode-cards { display: grid; gap: 10px; }
 .mode-card {

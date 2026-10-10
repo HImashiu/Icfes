@@ -33,8 +33,7 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam }
 
       <div className="booklet card">
         <span className="label">Cuadernillo</span>
-        <strong>{exam.title}</strong>
-        <span className="caption">Fuente: ICFES, Saber 11 · {exam.questions.length} preguntas</span>
+        {exams.length <= 1 && <strong>{exam.title}</strong>}
         {exams.length > 1 && (
           <select className="booklet-pick" value={slug} onChange={(e) => onPickExam(e.target.value)} aria-label="Cambiar cuadernillo">
             {exams.map((e) => (
@@ -44,6 +43,7 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam }
             ))}
           </select>
         )}
+        <span className="caption">Fuente: ICFES, Saber 11 · {exam.questions.length} preguntas</span>
       </div>
 
       <div className="segmented" role="tablist" aria-label="Alcance">
