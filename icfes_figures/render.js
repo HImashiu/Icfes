@@ -560,8 +560,13 @@
       const pad = (hi - lo || 1) * 0.04;
       return { lo: a && isNum(a.min) ? a.min : lo - pad, hi: a && isNum(a.max) ? a.max : hi + pad };
     };
-    const xr = range(spec.x, pts.map((p) => p[0]));
-    const yr = range(spec.y, pts.map((p) => p[1]));
+    // An axis with "ticks": true gets printed tick values, from its min, max and step, as the other charts do.
+    // Without it a curve stays shape-only: no numbers.
+    const ticked = (a) => !!(a && a.ticks === true);
+    const xScale = ticked(spec.x) ? scaleFor(spec.x, pts.map((p) => p[0]), false) : null;
+    const yScale = ticked(spec.y) ? scaleFor(spec.y, pts.map((p) => p[1]), false) : null;
+    const xr = xScale ? { lo: xScale.lo, hi: xScale.hi } : range(spec.x, pts.map((p) => p[0]));
+    const yr = yScale ? { lo: yScale.lo, hi: yScale.hi } : range(spec.y, pts.map((p) => p[1]));
     const left = 58;
     const right = W - 24;
     const top = spec.title ? 34 : 18;
@@ -570,6 +575,19 @@
     const sy = (v) => bottom - (v - yr.lo) / (yr.hi - yr.lo) * (bottom - top);
     const out = [];
     if (spec.title) out.push(text(W / 2, 18, spec.title, { weight: 'bold' }));
+    if (yScale) {
+      for (const t of yScale.ticks) {
+        const y = sy(t).toFixed(1);
+        out.push(`<line x1="${left}" x2="${right}" y1="${y}" y2="${y}" stroke="#e4e4e4" stroke-width="1"/>`);
+        out.push(text(left - 6, (sy(t) + 4).toFixed(1), tickText(spec.y, t), { anchor: 'end' }));
+      }
+    }
+    if (xScale) {
+      for (const t of xScale.ticks) {
+        out.push(`<line x1="${sx(t).toFixed(1)}" x2="${sx(t).toFixed(1)}" y1="${bottom}" y2="${bottom + 4}" stroke="#000"/>`);
+        out.push(text(sx(t).toFixed(1), bottom + 15, tickText(spec.x, t)));
+      }
+    }
     out.push(`<line x1="${left}" x2="${left}" y1="${top}" y2="${bottom}" stroke="#000"/>`);
     out.push(`<line x1="${left}" x2="${right}" y1="${bottom}" y2="${bottom}" stroke="#000"/>`);
     out.push(`<polygon points="${left},${top - 4} ${left - 4},${top + 6} ${left + 4},${top + 6}" fill="#000"/>`);

@@ -445,3 +445,13 @@ test('scatter series honour their marker, and the legend shows it', () => {
   const plain = F.render({ ...sc, series: sc.series.map((s) => ({ name: s.name, points: s.points })) });
   assert.ok(plain.includes('<circle') && plain.includes('<rect'));
 });
+
+test('curve axes print tick values only when the axis asks for them', () => {
+  const c = { kind: 'curve', x: { label: 'Hora', min: 0, max: 24, step: 3, ticks: true }, y: { label: 'Pulsos', min: 0, max: 60, step: 20, ticks: true }, series: [{ points: [[0, 0], [12, 40], [24, 10]] }] };
+  assert.deepEqual(F.validate(c), []);
+  const svg = F.render(c);
+  for (const t of ['>0<', '>3<', '>12<', '>24<', '>20<', '>60<']) assert.ok(svg.includes(t), `tick ${t}`);
+  // The same curve without "ticks": true stays shape-only.
+  const plain = F.render({ ...c, x: { ...c.x, ticks: undefined }, y: { ...c.y, ticks: undefined } });
+  assert.ok(!plain.includes('>12<'));
+});

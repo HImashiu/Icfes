@@ -89,6 +89,8 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 - For graphs that show only the shape. The points are sketch positions, with no tick values drawn.
 - Points are joined with a smooth curve. `label` is printed near point `labelAt` (default: middle).
 
+- `"ticks": true` on an axis prints its tick values, from that axis' `min`, `max` and `step`, as the other charts do. Without it a curve stays shape-only.
+
 ### `bar` with a second y axis
 
 ```json
