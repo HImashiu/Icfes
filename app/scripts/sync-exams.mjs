@@ -250,7 +250,10 @@ function prepareExam(exam, specPath, slug, report) {
   }
 
   const hidden = Object.values(hiddenBy).reduce((a, b) => a + b, 0);
-  report[slug] = { total: (exam.questions ?? []).length, shown: shownQuestions.length, hidden: hiddenBy, fixes, left };
+  const hiddenList = decisions
+    .filter((d) => d.reasons.length)
+    .map((d) => ({ number: d.q.number, section: d.q.section, reason: d.reasons[0] }));
+  report[slug] = { total: (exam.questions ?? []).length, shown: shownQuestions.length, hidden: hiddenBy, hiddenList, fixes, left };
   const fixText = Object.entries(fixes).map(([k, v]) => `${k} ${v}`).join(", ");
   const hideText = Object.entries(hiddenBy).map(([k, v]) => `${k} ${v}`).join(", ");
   console.log(`[normalize] ${slug}: shown ${shownQuestions.length}/${(exam.questions ?? []).length}${fixText ? `; ${fixText}` : ""}${hidden ? `; hidden ${hideText}` : ""}`);
