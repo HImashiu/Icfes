@@ -31,7 +31,14 @@ if (!existsSync(src)) {
 
 const files = readdirSync(src);
 const specDir = join(root, "figures", "specs");
-const specFiles = existsSync(specDir) ? readdirSync(specDir).filter((f) => f.endsWith(".json") && !f.endsWith(".full.json")) : [];
+// One spec per exam: "<exam>.json" or "<exam>.full.json". When both exist, the .full file wins.
+const specFiles = new Map();
+if (existsSync(specDir)) {
+  for (const f of readdirSync(specDir).filter((n) => n.endsWith(".json"))) {
+    const slug = f.replace(/\.full\.json$/, "").replace(/\.json$/, "");
+    if (!specFiles.has(slug) || f.endsWith(".full.json")) specFiles.set(slug, f);
+  }
+}
 
 // "S11-A 1ra" becomes "S11-A · Primera sesión", the same name the app shows (see formatBooklet in src/lib/exam.js).
 const ORDINAL = { 1: "Primera", 2: "Segunda" };
@@ -95,8 +102,7 @@ for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
 }
 // Specs without question text yet: listed as "Próximamente" so the catalog shows the whole plan.
 const goldenSlugs = new Set(exams.map((e) => e.slug));
-for (const file of specFiles) {
-  const slug = file.replace(/\.json$/, "");
+for (const [slug, file] of specFiles) {
   if (goldenSlugs.has(slug)) continue;
   const spec = JSON.parse(readFileSync(join(specDir, file), "utf8"));
   exams.push({
@@ -114,11 +120,11 @@ for (const file of specFiles) {
 exams.sort((a, b) => (a.status === b.status ? a.slug.localeCompare(b.slug) : a.status === "ready" ? -1 : 1));
 
 // Every figure spec, grouped by exam and question, for the internal review page (#revision-figuras).
-const review = specFiles.map((file) => {
+const review = [...specFiles].map(([slug, file]) => {
   const spec = JSON.parse(readFileSync(join(specDir, file), "utf8"));
   return {
-    slug: file.replace(/\.json$/, ""),
-    title: booklet(spec.exam ?? file),
+    slug,
+    title: booklet(spec.exam ?? slug),
     note: spec.note ?? null,
     pending: spec.pending ?? [],
     figures: (spec.figures ?? []).map((f) => ({
