@@ -46,7 +46,7 @@ accents. Numbers print with Spanish separators: "." groups thousands and "," is 
 ```
 
 - `categories`: one label per bar group. `series[i].values`: one non-negative number per category.
-- A single series with no name draws no legend.
+- A single series with no name draws no legend. `legend: false` on any chart hides the legend even with several series (use it when the scan prints none).
 
 ### `line`, a line over categorical x
 

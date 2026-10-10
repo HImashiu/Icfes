@@ -303,3 +303,9 @@ test('long category and legend labels stay inside the view', () => {
     assert.deepEqual(textOutside(F.render(s)), [], s.kind);
   }
 });
+
+test('legend: false hides the legend for several series', () => {
+  const two = { kind: 'line', x: { label: 'Mes' }, y: { label: 'Casos' }, categories: ['Ene', 'Feb'], series: [{ name: 'Zeta leyenda', values: [1, 2] }, { name: 'Omega leyenda', values: [2, 1] }] };
+  assert.ok(F.render(two).includes('>Zeta leyenda<'));
+  assert.ok(!F.render({ ...two, legend: false }).includes('>Zeta leyenda<'));
+});

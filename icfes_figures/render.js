@@ -325,7 +325,7 @@
   // Horizontal bars: categories run down the left, values run across. spec.y is the value axis.
   function hbarSvg(spec, id) {
     const series = spec.series;
-    const showLegend = series.length > 1 || (series[0] && series[0].name);
+    const showLegend = spec.legend !== false && (series.length > 1 || (series[0] && series[0].name));
     const xScale = scaleFor(spec.y, series.flatMap((s) => s.values), true);
     const labelW = Math.min(170, Math.max(...spec.categories.map((c) => String(c).length)) * 6.5);
     const left = 24 + labelW;
@@ -365,7 +365,7 @@
   function barSvg(spec, id) {
     if (spec.orientation === 'horizontal') return hbarSvg(spec, id);
     const series = spec.series;
-    const showLegend = series.length > 1 || (series[0] && series[0].name);
+    const showLegend = spec.legend !== false && (series.length > 1 || (series[0] && series[0].name));
     const primary = series.filter((s) => s.axis !== 2);
     const secondary = series.filter((s) => s.axis === 2);
     const yScale = scaleFor(spec.y, primary.flatMap((s) => s.values), true);
@@ -404,7 +404,7 @@
 
   function lineSvg(spec, id) {
     const series = spec.series;
-    const showLegend = series.length > 1 || (series[0] && series[0].name);
+    const showLegend = spec.legend !== false && (series.length > 1 || (series[0] && series[0].name));
     if (series.some((s) => Array.isArray(s.points))) return numericLine(spec, id, showLegend);
     const yScale = scaleFor(spec.y, series.flatMap((s) => s.values), false);
     const fr = frame(spec, showLegend, yScale);
@@ -479,7 +479,7 @@
 
   function scatterSvg(spec, id) {
     const series = spec.series;
-    const showLegend = series.length > 1 || (series[0] && series[0].name);
+    const showLegend = spec.legend !== false && (series.length > 1 || (series[0] && series[0].name));
     const pts = series.flatMap((s) => s.points);
     const xScale = scaleFor(spec.x, pts.map((p) => p[0]), false);
     const yScale = scaleFor(spec.y, pts.map((p) => p[1]), false);
@@ -720,7 +720,7 @@
   // A series with axis 2 is read against y2, so a bar and a line can carry different units.
   function comboSvg(spec, id) {
     const series = spec.series;
-    const showLegend = series.length > 1 || (series[0] && series[0].name);
+    const showLegend = spec.legend !== false && (series.length > 1 || (series[0] && series[0].name));
     const primary = series.filter((s) => s.axis !== 2);
     const secondary = series.filter((s) => s.axis === 2);
     const yScale = scaleFor(spec.y, primary.flatMap((s) => s.values), true);
