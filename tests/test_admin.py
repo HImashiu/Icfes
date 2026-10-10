@@ -130,7 +130,7 @@ def test_http_round_trip(root):
     base = f"http://127.0.0.1:{server.server_address[1]}"
     try:
         with urllib.request.urlopen(base + "/") as r:
-            assert b"ICFES editor" in r.read()
+            assert "Cóndor".encode() in r.read()
         with urllib.request.urlopen(base + "/api/exams") as r:
             assert json.loads(r.read())[0]["exam"] == EXAM
         req = urllib.request.Request(f"{base}/api/exams/{EXAM}/questions/2", method="PUT",

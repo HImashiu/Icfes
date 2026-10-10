@@ -99,6 +99,8 @@ class Handler(BaseHTTPRequestHandler):
         path = unquote(url.path)
         if method == "GET" and path in ("/", "/index.html"):
             return self._send(200, "text/html; charset=utf-8", (STATIC / "index.html").read_bytes())
+        if method == "GET" and not path.startswith("/api/"):
+            return self._static(path)
         try:
             for verb, rx, fn in ROUTES:
                 match = rx.match(path) if verb == method else None
@@ -118,6 +120,13 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as e:  # report to the page, keep the server running
             traceback.print_exc(file=sys.stderr)
             return self._send_json(500, {"error": f"{type(e).__name__}: {e}"})
+
+    def _static(self, path):
+        target = (STATIC / path.lstrip("/")).resolve()
+        if STATIC.resolve() not in target.parents or not target.is_file():
+            return self._send_json(404, {"error": "not found"})
+        ctype = mimetypes.guess_type(target.name)[0] or "application/octet-stream"
+        return self._send(200, ctype, target.read_bytes())
 
     def _read_json(self):
         length = int(self.headers.get("Content-Length") or 0)

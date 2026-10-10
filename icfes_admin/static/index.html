@@ -3,70 +3,112 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ICFES editor</title>
+<title>Cóndor · Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="katex/katex.min.css">
 <style>
-:root { --bg:#f6f7f9; --panel:#fff; --text:#1d2330; --muted:#667085; --line:#d9dde5; --ok:#1f7a4d; --warn:#a15c00; --bad:#b42318; --accent:#2b5bd7; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#14171d; --panel:#1d2129; --text:#e7eaf0; --muted:#98a2b3; --line:#343b48; --ok:#4cc38a; --warn:#f0b35a; --bad:#ff7a6b; --accent:#7ea6ff; } }
-:root[data-theme="dark"] { --bg:#14171d; --panel:#1d2129; --text:#e7eaf0; --muted:#98a2b3; --line:#343b48; --ok:#4cc38a; --warn:#f0b35a; --bad:#ff7a6b; --accent:#7ea6ff; }
-* { box-sizing: border-box; }
-body { margin:0; font:14px/1.45 system-ui, sans-serif; background:var(--bg); color:var(--text); }
-header { display:flex; gap:16px; align-items:center; padding:10px 16px; background:var(--panel); border-bottom:1px solid var(--line); flex-wrap:wrap; }
-header h1 { font-size:16px; margin:0; }
-nav button, button { font:inherit; color:var(--text); background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:5px 10px; cursor:pointer; }
-nav button.on { border-color:var(--accent); color:var(--accent); }
-button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
-button:disabled { opacity:.45; cursor:default; }
-select, input[type=text], textarea { font:inherit; color:var(--text); background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:5px 8px; max-width:100%; }
-textarea { width:100%; min-height:120px; font-family:ui-monospace, Menlo, monospace; font-size:13px; }
-main { padding:16px; max-width:1400px; margin:0 auto; }
-table { width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--line); }
-th, td { padding:7px 9px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
-th { font-size:12px; color:var(--muted); font-weight:600; }
-tr.click { cursor:pointer; } tr.click:hover td { background:color-mix(in srgb, var(--accent) 8%, transparent); }
-.badge { display:inline-block; border-radius:999px; padding:1px 8px; font-size:12px; border:1px solid var(--line); margin:1px 2px 1px 0; }
-.bad { color:var(--bad); } .warn { color:var(--warn); } .ok { color:var(--ok); } .muted { color:var(--muted); }
-.card { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:12px; }
-.card h3 { margin:0 0 8px; font-size:13px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.03em; }
-.grid { display:grid; grid-template-columns: minmax(0,1.1fr) minmax(0,.9fr); gap:16px; }
-@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } main { padding:12px; } }
-.toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
-.qlist { display:grid; grid-template-columns: repeat(auto-fill, minmax(70px,1fr)); gap:6px; }
-.qlist button { padding:6px 0; text-align:center; }
-.qlist button.hidden { border-style:dashed; color:var(--muted); }
-.qlist button.err { border-color:var(--bad); }
-.qlist button.on { background:var(--accent); color:#fff; border-color:var(--accent); }
-.passage { max-height:260px; overflow:auto; border:1px dashed var(--line); padding:8px; border-radius:6px; background:var(--bg); }
-.passage table, .preview table { font-size:12px; }
-.preview { white-space:pre-wrap; border:1px solid var(--line); border-radius:6px; padding:8px; background:var(--bg); }
-.preview table { white-space:normal; border-collapse:collapse; }
-.preview td, .preview th { border:1px solid var(--line); padding:3px 6px; }
-.opt { display:grid; grid-template-columns: 34px 1fr; gap:6px; align-items:start; margin-bottom:6px; }
-.opt b { padding-top:6px; }
-.opt textarea { min-height:44px; }
-img.scan { width:100%; border:1px solid var(--line); border-radius:6px; }
-img.fig { max-width:100%; background:#fff; border:1px solid var(--line); border-radius:6px; margin:4px 0; }
-.msg { font-size:13px; margin:3px 0; }
-#status { margin-left:auto; font-size:13px; }
-ul { margin:4px 0; padding-left:18px; }
+/* Tokens from the student app's design spec (design/spec.md §2). Dark is the default. */
+:root{--bg:#0D110F;--surface:#161B18;--surface-2:#20271F;--line:#2D3630;--text:#F2F5EF;--text-2:#A7B1AA;
+ --accent:#C8F04A;--accent-ink:#C8F04A;--on-accent:#0D110F;--accent-soft:rgba(200,240,74,.14);--accent-shadow:#8DB01E;
+ --flame:#FF9F43;--ok:#5FD48A;--ok-soft:rgba(95,212,138,.14);--bad:#FF7F6E;--bad-soft:rgba(255,127,110,.14);
+ --paper:#FBFAF5;--paper-ink:#1B1B19;--paper-2:#5B5A55;--side:#090C0A;
+ --area-lectura:#8AB4FF;--area-mate:#FFB547;--area-sociales:#F59EC4;--area-ciencias:#5ED3B4;--area-ingles:#C79BFF}
+:root[data-theme="light"]{--bg:#F3F5EF;--surface:#FFFFFF;--surface-2:#E9EDE4;--line:#D8DED3;--text:#121612;--text-2:#545E57;
+ --accent-ink:#4A6600;--on-accent:#121612;--accent-soft:#EEF8CF;--flame:#C25A00;--ok:#1B7F45;--ok-soft:#DDF3E5;--bad:#C2372B;--bad-soft:#FBE3E0;--side:#FFFFFF}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:400 14px/1.4 Figtree,system-ui,sans-serif;min-height:100vh}
+button,select,input,textarea{font:inherit;color:inherit}
+.top{position:sticky;top:0;z-index:5;display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 24px;background:var(--side);border-bottom:1px solid var(--line)}
+.brand{font:800 20px/1 "Bricolage Grotesque",sans-serif;letter-spacing:-.01em}
+.brand small{display:block;font:700 11px/1 Figtree;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2);margin-top:4px}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:14px;padding:4px;gap:4px}
+.seg button{border:0;background:transparent;border-radius:10px;padding:8px 14px;min-height:36px;cursor:pointer;color:var(--text-2);font-weight:600}
+.seg button.on{background:var(--surface);color:var(--text)}
+.spacer{flex:1}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px;color:var(--text-2)}
+main{padding:20px 24px;max-width:1280px;margin:0 auto}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:12px}
+.label{font:700 12px/1 Figtree;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2);margin:0 0 10px}
+.display{font:800 30px/1.05 "Bricolage Grotesque",sans-serif}
+.title{font:600 22px/1.2 "Bricolage Grotesque",sans-serif;margin:0 0 12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:12px}
+.stats .card{margin:0}
+.muted{color:var(--text-2)} .ok{color:var(--ok)} .bad{color:var(--bad)} .flame{color:var(--flame)} .acc{color:var(--accent-ink)}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:20px;overflow:hidden}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font:700 11px/1 Figtree;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2)}
+tr.row{cursor:pointer} tr.row:hover td{background:var(--surface-2)}
+.num{font-variant-numeric:tabular-nums}
+.bar{height:8px;background:var(--surface-2);border-radius:999px;overflow:hidden;min-width:90px}
+.bar i{display:block;height:100%;background:var(--accent)}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+select,input[type=text],textarea{background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:8px 10px}
+textarea{width:100%;min-height:110px;font:400 14px/1.45 ui-monospace,Menlo,monospace;resize:vertical}
+.chip{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border:2px solid var(--line);background:var(--surface);border-radius:999px;cursor:pointer;font-weight:600}
+.chip.on{border-color:var(--accent);background:var(--accent-soft)}
+.chip i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.map{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:8px}
+.cell{min-height:44px;border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--text-2);font-weight:700;cursor:pointer;padding:0}
+.cell.ready{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.cell.hidden{border-style:dashed;color:var(--text-2)}
+.cell.err{border-color:var(--bad);color:var(--bad)}
+.cell.cur{border-width:3px;border-color:var(--text)}
+.btn{min-height:52px;padding:0 20px;border-radius:16px;border:2px solid var(--line);background:transparent;cursor:pointer;font-weight:700}
+.btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);box-shadow:0 4px 0 var(--accent-shadow)}
+.btn.primary:active{box-shadow:0 0 0 var(--accent-shadow);transform:translateY(4px)}
+.btn:disabled{background:var(--surface-2);color:var(--text-2);border-color:transparent;box-shadow:none;cursor:not-allowed}
+.btn.sm{min-height:44px;padding:0 14px}
+/* The question is paper: stimulus, stem and source sit on a light card in both themes. */
+.paper{background:var(--paper);color:var(--paper-ink);border-radius:20px;padding:18px;margin-bottom:12px}
+.paper .stimulus,.paper .stem{font:400 17px/1.45 Newsreader,Georgia,serif}
+.paper .stem{font-weight:500;margin-top:12px}
+.paper .stimulus table,.paper .stem table{border-collapse:collapse;font-size:14px}
+.paper td,.paper th{border:1px solid #c9c7bd;padding:4px 8px;background:transparent;color:inherit}
+.paper .src{font:400 12px/1.4 Figtree;color:var(--paper-2);margin-top:12px}
+.paper p{margin:0 0 8px}
+.opt{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:start;min-height:60px;padding:12px;border:2px solid var(--line);border-bottom-width:3px;border-radius:16px;background:var(--surface);margin-bottom:10px}
+.opt .tile{width:34px;height:34px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;font-weight:700}
+.opt .body{font:600 16px/1.4 Figtree}
+.opt.marked{border-color:var(--flame)}
+.opt.marked .tile{background:var(--flame);color:#0D110F}
+.opt .body table{font-size:13px;border-collapse:collapse}
+.opt .body td,.opt .body th{border:1px solid var(--line);padding:3px 6px}
+.note{padding:10px 12px;border-radius:12px;margin:6px 0;font-size:13px}
+.note.bad{background:var(--bad-soft)} .note.warn{background:rgba(255,159,67,.14)} .note.ok{background:var(--ok-soft)}
+.badge{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600;border:1px solid var(--line);margin:2px 4px 2px 0;color:var(--text-2)}
+.badge.ok{color:var(--ok);border-color:var(--ok)} .badge.hid{color:var(--flame);border-color:var(--flame)}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+@media (max-width:920px){.grid2{grid-template-columns:1fr} main{padding:16px}.top{padding:12px 16px}}
+img.scan{width:100%;border-radius:12px;border:1px solid var(--line)}
+img.fig{max-width:100%;background:#fff;border-radius:12px;margin:4px 0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 </style>
 </head>
 <body>
-<header>
-  <h1>ICFES editor</h1>
-  <nav>
-    <button id="tab-progress" data-tab="progress">Progress</button>
-    <button id="tab-questions" data-tab="questions">Questions</button>
-  </nav>
-  <span id="status" class="muted"></span>
+<header class="top">
+  <div class="brand">Cóndor<small>Editor de preguntas</small></div>
+  <div class="seg" role="tablist">
+    <button id="tab-progress" data-tab="progress" role="tab">Progreso</button>
+    <button id="tab-questions" data-tab="questions" role="tab">Preguntas</button>
+  </div>
+  <span class="spacer"></span>
+  <span id="status" class="pill">Cargando…</span>
+  <button class="pill" id="theme" title="Tema">Tema</button>
 </header>
-<main id="app">Loading…</main>
+<main id="app"></main>
+<script src="render.bundle.js"></script>
 <script>
 const $ = (s) => document.querySelector(s);
 const app = $("#app");
+const AREA = { "Lectura crítica": "--area-lectura", "Matemáticas": "--area-mate", "Sociales y ciudadanas": "--area-sociales", "Ciencias naturales": "--area-ciencias", "Inglés": "--area-ingles" };
 const state = { tab: "progress", exam: null, filter: "all", n: null, detail: null, exams: [] };
 
 function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
-function status(text, cls = "muted") { const el = $("#status"); el.textContent = text; el.className = cls; }
+function status(text, cls = "") { const el = $("#status"); el.textContent = text; el.className = "pill " + cls; }
+function render(html) { return window.renderRich ? window.renderRich(html || "") : esc(html); }
+function areaColor(name) { return AREA[name] ? `var(${AREA[name]})` : "var(--text-2)"; }
+function fmt(n) { return n == null ? "—" : Number(n).toLocaleString("es-CO"); }
 
 async function api(path, opts) {
   const res = await fetch(path, opts);
@@ -77,71 +119,85 @@ async function api(path, opts) {
 
 function setTab(tab) {
   state.tab = tab;
-  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+  document.querySelectorAll(".seg button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
   if (tab === "progress") showProgress(); else showQuestions();
 }
-document.querySelectorAll("nav button").forEach(b => b.onclick = () => setTab(b.dataset.tab));
+document.querySelectorAll(".seg button").forEach(b => b.onclick = () => setTab(b.dataset.tab));
+$("#theme").onclick = () => {
+  const root = document.documentElement;
+  const dark = root.dataset.theme !== "light";
+  root.dataset.theme = dark ? "light" : "dark";
+};
 
 // ----- progress --------------------------------------------------------------
 
 async function showProgress() {
-  status("Reading…");
+  status("Leyendo…");
   state.exams = await api("/api/exams");
-  status("");
-  const rows = state.exams.map(e => `
-    <tr class="click" data-exam="${esc(e.exam)}">
-      <td><b>${esc(e.exam)}</b><br><span class="muted">${esc(e.title)}</span></td>
-      <td>${e.questions}${e.expected != null ? ` <span class="muted">/ ${e.expected}</span>` : ""}</td>
-      <td class="${e.ready === e.questions ? "ok" : ""}">${e.ready}</td>
-      <td class="${e.hidden ? "warn" : ""}">${e.hidden}</td>
-      <td class="${e.errors ? "bad" : "ok"}">${e.errors}</td>
-      <td class="muted">${e.warnings}</td>
-      <td>${e.key.present ? `${e.key.answers} answers` : '<span class="bad">no key</span>'}${e.key.disputed ? ` <span class="warn">${e.key.disputed} disputed</span>` : ""}</td>
-      <td>${e.figures.traced ? `${e.figures.traced} traced` : '<span class="muted">none</span>'}${e.figures.pending_spec ? ` <span class="warn">${e.figures.pending_spec} pending</span>` : ""}</td>
-    </tr>`).join("");
-  const totals = state.exams.reduce((t, e) => ({ q: t.q + e.questions, r: t.r + e.ready, h: t.h + e.hidden, er: t.er + e.errors }), { q: 0, r: 0, h: 0, er: 0 });
+  status(`${state.exams.length} exámenes`, "ok");
+  const t = state.exams.reduce((a, e) => ({ q: a.q + e.questions, r: a.r + e.ready, h: a.h + e.hidden, er: a.er + e.errors, k: a.k + (e.key.present ? 1 : 0) }), { q: 0, r: 0, h: 0, er: 0, k: 0 });
+  const rows = state.exams.map(e => {
+    const pct = e.questions ? Math.round(100 * e.ready / e.questions) : 0;
+    return `<tr class="row" data-exam="${esc(e.exam)}">
+      <td><b>${esc(e.exam)}</b><div class="muted">${esc(e.title)}</div></td>
+      <td class="num">${fmt(e.questions)}${e.expected != null && e.expected !== e.questions ? ` <span class="flame">/ ${fmt(e.expected)}</span>` : ""}</td>
+      <td><div class="bar"><i style="width:${pct}%"></i></div><span class="num">${fmt(e.ready)}</span></td>
+      <td class="num ${e.hidden ? "flame" : ""}">${fmt(e.hidden)}</td>
+      <td class="num ${e.errors ? "bad" : "ok"}">${fmt(e.errors)}</td>
+      <td class="num muted">${fmt(e.warnings)}</td>
+      <td>${e.key.present ? `<span class="num">${fmt(e.key.answers)}</span> claves${e.key.disputed ? ` <span class="flame">· ${e.key.disputed} disputadas</span>` : ""}` : '<span class="bad">sin clave</span>'}</td>
+      <td>${e.figures.traced ? `${e.figures.traced} trazadas${e.figures.pending_spec ? ` <span class="flame">· ${e.figures.pending_spec} pendientes</span>` : ""}` : '<span class="muted">ninguna</span>'}</td>
+    </tr>`;
+  }).join("");
   app.innerHTML = `
-    <div class="card"><h3>Totals</h3>
-      ${totals.q} questions · <span class="ok">${totals.r} ready</span> · <span class="warn">${totals.h} hidden from students</span> · <span class="bad">${totals.er} validator errors</span>
-      <div class="muted">${state.exams.length} exams. Click an exam to browse its questions.</div></div>
+    <div class="stats">
+      <div class="card"><div class="label">Preguntas</div><div class="display num">${fmt(t.q)}</div></div>
+      <div class="card"><div class="label">Listas</div><div class="display num acc">${fmt(t.r)}</div><div class="muted">${Math.round(100 * t.r / (t.q || 1))} % de ${fmt(t.q)}</div></div>
+      <div class="card"><div class="label">Ocultas a estudiantes</div><div class="display num flame">${fmt(t.h)}</div></div>
+      <div class="card"><div class="label">Errores del validador</div><div class="display num bad">${fmt(t.er)}</div></div>
+      <div class="card"><div class="label">Con clave</div><div class="display num">${t.k}<span class="muted" style="font-size:16px"> / ${state.exams.length}</span></div></div>
+    </div>
     <table>
-      <thead><tr><th>Exam</th><th>Questions</th><th>Ready</th><th>Hidden</th><th>Errors</th><th>Warnings</th><th>Answer key</th><th>Traced figures</th></tr></thead>
+      <thead><tr><th>Examen</th><th>Preguntas</th><th>Listas</th><th>Ocultas</th><th>Errores</th><th>Avisos</th><th>Clave</th><th>Figuras</th></tr></thead>
       <tbody>${rows}</tbody>
-    </table>`;
+    </table>
+    <p class="muted">Toca un examen para ver sus preguntas.</p>`;
   app.querySelectorAll("tr[data-exam]").forEach(tr => tr.onclick = () => { state.exam = tr.dataset.exam; state.n = null; setTab("questions"); });
 }
 
-// ----- question list ---------------------------------------------------------
+// ----- question map ----------------------------------------------------------
+
+const FILTERS = [["all", "Todas"], ["hidden", "Ocultas"], ["errors", "Con errores"], ["warnings", "Avisos"], ["notready", "No listas"]];
 
 async function showQuestions() {
   if (!state.exams.length) state.exams = await api("/api/exams");
   if (!state.exam) state.exam = state.exams[0]?.exam;
-  status("Reading…");
+  status("Leyendo…");
   const rows = await api(`/api/exams/${encodeURIComponent(state.exam)}/questions`);
-  status("");
   const pass = rows.filter(r => ({
-    all: true,
-    hidden: r.hidden.length > 0,
-    errors: r.errors > 0,
-    warnings: r.warnings > 0,
-    notready: !r.ready,
+    all: true, hidden: r.hidden.length > 0, errors: r.errors > 0, warnings: r.warnings > 0, notready: !r.ready,
   })[state.filter]);
+  status(`${rows.length} preguntas`, "ok");
   const opts = state.exams.map(e => `<option value="${esc(e.exam)}" ${e.exam === state.exam ? "selected" : ""}>${esc(e.exam)}</option>`).join("");
+  const sections = [...new Set(rows.map(r => r.section).filter(Boolean))];
   app.innerHTML = `
     <div class="toolbar">
-      <select id="pick-exam">${opts}</select>
-      <select id="pick-filter">
-        ${[["all","All questions"],["hidden","Hidden from students"],["errors","Validator errors"],["warnings","Warnings"],["notready","Not ready"]]
-          .map(([v, l]) => `<option value="${v}" ${v === state.filter ? "selected" : ""}>${l}</option>`).join("")}
-      </select>
-      <span class="muted">${pass.length} of ${rows.length}</span>
+      <select id="pick-exam" aria-label="Examen">${opts}</select>
+      ${FILTERS.map(([v, l]) => `<button class="chip ${v === state.filter ? "on" : ""}" data-filter="${v}">${l}</button>`).join("")}
+      <span class="muted num">${pass.length} de ${rows.length}</span>
     </div>
-    <div class="qlist">
-      ${pass.map(r => `<button data-n="${r.number}" class="${r.hidden.length ? "hidden" : ""} ${r.errors ? "err" : ""}" title="${esc(r.hidden.join(", ") || "visible")}">Q${r.number}</button>`).join("")}
+    <div class="toolbar">
+      ${sections.map(s => `<span class="chip" style="cursor:default"><i style="background:${areaColor(s)}"></i>${esc(s)}</span>`).join("")}
     </div>
-    <p class="muted">Dashed = hidden from students. Red border = validator error. Click a question to edit it.</p>`;
+    <div class="card">
+      <div class="label">Mapa de preguntas</div>
+      <div class="map">
+        ${pass.map(r => `<button class="cell ${r.errors ? "err" : r.hidden.length ? "hidden" : "ready"}" data-n="${r.number}" title="${esc(r.hidden.join(", ") || "visible para estudiantes")}">${r.number}</button>`).join("")}
+      </div>
+      <div class="muted" style="margin-top:12px">Relleno verde: visible para estudiantes. Borde punteado: oculta. Borde rojo: error del validador.</div>
+    </div>`;
   $("#pick-exam").onchange = (e) => { state.exam = e.target.value; state.n = null; showQuestions(); };
-  $("#pick-filter").onchange = (e) => { state.filter = e.target.value; showQuestions(); };
+  app.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { state.filter = b.dataset.filter; showQuestions(); });
   app.querySelectorAll("button[data-n]").forEach(b => b.onclick = () => openQuestion(Number(b.dataset.n)));
 }
 
@@ -149,82 +205,102 @@ async function showQuestions() {
 
 async function openQuestion(n) {
   state.n = n;
-  status("Loading…");
+  status("Cargando…");
   state.detail = await api(`/api/exams/${encodeURIComponent(state.exam)}/questions/${n}`);
-  status("");
+  status(`${state.exam} · Q${n}`, "ok");
   renderEditor();
+}
+
+function studentView(q, g, letterMark) {
+  const opts = q.options.map(o => `
+    <div class="opt" style="pointer-events:none">
+      <span class="tile">${esc(o.letter)}</span>
+      <div class="body">${render(o.text_md)}</div>
+    </div>`).join("");
+  const dir = g ? `<div class="label" style="color:var(--paper-2)">${esc(g.directions)}</div><div class="stimulus">${render(g.passage_md)}</div><hr style="border:0;border-top:1px solid #d8d6cc;margin:12px 0">` : "";
+  return `
+    <div class="paper">
+      <div class="label" style="color:var(--paper-2)">Pregunta ${q.number}</div>
+      ${dir}
+      ${q.stimulus_md ? `<div class="stimulus">${render(q.stimulus_md)}</div>` : ""}
+      <div class="stem">${render(q.stem_md)}</div>
+      <div class="src">Fuente: ICFES, Saber 11 · ${esc(state.exam)}</div>
+    </div>
+    ${opts}`;
 }
 
 function renderEditor() {
   const d = state.detail, q = d.question, g = d.group;
   const idx = d.numbers.indexOf(d.number);
   const prev = d.numbers[idx - 1], next = d.numbers[idx + 1];
-  const scan = d.scan_pages.length ? `<img class="scan" src="/api/scan/${encodeURIComponent(d.exam)}/${d.scan_pages[0]}" alt="scan page ${d.scan_pages[0]}" loading="lazy">` : `<p class="muted">No scan page recorded.</p>`;
+  const scan = d.scan_pages.length ? `<img class="scan" src="/api/scan/${encodeURIComponent(d.exam)}/${d.scan_pages[0]}" alt="página ${d.scan_pages[0]}" loading="lazy">` : `<p class="muted">Sin página de escaneo registrada.</p>`;
   const figs = d.figures.map(f => `
-    <div class="msg"><b>${esc(f.spec_id || f.figure_id)}</b> · ${esc(f.kind)} · ${esc(f.method)}${f.pending_spec ? ' · <span class="warn">pending spec</span>' : ""}</div>
-    ${f.svg ? `<img class="fig" src="/api/figure?path=${encodeURIComponent(f.svg)}" alt="traced ${esc(f.figure_id)}">` : ""}`).join("") || `<p class="muted">No traced figure for this question.</p>`;
-  const msgs = [...d.messages.errors.map(m => `<div class="msg bad">${esc(m)}</div>`), ...d.messages.warnings.map(m => `<div class="msg warn">${esc(m)}</div>`)].join("") || `<div class="msg ok">Validator clean.</div>`;
+    <div class="muted" style="margin-top:8px"><b>${esc(f.spec_id || f.figure_id)}</b> · ${esc(f.method)}${f.pending_spec ? ' · <span class="flame">pendiente</span>' : ""}</div>
+    ${f.svg ? `<img class="fig" src="/api/figure?path=${encodeURIComponent(f.svg)}" alt="${esc(f.figure_id)}">` : ""}`).join("") || `<p class="muted">Sin figura trazada.</p>`;
+  const msgs = [...d.messages.errors.map(m => `<div class="note bad">${esc(m)}</div>`), ...d.messages.warnings.map(m => `<div class="note warn">${esc(m)}</div>`)].join("") || `<div class="note ok">Validador limpio.</div>`;
   const flags = (q.provenance.flags || []).map(f => `<li>${esc(f)}</li>`).join("");
   const notes = (q.provenance.notes || []).map(f => `<li>${esc(f)}</li>`).join("");
-  const letters = q.options.map(o => o.letter);
-  const keyOpts = `<option value="">— none —</option>` + letters.map(l => `<option value="${l}" ${d.key === l ? "selected" : ""}>${l}</option>`).join("");
+  const keyOpts = `<option value="">— ninguna —</option>` + q.options.map(o => `<option value="${esc(o.letter)}" ${d.key === o.letter ? "selected" : ""}>${esc(o.letter)}</option>`).join("");
+  const hidden = d.hidden_reasons.length
+    ? d.hidden_reasons.map(r => `<span class="badge hid">oculta: ${esc(r)}</span>`).join("")
+    : `<span class="badge ok">visible para estudiantes</span>`;
 
   app.innerHTML = `
     <div class="toolbar">
-      <button id="prev" ${prev ? "" : "disabled"}>← Q${prev ?? ""}</button>
-      <b>${esc(d.exam)} · Q${d.number}</b> <span class="muted">${esc(q.section || "")}${q.part ? " · " + esc(q.part) : ""}</span>
-      <button id="next" ${next ? "" : "disabled"}>Q${next ?? ""} →</button>
-      <button id="back">All questions</button>
-      <span class="muted" style="margin-left:auto"></span>
+      <button class="btn sm" id="back">← Mapa</button>
+      <button class="btn sm" id="prev" ${prev ? "" : "disabled"}>← Q${prev ?? ""}</button>
+      <button class="btn sm" id="next" ${next ? "" : "disabled"}>Q${next ?? ""} →</button>
+      <span class="title" style="margin:0 0 0 8px;font-size:18px">${esc(d.exam)} · Q${d.number}</span>
+      <span class="muted">${esc(q.section || "")}${q.part ? " · " + esc(q.part) : ""}</span>
     </div>
-    <div class="toolbar">
-      ${d.hidden_reasons.length ? d.hidden_reasons.map(r => `<span class="badge warn">hidden: ${esc(r)}</span>`).join("") : '<span class="badge ok">visible to students</span>'}
-    </div>
-    <div class="grid">
+    <div class="toolbar">${hidden}</div>
+    <div class="grid2">
       <div>
-        <div class="card"><h3>Question</h3>
-          <label class="muted">Stem (markdown)</label>
+        <div class="card"><div class="label">Enunciado</div>
           <textarea id="f-stem">${esc(q.stem_md)}</textarea>
-          <div class="preview" id="p-stem"></div>
         </div>
-        <div class="card"><h3>Options</h3>
-          <div id="f-opts">
-            ${q.options.map(o => `<div class="opt"><b>${esc(o.letter)}</b><textarea data-letter="${esc(o.letter)}">${esc(o.text_md)}</textarea></div>`).join("")}
-          </div>
-          <div class="muted">Marked in scan: ${esc(q.scan_marked_option || "—")} · expected options: ${esc(q.expected_options ?? "—")}</div>
+        <div class="card"><div class="label">Opciones</div>
+          <div id="f-opts">${q.options.map(o => `<div style="display:grid;grid-template-columns:34px 1fr;gap:8px;margin-bottom:8px"><b style="padding-top:10px">${esc(o.letter)}</b><textarea data-letter="${esc(o.letter)}" style="min-height:44px">${esc(o.text_md)}</textarea></div>`).join("")}</div>
+          <div class="muted">Marcada en el escaneo: ${esc(q.scan_marked_option || "—")} · opciones esperadas: ${esc(q.expected_options ?? "—")}</div>
         </div>
-        <div class="card"><h3>Question-specific passage</h3>
-          <label class="muted">Stimulus (markdown)</label>
+        <div class="card"><div class="label">Texto propio de la pregunta</div>
           <textarea id="f-stimulus">${esc(q.stimulus_md)}</textarea>
         </div>
-        <div class="card"><h3>Shared passage ${g ? `(${esc(g.id)}, Q${g.from}-${g.to})` : ""}</h3>
-          <div class="muted">${esc(g?.directions || "No shared passage.")}</div>
-          <div class="passage">${g ? g.passage_md : ""}</div>
-          <div class="muted">Read-only here. Literary passages are never retyped: use [Texto pendiente: página N] and tools/fillpage.py.</div>
+        <div class="card"><div class="label">Texto compartido${g ? ` · ${esc(g.id)} (Q${g.from}–${g.to})` : ""}</div>
+          <p class="muted" style="margin-top:0">Solo lectura. Los textos literarios nunca se reescriben: usa [Texto pendiente: página N] y tools/fillpage.py.</p>
         </div>
       </div>
       <div>
-        <div class="card"><h3>Save</h3>
-          <label><input type="checkbox" id="f-ready" ${q.ready ? "checked" : ""}> Ready (visible to students)</label>
-          <div style="margin:8px 0">Answer:
+        <div class="card"><div class="label">Vista del estudiante</div>
+          <div id="preview">${studentView(q, g)}</div>
+        </div>
+        <div class="card">
+          <div class="label">Guardar</div>
+          <label style="display:flex;gap:10px;align-items:center;min-height:44px"><input type="checkbox" id="f-ready" ${q.ready ? "checked" : ""} style="width:20px;height:20px"> Lista (visible para estudiantes)</label>
+          <div style="display:flex;gap:10px;align-items:center;margin:10px 0;flex-wrap:wrap">
+            <span class="muted">Respuesta</span>
             <select id="f-answer">${keyOpts}</select>
-            <span class="muted">from answer-keys/${esc(d.exam)}.key.json</span>
+            <span class="muted">clave de answer-keys/${esc(d.exam)}.key.json</span>
           </div>
-          <div class="toolbar" style="margin:0"><button class="primary" id="save">Save</button><span id="save-msg" class="muted"></span></div>
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="btn primary" id="save">Guardar</button><span id="save-msg" class="muted"></span></div>
         </div>
-        <div class="card"><h3>Validator and flags</h3>
+        <div class="card"><div class="label">Validador y avisos</div>
           ${msgs}
-          ${flags ? `<h3 style="margin-top:10px">Review flags</h3><ul>${flags}</ul>` : ""}
-          ${notes ? `<h3 style="margin-top:10px">Notes</h3><ul>${notes}</ul>` : ""}
+          ${flags ? `<div class="label" style="margin-top:12px">Marcas de revisión</div><ul class="muted">${flags}</ul>` : ""}
+          ${notes ? `<div class="label" style="margin-top:12px">Notas</div><ul class="muted">${notes}</ul>` : ""}
         </div>
-        <div class="card"><h3>Scan (first source page)</h3>${scan}</div>
-        <div class="card"><h3>Traced figures</h3>${figs}</div>
+        <div class="card"><div class="label">Escaneo (primera página)</div>${scan}</div>
+        <div class="card"><div class="label">Figuras trazadas</div>${figs}</div>
       </div>
     </div>`;
 
-  const stem = $("#f-stem"), pstem = $("#p-stem");
-  const renderPreview = () => { pstem.innerHTML = stem.value; };
-  stem.oninput = renderPreview; renderPreview();
+  // The preview re-renders with the app's renderer as the editor changes, so it shows what students will see.
+  const refresh = () => {
+    const current = { ...q, stem_md: $("#f-stem").value, stimulus_md: $("#f-stimulus").value,
+      options: [...document.querySelectorAll("#f-opts [data-letter]")].map(t => ({ letter: t.dataset.letter, text_md: t.value })) };
+    $("#preview").innerHTML = studentView(current, g);
+  };
+  document.querySelectorAll("#f-stem, #f-stimulus, #f-opts textarea").forEach(t => t.oninput = refresh);
   $("#back").onclick = () => setTab("questions");
   $("#prev").onclick = () => prev && openQuestion(prev);
   $("#next").onclick = () => next && openQuestion(next);
@@ -242,17 +318,17 @@ async function saveQuestion() {
     answer: $("#f-answer").value || null,
   };
   const msg = $("#save-msg");
-  msg.textContent = "Saving…";
+  msg.textContent = "Guardando…";
   try {
     state.detail = await api(`/api/exams/${encodeURIComponent(d.exam)}/questions/${d.number}`, {
       method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
     });
-    status("Saved", "ok");
+    status("Guardado", "ok");
     renderEditor();
-    $("#save-msg").textContent = "Saved";
+    $("#save-msg").textContent = "Guardado";
   } catch (err) {
     if (err.status === 409) {
-      msg.innerHTML = `<span class="bad">Nothing saved. Cannot mark ready yet: ${esc((err.body.reasons || []).join(", "))}. Fix those, or untick Ready.</span>`;
+      msg.innerHTML = `<span class="bad">No se guardó. No se puede marcar como lista todavía: ${esc((err.body.reasons || []).join(", "))}. Corrige eso o desmarca «Lista».</span>`;
     } else {
       msg.innerHTML = `<span class="bad">${esc(err.message)}</span>`;
     }
