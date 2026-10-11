@@ -381,3 +381,14 @@ def test_a_proposed_box_counts_as_to_crop_and_comes_in_page_fractions(root, tmp_
     assert fig["proposed_box_page_fraction"] == pytest.approx([0, 0, 0.5, 0.5], abs=0.001)
     made = store.crop_page(EXAM, 1, 1, fig["proposed_box_page_fraction"], replaces="t-q1-fig")
     assert [f["figure_id"] for f in store.question_detail(EXAM, 1)["figures"]] == [made["figure_id"]]
+
+
+def test_saving_puts_questions_back_in_number_order(root):
+    p = root / "data" / f"{EXAM}.golden.json"
+    g = json.loads(p.read_text(encoding="utf-8"))
+    g["questions"] = g["questions"][1:] + g["questions"][:1]
+    p.write_text(json.dumps(g, ensure_ascii=False), encoding="utf-8")
+    store = Store(root)
+    assert [r["number"] for r in store.question_rows(EXAM)] == [1, 2, 3]
+    store.update_question(EXAM, 3, {"stem_md": "otra"})
+    assert [q["number"] for q in store.golden(EXAM)["questions"]] == [1, 2, 3]

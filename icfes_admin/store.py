@@ -805,6 +805,8 @@ class Store:
             self._set_answer(exam, n, patch["answer"])
         note =f"edited in the admin editor {datetime.now().strftime('%Y-%m-%d %H:%M')}"
         q.setdefault("provenance", {}).setdefault("notes", []).append(note)
+        # A question stored out of place (one added at the end later) moves into number order on any save.
+        g["questions"].sort(key=lambda x: x["number"])
         self._write(self.data / f"{exam}.golden.json",
                     json.dumps(g, ensure_ascii=False, indent=2) + "\n", f"{exam}.golden")
         return self.question_detail(exam, n)
