@@ -28,7 +28,8 @@ from icfes_admin import ocr  # noqa: E402
 
 EXAM_ID = re.compile(r"^[A-Za-z0-9_-]+$")
 QUESTION_PREFIX = re.compile(r"^Q(\d+):")
-PENDING_TEXT = "[Texto pendiente"
+# Any "[... pendiente(s)" placeholder (texto, tabla, gráfica, figuras) means the content is not typed yet; the app hides these too.
+PENDING_TEXT = re.compile(r"\[(?:Texto|Tablas?|Gr[aá]ficas?|Figuras) pendientes?")
 FIGURE_NOTE = "[FIGURE"
 # The tracing could not cut these figures; they wait for a crop drawn by hand ("proposed_box" comes with a box to check).
 TO_CROP = {"manual_crop_needed", "proposed_box"}
@@ -136,10 +137,10 @@ class Store:
         if not q.get("ready"):
             reasons.append("not ready")
         group = groups.get(q.get("group_id")) or {}
-        texts = [q.get("stem_md"), q.get("stimulus_md"), group.get("passage_md")]
+        texts = [q.get("stem_md"), q.get("stimulus_md"), group.get("passage_md"), group.get("stimulus_md")]
         texts += [o.get("text_md") for o in q.get("options", [])]
         texts = [t or "" for t in texts]
-        if any(PENDING_TEXT in t for t in texts):
+        if any(PENDING_TEXT.search(t) for t in texts):
             reasons.append("text pending")
         if any(FIGURE_NOTE in t for t in texts):
             reasons.append("[FIGURE] note")
@@ -201,7 +202,8 @@ class Store:
         groups = {x["id"]: x for x in g["groups"]}
         figs = self.figures_by_question(exam)
         rows = []
-        for q in g["questions"]:
+        # Number order, whatever order the golden file keeps them in (a question added later sits at the end).
+        for q in sorted(g["questions"], key=lambda x: x["number"]):
             n = q["number"]
             msgs = per_q.get(n, {"errors": [], "warnings": []})
             rows.append({
@@ -242,7 +244,7 @@ class Store:
             "key": answers.get(str(n)),
             "scan_pages": q.get("source", {}).get("pages", []),
             "scan": self.scan_info(exam, n, q, len(g["questions"])),
-            "numbers": [x["number"] for x in g["questions"]],
+            "numbers": sorted(x["number"] for x in g["questions"]),
             "undo": self.undo_count(exam, n),
             "ocr": self.ocr_available(exam),
             "anchor": self.locate(exam, n, self.scan_info(exam, n, q, len(g["questions"]))),

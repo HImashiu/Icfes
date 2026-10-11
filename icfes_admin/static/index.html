@@ -68,6 +68,8 @@ table.flat .badge{margin:1px 4px 1px 0}
 .btn{min-height:52px;padding:0 20px;border-radius:16px;border:2px solid var(--line);background:transparent;cursor:pointer;font-weight:700}
 .btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);box-shadow:0 4px 0 var(--accent-shadow)}
 .btn.primary:active{box-shadow:0 0 0 var(--accent-shadow);transform:translateY(4px)}
+.nextfix{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;border-color:var(--accent)}
+.nextfix b{display:block;font-size:17px;margin:4px 0}
 .btn:disabled{background:var(--surface-2);color:var(--text-2);border-color:transparent;box-shadow:none;cursor:not-allowed}
 .btn.sm{min-height:44px;padding:0 14px}
 /* The question is paper: stimulus, stem and source sit on a light card in both themes. */
@@ -76,6 +78,8 @@ table.flat .badge{margin:1px 4px 1px 0}
 .paper .stem{font-weight:500;margin-top:12px}
 .paper .stimulus table,.paper .stem table{border-collapse:collapse;font-size:14px}
 .paper td,.paper th{border:1px solid #c9c7bd;padding:4px 8px;background:transparent;color:inherit}
+.paper table{background:transparent;border:0;border-radius:0;width:auto;margin:6px 0;overflow:visible}
+.paper th{font:inherit;font-weight:700;text-transform:none;letter-spacing:0;color:inherit}
 .paper .src{font:400 12px/1.4 Figtree;color:var(--paper-2);margin-top:12px}
 .paper p{margin:0 0 8px}
 .opt{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:start;min-height:60px;padding:12px;border:2px solid var(--line);border-bottom-width:3px;border-radius:16px;background:var(--surface);margin-bottom:10px}
@@ -395,12 +399,19 @@ async function showProgress() {
       <td>${e.figures.traced ? `${e.figures.traced} del escaneo${e.figures.pending_spec ? ` <span class="flame">· ${e.figures.pending_spec} pendientes</span>` : ""}${e.figures.to_crop ? ` <span class="flame">· ✂ ${e.figures.to_crop} por recortar</span>` : ""}` : '<span class="muted">ninguna</span>'}</td>
     </tr>`;
   }).join("");
+  const todo = state.exams.filter(e => e.hidden || e.errors);
+  const fixCard = todo.length
+    ? `<div class="card nextfix"><div><div class="label">Qué sigue</div>
+        <b>${fmt(t.h)} preguntas no las ven los estudiantes todavía.</b>
+        <div class="muted">Empieza por ${esc(todo[0].exam)}: te llevo a la primera que falta y «Siguiente por arreglar» te pasa a la próxima.</div></div>
+        <button class="btn primary" id="fixfirst">Arreglar la siguiente →</button></div>`
+    : `<div class="card nextfix"><b>Todas las preguntas están listas para los estudiantes 🎉</b></div>`;
   const last = recall("last");
   const resume = last && state.exams.some(e => e.exam === last.exam)
     ? `<div class="card" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><b>Seguir donde quedaste:</b> ${esc(last.exam)} · Q${last.n}
        <button class="btn sm primary" id="resume">Abrir</button>
        <button class="btn sm" onclick="openSearch()">🔍 Buscar una pregunta</button></div>` : "";
-  app.innerHTML = resume + `
+  app.innerHTML = resume + fixCard + `
     <div class="stats">
       <div class="card"><div class="label">Preguntas</div><div class="display num">${fmt(t.q)}</div></div>
       <div class="card"><div class="label">Listas</div><div class="display num acc">${fmt(t.r)}</div><div class="muted">${Math.round(100 * t.r / (t.q || 1))} % de ${fmt(t.q)}</div></div>
@@ -415,6 +426,15 @@ async function showProgress() {
     <p class="muted">Toca un examen para ver sus preguntas.</p>`;
   app.querySelectorAll("tr[data-exam]").forEach(tr => tr.onclick = () => { state.exam = tr.dataset.exam; state.n = null; setTab("questions"); });
   if ($("#resume")) $("#resume").onclick = () => { state.exam = last.exam; openQuestion(last.n, { reloadExam: true }); };
+  if ($("#fixfirst")) $("#fixfirst").onclick = async () => {
+    for (const e of todo) {
+      state.exam = e.exam;
+      await loadExam();
+      const r = state.rows.find(x => x.errors || x.hidden.length || badFigure(x.number) || x.to_crop);
+      if (r) { state.tab = "questions"; document.querySelectorAll(".seg button").forEach(b => b.classList.toggle("on", b.dataset.tab === "questions")); return openQuestion(r.number); }
+    }
+    toast("No queda nada por arreglar 🎉");
+  };
 }
 
 // ----- question map ----------------------------------------------------------
@@ -744,11 +764,13 @@ function toggleMenu(id, e) {
 }
 document.addEventListener("click", e => { if (!e.target.closest(".menu hr")) document.querySelectorAll(".menu").forEach(x => { x.hidden = true; }); });
 
-const REASONS = { "not ready": "no está marcada como lista", "text pending": "texto pendiente", "[FIGURE] note": "nota [FIGURE] en el texto", "figure pending spec": "figura pendiente", "blank option": "opción vacía" };
+const REASONS = { "not ready": "no está marcada como lista", "text pending": "texto, tabla o gráfica pendiente", "[FIGURE] note": "nota [FIGURE] en el texto", "figure pending spec": "figura pendiente", "blank option": "opción vacía" };
+// The badge names the reasons, so nobody has to hover to learn why students do not see the question.
 function visBadges(reasons) {
-  return reasons.length
-    ? `<span class="badge hid" title="${esc(reasons.map(r => REASONS[r] || r).join(", "))}">Oculta a estudiantes</span>`
-    : `<span class="badge ok">Visible para estudiantes</span>`;
+  if (!reasons.length) return `<span class="badge ok">Visible para estudiantes</span>`;
+  const words = reasons.map(r => REASONS[r] || r);
+  const shown = words.length > 2 ? `${words.slice(0, 2).join(", ")} y ${words.length - 2} más` : words.join(" y ");
+  return `<span class="badge hid" title="${esc(words.join(", "))}">Oculta: ${esc(shown)}</span>`;
 }
 // The one next step, at the bottom of the form: what is still missing, and the button that finishes the question.
 function nsMissHtml() {
@@ -774,7 +796,7 @@ function markDirty() {
 function formPane(q, g) {
   const sections = Object.keys(AREA);
   if (q.section && !sections.includes(q.section)) sections.push(q.section);
-  const flags = (q.provenance?.flags || []).map(f => `<li>${esc(f)}</li>`).join("");
+  const flags = (q.provenance?.flags || []).map(f => `<li title="${esc(f)}">${esc(flagText(f))}</li>`).join("");
   const notes = (q.provenance?.notes || []).slice(-6).map(f => `<li>${esc(f)}</li>`).join("");
   const msgs = [...state.detail.messages.errors.map(m => `<div class="note bad">${esc(checkMsg(m))}</div>`), ...state.detail.messages.warnings.map(m => `<div class="note warn">${esc(checkMsg(m))}</div>`)].join("");
   return `
@@ -834,9 +856,34 @@ function formPane(q, g) {
     <div class="nextstep" id="nextstep">${nextStepHtml()}</div>`;
 }
 
+// Review flags the pipeline left on a question, in plain Spanish (the code stays in the tooltip).
+const FLAGS = [
+  [/^(no_key_on_scan|no_key_dot|no_blue_dot_on_scan|no_scan_mark|scan_key_missing|no blue dot seen)/, "El escaneo no muestra la respuesta marcada: revisa la clave"],
+  [/^(key needs check|pending_key|key review|key_logic_check|keys_from_handwriting|key_not_legible)/, "Revisa la clave de esta pregunta"],
+  [/^(scan key disputed|dot_vs_content_dispute|two_marks_on_scan|handwritten_mark)/, "La clave del escaneo está en duda: compárala con el contenido"],
+  [/^(figure pending|figure_pending_spec|figure pending_spec|pending_figure|pending_spec|figure needs drawing|figure_stimulus_pending|stimulus_figure_pending|figure_or_table_placeholder|stimulus placeholder)/, "Falta la figura o la tabla"],
+  [/^(figure options pending|option_figures_pending)/, "Faltan las figuras de las opciones"],
+  [/^(passage_pending|text_pending)/, "Falta el texto (pásalo desde el PDF)"],
+  [/^(passage_spot_check|passage_first_paragraph_retyped)/, "Compara el texto con el PDF"],
+  [/^Expected \d+ options, found \d+/, "Faltan opciones (pueden estar dentro de una figura)"],
+  [/^cloze_options_typed_from_scan/, "Opciones copiadas a mano del escaneo: compáralas con el PDF"],
+  [/^scan_obscured_options_check/, "Las opciones se veían mal en el escaneo: compáralas con el PDF"],
+  [/^This question was not detected/, "La pregunta no se detectó bien: revísala completa contra el PDF"],
+  [/^No question text found/, "No se encontró el texto de la pregunta"],
+  [/^Unclassified text after the options/, "Había texto después de las opciones que no se muestra: revisa el PDF"],
+  [/^Option [A-D] is much longer than the others/, "Una opción es mucho más larga: pueden estar dos opciones pegadas"],
+  [/^Question number was lost by the OCR/, "El número de la pregunta se dedujo por orden: confírmalo"],
+  [/^figure_pair_proof_written/, "Figura revisada con prueba lado a lado"],
+];
+function flagText(f) {
+  const s = String(f);
+  for (const [rx, text] of FLAGS) if (rx.test(s)) return text;
+  return s;
+}
+
 // The checker's messages, in plain Spanish.
 const CHECK = [
-  [/still has review flags: (.+)/, m => `Marca de revisión pendiente: ${m[1].replace("pending_figure", "falta la figura")}`],
+  [/still has review flags: (.+)/, m => `Marca de revisión: ${flagText(m[1])}`],
   [/duplicate question number/, () => "El número de la pregunta está repetido"],
   [/out of order after Q(\d+)/, m => `Está fuera de orden después de la pregunta ${m[1]}`],
   [/empty question text/, () => "La pregunta no tiene texto"],
