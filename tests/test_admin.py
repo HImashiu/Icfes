@@ -11,6 +11,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from icfes_admin.server import make_server  # noqa: E402
 from icfes_admin.store import BadRequest, Conflict, NotFound, Store  # noqa: E402
+from icfes_view.golden import validate_golden  # noqa: E402
 
 EXAM = "S11-T_1ra"
 
@@ -425,3 +426,12 @@ def test_sync_carries_only_laptop_edits_and_keeps_newer_shared_work(root, tmp_pa
     ids = [f["figure_id"] for f in json.loads(mp.read_text(encoding="utf-8"))["figures"]]
     assert "t-q1-new" in ids and "t-q3" not in ids and any("recorte" in i for i in ids)
     assert sync.changed_files(root, shared) == []
+
+
+def test_figure_placed_in_the_text_must_exist(root):
+    s = Store(root)
+    s.update_question(EXAM, 1, {"stem_md": "Antes\n\n[[figura:t-q3]]\n\nDespués"})
+    assert s.question_detail(EXAM, 1)["hidden_reasons"] == ["figure in the text not found"]  # t-q3 is Q3's
+    s.update_question(EXAM, 3, {"stem_md": "Mira\n\n[[figura:t-q3]]\n\n¿Qué ves?"})
+    assert "figure in the text not found" not in s.question_detail(EXAM, 3)["hidden_reasons"]
+    assert validate_golden(s.golden(EXAM))["errors"] == []

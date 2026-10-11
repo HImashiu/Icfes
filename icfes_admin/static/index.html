@@ -200,6 +200,15 @@ body.editing main{padding:0;max-width:none}
 .rich table{border-collapse:collapse;margin:6px 0;width:auto;background:#fff;border:0;border-radius:0}
 .rich th,.rich td{border:1px solid #000;padding:3px 8px;min-width:40px;color:#000;background:#fff;font:inherit;font-size:15px;text-transform:none;letter-spacing:0}
 .rich th{font-weight:700}
+.figblock{position:relative;display:block;margin:8px 0;padding:22px 6px 6px;border:1px dashed #9aa3b5;border-radius:10px;background:var(--paper);color:var(--paper-ink);cursor:grab;user-select:none}
+.figblock:hover{border-color:var(--flame)}
+.figblock .fighandle{position:absolute;top:3px;left:8px;font-size:11px;color:#667}
+.figblock img,.figblock svg{max-width:100%;max-height:260px;display:block;margin:0 auto}
+.figblock .figure-slot{display:block;padding:8px}
+.figblock .figx{position:absolute;top:2px;right:4px;border:0;background:none;color:#667;font-size:14px;cursor:pointer;padding:2px 6px}
+.figblock .figx:hover{color:#c00}
+.rich.dropping{outline:2px dashed var(--flame);outline-offset:2px}
+.figcard[draggable=true]{cursor:grab}
 .fgroup{display:inline-flex;gap:2px;padding:0 4px;border-left:1px solid var(--line)}
 .fgroup[hidden]{display:none}
 .fbar .ib.on{background:var(--accent-soft);border-color:var(--accent)}
@@ -785,7 +794,7 @@ function toggleMenu(id, e) {
 }
 document.addEventListener("click", e => { if (!e.target.closest(".menu hr")) document.querySelectorAll(".menu").forEach(x => { x.hidden = true; }); });
 
-const REASONS = { "not ready": "no está marcada como lista", "text pending": "texto, tabla o gráfica pendiente", "[FIGURE] note": "nota [FIGURE] en el texto", "figure pending spec": "figura pendiente", "blank option": "opción vacía" };
+const REASONS = { "not ready": "no está marcada como lista", "text pending": "texto, tabla o gráfica pendiente", "[FIGURE] note": "nota [FIGURE] en el texto", "figure pending spec": "figura pendiente", "blank option": "opción vacía", "figure in the text not found": "una figura puesta en el texto ya no existe" };
 // The badge names the reasons, so nobody has to hover to learn why students do not see the question.
 function visBadges(reasons) {
   if (!reasons.length) return `<span class="badge ok">Visible para estudiantes</span>`;
@@ -1013,17 +1022,28 @@ function drawNative(f, slot = true) {
 const scanUrl = (t) => `/api/figure?path=${encodeURIComponent(t.svg)}`;
 function traceOption(t) { return t.option || (/[-_](?:opt|opcion|opción)[-_]([a-d])(?=[-_]|$)/i.exec(t.figure_id || "")?.[1]?.toUpperCase() ?? null); }
 
+// Stem figures can go inside the text: a button puts one at the caret, or the card is dragged into the text.
+function placeButtons(ids, id) {
+  if (STATIC) return "";
+  const inText = ids.some(x => state.placedKey?.split(" ").includes(x));
+  return inText
+    ? `<span class="badge ok">en el texto</span><button class="ib" type="button" onclick="unplaceFigure('${esc(id)}')" title="La figura vuelve a su lugar de siempre, encima de la pregunta">Sacar del texto</button>`
+    : `<button class="ib" type="button" onclick="placeFigure('${esc(id)}', state.lastArea)" title="Pone la figura donde está el cursor en el texto. También puedes arrastrar esta tarjeta al texto.">⤵ Insertar figura aquí</button>`;
+}
 function drawFigs() {
   const d = state.detail;
+  state.placedKey = [...placedNow()].sort().join(" ");
   const gone = replacedIds(d.figures);
   const natives = d.native_figures.map(f => {
     const problems = figProblems(f);
     const replaced = gone.has(f.id);
-    return `<div class="figcard">
+    const stem = f.target !== "option" && !replaced && !problems.length;
+    return `<div class="figcard" ${stem && !STATIC ? `draggable="true" data-fig="${esc(f.id)}"` : ""}>
       <div class="head"><b>${esc(KIND_NAMES[f.kind] || f.kind)}</b>
         <span class="muted">${f.target === "option" ? `opción ${esc(f.option)}` : "enunciado"}</span>
         ${replaced ? '<span class="badge">reemplazada por un recorte</span>' : problems.length ? '<span class="badge hid">no se puede dibujar</span>' : '<span class="badge ok">se ve bien</span>'}
         <span class="spacer"></span>
+        ${stem ? placeButtons([f.id], f.id) : ""}
         <button class="ib" type="button" onclick="openStudio('${esc(f.id)}')">Editar</button>
         ${STATIC ? "" : `<button class="ib" type="button" onclick="startCrop('${esc(f.id)}', '${f.target === "option" ? esc(f.option) : ""}')" title="Cambiar esta figura por un recorte de la página">✂ Usar recorte</button>
         <button class="ib warn" type="button" onclick="deleteNative('${esc(f.id)}')" title="Quitar esta figura">Quitar</button>`}
@@ -1031,11 +1051,12 @@ function drawFigs() {
       ${problems.length && !replaced ? `<ul class="problems">${problems.slice(0, 4).map(p => `<li>${esc(p)}</li>`).join("")}${problems.length > 4 ? `<li>y ${problems.length - 4} más</li>` : ""}</ul>` : `<div class="mini">${drawNative(f)}</div>`}
     </div>`;
   });
-  const scans = d.figures.filter(traceShown).map(t => `<div class="figcard">
+  const scans = d.figures.filter(traceShown).map(t => `<div class="figcard" ${!traceOption(t) && !STATIC ? `draggable="true" data-fig="${esc(t.figure_id)}"` : ""}>
       <div class="head"><b>Imagen del escaneo</b><span class="muted">${traceOption(t) ? `opción ${esc(traceOption(t))}` : "enunciado"}</span>
         <span class="spacer"></span>
+        ${traceOption(t) ? "" : placeButtons([t.figure_id, t.spec_id].filter(Boolean), t.figure_id)}
         ${STATIC ? "" : `<button class="ib" type="button" onclick="cleanSaved('${esc(t.figure_id)}')" title="Quitar el fondo o tapar texto encima">✨ Limpiar</button><button class="ib warn" type="button" onclick="deleteScan('${esc(t.figure_id)}')" title="Quitar esta imagen">Quitar</button>`}</div>
-      <div class="mini"><img src="${scanUrl(t)}" alt="${esc(t.figure_id)}"></div></div>`);
+      <div class="mini"><img src="${scanUrl(t)}" alt="${esc(t.figure_id)}" draggable="false"></div></div>`);
   const todo = d.figures.filter(isToCrop).map(t => `<div class="figcard todo">
       <div class="head"><b>${t.proposed_box_page_fraction ? "Revisar el recorte propuesto" : "Falta recortar esta figura"}</b><span class="muted">${traceOption(t) ? `opción ${esc(traceOption(t))}` : "enunciado"}${t.page ? ` · página ${t.page}` : ""}</span>
         <span class="spacer"></span>
@@ -1065,7 +1086,7 @@ async function reloadFigures(msg) {
   const d = state.detail;
   d.figures = fresh.figures; d.native_figures = fresh.native_figures; d.undo = fresh.undo; d.hidden_reasons = fresh.hidden_reasons;
   state.natives[String(d.number)] = fresh.native_figures;
-  drawFigs(); refreshPreview(); refreshChrome();
+  drawFigs(); redrawFigBlocks(); refreshPreview(); refreshChrome();
   if (msg) toast(msg);
 }
 
@@ -1089,30 +1110,200 @@ function studentView(q, g, d) {
   const gone = replacedIds(d.figures);
   const natives = d.native_figures.filter(f => !gone.has(f.id));
   const scans = d.figures.filter(traceShown);
-  const stemFigs = natives.filter(f => f.target !== "option").map(f => drawNative(f)).join("");
-  const stemScans = scans.filter(t => !traceOption(t)).map(t => `<img class="scanfig" src="${scanUrl(t)}" alt="">`).join("");
+  const gText = g ? (g.passage_md || g.stimulus_md || "") : "";
+  // Figures placed in the text with [[figura:ID]] draw there; the rest keep their place above the question.
+  const placed = placedIds(q.stem_md, q.stimulus_md, gText);
+  const stemFigs = natives.filter(f => f.target !== "option" && !placed.has(f.id)).map(f => drawNative(f)).join("");
+  const stemScans = scans.filter(t => !traceOption(t) && !placed.has(t.figure_id) && !placed.has(t.spec_id)).map(t => `<img class="scanfig" src="${scanUrl(t)}" alt="">`).join("");
   const opts = q.options.map(o => {
     const nat = natives.find(f => f.target === "option" && f.option === o.letter);
     const sc = scans.find(t => traceOption(t) === o.letter);
     const body = nat ? drawNative(nat) : sc ? `<img class="scanfig" src="${scanUrl(sc)}" alt="">` : render(o.text_md);
     return `<div class="opt ${state.answer === o.letter ? "marked" : ""}" style="pointer-events:none"><span class="tile">${esc(o.letter)}</span><div class="body">${body}</div></div>`;
   }).join("");
-  const gText = g ? (g.passage_md || g.stimulus_md || "") : "";
   const plain = h => (h ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
   const stemInPassage = !!g && plain(q.stem_md).length > 20 && plain(gText).includes(plain(q.stem_md));
-  const dir = g ? `<div class="label" style="color:var(--paper-2)">${esc(g.directions)}</div><div class="stimulus">${render(gText)}</div><hr style="border:0;border-top:1px solid #d8d6cc;margin:12px 0">` : "";
+  const dir = g ? `<div class="label" style="color:var(--paper-2)">${esc(g.directions)}</div><div class="stimulus">${renderText(gText)}</div><hr style="border:0;border-top:1px solid #d8d6cc;margin:12px 0">` : "";
   return `
     <div class="paper">
       <div class="label" style="color:var(--paper-2)">Pregunta ${q.number}</div>
       ${dir}
-      ${q.stimulus_md ? `<div class="stimulus">${render(q.stimulus_md)}</div>` : ""}
+      ${q.stimulus_md ? `<div class="stimulus">${renderText(q.stimulus_md)}</div>` : ""}
       ${stemScans}${stemFigs}
-      ${stemInPassage ? "" : `<div class="stem">${render(q.stem_md)}</div>`}
+      ${stemInPassage ? "" : `<div class="stem">${renderText(q.stem_md)}</div>`}
       <div class="src">Fuente: ICFES, Saber 11 · ${esc(state.exam)}</div>
     </div>
     ${opts}
     <p class="muted" style="font-size:12px">El borde naranja marca la respuesta de la clave (solo en el editor).</p>`;
 }
+
+// ----- figures inside the text ----------------------------------------------------------------
+// [[figura:ID]] alone on its own paragraph of the stem, the stimulus or the group's text draws that figure right there.
+// ID is a native chart or table's id, or a crop's figure_id (or the native id it replaced), of this question or of
+// another question in its group. The student app reads the same mark.
+const FIG_TOKEN = /\[\[figura:([^\]\s]+)\]\]/g;
+const FIG_LINE = /^[ \t]*\[\[figura:([^\]\s]+)\]\][ \t]*$/m;
+const FIG_PARA = /^\s*\[\[figura:([^\]\s]+)\]\]\s*$/;
+function placedIds(...texts) {
+  const out = new Set();
+  texts.forEach(t => { for (const m of (t || "").matchAll(FIG_TOKEN)) out.add(m[1]); });
+  return out;
+}
+function figById(id, d = state.detail) {
+  for (const p of [d, d.group_figures]) {
+    if (!p) continue;
+    const gone = replacedIds(p.figures);
+    const nat = p.native_figures.find(f => f.id === id && !gone.has(f.id));
+    if (nat) return { native: nat };
+    const sc = p.figures.filter(traceShown).find(t => t.figure_id === id || t.spec_id === id);
+    if (sc) return { scan: sc };
+  }
+  return null;
+}
+function figHtml(id) {
+  const f = figById(id);
+  if (f?.native) return drawNative(f.native);
+  if (f?.scan) return `<img class="scanfig" src="${scanUrl(f.scan)}" alt="" draggable="false">`;
+  return `<span class="figure-slot bad">Esta figura ya no existe (${esc(id)}). Sácala del texto con ✕.</span>`;
+}
+function renderText(text) {
+  const parts = (text || "").split(new RegExp(FIG_LINE.source, "m"));
+  return parts.map((p, i) => (i % 2 ? figHtml(p) : p.trim() ? render(p) : "")).join("");
+}
+const figBlock = (id) => `<div class="figblock" contenteditable="false" draggable="true" data-fig="${esc(id)}" title="Arrastra la figura a otro lugar del texto"><span class="fighandle">⠿ Figura en el texto · arrástrala para moverla</span>${figHtml(id)}<button class="figx" type="button" title="Sacar la figura del texto (vuelve a su lugar de siempre)">✕</button></div>`;
+const TEXT_FIELDS = ["f-stem", "f-stimulus", "f-passage"];
+function placedNow() { return placedIds(...TEXT_FIELDS.map(id => $("#" + id)?.value)); }
+function redrawFigBlocks() { document.querySelectorAll("#form .figblock").forEach(b => { b.outerHTML = figBlock(b.dataset.fig); }); }
+
+// Puts a figure in a text field at the caret (or at a drop point): the paragraph splits there and the figure sits
+// between its two halves. A figure already in some text moves.
+function placeFigure(id, area, range) {
+  if (!area || !TEXT_FIELDS.includes(area.id)) area = TEXT_FIELDS.map(x => $("#" + x)).find(t => t && t === state.lastArea) || $("#f-stem");
+  unplaceFigure(id, true);
+  const rich = state.visual && richOf(area);
+  if (!rich) {
+    const at = area.selectionStart ?? area.value.length;
+    const before = area.value.slice(0, at).replace(/\s+$/, ""), after = area.value.slice(at).replace(/^\s+/, "");
+    area.value = [before, `[[figura:${id}]]`, after].filter(Boolean).join("\n\n");
+    area.dispatchEvent(new Event("input", { bubbles: true }));
+  } else {
+    if (!range || !rich.contains(range.startContainer)) range = rich._range && rich.contains(rich._range.startContainer) ? rich._range : null;
+    const tmp = document.createElement("div");
+    tmp.innerHTML = figBlock(id);
+    insertBlockAt(rich, range, tmp.firstChild);
+    rich.dispatchEvent(new Event("input"));
+  }
+  state.lastArea = area;
+  drawFigs();
+  toast("Figura puesta en el texto. Arrástrala para moverla; ✕ la devuelve a su lugar.");
+}
+function unplaceFigure(id, quiet = false) {
+  for (const fid of TEXT_FIELDS) {
+    const ta = $("#" + fid);
+    if (!ta || !placedIds(ta.value).has(id)) continue;
+    const rich = state.visual && richOf(ta);
+    if (rich) {
+      rich.querySelectorAll(".figblock").forEach(b => { if (b.dataset.fig === id) takeOut(b); });
+      rich.dispatchEvent(new Event("input"));
+    } else {
+      ta.value = ta.value.split(/\n\s*\n/).filter(b => !(FIG_PARA.test(b) && FIG_PARA.exec(b)[1] === id)).join("\n\n");
+      ta.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+  }
+  if (!quiet) drawFigs();
+}
+function insertBlockAt(rich, range, el) {
+  if (!range) { rich.append(el); return; }
+  if (range.startContainer === rich) { rich.insertBefore(el, rich.childNodes[range.startOffset] || null); return; }
+  let top = range.startContainer;
+  while (top.parentNode !== rich) top = top.parentNode;
+  if (top.nodeType === 3) {
+    const tail = top.splitText(Math.min(range.startOffset, top.length));
+    top.after(el);
+    if (!tail.nodeValue.trim()) tail.remove();
+    if (!top.nodeValue.trim()) top.remove();
+    return;
+  }
+  if (top.classList.contains("figblock") || /^(TABLE|UL|OL)$/.test(top.tagName)) { top.after(el); return; }
+  // what follows the caret goes below the figure, in a paragraph of its own
+  const tail = document.createRange();
+  tail.setStart(range.startContainer, range.startOffset);
+  tail.setEnd(top, top.childNodes.length);
+  const rest = top.cloneNode(false);
+  rest.dataset.split = "1";  // taking the figure out again joins the two halves back
+  rest.append(tail.extractContents());
+  const blank = (n) => !n.textContent.trim() && !n.querySelector("img,table,.mathchip,.figblock");
+  top.after(el);
+  if (!blank(rest)) el.after(rest);
+  if (blank(top)) top.remove();
+}
+function takeOut(block) {
+  const prev = block.previousSibling, next = block.nextSibling;
+  block.remove();
+  if (next?.dataset?.split && prev?.nodeType === 1 && prev.tagName === next.tagName && !prev.classList.contains("figblock")) {
+    prev.append(...next.childNodes);
+    next.remove();
+  }
+}
+function caretAt(x, y) {
+  if (document.caretRangeFromPoint) return document.caretRangeFromPoint(x, y);
+  const p = document.caretPositionFromPoint?.(x, y);
+  if (!p) return null;
+  const r = document.createRange(); r.setStart(p.offsetNode, p.offset); return r;
+}
+// Dragging: a figure card or a figure already in the text, onto any text field.
+document.addEventListener("dragstart", e => {
+  const src = e.target.closest?.("[data-fig]");
+  if (!src || !e.dataTransfer) return;
+  e.dataTransfer.setData("text/x-icfes-fig", src.dataset.fig);
+  e.dataTransfer.effectAllowed = "copyMove";
+  state.dragFig = src.dataset.fig;
+});
+document.addEventListener("dragend", () => { state.dragFig = null; document.querySelectorAll(".rich.dropping").forEach(r => r.classList.remove("dropping")); });
+document.addEventListener("dragover", e => {
+  const rich = e.target.closest?.(".rich");
+  if (!rich || !state.dragFig || !TEXT_FIELDS.includes(rich.previousElementSibling?.id)) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = "move";
+  document.querySelectorAll(".rich.dropping").forEach(r => { if (r !== rich) r.classList.remove("dropping"); });
+  rich.classList.add("dropping");
+  const r = caretAt(e.clientX, e.clientY);
+  if (r && rich.contains(r.startContainer) && !r.startContainer.parentElement?.closest(".figblock")) {
+    rich.focus({ preventScroll: true });
+    const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  }
+});
+document.addEventListener("dragleave", e => { const rich = e.target.closest?.(".rich"); if (rich && !rich.contains(e.relatedTarget)) rich.classList.remove("dropping"); });
+document.addEventListener("drop", e => {
+  const rich = e.target.closest?.(".rich");
+  const id = state.dragFig;
+  if (!rich || !id || !TEXT_FIELDS.includes(rich.previousElementSibling?.id)) return;
+  e.preventDefault();
+  rich.classList.remove("dropping");
+  let r = caretAt(e.clientX, e.clientY);
+  if (r && (!rich.contains(r.startContainer) || (r.startContainer.nodeType === 1 ? r.startContainer : r.startContainer.parentElement)?.closest(".figblock"))) {
+    // dropped on a figure: goes right below it
+    const over = e.target.closest(".figblock");
+    r = document.createRange();
+    if (over && over.parentNode === rich) r.setStartAfter(over); else { r.selectNodeContents(rich); r.collapse(false); }
+  }
+  // Keep the drop point while the old copy is taken out.
+  const mark = document.createElement("span");
+  if (r) { r.insertNode(mark); }
+  unplaceFigure(id, true);
+  const at = document.createRange();
+  if (mark.isConnected) { at.setStartBefore(mark); at.collapse(true); }
+  const tmp = document.createElement("div");
+  tmp.innerHTML = figBlock(id);
+  const area = rich.previousElementSibling;
+  insertBlockAt(rich, mark.isConnected ? at : null, tmp.firstChild);
+  mark.remove();
+  rich.normalize();
+  rich.dispatchEvent(new Event("input"));
+  state.lastArea = area;
+  state.dragFig = null;
+  drawFigs();
+});
 
 let previewQueued = false;
 function refreshPreview() {
@@ -1124,6 +1315,8 @@ function refreshPreview() {
     const q = { ...d.question, stem_md: $("#f-stem").value, stimulus_md: $("#f-stimulus").value, options: state.opts };
     const g = d.group && $("#f-passage") ? { ...d.group, passage_md: $("#f-passage").value } : d.group;
     $("#preview").innerHTML = studentView(q, g, d);
+    const key = [...placedNow()].sort().join(" ");
+    if (key !== state.placedKey) { state.placedKey = key; drawFigs(); }
   });
 }
 
@@ -1290,13 +1483,15 @@ const MATH_SPLIT = /(\$[^$\n]+?\$)/;
 // Exam text to editable HTML.
 function toVisual(src) {
   if (!src) return "";
+  const figs = [];
   const blocks = pipeTables(src).split(/\n\s*\n/).map(b => b.trim()).filter(Boolean)
-    .map(b => (/^<(p|div|ul|ol|table|h\d)\b/i.test(b) ? b : `<div>${b.replace(/\n/g, "<br>")}</div>`));
+    .map(b => (FIG_PARA.test(b) ? `\u2064${figs.push(FIG_PARA.exec(b)[1]) - 1}\u2064` : /^<(p|div|ul|ol|table|h\d)\b/i.test(b) ? b : `<div>${b.replace(/\n/g, "<br>")}</div>`));
   const maths = [];
   const html = blocks.join("").split(MATH_SPLIT).map((part, i) => (i % 2 ? (isTex(part) ? `\u2063${maths.push(part.slice(1, -1)) - 1}\u2063` : part)
     : part.replace(/\*\*([^*\n]+)\*\*/g, "<b>$1</b>").replace(/(^|[^*\w])\*([^*\n]+?)\*(?![*\w])/g, (m, pre, body) => (/<\/?(t[dhr]|div|p)\b/i.test(body) ? m : `${pre}<i>${body}</i>`)))).join("");
   // Formulas are swapped in after sanitizing: each is a chip drawn by the app's own math renderer.
-  return window.DOMPurify.sanitize(html).replace(/\u2063(\d+)\u2063/g, (m, k) => mathChip(maths[+k]));
+  return window.DOMPurify.sanitize(html).replace(/\u2063(\d+)\u2063/g, (m, k) => mathChip(maths[+k]))
+    .replace(/\u2064(\d+)\u2064/g, (m, k) => figBlock(figs[+k]));
 }
 // Prices like "$200.000, ... $" pair up as dollars too; only real formulas become chips, the rest stays text.
 const isTex = (part) => !/[<\n]/.test(part) && !/^\$\s|\s\$$/.test(part) && !/^\$\d{1,3}(\.\d{3})+([,;:]|\s|\$)/.test(part);
@@ -1333,6 +1528,7 @@ function toSource(root) {
 }
 function blockSource(el) {
   const tag = el.tagName;
+  if (el.classList.contains("figblock")) return `[[figura:${el.dataset.fig}]]`;
   // Figure notes left by the scan reading are kept as they are; the app uses them to hide unfinished questions.
   if (tag === "FIGURE" || tag === "FIGCAPTION") return `<${tag.toLowerCase()}>${toSource(el)}</${tag.toLowerCase()}>`;
   if (tag === "UL" || tag === "OL") {
@@ -1361,6 +1557,7 @@ function inlineSource(n) {
     .split(MATH_SPLIT).map((part, i) => (i % 2 ? part : part.replace(/\*/g, "&#42;"))).join("");
   if (n.nodeType !== 1) return "";
   if (n.classList.contains("mathchip")) return `$${n.dataset.tex}$`;
+  if (n.classList.contains("figblock")) return `\n\n[[figura:${n.dataset.fig}]]\n\n`;
   if (n.classList.contains("mathedit")) { const mf = n.querySelector("math-field"); const tex = mf ? texOf(mf) : n.dataset.tex; return tex ? `$${tex}$` : ""; }
   const tag = n.tagName;
   if (tag === "BR") return "\n";
@@ -1399,10 +1596,14 @@ function attachRich(ta) {
     ta.value = toSource(rich);
     ta.dispatchEvent(new Event("input", { bubbles: true }));
     ta._fromRich = false;
-    rich.classList.toggle("empty", !rich.textContent.trim() && !rich.querySelector("table,li"));
+    rich.classList.toggle("empty", !rich.textContent.trim() && !rich.querySelector("table,li,.figblock"));
   });
   ta.addEventListener("input", () => { if (!ta._fromRich) { rich.innerHTML = toVisual(ta.value); } });
   rich.addEventListener("focus", () => { state.lastArea = ta; });
+  rich.addEventListener("click", e => {
+    const x = e.target.closest(".figx");
+    if (x) { e.preventDefault(); takeOut(x.closest(".figblock")); rich.dispatchEvent(new Event("input")); drawFigs(); return; }
+  });
   rich.addEventListener("click", e => { const chip = e.target.closest(".mathchip"); if (chip) { state.lastArea = ta; editMathInline(ta, chip); } });
   rich.addEventListener("paste", e => {
     const html = e.clipboardData?.getData("text/html"), text = e.clipboardData?.getData("text/plain");
@@ -1427,7 +1628,7 @@ function attachRich(ta) {
       }
     }
   });
-  rich.classList.toggle("empty", !rich.textContent.trim() && !rich.querySelector("table,li"));
+  rich.classList.toggle("empty", !rich.textContent.trim() && !rich.querySelector("table,li,.figblock"));
 }
 function attachAllRich() { document.querySelectorAll("#form #f-stem, #form #f-stimulus, #form #f-passage, #f-opts textarea[data-letter]").forEach(attachRich); }
 
