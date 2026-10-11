@@ -80,6 +80,9 @@ const booklet = (t) =>
 // Every fix is counted in report[slug] so the sync log shows what is left in the data.
 // Any "[... pendiente(s)" placeholder (texto, tabla, gráfica, figuras) means the content is not typed yet.
 const PENDING_TEXT = /\[(?:Texto|Tablas?|Gr[aá]ficas?|Figuras) pendientes?/;
+// A figure placed inside the text by the editor: [[figura:ID]] on a line of its own.
+const FIGURE_TOKEN = /\[\[figura:([^\]\s]+)\]\]/g;
+const tokenIds = (...texts) => texts.flatMap((t) => [...(typeof t === "string" ? t : "").matchAll(FIGURE_TOKEN)].map((m) => m[1]));
 const FIGURE_NOTE = /\[(?:Figura pendiente|FIGURE)[^\]]*\]|(?:^|\n)[ \t]*Figura pendiente:[^\n]*/g;
 const FIGURE_NOTE_ANY = /\[(?:Figura pendiente|FIGURE)|(?:^|\n)[ \t]*Figura pendiente:/;
 const PICTURE = /!\[[^\]]*\]\([^)]*\)|<img\b[^>]*>/gi;
@@ -175,6 +178,16 @@ function prepareExam(exam, specPath, slug, report) {
     const stem = list.filter((t) => !t.option);
     if (stem.length) q.traced = stem.map((t) => ({ url: t.url, figure_id: t.figure_id }));
   }
+  // A token in a group passage can name a figure of a sibling question. Only the crops a token names are copied
+  // onto the group (their data URIs are large), so a group carries nothing when no token needs it.
+  for (const g of exam.groups ?? []) {
+    const members = (exam.questions ?? []).filter((q) => q.group_id === g.id);
+    const named = new Set(tokenIds(g.passage_md, g.stimulus_md, ...members.flatMap((q) => [q.stem_md, q.stimulus_md])));
+    const shared = members.flatMap((q) => q.traced ?? []).filter((t) => named.has(t.figure_id) || named.has(t.spec_id));
+    if (shared.length) g.traced = shared;
+    else delete g.traced;
+  }
+  const knownFigureIds = new Set([...specIds, ...[...traced.values()].flat().flatMap((t) => [t.figure_id, t.spec_id])]);
   const badSpecIds = new Set(specFigures.filter((f) => f.spec && f.kind !== "image" && figureEngine.validate(f.spec).length).map((f) => f.id));
   const badStemQuestions = new Set(specFigures.filter((f) => badSpecIds.has(f.id) && f.location?.question != null).map((f) => f.location.question));
   // The editor's validator list: questions whose native figures it cannot draw (see quality/invalid-figures.json).
@@ -208,6 +221,10 @@ function prepareExam(exam, specPath, slug, report) {
     // A table flattened into text stands in for a drawn table; without its link it is a gap.
     if (/\[Tabla:/.test(texts) && !figure) reasons.push("flattened_table_unlinked");
     if (q.pending_spec || (q.options ?? []).some((o) => o.pending_spec)) reasons.push("pending_spec");
+    const g = groups.get(q.group_id);
+    if (tokenIds(q.stem_md, q.stimulus_md, g?.passage_md, g?.stimulus_md).some((id) => !knownFigureIds.has(id))) {
+      reasons.push("figure in the text not found");
+    }
     const missingSpec = [].concat(q.figure ?? []).concat((q.options ?? []).flatMap((o) => [].concat(o.figure ?? [])));
     if (missingSpec.some((id) => !specIds.has(id))) reasons.push("figure_without_spec");
     const linked = [].concat(q.figure ?? []).concat((q.options ?? []).flatMap((o) => [].concat(o.figure ?? [])));
@@ -265,7 +282,7 @@ function prepareExam(exam, specPath, slug, report) {
       if (typeof o.text_md === "string") o.text_md = normalizeField(o.text_md, { counts: fixes });
     }
     if (!(q.stem_md ?? "").trim() && !figure && !(q.stimulus_md ?? "").trim()) bump(left, "empty_stem");
-    if ((q.options ?? []).some((o) => !(o.text_md ?? "").trim() && !o.figure)) bump(left, "empty_option_no_figure");
+    if ((q.options ?? []).some((o) => !(o.text_md ?? "").trim() && !o.figure && !o.traced)) bump(left, "empty_option_no_figure");
     if (q.expected_options && q.options?.length !== q.expected_options) bump(left, "option_count_differs");
   }
 

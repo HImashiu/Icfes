@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { Fragment, useLayoutEffect, useMemo, useRef } from "react";
 import { renderRich } from "../lib/render.js";
 
 // A formula stays on one line: one wider than its column is drawn with a smaller font, down to half size.
@@ -32,9 +32,26 @@ function fitMath(root) {
   });
 }
 
+// A figure the editor placed in the text: [[figura:ID]] on a line of its own (the paragraph tags are optional).
+const FIGURE_TOKEN = /(?:<p>\s*)?\[\[figura:([^\]\s]+)\]\](?:\s*<\/p>)?/g;
+function splitFigureTokens(html) {
+  const parts = [];
+  let last = 0;
+  for (const m of (html ?? "").matchAll(FIGURE_TOKEN)) {
+    parts.push({ text: html.slice(last, m.index) });
+    parts.push({ id: m[1] });
+    last = m.index + m[0].length;
+  }
+  parts.push({ text: html.slice(last) });
+  return parts;
+}
+
 // Renders exam HTML (with math and figure slots) as text, never as raw markup.
-export default function RichText({ html, className }) {
-  const safe = useMemo(() => renderRich(html), [html]);
+// With `resolve` (an id to element function), each [[figura:ID]] token is drawn in place of its text.
+export default function RichText({ html, className, resolve }) {
+  const parts = useMemo(() => (resolve ? splitFigureTokens(html) : null), [html, resolve]);
+  const inline = Boolean(parts?.some((p) => p.id));
+  const safe = useMemo(() => (inline ? "" : renderRich(html)), [html, inline]);
   const ref = useRef(null);
   useLayoutEffect(() => {
     const node = ref.current;
@@ -42,6 +59,13 @@ export default function RichText({ html, className }) {
     const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(() => fitMath(node)) : null;
     observer?.observe(node);
     return () => observer?.disconnect();
-  }, [safe]);
+  }, [safe, inline]);
+  if (inline) {
+    return (
+      <div ref={ref} className={className}>
+        {parts.map((p, i) => (p.id ? <Fragment key={i}>{resolve(p.id)}</Fragment> : p.text.trim() ? <RichText key={i} html={p.text} /> : null))}
+      </div>
+    );
+  }
   return <div ref={ref} className={className} dangerouslySetInnerHTML={{ __html: safe }} />;
 }

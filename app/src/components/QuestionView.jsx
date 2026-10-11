@@ -18,15 +18,19 @@ function optionState({ letter, answer, correctLetter, graded }) {
 
 const STATE_LABEL = { correct: "Respuesta según la clave", incorrect: "Tu respuesta" };
 
+// Figure ids the editor placed in the text as [[figura:ID]] tokens.
+const TOKEN_IDS = /\[\[figura:([^\]\s]+)\]\]/g;
+const tokenIdsOf = (...texts) => texts.flatMap((t) => [...(typeof t === "string" ? t : "").matchAll(TOKEN_IDS)].map((m) => m[1]));
+
 // Long stimuli on phone: the first lines show with a fade, and "Leer texto completo" opens the rest.
 const LONG_TEXT = 600;
-function LongText({ html, className, long }) {
+function LongText({ html, className, long, resolve }) {
   const [open, setOpen] = useState(false);
-  if (!long) return <RichText html={html} className={className} />;
+  if (!long) return <RichText html={html} className={className} resolve={resolve} />;
   return (
     <div className="long-text">
       <div className={open ? "clamp open" : "clamp"}>
-        <RichText html={html} className={className} />
+        <RichText html={html} className={className} resolve={resolve} />
       </div>
       <button type="button" className="link" onClick={() => setOpen(!open)} aria-expanded={open}>
         {open ? "Mostrar menos" : "Leer texto completo"}
@@ -74,10 +78,30 @@ export default function QuestionView({
   const correctLetter = review?.correctLetter ?? null;
   const collapsed = collapsedGroup && !wide;
 
+  // A figure placed in the text by the editor is drawn there, not in the usual slot above the stem.
+  const inText = new Set(tokenIdsOf(question.stem_md, question.stimulus_md, group?.stimulus_md));
   const stemFigures = [
     ...(figures?.get(question.key) ?? []),
     ...(group ? figures?.get(`group:${group.id}`) ?? [] : []),
-  ].filter((f) => f.target === "stem");
+  ].filter((f) => f.target === "stem" && !inText.has(f.id));
+
+  // Draws the figure a token names: a native figure not replaced by a crop, then a crop by figure id, then by spec id.
+  const allNative = [...(figures?.values() ?? [])].flat();
+  const crops = [...(group?.traced ?? []), ...(question.traced ?? [])];
+  const replacedSpecs = new Set(crops.map((t) => t.spec_id).filter(Boolean));
+  const resolveToken = (id) => {
+    const native = allNative.find((f) => f.id === id && !replacedSpecs.has(id));
+    if (native) return <FigureBlock figure={native} alt={id} />;
+    const crop = crops.find((t) => t.figure_id === id) ?? crops.find((t) => t.spec_id === id);
+    if (!crop) return null;
+    return (
+      <figure className="traced-figure">
+        <Zoomable src={tracedSrc(crop.url)} alt={id}>
+          <img className="scanfig" src={tracedSrc(crop.url)} alt={id} />
+        </Zoomable>
+      </figure>
+    );
+  };
   const optionFigure = (letter) =>
     (figures?.get(question.key) ?? []).find((f) => f.target === "option" && f.option === letter);
   const chartOptions = question.options.some((o) => optionFigure(o.letter) || o.traced);
@@ -93,12 +117,12 @@ export default function QuestionView({
   const passage = group && (
     <section className="passage paper-passage" aria-label={`Texto para las preguntas ${group.from} a ${group.to}`}>
       {group.directions && <p className="directions">{group.directions}</p>}
-      <LongText html={group.stimulus_md} className="stimulus" long={!wide && (group.stimulus_md ?? "").length > LONG_TEXT} />
+      <LongText html={group.stimulus_md} className="stimulus" long={!wide && (group.stimulus_md ?? "").length > LONG_TEXT} resolve={resolveToken} />
     </section>
   );
 
   // A traced figure (a scan trace from figures/traced) stands in for the native spec it replaces.
-  const traced = question.traced ?? [];
+  const traced = (question.traced ?? []).filter((t) => !inText.has(t.figure_id) && !inText.has(t.spec_id));
   const hasContext = Boolean(passage || ownStimulus || stemFigures.length || traced.length);
   const source = <span className="source">{examLabel ? `${SOURCE_LINE}, ${examLabel}` : SOURCE_LINE}</span>;
 
@@ -112,7 +136,7 @@ export default function QuestionView({
               {passage}
             </details>
           ) : passage)}
-          {ownStimulus && <LongText html={question.stimulus_md} className="stimulus" long={!wide && question.stimulus_md.length > LONG_TEXT} />}
+          {ownStimulus && <LongText html={question.stimulus_md} className="stimulus" long={!wide && question.stimulus_md.length > LONG_TEXT} resolve={resolveToken} />}
           {traced.map((t) => (
             <figure className="traced-figure" key={t.figure_id}>
               <Zoomable src={tracedSrc(t.url)} alt={t.figure_id}>
@@ -145,7 +169,7 @@ export default function QuestionView({
               </button>
             )}
           </div>
-          {!stemInPassage && <RichText html={question.stem_md} className="stem" />}
+          {!stemInPassage && <RichText html={question.stem_md} className="stem" resolve={resolveToken} />}
           {!hasContext && source}
         </article>
 
