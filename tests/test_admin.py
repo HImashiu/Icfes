@@ -435,3 +435,19 @@ def test_figure_placed_in_the_text_must_exist(root):
     s.update_question(EXAM, 3, {"stem_md": "Mira\n\n[[figura:t-q3]]\n\n¿Qué ves?"})
     assert "figure in the text not found" not in s.question_detail(EXAM, 3)["hidden_reasons"]
     assert validate_golden(s.golden(EXAM))["errors"] == []
+
+
+def test_option_with_a_picture_needs_no_text(root):
+    s = Store(root)
+    opts = s.question_detail(EXAM, 1)["question"]["options"]
+    opts[0]["text_md"] = ""
+    with pytest.raises(Conflict):
+        s.update_question(EXAM, 1, {"options": opts, "ready": True})
+    m = root / "figures" / "traced" / EXAM / "manifest.json"
+    data = json.loads(m.read_text(encoding="utf-8"))
+    data["figures"].append({"question": 1, "figure_id": "t-q1-recorte-1", "option": "A", "method": "eyeballed_box",
+                            "svg": "traced/S11-T_1ra/t-q1-recorte-1.png"})
+    m.write_text(json.dumps(data), encoding="utf-8")
+    d = s.update_question(EXAM, 1, {"options": opts, "ready": True})
+    assert d["question"]["options"][0]["text_md"] == "" and d["hidden_reasons"] == []
+    assert d["messages"]["errors"] == []

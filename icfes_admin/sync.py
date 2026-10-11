@@ -23,6 +23,7 @@ from datetime import datetime
 from pathlib import Path
 
 from icfes_view.golden import validate_golden
+from icfes_admin.store import option_figures
 
 SYNCED = ("data/*.golden.json", "answer-keys/*.key.json", "figures/specs/*.json",
           "figures/traced/*/manifest.json", "figures/traced/*/*-recorte-*.png", "figures/traced/*/*-recorte-*.jpg", "images/*/*")
@@ -125,10 +126,19 @@ def changed_files(src: Path, dst: Path):
     return out
 
 
-def error_count(path: Path):
+def _pictured(roots, rel):
+    """Options shown as a picture on either side, so an option with a crop and no text is not an error."""
+    exam = rel.name[:-len(".golden.json")]
+    out = set()
+    for root in roots:
+        out |= option_figures(root / "figures", exam)
+    return out
+
+
+def error_count(path: Path, pictured=None):
     if not path.exists():
         return 0
-    return validate_golden(json.loads(path.read_text(encoding="utf-8")))["summary"]["errors"]
+    return validate_golden(json.loads(path.read_text(encoding="utf-8")), pictured)["summary"]["errors"]
 
 
 def plan(src: Path, dst: Path):
@@ -137,8 +147,9 @@ def plan(src: Path, dst: Path):
         new_errors = 0
         if rel.name.endswith(".golden.json"):
             text = merged_text(src, dst, rel)
-            new_errors = validate_golden(json.loads(text if text is not None else (src / rel).read_bytes()))["summary"]["errors"]
-        old_errors = error_count(dst / rel) if rel.name.endswith(".golden.json") else 0
+            new_errors = validate_golden(json.loads(text if text is not None else (src / rel).read_bytes()),
+                                         _pictured((src, dst), rel))["summary"]["errors"]
+        old_errors = error_count(dst / rel, _pictured((dst,), rel)) if rel.name.endswith(".golden.json") else 0
         ok = new_errors <= old_errors
         rows.append((rel, ok, old_errors, new_errors))
     return rows

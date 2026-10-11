@@ -37,6 +37,39 @@ FIGURE_NOTE = "[FIGURE"
 FIGURE_TOKEN = re.compile(r"\[\[figura:([^\]\s]+)\]\]")
 # The tracing could not cut these figures; they wait for a crop drawn by hand ("proposed_box" comes with a box to check).
 TO_CROP = {"manual_crop_needed", "proposed_box"}
+OPTION_IN_ID = re.compile(r"[-_](?:opt|opcion|opción)[-_]([a-d])(?=[-_]|$)", re.I)
+
+
+def option_figures(figures_dir, exam):
+    """(question, letter) of every option shown as a picture: a crop for that option or a native figure targeting it.
+    Such an option needs no text. Crops still to be made do not count."""
+    figures_dir = Path(figures_dir)
+    out = set()
+    p = figures_dir / "traced" / exam / "manifest.json"
+    if p.exists():
+        for f in json.loads(p.read_text(encoding="utf-8")).get("figures", []):
+            if f.get("method") in TO_CROP or f.get("pending_spec") or not f.get("svg"):
+                continue
+            m = OPTION_IN_ID.search(f.get("figure_id") or "")
+            letter = f.get("option") or (m.group(1).upper() if m else None)
+            if letter and isinstance(f.get("question"), int):
+                out.add((f["question"], letter))
+    p = figures_dir / "specs" / f"{exam}.json"
+    booklet = None
+    if not p.exists() and exam.startswith("S11-M_"):
+        p = figures_dir / "specs" / "S11-M_1ra-2da.json"
+        booklet = "m1" if exam.endswith("1ra") else "m2"
+    if p.exists():
+        for fig in json.loads(p.read_text(encoding="utf-8")).get("figures", []):
+            loc = fig.get("location") or {}
+            if booklet and not str(fig.get("id", "")).startswith(booklet + "-"):
+                continue
+            if loc.get("stem_or_option") == "option" and loc.get("option") and fig.get("spec"):
+                try:
+                    out.add((int(loc.get("question")), loc["option"]))
+                except (TypeError, ValueError):
+                    pass
+    return out
 EDITABLE = {"stem_md", "stimulus_md", "group_passage_md", "section", "options", "ready", "answer"}
 
 
@@ -135,7 +168,7 @@ class Store:
         return by_q
 
     @staticmethod
-    def hidden_reasons(q, groups, figs, known_ids=None):
+    def hidden_reasons(q, groups, figs, known_ids=None, pictured=frozenset()):
         """Why students do not see this question yet (mirrors the app's gate). known_ids, when given, are the figure
         ids a [[figura:ID]] in the text may name; any other id hides the question."""
         reasons = []
@@ -151,7 +184,8 @@ class Store:
             reasons.append("[FIGURE] note")
         if any(f.get("pending_spec") for f in figs):
             reasons.append("figure pending spec")
-        if any(not (o.get("text_md") or "").strip() for o in q.get("options", [])):
+        if any(not (o.get("text_md") or "").strip() and (q.get("number"), o.get("letter")) not in pictured
+               for o in q.get("options", [])):
             reasons.append("blank option")
         if known_ids is not None and any(i not in known_ids for t in texts for i in FIGURE_TOKEN.findall(t)):
             reasons.append("figure in the text not found")
@@ -187,8 +221,8 @@ class Store:
         ids.discard(None)
         return ids
 
-    def validation(self, g):
-        report = validate_golden(g)
+    def validation(self, g, exam):
+        report = validate_golden(g, option_figures(self.figures, exam))
         per_q = {}
         for kind in ("errors", "warnings"):
             for msg in report[kind]:
@@ -199,13 +233,14 @@ class Store:
 
     def progress(self, exam):
         g = self.golden(exam)
-        report, _ = self.validation(g)
+        report, _ = self.validation(g, exam)
         groups = {x["id"]: x for x in g["groups"]}
         figs = self.figures_by_question(exam)
         natives = self.native_ids_by_question(exam)
+        pictured = option_figures(self.figures, exam)
         qs = g["questions"]
         hidden = sum(1 for q in qs if self.hidden_reasons(q, groups, figs.get(q["number"], []),
-                                                         self.known_figure_ids(q, qs, figs, natives)))
+                                                         self.known_figure_ids(q, qs, figs, natives), pictured))
         answers = self.answers(exam)
         side = self.sidecar(exam)
         traced = self.manifest_figures(exam)
@@ -237,10 +272,11 @@ class Store:
 
     def question_rows(self, exam):
         g = self.golden(exam)
-        _, per_q = self.validation(g)
+        _, per_q = self.validation(g, exam)
         groups = {x["id"]: x for x in g["groups"]}
         figs = self.figures_by_question(exam)
         natives = self.native_ids_by_question(exam)
+        pictured = option_figures(self.figures, exam)
         rows = []
         # Number order, whatever order the golden file keeps them in (a question added later sits at the end).
         for q in sorted(g["questions"], key=lambda x: x["number"]):
@@ -251,7 +287,7 @@ class Store:
                 "section": q.get("section"),
                 "ready": bool(q.get("ready")),
                 "hidden": self.hidden_reasons(q, groups, figs.get(n, []),
-                                              self.known_figure_ids(q, g["questions"], figs, natives)),
+                                              self.known_figure_ids(q, g["questions"], figs, natives), pictured),
                 "errors": len(msgs["errors"]),
                 "warnings": len(msgs["warnings"]),
                 "to_crop": sum(1 for f in figs.get(n, []) if f.get("method") in TO_CROP),
@@ -275,14 +311,14 @@ class Store:
         known = self.known_figure_ids(q, g["questions"], by_q, self.native_ids_by_question(exam))
         # Figures of the other questions in the group, so a [[figura:ID]] in the shared text draws in every question.
         siblings = sorted(x["number"] for x in g["questions"] if q.get("group_id") and x.get("group_id") == q["group_id"] and x["number"] != n)
-        _, per_q = self.validation(g)
+        _, per_q = self.validation(g, exam)
         answers = self.answers(exam) or {}
         return {
             "exam": exam,
             "number": n,
             "question": q,
             "group": groups.get(q.get("group_id")),
-            "hidden_reasons": self.hidden_reasons(q, groups, figs, known),
+            "hidden_reasons": self.hidden_reasons(q, groups, figs, known, option_figures(self.figures, exam)),
             "messages": per_q.get(n, {"errors": [], "warnings": []}),
             "figures": figs,
             "native_figures": self.native_figures(exam, n),
@@ -895,12 +931,13 @@ class Store:
             if not isinstance(patch["ready"], bool):
                 raise BadRequest("ready must be true or false")
             if patch["ready"]:
-                _, per_q = self.validation(g)
+                _, per_q = self.validation(g, exam)
                 blockers = list(per_q.get(n, {}).get("errors", []))
                 groups = {x["id"]: x for x in g["groups"]}
                 by_q = self.figures_by_question(exam)
                 known = self.known_figure_ids(q, g["questions"], by_q, self.native_ids_by_question(exam))
-                blockers += [r for r in self.hidden_reasons(q, groups, by_q.get(n, []), known) if r != "not ready"]
+                blockers += [r for r in self.hidden_reasons(q, groups, by_q.get(n, []), known, option_figures(self.figures, exam))
+                             if r != "not ready"]
                 if blockers:
                     raise Conflict(blockers)
             q["ready"] = patch["ready"]
