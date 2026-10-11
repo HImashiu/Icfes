@@ -55,7 +55,7 @@ textarea{width:100%;min-height:110px;font:400 14px/1.45 ui-monospace,Menlo,monos
 .cell.err{border-color:var(--bad);color:var(--bad)}
 .cell.cur{border-width:3px;border-color:var(--text)}
 .cell.crop,.qstrip button.crop{position:relative}
-.mathchip{display:inline-block;padding:0 3px;margin:0 1px;border-radius:6px;background:rgba(26,110,245,.08);outline:1px dashed rgba(26,110,245,.45);cursor:pointer;user-select:all}
+.mathchip{display:inline-block;max-width:100%;overflow-x:auto;vertical-align:middle;padding:0 3px;margin:0 1px;border-radius:6px;background:rgba(26,110,245,.08);outline:1px dashed rgba(26,110,245,.45);cursor:pointer;user-select:all}
 .mathchip:hover{background:rgba(26,110,245,.18)}
 .mathchip p{display:inline;margin:0}
 math-field::part(virtual-keyboard-toggle){display:none}
@@ -164,6 +164,19 @@ body.editing main{padding:0;max-width:none}
 .pdfpage img{display:block;width:100%;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.35)}
 .pdfpage .ov{position:absolute;inset:0}
 .pdfpage.cropping .ov{cursor:crosshair}
+.fxl{position:absolute;inset:0;pointer-events:none}
+.pdfpage.cropping .fxl{display:none}
+.fxhit{position:absolute;pointer-events:auto;cursor:pointer;border:2px solid rgba(26,110,245,.75);border-radius:6px;background:rgba(26,110,245,.08);animation:fxpulse 1.6s ease-in-out 2}
+.fxhit:hover{background:rgba(26,110,245,.2)}
+.fxhit .tag{position:absolute;left:-2px;bottom:100%;margin-bottom:2px;white-space:nowrap;font:600 12px/1 system-ui,sans-serif;color:#fff;background:#1a6ef5;border-radius:6px;padding:4px 7px}
+.fxhit.used{border-color:rgba(40,160,90,.8);background:rgba(40,160,90,.1)}
+.fxhit.used .tag{background:#28a05a}
+@keyframes fxpulse{50%{box-shadow:0 0 0 6px rgba(26,110,245,.25)}}
+.mathedit{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px;vertical-align:middle;max-width:100%;box-sizing:border-box;padding:4px;border-radius:8px;outline:2px solid var(--accent);background:rgba(26,110,245,.06)}
+.mathedit math-field{min-width:80px;max-width:100%;flex:1 1 100%;font-size:1.15em;background:#fff;color:#000;border-radius:6px;padding:2px 6px}
+.mathedit .mb{font:600 12px system-ui,sans-serif;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:6px;padding:4px 8px;cursor:pointer}
+.mathedit .mb.go{background:var(--accent);color:#000;border-color:transparent}
+.mathchip.flash{animation:fxpulse 1s ease-in-out 2}
 .box{position:absolute;border:2px solid var(--accent);background:rgba(200,240,74,.18);box-shadow:0 0 0 9999px rgba(0,0,0,.25)}
 .anchor{position:absolute;left:0;right:0;height:0;border-top:2px dashed var(--flame);pointer-events:none}
 .anchor span{position:absolute;left:4px;top:-20px;background:var(--flame);color:#0D110F;font-size:11px;font-weight:700;padding:1px 6px;border-radius:6px}
@@ -811,7 +824,7 @@ function formPane(q, g) {
       </span>
       <button class="ib" type="button" data-cmd="insertUnorderedList" onclick="richCmd('insertUnorderedList')" title="Lista con viñetas">• Lista</button>
       <button class="ib" type="button" onclick="richCmd('table')" title="Insertar una tabla de texto">▦ Tabla</button>
-      <button class="ib" type="button" onclick="openMath()" title="Escribe una fórmula: / hace fracciones, ^ exponentes, sqrt raíces (como en Desmos)">ƒx Fórmula</button>
+      <button class="ib" type="button" onclick="newFormula()" title="Escribe una fórmula donde está el cursor. Las fórmulas del PDF salen marcadas en azul: un clic y quedan puestas.">ƒx Fórmula</button>
       <select class="ib" onchange="if (this.value) { fmtInsert('sym', this.value); this.value = ''; }" title="Símbolos">
         <option value="">Ω Símbolo</option>${SYMBOLS.map(x => `<option>${x}</option>`).join("")}</select>
       <button class="ib" type="button" onclick="cleanField()" title="Une líneas cortadas, quita guiones de corte y espacios dobles en el campo activo">🧹 Limpiar</button>
@@ -1340,6 +1353,7 @@ function inlineSource(n) {
     .split(MATH_SPLIT).map((part, i) => (i % 2 ? part : part.replace(/\*/g, "&#42;"))).join("");
   if (n.nodeType !== 1) return "";
   if (n.classList.contains("mathchip")) return `$${n.dataset.tex}$`;
+  if (n.classList.contains("mathedit")) { const mf = n.querySelector("math-field"); const tex = mf ? texOf(mf) : n.dataset.tex; return tex ? `$${tex}$` : ""; }
   const tag = n.tagName;
   if (tag === "BR") return "\n";
   if (RICH_BLOCK.test(tag)) return "\n" + blockSource(n) + "\n";
@@ -1381,7 +1395,7 @@ function attachRich(ta) {
   });
   ta.addEventListener("input", () => { if (!ta._fromRich) { rich.innerHTML = toVisual(ta.value); } });
   rich.addEventListener("focus", () => { state.lastArea = ta; });
-  rich.addEventListener("click", e => { const chip = e.target.closest(".mathchip"); if (chip) { state.lastArea = ta; openMath(ta, chip); } });
+  rich.addEventListener("click", e => { const chip = e.target.closest(".mathchip"); if (chip) { state.lastArea = ta; editMathInline(ta, chip); } });
   rich.addEventListener("paste", e => {
     const html = e.clipboardData?.getData("text/html"), text = e.clipboardData?.getData("text/plain");
     if (e.clipboardData?.files?.length) return;
@@ -1508,6 +1522,168 @@ function richToolbarState() {
 
 const SYMBOLS = ["≤", "≥", "≠", "≈", "±", "×", "÷", "√", "π", "°", "²", "³", "½", "¼", "∞", "→", "←", "↔", "α", "β", "Δ", "θ", "λ", "μ", "Ω", "%", "€", "—"];
 // ----- formula editor: a MathLive field that formats as you type (like Desmos) and stores $LaTeX$ -----------
+// ----- formulas: found on the PDF page, placed with one click, edited in place -------------------------
+
+// Formulas printed on the page are found by the server (fraction bars + OCR) and outlined in blue. A click puts the
+// formula, already built, where the caret was in the text (or in place of a [fórmula] gap).
+const fxCache = {};
+async function loadFormulaHits() {
+  const layer = $("#fxl");
+  if (!layer || STATIC || !state.detail) return;
+  const key = `${state.detail.exam}:${state.page}`;
+  try {
+    fxCache[key] ??= api(`/api/exams/${encodeURIComponent(state.detail.exam)}/formulas/${state.page}`);
+    const { formulas } = await fxCache[key];
+    if ($("#fxl") !== layer || `${state.detail.exam}:${state.page}` !== key) return;
+    layer.innerHTML = formulas.map((f, i) => {
+      const [x0, y0, x1, y1] = f.box;
+      const used = usedTex().has(f.tex) ? " used" : "";
+      return `<div class="fxhit${used}" data-i="${i}" style="left:${x0 * 100}%;top:${y0 * 100}%;width:${(x1 - x0) * 100}%;height:${(y1 - y0) * 100}%"
+        title="Clic: poner esta fórmula en ${esc(fieldName(state.lastArea))}"><span class="tag">${used ? "✓ ya está en el texto" : "ƒx poner en el texto"}</span></div>`;
+    }).join("");
+    layer.querySelectorAll(".fxhit").forEach(el => el.onclick = (e) => { e.stopPropagation(); useFormula(formulas[+el.dataset.i].tex, el); });
+  } catch { delete fxCache[key]; }
+}
+// Most words of the formula appear in the text (accents and case aside).
+function sameWords(text, tex) {
+  const norm = (x) => x.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().match(/[a-z]{3,}/g) || [];
+  const want = norm(tex.replace(/\\[a-z]+/g, " "));
+  if (want.length < 3) return false;
+  const have = new Set(norm(text));
+  return want.filter(w => have.has(w)).length / want.length >= 0.7;
+}
+const usedTex = () => new Set([...document.querySelectorAll("#form textarea")].flatMap(t => [...t.value.matchAll(/\$([^$\n]+?)\$/g)].map(m => m[1])));
+const FORMULA_GAP = /\[\s*(f[óo]rmula|ecuaci[óo]n)[^\]]*\]/i;
+
+function useFormula(tex, hit) {
+  // Where it goes: the field with the [fórmula] gap, else the field and caret used last, else the enunciado.
+  const fields = [...document.querySelectorAll("#form #f-stimulus, #form #f-passage, #form #f-stem, #f-opts textarea[data-letter]")];
+  const gap = fields.find(t => FORMULA_GAP.test(t.value));
+  // A table typed by hand to imitate this formula (same words) is replaced by it.
+  const twin = !gap && state.visual ? fields.map(t => [t, [...(richOf(t)?.querySelectorAll("table") || [])].find(tb => sameWords(tb.textContent, tex))]).find(x => x[1]) : null;
+  let ta = gap || twin?.[0] || (state.lastArea?.isConnected ? state.lastArea : $("#f-stem"));
+  if (twin) {
+    const rich = richOf(ta), div = document.createElement("div");
+    div.innerHTML = mathChip(tex);
+    twin[1].replaceWith(div);
+    rich.dispatchEvent(new Event("input"));
+  } else if (gap) {
+    ta.value = ta.value.replace(FORMULA_GAP, `$${tex}$`);
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
+  } else if (state.visual && richOf(ta)) {
+    const rich = richOf(ta);
+    const range = rich._range && rich.contains(rich._range.startContainer) ? rich._range.cloneRange() : null;
+    const block = range && endOfBlock(rich, range);
+    if (block) {
+      // at the end of a paragraph, a formula from the page gets a line of its own, as printed
+      const div = document.createElement("div"); div.innerHTML = mathChip(tex);
+      block.after(div);
+      rich.dispatchEvent(new Event("input"));
+    } else placeChip(rich, range, tex);
+  } else insertAt(ta, `$${tex}$`);
+  state.lastArea = ta;
+  hit?.classList.add("used");
+  if (hit) hit.querySelector(".tag").textContent = "✓ ya está en el texto";
+  const chip = [...(richOf(ta)?.querySelectorAll(".mathchip") || [])].find(c => c.dataset.tex === tex);
+  if (chip) { chip.scrollIntoView({ block: "center", behavior: "smooth" }); chip.classList.add("flash"); setTimeout(() => chip.classList.remove("flash"), 2200); }
+  toast(`Fórmula puesta en ${fieldName(ta)}. Haz clic en ella para cambiar algo.`);
+}
+
+// The paragraph a caret sits at the end of (only blank text after it), or null.
+function endOfBlock(rich, range) {
+  let node = range.endContainer;
+  let block = node.nodeType === 1 ? node : node.parentElement;
+  while (block && block.parentElement !== rich) block = block.parentElement;
+  if (!block || block === rich) return null;
+  const after = document.createRange();
+  after.setStart(range.endContainer, range.endOffset);
+  after.setEndAfter(block);
+  return after.toString().trim() ? null : block;
+}
+// Puts a formula chip at a caret (or at the end) of a Word-style field and returns it.
+function placeChip(rich, range, tex) {
+  rich.focus();
+  const s = window.getSelection(); s.removeAllRanges();
+  if (range) s.addRange(range); else { const r = document.createRange(); r.selectNodeContents(rich); r.collapse(false); s.addRange(r); }
+  // insertHTML would split the paragraph around the formula; a marker typed in its place is swapped for the chip.
+  document.execCommand("insertText", false, "\u2063f\u2063");
+  const walk = document.createTreeWalker(rich, NodeFilter.SHOW_TEXT);
+  let chip = null;
+  for (let t = walk.nextNode(); t; t = walk.nextNode()) {
+    const at = t.nodeValue.indexOf("\u2063f\u2063");
+    if (at < 0) continue;
+    const after = t.splitText(at); after.nodeValue = "\u00a0" + after.nodeValue.slice(3);
+    const box = document.createElement("span"); box.innerHTML = mathChip(tex);
+    chip = box.firstChild;
+    t.after(chip);
+    const r = document.createRange(); r.setStart(after, 1); r.collapse(true); s.removeAllRanges(); s.addRange(r);
+    break;
+  }
+  rich.dispatchEvent(new Event("input"));
+  return chip;
+}
+
+// "ƒx Fórmula": an empty formula opens right where the caret is, to type in place.
+function newFormula() {
+  const area = state.lastArea?.isConnected ? state.lastArea : $("#f-stem");
+  const rich = state.visual && richOf(area);
+  if (!rich || !window.MathfieldElement) { openMath(area); return; }
+  const range = rich._range && rich.contains(rich._range.startContainer) ? rich._range.cloneRange() : null;
+  const chip = placeChip(rich, range, "x");
+  if (chip) editMathInline(area, chip, "");
+}
+
+// Editing a formula happens inside the text: the chip turns into a live formula box (tap a slot to type in it).
+function editMathInline(ta, chip, start = null) {
+  if (!window.MathfieldElement) { openMath(ta, chip); return; }
+  const rich = richOf(ta);
+  const tex = start ?? chip.dataset.tex;
+  const wrap = document.createElement("span");
+  wrap.className = "mathedit"; wrap.contentEditable = "false"; wrap.dataset.tex = tex;
+  wrap.innerHTML = `<math-field></math-field>
+    <button class="mb" data-a="text" title="Escribir palabras con espacios (vuelve a pulsar para números)">Aa</button>
+    <button class="mb" data-a="frac" title="Fracción">a/b</button>
+    <button class="mb" data-a="read" title="Leer esta fórmula de un recuadro en la página">📷</button>
+    <button class="mb" data-a="del" title="Quitar la fórmula">🗑</button>
+    <button class="mb go" data-a="ok">Listo</button>`;
+  chip.replaceWith(wrap);
+  const mf = wrap.querySelector("math-field");
+  mf.mathVirtualKeyboardPolicy = "manual";
+  mf.smartFence = true;
+  mf.value = tex;
+  const as_read = texOf(mf);  // MathLive's spelling of the same formula: unchanged means keep the original text
+  let closed = false;
+  const finish = (keep = true) => {
+    if (closed) return; closed = true;
+    const now = !keep || texOf(mf) === as_read ? tex : texOf(mf);
+    if (now) { const box = document.createElement("span"); box.innerHTML = mathChip(now); wrap.replaceWith(box.firstChild); }
+    else wrap.remove();
+    rich.dispatchEvent(new Event("input"));
+    loadFormulaHits();
+  };
+  wrap.querySelectorAll(".mb").forEach(b => {
+    b.addEventListener("pointerdown", e => e.preventDefault());
+    b.onclick = (e) => {
+      e.stopPropagation();
+      const a = b.dataset.a;
+      if (a === "ok") finish();
+      else if (a === "del") { mf.value = ""; finish(); }
+      else if (a === "text") { mf.focus(); mf.executeCommand(["switchMode", mf.mode === "text" ? "math" : "text"]); }
+      else if (a === "frac") { mf.focus(); mf.executeCommand(["switchMode", "math"]); mf.insert("\\frac{#?}{#?}", { focus: true, selectionMode: "placeholder" }); }
+      else if (a === "read") { const c = (finish(), [...rich.querySelectorAll(".mathchip")].pop()); formulaFromPage(ta, c); }
+    };
+  });
+  wrap.addEventListener("click", e => e.stopPropagation());
+  mf.addEventListener("input", e => e.stopPropagation());
+  mf.addEventListener("keydown", e => {
+    e.stopPropagation();
+    if (e.key === "Enter") { e.preventDefault(); finish(); }
+    if (e.key === "Escape") { e.preventDefault(); finish(false); }
+  });
+  mf.addEventListener("focusout", () => setTimeout(() => { if (!wrap.contains(document.activeElement) && document.activeElement !== mf) finish(); }, 150));
+  setTimeout(() => { mf.focus(); mf.executeCommand?.("moveToMathfieldEnd"); }, 30);
+}
+
 function openMath(area = state.lastArea, chip = null, readTex = null) {
   if (!area || !area.isConnected) { toast("Primero haz clic en un campo de texto"); return; }
   if (!window.MathfieldElement) { toast("El editor de fórmulas aún se está cargando; intenta de nuevo", true); return; }
@@ -1676,6 +1852,7 @@ function pdfPane() {
       <div class="pdfpage ${state.cropping ? "cropping" : ""}" id="pdfpage" style="width:${Math.round(state.zoom * 100)}%">
         <img id="pdfimg" alt="página ${state.page} del PDF original" src="/api/scan/${encodeURIComponent(d.exam)}/${state.page}" draggable="false" onerror="pageMissing(this)">
         <div class="ov" id="ov">${anchorMark()}</div>
+        <div class="fxl" id="fxl"></div>
       </div>
     </div>`;
 }
@@ -1728,6 +1905,7 @@ function bindPdf() {
     state.box = [Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1), Math.max(y0, y1)];
     drawBox(true);
   };
+  loadFormulaHits();
 }
 // Which part of a drawn box is under the pointer: an edge or corner ("t", "bl"…), "move" inside, or null outside.
 function boxGrip(box, p, rect) {
@@ -2036,8 +2214,16 @@ async function formulaFromBox() {
     const { tex, engine } = await api(`/api/exams/${encodeURIComponent(state.detail.exam)}/read`, J("POST", { page: state.page, box: state.box, engine: state.engine, want: "formula" }));
     cancelCrop();
     const area = tgt?.area?.isConnected ? tgt.area : state.lastArea?.isConnected ? state.lastArea : $("#f-stem");
-    openMath(area, tgt?.chip?.isConnected ? tgt.chip : null, tex);
-    toast(`Fórmula leída (${ENGINE_NAMES[engine] || engine}); revísala con la página y pulsa Enter`);
+    if (tgt?.chip?.isConnected && richOf(area)) {
+      // reading a formula for one being edited: it takes that one's place and stays open to check
+      const box = document.createElement("span"); box.innerHTML = mathChip(tex);
+      const chip = box.firstChild; tgt.chip.replaceWith(chip);
+      richOf(area).dispatchEvent(new Event("input"));
+      editMathInline(area, chip);
+    } else {
+      state.lastArea = area;
+      useFormula(tex);
+    }
   } catch (e) { toast(e.message, true); }
   finally { setSave(state.dirty ? "Cambios sin guardar" : "Sin cambios", state.dirty ? "dirty" : ""); }
 }

@@ -18,13 +18,13 @@ def test_word_fraction_with_a_stacked_left_side():
              Line("Volumen del", 0.7, 0.15, 0.6, 0.1), Line("lago (m3)", 0.7, 0.3, 0.6, 0.1),
              Line("Cauce", 0.7, 0.6, 0.65, 0.1), Line("(m3/años)", 0.7, 0.8, 0.6, 0.1)]
     tex = to_latex(lines, [Bar(0.45, 0.95, 0.45)])
-    assert tex == (r"\text{Tiempo de retención (años)} = \frac{\text{Volumen del lago (m}^{3}\text{)}}"
+    assert tex == (r"\displaystyle \text{Tiempo de retención (años)} = \frac{\text{Volumen del lago (m}^{3}\text{)}}"
                    r"{\text{Cauce (m}^{3}\text{/años)}}")
 
 
 def test_a_lost_equals_sign_comes_back_and_no_bar_means_plain_rows():
     lines = [Line("Densidad", 0.2, 0.5, 0.1, 0.1), Line("masa", 0.7, 0.3, 0.6, 0.1), Line("volumen", 0.7, 0.7, 0.6, 0.1)]
-    assert to_latex(lines, [Bar(0.5, 0.9, 0.5)]) == r"\text{Densidad} = \frac{\text{masa}}{\text{volumen}}"
+    assert to_latex(lines, [Bar(0.5, 0.9, 0.5)]) == r"\displaystyle \text{Densidad} = \frac{\text{masa}}{\text{volumen}}"
     assert to_latex([Line("a + b", 0.5, 0.5, 0.1, 0.1)], []) == r"\text{a + b}"
 
 

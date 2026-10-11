@@ -139,6 +139,11 @@ def ocr(store, m, body, query):
     return store.ocr_text(m.group(1), int(body.get("page") or 0), body.get("box"))
 
 
+@route("GET", r"/api/exams/([^/]+)/formulas/(\d+)")
+def page_formulas(store, m, body, query):
+    return store.page_formulas(m.group(1), int(m.group(2)))
+
+
 @route("POST", r"/api/exams/([^/]+)/read")
 def read_box(store, m, body, query):
     body = _json_body(body)

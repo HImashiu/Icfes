@@ -643,6 +643,33 @@ class Store:
             self._ocr_pages[exam] = ocr.load_saved(self.ocr, pdf.name) if ok else None
         return self._ocr_pages[exam]
 
+    def page_formulas(self, exam, page):
+        """Printed formulas on a page of the original, found without any box: [{box, tex}] in page fractions.
+
+        Fraction bars come from the pixels; the words from the saved Azure reading, or RapidOCR on the page when there
+        is none (only when the page has a candidate bar). Cached per page."""
+        exam = self._exam(exam)
+        key = (exam, page)
+        cache = self.__dict__.setdefault("_formula_cache", {})
+        if key in cache:
+            return cache[key]
+        pix = self._render_box(exam, page, [0, 0, 1, 1], dpi=150)
+        if not any(b.x1 - b.x0 <= 0.45 for b in formula.find_bars(pix.samples, pix.width, pix.height, pix.n, min_frac=0.03)):
+            cache[key] = {"formulas": []}
+            return cache[key]
+        pages = self._ocr_doc(exam)
+        if pages is not None:
+            lines = (pages.get(page) or {}).get("lines", [])
+        else:
+            try:
+                big = self._render_box(exam, page, [0, 0, 1, 1], dpi=200)
+                lines = ocr.rapid_read(big.samples, big.width, big.height, big.n)["lines"]
+            except ocr.OcrError:
+                lines = []
+        found = formula.find_formulas(pix.samples, pix.width, pix.height, pix.n, lines)
+        cache[key] = {"formulas": [{"box": list(f.box), "tex": f.tex} for f in found]}
+        return cache[key]
+
     def ocr_available(self, exam):
         return {"saved": self._ocr_doc(exam) is not None, "azure": ocr.azure_config() is not None}
 
