@@ -986,3 +986,6 @@ details.answers-area > summary::-webkit-details-marker { display: none; }
 /* Editor markup: <small> in any text field, and the source line under a Lectura crítica text. */
 small { font-size: 0.8em; }
 p.fuente { font-size: 0.78em; line-height: 1.35; text-align: right; margin: 14px 0 8px; opacity: 0.8; }
+.cita { margin: 10px 0 10px 16px; padding: 2px 0 2px 14px; border-left: 3px solid #c9c4b5; }
+.poema { white-space: pre-wrap; margin: 10px 0 10px 16px; }
+.espacio { height: 1.2em; }
