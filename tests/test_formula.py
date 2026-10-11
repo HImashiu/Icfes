@@ -40,3 +40,17 @@ def test_bars_are_long_thin_dark_runs():
     bars = find_bars(bytes(px), w, h, 1)
     assert len(bars) == 1
     assert abs(bars[0].x0 - 0.2) < 0.01 and abs(bars[0].x1 - 0.9) < 0.01 and abs(bars[0].y - 30.5 / 60) < 0.01
+
+
+def test_formulas_on_a_page_are_found_without_a_box():
+    from icfes_admin.formula import find_formulas
+    w, h = 400, 300
+    px = bytearray([255] * w * h)
+    for x in range(200, 320):  # the fraction bar
+        px[150 * w + x] = 0
+    lines = [Line("Densidad =", 0.35, 0.5, 0.25, 0.04), Line("masa", 0.65, 0.45, 0.6, 0.04),
+             Line("volumen", 0.65, 0.55, 0.57, 0.04), Line("Un texto largo de la pregunta", 0.5, 0.1, 0.1, 0.04)]
+    found = find_formulas(bytes(px), w, h, 1, lines)
+    assert [f.tex for f in found] == [r"\displaystyle \text{Densidad} = \frac{\text{masa}}{\text{volumen}}"]
+    x0, y0, x1, y1 = found[0].box
+    assert x0 < 0.26 and x1 > 0.79 and y0 < 0.44 and y1 > 0.56
