@@ -78,7 +78,8 @@ const booklet = (t) =>
 // A question is hidden when something it needs is missing (a passage, a picture, a figure
 // without a spec); a note standing in for a picture that is drawn is stripped instead.
 // Every fix is counted in report[slug] so the sync log shows what is left in the data.
-const PENDING_TEXT = /\[Texto pendiente/;
+// Any "[... pendiente(s)" placeholder (texto, tabla, gráfica, figuras) means the content is not typed yet.
+const PENDING_TEXT = /\[(?:Texto|Tablas?|Gr[aá]ficas?|Figuras) pendientes?/;
 const FIGURE_NOTE = /\[(?:Figura pendiente|FIGURE)[^\]]*\]|(?:^|\n)[ \t]*Figura pendiente:[^\n]*/g;
 const FIGURE_NOTE_ANY = /\[(?:Figura pendiente|FIGURE)|(?:^|\n)[ \t]*Figura pendiente:/;
 const PICTURE = /!\[[^\]]*\]\([^)]*\)|<img\b[^>]*>/gi;

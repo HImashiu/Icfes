@@ -49,6 +49,8 @@ export default function App() {
   const [view, setView] = useState("home");
   const [reviewStart, setReviewStart] = useState(0);
   const [reviewNumber, setReviewNumber] = useState(null);
+  // What the home card asked for (area, mode), so "Reto del día" or "Simulacro completo" open set up that way.
+  const [preset, setPreset] = useState(null);
   const [attempt, setAttempt] = useState(null);
   const [theme, setTheme] = useState(() => currentTheme());
 
@@ -194,7 +196,8 @@ export default function App() {
             const saved = loadAttempt(selected.slug, resumable.scope);
             if (saved) resume(saved);
           }}
-          onPractice={() => setView("setup")}
+          onPractice={() => { setPreset(null); setView("setup"); }}
+          onSetup={(p) => { setPreset(p); setView("setup"); }}
           onLeague={() => setView("league")}
           onGo={setView}
         />
@@ -205,6 +208,7 @@ export default function App() {
           exam={selected.exam}
           slug={selected.slug}
           exams={exams}
+          preset={preset}
           onPickExam={(slug) => openExam(slug)}
           onBack={() => setView("home")}
           onStart={startAttempt}
@@ -260,7 +264,7 @@ export default function App() {
       {view === "reports" && <Reports onBack={() => setView("profile")} onPractice={() => setView("setup")} onOpen={openFromReport} />}
       {view === "teacher" && <Teacher onExit={() => setView("profile")} />}
 
-      {navView && <BottomNav active={navView} onGo={setView} />}
+      {navView && <BottomNav active={navView} onGo={(v) => { if (v === "setup") setPreset(null); setView(v); }} />}
     </div>
     </ExamContext.Provider>
   );

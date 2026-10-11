@@ -190,7 +190,10 @@ export default function Teacher({ onExit }) {
           <span className="label">Plan del colegio</span>
           <span className="caption">Demostración · sin cuentas reales</span>
         </div>
-        <button type="button" className="link" onClick={onExit}>Volver a la app de estudiante</button>
+        <button type="button" className="link t-exit" onClick={onExit} aria-label="Volver a la app de estudiante">
+          <span className="t-exit-long">Volver a la app de estudiante</span>
+          <span className="t-exit-short" aria-hidden="true">‹ Estudiante</span>
+        </button>
       </aside>
 
       <main className="t-main">

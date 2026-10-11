@@ -8,12 +8,23 @@ import { areaColor, fmtInt, fmtPct } from "../lib/brand.js";
 
 // Resultados: celebrating mascot, three stats, per-area bars, the preliminary-key notice and the next steps.
 // Phone: each area folds to one line; the areas with errors start open. Desktop shows every area.
+// The title follows the score, so 1 of 25 is not "¡Buen trabajo!".
+function headline(pct, answered) {
+  if (pct === null) return answered ? "¡Sesión entregada!" : "Sin respuestas todavía";
+  if (pct >= 70) return "¡Excelente trabajo!";
+  if (pct >= 50) return "¡Buen trabajo!";
+  if (pct >= 30) return "Vas por buen camino";
+  return "Sigue practicando";
+}
 const isPhone = typeof window !== "undefined" && !window.matchMedia?.("(min-width: 768px)").matches;
 
 export default function Results({ title, questions, attempt, answerKey, keyStatus, onReview, onReviewAt, onHome, onRetry }) {
   const score = scoreAttempt(questions, attempt.answers, answerKey);
   const preliminary = keyStatus !== "official";
-  const pct = score.keyed && score.answered > 0 ? (score.correct / score.answered) * 100 : null;
+  // A simulacro is graded like the real exam: blanks count as wrong, so the score is out of every question.
+  // Practice is graded on what was answered, since stopping early is normal there.
+  const outOf = attempt.mode === "timed" ? score.total : score.answered;
+  const pct = score.keyed && outOf > 0 ? (score.correct / outOf) * 100 : null;
   const wrong = score.keyed ? score.answered - score.correct : 0;
   const flagged = Object.keys(attempt.flags).length;
   const delivered = Boolean(attempt.submittedAt);
@@ -31,6 +42,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
       total: score.total,
       keyed: score.keyed,
       correct: score.correct,
+      outOf,
       percent: pct ?? 0,
       perArea: score.perArea.map((a) => ({ name: a.name, correct: a.correct, answered: a.answered, total: a.total })),
       xp: xpEarned,
@@ -63,9 +75,9 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
     <section className="results">
       <div className="results-hero card">
         <div className="hero-row">
-          <Mascot pose="celebrating" size={84} />
+          <Mascot pose={pct !== null && pct >= 50 ? "celebrating" : "normal"} size={84} />
           <div className="hero-text">
-            <h1>{!delivered ? "Intento sin entregar" : pct && pct > 0 ? "¡Buen trabajo!" : "¡Sesión entregada!"}</h1>
+            <h1>{!delivered ? "Intento sin entregar" : headline(pct, score.answered)}</h1>
             <span className="caption">{title}</span>
             {attempt.auto && <span className="caption">El tiempo se acabó y el examen se entregó automáticamente.</span>}
           </div>
@@ -74,7 +86,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
           <div className="stat">
             <span className="label">Correctas</span>
             <strong className="display">{score.keyed ? fmtPct(pct ?? 0) : "—"}</strong>
-            <span className="caption">{score.keyed ? `${fmtInt(score.correct)} de ${fmtInt(score.answered)}` : "Clave pendiente"}</span>
+            <span className="caption">{score.keyed ? `${fmtInt(score.correct)} de ${fmtInt(outOf)}${attempt.mode === "timed" && score.answered < score.total ? " · en blanco cuentan como error" : ""}` : "Clave pendiente"}</span>
           </div>
           <div className="stat">
             <span className="label">XP ganado</span>
@@ -91,12 +103,13 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
       <div className="card area-card">
         <span className="label">Por área</span>
         {score.perArea.map((a) => {
-          const share = score.keyed && a.answered > 0 ? (a.correct / a.answered) * 100 : 0;
+          const areaOutOf = attempt.mode === "timed" ? a.total : a.answered;
+          const share = score.keyed && areaOutOf > 0 ? (a.correct / areaOutOf) * 100 : 0;
           return (
             <div key={a.name} className="area-row">
               <div className="area-row-head">
                 <span><span className="dot" style={{ background: areaColor(a.name) }} /> {a.name}</span>
-                <span className="muted">{score.keyed ? `${a.correct} de ${a.answered}` : `${a.answered} de ${a.total}`}</span>
+                <span className="muted">{score.keyed ? `${a.correct} de ${areaOutOf} correctas` : `${a.answered} de ${a.total}`}</span>
               </div>
               <div className="progress thin">
                 <span style={{ width: `${share}%`, background: areaColor(a.name) }} />
@@ -104,7 +117,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
             </div>
           );
         })}
-        <p className="footnote">+10 XP por acierto · +20 en {WEAKEST_AREA}.{preliminary ? " Clave preliminar, no oficial: el puntaje es orientativo." : ""}</p>
+        <p className="footnote">+10 XP por acierto{score.perArea.some((a) => a.name === WEAKEST_AREA) ? ` · +20 en ${WEAKEST_AREA}` : ""}.{preliminary ? " Clave preliminar, no oficial: el puntaje es orientativo." : ""}</p>
       </div>
 
       {flagged > 0 && <p className="caption">Marcó {fmtInt(flagged)} {flagged === 1 ? "pregunta" : "preguntas"} para revisar.</p>}

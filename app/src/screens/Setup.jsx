@@ -15,9 +15,20 @@ function formatDuration(minutes) {
   return m === 0 ? `${h} h` : `${h} h ${m} min`;
 }
 
-export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam }) {
-  const [scope, setScope] = useState("all");
-  const [mode, setMode] = useState("practice");
+// `preset` comes from a home card: { scope: "all" | "area" | <area name>, mode }. "area" opens the first area.
+function initialScope(exam, preset) {
+  const want = preset?.scope;
+  if (!want || want === "all") return "all";
+  if (exam.sections.some((s) => s.name === want)) return want;
+  return exam.sections[0]?.name ?? "all";
+}
+
+export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, preset }) {
+  const [scope, setScope] = useState(() => initialScope(exam, preset));
+  const [mode, setMode] = useState(preset?.mode ?? "practice");
+  // Switching booklets can drop the chosen area (1ra booklets have no Inglés): fall back to the whole booklet.
+  const scopeOk = scope === "all" || exam.sections.some((s) => s.name === scope);
+  if (!scopeOk) setScope("all");
   const scoped = questionsFor(exam, scope);
   const minutes = timedSeconds(scoped) / 60;
   const hint = `${mode === "timed" ? `Tiempo: ${formatClock(timedSeconds(scoped))} · ` : ""}+10 XP por acierto · +20 en ${WEAKEST_AREA}`;

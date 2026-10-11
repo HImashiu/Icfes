@@ -53,7 +53,7 @@ export default function History({ onBack, onNew, onOpen }) {
                 {r.keyed ? (
                   <>
                     <strong className="score-pct">{fmtPct(r.percent)}</strong>
-                    <span className="caption">{fmtInt(r.correct)} de {fmtInt(r.answered)} correctas</span>
+                    <span className="caption">{fmtInt(r.correct)} de {fmtInt(r.outOf ?? r.answered)} correctas</span>
                   </>
                 ) : (
                   <>

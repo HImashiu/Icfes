@@ -901,3 +901,56 @@ details.answers-area > summary::-webkit-details-marker { display: none; }
 .traced-figure { margin: 12px 0; }
 .traced-figure img { display: block; max-width: 100%; height: auto; background: #fff; border-radius: 8px; }
 .traced-option { display: block; max-width: 100%; height: auto; background: #fff; border-radius: 6px; }
+
+/* UX review (2026-10-11) */
+/* Entregar / Terminar asks in the app itself: a bottom sheet on phone, a centered box on larger screens. */
+.confirm-backdrop {
+  position: fixed; inset: 0; z-index: 40; background: rgba(0, 0, 0, 0.55);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.confirm-box {
+  width: 100%; max-width: 480px; background: var(--surface); color: var(--text);
+  border-radius: 24px 24px 0 0; padding: 20px 16px calc(16px + env(safe-area-inset-bottom));
+  display: grid; gap: 10px;
+}
+.confirm-box > strong { font-family: "Bricolage Grotesque", sans-serif; font-size: 22px; }
+.confirm-box > .caption { margin: 0; font-size: 15px; }
+.confirm-actions { display: grid; gap: 10px; margin-top: 6px; }
+.confirm-actions .big { width: 100%; }
+@media (min-width: 768px) {
+  .confirm-backdrop { align-items: center; }
+  .confirm-box { border-radius: 24px; padding: 24px; }
+}
+/* Practice: "Saltar" fills the footer like the main button does. */
+.test-bottom .secondary.big { flex: 1 1 auto; min-height: 54px; }
+
+/* Profile: name over course; menu rows with the chevron at the right edge. */
+.profile-card { grid-template-columns: auto 1fr; align-items: center; }
+.profile-name { display: grid; gap: 2px; }
+.quick-row {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px;
+  text-align: left; color: var(--text); font: inherit; font-weight: 600; cursor: pointer;
+}
+.quick-row > span { flex: 1; }
+
+.t-exit-short { display: none; }
+@media (max-width: 800px) { .t-exit-short { display: inline; } }
+/* Teacher on phone: the sections scroll sideways in one row, and the four numbers sit in a 2 x 2 grid. */
+@media (max-width: 800px) {
+  .teacher { grid-template-columns: minmax(0, 1fr); }
+  .t-side { min-width: 0; flex-wrap: nowrap; gap: 8px; padding: 10px 12px; position: sticky; top: 0; z-index: 10; background: var(--side); }
+  .t-side nav { display: flex; gap: 4px; overflow-x: auto; flex: 1; min-width: 0; scrollbar-width: none; }
+  .t-side nav::-webkit-scrollbar { display: none; }
+  .t-nav { white-space: nowrap; flex: none; }
+  .t-nav.active { box-shadow: inset 0 -3px 0 var(--accent); }
+  .t-logo { display: none; }
+  .t-exit { order: -1; flex: none; min-height: 40px; padding: 0 8px 0 0; font-size: 14px; white-space: nowrap; }
+  .t-exit-long { display: none; }
+  .t-head .primary { width: 100%; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+}
+/* Review on phone: "Siguiente" takes the rest of the row, like the test footer. */
+@media (max-width: 767px) {
+  .review .test-controls > button { min-height: 52px; }
+  .review .test-controls > .primary { flex: 1; }
+}

@@ -13,6 +13,7 @@ import { xpFor } from "../lib/xp.js";
 export default function Test({ title, examLabel, questions, attempt, answerKey, onChange, onSubmit, onExit, figures }) {
   const [now, setNow] = useState(() => Date.now());
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const timed = Boolean(attempt.durationSec);
   const practice = !timed;
   const remaining = timed ? attempt.durationSec - (now - attempt.startedAt) / 1000 : null;
@@ -38,6 +39,16 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   const area = q?.section;
   const prev = questions[current - 1];
 
+  // After "Comprobar" the verdict sits under the options; on a phone that is below the fold, so bring it up.
+  const showVerdict = () => setTimeout(() => {
+    const el = document.querySelector(".test .feedback");
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const bar = document.querySelector(".test-bottom")?.getBoundingClientRect();
+    const bottom = bar && bar.top > 0 && bar.top < window.innerHeight ? bar.top : window.innerHeight;
+    if (r.bottom > bottom) window.scrollBy({ top: r.bottom - bottom + 16, behavior: "smooth" });
+  }, 60);
+
   const go = (index) => {
     if (index < 0 || index >= questions.length) return;
     onChange((a) => ({ ...a, current: index }));
@@ -49,6 +60,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   useEffect(() => {
     const onKey = (e) => {
       if (e.target.closest?.("input, textarea, select") || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (confirmOpen) { if (e.key === "Escape") setConfirmOpen(false); return; }
       if (e.key === "ArrowRight") go(current + 1);
       if (e.key === "ArrowLeft") go(current - 1);
       if (e.key === "m" || e.key === "M") toggleFlag();
@@ -72,18 +84,18 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
     });
 
   // Practice: "Comprobar" reveals the grade for this question once. XP counts only the first correct check.
-  const check = () =>
+  const check = () => {
     onChange((a) => {
       if (a.checked?.[q.key]) return a;
       const hit = Boolean(correctLetter) && a.answers[q.key] === correctLetter;
       return { ...a, checked: { ...(a.checked ?? {}), [q.key]: true }, xp: (a.xp ?? 0) + (hit ? xpFor(q.section) : 0) };
     });
-
-  const submit = () => {
-    const blank = questions.length - answered;
-    const msg = blank > 0 ? `Le faltan ${blank} preguntas por responder. ¿Desea entregar el examen?` : "¿Desea entregar el examen?";
-    if (window.confirm(msg)) onSubmit({ auto: false });
+    showVerdict();
   };
+
+  // Entregar asks first in the app itself (a browser confirm() is blocked inside embedded previews).
+  const submit = () => setConfirmOpen(true);
+  const blank = questions.length - answered;
 
   const hasKey = Boolean(answerKey);
   const feedback = practice && checked && (
@@ -98,10 +110,16 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
     </div>
   );
 
+  // Practice: with nothing picked the main button skips ahead, so a hard question never blocks the student.
+  const last = current >= questions.length - 1;
   const mainAction = practice && !checked ? (
-    <button type="button" className="primary big" disabled={!picked} onClick={check}>Comprobar</button>
+    picked ? (
+      <button type="button" className="primary big" onClick={check}>Comprobar</button>
+    ) : (
+      <button type="button" className="secondary big" disabled={last} onClick={() => go(current + 1)}>Saltar</button>
+    )
   ) : (
-    <button type="button" className="primary big" disabled={current >= questions.length - 1} onClick={() => go(current + 1)}>
+    <button type="button" className="primary big" disabled={last} onClick={() => go(current + 1)}>
       Siguiente
     </button>
   );
@@ -121,9 +139,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
         <Icon name="left" size={18} /> Anterior
       </button>
       {mainAction}
-      {!practice && (
-        <button type="button" className="link submit-link" onClick={submit}>Entregar</button>
-      )}
+      <button type="button" className="link submit-link" onClick={submit}>{practice ? "Terminar" : "Entregar"}</button>
       <span className="kbd-hint desk-only">A–D responder · ← → mover · M marcar</span>
     </footer>
   );
@@ -154,7 +170,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
           <span className="clock-pill desk-only" aria-hidden="true">
             {timed ? formatClock(remaining) : "Práctica"}
           </span>
-          <button type="button" className="secondary desk-only desk-submit" onClick={submit}>Entregar</button>
+          <button type="button" className="secondary desk-only desk-submit" onClick={submit}>{practice ? "Terminar" : "Entregar"}</button>
         </div>
         <div className="test-meta">
           <span className="meta-area">
@@ -194,6 +210,25 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
           {mapCells}
         </aside>
       </div>
+
+      {confirmOpen && (
+        <div className="confirm-backdrop" onClick={() => setConfirmOpen(false)}>
+          <div className="confirm-box" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" onClick={(e) => e.stopPropagation()}>
+            <strong id="confirm-title">{practice ? "¿Terminar la práctica?" : "¿Entregar el simulacro?"}</strong>
+            <p className="caption">
+              {blank > 0
+                ? `Te ${blank === 1 ? "falta 1 pregunta" : `faltan ${fmtInt(blank)} preguntas`} por responder.${practice ? "" : " Las que dejes en blanco cuentan como incorrectas."}`
+                : "Respondiste todas las preguntas."}
+            </p>
+            <div className="confirm-actions">
+              <button type="button" className="primary big" autoFocus onClick={() => { setConfirmOpen(false); onSubmit({ auto: false }); }}>
+                {practice ? "Terminar y ver resultados" : "Entregar"}
+              </button>
+              <button type="button" className="secondary big" onClick={() => setConfirmOpen(false)}>Seguir respondiendo</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {sheetOpen && (
         <div className="sheet-backdrop" onClick={() => setSheetOpen(false)}>

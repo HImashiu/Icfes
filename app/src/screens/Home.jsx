@@ -8,7 +8,7 @@ const DAYS = ["L", "M", "X", "J", "V", "S", "D"];
 
 // Inicio: streak, continue, quick cards, weekly XP, mastery by area, league teaser.
 // Streak, XP, weekly, mastery and league values are SAMPLE data (see data/mock.js).
-export default function Home({ exam, resumable, onContinue, onPractice, onLeague, onGo, xpSession }) {
+export default function Home({ exam, resumable, onContinue, onPractice, onSetup, onLeague, xpSession }) {
   const todayIndex = (new Date().getDay() + 6) % 7;
   const xp = SAMPLE_STUDENT.xp + (xpSession ?? 0);
   const me = SAMPLE_LEAGUE.find((r) => r.me);
@@ -70,20 +70,20 @@ export default function Home({ exam, resumable, onContinue, onPractice, onLeague
       )}
 
       <div className="quick-grid">
-        <button type="button" className="card quick" onClick={() => onGo("setup")}>
+        <button type="button" className="card quick" onClick={() => onSetup({ scope: "Matemáticas", mode: "practice" })} disabled={!exam}>
           <Icon name="bolt" />
           <strong>Reto del día</strong>
           <span className="caption">{exam ? `${questionsFor(exam, "Matemáticas").length} preguntas de Matemáticas` : "Matemáticas"}</span>
         </button>
-        <button type="button" className="card quick" onClick={() => onGo("setup")}>
+        <button type="button" className="card quick" onClick={() => onSetup({ scope: "area", mode: "practice" })} disabled={!exam}>
           <Icon name="book" />
           <strong>Practicar por área</strong>
           <span className="caption">Escoge un área y empieza</span>
         </button>
-        <button type="button" className="card quick quick-wide" onClick={() => onGo("setup")}>
+        <button type="button" className="card quick quick-wide" onClick={() => onSetup({ scope: "all", mode: "timed" })} disabled={!exam}>
           <Icon name="clock" />
           <strong>Simulacro completo</strong>
-          <span className="caption">Las 119 preguntas, con o sin tiempo</span>
+          <span className="caption">{exam ? `Las ${fmtInt(exam.questions.length)} preguntas, con tiempo` : "Con tiempo, como el día del examen"}</span>
         </button>
       </div>
 

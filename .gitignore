@@ -6,3 +6,5 @@ __pycache__/
 # pipeline data (never commit source PDFs, outputs or credentials)
 data/
 output/
+# the app's sample (mock) data is code, not exam content
+!app/src/data/

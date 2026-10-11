@@ -173,7 +173,6 @@ export default function QuestionView({
                   type="button"
                   role="radio"
                   aria-checked={answer === opt.letter}
-                  aria-label={`Opción ${opt.letter}`}
                   disabled={disabled}
                   className={`option ${state}`}
                   onClick={() => onAnswer?.(opt.letter)}

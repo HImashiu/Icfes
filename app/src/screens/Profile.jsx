@@ -8,9 +8,9 @@ export default function Profile({ theme, onTheme, onTeacher, onReports }) {
       <header className="screen-head"><h1>Perfil</h1></header>
       <div className="card profile-card">
         <div className="avatar big" aria-hidden="true">E</div>
-        <div>
+        <div className="profile-name">
           <strong>{SAMPLE_STUDENT.name}</strong>
-          <span className="caption">{SAMPLE_STUDENT.course}</span>
+          <span className="caption">{SAMPLE_STUDENT.course} · datos de muestra</span>
         </div>
       </div>
 
