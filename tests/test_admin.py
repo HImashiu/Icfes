@@ -392,3 +392,36 @@ def test_saving_puts_questions_back_in_number_order(root):
     assert [r["number"] for r in store.question_rows(EXAM)] == [1, 2, 3]
     store.update_question(EXAM, 3, {"stem_md": "otra"})
     assert [q["number"] for q in store.golden(EXAM)["questions"]] == [1, 2, 3]
+
+
+def test_sync_carries_only_laptop_edits_and_keeps_newer_shared_work(root, tmp_path_factory):
+    import shutil
+    from icfes_admin import sync
+    shared = tmp_path_factory.mktemp("shared")
+    for part in ("data", "answer-keys", "figures"):
+        shutil.copytree(root / part, shared / part)
+    # laptop: edit Q1's stem and draw a crop for Q3 that replaces t-q3
+    s = Store(root)
+    s.update_question(EXAM, 1, {"stem_md": "Editada en la laptop?"})
+    s.add_scan_figure(EXAM, 3, b"\x89PNG\r\n\x1a\n", replaces="t-q3", page=1, box=[0.1, 0.1, 0.5, 0.5])
+    lp = root / "figures" / "traced" / EXAM / "manifest.json"
+    lm = json.loads(lp.read_text(encoding="utf-8"))
+    lm["figures"] = [f for f in lm["figures"] if f["figure_id"] != "t-q3"]
+    lp.write_text(json.dumps(lm), encoding="utf-8")
+    # shared, meanwhile: another thread fixes Q3's text and adds a traced figure
+    g = json.loads((shared / "data" / f"{EXAM}.golden.json").read_text(encoding="utf-8"))
+    g["questions"][2]["stem_md"] = "Arreglada en la carpeta compartida?"
+    (shared / "data" / f"{EXAM}.golden.json").write_text(json.dumps(g, ensure_ascii=False), encoding="utf-8")
+    mp = shared / "figures" / "traced" / EXAM / "manifest.json"
+    m = json.loads(mp.read_text(encoding="utf-8"))
+    m["figures"].append({"question": 1, "figure_id": "t-q1-new", "spec_id": "t-q1-new", "method": "eyeballed_box"})
+    mp.write_text(json.dumps(m), encoding="utf-8")
+
+    sync.main(["--from", str(root), "--to", str(shared), "--write"])
+
+    out = {q["number"]: q for q in json.loads((shared / "data" / f"{EXAM}.golden.json").read_text(encoding="utf-8"))["questions"]}
+    assert out[1]["stem_md"] == "Editada en la laptop?"
+    assert out[3]["stem_md"] == "Arreglada en la carpeta compartida?"
+    ids = [f["figure_id"] for f in json.loads(mp.read_text(encoding="utf-8"))["figures"]]
+    assert "t-q1-new" in ids and "t-q3" not in ids and any("recorte" in i for i in ids)
+    assert sync.changed_files(root, shared) == []
