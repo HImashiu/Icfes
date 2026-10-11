@@ -55,7 +55,7 @@ textarea{width:100%;min-height:110px;font:400 14px/1.45 ui-monospace,Menlo,monos
 .cell.err{border-color:var(--bad);color:var(--bad)}
 .cell.cur{border-width:3px;border-color:var(--text)}
 .cell.crop,.qstrip button.crop{position:relative}
-.mathchip{display:inline-block;max-width:100%;overflow-x:auto;vertical-align:middle;padding:0 3px;margin:0 1px;border-radius:6px;background:rgba(26,110,245,.08);outline:1px dashed rgba(26,110,245,.45);cursor:pointer;user-select:all}
+.mathchip{display:inline-block;max-width:100%;vertical-align:middle;padding:0 3px;margin:0 1px;border-radius:6px;background:rgba(26,110,245,.08);outline:1px dashed rgba(26,110,245,.45);cursor:pointer;user-select:all}
 .mathchip:hover{background:rgba(26,110,245,.18)}
 .mathchip p{display:inline;margin:0}
 math-field::part(virtual-keyboard-toggle){display:none}
@@ -176,6 +176,9 @@ body.editing main{padding:0;max-width:none}
 .mathedit math-field{min-width:80px;max-width:100%;flex:1 1 100%;font-size:1.15em;background:#fff;color:#000;border-radius:6px;padding:2px 6px}
 .mathedit .mb{font:600 12px system-ui,sans-serif;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:6px;padding:4px 8px;cursor:pointer}
 .mathedit .mb.go{background:var(--accent);color:#000;border-color:transparent}
+/* A formula never breaks across lines; when it is wider than its column, fitMath() makes its type smaller.
+   Same contract as the student app: .katex stays on one line and gets a smaller font-size inline. */
+.katex{white-space:nowrap}
 .mathchip.flash{animation:fxpulse 1s ease-in-out 2}
 .box{position:absolute;border:2px solid var(--accent);background:rgba(200,240,74,.18);box-shadow:0 0 0 9999px rgba(0,0,0,.25)}
 .anchor{position:absolute;left:0;right:0;height:0;border-top:2px dashed var(--flame);pointer-events:none}
@@ -1527,6 +1530,39 @@ function richToolbarState() {
 
 const SYMBOLS = ["≤", "≥", "≠", "≈", "±", "×", "÷", "√", "π", "°", "²", "³", "½", "¼", "∞", "→", "←", "↔", "α", "β", "Δ", "θ", "λ", "μ", "Ω", "%", "€", "—"];
 // ----- formula editor: a MathLive field that formats as you type (like Desmos) and stores $LaTeX$ -----------
+// Formulas stay on one line: one that is wider than its column is drawn smaller until it fits (down to half size).
+function fitMath(root = document) {
+  root.querySelectorAll(".katex").forEach(k => {
+    if (k.closest(".mathedit")) return;
+    k.style.fontSize = "";
+    const box = k.closest(".mathchip")?.parentElement || k.parentElement;
+    let host = box;
+    while (host && getComputedStyle(host).display.startsWith("inline")) host = host.parentElement;
+    if (!host) return;
+    const cs = getComputedStyle(host);
+    const room = host.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 8;
+    if (room <= 0) return;
+    // the width does not scale exactly with the type (rules, spacing), so it is measured again after each step
+    let scale = 1, tooWide = Infinity;
+    for (let i = 0; i < 5; i++) {
+      const wide = k.getBoundingClientRect().width;
+      if (wide > room) { tooWide = scale; scale = Math.max(0.5, scale * room / wide * 0.98); }
+      else if (wide < room * 0.95 && scale < 1 && scale < tooWide * 0.99) scale = Math.min(1, tooWide * 0.99, scale * room / wide * 0.98);
+      else break;
+      k.style.fontSize = scale === 1 ? "" : `${scale.toFixed(3)}em`;
+      if (scale === 0.5) break;
+    }
+  });
+}
+let fitQueued = false;
+const queueFit = () => { if (fitQueued) return; fitQueued = true; requestAnimationFrame(() => { fitQueued = false; fitMath(); }); };
+const fitSizes = new ResizeObserver(queueFit);  // columns change width when the split is dragged
+new MutationObserver(muts => {
+  if (!muts.some(m => [...m.addedNodes].some(n => n.nodeType === 1 && (n.matches?.(".katex, .mathchip") || n.querySelector?.(".katex"))))) return;
+  document.querySelectorAll(".rich, #preview").forEach(el => fitSizes.observe(el));
+  queueFit();
+}).observe(document.body, { childList: true, subtree: true });
+
 // ----- formulas: found on the PDF page, placed with one click, edited in place -------------------------
 
 // Formulas printed on the page are found by the server (fraction bars + OCR) and outlined in blue. A click puts the
