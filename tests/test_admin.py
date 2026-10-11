@@ -451,3 +451,10 @@ def test_option_with_a_picture_needs_no_text(root):
     d = s.update_question(EXAM, 1, {"options": opts, "ready": True})
     assert d["question"]["options"][0]["text_md"] == "" and d["hidden_reasons"] == []
     assert d["messages"]["errors"] == []
+
+
+def test_rows_mark_questions_edited_in_the_editor(root):
+    s = Store(root)
+    assert not any(r["edited"] for r in s.question_rows(EXAM))
+    s.update_question(EXAM, 2, {"stem_md": "Otra pregunta 2?"})
+    assert [r["number"] for r in s.question_rows(EXAM) if r["edited"]] == [2]

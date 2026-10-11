@@ -278,6 +278,8 @@ class Store:
         natives = self.native_ids_by_question(exam)
         pictured = option_figures(self.figures, exam)
         rows = []
+        # questions saved from this editor (text, figures or crops); syncs and scripts leave no history
+        edited = {e.get("question") for e in self._entries(exam)}
         # Number order, whatever order the golden file keeps them in (a question added later sits at the end).
         for q in sorted(g["questions"], key=lambda x: x["number"]):
             n = q["number"]
@@ -286,6 +288,7 @@ class Store:
                 "number": n,
                 "section": q.get("section"),
                 "ready": bool(q.get("ready")),
+                "edited": n in edited,
                 "hidden": self.hidden_reasons(q, groups, figs.get(n, []),
                                               self.known_figure_ids(q, g["questions"], figs, natives), pictured),
                 "errors": len(msgs["errors"]),

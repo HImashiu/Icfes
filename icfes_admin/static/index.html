@@ -243,6 +243,9 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:var(--accent)}
 .qstrip button.ready{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .qstrip button.hidden{border-style:dashed}
 .qstrip button.err{border-color:var(--bad);color:var(--bad)}
+.cell.mine,.qstrip button.mine{background:#14532d;border-color:#14532d;color:#fff}
+.cell.mine.err,.qstrip button.mine.err{border-color:var(--bad)}
+.mine-dot{display:inline-block;width:10px;height:10px;border-radius:3px;background:#14532d;vertical-align:middle;margin-right:4px}
 .qstrip button.cur{outline:3px solid var(--text);outline-offset:1px}
 .toast{position:fixed;left:50%;bottom:56px;transform:translateX(-50%);z-index:50;background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.4);max-width:80vw}
 .toast.bad{background:var(--bad);color:#fff}
@@ -479,7 +482,7 @@ async function showProgress() {
 
 // ----- question map ----------------------------------------------------------
 
-const FILTERS = [["all", "Todas"], ["hidden", "Ocultas"], ["errors", "Con errores"], ["badfig", "Figura inválida"], ["crop", "Por recortar"], ["warnings", "Avisos"], ["notready", "No listas"]];
+const FILTERS = [["all", "Todas"], ["mine", "Editadas por mí"], ["hidden", "Ocultas"], ["errors", "Con errores"], ["badfig", "Figura inválida"], ["crop", "Por recortar"], ["warnings", "Avisos"], ["notready", "No listas"]];
 
 // Problems of one native figure, in plain words. An empty list means the engine can draw it.
 const MSG = [
@@ -576,7 +579,7 @@ async function loadAll() {
 }
 const FLAT_PASS = {
   all: () => true, hidden: r => r.hidden.length > 0 || r.bad, errors: r => r.errors > 0, badfig: r => r.bad,
-  crop: r => r.to_crop > 0, warnings: r => r.warnings > 0, notready: r => !r.ready,
+  crop: r => r.to_crop > 0, warnings: r => r.warnings > 0, notready: r => !r.ready, mine: r => r.edited,
 };
 const weight = r => r.errors * 10 + r.hidden.length * 3 + (r.bad ? 3 : 0) + (r.to_crop ? 2 : 0) + r.warnings;
 async function showFlat() {
@@ -607,7 +610,7 @@ async function showFlat() {
       <tbody>${shown.map(r => {
         const probs = rowProblems(r, r.bad);
         return `<tr class="row" data-exam="${esc(r.exam)}" data-n="${r.number}">
-          <td><b>${esc(r.exam)}</b></td><td class="num">${r.number}</td>
+          <td><b>${esc(r.exam)}</b></td><td class="num">${r.edited ? '<span class="mine-dot" title="La editaste tú"></span>' : ""}${r.number}</td>
           <td><span class="chip" style="min-height:0;padding:2px 8px;border:0;cursor:inherit"><i style="background:${areaColor(r.section)}"></i>${esc(r.section || "—")}</span></td>
           <td>${probs.length ? probs.map(p => `<span class="badge hid">${esc(p)}</span>`).join("") : '<span class="badge ok">visible</span>'}
             ${r.messages.map(m => `<div class="${r.errors ? "bad" : "muted"}" style="font-size:12px">${esc(checkMsg(m))}</div>`).join("")}</td>
@@ -640,7 +643,7 @@ function nextInQueue() {
 
 function cellClass(r) {
   const bad = badFigure(r.number);
-  return (r.errors || bad ? "err" : r.hidden.length ? "hidden" : "ready") + (r.to_crop ? " crop" : "");
+  return (r.errors || bad ? "err" : r.hidden.length ? "hidden" : "ready") + (r.to_crop ? " crop" : "") + (r.edited ? " mine" : "");
 }
 
 async function showQuestions() {
@@ -649,7 +652,7 @@ async function showQuestions() {
   await loadExam();
   const rows = state.rows;
   const pass = rows.filter(r => ({
-    all: true, hidden: r.hidden.length > 0 || badFigure(r.number), errors: r.errors > 0, warnings: r.warnings > 0, notready: !r.ready, badfig: badFigure(r.number), crop: r.to_crop > 0,
+    all: true, mine: r.edited, hidden: r.hidden.length > 0 || badFigure(r.number), errors: r.errors > 0, warnings: r.warnings > 0, notready: !r.ready, badfig: badFigure(r.number), crop: r.to_crop > 0,
   })[state.filter]);
   status(`${rows.length} preguntas`, "ok");
   const opts = state.exams.map(e => `<option value="${esc(e.exam)}" ${e.exam === state.exam ? "selected" : ""}>${esc(e.exam)}</option>`).join("");
@@ -669,7 +672,7 @@ async function showQuestions() {
       <div class="map">
         ${pass.map(r => `<button class="cell ${cellClass(r)}" data-n="${r.number}" title="${esc([...r.hidden.map(x => REASONS[x] || x), ...(badFigure(r.number) ? ["figura inválida"] : []), ...(r.to_crop ? [`${r.to_crop} figura(s) por recortar`] : [])].join(", ") || "visible para estudiantes")}">${r.number}</button>`).join("")}
       </div>
-      <div class="muted" style="margin-top:12px">Relleno verde: visible para estudiantes. Borde punteado: oculta. Borde rojo: error del validador o figura que no se puede dibujar (los estudiantes no la ven). ✂: tiene una figura por recortar del PDF.</div>
+      <div class="muted" style="margin-top:12px">Relleno verde: visible para estudiantes. <span class="mine-dot"></span>Verde oscuro: la editaste tú. Borde punteado: oculta. Borde rojo: error del validador o figura que no se puede dibujar (los estudiantes no la ven). ✂: tiene una figura por recortar del PDF.</div>
     </div>`;
   bindViewSwitch();
   $("#pick-exam").onchange = (e) => { state.exam = e.target.value; state.n = null; showQuestions(); };
@@ -1101,6 +1104,8 @@ async function reloadFigures(msg) {
   const d = state.detail;
   d.figures = fresh.figures; d.native_figures = fresh.native_figures; d.undo = fresh.undo; d.hidden_reasons = fresh.hidden_reasons;
   state.natives[String(d.number)] = fresh.native_figures;
+  const row = state.rows.find(x => x.number === d.number);
+  if (row) row.edited = true;
   drawFigs(); redrawFigBlocks(); refreshPreview(); refreshChrome();
   if (msg) toast(msg);
 }
@@ -1362,7 +1367,7 @@ async function saveQuestion() {
     state.detail = { ...fresh };
     state.dirty = false;
     const r = state.rows.find(x => x.number === d.number);
-    if (r) { r.ready = fresh.question.ready; r.hidden = fresh.hidden_reasons; r.errors = fresh.messages.errors.length; r.warnings = fresh.messages.warnings.length; }
+    if (r) { r.ready = fresh.question.ready; r.edited = true; r.hidden = fresh.hidden_reasons; r.errors = fresh.messages.errors.length; r.warnings = fresh.messages.warnings.length; }
     if (document.body.classList.contains("editing") && state.n === d.number) {
       state.detail.question.options = fresh.question.options;
       refreshChrome();
