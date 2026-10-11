@@ -360,7 +360,12 @@ async function api(path, opts) {
   if (STATIC) return window.ICFES_STATIC(path, opts);
   const res = await fetch(path, opts);
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) { const err = new Error(body.error || res.statusText); err.body = body; err.status = res.status; throw err; }
+  if (!res.ok) {
+    // An older server than this page (updated while the editor was open) does not know the new requests.
+    const old = /^want must be|^engine must be/.test(body.error || "") || (res.status === 404 && body.error === "not found");
+    const err = new Error(old ? "El editor que está abierto es una versión anterior. Cierra la ventana negra «Editor ICFES» y abre otra vez «Abrir editor.bat»." : body.error || res.statusText);
+    err.body = body; err.status = res.status; throw err;
+  }
   return body;
 }
 const J = (method, body) => ({ method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body ?? {}) });

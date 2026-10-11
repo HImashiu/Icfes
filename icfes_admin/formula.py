@@ -248,5 +248,5 @@ def find_formulas(samples, width, height, channels, lines):
                    if box[0] <= (b.x0 + b.x1) / 2 <= box[2] and box[1] <= b.y <= box[3] and b.x1 - b.x0 <= 0.45]
         tex = to_latex(local, in_bars)
         if tex:
-            out.append(Found(tuple(round(v, 4) for v in box), tex))
+            out.append(Found(tuple(round(float(v), 4) for v in box), tex))
     return sorted(out, key=lambda f: (f.box[1], f.box[0]))

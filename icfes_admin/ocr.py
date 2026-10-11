@@ -227,7 +227,8 @@ def rapid_read(pix_samples, width, height, channels):
     for box, text in zip(res.boxes if res.boxes is not None else [], res.txts or []):
         xs = [p[0] for p in box]
         ys = [p[1] for p in box]
-        lines.append(Line(text, sum(xs) / len(xs) / width, sum(ys) / len(ys) / height, min(xs) / width, (max(ys) - min(ys)) / height))
+        lines.append(Line(text, float(sum(xs) / len(xs) / width), float(sum(ys) / len(ys) / height), float(min(xs) / width),
+                          float((max(ys) - min(ys)) / height)))
     # Sort into rows: lines whose centres are closer than half a line height share a row, read left to right.
     lines.sort(key=lambda ln: (ln.cy, ln.cx))
     rows, cur = [], []
