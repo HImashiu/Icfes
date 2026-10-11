@@ -83,6 +83,11 @@ table.flat .badge{margin:1px 4px 1px 0}
 .paper .src{font:400 12px/1.4 Figtree;color:var(--paper-2);margin-top:12px}
 .paper p{margin:0 0 8px}
 .paper small,.rich small{font-size:.8em}
+.paper .cita,.rich .cita{margin:10px 0 10px 16px;padding:2px 0 2px 14px;border-left:3px solid #c9c4b5}
+.paper .poema,.rich .poema{white-space:pre-wrap;margin:10px 0 10px 16px}
+.paper .espacio,.rich .espacio{height:1.2em}
+.rich .espacio{border:1px dashed #9aa3b5;border-radius:6px;position:relative;margin:2px 0}
+.rich .espacio::after{content:"espacio";position:absolute;right:6px;top:0;font:11px/1.2em system-ui,sans-serif;color:#8a90a0}
 .paper p.fuente,.rich p.fuente{font-size:.78em;line-height:1.35;text-align:right;margin:14px 0 8px;opacity:.8}
 .opt{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:start;min-height:60px;padding:12px;border:2px solid var(--line);border-bottom-width:3px;border-radius:16px;background:var(--surface);margin-bottom:10px}
 .opt .tile{width:34px;height:34px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;font-weight:700}
@@ -848,6 +853,9 @@ function formPane(q, g) {
         <option value="">Ω Símbolo</option>${SYMBOLS.map(x => `<option>${x}</option>`).join("")}</select>
       <button class="ib" type="button" data-small="1" onclick="richCmd('small')" title="Texto más pequeño en lo que seleccionaste. Otra vez lo devuelve a su tamaño.">A− Pequeño</button>
       <button class="ib" type="button" data-fuente="1" onclick="richCmd('fuente')" title="Convierte el párrafo del cursor en la fuente del texto: pequeña, a la derecha y separada del texto. Otra vez lo deshace.">Fuente</button>
+      <button class="ib" type="button" data-block="cita" onclick="richCmd('cita')" title="Cita: el párrafo del cursor (o los que selecciones) queda con sangría y una raya a la izquierda. Otra vez lo deshace.">❝ Cita</button>
+      <button class="ib" type="button" data-block="poema" onclick="richCmd('poema')" title="Poema: cada verso en su línea, con los espacios tal como los escribes. Enter = verso nuevo, dos Enter = estrofa nueva. Otra vez lo deshace.">Poema</button>
+      <button class="ib" type="button" onclick="richCmd('espacio')" title="Agrega un espacio en blanco debajo del párrafo del cursor. Bórralo con la tecla Borrar.">↕ Espacio</button>
       <button class="ib" type="button" onclick="cleanField()" title="Une líneas cortadas, quita guiones de corte y espacios dobles en el campo activo">🧹 Limpiar</button>
       <button class="ib" type="button" onclick="this.classList.toggle('on'); $('#fmore').hidden = !$('#fmore').hidden" title="Más botones de formato">Más ▾</button>
       <span class="fgroup" id="ftable" hidden>
@@ -1495,7 +1503,8 @@ function toVisual(src) {
     : part.replace(/\*\*([^*\n]+)\*\*/g, "<b>$1</b>").replace(/(^|[^*\w])\*([^*\n]+?)\*(?![*\w])/g, (m, pre, body) => (/<\/?(t[dhr]|div|p)\b/i.test(body) ? m : `${pre}<i>${body}</i>`)))).join("");
   // Formulas are swapped in after sanitizing: each is a chip drawn by the app's own math renderer.
   return window.DOMPurify.sanitize(html).replace(/\u2063(\d+)\u2063/g, (m, k) => mathChip(maths[+k]))
-    .replace(/\u2064(\d+)\u2064/g, (m, k) => figBlock(figs[+k]));
+    .replace(/\u2064(\d+)\u2064/g, (m, k) => figBlock(figs[+k]))
+    .replace(/<div class="espacio"><\/div>/g, '<div class="espacio" contenteditable="false"></div>');
 }
 // Prices like "$200.000, ... $" pair up as dollars too; only real formulas become chips, the rest stays text.
 const isTex = (part) => !/[<\n]/.test(part) && !/^\$\s|\s\$$/.test(part) && !/^\$\d{1,3}(\.\d{3})+([,;:]|\s|\$)/.test(part);
@@ -1533,6 +1542,14 @@ function toSource(root) {
 function blockSource(el) {
   const tag = el.tagName;
   if (el.classList.contains("figblock")) return `[[figura:${el.dataset.fig}]]`;
+  if (el.classList.contains("espacio")) return `<div class="espacio"></div>`;
+  for (const cls of ["cita", "poema"]) {
+    if (!el.classList.contains(cls)) continue;
+    // one line in the exam text: verses and paragraphs as <br>, an empty line as <br><br>
+    const inner = [...el.childNodes].map(n => (n.nodeType === 1 && RICH_BLOCK.test(n.tagName) ? "\n" + inlineHtml(n) + "\n" : inlineSource(n))).join("")
+      .replace(/^\n+|\n+$/g, "").replace(/\n/g, "<br>");
+    return inner.replace(/<br>/g, "").trim() ? `<div class="${cls}">${cls === "poema" ? inner : inner.trim()}</div>` : "";
+  }
   // Figure notes left by the scan reading are kept as they are; the app uses them to hide unfinished questions.
   if (tag === "FIGURE" || tag === "FIGCAPTION") return `<${tag.toLowerCase()}>${toSource(el)}</${tag.toLowerCase()}>`;
   if (tag === "UL" || tag === "OL") {
@@ -1621,6 +1638,28 @@ function attachRich(ta) {
     document.execCommand("insertHTML", false, toVisual(src));
   });
   rich.addEventListener("keydown", e => {
+    // Inside a quote or poem, Enter starts a new line (verse) in the same block; a third Enter in a row leaves it.
+    const box = e.key === "Enter" && !e.shiftKey && window.getSelection()?.anchorNode?.parentElement?.closest?.(".poema,.cita");
+    const boxEl = box || (e.key === "Enter" && !e.shiftKey && window.getSelection()?.anchorNode?.closest?.(".poema,.cita"));
+    if (boxEl && rich.contains(boxEl)) {
+      e.preventDefault();
+      const sel = window.getSelection(), r = sel.getRangeAt(0);
+      const atEnd = (() => { const t = document.createRange(); t.selectNodeContents(boxEl); t.setStart(r.endContainer, r.endOffset); return !t.toString().trim(); })();
+      // what is before the caret, with line breaks as \n (a <br>, or a \n typed in the poem's pre-wrap text)
+      const before = document.createRange(); before.selectNodeContents(boxEl); before.setEnd(r.startContainer, r.startOffset);
+      const lines = (n) => (n.nodeType === 3 ? n.nodeValue : n.nodeName === "BR" ? "\n" : [...n.childNodes].map(lines).join(""));
+      if (atEnd && /\n[ \t]*\n[ \t]*$/.test(lines(before.cloneContents()))) {
+        // drop the empty lines at the end, then continue in a plain paragraph below
+        for (let n = boxEl.lastChild; n && (n.nodeName === "BR" || (n.nodeType === 3 && !n.nodeValue.trim())); n = boxEl.lastChild) n.remove();
+        if (boxEl.lastChild?.nodeType === 3) boxEl.lastChild.nodeValue = boxEl.lastChild.nodeValue.replace(/\n+$/, "");
+        const d = document.createElement("div"); d.innerHTML = "<br>"; boxEl.after(d);
+        const nr = document.createRange(); nr.setStart(d, 0); nr.collapse(true); sel.removeAllRanges(); sel.addRange(nr);
+        rich.dispatchEvent(new Event("input"));
+        return;
+      }
+      document.execCommand("insertLineBreak");
+      return;
+    }
     const cell = window.getSelection()?.anchorNode?.parentElement?.closest?.("td,th");
     if (e.key === "Tab" && cell && rich.contains(cell)) {
       e.preventDefault();
@@ -1695,6 +1734,8 @@ function richCmd(cmd, arg) {
     if (cmd === "clear") { document.execCommand("removeFormat"); document.execCommand("justifyLeft"); return; }
     if (cmd === "small") { richSmall(rich); return; }
     if (cmd === "fuente") { richFuente(rich); return; }
+    if (cmd === "cita" || cmd === "poema") { richBlockStyle(rich, cmd); return; }
+    if (cmd === "espacio") { richSpace(rich); return; }
     document.execCommand(cmd, false, arg ?? null);
     return;
   }
@@ -1705,7 +1746,8 @@ function richCmd(cmd, arg) {
     insertOrderedList: `\n\n<ol>${sel.split("\n").map(l => `<li>${l}</li>`).join("")}</ol>\n\n`,
     justifyCenter: `\n\n<p style="text-align:center">${sel}</p>\n\n`, justifyRight: `\n\n<p style="text-align:right">${sel}</p>\n\n`,
     justifyFull: `\n\n<p style="text-align:justify">${sel}</p>\n\n`, justifyLeft: sel,
-    small: `<small>${sel}</small>`, fuente: `\n\n<p class="fuente">${sel}</p>\n\n`,
+    small: `<small>${sel}</small>`, espacio: `\n\n<div class="espacio"></div>\n\n`,
+    cita: `\n\n<div class="cita">${sel.trim().replace(/\n/g, "<br>")}</div>\n\n`, poema: `\n\n<div class="poema">${sel.trim().replace(/\n/g, "<br>")}</div>\n\n`, fuente: `\n\n<p class="fuente">${sel}</p>\n\n`,
     table: "\n| Columna 1 | Columna 2 |\n|---|---|\n| | |\n", clear: sel.replace(/<[^>]+>|\*\*/g, ""),
   }[cmd];
   if (wrap != null) insertAt(area, wrap);
@@ -1759,6 +1801,75 @@ function richFuente(rich) {
   richToolbarState();
 }
 
+// The top-level blocks of a field the selection touches (loose text around the caret becomes one).
+function selectedBlocks(rich) {
+  const s = window.getSelection();
+  if (!s.rangeCount || !rich.contains(s.anchorNode)) return [];
+  const topOf = (n) => { if (n === rich) return null; while (n.parentNode !== rich) n = n.parentNode; return n; };
+  const inline = (n) => n && (n.nodeType === 3 || (n.nodeType === 1 && !RICH_BLOCK.test(n.tagName) && n.tagName !== "BR" && !n.classList.contains("figblock")));
+  const wrapRun = (n) => {
+    if (!inline(n) && n.tagName !== "BR") return n;
+    const run = [n];
+    while (inline(run[0].previousSibling)) run.unshift(run[0].previousSibling);
+    while (inline(run[run.length - 1].nextSibling)) run.push(run[run.length - 1].nextSibling);
+    const div = document.createElement("div");
+    run[0].before(div); div.append(...run);
+    return div;
+  };
+  const r = s.getRangeAt(0);
+  const a = topOf(r.startContainer === rich ? rich.childNodes[r.startOffset] || rich.lastChild : r.startContainer);
+  const b = topOf(r.endContainer === rich ? rich.childNodes[Math.max(0, r.endOffset - 1)] || rich.lastChild : r.endContainer);
+  if (!a) return [];
+  const out = [];
+  for (let n = a; n; n = n.nextSibling) { out.push(n); if (n === b || !b) break; }
+  return [...new Set(out.filter(n => n.nodeType !== 3 || n.nodeValue.trim()).map(wrapRun))]
+    .filter(n => !n.classList.contains("figblock") && !n.classList.contains("espacio") && !/^(TABLE|UL|OL)$/.test(n.tagName));
+}
+// Cita / Poema: the paragraphs under the selection become one quote or poem block; on a block that already is one,
+// it goes back to plain paragraphs. Paragraphs inside are kept apart by an empty line (stanzas in a poem).
+function richBlockStyle(rich, cls) {
+  const blocks = selectedBlocks(rich);
+  if (!blocks.length) { toast("Pon el cursor en el párrafo, o selecciona los párrafos"); return; }
+  const s = window.getSelection();
+  let last;
+  if (blocks.every(b => b.classList.contains(cls))) {
+    blocks.forEach(b => {
+      // back to plain paragraphs, split where the block had an empty line
+      const parts = [[]];
+      [...b.childNodes].forEach(n => {
+        if (n.nodeName === "BR" && n.nextSibling?.nodeName === "BR") return;
+        if (n.nodeName === "BR" && n.previousSibling?.nodeName === "BR") { parts.push([]); return; }
+        parts[parts.length - 1].push(n);
+      });
+      const divs = parts.filter(p => p.length).map(p => { const d = document.createElement("div"); d.append(...p); return d; });
+      b.replaceWith(...divs);
+      last = divs[divs.length - 1];
+    });
+  } else {
+    const box = document.createElement("div");
+    box.className = cls;
+    blocks.forEach((b, i) => {
+      if (i) box.append(document.createElement("br"), document.createElement("br"));
+      const inner = b.classList.contains("cita") || b.classList.contains("poema") || b.tagName === "P" || b.tagName === "DIV" ? [...b.childNodes] : [b];
+      box.append(...inner);
+    });
+    blocks[0].before(box);
+    blocks.forEach(b => b.isConnected && b !== box && b.remove());
+    last = box;
+  }
+  if (last) { const r = document.createRange(); r.selectNodeContents(last); r.collapse(false); s.removeAllRanges(); s.addRange(r); }
+  rich.dispatchEvent(new Event("input"));
+  richToolbarState();
+}
+// Espacio: an empty line of space under the paragraph at the caret, kept when saving.
+function richSpace(rich) {
+  const s = window.getSelection();
+  const sp = Object.assign(document.createElement("div"), { className: "espacio", contentEditable: "false" });
+  if (!s.rangeCount || !rich.contains(s.anchorNode)) rich.append(sp);
+  else { let n = s.anchorNode; if (n === rich) n = rich.childNodes[s.anchorOffset - 1] || rich.firstChild; while (n && n.parentNode !== rich) n = n.parentNode; n ? n.after(sp) : rich.append(sp); }
+  rich.dispatchEvent(new Event("input"));
+}
+
 // Rows and columns of a table being edited in a text field.
 function richTable(op) {
   const s = window.getSelection();
@@ -1784,6 +1895,7 @@ function richToolbarState() {
   const here = inRich ? (s.anchorNode.nodeType === 1 ? s.anchorNode : s.anchorNode.parentElement) : null;
   bar.querySelector("[data-small]")?.classList.toggle("on", !!here?.closest("small"));
   bar.querySelector("[data-fuente]")?.classList.toggle("on", !!here?.closest("p.fuente"));
+  bar.querySelectorAll("[data-block]").forEach(b => b.classList.toggle("on", !!here?.closest("." + b.dataset.block)));
   const inTable = !!inRich && !!(s.anchorNode.nodeType === 1 ? s.anchorNode : s.anchorNode.parentElement).closest("td,th");
   const tb = $("#ftable");
   if (tb) tb.hidden = !inTable;
