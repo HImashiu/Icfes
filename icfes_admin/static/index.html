@@ -82,6 +82,8 @@ table.flat .badge{margin:1px 4px 1px 0}
 .paper th{font:inherit;font-weight:700;text-transform:none;letter-spacing:0;color:inherit}
 .paper .src{font:400 12px/1.4 Figtree;color:var(--paper-2);margin-top:12px}
 .paper p{margin:0 0 8px}
+.paper small,.rich small{font-size:.8em}
+.paper p.fuente,.rich p.fuente{font-size:.78em;line-height:1.35;text-align:right;margin:14px 0 8px;opacity:.8}
 .opt{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:start;min-height:60px;padding:12px;border:2px solid var(--line);border-bottom-width:3px;border-radius:16px;background:var(--surface);margin-bottom:10px}
 .opt .tile{width:34px;height:34px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;font-weight:700}
 .opt .body{font:600 16px/1.4 Figtree}
@@ -844,6 +846,8 @@ function formPane(q, g) {
       <button class="ib" type="button" onclick="newFormula()" title="Escribe una fórmula donde está el cursor. Las fórmulas del PDF salen marcadas en azul: un clic y quedan puestas.">ƒx Fórmula</button>
       <select class="ib" onchange="if (this.value) { fmtInsert('sym', this.value); this.value = ''; }" title="Símbolos">
         <option value="">Ω Símbolo</option>${SYMBOLS.map(x => `<option>${x}</option>`).join("")}</select>
+      <button class="ib" type="button" data-small="1" onclick="richCmd('small')" title="Texto más pequeño en lo que seleccionaste. Otra vez lo devuelve a su tamaño.">A− Pequeño</button>
+      <button class="ib" type="button" data-fuente="1" onclick="richCmd('fuente')" title="Convierte el párrafo del cursor en la fuente del texto: pequeña, a la derecha y separada del texto. Otra vez lo deshace.">Fuente</button>
       <button class="ib" type="button" onclick="cleanField()" title="Une líneas cortadas, quita guiones de corte y espacios dobles en el campo activo">🧹 Limpiar</button>
       <button class="ib" type="button" onclick="this.classList.toggle('on'); $('#fmore').hidden = !$('#fmore').hidden" title="Más botones de formato">Más ▾</button>
       <span class="fgroup" id="ftable" hidden>
@@ -1547,6 +1551,7 @@ function blockSource(el) {
   if ([...el.children].some(c => RICH_BLOCK.test(c.tagName))) return toSource(el);
   const align = (el.style.textAlign || el.getAttribute("align") || "").toLowerCase();
   const inner = [...el.childNodes].map(inlineSource).join("").replace(/\n+$/, "");
+  if (tag === "P" && el.classList.contains("fuente") && inner.trim()) return `<p class="fuente">${inner.trim().replace(/\n/g, "<br>")}</p>`;
   if (["center", "right", "justify"].includes(align) && inner.trim()) return `<p style="text-align:${align}">${inner.trim().replace(/\n/g, "<br>")}</p>`;
   return inner.trim();
 }
@@ -1569,6 +1574,7 @@ function inlineSource(n) {
   const under = tag === "U" || /underline/.test(st.textDecoration || st.textDecorationLine || "");
   const sub = tag === "SUB" || st.verticalAlign === "sub", sup = tag === "SUP" || st.verticalAlign === "super";
   if (!inner.trim()) return inner;
+  if (tag === "SMALL") inner = `<small>${inner}</small>`;
   if (sub) inner = `<sub>${inner}</sub>`;
   if (sup) inner = `<sup>${inner}</sup>`;
   if (under) inner = `<u>${inner}</u>`;
@@ -1687,6 +1693,8 @@ function richCmd(cmd, arg) {
       return;
     }
     if (cmd === "clear") { document.execCommand("removeFormat"); document.execCommand("justifyLeft"); return; }
+    if (cmd === "small") { richSmall(rich); return; }
+    if (cmd === "fuente") { richFuente(rich); return; }
     document.execCommand(cmd, false, arg ?? null);
     return;
   }
@@ -1697,9 +1705,58 @@ function richCmd(cmd, arg) {
     insertOrderedList: `\n\n<ol>${sel.split("\n").map(l => `<li>${l}</li>`).join("")}</ol>\n\n`,
     justifyCenter: `\n\n<p style="text-align:center">${sel}</p>\n\n`, justifyRight: `\n\n<p style="text-align:right">${sel}</p>\n\n`,
     justifyFull: `\n\n<p style="text-align:justify">${sel}</p>\n\n`, justifyLeft: sel,
+    small: `<small>${sel}</small>`, fuente: `\n\n<p class="fuente">${sel}</p>\n\n`,
     table: "\n| Columna 1 | Columna 2 |\n|---|---|\n| | |\n", clear: sel.replace(/<[^>]+>|\*\*/g, ""),
   }[cmd];
   if (wrap != null) insertAt(area, wrap);
+}
+
+// Smaller text: wraps the selection in <small>; on text that is already small, puts it back to normal size.
+function richSmall(rich) {
+  const s = window.getSelection();
+  if (!s.rangeCount || !rich.contains(s.anchorNode)) { toast("Selecciona el texto que quieres más pequeño"); return; }
+  const at = (n) => (n.nodeType === 1 ? n : n.parentElement)?.closest("small");
+  const cur = at(s.anchorNode);
+  if (cur && rich.contains(cur)) {
+    cur.replaceWith(...cur.childNodes);
+  } else {
+    const r = s.getRangeAt(0);
+    if (r.collapsed) { toast("Selecciona el texto que quieres más pequeño"); return; }
+    const small = document.createElement("small");
+    small.append(r.extractContents());
+    small.querySelectorAll("small").forEach(x => x.replaceWith(...x.childNodes));
+    r.insertNode(small);
+    s.removeAllRanges(); const nr = document.createRange(); nr.selectNodeContents(small); s.addRange(nr);
+  }
+  rich.normalize();
+  rich.dispatchEvent(new Event("input"));
+  richToolbarState();
+}
+// The source line under a text ("Tomado de: ..."): the paragraph under the caret becomes <p class="fuente">.
+function richFuente(rich) {
+  const s = window.getSelection();
+  if (!s.rangeCount || !rich.contains(s.anchorNode)) { toast("Pon el cursor en el párrafo de la fuente"); return; }
+  let top = s.anchorNode;
+  while (top.parentNode !== rich) top = top.parentNode;
+  if (top.nodeType === 3 || top.tagName === "BR" || /^(B|I|EM|STRONG|U|SUB|SUP|SMALL|SPAN)$/.test(top.tagName)) {
+    // loose text straight in the field: the run of inline nodes around the caret is the paragraph
+    const run = [top];
+    const inline = (n) => n && (n.nodeType === 3 || (n.nodeType === 1 && !RICH_BLOCK.test(n.tagName) && n.tagName !== "BR" && !n.classList.contains("figblock")));
+    while (inline(run[0].previousSibling)) run.unshift(run[0].previousSibling);
+    while (inline(run[run.length - 1].nextSibling)) run.push(run[run.length - 1].nextSibling);
+    const div = document.createElement("div");
+    run[0].before(div); div.append(...run);
+    top = div;
+  }
+  if (top.classList.contains("figblock") || /^(TABLE|UL|OL)$/.test(top.tagName)) { toast("Pon el cursor en un párrafo de texto"); return; }
+  const on = top.tagName === "P" && top.classList.contains("fuente");
+  const next = document.createElement(on ? "div" : "p");
+  if (!on) next.className = "fuente";
+  next.append(...top.childNodes);
+  top.replaceWith(next);
+  const r = document.createRange(); r.selectNodeContents(next); r.collapse(false); s.removeAllRanges(); s.addRange(r);
+  rich.dispatchEvent(new Event("input"));
+  richToolbarState();
 }
 
 // Rows and columns of a table being edited in a text field.
@@ -1724,6 +1781,9 @@ function richToolbarState() {
   const s = window.getSelection();
   const inRich = s?.anchorNode && (s.anchorNode.nodeType === 1 ? s.anchorNode : s.anchorNode.parentElement)?.closest(".rich");
   bar.querySelectorAll("[data-cmd]").forEach(b => { let on = false; try { on = !!inRich && document.queryCommandState(b.dataset.cmd); } catch (e) { /* not a state command */ } b.classList.toggle("on", on); });
+  const here = inRich ? (s.anchorNode.nodeType === 1 ? s.anchorNode : s.anchorNode.parentElement) : null;
+  bar.querySelector("[data-small]")?.classList.toggle("on", !!here?.closest("small"));
+  bar.querySelector("[data-fuente]")?.classList.toggle("on", !!here?.closest("p.fuente"));
   const inTable = !!inRich && !!(s.anchorNode.nodeType === 1 ? s.anchorNode : s.anchorNode.parentElement).closest("td,th");
   const tb = $("#ftable");
   if (tb) tb.hidden = !inTable;
