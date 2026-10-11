@@ -954,3 +954,31 @@ details.answers-area > summary::-webkit-details-marker { display: none; }
   .review .test-controls > button { min-height: 52px; }
   .review .test-controls > .primary { flex: 1; }
 }
+
+/* Formulas stay on one line; RichText.jsx shrinks the wider ones to fit. */
+.katex { white-space: nowrap; }
+
+/* Figures: tap to open full screen (see Zoomable.jsx). */
+.zoomable { position: relative; }
+.zoom-thumb { cursor: zoom-in; }
+.zoom-hint {
+  position: absolute; top: 6px; right: 6px; z-index: 1; padding: 3px 8px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92); color: #222; font-size: 12px; font-weight: 600; cursor: zoom-in;
+  border: 1px solid #ccc; line-height: 1.4;
+}
+.zoom-overlay {
+  position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.92);
+  display: grid; grid-template-rows: auto 1fr; overscroll-behavior: contain;
+}
+.zoom-bar { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 10px; }
+.zoom-bar button {
+  min-width: 44px; min-height: 44px; border-radius: 10px; border: 1px solid #555;
+  background: #222; color: #fff; font-size: 18px; font-weight: 600; cursor: pointer;
+}
+.zoom-bar .zoom-close { padding: 0 14px; font-size: 15px; }
+.zoom-stage { overflow: hidden; touch-action: none; display: grid; place-items: center; min-height: 0; }
+.zoom-art {
+  width: min(94vw, 900px); background: #fff; color: #111; border-radius: 10px; padding: 12px;
+  transform-origin: center center; will-change: transform;
+}
+.zoom-art svg, .zoom-art img { display: block; width: 100%; height: auto; max-width: none; }
