@@ -982,3 +982,7 @@ details.answers-area > summary::-webkit-details-marker { display: none; }
   transform-origin: center center; will-change: transform;
 }
 .zoom-art svg, .zoom-art img { display: block; width: 100%; height: auto; max-width: none; }
+
+/* Editor markup: <small> in any text field, and the source line under a Lectura crítica text. */
+small { font-size: 0.8em; }
+p.fuente { font-size: 0.78em; line-height: 1.35; text-align: right; margin: 14px 0 8px; opacity: 0.8; }
