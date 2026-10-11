@@ -88,6 +88,9 @@ table.flat .badge{margin:1px 4px 1px 0}
 .paper .espacio,.rich .espacio{height:1.2em}
 .rich .espacio{border:1px dashed #9aa3b5;border-radius:6px;position:relative;margin:2px 0}
 .rich .espacio::after{content:"espacio";position:absolute;right:6px;top:0;font:11px/1.2em system-ui,sans-serif;color:#8a90a0}
+.fld .foldprev{display:none}
+.fld.folded .foldprev{display:block;padding:8px 12px;border:1px dashed var(--line);border-radius:12px;color:var(--text-2);font-size:13px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fld.folded textarea,.fld.folded .rich,.fld.folded .note{display:none!important}
 .paper p.fuente,.rich p.fuente{font-size:.78em;line-height:1.35;text-align:right;margin:14px 0 8px;opacity:.8}
 .opt{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:start;min-height:60px;padding:12px;border:2px solid var(--line);border-bottom-width:3px;border-radius:16px;background:var(--surface);margin-bottom:10px}
 .opt .tile{width:34px;height:34px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;font-weight:700}
@@ -1675,7 +1678,42 @@ function attachRich(ta) {
   });
   rich.classList.toggle("empty", !rich.textContent.trim() && !rich.querySelector("table,li,.figblock"));
 }
-function attachAllRich() { document.querySelectorAll("#form #f-stem, #form #f-stimulus, #form #f-passage, #f-opts textarea[data-letter]").forEach(attachRich); }
+function attachAllRich() { document.querySelectorAll("#form #f-stem, #form #f-stimulus, #form #f-passage, #f-opts textarea[data-letter]").forEach(attachRich); attachFolds(); }
+
+// Long texts (the shared passage, the question's own text) can be folded to one line so the stem and options stay
+// in view. Folded or not is remembered for each kind of field, on every question.
+const FOLDABLE = { "f-passage": "texto compartido", "f-stimulus": "texto propio" };
+function attachFolds() {
+  Object.keys(FOLDABLE).forEach(id => {
+    const ta = $("#" + id), fld = ta?.closest(".fld");
+    if (!fld || fld.querySelector(".foldbtn")) return;
+    const label = fld.querySelector(".label");
+    const btn = Object.assign(document.createElement("button"), { type: "button", className: "ib foldbtn" });
+    btn.onclick = () => setFold(id, !fld.classList.contains("folded"));
+    label.firstElementChild.after(btn);
+    const prev = Object.assign(document.createElement("div"), { className: "foldprev", title: "Clic para abrir" });
+    prev.onclick = () => setFold(id, false);
+    ta.before(prev);
+    ta.addEventListener("input", () => { if (fld.classList.contains("folded")) foldPreview(id); });
+    setFold(id, !!(recall("fold") || {})[id], false);
+  });
+}
+function foldPreview(id) {
+  const ta = $("#" + id), prev = ta.closest(".fld").querySelector(".foldprev");
+  const text = ta.value.replace(/<[^>]+>|\[\[figura:[^\]]*\]\]|\*\*|\$/g, " ").replace(/\s+/g, " ").trim();
+  const words = text ? text.split(" ").length : 0;
+  prev.textContent = words ? `${words} palabras · ${text.slice(0, 140)}${text.length > 140 ? "…" : ""}` : "(vacío)";
+}
+function setFold(id, on, save = true) {
+  const fld = $("#" + id)?.closest(".fld");
+  if (!fld) return;
+  fld.classList.toggle("folded", on);
+  const btn = fld.querySelector(".foldbtn");
+  btn.textContent = on ? "▸ Mostrar" : "▾ Minimizar";
+  btn.title = on ? `Abrir el ${FOLDABLE[id]}` : `Reducir el ${FOLDABLE[id]} a una línea para ver el enunciado y las opciones`;
+  if (on) foldPreview(id);
+  if (save) remember("fold", { ...(recall("fold") || {}), [id]: on });
+}
 
 // Remembers where the caret was in each Word-style field, so OCR and symbols land there.
 document.addEventListener("selectionchange", () => {
