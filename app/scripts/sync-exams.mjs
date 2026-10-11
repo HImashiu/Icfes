@@ -113,13 +113,12 @@ function loadTraced(slug) {
     if (!["azure", "eyeballed_box"].includes(e.method) || !e.svg) continue;
     const from = join(root, "figures", e.svg);
     if (!existsSync(from)) continue;
-    const file = basename(e.svg);
-    mkdirSync(join(out, "traced", slug), { recursive: true });
-    writeFileSync(join(out, "traced", slug, file), readFileSync(from));
+    // Inlined as a data URI so each exam is one JSON file (a published page takes a limited number of files).
+    const url = `data:image/svg+xml;base64,${readFileSync(from).toString("base64")}`;
     // A figure named for one option (for example "...-opt-A-" or "...-opcion-b-") belongs to that option.
     const option = /[-_](?:opt|opcion|opción)[-_]([a-d])(?=[-_]|$)/i.exec(e.figure_id ?? "")?.[1]?.toUpperCase() ?? null;
     const list = traced.get(e.question) ?? [];
-    list.push({ url: `exams/traced/${slug}/${file}`, figure_id: e.figure_id, spec_id: e.spec_id, option });
+    list.push({ url, figure_id: e.figure_id, spec_id: e.spec_id, option });
     traced.set(e.question, list);
   }
   return traced;

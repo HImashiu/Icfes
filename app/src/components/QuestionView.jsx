@@ -4,6 +4,9 @@ import FigureBlock from "./FigureBlock.jsx";
 import { SOURCE_LINE } from "../lib/exam.js";
 import ReportError from "./ReportError.jsx";
 
+// Traced scans are inlined as data URIs by the sync; other paths sit under the app's base URL.
+const tracedSrc = (url) => (url.startsWith("data:") ? url : `${import.meta.env.BASE_URL}${url}`);
+
 // Option states: "selected" (the student's pick while answering), "correct" and "incorrect" for grading.
 function optionState({ letter, answer, correctLetter, graded }) {
   if (graded && correctLetter && letter === correctLetter) return "correct";
@@ -110,8 +113,8 @@ export default function QuestionView({
           ) : passage)}
           {ownStimulus && <LongText html={question.stimulus_md} className="stimulus" long={!wide && question.stimulus_md.length > LONG_TEXT} />}
           {traced.map((t) => (
-            <figure className="traced-figure" key={t.url}>
-              <img src={`${import.meta.env.BASE_URL}${t.url}`} alt={t.figure_id} />
+            <figure className="traced-figure" key={t.figure_id}>
+              <img src={tracedSrc(t.url)} alt={t.figure_id} />
             </figure>
           ))}
           {stemFigures.map((f) => (
@@ -153,7 +156,7 @@ export default function QuestionView({
                 {figure ? (
                   <FigureBlock figure={figure} alt={`Opción ${opt.letter}`} />
                 ) : opt.traced ? (
-                  <img className="traced-option" src={`${import.meta.env.BASE_URL}${opt.traced.url}`} alt={`Opción ${opt.letter}`} />
+                  <img className="traced-option" src={tracedSrc(opt.traced.url)} alt={`Opción ${opt.letter}`} />
                 ) : opt.pending_spec && !opt.text_md?.trim() ? (
                   // The golden file marks an option whose figure is not drawn yet: say so, never show a scan.
                   <span className="pending-fig">Figura pendiente de dibujar</span>
