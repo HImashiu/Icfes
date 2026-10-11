@@ -881,10 +881,10 @@ function formPane(q, g) {
     </div>
     ${msgs ? `<div class="fld">${msgs}</div>` : ""}
     ${!(q.stem_md || "").trim() ? `<div class="note warn fld">Falta el enunciado. ${STATIC ? "" : `<button class="ib" type="button" onclick="readInto('f-stem')">⌖ Leerlo del PDF</button>`}</div>` : ""}
-    ${g ? `<div class="fld"><div class="label"><span>Texto compartido · Q${g.from}–${g.to} <span class="muted" style="text-transform:none;letter-spacing:0">· lo ven todas sus preguntas</span></span>${STATIC ? "" : `<button class="ib" type="button" onclick="readInto('f-passage')" title="Dibuja un recuadro en la página y su texto se escribe aquí">⌖ Leer del PDF</button>`}</div>
+    ${g ? `<div class="fld"><div class="label"><span>Texto compartido · Q${g.from}–${g.to} <span class="muted" style="text-transform:none;letter-spacing:0">· lo ven todas sus preguntas</span></span>${STATIC ? "" : `<button class="ib" type="button" onclick="imageInto('f-passage')" title="Recorta una imagen del PDF y ponla donde está el cursor en el texto compartido (la ven todas sus preguntas)">✂ Imagen</button><button class="ib" type="button" onclick="readInto('f-passage')" title="Dibuja un recuadro en la página y su texto se escribe aquí">⌖ Leer del PDF</button>`}</div>
       <textarea id="f-passage" spellcheck="true" lang="es">${esc(g.passage_md || g.stimulus_md || "")}</textarea>
       <div class="muted" style="font-size:12px;margin-top:4px">Textos literarios: no los reescribas; deja [Texto pendiente: página N].</div></div>` : ""}
-    <div class="fld"><div class="label"><span>Texto propio (contexto)</span>${STATIC ? "" : `<button class="ib" type="button" onclick="readInto('f-stimulus')" title="Dibuja un recuadro en la página y su texto se escribe aquí">⌖ Leer del PDF</button>`}</div><textarea id="f-stimulus" spellcheck="true" lang="es" placeholder="Texto o descripción antes del enunciado (opcional)">${esc(q.stimulus_md)}</textarea></div>
+    <div class="fld"><div class="label"><span>Texto propio (contexto)</span>${STATIC ? "" : `<button class="ib" type="button" onclick="imageInto('f-stimulus')" title="Recorta una imagen del PDF y ponla donde está el cursor en este texto">✂ Imagen</button><button class="ib" type="button" onclick="readInto('f-stimulus')" title="Dibuja un recuadro en la página y su texto se escribe aquí">⌖ Leer del PDF</button>`}</div><textarea id="f-stimulus" spellcheck="true" lang="es" placeholder="Texto o descripción antes del enunciado (opcional)">${esc(q.stimulus_md)}</textarea></div>
     <div class="fld"><div class="label"><span>Figuras</span><span>
       ${STATIC ? "" : `<button class="ib" type="button" onclick="startCrop()" title="Dibuja un recuadro sobre la página">✂ Recortar del PDF</button>`}
       <button class="ib" type="button" onclick="openStudio('new')">+ Gráfica o tabla</button></span></div>
@@ -2395,6 +2395,9 @@ function drawBox(withBar) {
   if (tgt?.kind === "replace") bar.innerHTML = `<span class="lbl">Cambiar la figura por este recorte</span>
        <button class="ib go" onclick="cropTo('${esc(tgt.option || "")}', '${esc(tgt.replaces)}')">Usar este recorte</button>
        <button class="ib" onclick="cancelCrop()">Cancelar</button>${cleanToggle()}`;
+  else if (tgt?.kind === "place") bar.innerHTML = `<span class="lbl">Poner esta imagen en el ${esc(fieldName($("#" + tgt.field)))}, donde está el cursor</span>
+       <button class="ib go" onclick="cropTo('', null, state.cropTarget)">✂ Poner la imagen</button>
+       <button class="ib" onclick="cancelCrop()">Cancelar</button>${cleanToggle()}`;
   else if (tgt?.kind === "formula") bar.innerHTML = `<span class="lbl">Leer la fórmula del recuadro</span>
        <button class="ib go" onclick="formulaFromBox()">ƒx Leer fórmula</button>
        ${eng}<button class="ib" onclick="cancelCrop()">✕</button>`;
@@ -2403,6 +2406,7 @@ function drawBox(withBar) {
        ${eng}<button class="ib" onclick="cancelCrop()">✕</button>`;
   else bar.innerHTML = `<span class="lbl">Imagen del recuadro en…</span>
        <button class="ib" onclick="cropTo('')">Enunciado</button>
+       ${TEXT_FIELDS.includes(state.lastArea?.id) && state.lastArea.isConnected ? `<button class="ib" onclick="cropTo('', null, placeTarget(state.lastArea.id))" title="La imagen queda dentro del texto, donde está el cursor">En el ${esc(fieldName(state.lastArea))}, en el cursor</button>` : ""}
        ${letters.map(l => `<button class="ib" onclick="cropTo('${esc(l)}')">Opción ${esc(l)}</button>`).join("")}
        ${cleanToggle()}
        <span class="lbl">Texto del recuadro (OCR)</span>
@@ -2436,12 +2440,43 @@ function cancelCrop() {
   $("#cropbtn")?.classList.remove("on");
   if ($("#ov")) drawBox(false);
 }
-async function cropTo(option, replaces = null) {
-  if (state.cleanCrop) { openCleaner({ page: state.page, box: state.box, option: option || null, replaces }); return; }
+// An image cut from the page that goes inside a text field at the caret (kept from when the crop started).
+function placeTarget(field) {
+  const rich = richOf($("#" + field));
+  return { kind: "place", field, range: rich?._range && rich.contains(rich._range.startContainer) ? rich._range.cloneRange() : null };
+}
+function imageInto(field) {
+  state.lastArea = $("#" + field);
+  state.cropping = true;
+  state.cropTarget = placeTarget(field);
+  state.box = null;
+  $("#pdfpage")?.classList.add("cropping");
+  $("#cropbtn")?.classList.add("on");
+  drawBox(false);
+  toast(`Dibuja un recuadro sobre la imagen. Quedará en el ${fieldName($("#" + field))}, donde estaba el cursor.`);
+}
+// After a crop is saved: the one new figure goes into the text when the crop was meant for it.
+async function afterCrop(place, before, msg, oldId = null) {
+  await reloadFigures(place ? null : msg);
+  const added = state.detail.figures.find(f => !before.has(f.figure_id));
+  // a cleaned copy of a crop that sits in the text takes its place there
+  if (oldId && added) TEXT_FIELDS.forEach(id => {
+    const ta = $("#" + id);
+    if (!ta || !placedIds(ta.value).has(oldId)) return;
+    ta.value = ta.value.split(`[[figura:${oldId}]]`).join(`[[figura:${added.figure_id}]]`);
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  if (!place) return;
+  if (added) placeFigure(added.figure_id, $("#" + place.field), place.range);
+  else toast(msg);
+}
+async function cropTo(option, replaces = null, place = null) {
+  if (state.cleanCrop) { openCleaner({ page: state.page, box: state.box, option: option || null, replaces, place }); return; }
   try {
+    const before = new Set(state.detail.figures.map(f => f.figure_id));
     await api(`${qpath()}/crop`, J("POST", { page: state.page, box: state.box, option: option || null, replaces }));
     cancelCrop();
-    await reloadFigures(option ? `Imagen guardada en la opción ${option}` : "Imagen guardada en el enunciado");
+    await afterCrop(place, before, option ? `Imagen guardada en la opción ${option}` : "Imagen guardada en el enunciado");
   } catch (e) { toast(e.message, true); }
 }
 // ----- cleaning a crop before it is saved --------------------------------------------------------------
@@ -2607,6 +2642,7 @@ async function saveCleaner() {
     if (t.replaces) q.set("replaces", t.replaces);
     if (t.page) q.set("page", t.page);
     if (t.box) q.set("box", t.box.map(v => (+v).toFixed(4)).join(","));
+    const before = new Set(state.detail.figures.map(f => f.figure_id));
     const res = await fetch(`${qpath()}/scan-figures?${q}`, { method: "POST", headers: { "Content-Type": "image/png" }, body: blob });
     const body = await res.json();
     if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
@@ -2614,7 +2650,7 @@ async function saveCleaner() {
     if (t.oldId) await api(`${qpath()}/scan-figures/${encodeURIComponent(t.oldId)}`, { method: "DELETE" });
     closeCleaner();
     cancelCrop();
-    await reloadFigures(t.option ? `Imagen limpia guardada en la opción ${t.option}` : "Imagen limpia guardada en el enunciado");
+    await afterCrop(t.place, before, t.option ? `Imagen limpia guardada en la opción ${t.option}` : "Imagen limpia guardada en el enunciado", t.oldId);
   } catch (e) { toast(e.message, true); }
 }
 function cleanSaved(id) {
