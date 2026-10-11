@@ -25,6 +25,7 @@ if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 from icfes_view.golden import validate_golden  # noqa: E402
 from icfes_admin import ocr  # noqa: E402
+from icfes_admin import formula  # noqa: E402
 
 EXAM_ID = re.compile(r"^[A-Za-z0-9_-]+$")
 QUESTION_PREFIX = re.compile(r"^Q(\d+):")
@@ -654,8 +655,10 @@ class Store:
         box = self._box(box)
         if engine not in ("auto", "saved", "azure", "local"):
             raise BadRequest("engine must be auto, saved, azure or local")
-        if want not in ("text", "table"):
-            raise BadRequest("want must be text or table")
+        if want not in ("text", "table", "formula"):
+            raise BadRequest("want must be text, table or formula")
+        if want == "formula":
+            return self._formula_box(exam, page, box, engine)
         order = {"auto": ["saved", "azure", "local"], "saved": ["saved"], "azure": ["azure"], "local": ["local"]}[engine]
         if engine == "auto" and ocr.azure_config() is None:
             order.remove("azure")
@@ -683,7 +686,39 @@ class Store:
         what = "ninguna tabla" if want == "table" else "texto"
         raise NotFound(f"no se encontró {what} en el recuadro" + (f" ({'; '.join(problems)})" if problems else ""))
 
-    def _read_with(self, name, exam, page, box):
+    def _formula_box(self, exam, page, box, engine):
+        """LaTeX for a printed formula: fraction bars come from the pixels, the words from the OCR engines."""
+        pix = self._render_box(exam, page, box, dpi=300)
+        bars = formula.find_bars(pix.samples, pix.width, pix.height, pix.n)
+        order = {"auto": ["saved", "azure", "local"], "saved": ["saved"], "azure": ["azure"], "local": ["local"]}[engine]
+        if engine == "auto" and ocr.azure_config() is None:
+            order.remove("azure")
+        problems = []
+        for name in order:
+            try:
+                if name == "azure":
+                    found = ocr.azure_read(pix.tobytes("png"), features=["formulas"])
+                    # Azure's own formula reading wins when there is no word fraction for the bars to explain.
+                    if found.get("formulas") and not bars:
+                        return {"engine": name, "tex": " ".join(found["formulas"]), "bars": 0}
+                else:
+                    found = self._read_with(name, exam, page, box, pix=pix)
+            except ocr.OcrError as e:
+                problems.append(str(e))
+                continue
+            if not found or not found["lines"]:
+                continue
+            lines = found["lines"]
+            if name == "saved":
+                x0, y0, x1, y1 = box
+                lines = [ocr.Line(ln.text, (ln.cx - x0) / (x1 - x0), (ln.cy - y0) / (y1 - y0), (ln.left - x0) / (x1 - x0),
+                                  ln.height / (y1 - y0)) for ln in lines]
+            tex = formula.to_latex(lines, bars)
+            if tex:
+                return {"engine": name, "tex": tex, "bars": len(bars)}
+        raise NotFound("no se encontró una fórmula en el recuadro" + (f" ({'; '.join(problems)})" if problems else ""))
+
+    def _read_with(self, name, exam, page, box, pix=None):
         if name == "saved":
             pages = self._ocr_doc(exam)
             if pages is None:
@@ -692,7 +727,7 @@ class Store:
                 return None
             got = pages.get(page) or {"lines": [], "tables": []}
             return {"lines": ocr.inside(got["lines"], box), "tables": ocr.tables_inside(got["tables"], box)}
-        pix = self._render_box(exam, page, box, dpi=300)
+        pix = pix or self._render_box(exam, page, box, dpi=300)
         if name == "azure":
             return ocr.azure_read(pix.tobytes("png"))
         return ocr.rapid_read(pix.samples, pix.width, pix.height, pix.n)

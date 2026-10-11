@@ -1508,7 +1508,7 @@ function richToolbarState() {
 
 const SYMBOLS = ["≤", "≥", "≠", "≈", "±", "×", "÷", "√", "π", "°", "²", "³", "½", "¼", "∞", "→", "←", "↔", "α", "β", "Δ", "θ", "λ", "μ", "Ω", "%", "€", "—"];
 // ----- formula editor: a MathLive field that formats as you type (like Desmos) and stores $LaTeX$ -----------
-function openMath(area = state.lastArea, chip = null) {
+function openMath(area = state.lastArea, chip = null, readTex = null) {
   if (!area || !area.isConnected) { toast("Primero haz clic en un campo de texto"); return; }
   if (!window.MathfieldElement) { toast("El editor de fórmulas aún se está cargando; intenta de nuevo", true); return; }
   const rich = state.visual && richOf(area);
@@ -1516,10 +1516,25 @@ function openMath(area = state.lastArea, chip = null) {
   const range = rich && !chip ? (rich._range && rich.contains(rich._range.startContainer) ? rich._range.cloneRange() : null) : null;
   const sel = !rich ? [area.selectionStart, area.selectionEnd] : null;
   const picked = !rich ? area.value.slice(sel[0], sel[1]).replace(/^\$|\$$/g, "") : range ? range.toString() : "";
-  const start = chip ? chip.dataset.tex : picked;
+  const start = readTex ?? (chip ? chip.dataset.tex : picked);
   overlay(`<div class="label">${chip ? "Editar fórmula" : "Nueva fórmula"}</div>
     <math-field id="mf" style="width:100%;font-size:26px;padding:10px;border-radius:12px;border:2px solid var(--accent);background:#fff;color:#000"></math-field>
-    <p class="muted" style="font-size:13px;margin:8px 0">Escribe como en Desmos: <b>/</b> hace una fracción, <b>^</b> un exponente, <b>_</b> un subíndice, <b>sqrt</b> una raíz, <b>pi</b> π, <b>*</b> ×, <b>&lt;=</b> ≤. Las flechas mueven el cursor dentro de la fórmula.</p>
+    <p class="muted" style="font-size:13px;margin:8px 0">Escribe como en Desmos: <b>/</b> hace una fracción, <b>^</b> un exponente, <b>_</b> un subíndice, <b>sqrt</b> una raíz, <b>pi</b> π, <b>*</b> ×, <b>&lt;=</b> ≤. Las flechas mueven el cursor dentro de la fórmula. Para palabras con espacios, pulsa <b>Aa Palabras</b> (o la tecla <b>"</b>) y escribe.</p>
+    <div class="row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+      <button class="ib" id="mf-text" title="Escribir palabras normales dentro de la fórmula (vuelve a pulsar para seguir con números)">Aa Palabras</button>
+      <button class="ib" id="mf-wfrac" title="Una fracción con palabras arriba y abajo">▭⁄▭ Fracción con palabras</button>
+      <span id="mf-wf" style="display:none;gap:6px;align-items:center;width:100%">
+        <input id="mf-top" placeholder="Arriba, p. ej. Volumen del lago (m3)" style="flex:1">
+        <span>/</span>
+        <input id="mf-bot" placeholder="Abajo, p. ej. Cauce (m3/años)" style="flex:1">
+        <button class="ib go" id="mf-wf-ok">Poner</button>
+      </span>
+      <button class="ib" data-ins="\\text{m}^{2}" title="metros cuadrados">m²</button>
+      <button class="ib" data-ins="\\text{m}^{3}" title="metros cúbicos">m³</button>
+      <button class="ib" data-ins="=">=</button>
+      <span class="spacer" style="flex:1"></span>
+      <button class="ib" id="mf-read" title="Dibuja un recuadro sobre la fórmula impresa y se escribe sola">📷 Leer de la página</button>
+    </div>
     <div class="row" style="display:flex;gap:8px;align-items:center">
       <button class="ib" onclick="window.mathVirtualKeyboard.visible ? window.mathVirtualKeyboard.hide() : window.mathVirtualKeyboard.show()">⌨ Teclado</button>
       <span class="spacer" style="flex:1"></span>
@@ -1563,9 +1578,43 @@ function openMath(area = state.lastArea, chip = null) {
     insertAt(area, `$${tex}$`);
   };
   $("#mf-ok").onclick = done;
+  // Words: MathLive's text mode keeps spaces and writes \text{...}.
+  const textMode = () => { mf.focus(); mf.executeCommand(["switchMode", mf.mode === "text" ? "math" : "text"]); };
+  $("#mf-text").onclick = textMode;
+  // Keep the caret in the formula when a button is pressed.
+  document.querySelectorAll("#mf-text, [data-ins]").forEach(b => b.addEventListener("pointerdown", e => e.preventDefault()));
+  document.querySelectorAll("#overlay [data-ins]").forEach(b => b.onclick = () => { mf.focus(); mf.executeCommand(["switchMode", "math"]); mf.insert(b.dataset.ins, { focus: true }); });
+  // A fraction of words is typed in two plain boxes: MathLive's placeholders do not take text mode well.
+  $("#mf-wfrac").onclick = () => { $("#mf-wf").style.display = "flex"; $("#mf-top").focus(); };
+  const putWordFrac = () => {
+    const top = $("#mf-top").value.trim(), bot = $("#mf-bot").value.trim();
+    if (!top || !bot) { toast("Escribe lo de arriba y lo de abajo", true); return; }
+    mf.focus(); mf.executeCommand(["switchMode", "math"]);
+    mf.insert(`\\frac{${texWords(top)}}{${texWords(bot)}}`, { focus: true, selectionMode: "after" });
+    $("#mf-top").value = $("#mf-bot").value = ""; $("#mf-wf").style.display = "none";
+  };
+  $("#mf-wf-ok").onclick = putWordFrac;
+  for (const id of ["#mf-top", "#mf-bot"]) $(id).addEventListener("keydown", e => {
+    e.stopPropagation();
+    if (e.key === "Enter") { e.preventDefault(); if (id === "#mf-top") $("#mf-bot").focus(); else putWordFrac(); }
+  });
+  $("#mf-read").onclick = () => { window.mathVirtualKeyboard?.hide?.(); formulaFromPage(area, chip); };
   if ($("#mf-del")) $("#mf-del").onclick = () => { closeOverlay(); chip.remove(); rich.dispatchEvent(new Event("input")); };
   mf.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); done(); } if (e.key === "Escape") { e.stopPropagation(); closeOverlay(); } });
   setTimeout(() => { mf.focus(); mf.executeCommand?.("moveToMathfieldEnd"); }, 50);
+}
+// Words as LaTeX, the same way the server reads a printed formula: \text{...} with units such as m3 or m³ as m^{3}.
+function texWords(text) {
+  const special = { "\\": "\\textbackslash{}", "{": "\\{", "}": "\\}", "%": "\\%", "$": "\\$", "#": "\\#", "&": "\\&", "_": "\\_" };
+  const t = (x) => !x ? "" : /^[0-9.,]+$/.test(x.trim()) ? x.trim() : `\\text{${[...x].map(c => special[c] || c).join("")}}`;
+  text = text.split(/\s+/).join(" ");
+  const unit = /(?<![A-Za-zÀ-ÿ])(m|cm|mm|km|dm|s|g|kg|L)(?:([²³])|([23])(?![0-9]))/g;
+  let out = "", pos = 0;
+  for (const m of text.matchAll(unit)) {
+    out += t(text.slice(pos, m.index) + m[1]) + `^{${m[2] ? { "²": 2, "³": 3 }[m[2]] : m[3]}}`;
+    pos = m.index + m[0].length;
+  }
+  return out + t(text.slice(pos));
 }
 // The LaTeX the app renders: no empty placeholders, and $ never inside.
 const texOf = (mf) => mf.getValue("latex-without-placeholders").replace(/\$/g, "\\$").trim();
@@ -1716,6 +1765,9 @@ function drawBox(withBar) {
   if (tgt?.kind === "replace") bar.innerHTML = `<span class="lbl">Cambiar la figura por este recorte</span>
        <button class="ib go" onclick="cropTo('${esc(tgt.option || "")}', '${esc(tgt.replaces)}')">Usar este recorte</button>
        <button class="ib" onclick="cancelCrop()">Cancelar</button>${cleanToggle()}`;
+  else if (tgt?.kind === "formula") bar.innerHTML = `<span class="lbl">Leer la fórmula del recuadro</span>
+       <button class="ib go" onclick="formulaFromBox()">ƒx Leer fórmula</button>
+       ${eng}<button class="ib" onclick="cancelCrop()">✕</button>`;
   else if (tgt?.kind === "field") bar.innerHTML = `<span class="lbl">Leer el texto del recuadro</span>
        <button class="ib go" onclick="ocrTo('${tgt.field}')">${tgt.field === "opts" ? "Repartir en opciones A–D" : `Escribir en ${esc(fieldName($("#" + tgt.field)))}`}</button>
        ${eng}<button class="ib" onclick="cancelCrop()">✕</button>`;
@@ -1728,6 +1780,7 @@ function drawBox(withBar) {
        <button class="ib" onclick="ocrTo('opts')">Repartir en A–D</button>
        <button class="ib" onclick="ocrTo('copy')">Copiar</button>
        <button class="ib" onclick="tableFromBox()" title="Convierte la tabla del recuadro en una tabla editable">▦ Tabla</button>
+       <button class="ib" onclick="formulaFromBox()" title="Lee la fórmula del recuadro (también fracciones con palabras) y la abre en el editor de fórmulas">ƒx Fórmula</button>
        ${eng}<button class="ib" onclick="cancelCrop()">✕</button>`;
   ov.appendChild(bar);
   bar.addEventListener("pointerdown", e => e.stopPropagation());
@@ -1961,6 +2014,32 @@ function readInto(field) {
   $("#cropbtn")?.classList.add("on");
   drawBox(false);
   toast(field === "opts" ? "Dibuja un recuadro sobre las opciones A–D" : `Dibuja un recuadro sobre el texto del ${fieldName($("#" + field))}`);
+}
+
+// A formula from a box on the page: fraction bars come from the picture, the words from the OCR. It opens in the
+// formula editor so it can be checked before it goes into the text.
+function formulaFromPage(area, chip) {
+  if (!$("#pdfpage")) { toast("Abre la página original (Más ▾ → mostrar página) para leer una fórmula de ella", true); return; }
+  closeOverlay();
+  state.cropping = true;
+  state.cropTarget = { kind: "formula", area, chip };
+  state.box = null;
+  $("#pdfpage").classList.add("cropping");
+  $("#cropbtn")?.classList.add("on");
+  drawBox(false);
+  toast("Dibuja un recuadro sobre la fórmula de la página");
+}
+async function formulaFromBox() {
+  const tgt = state.cropTarget?.kind === "formula" ? state.cropTarget : null;
+  try {
+    setSave("Leyendo la fórmula…", "");
+    const { tex, engine } = await api(`/api/exams/${encodeURIComponent(state.detail.exam)}/read`, J("POST", { page: state.page, box: state.box, engine: state.engine, want: "formula" }));
+    cancelCrop();
+    const area = tgt?.area?.isConnected ? tgt.area : state.lastArea?.isConnected ? state.lastArea : $("#f-stem");
+    openMath(area, tgt?.chip?.isConnected ? tgt.chip : null, tex);
+    toast(`Fórmula leída (${ENGINE_NAMES[engine] || engine}); revísala con la página y pulsa Enter`);
+  } catch (e) { toast(e.message, true); }
+  finally { setSave(state.dirty ? "Cambios sin guardar" : "Sin cambios", state.dirty ? "dirty" : ""); }
 }
 
 async function readBox(want) {
