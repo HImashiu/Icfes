@@ -729,18 +729,18 @@ function renderWorkspace() {
     <div class="edbar">
       <button class="ib" id="back" title="Volver a la lista de preguntas">← Volver</button>
       <select id="ed-exam" aria-label="Examen">${exams}</select>
-      <button class="ib" id="prev" ${prev ? "" : "disabled"} title="Pregunta anterior (Alt+←)">‹ Anterior</button>
+      <button class="ib" id="prev" ${prev ? "" : "disabled"} title="Pregunta anterior (←)">‹ Anterior</button>
       <span class="qnum">Pregunta ${d.number}</span>
-      <button class="ib" id="next" ${next ? "" : "disabled"} title="Pregunta siguiente (Alt+→)">Siguiente ›</button>
+      <button class="ib" id="next" ${next ? "" : "disabled"} title="Pregunta siguiente (→)">Siguiente ›</button>
       <span id="vis">${visBadges(reasons)}</span>
       <span class="spacer"></span>
-      <button class="ib" id="fixnext" title="Salta a la próxima pregunta oculta o con errores (Alt+N)">⚑ Siguiente por arreglar</button>
+      <button class="ib" id="fixnext" title="Salta a la próxima pregunta oculta o con errores (N)">⚑ Siguiente por arreglar</button>
       <span id="savestate" class="savestate">Sin cambios</span>
-      <button class="ib go" id="save" title="Ctrl+S">Guardar</button>
+      <button class="ib go" id="save" title="G (o Ctrl+S)">Guardar</button>
       <span class="more">
         <button class="ib" id="morebtn" onclick="toggleMenu('moremenu', event)" aria-haspopup="true">Más ▾</button>
         <div class="menu" id="moremenu" hidden>
-          <button onclick="openSearch()">🔍 Buscar preguntas <kbd>Ctrl+K</kbd></button>
+          <button onclick="openSearch()">🔍 Buscar preguntas <kbd>B</kbd></button>
           ${STATIC ? "" : `<button id="undo" ${d.undo ? "" : "disabled"}>${undoLabel(d.undo)}</button>`}
           <button id="toggle-prev">${prevLabel()}</button>
           <button onclick="setVisual(!state.visual)">‹/› Ver el texto como código</button>
@@ -824,7 +824,7 @@ function nsMissHtml() {
 }
 function nextStepHtml() {
   return `<div id="nsmiss">${nsMissHtml()}</div>
-    <div class="nsrow"><button class="ib go big" type="button" onclick="readyAndNext()" title="Ctrl+Enter">✓ Está bien: guardar y pasar a la siguiente</button>
+    <div class="nsrow"><button class="ib go big" type="button" onclick="readyAndNext()" title="L (o Ctrl+Enter)">✓ Está bien: guardar y pasar a la siguiente</button>
     <label class="switch muted" style="font-size:13px"><input type="checkbox" id="f-ready" ${state.detail.question.ready ? "checked" : ""}> Lista para estudiantes</label></div>`;
 }
 
@@ -1408,12 +1408,16 @@ function overlay(html) {
 function showHelp() {
   const k = (a, b) => `<tr><td>${a}</td><td>${b}</td></tr>`;
   overlay(`<div class="label">Atajos y trucos</div><table class="help">
-    ${k("<kbd>Ctrl</kbd>+<kbd>S</kbd>", "Guardar")}
-    ${k("<kbd>Ctrl</kbd>+<kbd>Enter</kbd>", "Marcar lista, guardar y pasar a la siguiente")}
-    ${k("<kbd>Alt</kbd>+<kbd>→</kbd> / <kbd>←</kbd>", "Siguiente / anterior (guarda antes de salir)")}
-    ${k("<kbd>Alt</kbd>+<kbd>N</kbd>", "Siguiente pregunta por arreglar")}
-    ${k("<kbd>Alt</kbd>+<kbd>R</kbd>", "Dibujar un recuadro en la página")}
-    ${k("<kbd>Ctrl</kbd>+<kbd>K</kbd>", "Buscar en todas las preguntas")}
+    <tr><td colspan="2" class="muted" style="font-size:12px">Con una sola tecla cuando el cursor no está en un campo de texto. Dentro de un campo, <kbd>Esc</kbd> lo deja y las teclas vuelven a funcionar. Las versiones con Ctrl/Alt siguen sirviendo.</td></tr>
+    ${k("<kbd>G</kbd>", "Guardar (también Ctrl+S)")}
+    ${k("<kbd>L</kbd>", "Marcar lista, guardar y pasar a la siguiente (también Ctrl+Enter)")}
+    ${k("<kbd>→</kbd> / <kbd>←</kbd>", "Siguiente / anterior (guarda antes de salir)")}
+    ${k("<kbd>N</kbd>", "Siguiente pregunta por arreglar")}
+    ${k("<kbd>R</kbd>", "Dibujar un recuadro en la página")}
+    ${k("<kbd>F</kbd>", "Fórmula nueva en el último campo que usaste")}
+    ${k("<kbd>M</kbd>", "Minimizar o mostrar los textos largos")}
+    ${k("<kbd>B</kbd> o <kbd>/</kbd>", "Buscar en todas las preguntas")}
+    ${k("<kbd>?</kbd>", "Esta lista")}
     ${k("<kbd>Ctrl</kbd>+rueda", "Acercar o alejar la página")}
     ${k("<kbd>Ctrl</kbd>+<kbd>Z</kbd>", "Deshacer lo escrito en un campo (↶ Deshacer revierte lo guardado)")}
     ${k("<kbd>Esc</kbd>", "Cerrar el recuadro o la ventana")}
@@ -1462,7 +1466,22 @@ document.addEventListener("keydown", e => {
     return;
   }
   if ($("#overlay")) { if (e.key === "Escape") closeOverlay(); return; }
-  const typing = /TEXTAREA|INPUT|SELECT/.test(e.target.tagName);
+  const typing = /TEXTAREA|INPUT|SELECT/.test(e.target.tagName) || e.target.isContentEditable || !!e.target.closest?.("math-field,.mathedit");
+  // Esc in a text field leaves it, so the one-key shortcuts below work again.
+  if (typing && e.key === "Escape" && (e.target.closest?.(".rich") || e.target.tagName === "TEXTAREA") && !e.target.closest?.(".mathedit")) {
+    e.target.blur(); window.getSelection()?.removeAllRanges(); return;
+  }
+  // One key, no Ctrl, when the caret is not in a text field. None of them deletes or discards anything.
+  if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey && !e.repeat) {
+    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    const act = {
+      g: () => saveQuestion(), l: () => readyAndNext(), n: () => $("#fixnext").click(),
+      ArrowRight: () => $("#next").click(), ArrowLeft: () => $("#prev").click(),
+      r: () => (state.cropping ? cancelCrop() : startCrop()), b: () => openSearch(), "/": () => openSearch(),
+      f: () => newFormula(), m: () => ["f-passage", "f-stimulus"].forEach(id => $("#" + id) && setFold(id, !$("#" + id).closest(".fld").classList.contains("folded"))),
+    }[k];
+    if (act) { e.preventDefault(); act(); return; }
+  }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); saveQuestion(); }
   else if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); readyAndNext(); }
   else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openSearch(); }
@@ -2302,7 +2321,7 @@ function pdfPane() {
       <button class="ib" onclick="zoomBy(1/1.25)" title="Alejar">−</button>
       <button class="ib" onclick="zoomBy(0)" title="Ajustar al ancho del panel">Ajustar</button>
       <button class="ib" onclick="zoomBy(1.25)" title="Acercar">+</button>
-      ${STATIC ? "" : `<button class="ib ${state.cropping ? "on" : ""}" id="cropbtn" onclick="state.cropping ? cancelCrop() : startCrop()" title="Dibuja un recuadro en la página para recortar una figura o copiar su texto (Alt+R)">✂ Recortar o leer</button>`}
+      ${STATIC ? "" : `<button class="ib ${state.cropping ? "on" : ""}" id="cropbtn" onclick="state.cropping ? cancelCrop() : startCrop()" title="Dibuja un recuadro en la página para recortar una figura o copiar su texto (R)">✂ Recortar o leer</button>`}
     </div>
     ${est ? `<div class="note warn" style="margin:8px 10px 0">Página estimada: busca la pregunta con ‹ ›.</div>` : ""}
     <div class="pdfscroll" id="pdfscroll">
