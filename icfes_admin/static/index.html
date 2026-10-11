@@ -55,6 +55,11 @@ textarea{width:100%;min-height:110px;font:400 14px/1.45 ui-monospace,Menlo,monos
 .cell.err{border-color:var(--bad);color:var(--bad)}
 .cell.cur{border-width:3px;border-color:var(--text)}
 .cell.crop,.qstrip button.crop{position:relative}
+.mathchip{display:inline-block;padding:0 3px;margin:0 1px;border-radius:6px;background:rgba(26,110,245,.08);outline:1px dashed rgba(26,110,245,.45);cursor:pointer;user-select:all}
+.mathchip:hover{background:rgba(26,110,245,.18)}
+.mathchip p{display:inline;margin:0}
+math-field::part(virtual-keyboard-toggle){display:none}
+body > .ML__keyboard{z-index:60}
 table.flat td{padding:8px 10px}
 table.flat td:first-child{white-space:nowrap}
 table.flat .badge{margin:1px 4px 1px 0}
@@ -307,6 +312,8 @@ table.icfes-table caption{font-weight:700;color:#000;margin-bottom:4px}
 <main id="app"></main>
 <script src="figures-render.js"></script>
 <script src="render.bundle.js"></script>
+<script defer src="mathlive/mathlive.min.js"></script>
+<script>window.addEventListener("DOMContentLoaded", () => { if (window.MathfieldElement) { MathfieldElement.soundsDirectory = null; MathfieldElement.fontsDirectory = "mathlive/fonts"; } });</script>
 <script>
 const $ = (s) => document.querySelector(s);
 const app = $("#app");
@@ -782,7 +789,7 @@ function formPane(q, g) {
       </span>
       <button class="ib" type="button" data-cmd="insertUnorderedList" onclick="richCmd('insertUnorderedList')" title="Lista con viñetas">• Lista</button>
       <button class="ib" type="button" onclick="richCmd('table')" title="Insertar una tabla de texto">▦ Tabla</button>
-      <button class="ib" type="button" onclick="fmtInsert('math')" title="Fórmula (se dibuja en la vista del estudiante)">ƒx Fórmula</button>
+      <button class="ib" type="button" onclick="openMath()" title="Escribe una fórmula: / hace fracciones, ^ exponentes, sqrt raíces (como en Desmos)">ƒx Fórmula</button>
       <select class="ib" onchange="if (this.value) { fmtInsert('sym', this.value); this.value = ''; }" title="Símbolos">
         <option value="">Ω Símbolo</option>${SYMBOLS.map(x => `<option>${x}</option>`).join("")}</select>
       <button class="ib" type="button" onclick="cleanField()" title="Une líneas cortadas, quita guiones de corte y espacios dobles en el campo activo">🧹 Limpiar</button>
@@ -1217,9 +1224,17 @@ function toVisual(src) {
   if (!src) return "";
   const blocks = pipeTables(src).split(/\n\s*\n/).map(b => b.trim()).filter(Boolean)
     .map(b => (/^<(p|div|ul|ol|table|h\d)\b/i.test(b) ? b : `<div>${b.replace(/\n/g, "<br>")}</div>`));
-  const html = blocks.join("").split(MATH_SPLIT).map((part, i) => (i % 2 ? part
+  const maths = [];
+  const html = blocks.join("").split(MATH_SPLIT).map((part, i) => (i % 2 ? (isTex(part) ? `\u2063${maths.push(part.slice(1, -1)) - 1}\u2063` : part)
     : part.replace(/\*\*([^*\n]+)\*\*/g, "<b>$1</b>").replace(/(^|[^*\w])\*([^*\n]+?)\*(?![*\w])/g, (m, pre, body) => (/<\/?(t[dhr]|div|p)\b/i.test(body) ? m : `${pre}<i>${body}</i>`)))).join("");
-  return window.DOMPurify.sanitize(html);
+  // Formulas are swapped in after sanitizing: each is a chip drawn by the app's own math renderer.
+  return window.DOMPurify.sanitize(html).replace(/\u2063(\d+)\u2063/g, (m, k) => mathChip(maths[+k]));
+}
+// Prices like "$200.000, ... $" pair up as dollars too; only real formulas become chips, the rest stays text.
+const isTex = (part) => !/[<\n]/.test(part) && !/^\$\s|\s\$$/.test(part) && !/^\$\d{1,3}(\.\d{3})+([,;:]|\s|\$)/.test(part);
+function mathChip(tex) {
+  const drawn = window.renderRich ? window.renderRich(`$${tex}$`).replace(/^\s*<p>|<\/p>\s*$/g, "") : esc(tex);
+  return `<span class="mathchip" contenteditable="false" data-tex="${esc(tex)}" title="Clic para editar la fórmula">${drawn}</span>`;
 }
 function pipeTables(text) {
   const lines = text.split("\n"), out = [];
@@ -1277,6 +1292,7 @@ function inlineSource(n) {
   if (n.nodeType === 3) return n.nodeValue.replace(/\u00a0/g, " ").replace(/<(?=[A-Za-z/!])/g, "&lt;")
     .split(MATH_SPLIT).map((part, i) => (i % 2 ? part : part.replace(/\*/g, "&#42;"))).join("");
   if (n.nodeType !== 1) return "";
+  if (n.classList.contains("mathchip")) return `$${n.dataset.tex}$`;
   const tag = n.tagName;
   if (tag === "BR") return "\n";
   if (RICH_BLOCK.test(tag)) return "\n" + blockSource(n) + "\n";
@@ -1318,6 +1334,7 @@ function attachRich(ta) {
   });
   ta.addEventListener("input", () => { if (!ta._fromRich) { rich.innerHTML = toVisual(ta.value); } });
   rich.addEventListener("focus", () => { state.lastArea = ta; });
+  rich.addEventListener("click", e => { const chip = e.target.closest(".mathchip"); if (chip) { state.lastArea = ta; openMath(ta, chip); } });
   rich.addEventListener("paste", e => {
     const html = e.clipboardData?.getData("text/html"), text = e.clipboardData?.getData("text/plain");
     if (e.clipboardData?.files?.length) return;
@@ -1443,6 +1460,69 @@ function richToolbarState() {
 }
 
 const SYMBOLS = ["≤", "≥", "≠", "≈", "±", "×", "÷", "√", "π", "°", "²", "³", "½", "¼", "∞", "→", "←", "↔", "α", "β", "Δ", "θ", "λ", "μ", "Ω", "%", "€", "—"];
+// ----- formula editor: a MathLive field that formats as you type (like Desmos) and stores $LaTeX$ -----------
+function openMath(area = state.lastArea, chip = null) {
+  if (!area || !area.isConnected) { toast("Primero haz clic en un campo de texto"); return; }
+  if (!window.MathfieldElement) { toast("El editor de fórmulas aún se está cargando; intenta de nuevo", true); return; }
+  const rich = state.visual && richOf(area);
+  // Where the formula goes: the chip being edited, the caret in the field, or the selection in the code view.
+  const range = rich && !chip ? (rich._range && rich.contains(rich._range.startContainer) ? rich._range.cloneRange() : null) : null;
+  const sel = !rich ? [area.selectionStart, area.selectionEnd] : null;
+  const picked = !rich ? area.value.slice(sel[0], sel[1]).replace(/^\$|\$$/g, "") : range ? range.toString() : "";
+  const start = chip ? chip.dataset.tex : picked;
+  overlay(`<div class="label">${chip ? "Editar fórmula" : "Nueva fórmula"}</div>
+    <math-field id="mf" style="width:100%;font-size:26px;padding:10px;border-radius:12px;border:2px solid var(--accent);background:#fff;color:#000"></math-field>
+    <p class="muted" style="font-size:13px;margin:8px 0">Escribe como en Desmos: <b>/</b> hace una fracción, <b>^</b> un exponente, <b>_</b> un subíndice, <b>sqrt</b> una raíz, <b>pi</b> π, <b>*</b> ×, <b>&lt;=</b> ≤. Las flechas mueven el cursor dentro de la fórmula.</p>
+    <div class="row" style="display:flex;gap:8px;align-items:center">
+      <button class="ib" onclick="window.mathVirtualKeyboard.visible ? window.mathVirtualKeyboard.hide() : window.mathVirtualKeyboard.show()">⌨ Teclado</button>
+      <span class="spacer" style="flex:1"></span>
+      ${chip ? `<button class="ib warn" id="mf-del">Quitar fórmula</button>` : ""}
+      <button class="ib" onclick="closeOverlay()">Cancelar</button>
+      <button class="ib go" id="mf-ok">${chip ? "Listo" : "Insertar"} (Enter)</button>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:8px">Se guarda como <code id="mf-tex"></code></div>`);
+  const mf = $("#mf");
+  mf.mathVirtualKeyboardPolicy = "manual";
+  mf.smartFence = true;
+  mf.value = start || "";
+  const show = () => { $("#mf-tex").textContent = `$${texOf(mf)}$`; };
+  mf.addEventListener("input", show); show();
+  const done = () => {
+    const tex = texOf(mf);
+    window.mathVirtualKeyboard?.hide?.();
+    closeOverlay();
+    if (!tex) return;
+    if (chip) { chip.outerHTML = mathChip(tex); rich.dispatchEvent(new Event("input")); return; }
+    if (rich) {
+      rich.focus();
+      const s = window.getSelection(); s.removeAllRanges();
+      if (range) s.addRange(range); else { const r = document.createRange(); r.selectNodeContents(rich); r.collapse(false); s.addRange(r); }
+      // insertHTML would split the paragraph around the formula; a marker typed in its place is swapped for the chip.
+      document.execCommand("insertText", false, "\u2063f\u2063");
+      const walk = document.createTreeWalker(rich, NodeFilter.SHOW_TEXT);
+      for (let t = walk.nextNode(); t; t = walk.nextNode()) {
+        const at = t.nodeValue.indexOf("\u2063f\u2063");
+        if (at < 0) continue;
+        const after = t.splitText(at); after.nodeValue = "\u00a0" + after.nodeValue.slice(3);
+        const box = document.createElement("span"); box.innerHTML = mathChip(tex);
+        t.after(box.firstChild);
+        const r = document.createRange(); r.setStart(after, 1); r.collapse(true); s.removeAllRanges(); s.addRange(r);
+        break;
+      }
+      rich.dispatchEvent(new Event("input"));
+      return;
+    }
+    area.focus(); area.setSelectionRange(sel[0], sel[1]);
+    insertAt(area, `$${tex}$`);
+  };
+  $("#mf-ok").onclick = done;
+  if ($("#mf-del")) $("#mf-del").onclick = () => { closeOverlay(); chip.remove(); rich.dispatchEvent(new Event("input")); };
+  mf.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); done(); } if (e.key === "Escape") { e.stopPropagation(); closeOverlay(); } });
+  setTimeout(() => { mf.focus(); mf.executeCommand?.("moveToMathfieldEnd"); }, 50);
+}
+// The LaTeX the app renders: no empty placeholders, and $ never inside.
+const texOf = (mf) => mf.getValue("latex-without-placeholders").replace(/\$/g, "\\$").trim();
+
 function fmtInsert(kind) {
   const area = state.lastArea;
   if (!area || !area.isConnected) { toast("Primero haz clic en un campo de texto"); return; }
