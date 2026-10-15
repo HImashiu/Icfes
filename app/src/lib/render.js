@@ -6,6 +6,7 @@ import DOMPurify from "dompurify";
 import katex from "katex";
 import "katex/contrib/mhchem";
 import "katex/dist/katex.min.css";
+import { expandMol, molParts } from "./molecule.js";
 import { isMathSpan, normalizeField, outsideMath } from "./text-normalize.js";
 
 const MATH = /(?<!\\)\$([^$\n]+?)\$/g;
@@ -24,15 +25,22 @@ function paragraphs(text) {
     .join("");
 }
 
+const katexHtml = (tex) => katex.renderToString(tex, { throwOnError: false, output: "htmlAndMathml" });
+// A reaction's molecules, arrows and plus signs sit on one baseline and wrap between pieces.
+const MOL_ROW = "display:inline-flex;flex-wrap:wrap;align-items:baseline;justify-content:center;column-gap:0.35em;row-gap:0.8em;max-width:100%;vertical-align:middle";
+
 export function renderRich(source) {
   if (!source) return "";
   const withoutPictures = source.replace(IMG, "").replace(MD_IMG, "");
   const cleaned = normalizeField(withoutPictures);
   // **bold** in the exam text (for example a bold NO in a stem) becomes <strong>.
   const bold = outsideMath(paragraphs(cleaned), (part) => part.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>"));
-  const withMath = bold.replace(MATH, (whole, tex) =>
-    isMathSpan(tex) ? katex.renderToString(tex.trim(), { throwOnError: false, output: "htmlAndMathml" }) : whole,
-  );
+  const withMath = bold.replace(MATH, (whole, tex) => {
+    if (!isMathSpan(tex)) return whole;
+    const pieces = molParts(tex);
+    if (pieces) return `<span class="mol-row" style="${MOL_ROW}">${pieces.map(katexHtml).join("")}</span>`;
+    return katexHtml(expandMol(tex.trim()));
+  });
   return DOMPurify.sanitize(withMath);
 }
 

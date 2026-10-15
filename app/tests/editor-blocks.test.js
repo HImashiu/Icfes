@@ -26,3 +26,16 @@ describe("chemistry in math", () => {
     expect(html).not.toContain("$\\ce");
   });
 });
+
+describe("structural formulas", () => {
+  it("draws a molecule with its hydrogens above and below", () => {
+    const html = renderRich("<p>Ácido: $\\mol{H-C(H,H)-C(=O)-OH}$</p>");
+    expect(html).toContain("katex");
+    expect(html).not.toContain("\\mol{");
+  });
+
+  it("lays out a reaction in a wrapping row, one piece per molecule", () => {
+    const html = renderRich('<p>$\\mol{H-C(=O)-OH "Ácido" ->[H^+] H-C(=O)-O-CH3 "Éster" + H2O "Agua"}$</p>');
+    expect(html).toContain('class="mol-row"');
+  });
+});
