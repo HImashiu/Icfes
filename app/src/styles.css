@@ -992,3 +992,6 @@ p.fuente { font-size: 0.78em; line-height: 1.35; text-align: right; margin: 14px
 
 /* The blank the student is answering (fill-in English). */
 .gap.gap-now { background: rgba(255, 170, 40, 0.28); outline: 2px solid var(--flame); border-radius: 3px; }
+
+/* Questions that share one text are shown as one block: the text once, then each question. */
+.block-q + .block-q { margin-top: 28px; }

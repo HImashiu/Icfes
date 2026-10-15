@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import RichText from "./RichText.jsx";
 import FigureBlock from "./FigureBlock.jsx";
 import { SOURCE_LINE } from "../lib/exam.js";
-import { plainText } from "../lib/render.js";
 import ReportError from "./ReportError.jsx";
 import Zoomable from "./Zoomable.jsx";
 
@@ -66,6 +65,7 @@ export default function QuestionView({
   review,
   figures,
   collapsedGroup = false,
+  showPassage = true,
   examLabel,
   footer,
   feedback,
@@ -75,36 +75,7 @@ export default function QuestionView({
 }) {
   const { group } = question;
   const wide = useWide();
-  const rootRef = useRef(null);
 
-  // Fill-in gaps: the blank for this question is marked, shown inside the passage, and filled with the chosen option.
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
-    root.querySelectorAll(".gap-now").forEach((g) => g.classList.remove("gap-now"));
-    const chosen = answer ? question.options.find((o) => o.letter === answer) : null;
-    const fill = chosen ? plainText(chosen.text_md) : "";
-    root.querySelectorAll(`.gap[data-gap="${question.number}"]`).forEach((g) => {
-      g.classList.add("gap-now");
-      let el = g.querySelector(".gap-fill");
-      if (fill) {
-        if (!el) {
-          el = document.createElement("span");
-          el.className = "gap-fill";
-          el.style.fontStyle = "italic";
-          g.append(" ", el);
-        }
-        el.textContent = fill;
-      } else if (el) {
-        el.previousSibling?.nodeType === Node.TEXT_NODE && el.previousSibling.remove();
-        el.remove();
-      }
-    });
-  }, [question.key, question.number, question.options, answer]);
-  // Scroll to the blank once per question, so picking an option does not move the page.
-  useEffect(() => {
-    rootRef.current?.querySelector(".gap-now")?.scrollIntoView?.({ block: "center" });
-  }, [question.key]);
   const [groupOpen, setGroupOpen] = useState(!collapsedGroup);
   const correctLetter = review?.correctLetter ?? null;
   const collapsed = collapsedGroup && !wide;
@@ -145,7 +116,7 @@ export default function QuestionView({
   // Many questions repeat their passage in stimulus_md, which the group already shows.
   const ownStimulus = question.stimulus_md && question.stimulus_md.trim() !== group?.stimulus_md?.trim();
 
-  const passage = group && (
+  const passage = group && showPassage && (
     <section className="passage paper-passage" aria-label={`Texto para las preguntas ${group.from} a ${group.to}`}>
       {group.directions && <p className="directions">{group.directions}</p>}
       <LongText html={group.stimulus_md} className="stimulus" long={!wide && (group.stimulus_md ?? "").length > LONG_TEXT} resolve={resolveToken} />
@@ -158,7 +129,7 @@ export default function QuestionView({
   const source = <span className="source">{examLabel ? `${SOURCE_LINE}, ${examLabel}` : SOURCE_LINE}</span>;
 
   return (
-    <div ref={rootRef} className={hasContext ? "q-split" : "q-split solo"}>
+    <div className={hasContext ? "q-split" : "q-split solo"}>
       {hasContext && (
         <section className="paper-card q-context" aria-label="Texto y gráfica de la pregunta">
           {passage && (collapsed ? (

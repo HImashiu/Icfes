@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Navigator from "../components/Navigator.jsx";
 import QuestionView from "../components/QuestionView.jsx";
 import Icon from "../components/Icon.jsx";
 import { formatClock } from "../lib/exam.js";
 import { areaColor, fmtInt } from "../lib/brand.js";
+import { plainText } from "../lib/render.js";
 import { xpFor } from "../lib/xp.js";
 
 // +10 XP per correct practice answer, double in the weakest area.
@@ -35,9 +36,16 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   const checked = Boolean(attempt.checked?.[q?.key]);
   const correctLetter = q ? answerKey?.get(q.key) ?? null : null;
   const picked = q && attempt.answers[q.key];
-  const isCorrect = checked && correctLetter && picked === correctLetter;
   const area = q?.section;
-  const prev = questions[current - 1];
+
+  // Questions that share one text are shown together as one block: the text once, then each question.
+  const sameText = (a, b) => Boolean(a?.group) && a.group?.id === b?.group?.id;
+  let blockFrom = current;
+  let blockTo = current;
+  while (blockFrom > 0 && sameText(questions[blockFrom - 1], q)) blockFrom--;
+  while (blockTo < questions.length - 1 && sameText(questions[blockTo + 1], q)) blockTo++;
+  const block = questions.slice(blockFrom, blockTo + 1);
+  const mainRef = useRef(null);
 
   // After "Comprobar" the verdict sits under the options; on a phone that is below the fold, so bring it up.
   const showVerdict = () => setTimeout(() => {
@@ -71,17 +79,25 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  const setAnswer = (letter) => {
-    if (checked) return;
-    onChange((a) => ({ ...a, answers: { ...a.answers, [q.key]: letter } }));
+  const setAnswerFor = (qq, letter) => {
+    if (attempt.checked?.[qq.key]) return;
+    onChange((a) => ({ ...a, answers: { ...a.answers, [qq.key]: letter } }));
   };
-  const toggleFlag = () =>
+  const setAnswer = (letter) => setAnswerFor(q, letter);
+  // A tap on an option of another question in the block moves the current question there first.
+  const answerIn = (qq) => (letter) => {
+    const index = questions.indexOf(qq);
+    if (index !== current) onChange((a) => ({ ...a, current: index }));
+    setAnswerFor(qq, letter);
+  };
+  const toggleFlagOf = (qq) => () =>
     onChange((a) => {
       const flags = { ...a.flags };
-      if (flags[q.key]) delete flags[q.key];
-      else flags[q.key] = true;
+      if (flags[qq.key]) delete flags[qq.key];
+      else flags[qq.key] = true;
       return { ...a, flags };
     });
+  const toggleFlag = toggleFlagOf(q);
 
   // Practice: "Comprobar" reveals the grade for this question once. XP counts only the first correct check.
   const check = () => {
@@ -98,17 +114,23 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   const blank = questions.length - answered;
 
   const hasKey = Boolean(answerKey);
-  const feedback = practice && checked && (
-    <div className={`feedback ${hasKey ? (isCorrect ? "ok" : "bad") : "neutral"}`} role="status">
-      <Icon name={hasKey && isCorrect ? "check" : "x"} size={22} />
-      <div>
-        <strong>
-          {!hasKey ? "Clave pendiente" : isCorrect ? `¡Correcto! +${xpFor(q.section)} XP` : `Casi. La respuesta es ${correctLetter}`}
-        </strong>
-        <span>{hasKey ? "Clave preliminar, no oficial" : "Esta pregunta todavía no tiene clave."}</span>
+  // The verdict of one question of the block (every checked question keeps its own).
+  const feedbackOf = (qq) => {
+    if (!practice || !attempt.checked?.[qq.key]) return null;
+    const cl = answerKey?.get(qq.key) ?? null;
+    const right = Boolean(cl) && attempt.answers[qq.key] === cl;
+    return (
+      <div className={`feedback ${hasKey ? (right ? "ok" : "bad") : "neutral"}`} role="status">
+        <Icon name={hasKey && right ? "check" : "x"} size={22} />
+        <div>
+          <strong>
+            {!hasKey ? "Clave pendiente" : right ? `¡Correcto! +${xpFor(qq.section)} XP` : `Casi. La respuesta es ${cl}`}
+          </strong>
+          <span>{hasKey ? "Clave preliminar, no oficial" : "Esta pregunta todavía no tiene clave."}</span>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Practice: with nothing picked the main button skips ahead, so a hard question never blocks the student.
   const last = current >= questions.length - 1;
@@ -129,6 +151,42 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   const mapCells = (
     <Navigator questions={questions} answers={attempt.answers} flags={attempt.flags} current={current} onGo={go} />
   );
+
+  // Fill-in gaps: each answered question fills its own blank with the chosen option, and the current one is marked.
+  useEffect(() => {
+    const root = mainRef.current;
+    if (!root) return;
+    root.querySelectorAll(".gap-now").forEach((g) => g.classList.remove("gap-now"));
+    root.querySelectorAll(".gap-fill").forEach((el) => {
+      if (el.previousSibling?.nodeType === Node.TEXT_NODE) el.previousSibling.remove();
+      el.remove();
+    });
+    block.forEach((qq) => {
+      const chosen = attempt.answers[qq.key] ? qq.options.find((o) => o.letter === attempt.answers[qq.key]) : null;
+      const fill = chosen ? plainText(chosen.text_md) : "";
+      root.querySelectorAll(`.gap[data-gap="${qq.number}"]`).forEach((g) => {
+        if (qq.key === q?.key) g.classList.add("gap-now");
+        if (!fill) return;
+        const el = document.createElement("span");
+        el.className = "gap-fill";
+        el.style.fontStyle = "italic";
+        el.textContent = fill;
+        g.append(" ", el);
+      });
+    });
+  }, [current, attempt.answers, blockFrom, blockTo, questions]);
+
+  // Once per question: bring the blank into view, or the question card when it is not the first of its block.
+  useEffect(() => {
+    const root = mainRef.current;
+    if (!root) return;
+    const gap = root.querySelector(".gap-now");
+    if (gap) {
+      gap.scrollIntoView?.({ block: "center", behavior: "smooth" });
+    } else if (current > blockFrom) {
+      root.querySelector(`[data-qkey="${q?.key}"]`)?.scrollIntoView?.({ block: "start", behavior: "smooth" });
+    }
+  }, [current]);
 
   const footer = (
     <footer className="test-bottom">
@@ -187,23 +245,29 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
       </header>
 
       <div className="test-body">
-        <main className="test-main">
-          {q && (
-            <QuestionView
-              question={q}
-              answer={picked}
-              onAnswer={setAnswer}
-              graded={checked}
-              review={hasKey && checked ? { correctLetter } : null}
-              figures={figures}
-              collapsedGroup={Boolean(q.group && prev?.group?.id === q.group.id)}
-              examLabel={examLabel}
-              flagged={flagged}
-              onToggleFlag={toggleFlag}
-              feedback={feedback}
-              footer={footer}
-            />
-          )}
+        <main className="test-main" ref={mainRef}>
+          {block.map((qq, i) => {
+            const memberChecked = Boolean(attempt.checked?.[qq.key]);
+            const memberCorrect = answerKey?.get(qq.key) ?? null;
+            return (
+              <section key={qq.key} data-qkey={qq.key} className={qq.key === q?.key ? "block-q current" : "block-q"}>
+                <QuestionView
+                  question={qq}
+                  answer={attempt.answers[qq.key]}
+                  onAnswer={answerIn(qq)}
+                  graded={memberChecked}
+                  review={hasKey && memberChecked ? { correctLetter: memberCorrect } : null}
+                  figures={figures}
+                  showPassage={i === 0}
+                  examLabel={examLabel}
+                  flagged={Boolean(attempt.flags[qq.key])}
+                  onToggleFlag={toggleFlagOf(qq)}
+                  feedback={feedbackOf(qq)}
+                  footer={i === block.length - 1 ? footer : null}
+                />
+              </section>
+            );
+          })}
         </main>
         <aside className="test-side" aria-label="Mapa de preguntas">
           <span className="label map-title">Mapa de preguntas</span>
