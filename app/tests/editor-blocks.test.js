@@ -50,3 +50,13 @@ describe("fill-in gaps", () => {
     expect(html).not.toContain("[[hueco");
   });
 });
+
+describe("worked example block", () => {
+  it("draws the example with its answer marked, as a block", () => {
+    const html = renderRich("[[ejemplo:B|Where can you see this sign?|in a playground|in a street|in a garden]]\n\nQuestion text");
+    expect(html).toContain('class="ejemplo"');
+    expect(html).toContain("Where can you see this sign?");
+    expect(html).toContain("ej-right");
+    expect(html).not.toContain("[[ejemplo");
+  });
+});
