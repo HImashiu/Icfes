@@ -5,3 +5,5 @@ import { renderRich, plainText } from "./render.js";
 window.renderRich = renderRich;
 window.plainText = plainText;
 window.DOMPurify = DOMPurify;
+import { gapHtml } from "./gaps.js";
+window.gapHtml = gapHtml;

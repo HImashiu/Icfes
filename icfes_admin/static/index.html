@@ -55,6 +55,8 @@ textarea{width:100%;min-height:110px;font:400 14px/1.45 ui-monospace,Menlo,monos
 .cell.err{border-color:var(--bad);color:var(--bad)}
 .cell.cur{border-width:3px;border-color:var(--text)}
 .cell.crop,.qstrip button.crop{position:relative}
+.gapchip{display:inline-block;cursor:pointer;border-radius:4px;background:rgba(26,110,245,.08);outline:1px dashed rgba(26,110,245,.45);user-select:all}
+.gap.gap-now{background:rgba(255,170,40,.28);outline:2px solid var(--flame);border-radius:3px}
 .mathchip{display:inline-block;max-width:100%;vertical-align:middle;padding:0 3px;margin:0 1px;border-radius:6px;background:rgba(26,110,245,.08);outline:1px dashed rgba(26,110,245,.45);cursor:pointer;user-select:all}
 .mathchip:hover{background:rgba(26,110,245,.18)}
 .mathchip p{display:inline;margin:0}
@@ -859,6 +861,7 @@ function formPane(q, g) {
       <button class="ib" type="button" onclick="richCmd('table')" title="Insertar una tabla de texto">▦ Tabla</button>
       <button class="ib" type="button" onclick="openChem()" title="Ecuación química: escribe 2H2 + O2 -> 2H2O y se ve con subíndices y flecha">⚗ Química</button>
       <button class="ib" type="button" onclick="openMol()" title="Molécula desarrollada con todos los H, como en el ICFES: H-C(H,H)-C(=O)-OH. También reacciones con flecha y nombres debajo">⌬ Molécula</button>
+      <button class="ib" type="button" onclick="newGap()" title="Espacio en blanco para completar (inglés): en el texto compartido lleva el número de su pregunta; en un enunciado va sin número">▁ Hueco</button>
       <button class="ib" type="button" onclick="newFormula()" title="Escribe una fórmula donde está el cursor. Las fórmulas del PDF salen marcadas en azul: un clic y quedan puestas.">ƒx Fórmula</button>
       <select class="ib" onchange="if (this.value) { fmtInsert('sym', this.value); this.value = ''; }" title="Símbolos">
         <option value="">Ω Símbolo</option>${SYMBOLS.map(x => `<option>${x}</option>`).join("")}</select>
@@ -889,7 +892,7 @@ function formPane(q, g) {
     </div>
     ${msgs ? `<div class="fld">${msgs}</div>` : ""}
     ${!(q.stem_md || "").trim() ? `<div class="note warn fld">Falta el enunciado. ${STATIC ? "" : `<button class="ib" type="button" onclick="readInto('f-stem')">⌖ Leerlo del PDF</button>`}</div>` : ""}
-    ${g ? `<div class="fld"><div class="label"><span>Texto compartido · Q${g.from}–${g.to} <span class="muted" style="text-transform:none;letter-spacing:0">· lo ven todas sus preguntas</span></span>${STATIC ? "" : `<button class="ib" type="button" onclick="imageInto('f-passage')" title="Recorta una imagen del PDF y ponla donde está el cursor en el texto compartido (la ven todas sus preguntas)">✂ Imagen</button><button class="ib" type="button" onclick="readInto('f-passage')" title="Dibuja un recuadro en la página y su texto se escribe aquí">⌖ Leer del PDF</button>`}</div>
+    ${g ? `<div class="fld"><div class="label"><span>Texto compartido · Q${g.from}–${g.to} <span class="muted" style="text-transform:none;letter-spacing:0">· lo ven todas sus preguntas</span></span>${STATIC ? "" : `<button class="ib" type="button" id="gap-mark" hidden onclick="markGaps()" title="Convierte los espacios escritos como (97) en huecos con número, uno por pregunta">▁ Marcar huecos</button><button class="ib" type="button" onclick="imageInto('f-passage')" title="Recorta una imagen del PDF y ponla donde está el cursor en el texto compartido (la ven todas sus preguntas)">✂ Imagen</button><button class="ib" type="button" onclick="readInto('f-passage')" title="Dibuja un recuadro en la página y su texto se escribe aquí">⌖ Leer del PDF</button>`}</div>
       <textarea id="f-passage" spellcheck="true" lang="es">${esc(g.passage_md || g.stimulus_md || "")}</textarea>
       <div class="muted" style="font-size:12px;margin-top:4px">Textos literarios: no los reescribas; deja [Texto pendiente: página N].</div></div>` : ""}
     <div class="fld"><div class="label"><span>Texto propio (contexto)</span>${STATIC ? "" : `<button class="ib" type="button" onclick="imageInto('f-stimulus')" title="Recorta una imagen del PDF y ponla donde está el cursor en este texto">✂ Imagen</button><button class="ib" type="button" onclick="readInto('f-stimulus')" title="Dibuja un recuadro en la página y su texto se escribe aquí">⌖ Leer del PDF</button>`}</div><textarea id="f-stimulus" spellcheck="true" lang="es" placeholder="Texto o descripción antes del enunciado (opcional)">${esc(q.stimulus_md)}</textarea></div>
@@ -1340,6 +1343,8 @@ function refreshPreview() {
     const q = { ...d.question, stem_md: $("#f-stem").value, stimulus_md: $("#f-stimulus").value, options: state.opts };
     const g = d.group && $("#f-passage") ? { ...d.group, passage_md: $("#f-passage").value } : d.group;
     $("#preview").innerHTML = studentView(q, g, d);
+    $("#preview").querySelectorAll(`.gap[data-gap="${d.number}"]`).forEach(x => x.classList.add("gap-now"));
+    updateGapBar();
     const key = [...placedNow()].sort().join(" ");
     if (key !== state.placedKey) { state.placedKey = key; drawFigs(); }
   });
@@ -1531,11 +1536,13 @@ function toVisual(src) {
   const blocks = pipeTables(src).split(/\n\s*\n/).map(b => b.trim()).filter(Boolean)
     .map(b => (FIG_PARA.test(b) ? `\u2064${figs.push(FIG_PARA.exec(b)[1]) - 1}\u2064` : /^<(p|div|ul|ol|table|h\d)\b/i.test(b) ? b : `<div>${b.replace(/\n/g, "<br>")}</div>`));
   const maths = [];
+  const gaps = [];
   const html = blocks.join("").split(MATH_SPLIT).map((part, i) => (i % 2 ? (isTex(part) ? `\u2063${maths.push(part.slice(1, -1)) - 1}\u2063` : part)
-    : part.replace(/\*\*([^*\n]+)\*\*/g, "<b>$1</b>").replace(/(^|[^*\w])\*([^*\n]+?)\*(?![*\w])/g, (m, pre, body) => (/<\/?(t[dhr]|div|p)\b/i.test(body) ? m : `${pre}<i>${body}</i>`)))).join("");
+    : part.replace(GAP_TOKEN, (m, n, w) => `\u2062${gaps.push([n ?? "", w ?? ""]) - 1}\u2062`).replace(/\*\*([^*\n]+)\*\*/g, "<b>$1</b>").replace(/(^|[^*\w])\*([^*\n]+?)\*(?![*\w])/g, (m, pre, body) => (/<\/?(t[dhr]|div|p)\b/i.test(body) ? m : `${pre}<i>${body}</i>`)))).join("");
   // Formulas are swapped in after sanitizing: each is a chip drawn by the app's own math renderer.
   return window.DOMPurify.sanitize(html).replace(/\u2063(\d+)\u2063/g, (m, k) => mathChip(maths[+k]))
     .replace(/\u2064(\d+)\u2064/g, (m, k) => figBlock(figs[+k]))
+    .replace(/\u2062(\d+)\u2062/g, (m, k) => gapChip(...gaps[+k]))
     .replace(/<div class="espacio"><\/div>/g, '<div class="espacio" contenteditable="false"></div>');
 }
 // Prices like "$200.000, ... $" pair up as dollars too; only real formulas become chips, the rest stays text.
@@ -1543,6 +1550,13 @@ const isTex = (part) => !/\n/.test(part) && (!part.includes("<") || /^\$\\(ce|mo
 function mathChip(tex) {
   const drawn = window.renderRich ? window.renderRich(`$${tex}$`).replace(/^\s*<p>|<\/p>\s*$/g, "") : esc(tex);
   return `<span class="mathchip" contenteditable="false" data-tex="${esc(tex)}" title="Clic para editar la fórmula">${drawn}</span>`;
+}
+// Fill-in-the-blank gaps (English section): [[hueco:97]], [[hueco:0|word]] for the example, [[hueco]] without number.
+const GAP_TOKEN = /\[\[hueco(?::(\d{1,3}))?(?:\|([^\]\n]*))?\]\]/g;
+const gapToken = (n, w) => `[[hueco${n !== "" && n != null ? ":" + n : ""}${w ? "|" + w.replace(/[\]|\n]/g, " ").trim() : ""}]]`;
+function gapChip(n, w = "") {
+  const drawn = window.gapHtml ? window.gapHtml(n === "" ? null : n, w) : esc(gapToken(n, w));
+  return `<span class="gapchip" contenteditable="false" data-gap="${esc(String(n ?? ""))}" data-word="${esc(w || "")}" title="Clic para cambiar el número del hueco o quitarlo">${drawn}</span>`;
 }
 function pipeTables(text) {
   const lines = text.split("\n"), out = [];
@@ -1611,6 +1625,7 @@ function inlineSource(n) {
     .split(MATH_SPLIT).map((part, i) => (i % 2 ? part : part.replace(/\*/g, "&#42;"))).join("");
   if (n.nodeType !== 1) return "";
   if (n.classList.contains("mathchip")) return `$${n.dataset.tex}$`;
+  if (n.classList.contains("gapchip")) return gapToken(n.dataset.gap, n.dataset.word);
   if (n.classList.contains("figblock")) return `\n\n[[figura:${n.dataset.fig}]]\n\n`;
   if (n.classList.contains("mathedit")) { const mf = n.querySelector("math-field"); const tex = mf ? texOf(mf) : n.dataset.tex; return tex ? `$${tex}$` : ""; }
   const tag = n.tagName;
@@ -1660,6 +1675,7 @@ function attachRich(ta) {
     if (x) { e.preventDefault(); takeOut(x.closest(".figblock")); rich.dispatchEvent(new Event("input")); drawFigs(); return; }
   });
   rich.addEventListener("click", e => { const chip = e.target.closest(".mathchip"); if (chip) { state.lastArea = ta; editMathInline(ta, chip); } });
+  rich.addEventListener("click", e => { const gap = e.target.closest(".gapchip"); if (gap) { state.lastArea = ta; openGap(ta, gap); } });
   rich.addEventListener("paste", e => {
     const html = e.clipboardData?.getData("text/html"), text = e.clipboardData?.getData("text/plain");
     if (e.clipboardData?.files?.length) return;
@@ -2082,7 +2098,7 @@ function endOfBlock(rich, range) {
   return after.toString().trim() ? null : block;
 }
 // Puts a formula chip at a caret (or at the end) of a Word-style field and returns it.
-function placeChip(rich, range, tex) {
+function placeChip(rich, range, tex, html = null) {
   rich.focus();
   const s = window.getSelection(); s.removeAllRanges();
   if (range) s.addRange(range); else { const r = document.createRange(); r.selectNodeContents(rich); r.collapse(false); s.addRange(r); }
@@ -2094,7 +2110,7 @@ function placeChip(rich, range, tex) {
     const at = t.nodeValue.indexOf("\u2063f\u2063");
     if (at < 0) continue;
     const after = t.splitText(at); after.nodeValue = "\u00a0" + after.nodeValue.slice(3);
-    const box = document.createElement("span"); box.innerHTML = mathChip(tex);
+    const box = document.createElement("span"); box.innerHTML = html ?? mathChip(tex);
     chip = box.firstChild;
     t.after(chip);
     const r = document.createRange(); r.setStart(after, 1); r.collapse(true); s.removeAllRanges(); s.addRange(r);
@@ -2187,6 +2203,80 @@ function openMol(area = state.lastArea, chip = null) {
   if ($("#mol-del")) $("#mol-del").onclick = () => { closeOverlay(); chip.remove(); rich?.dispatchEvent(new Event("input")); };
   inp.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); done(); } });
   draw(); inp.focus();
+}
+// ----- English: fill-in-the-blank gaps ------------------------------------------------------------------
+// The gaps already written in the shared text and this question's texts.
+function gapsPlaced() {
+  const seen = new Set();
+  for (const id of ["f-passage", "f-stimulus", "f-stem"]) for (const m of ($("#" + id)?.value || "").matchAll(GAP_TOKEN)) if (m[1]) seen.add(+m[1]);
+  return seen;
+}
+// A gap in the shared text takes the first question of the group still without one; elsewhere it has no number.
+function suggestedGap(area) {
+  const d = state.detail, g = d?.group;
+  if (!["f-passage", "f-stimulus"].includes(area?.id)) return "";
+  const placed = gapsPlaced();
+  if (g) for (let n = g.from; n <= g.to; n++) if (!placed.has(n)) return n;
+  return placed.has(d?.number) ? "" : (d?.number ?? "");
+}
+function newGap() {
+  const area = state.lastArea?.isConnected ? state.lastArea : $("#f-passage") || $("#f-stem");
+  const rich = state.visual && richOf(area);
+  const n = suggestedGap(area);
+  if (!rich) { insertAt(area, gapToken(n, "")); return; }
+  const range = rich._range && rich.contains(rich._range.startContainer) ? rich._range.cloneRange() : null;
+  placeChip(rich, range, null, gapChip(n, ""));
+  toast(n === "" ? "Hueco sin número puesto. Haz clic en él para darle un número." : `Hueco (${n}) puesto. Haz clic en él para cambiar el número.`);
+}
+function openGap(area, chip) {
+  const rich = richOf(area);
+  overlay(`<div class="label">Hueco para completar</div>
+    <p class="muted" style="margin:0 0 8px;font-size:13px">El número es el de la pregunta que pide la palabra de este espacio. Déjalo vacío si el hueco está en una sola frase del enunciado. Para el ejemplo (0) escribe la palabra que lo completa.</p>
+    <div class="row" style="gap:10px;align-items:end;flex-wrap:wrap">
+      <label style="font-size:13px">Número<br><input id="gap-n" inputmode="numeric" value="${esc(chip.dataset.gap)}" style="width:90px;font:16px system-ui;padding:8px;border-radius:8px;border:2px solid var(--line);background:var(--surface);color:var(--text)"></label>
+      <label style="font-size:13px;flex:1">Palabra ya escrita (solo el ejemplo)<br><input id="gap-w" value="${esc(chip.dataset.word)}" style="width:100%;font:16px system-ui;padding:8px;border-radius:8px;border:2px solid var(--line);background:var(--surface);color:var(--text)"></label>
+    </div>
+    <div id="gap-prev" class="paper" style="margin-top:10px;font-size:18px;text-align:center"></div>
+    <div class="row" style="gap:8px;margin-top:10px">
+      <button class="ib go" type="button" id="gap-ok">Listo</button>
+      <button class="ib warn" type="button" id="gap-del">Quitar</button>
+      <button class="ib" type="button" onclick="closeOverlay()">Cancelar</button></div>`);
+  const num = () => $("#gap-n").value.replace(/\D/g, "").slice(0, 3), word = () => $("#gap-w").value.trim();
+  const draw = () => { $("#gap-prev").innerHTML = `… ${window.gapHtml(num() || null, word())} …`; };
+  ["gap-n", "gap-w"].forEach(id => $("#" + id).addEventListener("input", draw));
+  const done = () => { const html = gapChip(num(), word()); closeOverlay(); chip.outerHTML = html; rich?.dispatchEvent(new Event("input")); };
+  $("#gap-ok").onclick = done;
+  $("#gap-del").onclick = () => { closeOverlay(); chip.remove(); rich?.dispatchEvent(new Event("input")); };
+  document.querySelectorAll("#gap-n, #gap-w").forEach(i => i.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); done(); } }));
+  draw(); $("#gap-n").focus();
+}
+// Texts read from the scan mark a blank as "(97)", "(97)____" or "(97) ......"; this turns the ones of this
+// group (and the example 0) into gaps. Other numbers in brackets are left alone.
+function markGapsIn(text, from, to) {
+  return text.split(MATH_SPLIT).map((part, i) => (i % 2 ? part : part.replace(/\((\d{1,3})\)[ \t]*(?:[_.…]{2,}[ \t]*)?/g, (m, n) => {
+    const k = +n;
+    return k === 0 || (k >= from && k <= to) ? gapToken(k, "") + (/[ \t]$/.test(m) ? " " : "") : m;
+  }))).join("");
+}
+function gapsToMark() {
+  const g = state.detail?.group, ta = $("#f-passage");
+  if (!g || !ta) return 0;
+  return [...ta.value.matchAll(/\((\d{1,3})\)/g)].filter(m => +m[1] === 0 || (+m[1] >= g.from && +m[1] <= g.to)).length;
+}
+function markGaps() {
+  const g = state.detail?.group, ta = $("#f-passage");
+  if (!g || !ta) return;
+  const before = ta.value, after = markGapsIn(before, g.from, g.to);
+  if (after === before) { toast("No encontré espacios como (97) en el texto compartido."); return; }
+  ta.value = after; ta.dispatchEvent(new Event("input", { bubbles: true }));
+  const missing = [];
+  for (let n = g.from; n <= g.to; n++) if (!gapsPlaced().has(n)) missing.push(n);
+  toast(missing.length ? `Huecos marcados. Faltan en el texto: ${missing.join(", ")}; ponlos con ▁ Hueco.` : "Huecos marcados: cada pregunta tiene su espacio en el texto.");
+  updateGapBar();
+}
+function updateGapBar() {
+  const btn = $("#gap-mark");
+  if (btn) btn.hidden = !gapsToMark();
 }
 function newFormula() {
   const area = state.lastArea?.isConnected ? state.lastArea : $("#f-stem");
