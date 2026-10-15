@@ -7,6 +7,7 @@ import katex from "katex";
 // \ce{...} and \pu{...} for chemistry (mhchem), drawn by the same KaTeX.
 import "katex/contrib/mhchem";
 import "katex/dist/katex.min.css";
+import { EXAMPLE_PARA, renderExample } from "./example.js";
 import { renderGaps } from "./gaps.js";
 import { expandMol, molParts } from "./molecule.js";
 import { isMathSpan, normalizeField, outsideMath } from "./text-normalize.js";
@@ -23,7 +24,7 @@ function paragraphs(text) {
     .split(/\n\s*\n/)
     .map((block) => block.trim())
     .filter(Boolean)
-    .map((block) => (BLOCK_START.test(block) ? block : `<p>${block.replace(/\n/g, "<br>")}</p>`))
+    .map((block) => (EXAMPLE_PARA.test(block) ? renderExample(block) : BLOCK_START.test(block) ? block : `<p>${block.replace(/\n/g, "<br>")}</p>`))
     .join("");
 }
 

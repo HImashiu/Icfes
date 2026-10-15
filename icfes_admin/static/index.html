@@ -55,6 +55,16 @@ textarea{width:100%;min-height:110px;font:400 14px/1.45 ui-monospace,Menlo,monos
 .cell.err{border-color:var(--bad);color:var(--bad)}
 .cell.cur{border-width:3px;border-color:var(--text)}
 .cell.crop,.qstrip button.crop{position:relative}
+.gcard{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:0 0 14px;background:var(--surface)}
+.gcard.focus{border-color:var(--flame);box-shadow:0 0 0 1px var(--flame)}
+.gchead{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.gchead .spacer{flex:1}
+.gq{padding:8px 10px;margin:6px -10px;border-radius:10px}
+.gq.focus{background:rgba(255,170,40,.12)}
+.gq .stem{margin-bottom:4px}
+.gopt{padding:2px 0 2px 1.2em}
+.gopt.marked{color:#1B7F45;font-weight:600}
+.exblock{cursor:pointer;border-radius:10px;outline:1px dashed rgba(26,110,245,.45);background:rgba(26,110,245,.05);margin:6px 0}
 .gapchip{display:inline-block;cursor:pointer;border-radius:4px;background:rgba(26,110,245,.08);outline:1px dashed rgba(26,110,245,.45);user-select:all}
 .gap.gap-now{background:rgba(255,170,40,.28);outline:2px solid var(--flame);border-radius:3px}
 .mathchip{display:inline-block;max-width:100%;vertical-align:middle;padding:0 3px;margin:0 1px;border-radius:6px;background:rgba(26,110,245,.08);outline:1px dashed rgba(26,110,245,.45);cursor:pointer;user-select:all}
@@ -738,6 +748,7 @@ function renderWorkspace() {
       <span class="qnum">Pregunta ${d.number}</span>
       <button class="ib" id="next" ${next ? "" : "disabled"} title="Pregunta siguiente (→)">Siguiente ›</button>
       <span id="vis">${visBadges(reasons)}</span>
+      ${g ? `<button class="ib" id="groupbtn" onclick="leave(() => openGroup(${d.number}))" title="Edita el texto compartido una vez y todas sus preguntas debajo, en una sola pantalla (J)">▤ Q${g.from}–${g.to} juntas</button>` : ""}
       <span class="spacer"></span>
       <button class="ib" id="fixnext" title="Salta a la próxima pregunta oculta o con errores (N)">⚑ Siguiente por arreglar</button>
       <span id="savestate" class="savestate">Sin cambios</span>
@@ -841,12 +852,7 @@ function markDirty() {
   if (s) { s.textContent = "Cambios sin guardar"; s.className = "savestate dirty"; }
 }
 
-function formPane(q, g) {
-  const sections = Object.keys(AREA);
-  if (q.section && !sections.includes(q.section)) sections.push(q.section);
-  const flags = (q.provenance?.flags || []).map(f => `<li title="${esc(f)}">${esc(flagText(f))}</li>`).join("");
-  const notes = (q.provenance?.notes || []).slice(-6).map(f => `<li>${esc(f)}</li>`).join("");
-  const msgs = [...state.detail.messages.errors.map(m => `<div class="note bad">${esc(checkMsg(m))}</div>`), ...state.detail.messages.warnings.map(m => `<div class="note warn">${esc(checkMsg(m))}</div>`)].join("");
+function fbarHtml() {
   return `
     <div class="fbar" onmousedown="if (event.target.closest('button')) event.preventDefault()">
       <span id="fmode">${fmodeHtml()}</span>
@@ -861,6 +867,7 @@ function formPane(q, g) {
       <button class="ib" type="button" onclick="richCmd('table')" title="Insertar una tabla de texto">▦ Tabla</button>
       <button class="ib" type="button" onclick="openChem()" title="Ecuación química: escribe 2H2 + O2 -> 2H2O y se ve con subíndices y flecha">⚗ Química</button>
       <button class="ib" type="button" onclick="openMol()" title="Molécula desarrollada con todos los H, como en el ICFES: H-C(H,H)-C(=O)-OH. También reacciones con flecha y nombres debajo">⌬ Molécula</button>
+      <button class="ib" type="button" onclick="openExample()" title="El ejemplo (0) que abre cada parte de inglés: la pregunta, sus opciones y la respuesta, en un recuadro">⓪ Ejemplo</button>
       <button class="ib" type="button" onclick="newGap()" title="Espacio en blanco para completar (inglés): en el texto compartido lleva el número de su pregunta; en un enunciado va sin número">▁ Hueco</button>
       <button class="ib" type="button" onclick="newFormula()" title="Escribe una fórmula donde está el cursor. Las fórmulas del PDF salen marcadas en azul: un clic y quedan puestas.">ƒx Fórmula</button>
       <select class="ib" onchange="if (this.value) { fmtInsert('sym', this.value); this.value = ''; }" title="Símbolos">
@@ -889,7 +896,16 @@ function formPane(q, g) {
         <button class="ib" type="button" onclick="fmtInsert('frac')" title="Fracción">a/b Fracción</button>
         <button class="ib" type="button" onclick="richCmd('clear')" title="Quitar formato de la selección">T̸ Quitar formato</button>
       </span>
-    </div>
+    </div>`;
+}
+function formPane(q, g) {
+  const sections = Object.keys(AREA);
+  if (q.section && !sections.includes(q.section)) sections.push(q.section);
+  const flags = (q.provenance?.flags || []).map(f => `<li title="${esc(f)}">${esc(flagText(f))}</li>`).join("");
+  const notes = (q.provenance?.notes || []).slice(-6).map(f => `<li>${esc(f)}</li>`).join("");
+  const msgs = [...state.detail.messages.errors.map(m => `<div class="note bad">${esc(checkMsg(m))}</div>`), ...state.detail.messages.warnings.map(m => `<div class="note warn">${esc(checkMsg(m))}</div>`)].join("");
+  return `
+    ${fbarHtml()}
     ${msgs ? `<div class="fld">${msgs}</div>` : ""}
     ${!(q.stem_md || "").trim() ? `<div class="note warn fld">Falta el enunciado. ${STATIC ? "" : `<button class="ib" type="button" onclick="readInto('f-stem')">⌖ Leerlo del PDF</button>`}</div>` : ""}
     ${g ? `<div class="fld"><div class="label"><span>Texto compartido · Q${g.from}–${g.to} <span class="muted" style="text-transform:none;letter-spacing:0">· lo ven todas sus preguntas</span></span>${STATIC ? "" : `<button class="ib" type="button" id="gap-mark" hidden onclick="markGaps()" title="Convierte los espacios escritos como (97) en huecos con número, uno por pregunta">▁ Marcar huecos</button><button class="ib" type="button" onclick="imageInto('f-passage')" title="Recorta una imagen del PDF y ponla donde está el cursor en el texto compartido (la ven todas sus preguntas)">✂ Imagen</button><button class="ib" type="button" onclick="readInto('f-passage')" title="Dibuja un recuadro en la página y su texto se escribe aquí">⌖ Leer del PDF</button>`}</div>
@@ -992,6 +1008,198 @@ function startTour(i = 0) {
     </div></div>`);
 }
 function endTour() { $("#tour")?.remove(); $("#form")?.scrollTo(0, 0); remember("tourDone", true); }
+
+// ----- a shared text with all its questions on one screen ------------------------------------------
+// The shared text is edited once at the top and every question of the group sits under it (stem, options,
+// key, ready). "Guardar todo" saves each question that changed; the preview shows the group as one block.
+async function openGroup(n) {
+  status("Cargando el grupo…");
+  if (!state.rows.length) await loadExam();
+  const first = await api(`/api/exams/${encodeURIComponent(state.exam)}/questions/${n}`);
+  const g = first.group;
+  if (!g) { openQuestion(n); return; }
+  const numbers = first.numbers.filter(k => k >= g.from && k <= g.to);
+  const details = await Promise.all(numbers.map(k => (k === n ? first : api(`/api/exams/${encodeURIComponent(state.exam)}/questions/${k}`))));
+  state.group = { g, focus: n, items: details.map(d => ({ d, opts: d.question.options.map(o => ({ ...o })), answer: d.key || "", ready: !!d.question.ready, dirty: false, error: "" })) };
+  state.detail = first; state.n = n; state.dirty = false; state.cropping = false;
+  state.page = first.anchor?.page ?? first.scan.pages[0] ?? first.scan.guess;
+  // same full-screen layout as one question; "grouped" routes the keys to groupKey()
+  document.body.classList.add("editing", "grouped");
+  renderGroup();
+  status(`${state.exam} · Q${g.from}–${g.to}`, "ok");
+}
+function leaveGroup(go) {
+  if (state.dirty && !confirm("Hay cambios sin guardar en el grupo. ¿Salir sin guardarlos?")) return;
+  state.dirty = false; state.group = null;
+  document.body.classList.remove("grouped");
+  go();
+}
+const gItem = (n) => state.group.items.find(it => it.d.number === n);
+function gCard(it) {
+  const q = it.d.question, n = it.d.number;
+  const pics = new Set(it.d.figures.filter(traceShown).map(traceOption).filter(Boolean));
+  it.d.native_figures.filter(f => f.target === "option").forEach(f => pics.add(f.option));
+  const stemFigs = it.d.figures.filter(t => traceShown(t) && !traceOption(t)).length + it.d.native_figures.filter(f => f.target !== "option").length;
+  return `<div class="gcard ${state.group.focus === n ? "focus" : ""}" data-n="${n}">
+    <div class="gchead"><b>Pregunta ${n}</b>
+      ${visBadges(it.d.hidden_reasons)}
+      <span class="spacer"></span>
+      <label class="switch"><input type="checkbox" class="g-ready" ${it.ready ? "checked" : ""}> Lista</label>
+      <button class="ib" type="button" onclick="leaveGroup(() => openQuestion(${n}))" title="Abrir esta pregunta sola (figuras, recortes, notas)">Abrir sola ›</button></div>
+    ${it.error ? `<div class="note bad">${esc(it.error)}</div>` : ""}
+    ${(q.stimulus_md || "").trim() ? `<div class="label"><span>Texto propio</span></div><textarea class="g-stim" spellcheck="true" lang="es">${esc(q.stimulus_md)}</textarea>` : ""}
+    ${stemFigs ? `<div class="muted" style="font-size:12px">Tiene ${stemFigs} figura(s): se editan al abrirla sola.</div>` : ""}
+    <div class="label"><span>Enunciado</span></div>
+    <textarea class="g-stem" spellcheck="true" lang="es">${esc(q.stem_md)}</textarea>
+    <div class="label"><span>Opciones <span class="muted" style="text-transform:none;letter-spacing:0">· toca la letra para marcar la respuesta</span></span></div>
+    ${it.opts.map(o => `<div class="orow">
+      <button type="button" class="ltile ${it.answer === o.letter ? "key" : ""}" data-key="${esc(o.letter)}" title="Marcar como respuesta correcta">${esc(o.letter)}${o.marked_in_scan ? '<i class="mk" title="marcada en el escaneo"></i>' : ""}</button>
+      <textarea class="g-opt" data-letter="${esc(o.letter)}" spellcheck="true" lang="es" placeholder="${pics.has(o.letter) ? "Tiene figura" : "Texto de la opción " + esc(o.letter)}">${esc(o.text_md)}</textarea></div>`).join("")}
+  </div>`;
+}
+function renderGroup() {
+  const { g, items } = state.group, d = state.detail;
+  const exams = state.exams.map(e => `<option ${e.exam === state.exam ? "selected" : ""}>${esc(e.exam)}</option>`).join("");
+  app.innerHTML = `
+  <div class="ed">
+    <div class="edbar">
+      <button class="ib" id="back" title="Volver a la lista de preguntas">← Volver</button>
+      <select id="ed-exam" aria-label="Examen" disabled>${exams}</select>
+      <span class="qnum">Preguntas ${g.from}–${g.to} juntas</span>
+      <button class="ib" id="single" title="Volver a editar una pregunta a la vez (J)">Una por una</button>
+      <span class="spacer"></span>
+      <span id="savestate" class="savestate">Sin cambios</span>
+      <button class="ib go" id="save" title="Guarda todas las preguntas que cambiaste (G o Ctrl+S)">Guardar todo</button>
+    </div>
+    <div class="edgrid ${state.preview ? "" : "noprev"}" id="edgrid">
+      <section class="pane pdf" id="pdfpane">${pdfPane()}</section>
+      <div class="split" id="split" title="Arrastra para cambiar el ancho"></div>
+      <section class="pane form" id="form">
+        ${fbarHtml()}
+        <div class="fld"><div class="label"><span>Texto compartido · Q${g.from}–${g.to}</span>${STATIC ? "" : `<button class="ib" type="button" id="gap-mark" hidden onclick="markGaps()" title="Convierte los espacios escritos como (97) en huecos con número, uno por pregunta">▁ Marcar huecos</button>`}</div>
+          <textarea id="f-passage" spellcheck="true" lang="es">${esc(g.passage_md || g.stimulus_md || "")}</textarea></div>
+        <div id="gcards">${items.map(gCard).join("")}</div>
+      </section>
+      <section class="pane prev"><div class="label">Vista del estudiante</div><div id="preview"></div></section>
+    </div>
+    <div class="qstrip" id="qstrip">${state.rows.map(r => `<button class="${cellClass(r)} ${r.number >= g.from && r.number <= g.to ? "cur" : ""}" data-n="${r.number}">${r.number}</button>`).join("")}</div>
+  </div>`;
+  bindPdf();
+  document.querySelectorAll("#form textarea").forEach(fit);
+  document.querySelectorAll("#form #f-passage, #form .g-stem, #form .g-stim, #form .g-opt").forEach(attachRich);
+  $("#form").classList.toggle("visual", state.visual);
+  $("#back").onclick = () => leaveGroup(() => setTab("questions"));
+  $("#single").onclick = () => leaveGroup(() => openQuestion(state.group?.focus ?? g.from));
+  $("#save").onclick = saveGroup;
+  $("#qstrip").querySelectorAll("button").forEach(b => b.onclick = () => leaveGroup(() => openQuestion(Number(b.dataset.n))));
+  $("#qstrip").querySelector(".cur")?.scrollIntoView({ inline: "center", block: "nearest" });
+  $("#form").addEventListener("input", e => {
+    if (e.target.tagName === "TEXTAREA") fit(e.target);
+    const card = e.target.closest(".gcard");
+    if (card) gItem(+card.dataset.n).dirty = true;
+    else if (e.target.id === "f-passage") state.group.passageDirty = true;
+    markDirty(); refreshGroupPreview();
+  });
+  $("#form").addEventListener("change", e => {
+    if (!e.target.classList.contains("g-ready")) return;
+    const it = gItem(+e.target.closest(".gcard").dataset.n); it.ready = e.target.checked; it.dirty = true; markDirty();
+  });
+  $("#form").addEventListener("click", e => {
+    const k = e.target.closest(".ltile[data-key]");
+    if (!k) return;
+    const card = k.closest(".gcard"), it = gItem(+card.dataset.n);
+    it.answer = it.answer === k.dataset.key ? "" : k.dataset.key; it.dirty = true;
+    card.querySelectorAll(".ltile[data-key]").forEach(b => b.classList.toggle("key", b.dataset.key === it.answer));
+    markDirty(); refreshGroupPreview();
+  });
+  // the question being worked on: its gap lights up in the preview and the PDF follows it
+  $("#form").addEventListener("focusin", e => {
+    const card = e.target.closest(".gcard");
+    if (!card || +card.dataset.n === state.group.focus) return;
+    state.group.focus = +card.dataset.n;
+    document.querySelectorAll(".gcard").forEach(c => c.classList.toggle("focus", c === card));
+    refreshGroupPreview();
+  });
+  bindSplit();
+  refreshGroupPreview();
+}
+// Reads the cards back into the group state.
+function gSync() {
+  document.querySelectorAll(".gcard").forEach(card => {
+    const it = gItem(+card.dataset.n);
+    it.stem = card.querySelector(".g-stem").value;
+    it.stim = card.querySelector(".g-stim")?.value ?? it.d.question.stimulus_md ?? "";
+    const old = Object.fromEntries(it.opts.map(o => [o.letter, o]));
+    it.opts = [...card.querySelectorAll(".g-opt")].map(t => ({ letter: t.dataset.letter, text_md: t.value, marked_in_scan: old[t.dataset.letter]?.marked_in_scan ?? false }));
+  });
+}
+let gPrevQueued = false;
+function refreshGroupPreview() {
+  if (gPrevQueued) return;
+  gPrevQueued = true;
+  requestAnimationFrame(() => {
+    gPrevQueued = false;
+    if (!state.group || !$("#preview")) return;
+    gSync();
+    const { g, items, focus } = state.group;
+    const text = $("#f-passage").value;
+    const qs = items.map(it => `<div class="gq ${it.d.number === focus ? "focus" : ""}">
+      ${it.stim.trim() && it.stim.trim() !== text.trim() ? `<div class="stimulus">${renderText(it.stim)}</div>` : ""}
+      <div class="stem"><b>${it.d.number}.</b> ${render(it.stem)}</div>
+      ${it.opts.map(o => `<div class="gopt ${it.answer === o.letter ? "marked" : ""}"><b>${esc(o.letter)}.</b> ${render(o.text_md).replace(/^\s*<p>|<\/p>\s*$/g, "")}</div>`).join("")}
+    </div>`).join("");
+    $("#preview").innerHTML = `<div class="paper"><div class="label" style="color:var(--paper-2)">${esc(g.directions || "")}</div>
+      <div class="stimulus">${renderText(text)}</div><hr style="border:0;border-top:1px solid #d8d6cc;margin:12px 0">${qs}
+      <div class="src">Fuente: ICFES, Saber 11 · ${esc(state.exam)}</div></div>
+      <p class="muted" style="font-size:12px">En verde la respuesta de la clave; en naranja la pregunta donde estás (solo en el editor).</p>`;
+    $("#preview").querySelectorAll(`.gap[data-gap="${focus}"]`).forEach(x => x.classList.add("gap-now"));
+    updateGapBar();
+  });
+}
+async function saveGroup() {
+  if (!state.group) return false;
+  gSync();
+  const { items } = state.group;
+  const passage = $("#f-passage").value;
+  const todo = items.filter(it => it.dirty || state.group.passageDirty);
+  if (!todo.length) { setSave("Sin cambios", ""); return true; }
+  // the shared text travels with every question saved; when only it changed, the first question carries it
+  const send = items.some(it => it.dirty) ? items.filter(it => it.dirty || it === items[0] && state.group.passageDirty) : [items[0]];
+  setSave("Guardando…", "");
+  let bad = 0;
+  for (const it of send) {
+    const body = { stem_md: it.stem, stimulus_md: it.stim, options: it.opts.map(o => ({ letter: o.letter, text_md: o.text_md })),
+      ready: it.ready, answer: it.answer || null, section: it.d.question.section || "", group_passage_md: passage };
+    try {
+      const fresh = await api(qpath(it.d), J("PUT", body));
+      it.d = { ...it.d, ...fresh }; it.dirty = false; it.error = "";
+      const r = state.rows.find(x => x.number === it.d.number);
+      if (r) { r.ready = fresh.question.ready; r.edited = true; r.hidden = fresh.hidden_reasons; r.errors = fresh.messages.errors.length; r.warnings = fresh.messages.warnings.length; }
+    } catch (err) {
+      bad++;
+      it.error = err.status === 409 ? `No se guardó: no puede estar lista todavía (${(err.body.reasons || []).join(", ")}). Corrige eso o desmarca «Lista».` : `No se guardó: ${err.message}`;
+    }
+  }
+  if (!bad) state.group.passageDirty = false;
+  state.dirty = !!bad;
+  const focus = state.group.focus, y = $("#form").scrollTop;
+  renderGroup();
+  $("#form").scrollTop = y; state.group.focus = focus;
+  if (bad) { setSave(`${bad} pregunta(s) no se guardaron: mira el aviso en rojo`, "bad"); toast("Algunas preguntas no se guardaron.", true); }
+  else setSave(`Guardado ${new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}`, "ok");
+  return !bad;
+}
+function groupKey(e) {
+  if ($("#overlay")) { if (e.key === "Escape") closeOverlay(); return; }
+  const typing = /TEXTAREA|INPUT|SELECT/.test(e.target.tagName) || e.target.isContentEditable || !!e.target.closest?.("math-field,.mathedit");
+  if (typing && e.key === "Escape") { e.target.blur?.(); window.getSelection()?.removeAllRanges(); return; }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); saveGroup(); return; }
+  if (typing || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+  const k = e.key.toLowerCase();
+  if (k === "g") { e.preventDefault(); saveGroup(); }
+  else if (k === "j") { e.preventDefault(); $("#single").click(); }
+  else if (k === "f") { e.preventDefault(); newFormula(); }
+}
 
 // ----- options: tap a letter to set the key ------------------------------------------
 
@@ -1466,6 +1674,7 @@ async function undo() {
 }
 
 document.addEventListener("keydown", e => {
+  if (document.body.classList.contains("grouped")) { groupKey(e); return; }
   if (!document.body.classList.contains("editing")) return;
   if ($("#tour")) { if (e.key === "Escape") endTour(); return; }
   if ($("#cleaner")) { cleanerKey(e); return; }
@@ -1488,7 +1697,7 @@ document.addEventListener("keydown", e => {
       g: () => saveQuestion(), l: () => readyAndNext(), n: () => $("#fixnext").click(),
       ArrowRight: () => $("#next").click(), ArrowLeft: () => $("#prev").click(),
       r: () => (state.cropping ? cancelCrop() : startCrop()), b: () => openSearch(), "/": () => openSearch(),
-      f: () => newFormula(), m: () => ["f-passage", "f-stimulus"].forEach(id => $("#" + id) && setFold(id, !$("#" + id).closest(".fld").classList.contains("folded"))),
+      f: () => newFormula(), j: () => $("#groupbtn")?.click(), m: () => ["f-passage", "f-stimulus"].forEach(id => $("#" + id) && setFold(id, !$("#" + id).closest(".fld").classList.contains("folded"))),
     }[k];
     if (act) { e.preventDefault(); act(); return; }
   }
@@ -1532,9 +1741,9 @@ const MATH_SPLIT = /(\$[^$\n]+?\$)/;
 // Exam text to editable HTML.
 function toVisual(src) {
   if (!src) return "";
-  const figs = [];
+  const figs = [], exs = [];
   const blocks = pipeTables(src).split(/\n\s*\n/).map(b => b.trim()).filter(Boolean)
-    .map(b => (FIG_PARA.test(b) ? `\u2064${figs.push(FIG_PARA.exec(b)[1]) - 1}\u2064` : /^<(p|div|ul|ol|table|h\d)\b/i.test(b) ? b : `<div>${b.replace(/\n/g, "<br>")}</div>`));
+    .map(b => (EX_PARA.test(b) ? `<div>\u2065${exs.push(b) - 1}\u2065</div>` : FIG_PARA.test(b) ? `\u2064${figs.push(FIG_PARA.exec(b)[1]) - 1}\u2064` : /^<(p|div|ul|ol|table|h\d)\b/i.test(b) ? b : `<div>${b.replace(/\n/g, "<br>")}</div>`));
   const maths = [];
   const gaps = [];
   const html = blocks.join("").split(MATH_SPLIT).map((part, i) => (i % 2 ? (isTex(part) ? `\u2063${maths.push(part.slice(1, -1)) - 1}\u2063` : part)
@@ -1543,6 +1752,7 @@ function toVisual(src) {
   return window.DOMPurify.sanitize(html).replace(/\u2063(\d+)\u2063/g, (m, k) => mathChip(maths[+k]))
     .replace(/\u2064(\d+)\u2064/g, (m, k) => figBlock(figs[+k]))
     .replace(/\u2062(\d+)\u2062/g, (m, k) => gapChip(...gaps[+k]))
+    .replace(/<div>\u2065(\d+)\u2065<\/div>/g, (m, k) => exBlock(exs[+k]))
     .replace(/<div class="espacio"><\/div>/g, '<div class="espacio" contenteditable="false"></div>');
 }
 // Prices like "$200.000, ... $" pair up as dollars too; only real formulas become chips, the rest stays text.
@@ -1557,6 +1767,14 @@ const gapToken = (n, w) => `[[hueco${n !== "" && n != null ? ":" + n : ""}${w ? 
 function gapChip(n, w = "") {
   const drawn = window.gapHtml ? window.gapHtml(n === "" ? null : n, w) : esc(gapToken(n, w));
   return `<span class="gapchip" contenteditable="false" data-gap="${esc(String(n ?? ""))}" data-word="${esc(w || "")}" title="Clic para cambiar el número del hueco o quitarlo">${drawn}</span>`;
+}
+// The worked example (0) of an English part: [[ejemplo:B|prompt|option A|option B|…]] alone on its line.
+const EX_PARA = /^\s*\[\[ejemplo:([A-Za-z]?)\|([^\]\n]*)\]\]\s*$/;
+const exToken = ({ answer, prompt, options }) => `[[ejemplo:${answer || ""}|${[prompt, ...options].map(x => x.replace(/[|\]\n]/g, " ").trim()).join("|")}]]`;
+function exBlock(token) {
+  const ex = window.parseExample?.(token);
+  const drawn = ex ? window.DOMPurify.sanitize(window.exampleHtml(ex)) : esc(token);
+  return `<div class="exblock" contenteditable="false" data-src="${esc(token)}" title="Clic para editar el ejemplo">${drawn}</div>`;
 }
 function pipeTables(text) {
   const lines = text.split("\n"), out = [];
@@ -1588,6 +1806,7 @@ function toSource(root) {
 function blockSource(el) {
   const tag = el.tagName;
   if (el.classList.contains("figblock")) return `[[figura:${el.dataset.fig}]]`;
+  if (el.classList.contains("exblock")) return el.dataset.src;
   if (el.classList.contains("espacio")) return `<div class="espacio"></div>`;
   for (const cls of ["cita", "poema"]) {
     if (!el.classList.contains(cls)) continue;
@@ -1627,6 +1846,7 @@ function inlineSource(n) {
   if (n.classList.contains("mathchip")) return `$${n.dataset.tex}$`;
   if (n.classList.contains("gapchip")) return gapToken(n.dataset.gap, n.dataset.word);
   if (n.classList.contains("figblock")) return `\n\n[[figura:${n.dataset.fig}]]\n\n`;
+  if (n.classList.contains("exblock")) return `\n\n${n.dataset.src}\n\n`;
   if (n.classList.contains("mathedit")) { const mf = n.querySelector("math-field"); const tex = mf ? texOf(mf) : n.dataset.tex; return tex ? `$${tex}$` : ""; }
   const tag = n.tagName;
   if (tag === "BR") return "\n";
@@ -1676,6 +1896,7 @@ function attachRich(ta) {
   });
   rich.addEventListener("click", e => { const chip = e.target.closest(".mathchip"); if (chip) { state.lastArea = ta; editMathInline(ta, chip); } });
   rich.addEventListener("click", e => { const gap = e.target.closest(".gapchip"); if (gap) { state.lastArea = ta; openGap(ta, gap); } });
+  rich.addEventListener("click", e => { const ex = e.target.closest(".exblock"); if (ex) { state.lastArea = ta; openExample(ta, ex); } });
   rich.addEventListener("paste", e => {
     const html = e.clipboardData?.getData("text/html"), text = e.clipboardData?.getData("text/plain");
     if (e.clipboardData?.files?.length) return;
@@ -2250,6 +2471,43 @@ function openGap(area, chip) {
   document.querySelectorAll("#gap-n, #gap-w").forEach(i => i.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); done(); } }));
   draw(); $("#gap-n").focus();
 }
+// The worked example (0): prompt, options one per line, and the right letter. Without options the answer is
+// a letter of a list shown elsewhere (the matching part, A–H).
+function openExample(area = state.lastArea, block = null) {
+  if (!area?.isConnected) area = $("#f-passage") || $("#f-stimulus");
+  const rich = state.visual && richOf(area);
+  const range = rich?._range && rich.contains(rich._range.startContainer) ? rich._range.cloneRange() : null;
+  const ex = (block && window.parseExample(block.dataset.src)) || { answer: "", prompt: "", options: [] };
+  const field = "width:100%;font:15px system-ui;padding:8px;border-radius:8px;border:2px solid var(--line);background:var(--surface);color:var(--text);box-sizing:border-box";
+  overlay(`<div class="label">Ejemplo (0)</div>
+    <p class="muted" style="margin:0 0 8px;font-size:13px">El ejemplo que trae resuelto cada parte de inglés. Si el ejemplo es un aviso con imagen, pon la imagen encima con ✂ Imagen. El ejemplo de un texto con huecos va dentro del texto: haz clic en el hueco (0) y escribe la palabra.</p>
+    <label style="font-size:13px">Pregunta, aviso o frase del ejemplo<br><input id="ex-q" value="${esc(ex.prompt)}" style="${field}"></label>
+    <label style="font-size:13px;display:block;margin-top:8px">Opciones, una por línea (A, B, C… en orden). Déjalo vacío si la respuesta es una letra de una lista, como en la parte 2.<br>
+      <textarea id="ex-o" rows="4" style="${field}">${esc(ex.options.join("\n"))}</textarea></label>
+    <label style="font-size:13px;display:block;margin-top:8px">Respuesta <select id="ex-a" style="font:15px system-ui;padding:6px;border-radius:8px">${["", ..."ABCDEFGH"].map(l => `<option ${l === ex.answer ? "selected" : ""} value="${l}">${l || "—"}</option>`).join("")}</select></label>
+    <div id="ex-prev" class="paper" style="margin-top:10px;font-size:16px"></div>
+    <div class="row" style="gap:8px;margin-top:10px">
+      <button class="ib go" type="button" id="ex-ok">${block ? "Listo" : "Poner en el texto"}</button>
+      ${block ? '<button class="ib warn" type="button" id="ex-del">Quitar</button>' : ""}
+      <button class="ib" type="button" onclick="closeOverlay()">Cancelar</button></div>`);
+  const read = () => ({ answer: $("#ex-a").value, prompt: $("#ex-q").value.trim(), options: $("#ex-o").value.split("\n").map(x => x.trim()).filter(Boolean) });
+  const draw = () => { $("#ex-prev").innerHTML = window.renderRich(exToken(read())); };
+  ["ex-q", "ex-o", "ex-a"].forEach(id => $("#" + id).addEventListener("input", draw));
+  $("#ex-a").addEventListener("change", draw);
+  $("#ex-ok").onclick = () => {
+    const v = read();
+    closeOverlay();
+    if (!v.prompt) return;
+    const box = document.createElement("div"); box.innerHTML = exBlock(exToken(v));
+    const el = box.firstChild;
+    if (block) block.replaceWith(el);
+    else if (rich) insertBlockAt(rich, range, el);
+    else { insertAt(area, `\n\n${exToken(v)}\n\n`); return; }
+    rich?.dispatchEvent(new Event("input"));
+  };
+  if ($("#ex-del")) $("#ex-del").onclick = () => { closeOverlay(); block.remove(); rich?.dispatchEvent(new Event("input")); };
+  draw(); $("#ex-q").focus();
+}
 // Texts read from the scan mark a blank as "(97)", "(97)____" or "(97) ......"; this turns the ones of this
 // group (and the example 0) into gaps. Other numbers in brackets are left alone.
 function markGapsIn(text, from, to) {
@@ -2501,7 +2759,7 @@ function pdfPane() {
       <button class="ib" onclick="zoomBy(1/1.25)" title="Alejar">−</button>
       <button class="ib" onclick="zoomBy(0)" title="Ajustar al ancho del panel">Ajustar</button>
       <button class="ib" onclick="zoomBy(1.25)" title="Acercar">+</button>
-      ${STATIC ? "" : `<button class="ib ${state.cropping ? "on" : ""}" id="cropbtn" onclick="state.cropping ? cancelCrop() : startCrop()" title="Dibuja un recuadro en la página para recortar una figura o copiar su texto (R)">✂ Recortar o leer</button>`}
+      ${STATIC || state.group ? "" : `<button class="ib ${state.cropping ? "on" : ""}" id="cropbtn" onclick="state.cropping ? cancelCrop() : startCrop()" title="Dibuja un recuadro en la página para recortar una figura o copiar su texto (R)">✂ Recortar o leer</button>`}
     </div>
     ${est ? `<div class="note warn" style="margin:8px 10px 0">Página estimada: busca la pregunta con ‹ ›.</div>` : ""}
     <div class="pdfscroll" id="pdfscroll">
