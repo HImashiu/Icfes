@@ -11,6 +11,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from icfes_admin.server import make_server  # noqa: E402
 from icfes_admin.store import BadRequest, Conflict, NotFound, Store  # noqa: E402
+from icfes_view.golden import validate_golden  # noqa: E402
 
 EXAM = "S11-T_1ra"
 
@@ -319,3 +320,141 @@ def test_reading_falls_back_to_the_next_engine(root, monkeypatch):
         store.ocr_box(EXAM, 3, [0, 0, 1, 1], engine="local", want="table")
     with pytest.raises(BadRequest):
         store.ocr_box(EXAM, 3, [0, 0, 1, 1], engine="paper")
+
+
+def test_a_cleaned_crop_is_fetched_then_saved_with_its_place_on_the_page(root, tmp_path):
+    _, sources = _pdf(tmp_path)
+    server = make_server(root, port=0, sources=sources)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{server.server_address[1]}/api/exams/{EXAM}"
+    try:
+        req = urllib.request.Request(base + "/crop-image", method="POST", headers={"Content-Type": "application/json"},
+                                     data=json.dumps({"page": 1, "box": [0.1, 0.05, 0.6, 0.3]}).encode())
+        with urllib.request.urlopen(req) as r:
+            png = r.read()
+            assert r.headers["Content-Type"] == "image/png" and png[:4] == b"\x89PNG"
+        # The page edits the picture, then sends it back with the page, box and the native figure it replaces.
+        req = urllib.request.Request(base + "/questions/1/scan-figures?option=b&replaces=t-q1-chart&page=1&box=0.1,0.05,0.6,0.3",
+                                     method="POST", data=png, headers={"Content-Type": "image/png"})
+        with urllib.request.urlopen(req) as r:
+            made = json.loads(r.read())
+        assert "-opt-b-" in made["figure_id"] and made["spec_id"] == "t-q1-chart"
+        assert made["page"] == 1 and made["box_page_fraction"] == [0.1, 0.05, 0.6, 0.3]
+    finally:
+        server.shutdown()
+
+
+def test_a_crop_takes_the_place_of_a_figure_left_for_a_hand_crop(root, tmp_path):
+    _, sources = _pdf(tmp_path)
+    mp = root / "figures" / "traced" / EXAM / "manifest.json"
+    manifest = json.loads(mp.read_text(encoding="utf-8"))
+    manifest["figures"].append({"figure_id": "t-q1-opt-a", "question": 1, "page": 1, "kind": "diagram",
+                                "spec_id": "t-q1-opt-a", "method": "manual_crop_needed", "svg": None})
+    mp.write_text(json.dumps(manifest), encoding="utf-8")
+    store = Store(root, sources=sources)
+    assert store.progress(EXAM)["figures"]["to_crop"] == 1
+    assert [r["to_crop"] for r in store.question_rows(EXAM)] == [1, 0, 0]
+    made = store.crop_page(EXAM, 1, 1, [0.1, 0.1, 0.5, 0.4], option="a", replaces="t-q1-opt-a")
+    assert made["spec_id"] == "t-q1-opt-a"
+    ids = [f["figure_id"] for f in store.question_detail(EXAM, 1)["figures"]]
+    assert ids == [made["figure_id"]]
+    assert store.progress(EXAM)["figures"]["to_crop"] == 0
+    store.undo(EXAM, 1)
+    assert [f["figure_id"] for f in store.question_detail(EXAM, 1)["figures"]] == ["t-q1-opt-a"]
+
+
+def test_all_questions_come_in_one_list_with_their_exam(root):
+    rows = Store(root).all_rows()
+    assert [(r["exam"], r["number"]) for r in rows] == [(EXAM, 1), (EXAM, 2), (EXAM, 3)]
+    assert rows[1]["hidden"] == ["not ready", "text pending"] and rows[0]["snippet"] == "Pregunta 1?"
+
+
+def test_a_proposed_box_counts_as_to_crop_and_comes_in_page_fractions(root, tmp_path):
+    _, sources = _pdf(tmp_path)
+    mp = root / "figures" / "traced" / EXAM / "manifest.json"
+    manifest = json.loads(mp.read_text(encoding="utf-8"))
+    manifest["figures"].append({"figure_id": "t-q1-fig", "question": 1, "page": 1, "spec_id": "t-q1-fig",
+                                "method": "proposed_box", "svg": None, "proposed_box_300dpi": [0, 0, 1240, 1754]})
+    mp.write_text(json.dumps(manifest), encoding="utf-8")
+    store = Store(root, sources=sources)
+    assert store.question_rows(EXAM)[0]["to_crop"] == 1
+    fig = next(f for f in store.question_detail(EXAM, 1)["figures"] if f["figure_id"] == "t-q1-fig")
+    assert fig["proposed_box_page_fraction"] == pytest.approx([0, 0, 0.5, 0.5], abs=0.001)
+    made = store.crop_page(EXAM, 1, 1, fig["proposed_box_page_fraction"], replaces="t-q1-fig")
+    assert [f["figure_id"] for f in store.question_detail(EXAM, 1)["figures"]] == [made["figure_id"]]
+
+
+def test_saving_puts_questions_back_in_number_order(root):
+    p = root / "data" / f"{EXAM}.golden.json"
+    g = json.loads(p.read_text(encoding="utf-8"))
+    g["questions"] = g["questions"][1:] + g["questions"][:1]
+    p.write_text(json.dumps(g, ensure_ascii=False), encoding="utf-8")
+    store = Store(root)
+    assert [r["number"] for r in store.question_rows(EXAM)] == [1, 2, 3]
+    store.update_question(EXAM, 3, {"stem_md": "otra"})
+    assert [q["number"] for q in store.golden(EXAM)["questions"]] == [1, 2, 3]
+
+
+def test_sync_carries_only_laptop_edits_and_keeps_newer_shared_work(root, tmp_path_factory):
+    import shutil
+    from icfes_admin import sync
+    shared = tmp_path_factory.mktemp("shared")
+    for part in ("data", "answer-keys", "figures"):
+        shutil.copytree(root / part, shared / part)
+    # laptop: edit Q1's stem and draw a crop for Q3 that replaces t-q3
+    s = Store(root)
+    s.update_question(EXAM, 1, {"stem_md": "Editada en la laptop?"})
+    s.add_scan_figure(EXAM, 3, b"\x89PNG\r\n\x1a\n", replaces="t-q3", page=1, box=[0.1, 0.1, 0.5, 0.5])
+    lp = root / "figures" / "traced" / EXAM / "manifest.json"
+    lm = json.loads(lp.read_text(encoding="utf-8"))
+    lm["figures"] = [f for f in lm["figures"] if f["figure_id"] != "t-q3"]
+    lp.write_text(json.dumps(lm), encoding="utf-8")
+    # shared, meanwhile: another thread fixes Q3's text and adds a traced figure
+    g = json.loads((shared / "data" / f"{EXAM}.golden.json").read_text(encoding="utf-8"))
+    g["questions"][2]["stem_md"] = "Arreglada en la carpeta compartida?"
+    (shared / "data" / f"{EXAM}.golden.json").write_text(json.dumps(g, ensure_ascii=False), encoding="utf-8")
+    mp = shared / "figures" / "traced" / EXAM / "manifest.json"
+    m = json.loads(mp.read_text(encoding="utf-8"))
+    m["figures"].append({"question": 1, "figure_id": "t-q1-new", "spec_id": "t-q1-new", "method": "eyeballed_box"})
+    mp.write_text(json.dumps(m), encoding="utf-8")
+
+    sync.main(["--from", str(root), "--to", str(shared), "--write"])
+
+    out = {q["number"]: q for q in json.loads((shared / "data" / f"{EXAM}.golden.json").read_text(encoding="utf-8"))["questions"]}
+    assert out[1]["stem_md"] == "Editada en la laptop?"
+    assert out[3]["stem_md"] == "Arreglada en la carpeta compartida?"
+    ids = [f["figure_id"] for f in json.loads(mp.read_text(encoding="utf-8"))["figures"]]
+    assert "t-q1-new" in ids and "t-q3" not in ids and any("recorte" in i for i in ids)
+    assert sync.changed_files(root, shared) == []
+
+
+def test_figure_placed_in_the_text_must_exist(root):
+    s = Store(root)
+    s.update_question(EXAM, 1, {"stem_md": "Antes\n\n[[figura:t-q3]]\n\nDespués"})
+    assert s.question_detail(EXAM, 1)["hidden_reasons"] == ["figure in the text not found"]  # t-q3 is Q3's
+    s.update_question(EXAM, 3, {"stem_md": "Mira\n\n[[figura:t-q3]]\n\n¿Qué ves?"})
+    assert "figure in the text not found" not in s.question_detail(EXAM, 3)["hidden_reasons"]
+    assert validate_golden(s.golden(EXAM))["errors"] == []
+
+
+def test_option_with_a_picture_needs_no_text(root):
+    s = Store(root)
+    opts = s.question_detail(EXAM, 1)["question"]["options"]
+    opts[0]["text_md"] = ""
+    with pytest.raises(Conflict):
+        s.update_question(EXAM, 1, {"options": opts, "ready": True})
+    m = root / "figures" / "traced" / EXAM / "manifest.json"
+    data = json.loads(m.read_text(encoding="utf-8"))
+    data["figures"].append({"question": 1, "figure_id": "t-q1-recorte-1", "option": "A", "method": "eyeballed_box",
+                            "svg": "traced/S11-T_1ra/t-q1-recorte-1.png"})
+    m.write_text(json.dumps(data), encoding="utf-8")
+    d = s.update_question(EXAM, 1, {"options": opts, "ready": True})
+    assert d["question"]["options"][0]["text_md"] == "" and d["hidden_reasons"] == []
+    assert d["messages"]["errors"] == []
+
+
+def test_rows_mark_questions_edited_in_the_editor(root):
+    s = Store(root)
+    assert not any(r["edited"] for r in s.question_rows(EXAM))
+    s.update_question(EXAM, 2, {"stem_md": "Otra pregunta 2?"})
+    assert [r["number"] for r in s.question_rows(EXAM) if r["edited"]] == [2]

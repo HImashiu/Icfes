@@ -162,13 +162,17 @@ def azure_config():
     return (endpoint.rstrip("/"), key) if endpoint and key else None
 
 
-def azure_live(png, config=None, opener=urllib.request.urlopen, sleep=time.sleep, timeout=60):
-    """Runs prebuilt-layout on one picture and returns its analyzeResult. About 1 cent per call."""
+def azure_live(png, config=None, opener=urllib.request.urlopen, sleep=time.sleep, timeout=60, features=None):
+    """Runs prebuilt-layout on one picture and returns its analyzeResult. About 1 cent per call.
+
+    features=["formulas"] also returns the formulas Azure finds, as LaTeX (an add-on with its own small charge)."""
     config = config or azure_config()
     if config is None:
         raise OcrError("Azure no está configurado en este equipo (faltan AZURE_DI_ENDPOINT y AZURE_DI_KEY)")
     endpoint, key = config
     url = f"{endpoint}/documentintelligence/documentModels/prebuilt-layout:analyze?api-version={API_VERSION}"
+    if features:
+        url += "&features=" + ",".join(features)
     req = urllib.request.Request(url, data=png, method="POST",
                                  headers={"Ocp-Apim-Subscription-Key": key, "Content-Type": "image/png"})
     try:
@@ -198,7 +202,8 @@ def azure_read(png, **kw):
     page = (res.get("pages") or [{}])[0]
     w, h = page.get("width") or 1, page.get("height") or 1
     return {"lines": lines_from_polys(page.get("lines", []), w, h),
-            "tables": tables_from_result(res, page.get("pageNumber", 1), w, h)}
+            "tables": tables_from_result(res, page.get("pageNumber", 1), w, h),
+            "formulas": [f.get("value", "") for f in page.get("formulas", []) if f.get("value")]}
 
 
 # ----- RapidOCR on the laptop ----------------------------------------------------------------
@@ -222,7 +227,8 @@ def rapid_read(pix_samples, width, height, channels):
     for box, text in zip(res.boxes if res.boxes is not None else [], res.txts or []):
         xs = [p[0] for p in box]
         ys = [p[1] for p in box]
-        lines.append(Line(text, sum(xs) / len(xs) / width, sum(ys) / len(ys) / height, min(xs) / width, (max(ys) - min(ys)) / height))
+        lines.append(Line(text, float(sum(xs) / len(xs) / width), float(sum(ys) / len(ys) / height), float(min(xs) / width),
+                          float((max(ys) - min(ys)) / height)))
     # Sort into rows: lines whose centres are closer than half a line height share a row, read left to right.
     lines.sort(key=lambda ln: (ln.cy, ln.cx))
     rows, cur = [], []

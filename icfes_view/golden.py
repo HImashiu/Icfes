@@ -59,7 +59,9 @@ def build_golden(doc_id: str, title: str, qdata: dict, bundles: dict | None, rec
         "questions": qs}
 
 
-def validate_golden(g: dict) -> dict:
+def validate_golden(g: dict, option_figures=None) -> dict:
+    """option_figures: (question number, letter) pairs whose option is a picture, so its text may be empty."""
+    option_figures = option_figures or set()
     errors: list[str] = []
     warnings: list[str] = list(g["exam"].get("warnings", []))
     seen: set[int] = set()
@@ -82,7 +84,7 @@ def validate_golden(g: dict) -> dict:
             errors.append(f"Q{n}: {len(letters)} options, expected {want}")
         if letters != list("ABCDEFGH"[:len(letters)]) or (len(letters) > 4 and q.get("item_type") != "matching"):
             errors.append(f"Q{n}: option letters are not A, B, C… in order: {letters}")
-        if any(not o["text_md"].strip() for o in q["options"]):
+        if any(not o["text_md"].strip() and (n, o["letter"]) not in option_figures for o in q["options"]):
             errors.append(f"Q{n}: an option has no text")
         if ARTIFACTS.search(text):
             errors.append(f"Q{n}: contains OCR/layout artifacts")

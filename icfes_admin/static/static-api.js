@@ -47,8 +47,8 @@
     const reasons = [];
     if (!q.ready) reasons.push("not ready");
     const g = groups(e)[q.group_id] || {};
-    const texts = [q.stem_md, q.stimulus_md, g.passage_md, ...(q.options || []).map(o => o.text_md)].map(t => t || "");
-    if (texts.some(t => t.includes("[Texto pendiente"))) reasons.push("text pending");
+    const texts = [q.stem_md, q.stimulus_md, g.passage_md, g.stimulus_md, ...(q.options || []).map(o => o.text_md)].map(t => t || "");
+    if (texts.some(t => /\[(?:Texto|Tablas?|Gr[aá]ficas?|Figuras) pendientes?/.test(t))) reasons.push("text pending");
     if (texts.some(t => t.includes("[FIGURE"))) reasons.push("[FIGURE] note");
     if (pendingFig(e, q.number)) reasons.push("figure pending spec");
     if ((q.options || []).some(o => !(o.text_md || "").trim())) reasons.push("blank option");

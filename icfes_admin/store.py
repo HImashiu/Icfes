@@ -25,11 +25,51 @@ if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 from icfes_view.golden import validate_golden  # noqa: E402
 from icfes_admin import ocr  # noqa: E402
+from icfes_admin import formula  # noqa: E402
 
 EXAM_ID = re.compile(r"^[A-Za-z0-9_-]+$")
 QUESTION_PREFIX = re.compile(r"^Q(\d+):")
-PENDING_TEXT = "[Texto pendiente"
+# Any "[... pendiente(s)" placeholder (texto, tabla, gráfica, figuras) means the content is not typed yet; the app hides these too.
+PENDING_TEXT = re.compile(r"\[(?:Texto|Tablas?|Gr[aá]ficas?|Figuras) pendientes?")
 FIGURE_NOTE = "[FIGURE"
+# A figure placed inside the text: [[figura:ID]] alone on its own paragraph. ID is a native figure's id or a crop's
+# figure_id (or the spec_id it replaced), of this question or of another question in its group.
+FIGURE_TOKEN = re.compile(r"\[\[figura:([^\]\s]+)\]\]")
+# The tracing could not cut these figures; they wait for a crop drawn by hand ("proposed_box" comes with a box to check).
+TO_CROP = {"manual_crop_needed", "proposed_box"}
+OPTION_IN_ID = re.compile(r"[-_](?:opt|opcion|opción)[-_]([a-d])(?=[-_]|$)", re.I)
+
+
+def option_figures(figures_dir, exam):
+    """(question, letter) of every option shown as a picture: a crop for that option or a native figure targeting it.
+    Such an option needs no text. Crops still to be made do not count."""
+    figures_dir = Path(figures_dir)
+    out = set()
+    p = figures_dir / "traced" / exam / "manifest.json"
+    if p.exists():
+        for f in json.loads(p.read_text(encoding="utf-8")).get("figures", []):
+            if f.get("method") in TO_CROP or f.get("pending_spec") or not f.get("svg"):
+                continue
+            m = OPTION_IN_ID.search(f.get("figure_id") or "")
+            letter = f.get("option") or (m.group(1).upper() if m else None)
+            if letter and isinstance(f.get("question"), int):
+                out.add((f["question"], letter))
+    p = figures_dir / "specs" / f"{exam}.json"
+    booklet = None
+    if not p.exists() and exam.startswith("S11-M_"):
+        p = figures_dir / "specs" / "S11-M_1ra-2da.json"
+        booklet = "m1" if exam.endswith("1ra") else "m2"
+    if p.exists():
+        for fig in json.loads(p.read_text(encoding="utf-8")).get("figures", []):
+            loc = fig.get("location") or {}
+            if booklet and not str(fig.get("id", "")).startswith(booklet + "-"):
+                continue
+            if loc.get("stem_or_option") == "option" and loc.get("option") and fig.get("spec"):
+                try:
+                    out.add((int(loc.get("question")), loc["option"]))
+                except (TypeError, ValueError):
+                    pass
+    return out
 EDITABLE = {"stem_md", "stimulus_md", "group_passage_md", "section", "options", "ready", "answer"}
 
 
@@ -128,27 +168,61 @@ class Store:
         return by_q
 
     @staticmethod
-    def hidden_reasons(q, groups, figs):
-        """Why students do not see this question yet (mirrors the app's gate)."""
+    def hidden_reasons(q, groups, figs, known_ids=None, pictured=frozenset()):
+        """Why students do not see this question yet (mirrors the app's gate). known_ids, when given, are the figure
+        ids a [[figura:ID]] in the text may name; any other id hides the question."""
         reasons = []
         if not q.get("ready"):
             reasons.append("not ready")
         group = groups.get(q.get("group_id")) or {}
-        texts = [q.get("stem_md"), q.get("stimulus_md"), group.get("passage_md")]
+        texts = [q.get("stem_md"), q.get("stimulus_md"), group.get("passage_md"), group.get("stimulus_md")]
         texts += [o.get("text_md") for o in q.get("options", [])]
         texts = [t or "" for t in texts]
-        if any(PENDING_TEXT in t for t in texts):
+        if any(PENDING_TEXT.search(t) for t in texts):
             reasons.append("text pending")
         if any(FIGURE_NOTE in t for t in texts):
             reasons.append("[FIGURE] note")
         if any(f.get("pending_spec") for f in figs):
             reasons.append("figure pending spec")
-        if any(not (o.get("text_md") or "").strip() for o in q.get("options", [])):
+        if any(not (o.get("text_md") or "").strip() and (q.get("number"), o.get("letter")) not in pictured
+               for o in q.get("options", [])):
             reasons.append("blank option")
+        if known_ids is not None and any(i not in known_ids for t in texts for i in FIGURE_TOKEN.findall(t)):
+            reasons.append("figure in the text not found")
         return reasons
 
-    def validation(self, g):
-        report = validate_golden(g)
+    def native_ids_by_question(self, exam):
+        p, booklet = self._specs_file(exam)
+        out = {}
+        if p is None:
+            return out
+        raw = json.loads(p.read_text(encoding="utf-8"))
+        for fig in raw.get("figures", []):
+            if booklet and not str(fig.get("id", "")).startswith(booklet + "-"):
+                continue
+            q = (fig.get("location") or {}).get("question")
+            try:
+                out.setdefault(int(q), set()).add(fig.get("id"))
+            except (TypeError, ValueError):
+                continue
+        return out
+
+    @staticmethod
+    def known_figure_ids(q, questions, figs_by_q, natives_by_q):
+        """Ids a [[figura:ID]] in this question or its group may name: figures of the question and of its group."""
+        nums = {q["number"]}
+        if q.get("group_id"):
+            nums |= {x["number"] for x in questions if x.get("group_id") == q["group_id"]}
+        ids = set()
+        for n in nums:
+            ids |= natives_by_q.get(n, set())
+            for f in figs_by_q.get(n, []):
+                ids |= {f.get("figure_id"), f.get("spec_id")}
+        ids.discard(None)
+        return ids
+
+    def validation(self, g, exam):
+        report = validate_golden(g, option_figures(self.figures, exam))
         per_q = {}
         for kind in ("errors", "warnings"):
             for msg in report[kind]:
@@ -159,11 +233,14 @@ class Store:
 
     def progress(self, exam):
         g = self.golden(exam)
-        report, _ = self.validation(g)
+        report, _ = self.validation(g, exam)
         groups = {x["id"]: x for x in g["groups"]}
         figs = self.figures_by_question(exam)
+        natives = self.native_ids_by_question(exam)
+        pictured = option_figures(self.figures, exam)
         qs = g["questions"]
-        hidden = sum(1 for q in qs if self.hidden_reasons(q, groups, figs.get(q["number"], [])))
+        hidden = sum(1 for q in qs if self.hidden_reasons(q, groups, figs.get(q["number"], []),
+                                                         self.known_figure_ids(q, qs, figs, natives), pictured))
         answers = self.answers(exam)
         side = self.sidecar(exam)
         traced = self.manifest_figures(exam)
@@ -186,6 +263,7 @@ class Store:
                 "traced": len(traced),
                 "pending_spec": sum(1 for f in traced if f.get("pending_spec")),
                 "eyeballed": sum(1 for f in traced if "eyeball" in str(f.get("method", ""))),
+                "to_crop": sum(1 for f in traced if f.get("method") in TO_CROP),
             },
         }
 
@@ -194,22 +272,36 @@ class Store:
 
     def question_rows(self, exam):
         g = self.golden(exam)
-        _, per_q = self.validation(g)
+        _, per_q = self.validation(g, exam)
         groups = {x["id"]: x for x in g["groups"]}
         figs = self.figures_by_question(exam)
+        natives = self.native_ids_by_question(exam)
+        pictured = option_figures(self.figures, exam)
         rows = []
-        for q in g["questions"]:
+        # questions saved from this editor (text, figures or crops); syncs and scripts leave no history
+        edited = {e.get("question") for e in self._entries(exam)}
+        # Number order, whatever order the golden file keeps them in (a question added later sits at the end).
+        for q in sorted(g["questions"], key=lambda x: x["number"]):
             n = q["number"]
             msgs = per_q.get(n, {"errors": [], "warnings": []})
             rows.append({
                 "number": n,
                 "section": q.get("section"),
                 "ready": bool(q.get("ready")),
-                "hidden": self.hidden_reasons(q, groups, figs.get(n, [])),
+                "edited": n in edited,
+                "hidden": self.hidden_reasons(q, groups, figs.get(n, []),
+                                              self.known_figure_ids(q, g["questions"], figs, natives), pictured),
                 "errors": len(msgs["errors"]),
                 "warnings": len(msgs["warnings"]),
+                "to_crop": sum(1 for f in figs.get(n, []) if f.get("method") in TO_CROP),
+                "messages": (msgs["errors"] + msgs["warnings"])[:4],
+                "snippet": " ".join((q.get("stem_md") or q.get("stimulus_md") or "").split())[:120],
             })
         return rows
+
+    def all_rows(self):
+        """Every question of every exam in one list, for the admin view without exam tabs."""
+        return [{"exam": e, **r} for e in self.exam_ids() for r in self.question_rows(e)]
 
     def question_detail(self, exam, n):
         g = self.golden(exam)
@@ -217,22 +309,28 @@ class Store:
         if q is None:
             raise NotFound(f"no question {n} in {exam}")
         groups = {x["id"]: x for x in g["groups"]}
-        figs = self.figures_by_question(exam).get(n, [])
-        _, per_q = self.validation(g)
+        by_q = self.figures_by_question(exam)
+        figs = [self._with_fraction(exam, f) for f in by_q.get(n, [])]
+        known = self.known_figure_ids(q, g["questions"], by_q, self.native_ids_by_question(exam))
+        # Figures of the other questions in the group, so a [[figura:ID]] in the shared text draws in every question.
+        siblings = sorted(x["number"] for x in g["questions"] if q.get("group_id") and x.get("group_id") == q["group_id"] and x["number"] != n)
+        _, per_q = self.validation(g, exam)
         answers = self.answers(exam) or {}
         return {
             "exam": exam,
             "number": n,
             "question": q,
             "group": groups.get(q.get("group_id")),
-            "hidden_reasons": self.hidden_reasons(q, groups, figs),
+            "hidden_reasons": self.hidden_reasons(q, groups, figs, known, option_figures(self.figures, exam)),
             "messages": per_q.get(n, {"errors": [], "warnings": []}),
             "figures": figs,
             "native_figures": self.native_figures(exam, n),
+            "group_figures": {"figures": [self._with_fraction(exam, f) for m in siblings for f in by_q.get(m, [])],
+                              "native_figures": [f for m in siblings for f in self.native_figures(exam, m)]},
             "key": answers.get(str(n)),
             "scan_pages": q.get("source", {}).get("pages", []),
             "scan": self.scan_info(exam, n, q, len(g["questions"])),
-            "numbers": [x["number"] for x in g["questions"]],
+            "numbers": sorted(x["number"] for x in g["questions"]),
             "undo": self.undo_count(exam, n),
             "ocr": self.ocr_available(exam),
             "anchor": self.locate(exam, n, self.scan_info(exam, n, q, len(g["questions"]))),
@@ -515,6 +613,11 @@ class Store:
         return self.add_scan_figure(exam, n, data, option=option, replaces=replaces, page=page,
                                     box=[round(v, 4) for v in (x0, y0, x1, y1)])
 
+    def crop_image(self, exam, page, box, dpi=200):
+        """The PNG of a box on the original page, for the clean-up step before it is saved."""
+        exam = self._exam(exam)
+        return self._render_box(exam, page, self._box(box), dpi).tobytes("png")
+
     def add_scan_figure(self, exam, n, data, option=None, replaces=None, page=None, box=None, ctype="image/png"):
         """Stores a picture of the scan as the figure of question n (or of one option) in figures/traced/<exam>/manifest.json.
 
@@ -546,8 +649,14 @@ class Store:
                  "method": "eyeballed_box", "svg": f"traced/{exam}/{fid}.{ext}", "crop_png": None, "pending_spec": False,
                  "box_page_fraction": box, "option": option,
                  "note": "box drawn in the admin editor" if box else "picture added in the admin editor"}
-        manifest.setdefault("figures", []).append(entry)
-        self._remember(exam, n, {"type": "scan", "id": fid, "before": None})
+        # A figure the tracing left for a hand crop is replaced by the crop; undo brings the placeholder back.
+        figs = manifest.setdefault("figures", [])
+        todo = next((f for f in figs if f.get("question") == n and f.get("method") in TO_CROP
+                     and replaces in (f.get("figure_id"), f.get("spec_id"))), None) if replaces else None
+        if todo is not None:
+            figs.remove(todo)
+        figs.append(entry)
+        self._remember(exam, n, {"type": "scan", "id": fid, "before": todo})
         self._write(mp, json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", f"{exam}.manifest")
         return entry
 
@@ -562,6 +671,32 @@ class Store:
         manifest["figures"] = [f for f in manifest["figures"] if f is not hit]
         self._write(mp, json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", f"{exam}.manifest")
         return {"deleted": fig_id}
+
+    def _with_fraction(self, exam, f):
+        """A proposed box comes in 300 dpi pixels; the editor draws boxes in page fractions."""
+        box = f.get("proposed_box_300dpi")
+        if f.get("method") != "proposed_box" or not box or not f.get("page"):
+            return f
+        size = self._page_size_300(exam, f["page"])
+        if not size:
+            return f
+        w, h = size
+        return {**f, "proposed_box_page_fraction": [round(min(1, max(0, v / d)), 4) for v, d in zip(box, (w, h, w, h))]}
+
+    def _page_size_300(self, exam, page):
+        """Width and height of a page rendered at 300 dpi, from the PDF or the scan PNG."""
+        fitz = _pymupdf()
+        pdf = self.sources.get(exam)
+        if fitz is not None and pdf is not None and pdf.is_file():
+            with fitz.open(pdf) as doc:
+                if 1 <= page <= doc.page_count:
+                    r = doc[page - 1].rect
+                    return r.width * 300 / 72, r.height * 300 / 72
+        path = self.scan_file(exam, page)
+        if path is not None and path.suffix.lower() == ".png":  # the scans are 300 dpi renders: read the PNG header
+            head = path.read_bytes()[:24]
+            return int.from_bytes(head[16:20], "big"), int.from_bytes(head[20:24], "big")
+        return None
 
     def _render_box(self, exam, page, box, dpi):
         """Pixels of a box on the original page (the PDF, or the scan PNG when there is no PDF)."""
@@ -593,6 +728,33 @@ class Store:
             self._ocr_pages[exam] = ocr.load_saved(self.ocr, pdf.name) if ok else None
         return self._ocr_pages[exam]
 
+    def page_formulas(self, exam, page):
+        """Printed formulas on a page of the original, found without any box: [{box, tex}] in page fractions.
+
+        Fraction bars come from the pixels; the words from the saved Azure reading, or RapidOCR on the page when there
+        is none (only when the page has a candidate bar). Cached per page."""
+        exam = self._exam(exam)
+        key = (exam, page)
+        cache = self.__dict__.setdefault("_formula_cache", {})
+        if key in cache:
+            return cache[key]
+        pix = self._render_box(exam, page, [0, 0, 1, 1], dpi=150)
+        if not any(b.x1 - b.x0 <= 0.45 for b in formula.find_bars(pix.samples, pix.width, pix.height, pix.n, min_frac=0.03)):
+            cache[key] = {"formulas": []}
+            return cache[key]
+        pages = self._ocr_doc(exam)
+        if pages is not None:
+            lines = (pages.get(page) or {}).get("lines", [])
+        else:
+            try:
+                big = self._render_box(exam, page, [0, 0, 1, 1], dpi=200)
+                lines = ocr.rapid_read(big.samples, big.width, big.height, big.n)["lines"]
+            except ocr.OcrError:
+                lines = []
+        found = formula.find_formulas(pix.samples, pix.width, pix.height, pix.n, lines)
+        cache[key] = {"formulas": [{"box": list(f.box), "tex": f.tex} for f in found]}
+        return cache[key]
+
     def ocr_available(self, exam):
         return {"saved": self._ocr_doc(exam) is not None, "azure": ocr.azure_config() is not None}
 
@@ -605,8 +767,10 @@ class Store:
         box = self._box(box)
         if engine not in ("auto", "saved", "azure", "local"):
             raise BadRequest("engine must be auto, saved, azure or local")
-        if want not in ("text", "table"):
-            raise BadRequest("want must be text or table")
+        if want not in ("text", "table", "formula"):
+            raise BadRequest("want must be text, table or formula")
+        if want == "formula":
+            return self._formula_box(exam, page, box, engine)
         order = {"auto": ["saved", "azure", "local"], "saved": ["saved"], "azure": ["azure"], "local": ["local"]}[engine]
         if engine == "auto" and ocr.azure_config() is None:
             order.remove("azure")
@@ -634,7 +798,39 @@ class Store:
         what = "ninguna tabla" if want == "table" else "texto"
         raise NotFound(f"no se encontró {what} en el recuadro" + (f" ({'; '.join(problems)})" if problems else ""))
 
-    def _read_with(self, name, exam, page, box):
+    def _formula_box(self, exam, page, box, engine):
+        """LaTeX for a printed formula: fraction bars come from the pixels, the words from the OCR engines."""
+        pix = self._render_box(exam, page, box, dpi=300)
+        bars = formula.find_bars(pix.samples, pix.width, pix.height, pix.n)
+        order = {"auto": ["saved", "azure", "local"], "saved": ["saved"], "azure": ["azure"], "local": ["local"]}[engine]
+        if engine == "auto" and ocr.azure_config() is None:
+            order.remove("azure")
+        problems = []
+        for name in order:
+            try:
+                if name == "azure":
+                    found = ocr.azure_read(pix.tobytes("png"), features=["formulas"])
+                    # Azure's own formula reading wins when there is no word fraction for the bars to explain.
+                    if found.get("formulas") and not bars:
+                        return {"engine": name, "tex": " ".join(found["formulas"]), "bars": 0}
+                else:
+                    found = self._read_with(name, exam, page, box, pix=pix)
+            except ocr.OcrError as e:
+                problems.append(str(e))
+                continue
+            if not found or not found["lines"]:
+                continue
+            lines = found["lines"]
+            if name == "saved":
+                x0, y0, x1, y1 = box
+                lines = [ocr.Line(ln.text, (ln.cx - x0) / (x1 - x0), (ln.cy - y0) / (y1 - y0), (ln.left - x0) / (x1 - x0),
+                                  ln.height / (y1 - y0)) for ln in lines]
+            tex = formula.to_latex(lines, bars)
+            if tex:
+                return {"engine": name, "tex": tex, "bars": len(bars)}
+        raise NotFound("no se encontró una fórmula en el recuadro" + (f" ({'; '.join(problems)})" if problems else ""))
+
+    def _read_with(self, name, exam, page, box, pix=None):
         if name == "saved":
             pages = self._ocr_doc(exam)
             if pages is None:
@@ -643,7 +839,7 @@ class Store:
                 return None
             got = pages.get(page) or {"lines": [], "tables": []}
             return {"lines": ocr.inside(got["lines"], box), "tables": ocr.tables_inside(got["tables"], box)}
-        pix = self._render_box(exam, page, box, dpi=300)
+        pix = pix or self._render_box(exam, page, box, dpi=300)
         if name == "azure":
             return ocr.azure_read(pix.tobytes("png"))
         return ocr.rapid_read(pix.samples, pix.width, pix.height, pix.n)
@@ -738,11 +934,13 @@ class Store:
             if not isinstance(patch["ready"], bool):
                 raise BadRequest("ready must be true or false")
             if patch["ready"]:
-                _, per_q = self.validation(g)
+                _, per_q = self.validation(g, exam)
                 blockers = list(per_q.get(n, {}).get("errors", []))
                 groups = {x["id"]: x for x in g["groups"]}
-                figs = self.figures_by_question(exam).get(n, [])
-                blockers += [r for r in self.hidden_reasons(q, groups, figs) if r != "not ready"]
+                by_q = self.figures_by_question(exam)
+                known = self.known_figure_ids(q, g["questions"], by_q, self.native_ids_by_question(exam))
+                blockers += [r for r in self.hidden_reasons(q, groups, by_q.get(n, []), known, option_figures(self.figures, exam))
+                             if r != "not ready"]
                 if blockers:
                     raise Conflict(blockers)
             q["ready"] = patch["ready"]
@@ -756,6 +954,8 @@ class Store:
             self._set_answer(exam, n, patch["answer"])
         note =f"edited in the admin editor {datetime.now().strftime('%Y-%m-%d %H:%M')}"
         q.setdefault("provenance", {}).setdefault("notes", []).append(note)
+        # A question stored out of place (one added at the end later) moves into number order on any save.
+        g["questions"].sort(key=lambda x: x["number"])
         self._write(self.data / f"{exam}.golden.json",
                     json.dumps(g, ensure_ascii=False, indent=2) + "\n", f"{exam}.golden")
         return self.question_detail(exam, n)

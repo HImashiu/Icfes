@@ -4,7 +4,12 @@
 // specs (FigureBlock), so <img> tags and markdown image references are removed here.
 import DOMPurify from "dompurify";
 import katex from "katex";
+// \ce{...} and \pu{...} for chemistry (mhchem), drawn by the same KaTeX.
+import "katex/contrib/mhchem";
 import "katex/dist/katex.min.css";
+import { EXAMPLE_PARA, renderExample } from "./example.js";
+import { renderGaps } from "./gaps.js";
+import { expandMol, molParts } from "./molecule.js";
 import { isMathSpan, normalizeField, outsideMath } from "./text-normalize.js";
 
 const MATH = /(?<!\\)\$([^$\n]+?)\$/g;
@@ -19,19 +24,26 @@ function paragraphs(text) {
     .split(/\n\s*\n/)
     .map((block) => block.trim())
     .filter(Boolean)
-    .map((block) => (BLOCK_START.test(block) ? block : `<p>${block.replace(/\n/g, "<br>")}</p>`))
+    .map((block) => (EXAMPLE_PARA.test(block) ? renderExample(block) : BLOCK_START.test(block) ? block : `<p>${block.replace(/\n/g, "<br>")}</p>`))
     .join("");
 }
+
+const katexHtml = (tex) => katex.renderToString(tex, { throwOnError: false, output: "htmlAndMathml" });
+// A reaction's molecules, arrows and plus signs sit on one baseline and wrap between pieces.
+const MOL_ROW = "display:inline-flex;flex-wrap:wrap;align-items:baseline;justify-content:center;column-gap:0.35em;row-gap:0.8em;max-width:100%;vertical-align:middle";
 
 export function renderRich(source) {
   if (!source) return "";
   const withoutPictures = source.replace(IMG, "").replace(MD_IMG, "");
   const cleaned = normalizeField(withoutPictures);
   // **bold** in the exam text (for example a bold NO in a stem) becomes <strong>.
-  const bold = outsideMath(paragraphs(cleaned), (part) => part.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>"));
-  const withMath = bold.replace(MATH, (whole, tex) =>
-    isMathSpan(tex) ? katex.renderToString(tex.trim(), { throwOnError: false, output: "htmlAndMathml" }) : whole,
-  );
+  const bold = outsideMath(paragraphs(cleaned), (part) => renderGaps(part.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")));
+  const withMath = bold.replace(MATH, (whole, tex) => {
+    if (!isMathSpan(tex)) return whole;
+    const pieces = molParts(tex);
+    if (pieces) return `<span class="mol-row" style="${MOL_ROW}">${pieces.map(katexHtml).join("")}</span>`;
+    return katexHtml(expandMol(tex.trim()));
+  });
   return DOMPurify.sanitize(withMath);
 }
 

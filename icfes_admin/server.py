@@ -12,7 +12,10 @@ import json
 import mimetypes
 import os
 import re
+import subprocess
 import sys
+import threading
+import time
 import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -50,6 +53,11 @@ def list_exams(store, m, body, query):
 @route("GET", r"/api/exams/([^/]+)/questions")
 def list_questions(store, m, body, query):
     return store.question_rows(m.group(1))
+
+
+@route("GET", r"/api/questions")
+def all_questions(store, m, body, query):
+    return store.all_rows()
 
 
 @route("GET", r"/api/exams/([^/]+)/questions/(\d+)")
@@ -108,10 +116,19 @@ def crop(store, m, body, query):
                            option=body.get("option"), replaces=body.get("replaces"))
 
 
+@route("POST", r"/api/exams/([^/]+)/crop-image")
+def crop_image(store, m, body, query):
+    body = _json_body(body)
+    return Raw("image/png", store.crop_image(m.group(1), int(body.get("page") or 0), body.get("box")))
+
+
 @route("POST", r"/api/exams/([^/]+)/questions/(\d+)/scan-figures")
 def add_scan_figure(store, m, body, query):
     ctype, data = body
-    return store.add_scan_figure(m.group(1), int(m.group(2)), data, option=(query.get("option") or [None])[0], ctype=ctype)
+    q = lambda k: (query.get(k) or [None])[0]
+    box = [float(v) for v in q("box").split(",")] if q("box") else None
+    return store.add_scan_figure(m.group(1), int(m.group(2)), data, option=q("option"), replaces=q("replaces") or None,
+                                 page=int(q("page")) if q("page") else None, box=box, ctype=ctype)
 
 
 @route("DELETE", r"/api/exams/([^/]+)/questions/(\d+)/scan-figures/([^/]+)")
@@ -123,6 +140,11 @@ def delete_scan_figure(store, m, body, query):
 def ocr(store, m, body, query):
     body = _json_body(body)
     return store.ocr_text(m.group(1), int(body.get("page") or 0), body.get("box"))
+
+
+@route("GET", r"/api/exams/([^/]+)/formulas/(\d+)")
+def page_formulas(store, m, body, query):
+    return store.page_formulas(m.group(1), int(m.group(2)))
 
 
 @route("POST", r"/api/exams/([^/]+)/read")
@@ -254,6 +276,30 @@ def make_server(data, scans=None, port=0, sources=None, ocr=None):
     return ThreadingHTTPServer(("127.0.0.1", port), handler)
 
 
+def _code_stamp():
+    here = Path(__file__).resolve().parent
+    files = list(here.glob("*.py")) + list((here.parent / "icfes_view").glob("*.py"))
+    return {f: f.stat().st_mtime for f in files if f.exists()}
+
+
+def _restart_on_update(server, every=2.0):
+    """When an update replaces the editor's code, the running server starts again with it (same arguments), so a
+    new version never meets an old server. The page keeps working: the browser just talks to the new one."""
+    first = _code_stamp()
+    while True:
+        time.sleep(every)
+        try:
+            now = _code_stamp()
+        except OSError:
+            continue
+        if now != first:
+            time.sleep(1.0)  # let the rest of the update land
+            print("El editor se actualizó; reiniciando…", flush=True)
+            server.restart = True
+            server.shutdown()  # main() starts the new version once the port is free
+            return
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="icfes_admin", description="Local ICFES question editor.")
     ap.add_argument("--data", default=os.environ.get("ICFES_DATA"),
@@ -270,8 +316,14 @@ def main(argv=None):
         ap.error("pass --data or set ICFES_DATA")
     server = make_server(args.data, args.scans, args.port, args.sources, args.ocr)
     print(f"ICFES editor on http://127.0.0.1:{server.server_address[1]}  (data: {args.data})")
+    server.restart = False
+    threading.Thread(target=_restart_on_update, args=(server,), daemon=True).start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         pass
+    server.server_close()
+    if server.restart:
+        # a new process rather than exec: Windows quotes the arguments properly this way
+        return subprocess.call([sys.executable, "-m", "icfes_admin", *sys.argv[1:]], cwd=os.getcwd())
     return 0

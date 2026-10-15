@@ -54,9 +54,34 @@ textarea{width:100%;min-height:110px;font:400 14px/1.45 ui-monospace,Menlo,monos
 .cell.hidden{border-style:dashed;color:var(--text-2)}
 .cell.err{border-color:var(--bad);color:var(--bad)}
 .cell.cur{border-width:3px;border-color:var(--text)}
+.cell.crop,.qstrip button.crop{position:relative}
+.gcard{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:0 0 14px;background:var(--surface)}
+.gcard.focus{border-color:var(--flame);box-shadow:0 0 0 1px var(--flame)}
+.gchead{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.gchead .spacer{flex:1}
+.gq{padding:8px 10px;margin:6px -10px;border-radius:10px}
+.gq.focus{background:rgba(255,170,40,.12)}
+.gq .stem{margin-bottom:4px}
+.gopt{padding:2px 0 2px 1.2em}
+.gopt.marked{color:#1B7F45;font-weight:600}
+.exblock{cursor:pointer;border-radius:10px;outline:1px dashed rgba(26,110,245,.45);background:rgba(26,110,245,.05);margin:6px 0}
+.gapchip{display:inline-block;cursor:pointer;border-radius:4px;background:rgba(26,110,245,.08);outline:1px dashed rgba(26,110,245,.45);user-select:all}
+.gap.gap-now{background:rgba(255,170,40,.28);outline:2px solid var(--flame);border-radius:3px}
+.mathchip{display:inline-block;max-width:100%;vertical-align:middle;padding:0 3px;margin:0 1px;border-radius:6px;background:rgba(26,110,245,.08);outline:1px dashed rgba(26,110,245,.45);cursor:pointer;user-select:all}
+.mathchip:hover{background:rgba(26,110,245,.18)}
+.mathchip p{display:inline;margin:0}
+math-field::part(virtual-keyboard-toggle){display:none}
+body > .ML__keyboard{z-index:60}
+table.flat td{padding:8px 10px}
+table.flat td:first-child{white-space:nowrap}
+table.flat .badge{margin:1px 4px 1px 0}
+.cell.crop::after,.qstrip button.crop::after{content:"✂";position:absolute;top:-7px;right:-6px;font-size:11px;line-height:16px;width:16px;border-radius:50%;background:var(--flame);color:#0D110F}
+.figcard.todo{border:2px dashed var(--flame)}
 .btn{min-height:52px;padding:0 20px;border-radius:16px;border:2px solid var(--line);background:transparent;cursor:pointer;font-weight:700}
 .btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);box-shadow:0 4px 0 var(--accent-shadow)}
 .btn.primary:active{box-shadow:0 0 0 var(--accent-shadow);transform:translateY(4px)}
+.nextfix{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;border-color:var(--accent)}
+.nextfix b{display:block;font-size:17px;margin:4px 0}
 .btn:disabled{background:var(--surface-2);color:var(--text-2);border-color:transparent;box-shadow:none;cursor:not-allowed}
 .btn.sm{min-height:44px;padding:0 14px}
 /* The question is paper: stimulus, stem and source sit on a light card in both themes. */
@@ -65,8 +90,20 @@ textarea{width:100%;min-height:110px;font:400 14px/1.45 ui-monospace,Menlo,monos
 .paper .stem{font-weight:500;margin-top:12px}
 .paper .stimulus table,.paper .stem table{border-collapse:collapse;font-size:14px}
 .paper td,.paper th{border:1px solid #c9c7bd;padding:4px 8px;background:transparent;color:inherit}
+.paper table{background:transparent;border:0;border-radius:0;width:auto;margin:6px 0;overflow:visible}
+.paper th{font:inherit;font-weight:700;text-transform:none;letter-spacing:0;color:inherit}
 .paper .src{font:400 12px/1.4 Figtree;color:var(--paper-2);margin-top:12px}
 .paper p{margin:0 0 8px}
+.paper small,.rich small{font-size:.8em}
+.paper .cita,.rich .cita{margin:10px 0 10px 16px;padding:2px 0 2px 14px;border-left:3px solid #c9c4b5}
+.paper .poema,.rich .poema{white-space:pre-wrap;margin:10px 0 10px 16px}
+.paper .espacio,.rich .espacio{height:1.2em}
+.rich .espacio{border:1px dashed #9aa3b5;border-radius:6px;position:relative;margin:2px 0}
+.rich .espacio::after{content:"espacio";position:absolute;right:6px;top:0;font:11px/1.2em system-ui,sans-serif;color:#8a90a0}
+.fld .foldprev{display:none}
+.fld.folded .foldprev{display:block;padding:8px 12px;border:1px dashed var(--line);border-radius:12px;color:var(--text-2);font-size:13px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fld.folded textarea,.fld.folded .rich,.fld.folded .note{display:none!important}
+.paper p.fuente,.rich p.fuente{font-size:.78em;line-height:1.35;text-align:right;margin:14px 0 8px;opacity:.8}
 .opt{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:start;min-height:60px;padding:12px;border:2px solid var(--line);border-bottom-width:3px;border-radius:16px;background:var(--surface);margin-bottom:10px}
 .opt .tile{width:34px;height:34px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;font-weight:700}
 .opt .body{font:600 16px/1.4 Figtree}
@@ -113,6 +150,23 @@ body.editing main{padding:0;max-width:none}
 .ib.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
 .ib.go{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
 .ib.warn{border-color:var(--bad);color:var(--bad)}
+.more{position:relative}
+.menu{position:absolute;right:0;top:calc(100% + 6px);z-index:15;min-width:280px;display:flex;flex-direction:column;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.menu[hidden]{display:none}
+.menu button{display:flex;justify-content:space-between;gap:12px;text-align:left;padding:9px 10px;border:0;border-radius:8px;background:none;color:var(--text);font:inherit;cursor:pointer}
+.menu button:hover:not(:disabled){background:var(--surface-2)}
+.menu button:disabled{opacity:.45;cursor:default}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+.menu kbd{font-size:11px;color:var(--text-2)}
+.nextstep{position:sticky;bottom:-12px;z-index:2;margin:14px -14px -12px;padding:12px 14px;background:var(--bg);border-top:1px solid var(--line)}
+.nextstep .nsrow{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.nextstep .nsmiss{font-size:13px;color:var(--flame);margin-bottom:8px}
+.ib.big{min-height:46px;padding:0 18px;font-size:15px}
+#tour{position:fixed;inset:0;z-index:40}
+#tour .tspot{position:fixed;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.6);outline:2px solid var(--accent);pointer-events:none}
+#tour .tbub{position:fixed;width:360px;padding:14px 16px;background:var(--surface);border:1px solid var(--accent);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#tour .tbub p{margin:6px 0 12px;line-height:1.45}
+#tour .row{display:flex;gap:6px;align-items:center}
 .savestate{font-size:13px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);color:var(--text-2)}
 .savestate.dirty{color:var(--flame);border-color:var(--flame)}
 .savestate.ok{color:var(--ok);border-color:var(--ok)}
@@ -132,6 +186,22 @@ body.editing main{padding:0;max-width:none}
 .pdfpage img{display:block;width:100%;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.35)}
 .pdfpage .ov{position:absolute;inset:0}
 .pdfpage.cropping .ov{cursor:crosshair}
+.fxl{position:absolute;inset:0;pointer-events:none}
+.pdfpage.cropping .fxl{display:none}
+.fxhit{position:absolute;pointer-events:auto;cursor:pointer;border:2px solid rgba(26,110,245,.75);border-radius:6px;background:rgba(26,110,245,.08);animation:fxpulse 1.6s ease-in-out 2}
+.fxhit:hover{background:rgba(26,110,245,.2)}
+.fxhit .tag{position:absolute;left:-2px;bottom:100%;margin-bottom:2px;white-space:nowrap;font:600 12px/1 system-ui,sans-serif;color:#fff;background:#1a6ef5;border-radius:6px;padding:4px 7px}
+.fxhit.used{border-color:rgba(40,160,90,.8);background:rgba(40,160,90,.1)}
+.fxhit.used .tag{background:#28a05a}
+@keyframes fxpulse{50%{box-shadow:0 0 0 6px rgba(26,110,245,.25)}}
+.mathedit{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px;vertical-align:middle;max-width:100%;box-sizing:border-box;padding:4px;border-radius:8px;outline:2px solid var(--accent);background:rgba(26,110,245,.06)}
+.mathedit math-field{min-width:80px;max-width:100%;flex:1 1 100%;font-size:1.15em;background:#fff;color:#000;border-radius:6px;padding:2px 6px}
+.mathedit .mb{font:600 12px system-ui,sans-serif;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:6px;padding:4px 8px;cursor:pointer}
+.mathedit .mb.go{background:var(--accent);color:#000;border-color:transparent}
+/* A formula never breaks across lines; when it is wider than its column, fitMath() makes its type smaller.
+   Same contract as the student app: .katex stays on one line and gets a smaller font-size inline. */
+.katex{white-space:nowrap}
+.mathchip.flash{animation:fxpulse 1s ease-in-out 2}
 .box{position:absolute;border:2px solid var(--accent);background:rgba(200,240,74,.18);box-shadow:0 0 0 9999px rgba(0,0,0,.25)}
 .anchor{position:absolute;left:0;right:0;height:0;border-top:2px dashed var(--flame);pointer-events:none}
 .anchor span{position:absolute;left:4px;top:-20px;background:var(--flame);color:#0D110F;font-size:11px;font-weight:700;padding:1px 6px;border-radius:6px}
@@ -152,6 +222,15 @@ body.editing main{padding:0;max-width:none}
 .rich table{border-collapse:collapse;margin:6px 0;width:auto;background:#fff;border:0;border-radius:0}
 .rich th,.rich td{border:1px solid #000;padding:3px 8px;min-width:40px;color:#000;background:#fff;font:inherit;font-size:15px;text-transform:none;letter-spacing:0}
 .rich th{font-weight:700}
+.figblock{position:relative;display:block;margin:8px 0;padding:22px 6px 6px;border:1px dashed #9aa3b5;border-radius:10px;background:var(--paper);color:var(--paper-ink);cursor:grab;user-select:none}
+.figblock:hover{border-color:var(--flame)}
+.figblock .fighandle{position:absolute;top:3px;left:8px;font-size:11px;color:#667}
+.figblock img,.figblock svg{max-width:100%;max-height:260px;display:block;margin:0 auto}
+.figblock .figure-slot{display:block;padding:8px}
+.figblock .figx{position:absolute;top:2px;right:4px;border:0;background:none;color:#667;font-size:14px;cursor:pointer;padding:2px 6px}
+.figblock .figx:hover{color:#c00}
+.rich.dropping{outline:2px dashed var(--flame);outline-offset:2px}
+.figcard[draggable=true]{cursor:grab}
 .fgroup{display:inline-flex;gap:2px;padding:0 4px;border-left:1px solid var(--line)}
 .fgroup[hidden]{display:none}
 .fbar .ib.on{background:var(--accent-soft);border-color:var(--accent)}
@@ -162,7 +241,7 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:var(--accent)}
 .ltile.key{background:var(--ok);border-color:var(--ok);color:#0D110F}
 .ltile .mk{position:absolute;right:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--flame)}
 .otools{display:flex;flex-direction:column;gap:2px}
-.otools button{min-height:20px;min-width:26px;padding:0 4px;font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:6px;cursor:pointer;color:var(--text-2)}
+.otools button{min-height:20px;min-width:26px;white-space:nowrap;padding:0 4px;font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:6px;cursor:pointer;color:var(--text-2)}
 .figs{display:grid;gap:8px}
 .figcard{border:1px solid var(--line);border-radius:14px;padding:10px;background:var(--surface)}
 .figcard .head{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px;font-size:13px}
@@ -176,6 +255,11 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:var(--accent)}
 .qstrip button.ready{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .qstrip button.hidden{border-style:dashed}
 .qstrip button.err{border-color:var(--bad);color:var(--bad)}
+.cell.mine,.qstrip button.mine{background:#14532d;border-color:#14532d;color:#fff}
+.cell.mine.err,.qstrip button.mine.err{border-color:var(--bad)}
+.cell.minewip,.qstrip button.minewip{border-color:#2f8a52;border-style:solid;box-shadow:inset 0 0 0 2px #2f8a52}
+.mine-dot.wip{background:none;box-shadow:inset 0 0 0 2px #2f8a52}
+.mine-dot{display:inline-block;width:10px;height:10px;border-radius:3px;background:#14532d;vertical-align:middle;margin-right:4px}
 .qstrip button.cur{outline:3px solid var(--text);outline-offset:1px}
 .toast{position:fixed;left:50%;bottom:56px;transform:translateX(-50%);z-index:50;background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.4);max-width:80vw}
 .toast.bad{background:var(--bad);color:#fff}
@@ -195,7 +279,7 @@ select.ib{padding:0 8px}
 table.exam-table{border-collapse:collapse;width:auto;border:0;border-radius:0;overflow:visible;background:#fff;margin:8px 0}
 table.exam-table th,table.exam-table td{border:1px solid #000;padding:4px 10px;color:#000;background:#fff;font:inherit;font-size:15px;text-transform:none;letter-spacing:0;text-align:left}
 table.exam-table th{font-weight:700}
-.fbar .ib{min-height:30px;padding:3px 9px}
+.fbar .ib{min-height:30px;padding:3px 9px;white-space:nowrap}
 .fbar .seg{padding:2px}
 .fbar .seg button{min-height:28px}
 table.icfes-table{width:auto;border:0;border-radius:0;overflow:visible;background:#fff;margin:8px auto}
@@ -206,6 +290,14 @@ table.icfes-table caption{font-weight:700;color:#000;margin-bottom:4px}
 .studio{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column}
 .stbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--side)}
 .stgrid{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,28%) minmax(0,42%) minmax(0,30%)}
+.clgrid{flex:1;min-height:0;display:grid;grid-template-columns:260px 1fr}
+.cltools{padding:14px;border-right:1px solid var(--line);overflow:auto;display:flex;flex-direction:column;gap:8px}
+.cltools .row{display:flex;gap:6px;flex-wrap:wrap}
+.cltools .ib.on{background:var(--accent-soft);border-color:var(--accent)}
+.cltools .sw{width:30px;height:30px;border-radius:8px;border:2px solid var(--line);cursor:pointer}
+.cltools .sw.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.clstage{overflow:auto;padding:20px;display:flex;align-items:flex-start;justify-content:center;background:repeating-conic-gradient(#d8d8d8 0 25%,#f4f4f4 0 50%) 0 0/16px 16px}
+#cl-canvas{max-width:100%;height:auto;box-shadow:0 4px 24px rgba(0,0,0,.35);cursor:crosshair;touch-action:none;image-rendering:auto}
 .cvbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
 .cvbar .sw{width:26px;height:26px;border-radius:6px;border:2px solid var(--line);cursor:pointer;padding:0}
 .cvbar .sw.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
@@ -276,6 +368,8 @@ table.icfes-table caption{font-weight:700;color:#000;margin-bottom:4px}
 <main id="app"></main>
 <script src="figures-render.js"></script>
 <script src="render.bundle.js"></script>
+<script defer src="mathlive/mathlive.min.js"></script>
+<script>window.addEventListener("DOMContentLoaded", () => { if (window.MathfieldElement) { MathfieldElement.soundsDirectory = null; MathfieldElement.fontsDirectory = "mathlive/fonts"; } });</script>
 <script>
 const $ = (s) => document.querySelector(s);
 const app = $("#app");
@@ -305,7 +399,12 @@ async function api(path, opts) {
   if (STATIC) return window.ICFES_STATIC(path, opts);
   const res = await fetch(path, opts);
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) { const err = new Error(body.error || res.statusText); err.body = body; err.status = res.status; throw err; }
+  if (!res.ok) {
+    // An older server than this page (updated while the editor was open) does not know the new requests.
+    const old = /^want must be|^engine must be/.test(body.error || "") || (res.status === 404 && body.error === "not found");
+    const err = new Error(old ? "El editor que está abierto es una versión anterior. Cierra la ventana negra «Editor ICFES» y abre otra vez «Abrir editor.bat»." : body.error || res.statusText);
+    err.body = body; err.status = res.status; throw err;
+  }
   return body;
 }
 const J = (method, body) => ({ method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body ?? {}) });
@@ -354,15 +453,22 @@ async function showProgress() {
       <td class="num ${e.errors ? "bad" : "ok"}">${fmt(e.errors)}</td>
       <td class="num muted">${fmt(e.warnings)}</td>
       <td>${e.key.present ? `<span class="num">${fmt(e.key.answers)}</span> claves${e.key.disputed ? ` <span class="flame">· ${e.key.disputed} disputadas</span>` : ""}` : '<span class="bad">sin clave</span>'}</td>
-      <td>${e.figures.traced ? `${e.figures.traced} del escaneo${e.figures.pending_spec ? ` <span class="flame">· ${e.figures.pending_spec} pendientes</span>` : ""}` : '<span class="muted">ninguna</span>'}</td>
+      <td>${e.figures.traced ? `${e.figures.traced} del escaneo${e.figures.pending_spec ? ` <span class="flame">· ${e.figures.pending_spec} pendientes</span>` : ""}${e.figures.to_crop ? ` <span class="flame">· ✂ ${e.figures.to_crop} por recortar</span>` : ""}` : '<span class="muted">ninguna</span>'}</td>
     </tr>`;
   }).join("");
+  const todo = state.exams.filter(e => e.hidden || e.errors);
+  const fixCard = todo.length
+    ? `<div class="card nextfix"><div><div class="label">Qué sigue</div>
+        <b>${fmt(t.h)} preguntas no las ven los estudiantes todavía.</b>
+        <div class="muted">Empieza por ${esc(todo[0].exam)}: te llevo a la primera que falta y «Siguiente por arreglar» te pasa a la próxima.</div></div>
+        <button class="btn primary" id="fixfirst">Arreglar la siguiente →</button></div>`
+    : `<div class="card nextfix"><b>Todas las preguntas están listas para los estudiantes 🎉</b></div>`;
   const last = recall("last");
   const resume = last && state.exams.some(e => e.exam === last.exam)
     ? `<div class="card" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><b>Seguir donde quedaste:</b> ${esc(last.exam)} · Q${last.n}
        <button class="btn sm primary" id="resume">Abrir</button>
        <button class="btn sm" onclick="openSearch()">🔍 Buscar una pregunta</button></div>` : "";
-  app.innerHTML = resume + `
+  app.innerHTML = resume + fixCard + `
     <div class="stats">
       <div class="card"><div class="label">Preguntas</div><div class="display num">${fmt(t.q)}</div></div>
       <div class="card"><div class="label">Listas</div><div class="display num acc">${fmt(t.r)}</div><div class="muted">${Math.round(100 * t.r / (t.q || 1))} % de ${fmt(t.q)}</div></div>
@@ -377,11 +483,20 @@ async function showProgress() {
     <p class="muted">Toca un examen para ver sus preguntas.</p>`;
   app.querySelectorAll("tr[data-exam]").forEach(tr => tr.onclick = () => { state.exam = tr.dataset.exam; state.n = null; setTab("questions"); });
   if ($("#resume")) $("#resume").onclick = () => { state.exam = last.exam; openQuestion(last.n, { reloadExam: true }); };
+  if ($("#fixfirst")) $("#fixfirst").onclick = async () => {
+    for (const e of todo) {
+      state.exam = e.exam;
+      await loadExam();
+      const r = state.rows.find(x => x.errors || x.hidden.length || badFigure(x.number) || x.to_crop);
+      if (r) { state.tab = "questions"; document.querySelectorAll(".seg button").forEach(b => b.classList.toggle("on", b.dataset.tab === "questions")); return openQuestion(r.number); }
+    }
+    toast("No queda nada por arreglar 🎉");
+  };
 }
 
 // ----- question map ----------------------------------------------------------
 
-const FILTERS = [["all", "Todas"], ["hidden", "Ocultas"], ["errors", "Con errores"], ["badfig", "Figura inválida"], ["warnings", "Avisos"], ["notready", "No listas"]];
+const FILTERS = [["all", "Todas"], ["mine", "Editadas por mí"], ["hidden", "Ocultas"], ["errors", "Con errores"], ["badfig", "Figura inválida"], ["crop", "Por recortar"], ["warnings", "Avisos"], ["notready", "No listas"]];
 
 // Problems of one native figure, in plain words. An empty list means the engine can draw it.
 const MSG = [
@@ -417,6 +532,22 @@ function figProblems(f) {
   // The same problem repeated for every area or cell says nothing new.
   return [...new Set(errs.map(friendly))];
 }
+const isToCrop = (t) => t.method === "manual_crop_needed" || t.method === "proposed_box";
+// Opens the figure's page and starts a box that replaces the placeholder.
+function cropMissing(id) {
+  const t = state.detail.figures.find(x => x.figure_id === id);
+  if (!t) return;
+  if (t.page && t.page !== state.page) goPage(t.page);
+  startCrop(t.figure_id, traceOption(t) || "");
+  const fb = t.proposed_box_page_fraction;
+  if (fb) {
+    state.box = [...fb];
+    drawBox(true);
+    const sc = $("#pdfscroll"), pg = $("#pdfpage");
+    if (sc && pg) sc.scrollTop = Math.max(0, pg.offsetTop + fb[1] * pg.offsetHeight - 80);
+    toast("Recuadro propuesto: Enter para usarlo, o arrastra sus bordes para ajustarlo");
+  }
+}
 const traceShown = (t) => ["azure", "eyeballed_box"].includes(t.method) && t.svg;
 // Figures whose native spec a scan picture replaces (the app drops them the same way).
 function replacedIds(traced) { return new Set(traced.filter(traceShown).flatMap(t => [t.spec_id, t.figure_id])); }
@@ -437,22 +568,112 @@ async function loadExam() {
   state.rows = rows;
   state.natives = natives;
 }
+// ----- all questions together: one list across every exam, for finding and fixing problems -----
+
+state.flat = !!recall("flat");
+state.sort = recall("sort") || "exam";
+const viewSwitch = () => STATIC ? "" : `<div class="toolbar"><span class="seg" style="display:inline-flex">
+    <button class="${state.flat ? "" : "on"}" data-flat="0">Por examen</button><button class="${state.flat ? "on" : ""}" data-flat="1">Todo junto</button></span>
+    <span class="muted" style="font-size:13px">${state.flat ? `Todas las preguntas de los ${state.exams.length || ""} exámenes en una sola lista.` : "Una prueba a la vez, como la ven los estudiantes."}</span></div>`;
+function bindViewSwitch() {
+  app.querySelectorAll("[data-flat]").forEach(b => b.onclick = () => { state.flat = b.dataset.flat === "1"; remember("flat", state.flat); state.queue = null; showQuestions(); });
+}
+// What is wrong with one row, in plain words.
+function rowProblems(r, bad) {
+  return [...r.hidden.map(x => REASONS[x] || x), ...(bad ? ["figura inválida"] : []), ...(r.to_crop ? [`✂ ${r.to_crop} por recortar`] : [])];
+}
+async function loadAll() {
+  if (!state.exams.length) state.exams = await api("/api/exams");
+  const [rows, ...natives] = await Promise.all([api("/api/questions"),
+    ...state.exams.map(e => api(`/api/exams/${encodeURIComponent(e.exam)}/figures`).catch(() => ({})))]);
+  await mapsReady;
+  state.allNatives = Object.fromEntries(state.exams.map((e, i) => [e.exam, natives[i]]));
+  const badIn = (exam, n) => (state.allNatives[exam]?.[String(n)] || []).some(f => figProblems(f).length);
+  state.all = rows.map(r => ({ ...r, bad: badIn(r.exam, r.number) }));
+}
+const FLAT_PASS = {
+  all: () => true, hidden: r => r.hidden.length > 0 || r.bad, errors: r => r.errors > 0, badfig: r => r.bad,
+  crop: r => r.to_crop > 0, warnings: r => r.warnings > 0, notready: r => !r.ready, mine: r => r.edited,
+};
+const weight = r => r.errors * 10 + r.hidden.length * 3 + (r.bad ? 3 : 0) + (r.to_crop ? 2 : 0) + r.warnings;
+async function showFlat() {
+  status("Leyendo…");
+  if (!state.all || state.allStale) { await loadAll(); state.allStale = false; }
+  const q = (state.flatText || "").trim().toLowerCase();
+  let rows = state.all.filter(FLAT_PASS[state.filter] || FLAT_PASS.all)
+    .filter(r => !state.flatArea || r.section === state.flatArea)
+    .filter(r => !q || `${r.exam} ${r.number} ${r.snippet}`.toLowerCase().includes(q));
+  if (state.sort === "worst") rows = [...rows].sort((a, b) => weight(b) - weight(a));
+  if (state.sort === "area") rows = [...rows].sort((a, b) => (a.section || "").localeCompare(b.section || ""));
+  state.queue = rows.map(r => [r.exam, r.number]);
+  status(`${fmt(rows.length)} preguntas`, "ok");
+  const areas = [...new Set(state.all.map(r => r.section).filter(Boolean))].sort();
+  const shown = rows.slice(0, state.flatLimit || 300);
+  app.innerHTML = `${viewSwitch()}
+    <div class="toolbar">
+      ${FILTERS.map(([v, l]) => `<button class="chip ${v === state.filter ? "on" : ""}" data-filter="${v}">${l} <span class="muted num">${fmt(state.all.filter(FLAT_PASS[v]).length)}</span></button>`).join("")}
+    </div>
+    <div class="toolbar">
+      <input id="flat-q" placeholder="Buscar por examen, número o texto" value="${esc(state.flatText || "")}" style="flex:1;min-width:220px;padding:10px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--text)">
+      <select id="flat-area" aria-label="Área"><option value="">Todas las áreas</option>${areas.map(a => `<option ${a === state.flatArea ? "selected" : ""}>${esc(a)}</option>`).join("")}</select>
+      <select id="flat-sort" aria-label="Orden">${[["exam", "Por examen y número"], ["worst", "Más problemas primero"], ["area", "Por área"]].map(([v, l]) => `<option value="${v}" ${v === state.sort ? "selected" : ""}>${l}</option>`).join("")}</select>
+      <span class="muted num">${fmt(rows.length)} de ${fmt(state.all.length)}</span>
+    </div>
+    <table class="flat">
+      <thead><tr><th>Examen</th><th>Pregunta</th><th>Área</th><th>Qué le falta</th><th>Comienza así</th></tr></thead>
+      <tbody>${shown.map(r => {
+        const probs = rowProblems(r, r.bad);
+        return `<tr class="row" data-exam="${esc(r.exam)}" data-n="${r.number}">
+          <td><b>${esc(r.exam)}</b></td><td class="num">${r.edited ? (r.ready ? '<span class="mine-dot" title="La editaste tú y está lista"></span>' : '<span class="mine-dot wip" title="La editaste, aún no está lista"></span>') : ""}${r.number}</td>
+          <td><span class="chip" style="min-height:0;padding:2px 8px;border:0;cursor:inherit"><i style="background:${areaColor(r.section)}"></i>${esc(r.section || "—")}</span></td>
+          <td>${probs.length ? probs.map(p => `<span class="badge hid">${esc(p)}</span>`).join("") : '<span class="badge ok">visible</span>'}
+            ${r.messages.map(m => `<div class="${r.errors ? "bad" : "muted"}" style="font-size:12px">${esc(checkMsg(m))}</div>`).join("")}</td>
+          <td class="muted" style="font-size:13px">${esc(r.snippet)}</td></tr>`;
+      }).join("")}</tbody>
+    </table>
+    ${rows.length > shown.length ? `<p><button class="btn sm" id="flat-more">Mostrar ${fmt(Math.min(300, rows.length - shown.length))} más</button> <span class="muted">(${fmt(rows.length - shown.length)} sin mostrar)</span></p>` : ""}`;
+  bindViewSwitch();
+  app.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { state.filter = b.dataset.filter; state.flatLimit = 300; showFlat(); });
+  $("#flat-sort").onchange = e => { state.sort = e.target.value; remember("sort", state.sort); showFlat(); };
+  $("#flat-area").onchange = e => { state.flatArea = e.target.value; showFlat(); };
+  let t; $("#flat-q").oninput = e => { clearTimeout(t); t = setTimeout(() => { state.flatText = e.target.value; state.flatLimit = 300; showFlat().then(() => { const i = $("#flat-q"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }); }, 250); };
+  if ($("#flat-more")) $("#flat-more").onclick = () => { state.flatLimit = (state.flatLimit || 300) + 300; showFlat(); };
+  app.querySelectorAll("tr[data-exam]").forEach(tr => tr.onclick = () => openFrom(tr.dataset.exam, Number(tr.dataset.n)));
+}
+async function openFrom(exam, n) {
+  const change = state.exam !== exam;
+  state.exam = exam;
+  await openQuestion(n, { reloadExam: change });
+}
+// In the all-together view, "Siguiente por arreglar" walks that list (across exams) instead of one exam.
+function nextInQueue() {
+  const q = state.queue || [], i = q.findIndex(([e, n]) => e === state.exam && n === state.n);
+  const left = q.slice(i + 1).filter(([e, n]) => {
+    const r = state.all?.find(x => x.exam === e && x.number === n);
+    return r && (r.errors || r.hidden.length || r.bad || r.to_crop);
+  });
+  return left[0] || null;
+}
+
 function cellClass(r) {
   const bad = badFigure(r.number);
-  return r.errors || bad ? "err" : r.hidden.length ? "hidden" : "ready";
+  // dark green: edited here and marked ready; edited but not ready yet: green outline only
+  return (r.errors || bad ? "err" : r.hidden.length ? "hidden" : "ready") + (r.to_crop ? " crop" : "") + (r.edited ? (r.ready ? " mine" : " minewip") : "");
 }
 
 async function showQuestions() {
+  if (state.flat && !STATIC) return showFlat();
   status("Leyendo…");
   await loadExam();
   const rows = state.rows;
   const pass = rows.filter(r => ({
-    all: true, hidden: r.hidden.length > 0 || badFigure(r.number), errors: r.errors > 0, warnings: r.warnings > 0, notready: !r.ready, badfig: badFigure(r.number),
+    all: true, mine: r.edited, hidden: r.hidden.length > 0 || badFigure(r.number), errors: r.errors > 0, warnings: r.warnings > 0, notready: !r.ready, badfig: badFigure(r.number), crop: r.to_crop > 0,
   })[state.filter]);
   status(`${rows.length} preguntas`, "ok");
   const opts = state.exams.map(e => `<option value="${esc(e.exam)}" ${e.exam === state.exam ? "selected" : ""}>${esc(e.exam)}</option>`).join("");
   const sections = [...new Set(rows.map(r => r.section).filter(Boolean))];
   app.innerHTML = `
+    ${viewSwitch()}
     <div class="toolbar">
       <select id="pick-exam" aria-label="Examen">${opts}</select>
       ${FILTERS.map(([v, l]) => `<button class="chip ${v === state.filter ? "on" : ""}" data-filter="${v}">${l}</button>`).join("")}
@@ -464,10 +685,11 @@ async function showQuestions() {
     <div class="card">
       <div class="label">Mapa de preguntas</div>
       <div class="map">
-        ${pass.map(r => `<button class="cell ${cellClass(r)}" data-n="${r.number}" title="${esc([...r.hidden.map(x => REASONS[x] || x), ...(badFigure(r.number) ? ["figura inválida"] : [])].join(", ") || "visible para estudiantes")}">${r.number}</button>`).join("")}
+        ${pass.map(r => `<button class="cell ${cellClass(r)}" data-n="${r.number}" title="${esc([...r.hidden.map(x => REASONS[x] || x), ...(badFigure(r.number) ? ["figura inválida"] : []), ...(r.to_crop ? [`${r.to_crop} figura(s) por recortar`] : [])].join(", ") || "visible para estudiantes")}">${r.number}</button>`).join("")}
       </div>
-      <div class="muted" style="margin-top:12px">Relleno verde: visible para estudiantes. Borde punteado: oculta. Borde rojo: error del validador o figura que no se puede dibujar (los estudiantes no la ven).</div>
+      <div class="muted" style="margin-top:12px">Relleno verde: visible para estudiantes. <span class="mine-dot"></span>Verde oscuro: la editaste tú y está lista. <span class="mine-dot wip"></span>Borde verde: la editaste pero aún no la marcas lista. Borde punteado: oculta. Borde rojo: error del validador o figura que no se puede dibujar (los estudiantes no la ven). ✂: tiene una figura por recortar del PDF.</div>
     </div>`;
+  bindViewSwitch();
   $("#pick-exam").onchange = (e) => { state.exam = e.target.value; state.n = null; showQuestions(); };
   app.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { state.filter = b.dataset.filter; showQuestions(); });
   app.querySelectorAll("button[data-n]").forEach(b => b.onclick = () => openQuestion(Number(b.dataset.n)));
@@ -499,6 +721,8 @@ async function openQuestion(n, opts = {}) {
   state.page = detail.anchor?.page ?? sc.pages[0] ?? sc.guess;
   document.body.classList.add("editing");
   renderWorkspace();
+  const proposed = !STATIC && detail.figures.find(t => t.method === "proposed_box" && t.proposed_box_page_fraction);
+  if (proposed) cropMissing(proposed.figure_id);
   status(`${state.exam} · Q${n}`, "ok");
 }
 
@@ -518,21 +742,29 @@ function renderWorkspace() {
   app.innerHTML = `
   <div class="ed">
     <div class="edbar">
-      <button class="ib" id="back" title="Volver al mapa">← Mapa</button>
+      <button class="ib" id="back" title="Volver a la lista de preguntas">← Volver</button>
       <select id="ed-exam" aria-label="Examen">${exams}</select>
-      <button class="ib" id="prev" ${prev ? "" : "disabled"} title="Anterior (Alt+←)">‹</button>
-      <span class="qnum">Q${d.number}</span>
-      <button class="ib" id="next" ${next ? "" : "disabled"} title="Siguiente (Alt+→)">›</button>
-      <span class="chip" style="min-height:32px;cursor:default"><i style="background:${areaColor(q.section)}"></i>${esc(q.section || "sin área")}</span>
+      <button class="ib" id="prev" ${prev ? "" : "disabled"} title="Pregunta anterior (←)">‹ Anterior</button>
+      <span class="qnum">Pregunta ${d.number}</span>
+      <button class="ib" id="next" ${next ? "" : "disabled"} title="Pregunta siguiente (→)">Siguiente ›</button>
       <span id="vis">${visBadges(reasons)}</span>
+      ${g ? `<button class="ib" id="groupbtn" onclick="leave(() => openGroup(${d.number}))" title="Edita el texto compartido una vez y todas sus preguntas debajo, en una sola pantalla (J)">▤ Q${g.from}–${g.to} juntas</button>` : ""}
       <span class="spacer"></span>
-      <button class="ib" id="fixnext" title="Siguiente pregunta oculta, con errores o con figura inválida (Alt+N)">⚑ Siguiente por arreglar</button>
-      <button class="ib" onclick="openSearch()" title="Buscar en todas las preguntas (Ctrl+K)">🔍</button>
-      <button class="ib" onclick="showHelp()" title="Atajos de teclado (?)">?</button>
-      <button class="ib" id="toggle-prev" title="Mostrar u ocultar la vista del estudiante">Vista ${state.preview ? "✓" : "✕"}</button>
-      ${STATIC ? "" : `<button class="ib" id="undo" ${d.undo ? "" : "disabled"} title="Deshace el último cambio guardado de esta pregunta">↶ Deshacer${d.undo ? ` (${d.undo})` : ""}</button>`}
+      <button class="ib" id="fixnext" title="Salta a la próxima pregunta oculta o con errores (N)">⚑ Siguiente por arreglar</button>
       <span id="savestate" class="savestate">Sin cambios</span>
-      <button class="ib go" id="save">Guardar</button>
+      <button class="ib go" id="save" title="G (o Ctrl+S)">Guardar</button>
+      <span class="more">
+        <button class="ib" id="morebtn" onclick="toggleMenu('moremenu', event)" aria-haspopup="true">Más ▾</button>
+        <div class="menu" id="moremenu" hidden>
+          <button onclick="openSearch()">🔍 Buscar preguntas <kbd>B</kbd></button>
+          ${STATIC ? "" : `<button id="undo" ${d.undo ? "" : "disabled"}>${undoLabel(d.undo)}</button>`}
+          <button id="toggle-prev">${prevLabel()}</button>
+          <button onclick="setVisual(!state.visual)">‹/› Ver el texto como código</button>
+          <hr>
+          <button onclick="startTour()">💡 Ver la guía otra vez</button>
+          <button onclick="showHelp()">⌨ Atajos de teclado</button>
+        </div>
+      </span>
     </div>
     <div class="edgrid ${state.preview ? "" : "noprev"}" id="edgrid">
       <section class="pane pdf" id="pdfpane">${pdfPane()}</section>
@@ -557,9 +789,15 @@ function renderWorkspace() {
   $("#next").onclick = () => next && leave(() => openQuestion(next));
   $("#ed-exam").onchange = (e) => leave(async () => { state.exam = e.target.value; await loadExam(); openQuestion(state.rows[0].number); });
   $("#save").onclick = saveQuestion;
-  $("#fixnext").onclick = () => { const n = nextToFix(); if (n == null) toast("No queda nada por arreglar en este examen 🎉"); else leave(() => openQuestion(n)); };
+  $("#fixnext").onclick = () => {
+    if (state.flat && state.queue) {
+      const nx = nextInQueue();
+      return nx ? leave(() => openFrom(nx[0], nx[1])) : toast("No queda nada por arreglar en esta lista 🎉");
+    }
+    const n = nextToFix(); if (n == null) toast("No queda nada por arreglar en este examen 🎉"); else leave(() => openQuestion(n));
+  };
   remember("last", { exam: state.exam, n: d.number });
-  $("#toggle-prev").onclick = () => { state.preview = !state.preview; $("#edgrid").classList.toggle("noprev", !state.preview); $("#toggle-prev").textContent = `Vista ${state.preview ? "✓" : "✕"}`; };
+  $("#toggle-prev").onclick = () => { state.preview = !state.preview; $("#edgrid").classList.toggle("noprev", !state.preview); $("#toggle-prev").textContent = prevLabel(); };
   if ($("#undo")) $("#undo").onclick = undo;
   $("#qstrip").querySelectorAll("button").forEach(b => b.onclick = () => leave(() => openQuestion(Number(b.dataset.n))));
   $("#qstrip").querySelector(".cur")?.scrollIntoView({ inline: "center", block: "nearest" });
@@ -571,13 +809,39 @@ function renderWorkspace() {
   });
   $("#form").addEventListener("change", e => { if (e.target.id === "f-section" || e.target.id === "f-ready") { markDirty(); refreshPreview(); } });
   bindSplit();
+  if (!recall("tourDone")) setTimeout(startTour, 400);
 }
+const undoLabel = (n) => `↶ Deshacer el último guardado${n ? ` (${n})` : ""}`;
+const prevLabel = () => state.preview ? "👁 Ocultar la vista del estudiante" : "👁 Mostrar la vista del estudiante";
 
-const REASONS = { "not ready": "no está marcada como lista", "text pending": "texto pendiente", "[FIGURE] note": "nota [FIGURE] en el texto", "figure pending spec": "figura pendiente", "blank option": "opción vacía" };
+// One small drop-down menu at a time; a click anywhere else closes it.
+function toggleMenu(id, e) {
+  e?.stopPropagation();
+  const m = $("#" + id), open = m.hidden;
+  document.querySelectorAll(".menu").forEach(x => { x.hidden = true; });
+  m.hidden = !open;
+}
+document.addEventListener("click", e => { if (!e.target.closest(".menu hr")) document.querySelectorAll(".menu").forEach(x => { x.hidden = true; }); });
+
+const REASONS = { "not ready": "no está marcada como lista", "text pending": "texto, tabla o gráfica pendiente", "[FIGURE] note": "nota [FIGURE] en el texto", "figure pending spec": "figura pendiente", "blank option": "opción vacía", "figure in the text not found": "una figura puesta en el texto ya no existe" };
+// The badge names the reasons, so nobody has to hover to learn why students do not see the question.
 function visBadges(reasons) {
-  return reasons.length
-    ? reasons.map(r => `<span class="badge hid">oculta: ${esc(REASONS[r] || r)}</span>`).join("")
-    : `<span class="badge ok">visible para estudiantes</span>`;
+  if (!reasons.length) return `<span class="badge ok">Visible para estudiantes</span>`;
+  const words = reasons.map(r => REASONS[r] || r);
+  const shown = words.length > 2 ? `${words.slice(0, 2).join(", ")} y ${words.length - 2} más` : words.join(" y ");
+  return `<span class="badge hid" title="${esc(words.join(", "))}">Oculta: ${esc(shown)}</span>`;
+}
+// The one next step, at the bottom of the form: what is still missing, and the button that finishes the question.
+function nsMissHtml() {
+  const missing = hiddenNow().filter(r => r !== "not ready").map(r => REASONS[r] || r);
+  const crops = (state.detail.figures || []).filter(isToCrop).length;
+  if (crops) missing.push(crops === 1 ? "recortar 1 figura del PDF" : `recortar ${crops} figuras del PDF`);
+  return missing.length ? `<div class="nsmiss"><b>Antes de publicarla falta:</b> ${missing.map(esc).join(" · ")}</div>` : "";
+}
+function nextStepHtml() {
+  return `<div id="nsmiss">${nsMissHtml()}</div>
+    <div class="nsrow"><button class="ib go big" type="button" onclick="readyAndNext()" title="L (o Ctrl+Enter)">✓ Está bien: guardar y pasar a la siguiente</button>
+    <label class="switch muted" style="font-size:13px"><input type="checkbox" id="f-ready" ${state.detail.question.ready ? "checked" : ""}> Lista para estudiantes</label></div>`;
 }
 
 function fit(t) { t.style.height = "auto"; t.style.height = (t.scrollHeight + 4) + "px"; }
@@ -588,15 +852,10 @@ function markDirty() {
   if (s) { s.textContent = "Cambios sin guardar"; s.className = "savestate dirty"; }
 }
 
-function formPane(q, g) {
-  const sections = Object.keys(AREA);
-  if (q.section && !sections.includes(q.section)) sections.push(q.section);
-  const flags = (q.provenance?.flags || []).map(f => `<li>${esc(f)}</li>`).join("");
-  const notes = (q.provenance?.notes || []).slice(-6).map(f => `<li>${esc(f)}</li>`).join("");
-  const msgs = [...state.detail.messages.errors.map(m => `<div class="note bad">${esc(m)}</div>`), ...state.detail.messages.warnings.map(m => `<div class="note warn">${esc(m)}</div>`)].join("");
+function fbarHtml() {
   return `
     <div class="fbar" onmousedown="if (event.target.closest('button')) event.preventDefault()">
-      <span class="seg" id="fmode">${fmodeHtml()}</span>
+      <span id="fmode">${fmodeHtml()}</span>
       <span class="fgroup">
         <button class="ib" type="button" data-cmd="bold" onclick="richCmd('bold')" title="Negrita (Ctrl+B)"><b>B</b></button>
         <button class="ib" type="button" data-cmd="italic" onclick="richCmd('italic')" title="Cursiva (Ctrl+I)"><i>I</i></button>
@@ -604,37 +863,55 @@ function formPane(q, g) {
         <button class="ib" type="button" data-cmd="subscript" onclick="richCmd('subscript')" title="Subíndice, como en H₂O">x₂</button>
         <button class="ib" type="button" data-cmd="superscript" onclick="richCmd('superscript')" title="Superíndice, como en m²">x²</button>
       </span>
-      <span class="fgroup">
-        <button class="ib" type="button" data-cmd="insertUnorderedList" onclick="richCmd('insertUnorderedList')" title="Lista con viñetas">• Lista</button>
-        <button class="ib" type="button" data-cmd="insertOrderedList" onclick="richCmd('insertOrderedList')" title="Lista numerada">1. Lista</button>
+      <button class="ib" type="button" data-cmd="insertUnorderedList" onclick="richCmd('insertUnorderedList')" title="Lista con viñetas">• Lista</button>
+      <button class="ib" type="button" onclick="richCmd('table')" title="Insertar una tabla de texto">▦ Tabla</button>
+      <button class="ib" type="button" onclick="openChem()" title="Ecuación química: escribe 2H2 + O2 -> 2H2O y se ve con subíndices y flecha">⚗ Química</button>
+      <button class="ib" type="button" onclick="openMol()" title="Molécula desarrollada con todos los H, como en el ICFES: H-C(H,H)-C(=O)-OH. También reacciones con flecha y nombres debajo">⌬ Molécula</button>
+      <button class="ib" type="button" onclick="openExample()" title="El ejemplo (0) que abre cada parte de inglés: la pregunta, sus opciones y la respuesta, en un recuadro">⓪ Ejemplo</button>
+      <button class="ib" type="button" onclick="newGap()" title="Espacio en blanco para completar (inglés): en el texto compartido lleva el número de su pregunta; en un enunciado va sin número">▁ Hueco</button>
+      <button class="ib" type="button" onclick="newFormula()" title="Escribe una fórmula donde está el cursor. Las fórmulas del PDF salen marcadas en azul: un clic y quedan puestas.">ƒx Fórmula</button>
+      <select class="ib" onchange="if (this.value) { fmtInsert('sym', this.value); this.value = ''; }" title="Símbolos">
+        <option value="">Ω Símbolo</option>${SYMBOLS.map(x => `<option>${x}</option>`).join("")}</select>
+      <button class="ib" type="button" data-small="1" onclick="richCmd('small')" title="Texto más pequeño en lo que seleccionaste. Otra vez lo devuelve a su tamaño.">A− Pequeño</button>
+      <button class="ib" type="button" data-fuente="1" onclick="richCmd('fuente')" title="Convierte el párrafo del cursor en la fuente del texto: pequeña, a la derecha y separada del texto. Otra vez lo deshace.">Fuente</button>
+      <button class="ib" type="button" data-block="cita" onclick="richCmd('cita')" title="Cita: el párrafo del cursor (o los que selecciones) queda con sangría y una raya a la izquierda. Otra vez lo deshace.">❝ Cita</button>
+      <button class="ib" type="button" data-block="poema" onclick="richCmd('poema')" title="Poema: cada verso en su línea, con los espacios tal como los escribes. Enter = verso nuevo, dos Enter = estrofa nueva. Otra vez lo deshace.">Poema</button>
+      <button class="ib" type="button" onclick="richCmd('espacio')" title="Agrega un espacio en blanco debajo del párrafo del cursor. Bórralo con la tecla Borrar.">↕ Espacio</button>
+      <button class="ib" type="button" onclick="cleanField()" title="Une líneas cortadas, quita guiones de corte y espacios dobles en el campo activo">🧹 Limpiar</button>
+      <button class="ib" type="button" onclick="this.classList.toggle('on'); $('#fmore').hidden = !$('#fmore').hidden" title="Más botones de formato">Más ▾</button>
+      <span class="fgroup" id="ftable" hidden>
+        <span class="muted" style="font-size:12px">Tabla:</span>
+        <button class="ib" type="button" onclick="richTable('row+')" title="Fila debajo">+ fila</button>
+        <button class="ib" type="button" onclick="richTable('col+')" title="Columna a la derecha">+ columna</button>
+        <button class="ib" type="button" onclick="richTable('row-')" title="Quitar esta fila">− fila</button>
+        <button class="ib" type="button" onclick="richTable('col-')" title="Quitar esta columna">− columna</button>
+        <button class="ib warn" type="button" onclick="richTable('del')" title="Quitar la tabla">Quitar tabla</button>
       </span>
-      <span class="fgroup">
+      <span class="fgroup" id="fmore" hidden>
+        <button class="ib" type="button" data-cmd="insertOrderedList" onclick="richCmd('insertOrderedList')" title="Lista numerada">1. Lista</button>
         <button class="ib" type="button" data-cmd="justifyLeft" onclick="richCmd('justifyLeft')" title="Alinear a la izquierda"><svg viewBox="0 0 16 12" width="16" height="12"><path d="M0 1h16M0 4.5h10M0 8h16M0 11.5h10" stroke="currentColor" stroke-width="1.6"/></svg></button>
         <button class="ib" type="button" data-cmd="justifyCenter" onclick="richCmd('justifyCenter')" title="Centrar"><svg viewBox="0 0 16 12" width="16" height="12"><path d="M0 1h16M3 4.5h10M0 8h16M3 11.5h10" stroke="currentColor" stroke-width="1.6"/></svg></button>
         <button class="ib" type="button" data-cmd="justifyRight" onclick="richCmd('justifyRight')" title="Alinear a la derecha"><svg viewBox="0 0 16 12" width="16" height="12"><path d="M0 1h16M6 4.5h10M0 8h16M6 11.5h10" stroke="currentColor" stroke-width="1.6"/></svg></button>
         <button class="ib" type="button" data-cmd="justifyFull" onclick="richCmd('justifyFull')" title="Justificar"><svg viewBox="0 0 16 12" width="16" height="12"><path d="M0 1h16M0 4.5h16M0 8h16M0 11.5h16" stroke="currentColor" stroke-width="1.6"/></svg></button>
+        <button class="ib" type="button" onclick="fmtInsert('frac')" title="Fracción">a/b Fracción</button>
+        <button class="ib" type="button" onclick="richCmd('clear')" title="Quitar formato de la selección">T̸ Quitar formato</button>
       </span>
-      <button class="ib" type="button" onclick="richCmd('table')" title="Insertar una tabla de texto">▦ Tabla</button>
-      <span class="fgroup" id="ftable" hidden>
-        <button class="ib" type="button" onclick="richTable('row+')" title="Fila debajo">+ fila</button>
-        <button class="ib" type="button" onclick="richTable('col+')" title="Columna a la derecha">+ col</button>
-        <button class="ib" type="button" onclick="richTable('row-')" title="Quitar esta fila">− fila</button>
-        <button class="ib" type="button" onclick="richTable('col-')" title="Quitar esta columna">− col</button>
-        <button class="ib warn" type="button" onclick="richTable('del')" title="Quitar la tabla">✕</button>
-      </span>
-      <button class="ib" type="button" onclick="fmtInsert('math')" title="Fórmula (se dibuja en la vista del estudiante)">ƒx</button>
-      <button class="ib" type="button" onclick="fmtInsert('frac')" title="Fracción">a/b</button>
-      <button class="ib" type="button" onclick="richCmd('clear')" title="Quitar formato de la selección">T̸</button>
-      <select class="ib" onchange="if (this.value) { fmtInsert('sym', this.value); this.value = ''; }" title="Símbolos">
-        <option value="">Ω símbolo</option>${SYMBOLS.map(x => `<option>${x}</option>`).join("")}</select>
-      <button class="ib" type="button" onclick="cleanField()" title="Une líneas cortadas, quita guiones de corte y espacios dobles en el campo activo">🧹 Limpiar</button>
-    </div>
+    </div>`;
+}
+function formPane(q, g) {
+  const sections = Object.keys(AREA);
+  if (q.section && !sections.includes(q.section)) sections.push(q.section);
+  const flags = (q.provenance?.flags || []).map(f => `<li title="${esc(f)}">${esc(flagText(f))}</li>`).join("");
+  const notes = (q.provenance?.notes || []).slice(-6).map(f => `<li>${esc(f)}</li>`).join("");
+  const msgs = [...state.detail.messages.errors.map(m => `<div class="note bad">${esc(checkMsg(m))}</div>`), ...state.detail.messages.warnings.map(m => `<div class="note warn">${esc(checkMsg(m))}</div>`)].join("");
+  return `
+    ${fbarHtml()}
     ${msgs ? `<div class="fld">${msgs}</div>` : ""}
     ${!(q.stem_md || "").trim() ? `<div class="note warn fld">Falta el enunciado. ${STATIC ? "" : `<button class="ib" type="button" onclick="readInto('f-stem')">⌖ Leerlo del PDF</button>`}</div>` : ""}
-    ${g ? `<div class="fld"><div class="label"><span>Texto compartido · Q${g.from}–${g.to} <span class="muted" style="text-transform:none;letter-spacing:0">· lo ven todas sus preguntas</span></span>${STATIC ? "" : `<button class="ib" type="button" onclick="readInto('f-passage')" title="Dibuja un recuadro en la página y su texto se escribe aquí">⌖ Leer del PDF</button>`}</div>
+    ${g ? `<div class="fld"><div class="label"><span>Texto compartido · Q${g.from}–${g.to} <span class="muted" style="text-transform:none;letter-spacing:0">· lo ven todas sus preguntas</span></span>${STATIC ? "" : `<button class="ib" type="button" id="gap-mark" hidden onclick="markGaps()" title="Convierte los espacios escritos como (97) en huecos con número, uno por pregunta">▁ Marcar huecos</button><button class="ib" type="button" onclick="imageInto('f-passage')" title="Recorta una imagen del PDF y ponla donde está el cursor en el texto compartido (la ven todas sus preguntas)">✂ Imagen</button><button class="ib" type="button" onclick="readInto('f-passage')" title="Dibuja un recuadro en la página y su texto se escribe aquí">⌖ Leer del PDF</button>`}</div>
       <textarea id="f-passage" spellcheck="true" lang="es">${esc(g.passage_md || g.stimulus_md || "")}</textarea>
       <div class="muted" style="font-size:12px;margin-top:4px">Textos literarios: no los reescribas; deja [Texto pendiente: página N].</div></div>` : ""}
-    <div class="fld"><div class="label"><span>Texto propio (contexto)</span>${STATIC ? "" : `<button class="ib" type="button" onclick="readInto('f-stimulus')" title="Dibuja un recuadro en la página y su texto se escribe aquí">⌖ Leer del PDF</button>`}</div><textarea id="f-stimulus" spellcheck="true" lang="es" placeholder="Texto o descripción antes del enunciado (opcional)">${esc(q.stimulus_md)}</textarea></div>
+    <div class="fld"><div class="label"><span>Texto propio (contexto)</span>${STATIC ? "" : `<button class="ib" type="button" onclick="imageInto('f-stimulus')" title="Recorta una imagen del PDF y ponla donde está el cursor en este texto">✂ Imagen</button><button class="ib" type="button" onclick="readInto('f-stimulus')" title="Dibuja un recuadro en la página y su texto se escribe aquí">⌖ Leer del PDF</button>`}</div><textarea id="f-stimulus" spellcheck="true" lang="es" placeholder="Texto o descripción antes del enunciado (opcional)">${esc(q.stimulus_md)}</textarea></div>
     <div class="fld"><div class="label"><span>Figuras</span><span>
       ${STATIC ? "" : `<button class="ib" type="button" onclick="startCrop()" title="Dibuja un recuadro sobre la página">✂ Recortar del PDF</button>`}
       <button class="ib" type="button" onclick="openStudio('new')">+ Gráfica o tabla</button></span></div>
@@ -644,12 +921,284 @@ function formPane(q, g) {
       <div id="f-opts"></div></div>
     <div class="fld card" style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
       <label class="switch">Área <select id="f-section">${sections.map(s => `<option ${s === q.section ? "selected" : ""}>${esc(s)}</option>`).join("")}</select></label>
-      <label class="switch"><input type="checkbox" id="f-ready" ${q.ready ? "checked" : ""}> Lista para estudiantes</label>
-      <button class="ib go" type="button" onclick="readyAndNext()" title="Marca la pregunta como lista, guarda y pasa a la siguiente (Ctrl+Enter)">✓ Lista y siguiente</button>
       <span class="muted" style="font-size:12px">Marcada en el escaneo: ${esc(q.scan_marked_option || "—")}</span>
     </div>
     ${flags || notes ? `<details class="fld"><summary class="muted">Marcas de revisión y notas</summary>
-      ${flags ? `<ul class="muted">${flags}</ul>` : ""}${notes ? `<ul class="muted">${notes}</ul>` : ""}</details>` : ""}`;
+      ${flags ? `<ul class="muted">${flags}</ul>` : ""}${notes ? `<ul class="muted">${notes}</ul>` : ""}</details>` : ""}
+    <div class="nextstep" id="nextstep">${nextStepHtml()}</div>`;
+}
+
+// Review flags the pipeline left on a question, in plain Spanish (the code stays in the tooltip).
+const FLAGS = [
+  [/^(no_key_on_scan|no_key_dot|no_blue_dot_on_scan|no_scan_mark|scan_key_missing|no blue dot seen)/, "El escaneo no muestra la respuesta marcada: revisa la clave"],
+  [/^(key needs check|pending_key|key review|key_logic_check|keys_from_handwriting|key_not_legible)/, "Revisa la clave de esta pregunta"],
+  [/^(scan key disputed|dot_vs_content_dispute|two_marks_on_scan|handwritten_mark)/, "La clave del escaneo está en duda: compárala con el contenido"],
+  [/^(figure pending|figure_pending_spec|figure pending_spec|pending_figure|pending_spec|figure needs drawing|figure_stimulus_pending|stimulus_figure_pending|figure_or_table_placeholder|stimulus placeholder)/, "Falta la figura o la tabla"],
+  [/^(figure options pending|option_figures_pending)/, "Faltan las figuras de las opciones"],
+  [/^(passage_pending|text_pending)/, "Falta el texto (pásalo desde el PDF)"],
+  [/^(passage_spot_check|passage_first_paragraph_retyped)/, "Compara el texto con el PDF"],
+  [/^Expected \d+ options, found \d+/, "Faltan opciones (pueden estar dentro de una figura)"],
+  [/^cloze_options_typed_from_scan/, "Opciones copiadas a mano del escaneo: compáralas con el PDF"],
+  [/^scan_obscured_options_check/, "Las opciones se veían mal en el escaneo: compáralas con el PDF"],
+  [/^This question was not detected/, "La pregunta no se detectó bien: revísala completa contra el PDF"],
+  [/^No question text found/, "No se encontró el texto de la pregunta"],
+  [/^Unclassified text after the options/, "Había texto después de las opciones que no se muestra: revisa el PDF"],
+  [/^Option [A-D] is much longer than the others/, "Una opción es mucho más larga: pueden estar dos opciones pegadas"],
+  [/^Question number was lost by the OCR/, "El número de la pregunta se dedujo por orden: confírmalo"],
+  [/^figure_pair_proof_written/, "Figura revisada con prueba lado a lado"],
+];
+function flagText(f) {
+  const s = String(f);
+  for (const [rx, text] of FLAGS) if (rx.test(s)) return text;
+  return s;
+}
+
+// The checker's messages, in plain Spanish.
+const CHECK = [
+  [/still has review flags: (.+)/, m => `Marca de revisión: ${flagText(m[1])}`],
+  [/duplicate question number/, () => "El número de la pregunta está repetido"],
+  [/out of order after Q(\d+)/, m => `Está fuera de orden después de la pregunta ${m[1]}`],
+  [/empty question text/, () => "La pregunta no tiene texto"],
+  [/(\d+) options, expected (\d+)/, m => `Tiene ${m[1]} opciones y deberían ser ${m[2]}`],
+  [/option letters are not/, () => "Las letras de las opciones no van A, B, C… en orden"],
+  [/an option has no text/, () => "Una opción está vacía"],
+  [/OCR\/layout artifacts/, () => "Quedan restos del OCR en el texto (marcas raras de la página). Usa 🧹 Limpiar."],
+  [/unknown group/, () => "Apunta a un texto compartido que no existe"],
+  [/unbalanced \$/, () => "Una fórmula tiene un $ sin cerrar"],
+  [/two options have identical text/, () => "Dos opciones tienen el mismo texto"],
+  [/more than one option carries a scan mark/, () => "Más de una opción está marcada en el escaneo"],
+];
+function checkMsg(msg) {
+  for (const [rx, f] of CHECK) { const m = rx.exec(msg); if (m) return f(m); }
+  return msg.replace(/^Q\d+:\s*/, "");
+}
+
+// ----- first-run guide: a few spotlights on the real screen, closable at any step -------------
+const TOUR = [
+  ["#pdfpane", "La página original", "Aquí ves el examen tal como está en el PDF. La línea naranja marca dónde empieza la pregunta."],
+  ["#cropbtn", "Recortar o leer", "Dibuja un recuadro sobre la página. Puedes guardar lo que encierra como figura (y limpiarle el fondo) o copiar su texto a un campo."],
+  ["#form", "Corregir la pregunta", "Escribe aquí como en Word. Si falta un texto, pulsa «⌖ Leer del PDF» junto al campo y encierra ese texto en la página."],
+  ["#f-opts", "La respuesta", "Toca la letra de una opción para marcarla como respuesta correcta."],
+  [".pane.prev", "Lo que ve el estudiante", "Así queda la pregunta en la aplicación. Cambia mientras escribes."],
+  ["#nextstep", "El siguiente paso", "Cuando la pregunta esté bien, pulsa este botón: se guarda, queda visible para los estudiantes y pasas a la siguiente."],
+  ["#morebtn", "Lo demás", "Buscar, deshacer, el código del texto y esta guía están en «Más»."],
+];
+function startTour(i = 0) {
+  document.querySelectorAll(".menu").forEach(x => { x.hidden = true; });
+  $("#tour")?.remove();
+  const steps = TOUR.filter(([sel]) => $(sel));
+  const step = steps[i];
+  if (!step) return endTour();
+  const el = $(step[0]);
+  el.scrollIntoView?.({ block: "nearest" });
+  const r = el.getBoundingClientRect(), pad = 6;
+  const below = r.top + r.height / 2 < innerHeight / 2;
+  const left = Math.max(12, Math.min(innerWidth - 372, r.left + r.width / 2 - 180));
+  const top = below ? Math.min(innerHeight - 220, r.bottom + 14) : null;
+  const bottom = below ? null : Math.min(innerHeight - 220, innerHeight - r.top + 14);
+  document.body.insertAdjacentHTML("beforeend", `<div id="tour">
+    <div class="tspot" style="left:${r.left - pad}px;top:${r.top - pad}px;width:${r.width + 2 * pad}px;height:${r.height + 2 * pad}px"></div>
+    <div class="tbub" style="left:${left}px;${top != null ? `top:${Math.max(12, top)}px` : `bottom:${Math.max(12, bottom)}px`}">
+      <div class="muted" style="font-size:12px">Paso ${i + 1} de ${steps.length}</div>
+      <b style="font:700 17px 'Bricolage Grotesque'">${step[1]}</b>
+      <p>${step[2]}</p>
+      <div class="row"><button class="ib" onclick="endTour()">Cerrar la guía</button><span class="spacer"></span>
+        ${i ? `<button class="ib" onclick="startTour(${i - 1})">Atrás</button>` : ""}
+        <button class="ib go" onclick="startTour(${i + 1})">${i + 1 < steps.length ? "Siguiente" : "Entendido"}</button></div>
+    </div></div>`);
+}
+function endTour() { $("#tour")?.remove(); $("#form")?.scrollTo(0, 0); remember("tourDone", true); }
+
+// ----- a shared text with all its questions on one screen ------------------------------------------
+// The shared text is edited once at the top and every question of the group sits under it (stem, options,
+// key, ready). "Guardar todo" saves each question that changed; the preview shows the group as one block.
+async function openGroup(n) {
+  status("Cargando el grupo…");
+  if (!state.rows.length) await loadExam();
+  const first = await api(`/api/exams/${encodeURIComponent(state.exam)}/questions/${n}`);
+  const g = first.group;
+  if (!g) { openQuestion(n); return; }
+  const numbers = first.numbers.filter(k => k >= g.from && k <= g.to);
+  const details = await Promise.all(numbers.map(k => (k === n ? first : api(`/api/exams/${encodeURIComponent(state.exam)}/questions/${k}`))));
+  state.group = { g, focus: n, items: details.map(d => ({ d, opts: d.question.options.map(o => ({ ...o })), answer: d.key || "", ready: !!d.question.ready, dirty: false, error: "" })) };
+  state.detail = first; state.n = n; state.dirty = false; state.cropping = false;
+  state.page = first.anchor?.page ?? first.scan.pages[0] ?? first.scan.guess;
+  // same full-screen layout as one question; "grouped" routes the keys to groupKey()
+  document.body.classList.add("editing", "grouped");
+  renderGroup();
+  status(`${state.exam} · Q${g.from}–${g.to}`, "ok");
+}
+function leaveGroup(go) {
+  if (state.dirty && !confirm("Hay cambios sin guardar en el grupo. ¿Salir sin guardarlos?")) return;
+  state.dirty = false; state.group = null;
+  document.body.classList.remove("grouped");
+  go();
+}
+const gItem = (n) => state.group.items.find(it => it.d.number === n);
+function gCard(it) {
+  const q = it.d.question, n = it.d.number;
+  const pics = new Set(it.d.figures.filter(traceShown).map(traceOption).filter(Boolean));
+  it.d.native_figures.filter(f => f.target === "option").forEach(f => pics.add(f.option));
+  const stemFigs = it.d.figures.filter(t => traceShown(t) && !traceOption(t)).length + it.d.native_figures.filter(f => f.target !== "option").length;
+  return `<div class="gcard ${state.group.focus === n ? "focus" : ""}" data-n="${n}">
+    <div class="gchead"><b>Pregunta ${n}</b>
+      ${visBadges(it.d.hidden_reasons)}
+      <span class="spacer"></span>
+      <label class="switch"><input type="checkbox" class="g-ready" ${it.ready ? "checked" : ""}> Lista</label>
+      <button class="ib" type="button" onclick="leaveGroup(() => openQuestion(${n}))" title="Abrir esta pregunta sola (figuras, recortes, notas)">Abrir sola ›</button></div>
+    ${it.error ? `<div class="note bad">${esc(it.error)}</div>` : ""}
+    ${(q.stimulus_md || "").trim() ? `<div class="label"><span>Texto propio</span></div><textarea class="g-stim" spellcheck="true" lang="es">${esc(q.stimulus_md)}</textarea>` : ""}
+    ${stemFigs ? `<div class="muted" style="font-size:12px">Tiene ${stemFigs} figura(s): se editan al abrirla sola.</div>` : ""}
+    <div class="label"><span>Enunciado</span></div>
+    <textarea class="g-stem" spellcheck="true" lang="es">${esc(q.stem_md)}</textarea>
+    <div class="label"><span>Opciones <span class="muted" style="text-transform:none;letter-spacing:0">· toca la letra para marcar la respuesta</span></span></div>
+    ${it.opts.map(o => `<div class="orow">
+      <button type="button" class="ltile ${it.answer === o.letter ? "key" : ""}" data-key="${esc(o.letter)}" title="Marcar como respuesta correcta">${esc(o.letter)}${o.marked_in_scan ? '<i class="mk" title="marcada en el escaneo"></i>' : ""}</button>
+      <textarea class="g-opt" data-letter="${esc(o.letter)}" spellcheck="true" lang="es" placeholder="${pics.has(o.letter) ? "Tiene figura" : "Texto de la opción " + esc(o.letter)}">${esc(o.text_md)}</textarea></div>`).join("")}
+  </div>`;
+}
+function renderGroup() {
+  const { g, items } = state.group, d = state.detail;
+  const exams = state.exams.map(e => `<option ${e.exam === state.exam ? "selected" : ""}>${esc(e.exam)}</option>`).join("");
+  app.innerHTML = `
+  <div class="ed">
+    <div class="edbar">
+      <button class="ib" id="back" title="Volver a la lista de preguntas">← Volver</button>
+      <select id="ed-exam" aria-label="Examen" disabled>${exams}</select>
+      <span class="qnum">Preguntas ${g.from}–${g.to} juntas</span>
+      <button class="ib" id="single" title="Volver a editar una pregunta a la vez (J)">Una por una</button>
+      <span class="spacer"></span>
+      <span id="savestate" class="savestate">Sin cambios</span>
+      <button class="ib go" id="save" title="Guarda todas las preguntas que cambiaste (G o Ctrl+S)">Guardar todo</button>
+    </div>
+    <div class="edgrid ${state.preview ? "" : "noprev"}" id="edgrid">
+      <section class="pane pdf" id="pdfpane">${pdfPane()}</section>
+      <div class="split" id="split" title="Arrastra para cambiar el ancho"></div>
+      <section class="pane form" id="form">
+        ${fbarHtml()}
+        <div class="fld"><div class="label"><span>Texto compartido · Q${g.from}–${g.to}</span>${STATIC ? "" : `<button class="ib" type="button" id="gap-mark" hidden onclick="markGaps()" title="Convierte los espacios escritos como (97) en huecos con número, uno por pregunta">▁ Marcar huecos</button>`}</div>
+          <textarea id="f-passage" spellcheck="true" lang="es">${esc(g.passage_md || g.stimulus_md || "")}</textarea></div>
+        <div id="gcards">${items.map(gCard).join("")}</div>
+      </section>
+      <section class="pane prev"><div class="label">Vista del estudiante</div><div id="preview"></div></section>
+    </div>
+    <div class="qstrip" id="qstrip">${state.rows.map(r => `<button class="${cellClass(r)} ${r.number >= g.from && r.number <= g.to ? "cur" : ""}" data-n="${r.number}">${r.number}</button>`).join("")}</div>
+  </div>`;
+  bindPdf();
+  document.querySelectorAll("#form textarea").forEach(fit);
+  document.querySelectorAll("#form #f-passage, #form .g-stem, #form .g-stim, #form .g-opt").forEach(attachRich);
+  $("#form").classList.toggle("visual", state.visual);
+  $("#back").onclick = () => leaveGroup(() => setTab("questions"));
+  $("#single").onclick = () => leaveGroup(() => openQuestion(state.group?.focus ?? g.from));
+  $("#save").onclick = saveGroup;
+  $("#qstrip").querySelectorAll("button").forEach(b => b.onclick = () => leaveGroup(() => openQuestion(Number(b.dataset.n))));
+  $("#qstrip").querySelector(".cur")?.scrollIntoView({ inline: "center", block: "nearest" });
+  $("#form").addEventListener("input", e => {
+    if (e.target.tagName === "TEXTAREA") fit(e.target);
+    const card = e.target.closest(".gcard");
+    if (card) gItem(+card.dataset.n).dirty = true;
+    else if (e.target.id === "f-passage") state.group.passageDirty = true;
+    markDirty(); refreshGroupPreview();
+  });
+  $("#form").addEventListener("change", e => {
+    if (!e.target.classList.contains("g-ready")) return;
+    const it = gItem(+e.target.closest(".gcard").dataset.n); it.ready = e.target.checked; it.dirty = true; markDirty();
+  });
+  $("#form").addEventListener("click", e => {
+    const k = e.target.closest(".ltile[data-key]");
+    if (!k) return;
+    const card = k.closest(".gcard"), it = gItem(+card.dataset.n);
+    it.answer = it.answer === k.dataset.key ? "" : k.dataset.key; it.dirty = true;
+    card.querySelectorAll(".ltile[data-key]").forEach(b => b.classList.toggle("key", b.dataset.key === it.answer));
+    markDirty(); refreshGroupPreview();
+  });
+  // the question being worked on: its gap lights up in the preview and the PDF follows it
+  $("#form").addEventListener("focusin", e => {
+    const card = e.target.closest(".gcard");
+    if (!card || +card.dataset.n === state.group.focus) return;
+    state.group.focus = +card.dataset.n;
+    document.querySelectorAll(".gcard").forEach(c => c.classList.toggle("focus", c === card));
+    refreshGroupPreview();
+  });
+  bindSplit();
+  refreshGroupPreview();
+}
+// Reads the cards back into the group state.
+function gSync() {
+  document.querySelectorAll(".gcard").forEach(card => {
+    const it = gItem(+card.dataset.n);
+    it.stem = card.querySelector(".g-stem").value;
+    it.stim = card.querySelector(".g-stim")?.value ?? it.d.question.stimulus_md ?? "";
+    const old = Object.fromEntries(it.opts.map(o => [o.letter, o]));
+    it.opts = [...card.querySelectorAll(".g-opt")].map(t => ({ letter: t.dataset.letter, text_md: t.value, marked_in_scan: old[t.dataset.letter]?.marked_in_scan ?? false }));
+  });
+}
+let gPrevQueued = false;
+function refreshGroupPreview() {
+  if (gPrevQueued) return;
+  gPrevQueued = true;
+  requestAnimationFrame(() => {
+    gPrevQueued = false;
+    if (!state.group || !$("#preview")) return;
+    gSync();
+    const { g, items, focus } = state.group;
+    const text = $("#f-passage").value;
+    const qs = items.map(it => `<div class="gq ${it.d.number === focus ? "focus" : ""}">
+      ${it.stim.trim() && it.stim.trim() !== text.trim() ? `<div class="stimulus">${renderText(it.stim)}</div>` : ""}
+      <div class="stem"><b>${it.d.number}.</b> ${render(it.stem)}</div>
+      ${it.opts.map(o => `<div class="gopt ${it.answer === o.letter ? "marked" : ""}"><b>${esc(o.letter)}.</b> ${render(o.text_md).replace(/^\s*<p>|<\/p>\s*$/g, "")}</div>`).join("")}
+    </div>`).join("");
+    $("#preview").innerHTML = `<div class="paper"><div class="label" style="color:var(--paper-2)">${esc(g.directions || "")}</div>
+      <div class="stimulus">${renderText(text)}</div><hr style="border:0;border-top:1px solid #d8d6cc;margin:12px 0">${qs}
+      <div class="src">Fuente: ICFES, Saber 11 · ${esc(state.exam)}</div></div>
+      <p class="muted" style="font-size:12px">En verde la respuesta de la clave; en naranja la pregunta donde estás (solo en el editor).</p>`;
+    $("#preview").querySelectorAll(`.gap[data-gap="${focus}"]`).forEach(x => x.classList.add("gap-now"));
+    updateGapBar();
+  });
+}
+async function saveGroup() {
+  if (!state.group) return false;
+  gSync();
+  const { items } = state.group;
+  const passage = $("#f-passage").value;
+  const todo = items.filter(it => it.dirty || state.group.passageDirty);
+  if (!todo.length) { setSave("Sin cambios", ""); return true; }
+  // the shared text travels with every question saved; when only it changed, the first question carries it
+  const send = items.some(it => it.dirty) ? items.filter(it => it.dirty || it === items[0] && state.group.passageDirty) : [items[0]];
+  setSave("Guardando…", "");
+  let bad = 0;
+  for (const it of send) {
+    const body = { stem_md: it.stem, stimulus_md: it.stim, options: it.opts.map(o => ({ letter: o.letter, text_md: o.text_md })),
+      ready: it.ready, answer: it.answer || null, section: it.d.question.section || "", group_passage_md: passage };
+    try {
+      const fresh = await api(qpath(it.d), J("PUT", body));
+      it.d = { ...it.d, ...fresh }; it.dirty = false; it.error = "";
+      const r = state.rows.find(x => x.number === it.d.number);
+      if (r) { r.ready = fresh.question.ready; r.edited = true; r.hidden = fresh.hidden_reasons; r.errors = fresh.messages.errors.length; r.warnings = fresh.messages.warnings.length; }
+    } catch (err) {
+      bad++;
+      it.error = err.status === 409 ? `No se guardó: no puede estar lista todavía (${(err.body.reasons || []).join(", ")}). Corrige eso o desmarca «Lista».` : `No se guardó: ${err.message}`;
+    }
+  }
+  if (!bad) state.group.passageDirty = false;
+  state.dirty = !!bad;
+  const focus = state.group.focus, y = $("#form").scrollTop;
+  renderGroup();
+  $("#form").scrollTop = y; state.group.focus = focus;
+  if (bad) { setSave(`${bad} pregunta(s) no se guardaron: mira el aviso en rojo`, "bad"); toast("Algunas preguntas no se guardaron.", true); }
+  else setSave(`Guardado ${new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}`, "ok");
+  return !bad;
+}
+function groupKey(e) {
+  if ($("#overlay")) { if (e.key === "Escape") closeOverlay(); return; }
+  const typing = /TEXTAREA|INPUT|SELECT/.test(e.target.tagName) || e.target.isContentEditable || !!e.target.closest?.("math-field,.mathedit");
+  if (typing && e.key === "Escape") { e.target.blur?.(); window.getSelection()?.removeAllRanges(); return; }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); saveGroup(); return; }
+  if (typing || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+  const k = e.key.toLowerCase();
+  if (k === "g") { e.preventDefault(); saveGroup(); }
+  else if (k === "j") { e.preventDefault(); $("#single").click(); }
+  else if (k === "f") { e.preventDefault(); newFormula(); }
 }
 
 // ----- options: tap a letter to set the key ------------------------------------------
@@ -666,11 +1215,11 @@ function drawOpts() {
       <button type="button" class="ltile ${state.answer === o.letter ? "key" : ""}" onclick="setAnswer('${esc(o.letter)}')" title="${state.answer === o.letter ? "Respuesta correcta" : "Marcar como respuesta correcta"}">${esc(o.letter)}${o.marked_in_scan ? '<i class="mk" title="marcada en el escaneo"></i>' : ""}</button>
       <textarea data-letter="${esc(o.letter)}" spellcheck="true" lang="es" placeholder="Texto de la opción ${esc(o.letter)}">${esc(o.text_md)}</textarea>
       <span class="otools">
-        <button type="button" onclick="moveOpt(${i}, -1)" ${i === 0 ? "disabled" : ""} title="Subir">↑</button>
-        <button type="button" onclick="moveOpt(${i}, 1)" ${i === state.opts.length - 1 ? "disabled" : ""} title="Bajar">↓</button>
-        <button type="button" onclick="removeOpt(${i})" title="Quitar opción">✕</button>
+        <button type="button" onclick="moveOpt(${i}, -1)" ${i === 0 ? "disabled" : ""} title="Mover esta opción arriba">↑ Subir</button>
+        <button type="button" onclick="moveOpt(${i}, 1)" ${i === state.opts.length - 1 ? "disabled" : ""} title="Mover esta opción abajo">↓ Bajar</button>
+        <button type="button" onclick="removeOpt(${i})" title="Quitar esta opción">Quitar</button>
       </span>
-    </div>`).join("") + `<button class="ib" type="button" onclick="addOpt()">+ Opción</button>
+    </div>`).join("") + `<button class="ib" type="button" onclick="addOpt()">+ Agregar opción</button>
     <span class="muted" style="font-size:12px;margin-left:8px">Respuesta: <b>${esc(state.answer || "sin clave")}</b>${state.answer ? ` <a href="#" onclick="setAnswer('');return false">quitar</a>` : ""}</span>`;
   document.querySelectorAll("#f-opts textarea").forEach(fit);
   attachAllRich();
@@ -707,31 +1256,48 @@ function drawNative(f, slot = true) {
 const scanUrl = (t) => `/api/figure?path=${encodeURIComponent(t.svg)}`;
 function traceOption(t) { return t.option || (/[-_](?:opt|opcion|opción)[-_]([a-d])(?=[-_]|$)/i.exec(t.figure_id || "")?.[1]?.toUpperCase() ?? null); }
 
+// Stem figures can go inside the text: a button puts one at the caret, or the card is dragged into the text.
+function placeButtons(ids, id) {
+  if (STATIC) return "";
+  const inText = ids.some(x => state.placedKey?.split(" ").includes(x));
+  return inText
+    ? `<span class="badge ok">en el texto</span><button class="ib" type="button" onclick="unplaceFigure('${esc(id)}')" title="La figura vuelve a su lugar de siempre, encima de la pregunta">Sacar del texto</button>`
+    : `<button class="ib" type="button" onclick="placeFigure('${esc(id)}', state.lastArea)" title="Pone la figura donde está el cursor en el texto. También puedes arrastrar esta tarjeta al texto.">⤵ Insertar figura aquí</button>`;
+}
 function drawFigs() {
   const d = state.detail;
+  state.placedKey = [...placedNow()].sort().join(" ");
   const gone = replacedIds(d.figures);
   const natives = d.native_figures.map(f => {
     const problems = figProblems(f);
     const replaced = gone.has(f.id);
-    return `<div class="figcard">
+    const stem = f.target !== "option" && !replaced && !problems.length;
+    return `<div class="figcard" ${stem && !STATIC ? `draggable="true" data-fig="${esc(f.id)}"` : ""}>
       <div class="head"><b>${esc(KIND_NAMES[f.kind] || f.kind)}</b>
         <span class="muted">${f.target === "option" ? `opción ${esc(f.option)}` : "enunciado"}</span>
-        ${replaced ? '<span class="badge">reemplazada por un recorte</span>' : problems.length ? '<span class="badge hid">oculta a estudiantes</span>' : '<span class="badge ok">se dibuja</span>'}
+        ${replaced ? '<span class="badge">reemplazada por un recorte</span>' : problems.length ? '<span class="badge hid">no se puede dibujar</span>' : '<span class="badge ok">se ve bien</span>'}
         <span class="spacer"></span>
+        ${stem ? placeButtons([f.id], f.id) : ""}
         <button class="ib" type="button" onclick="openStudio('${esc(f.id)}')">Editar</button>
         ${STATIC ? "" : `<button class="ib" type="button" onclick="startCrop('${esc(f.id)}', '${f.target === "option" ? esc(f.option) : ""}')" title="Cambiar esta figura por un recorte de la página">✂ Usar recorte</button>
-        <button class="ib warn" type="button" onclick="deleteNative('${esc(f.id)}')" title="Quitar">✕</button>`}
+        <button class="ib warn" type="button" onclick="deleteNative('${esc(f.id)}')" title="Quitar esta figura">Quitar</button>`}
       </div>
       ${problems.length && !replaced ? `<ul class="problems">${problems.slice(0, 4).map(p => `<li>${esc(p)}</li>`).join("")}${problems.length > 4 ? `<li>y ${problems.length - 4} más</li>` : ""}</ul>` : `<div class="mini">${drawNative(f)}</div>`}
     </div>`;
   });
-  const scans = d.figures.filter(traceShown).map(t => `<div class="figcard">
+  const scans = d.figures.filter(traceShown).map(t => `<div class="figcard" ${!traceOption(t) && !STATIC ? `draggable="true" data-fig="${esc(t.figure_id)}"` : ""}>
       <div class="head"><b>Imagen del escaneo</b><span class="muted">${traceOption(t) ? `opción ${esc(traceOption(t))}` : "enunciado"}</span>
         <span class="spacer"></span>
-        ${STATIC ? "" : `<button class="ib warn" type="button" onclick="deleteScan('${esc(t.figure_id)}')" title="Quitar">✕</button>`}</div>
-      <div class="mini"><img src="${scanUrl(t)}" alt="${esc(t.figure_id)}"></div></div>`);
-  const pending = d.figures.filter(t => !traceShown(t)).map(t => `<div class="figcard"><div class="head"><b>${esc(t.figure_id || t.spec_id)}</b><span class="badge hid">${t.pending_spec ? "pendiente" : esc(t.method || "")}</span></div></div>`);
-  $("#figs").innerHTML = [...natives, ...scans, ...pending].join("") || `<p class="muted" style="margin:0">Sin figuras. Si la pregunta tiene un dibujo, mapa o foto, recórtalo del PDF. Si es una gráfica o tabla, créala con «+ Gráfica o tabla».</p>`;
+        ${traceOption(t) ? "" : placeButtons([t.figure_id, t.spec_id].filter(Boolean), t.figure_id)}
+        ${STATIC ? "" : `<button class="ib" type="button" onclick="cleanSaved('${esc(t.figure_id)}')" title="Quitar el fondo o tapar texto encima">✨ Limpiar</button><button class="ib warn" type="button" onclick="deleteScan('${esc(t.figure_id)}')" title="Quitar esta imagen">Quitar</button>`}</div>
+      <div class="mini"><img src="${scanUrl(t)}" alt="${esc(t.figure_id)}" draggable="false"></div></div>`);
+  const todo = d.figures.filter(isToCrop).map(t => `<div class="figcard todo">
+      <div class="head"><b>${t.proposed_box_page_fraction ? "Revisar el recorte propuesto" : "Falta recortar esta figura"}</b><span class="muted">${traceOption(t) ? `opción ${esc(traceOption(t))}` : "enunciado"}${t.page ? ` · página ${t.page}` : ""}</span>
+        <span class="spacer"></span>
+        ${STATIC ? "" : `<button class="ib go" type="button" onclick="cropMissing('${esc(t.figure_id)}')">${t.proposed_box_page_fraction ? "✂ Ver el recuadro propuesto" : "✂ Recortarla del PDF"}</button>`}</div>
+      <div class="muted" style="font-size:12px">${t.proposed_box_page_fraction ? "Ya hay un recuadro dibujado en la página. Pulsa Enter si está bien, o arrastra sus bordes para ajustarlo." : "Dibuja un recuadro sobre la figura en la página. El recorte toma su lugar."}</div></div>`);
+  const pending = d.figures.filter(t => !traceShown(t) && !isToCrop(t)).map(t => `<div class="figcard"><div class="head"><b>${esc(t.figure_id || t.spec_id)}</b><span class="badge hid">${t.pending_spec ? "pendiente" : esc(t.method || "")}</span></div></div>`);
+  $("#figs").innerHTML = [...todo, ...natives, ...scans, ...pending].join("") || `<p class="muted" style="margin:0">Sin figuras. Si la pregunta tiene un dibujo, mapa o foto, recórtalo del PDF. Si es una gráfica o tabla, créala con «+ Gráfica o tabla».</p>`;
 }
 
 async function deleteNative(id) {
@@ -754,7 +1320,9 @@ async function reloadFigures(msg) {
   const d = state.detail;
   d.figures = fresh.figures; d.native_figures = fresh.native_figures; d.undo = fresh.undo; d.hidden_reasons = fresh.hidden_reasons;
   state.natives[String(d.number)] = fresh.native_figures;
-  drawFigs(); refreshPreview(); refreshChrome();
+  const row = state.rows.find(x => x.number === d.number);
+  if (row) row.edited = true;
+  drawFigs(); redrawFigBlocks(); refreshPreview(); refreshChrome();
   if (msg) toast(msg);
 }
 
@@ -762,8 +1330,12 @@ function refreshChrome() {
   const d = state.detail;
   $("#vis").innerHTML = visBadges(hiddenNow());
   const u = $("#undo");
-  if (u) { u.disabled = !d.undo; u.textContent = `↶ Deshacer${d.undo ? ` (${d.undo})` : ""}`; }
+  if (u) { u.disabled = !d.undo; u.textContent = undoLabel(d.undo); }
+  if ($("#nsmiss")) $("#nsmiss").innerHTML = nsMissHtml();
   const r = state.rows.find(x => x.number === d.number);
+  if (r) r.to_crop = d.figures.filter(isToCrop).length;
+  const a = state.all?.find(x => x.exam === d.exam && x.number === d.number);
+  if (a) { Object.assign(a, { hidden: d.hidden_reasons, to_crop: d.figures.filter(isToCrop).length, bad: badFigure(d.number) }); state.allStale = true; }
   const cell = $(`#qstrip button[data-n="${d.number}"]`);
   if (r && cell) cell.className = `${cellClass(r)} cur`;
 }
@@ -774,30 +1346,200 @@ function studentView(q, g, d) {
   const gone = replacedIds(d.figures);
   const natives = d.native_figures.filter(f => !gone.has(f.id));
   const scans = d.figures.filter(traceShown);
-  const stemFigs = natives.filter(f => f.target !== "option").map(f => drawNative(f)).join("");
-  const stemScans = scans.filter(t => !traceOption(t)).map(t => `<img class="scanfig" src="${scanUrl(t)}" alt="">`).join("");
+  const gText = g ? (g.passage_md || g.stimulus_md || "") : "";
+  // Figures placed in the text with [[figura:ID]] draw there; the rest keep their place above the question.
+  const placed = placedIds(q.stem_md, q.stimulus_md, gText);
+  const stemFigs = natives.filter(f => f.target !== "option" && !placed.has(f.id)).map(f => drawNative(f)).join("");
+  const stemScans = scans.filter(t => !traceOption(t) && !placed.has(t.figure_id) && !placed.has(t.spec_id)).map(t => `<img class="scanfig" src="${scanUrl(t)}" alt="">`).join("");
   const opts = q.options.map(o => {
     const nat = natives.find(f => f.target === "option" && f.option === o.letter);
     const sc = scans.find(t => traceOption(t) === o.letter);
     const body = nat ? drawNative(nat) : sc ? `<img class="scanfig" src="${scanUrl(sc)}" alt="">` : render(o.text_md);
     return `<div class="opt ${state.answer === o.letter ? "marked" : ""}" style="pointer-events:none"><span class="tile">${esc(o.letter)}</span><div class="body">${body}</div></div>`;
   }).join("");
-  const gText = g ? (g.passage_md || g.stimulus_md || "") : "";
   const plain = h => (h ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
   const stemInPassage = !!g && plain(q.stem_md).length > 20 && plain(gText).includes(plain(q.stem_md));
-  const dir = g ? `<div class="label" style="color:var(--paper-2)">${esc(g.directions)}</div><div class="stimulus">${render(gText)}</div><hr style="border:0;border-top:1px solid #d8d6cc;margin:12px 0">` : "";
+  const dir = g ? `<div class="label" style="color:var(--paper-2)">${esc(g.directions)}</div><div class="stimulus">${renderText(gText)}</div><hr style="border:0;border-top:1px solid #d8d6cc;margin:12px 0">` : "";
   return `
     <div class="paper">
       <div class="label" style="color:var(--paper-2)">Pregunta ${q.number}</div>
       ${dir}
-      ${q.stimulus_md ? `<div class="stimulus">${render(q.stimulus_md)}</div>` : ""}
+      ${q.stimulus_md ? `<div class="stimulus">${renderText(q.stimulus_md)}</div>` : ""}
       ${stemScans}${stemFigs}
-      ${stemInPassage ? "" : `<div class="stem">${render(q.stem_md)}</div>`}
+      ${stemInPassage ? "" : `<div class="stem">${renderText(q.stem_md)}</div>`}
       <div class="src">Fuente: ICFES, Saber 11 · ${esc(state.exam)}</div>
     </div>
     ${opts}
     <p class="muted" style="font-size:12px">El borde naranja marca la respuesta de la clave (solo en el editor).</p>`;
 }
+
+// ----- figures inside the text ----------------------------------------------------------------
+// [[figura:ID]] alone on its own paragraph of the stem, the stimulus or the group's text draws that figure right there.
+// ID is a native chart or table's id, or a crop's figure_id (or the native id it replaced), of this question or of
+// another question in its group. The student app reads the same mark.
+const FIG_TOKEN = /\[\[figura:([^\]\s]+)\]\]/g;
+const FIG_LINE = /^[ \t]*\[\[figura:([^\]\s]+)\]\][ \t]*$/m;
+const FIG_PARA = /^\s*\[\[figura:([^\]\s]+)\]\]\s*$/;
+function placedIds(...texts) {
+  const out = new Set();
+  texts.forEach(t => { for (const m of (t || "").matchAll(FIG_TOKEN)) out.add(m[1]); });
+  return out;
+}
+function figById(id, d = state.detail) {
+  for (const p of [d, d.group_figures]) {
+    if (!p) continue;
+    const gone = replacedIds(p.figures);
+    const nat = p.native_figures.find(f => f.id === id && !gone.has(f.id));
+    if (nat) return { native: nat };
+    const sc = p.figures.filter(traceShown).find(t => t.figure_id === id || t.spec_id === id);
+    if (sc) return { scan: sc };
+  }
+  return null;
+}
+function figHtml(id) {
+  const f = figById(id);
+  if (f?.native) return drawNative(f.native);
+  if (f?.scan) return `<img class="scanfig" src="${scanUrl(f.scan)}" alt="" draggable="false">`;
+  return `<span class="figure-slot bad">Esta figura ya no existe (${esc(id)}). Sácala del texto con ✕.</span>`;
+}
+function renderText(text) {
+  const parts = (text || "").split(new RegExp(FIG_LINE.source, "m"));
+  return parts.map((p, i) => (i % 2 ? figHtml(p) : p.trim() ? render(p) : "")).join("");
+}
+const figBlock = (id) => `<div class="figblock" contenteditable="false" draggable="true" data-fig="${esc(id)}" title="Arrastra la figura a otro lugar del texto"><span class="fighandle">⠿ Figura en el texto · arrástrala para moverla</span>${figHtml(id)}<button class="figx" type="button" title="Sacar la figura del texto (vuelve a su lugar de siempre)">✕</button></div>`;
+const TEXT_FIELDS = ["f-stem", "f-stimulus", "f-passage"];
+function placedNow() { return placedIds(...TEXT_FIELDS.map(id => $("#" + id)?.value)); }
+function redrawFigBlocks() { document.querySelectorAll("#form .figblock").forEach(b => { b.outerHTML = figBlock(b.dataset.fig); }); }
+
+// Puts a figure in a text field at the caret (or at a drop point): the paragraph splits there and the figure sits
+// between its two halves. A figure already in some text moves.
+function placeFigure(id, area, range) {
+  if (!area || !TEXT_FIELDS.includes(area.id)) area = TEXT_FIELDS.map(x => $("#" + x)).find(t => t && t === state.lastArea) || $("#f-stem");
+  unplaceFigure(id, true);
+  const rich = state.visual && richOf(area);
+  if (!rich) {
+    const at = area.selectionStart ?? area.value.length;
+    const before = area.value.slice(0, at).replace(/\s+$/, ""), after = area.value.slice(at).replace(/^\s+/, "");
+    area.value = [before, `[[figura:${id}]]`, after].filter(Boolean).join("\n\n");
+    area.dispatchEvent(new Event("input", { bubbles: true }));
+  } else {
+    if (!range || !rich.contains(range.startContainer)) range = rich._range && rich.contains(rich._range.startContainer) ? rich._range : null;
+    const tmp = document.createElement("div");
+    tmp.innerHTML = figBlock(id);
+    insertBlockAt(rich, range, tmp.firstChild);
+    rich.dispatchEvent(new Event("input"));
+  }
+  state.lastArea = area;
+  drawFigs();
+  toast("Figura puesta en el texto. Arrástrala para moverla; ✕ la devuelve a su lugar.");
+}
+function unplaceFigure(id, quiet = false) {
+  for (const fid of TEXT_FIELDS) {
+    const ta = $("#" + fid);
+    if (!ta || !placedIds(ta.value).has(id)) continue;
+    const rich = state.visual && richOf(ta);
+    if (rich) {
+      rich.querySelectorAll(".figblock").forEach(b => { if (b.dataset.fig === id) takeOut(b); });
+      rich.dispatchEvent(new Event("input"));
+    } else {
+      ta.value = ta.value.split(/\n\s*\n/).filter(b => !(FIG_PARA.test(b) && FIG_PARA.exec(b)[1] === id)).join("\n\n");
+      ta.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+  }
+  if (!quiet) drawFigs();
+}
+function insertBlockAt(rich, range, el) {
+  if (!range) { rich.append(el); return; }
+  if (range.startContainer === rich) { rich.insertBefore(el, rich.childNodes[range.startOffset] || null); return; }
+  let top = range.startContainer;
+  while (top.parentNode !== rich) top = top.parentNode;
+  if (top.nodeType === 3) {
+    const tail = top.splitText(Math.min(range.startOffset, top.length));
+    top.after(el);
+    if (!tail.nodeValue.trim()) tail.remove();
+    if (!top.nodeValue.trim()) top.remove();
+    return;
+  }
+  if (top.classList.contains("figblock") || /^(TABLE|UL|OL)$/.test(top.tagName)) { top.after(el); return; }
+  // what follows the caret goes below the figure, in a paragraph of its own
+  const tail = document.createRange();
+  tail.setStart(range.startContainer, range.startOffset);
+  tail.setEnd(top, top.childNodes.length);
+  const rest = top.cloneNode(false);
+  rest.dataset.split = "1";  // taking the figure out again joins the two halves back
+  rest.append(tail.extractContents());
+  const blank = (n) => !n.textContent.trim() && !n.querySelector("img,table,.mathchip,.figblock");
+  top.after(el);
+  if (!blank(rest)) el.after(rest);
+  if (blank(top)) top.remove();
+}
+function takeOut(block) {
+  const prev = block.previousSibling, next = block.nextSibling;
+  block.remove();
+  if (next?.dataset?.split && prev?.nodeType === 1 && prev.tagName === next.tagName && !prev.classList.contains("figblock")) {
+    prev.append(...next.childNodes);
+    next.remove();
+  }
+}
+function caretAt(x, y) {
+  if (document.caretRangeFromPoint) return document.caretRangeFromPoint(x, y);
+  const p = document.caretPositionFromPoint?.(x, y);
+  if (!p) return null;
+  const r = document.createRange(); r.setStart(p.offsetNode, p.offset); return r;
+}
+// Dragging: a figure card or a figure already in the text, onto any text field.
+document.addEventListener("dragstart", e => {
+  const src = e.target.closest?.("[data-fig]");
+  if (!src || !e.dataTransfer) return;
+  e.dataTransfer.setData("text/x-icfes-fig", src.dataset.fig);
+  e.dataTransfer.effectAllowed = "copyMove";
+  state.dragFig = src.dataset.fig;
+});
+document.addEventListener("dragend", () => { state.dragFig = null; document.querySelectorAll(".rich.dropping").forEach(r => r.classList.remove("dropping")); });
+document.addEventListener("dragover", e => {
+  const rich = e.target.closest?.(".rich");
+  if (!rich || !state.dragFig || !TEXT_FIELDS.includes(rich.previousElementSibling?.id)) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = "move";
+  document.querySelectorAll(".rich.dropping").forEach(r => { if (r !== rich) r.classList.remove("dropping"); });
+  rich.classList.add("dropping");
+  const r = caretAt(e.clientX, e.clientY);
+  if (r && rich.contains(r.startContainer) && !r.startContainer.parentElement?.closest(".figblock")) {
+    rich.focus({ preventScroll: true });
+    const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  }
+});
+document.addEventListener("dragleave", e => { const rich = e.target.closest?.(".rich"); if (rich && !rich.contains(e.relatedTarget)) rich.classList.remove("dropping"); });
+document.addEventListener("drop", e => {
+  const rich = e.target.closest?.(".rich");
+  const id = state.dragFig;
+  if (!rich || !id || !TEXT_FIELDS.includes(rich.previousElementSibling?.id)) return;
+  e.preventDefault();
+  rich.classList.remove("dropping");
+  let r = caretAt(e.clientX, e.clientY);
+  if (r && (!rich.contains(r.startContainer) || (r.startContainer.nodeType === 1 ? r.startContainer : r.startContainer.parentElement)?.closest(".figblock"))) {
+    // dropped on a figure: goes right below it
+    const over = e.target.closest(".figblock");
+    r = document.createRange();
+    if (over && over.parentNode === rich) r.setStartAfter(over); else { r.selectNodeContents(rich); r.collapse(false); }
+  }
+  // Keep the drop point while the old copy is taken out.
+  const mark = document.createElement("span");
+  if (r) { r.insertNode(mark); }
+  unplaceFigure(id, true);
+  const at = document.createRange();
+  if (mark.isConnected) { at.setStartBefore(mark); at.collapse(true); }
+  const tmp = document.createElement("div");
+  tmp.innerHTML = figBlock(id);
+  const area = rich.previousElementSibling;
+  insertBlockAt(rich, mark.isConnected ? at : null, tmp.firstChild);
+  mark.remove();
+  rich.normalize();
+  rich.dispatchEvent(new Event("input"));
+  state.lastArea = area;
+  state.dragFig = null;
+  drawFigs();
+});
 
 let previewQueued = false;
 function refreshPreview() {
@@ -809,6 +1551,10 @@ function refreshPreview() {
     const q = { ...d.question, stem_md: $("#f-stem").value, stimulus_md: $("#f-stimulus").value, options: state.opts };
     const g = d.group && $("#f-passage") ? { ...d.group, passage_md: $("#f-passage").value } : d.group;
     $("#preview").innerHTML = studentView(q, g, d);
+    $("#preview").querySelectorAll(`.gap[data-gap="${d.number}"]`).forEach(x => x.classList.add("gap-now"));
+    updateGapBar();
+    const key = [...placedNow()].sort().join(" ");
+    if (key !== state.placedKey) { state.placedKey = key; drawFigs(); }
   });
 }
 
@@ -839,7 +1585,7 @@ async function saveQuestion() {
     state.detail = { ...fresh };
     state.dirty = false;
     const r = state.rows.find(x => x.number === d.number);
-    if (r) { r.ready = fresh.question.ready; r.hidden = fresh.hidden_reasons; r.errors = fresh.messages.errors.length; r.warnings = fresh.messages.warnings.length; }
+    if (r) { r.ready = fresh.question.ready; r.edited = true; r.hidden = fresh.hidden_reasons; r.errors = fresh.messages.errors.length; r.warnings = fresh.messages.warnings.length; }
     if (document.body.classList.contains("editing") && state.n === d.number) {
       state.detail.question.options = fresh.question.options;
       refreshChrome();
@@ -863,7 +1609,7 @@ async function readyAndNext() {
 
 function nextToFix() {
   const rows = state.rows, cur = rows.findIndex(r => r.number === state.n);
-  const needs = r => r.errors || r.hidden.length || badFigure(r.number);
+  const needs = r => r.errors || r.hidden.length || badFigure(r.number) || r.to_crop;
   for (let k = 1; k <= rows.length; k++) { const r = rows[(cur + k) % rows.length]; if (needs(r)) return r.number; }
   return null;
 }
@@ -880,12 +1626,16 @@ function overlay(html) {
 function showHelp() {
   const k = (a, b) => `<tr><td>${a}</td><td>${b}</td></tr>`;
   overlay(`<div class="label">Atajos y trucos</div><table class="help">
-    ${k("<kbd>Ctrl</kbd>+<kbd>S</kbd>", "Guardar")}
-    ${k("<kbd>Ctrl</kbd>+<kbd>Enter</kbd>", "Marcar lista, guardar y pasar a la siguiente")}
-    ${k("<kbd>Alt</kbd>+<kbd>→</kbd> / <kbd>←</kbd>", "Siguiente / anterior (guarda antes de salir)")}
-    ${k("<kbd>Alt</kbd>+<kbd>N</kbd>", "Siguiente pregunta por arreglar")}
-    ${k("<kbd>Alt</kbd>+<kbd>R</kbd>", "Dibujar un recuadro en la página")}
-    ${k("<kbd>Ctrl</kbd>+<kbd>K</kbd>", "Buscar en todas las preguntas")}
+    <tr><td colspan="2" class="muted" style="font-size:12px">Con una sola tecla cuando el cursor no está en un campo de texto. Dentro de un campo, <kbd>Esc</kbd> lo deja y las teclas vuelven a funcionar. Las versiones con Ctrl/Alt siguen sirviendo.</td></tr>
+    ${k("<kbd>G</kbd>", "Guardar (también Ctrl+S)")}
+    ${k("<kbd>L</kbd>", "Marcar lista, guardar y pasar a la siguiente (también Ctrl+Enter)")}
+    ${k("<kbd>→</kbd> / <kbd>←</kbd>", "Siguiente / anterior (guarda antes de salir)")}
+    ${k("<kbd>N</kbd>", "Siguiente pregunta por arreglar")}
+    ${k("<kbd>R</kbd>", "Dibujar un recuadro en la página")}
+    ${k("<kbd>F</kbd>", "Fórmula nueva en el último campo que usaste")}
+    ${k("<kbd>M</kbd>", "Minimizar o mostrar los textos largos")}
+    ${k("<kbd>B</kbd> o <kbd>/</kbd>", "Buscar en todas las preguntas")}
+    ${k("<kbd>?</kbd>", "Esta lista")}
     ${k("<kbd>Ctrl</kbd>+rueda", "Acercar o alejar la página")}
     ${k("<kbd>Ctrl</kbd>+<kbd>Z</kbd>", "Deshacer lo escrito en un campo (↶ Deshacer revierte lo guardado)")}
     ${k("<kbd>Esc</kbd>", "Cerrar el recuadro o la ventana")}
@@ -924,7 +1674,10 @@ async function undo() {
 }
 
 document.addEventListener("keydown", e => {
+  if (document.body.classList.contains("grouped")) { groupKey(e); return; }
   if (!document.body.classList.contains("editing")) return;
+  if ($("#tour")) { if (e.key === "Escape") endTour(); return; }
+  if ($("#cleaner")) { cleanerKey(e); return; }
   if ($(".studio")) {
     if (cvKey(e)) return;
     if (e.key === "Escape") closeStudio();
@@ -932,7 +1685,22 @@ document.addEventListener("keydown", e => {
     return;
   }
   if ($("#overlay")) { if (e.key === "Escape") closeOverlay(); return; }
-  const typing = /TEXTAREA|INPUT|SELECT/.test(e.target.tagName);
+  const typing = /TEXTAREA|INPUT|SELECT/.test(e.target.tagName) || e.target.isContentEditable || !!e.target.closest?.("math-field,.mathedit");
+  // Esc in a text field leaves it, so the one-key shortcuts below work again.
+  if (typing && e.key === "Escape" && (e.target.closest?.(".rich") || e.target.tagName === "TEXTAREA") && !e.target.closest?.(".mathedit")) {
+    e.target.blur(); window.getSelection()?.removeAllRanges(); return;
+  }
+  // One key, no Ctrl, when the caret is not in a text field. None of them deletes or discards anything.
+  if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey && !e.repeat) {
+    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    const act = {
+      g: () => saveQuestion(), l: () => readyAndNext(), n: () => $("#fixnext").click(),
+      ArrowRight: () => $("#next").click(), ArrowLeft: () => $("#prev").click(),
+      r: () => (state.cropping ? cancelCrop() : startCrop()), b: () => openSearch(), "/": () => openSearch(),
+      f: () => newFormula(), j: () => $("#groupbtn")?.click(), m: () => ["f-passage", "f-stimulus"].forEach(id => $("#" + id) && setFold(id, !$("#" + id).closest(".fld").classList.contains("folded"))),
+    }[k];
+    if (act) { e.preventDefault(); act(); return; }
+  }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); saveQuestion(); }
   else if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); readyAndNext(); }
   else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openSearch(); }
@@ -941,6 +1709,9 @@ document.addEventListener("keydown", e => {
   else if (!typing && e.key === "?") { showHelp(); }
   else if (e.altKey && e.key === "ArrowRight") { e.preventDefault(); $("#next").click(); }
   else if (e.altKey && e.key === "ArrowLeft") { e.preventDefault(); $("#prev").click(); }
+  else if (e.key === "Enter" && !typing && state.cropping && state.box && state.cropTarget?.kind === "replace" && !e.target.closest?.(".cropbar")) {
+    e.preventDefault(); cropTo(state.cropTarget.option || "", state.cropTarget.replaces);
+  }
   else if (e.key === "Escape") { cancelCrop(); }
 });
 
@@ -970,11 +1741,40 @@ const MATH_SPLIT = /(\$[^$\n]+?\$)/;
 // Exam text to editable HTML.
 function toVisual(src) {
   if (!src) return "";
+  const figs = [], exs = [];
   const blocks = pipeTables(src).split(/\n\s*\n/).map(b => b.trim()).filter(Boolean)
-    .map(b => (/^<(p|div|ul|ol|table|h\d)\b/i.test(b) ? b : `<div>${b.replace(/\n/g, "<br>")}</div>`));
-  const html = blocks.join("").split(MATH_SPLIT).map((part, i) => (i % 2 ? part
-    : part.replace(/\*\*([^*\n]+)\*\*/g, "<b>$1</b>").replace(/(^|[^*\w])\*([^*\n]+?)\*(?![*\w])/g, (m, pre, body) => (/<\/?(t[dhr]|div|p)\b/i.test(body) ? m : `${pre}<i>${body}</i>`)))).join("");
-  return window.DOMPurify.sanitize(html);
+    .map(b => (EX_PARA.test(b) ? `<div>\u2065${exs.push(b) - 1}\u2065</div>` : FIG_PARA.test(b) ? `\u2064${figs.push(FIG_PARA.exec(b)[1]) - 1}\u2064` : /^<(p|div|ul|ol|table|h\d)\b/i.test(b) ? b : `<div>${b.replace(/\n/g, "<br>")}</div>`));
+  const maths = [];
+  const gaps = [];
+  const html = blocks.join("").split(MATH_SPLIT).map((part, i) => (i % 2 ? (isTex(part) ? `\u2063${maths.push(part.slice(1, -1)) - 1}\u2063` : part)
+    : part.replace(GAP_TOKEN, (m, n, w) => `\u2062${gaps.push([n ?? "", w ?? ""]) - 1}\u2062`).replace(/\*\*([^*\n]+)\*\*/g, "<b>$1</b>").replace(/(^|[^*\w])\*([^*\n]+?)\*(?![*\w])/g, (m, pre, body) => (/<\/?(t[dhr]|div|p)\b/i.test(body) ? m : `${pre}<i>${body}</i>`)))).join("");
+  // Formulas are swapped in after sanitizing: each is a chip drawn by the app's own math renderer.
+  return window.DOMPurify.sanitize(html).replace(/\u2063(\d+)\u2063/g, (m, k) => mathChip(maths[+k]))
+    .replace(/\u2064(\d+)\u2064/g, (m, k) => figBlock(figs[+k]))
+    .replace(/\u2062(\d+)\u2062/g, (m, k) => gapChip(...gaps[+k]))
+    .replace(/<div>\u2065(\d+)\u2065<\/div>/g, (m, k) => exBlock(exs[+k]))
+    .replace(/<div class="espacio"><\/div>/g, '<div class="espacio" contenteditable="false"></div>');
+}
+// Prices like "$200.000, ... $" pair up as dollars too; only real formulas become chips, the rest stays text.
+const isTex = (part) => !/\n/.test(part) && (!part.includes("<") || /^\$\\(ce|mol)\{/.test(part)) && !/^\$\s|\s\$$/.test(part) && !/^\$\d{1,3}(\.\d{3})+([,;:]|\s|\$)/.test(part);
+function mathChip(tex) {
+  const drawn = window.renderRich ? window.renderRich(`$${tex}$`).replace(/^\s*<p>|<\/p>\s*$/g, "") : esc(tex);
+  return `<span class="mathchip" contenteditable="false" data-tex="${esc(tex)}" title="Clic para editar la fórmula">${drawn}</span>`;
+}
+// Fill-in-the-blank gaps (English section): [[hueco:97]], [[hueco:0|word]] for the example, [[hueco]] without number.
+const GAP_TOKEN = /\[\[hueco(?::(\d{1,3}))?(?:\|([^\]\n]*))?\]\]/g;
+const gapToken = (n, w) => `[[hueco${n !== "" && n != null ? ":" + n : ""}${w ? "|" + w.replace(/[\]|\n]/g, " ").trim() : ""}]]`;
+function gapChip(n, w = "") {
+  const drawn = window.gapHtml ? window.gapHtml(n === "" ? null : n, w) : esc(gapToken(n, w));
+  return `<span class="gapchip" contenteditable="false" data-gap="${esc(String(n ?? ""))}" data-word="${esc(w || "")}" title="Clic para cambiar el número del hueco o quitarlo">${drawn}</span>`;
+}
+// The worked example (0) of an English part: [[ejemplo:B|prompt|option A|option B|…]] alone on its line.
+const EX_PARA = /^\s*\[\[ejemplo:([A-Za-z]?)\|([^\]\n]*)\]\]\s*$/;
+const exToken = ({ answer, prompt, options }) => `[[ejemplo:${answer || ""}|${[prompt, ...options].map(x => x.replace(/[|\]\n]/g, " ").trim()).join("|")}]]`;
+function exBlock(token) {
+  const ex = window.parseExample?.(token);
+  const drawn = ex ? window.DOMPurify.sanitize(window.exampleHtml(ex)) : esc(token);
+  return `<div class="exblock" contenteditable="false" data-src="${esc(token)}" title="Clic para editar el ejemplo">${drawn}</div>`;
 }
 function pipeTables(text) {
   const lines = text.split("\n"), out = [];
@@ -1005,6 +1805,16 @@ function toSource(root) {
 }
 function blockSource(el) {
   const tag = el.tagName;
+  if (el.classList.contains("figblock")) return `[[figura:${el.dataset.fig}]]`;
+  if (el.classList.contains("exblock")) return el.dataset.src;
+  if (el.classList.contains("espacio")) return `<div class="espacio"></div>`;
+  for (const cls of ["cita", "poema"]) {
+    if (!el.classList.contains(cls)) continue;
+    // one line in the exam text: verses and paragraphs as <br>, an empty line as <br><br>
+    const inner = [...el.childNodes].map(n => (n.nodeType === 1 && RICH_BLOCK.test(n.tagName) ? "\n" + inlineHtml(n) + "\n" : inlineSource(n))).join("")
+      .replace(/^\n+|\n+$/g, "").replace(/\n/g, "<br>");
+    return inner.replace(/<br>/g, "").trim() ? `<div class="${cls}">${cls === "poema" ? inner : inner.trim()}</div>` : "";
+  }
   // Figure notes left by the scan reading are kept as they are; the app uses them to hide unfinished questions.
   if (tag === "FIGURE" || tag === "FIGCAPTION") return `<${tag.toLowerCase()}>${toSource(el)}</${tag.toLowerCase()}>`;
   if (tag === "UL" || tag === "OL") {
@@ -1023,6 +1833,7 @@ function blockSource(el) {
   if ([...el.children].some(c => RICH_BLOCK.test(c.tagName))) return toSource(el);
   const align = (el.style.textAlign || el.getAttribute("align") || "").toLowerCase();
   const inner = [...el.childNodes].map(inlineSource).join("").replace(/\n+$/, "");
+  if (tag === "P" && el.classList.contains("fuente") && inner.trim()) return `<p class="fuente">${inner.trim().replace(/\n/g, "<br>")}</p>`;
   if (["center", "right", "justify"].includes(align) && inner.trim()) return `<p style="text-align:${align}">${inner.trim().replace(/\n/g, "<br>")}</p>`;
   return inner.trim();
 }
@@ -1032,6 +1843,11 @@ function inlineSource(n) {
   if (n.nodeType === 3) return n.nodeValue.replace(/\u00a0/g, " ").replace(/<(?=[A-Za-z/!])/g, "&lt;")
     .split(MATH_SPLIT).map((part, i) => (i % 2 ? part : part.replace(/\*/g, "&#42;"))).join("");
   if (n.nodeType !== 1) return "";
+  if (n.classList.contains("mathchip")) return `$${n.dataset.tex}$`;
+  if (n.classList.contains("gapchip")) return gapToken(n.dataset.gap, n.dataset.word);
+  if (n.classList.contains("figblock")) return `\n\n[[figura:${n.dataset.fig}]]\n\n`;
+  if (n.classList.contains("exblock")) return `\n\n${n.dataset.src}\n\n`;
+  if (n.classList.contains("mathedit")) { const mf = n.querySelector("math-field"); const tex = mf ? texOf(mf) : n.dataset.tex; return tex ? `$${tex}$` : ""; }
   const tag = n.tagName;
   if (tag === "BR") return "\n";
   if (RICH_BLOCK.test(tag)) return "\n" + blockSource(n) + "\n";
@@ -1042,6 +1858,7 @@ function inlineSource(n) {
   const under = tag === "U" || /underline/.test(st.textDecoration || st.textDecorationLine || "");
   const sub = tag === "SUB" || st.verticalAlign === "sub", sup = tag === "SUP" || st.verticalAlign === "super";
   if (!inner.trim()) return inner;
+  if (tag === "SMALL") inner = `<small>${inner}</small>`;
   if (sub) inner = `<sub>${inner}</sub>`;
   if (sup) inner = `<sup>${inner}</sup>`;
   if (under) inner = `<u>${inner}</u>`;
@@ -1069,10 +1886,17 @@ function attachRich(ta) {
     ta.value = toSource(rich);
     ta.dispatchEvent(new Event("input", { bubbles: true }));
     ta._fromRich = false;
-    rich.classList.toggle("empty", !rich.textContent.trim() && !rich.querySelector("table,li"));
+    rich.classList.toggle("empty", !rich.textContent.trim() && !rich.querySelector("table,li,.figblock"));
   });
   ta.addEventListener("input", () => { if (!ta._fromRich) { rich.innerHTML = toVisual(ta.value); } });
   rich.addEventListener("focus", () => { state.lastArea = ta; });
+  rich.addEventListener("click", e => {
+    const x = e.target.closest(".figx");
+    if (x) { e.preventDefault(); takeOut(x.closest(".figblock")); rich.dispatchEvent(new Event("input")); drawFigs(); return; }
+  });
+  rich.addEventListener("click", e => { const chip = e.target.closest(".mathchip"); if (chip) { state.lastArea = ta; editMathInline(ta, chip); } });
+  rich.addEventListener("click", e => { const gap = e.target.closest(".gapchip"); if (gap) { state.lastArea = ta; openGap(ta, gap); } });
+  rich.addEventListener("click", e => { const ex = e.target.closest(".exblock"); if (ex) { state.lastArea = ta; openExample(ta, ex); } });
   rich.addEventListener("paste", e => {
     const html = e.clipboardData?.getData("text/html"), text = e.clipboardData?.getData("text/plain");
     if (e.clipboardData?.files?.length) return;
@@ -1083,6 +1907,28 @@ function attachRich(ta) {
     document.execCommand("insertHTML", false, toVisual(src));
   });
   rich.addEventListener("keydown", e => {
+    // Inside a quote or poem, Enter starts a new line (verse) in the same block; a third Enter in a row leaves it.
+    const box = e.key === "Enter" && !e.shiftKey && window.getSelection()?.anchorNode?.parentElement?.closest?.(".poema,.cita");
+    const boxEl = box || (e.key === "Enter" && !e.shiftKey && window.getSelection()?.anchorNode?.closest?.(".poema,.cita"));
+    if (boxEl && rich.contains(boxEl)) {
+      e.preventDefault();
+      const sel = window.getSelection(), r = sel.getRangeAt(0);
+      const atEnd = (() => { const t = document.createRange(); t.selectNodeContents(boxEl); t.setStart(r.endContainer, r.endOffset); return !t.toString().trim(); })();
+      // what is before the caret, with line breaks as \n (a <br>, or a \n typed in the poem's pre-wrap text)
+      const before = document.createRange(); before.selectNodeContents(boxEl); before.setEnd(r.startContainer, r.startOffset);
+      const lines = (n) => (n.nodeType === 3 ? n.nodeValue : n.nodeName === "BR" ? "\n" : [...n.childNodes].map(lines).join(""));
+      if (atEnd && /\n[ \t]*\n[ \t]*$/.test(lines(before.cloneContents()))) {
+        // drop the empty lines at the end, then continue in a plain paragraph below
+        for (let n = boxEl.lastChild; n && (n.nodeName === "BR" || (n.nodeType === 3 && !n.nodeValue.trim())); n = boxEl.lastChild) n.remove();
+        if (boxEl.lastChild?.nodeType === 3) boxEl.lastChild.nodeValue = boxEl.lastChild.nodeValue.replace(/\n+$/, "");
+        const d = document.createElement("div"); d.innerHTML = "<br>"; boxEl.after(d);
+        const nr = document.createRange(); nr.setStart(d, 0); nr.collapse(true); sel.removeAllRanges(); sel.addRange(nr);
+        rich.dispatchEvent(new Event("input"));
+        return;
+      }
+      document.execCommand("insertLineBreak");
+      return;
+    }
     const cell = window.getSelection()?.anchorNode?.parentElement?.closest?.("td,th");
     if (e.key === "Tab" && cell && rich.contains(cell)) {
       e.preventDefault();
@@ -1096,9 +1942,44 @@ function attachRich(ta) {
       }
     }
   });
-  rich.classList.toggle("empty", !rich.textContent.trim() && !rich.querySelector("table,li"));
+  rich.classList.toggle("empty", !rich.textContent.trim() && !rich.querySelector("table,li,.figblock"));
 }
-function attachAllRich() { document.querySelectorAll("#form #f-stem, #form #f-stimulus, #form #f-passage, #f-opts textarea[data-letter]").forEach(attachRich); }
+function attachAllRich() { document.querySelectorAll("#form #f-stem, #form #f-stimulus, #form #f-passage, #f-opts textarea[data-letter]").forEach(attachRich); attachFolds(); }
+
+// Long texts (the shared passage, the question's own text) can be folded to one line so the stem and options stay
+// in view. Folded or not is remembered for each kind of field, on every question.
+const FOLDABLE = { "f-passage": "texto compartido", "f-stimulus": "texto propio" };
+function attachFolds() {
+  Object.keys(FOLDABLE).forEach(id => {
+    const ta = $("#" + id), fld = ta?.closest(".fld");
+    if (!fld || fld.querySelector(".foldbtn")) return;
+    const label = fld.querySelector(".label");
+    const btn = Object.assign(document.createElement("button"), { type: "button", className: "ib foldbtn" });
+    btn.onclick = () => setFold(id, !fld.classList.contains("folded"));
+    label.firstElementChild.after(btn);
+    const prev = Object.assign(document.createElement("div"), { className: "foldprev", title: "Clic para abrir" });
+    prev.onclick = () => setFold(id, false);
+    ta.before(prev);
+    ta.addEventListener("input", () => { if (fld.classList.contains("folded")) foldPreview(id); });
+    setFold(id, !!(recall("fold") || {})[id], false);
+  });
+}
+function foldPreview(id) {
+  const ta = $("#" + id), prev = ta.closest(".fld").querySelector(".foldprev");
+  const text = ta.value.replace(/<[^>]+>|\[\[figura:[^\]]*\]\]|\*\*|\$/g, " ").replace(/\s+/g, " ").trim();
+  const words = text ? text.split(" ").length : 0;
+  prev.textContent = words ? `${words} palabras · ${text.slice(0, 140)}${text.length > 140 ? "…" : ""}` : "(vacío)";
+}
+function setFold(id, on, save = true) {
+  const fld = $("#" + id)?.closest(".fld");
+  if (!fld) return;
+  fld.classList.toggle("folded", on);
+  const btn = fld.querySelector(".foldbtn");
+  btn.textContent = on ? "▸ Mostrar" : "▾ Minimizar";
+  btn.title = on ? `Abrir el ${FOLDABLE[id]}` : `Reducir el ${FOLDABLE[id]} a una línea para ver el enunciado y las opciones`;
+  if (on) foldPreview(id);
+  if (save) remember("fold", { ...(recall("fold") || {}), [id]: on });
+}
 
 // Remembers where the caret was in each Word-style field, so OCR and symbols land there.
 document.addEventListener("selectionchange", () => {
@@ -1137,7 +2018,7 @@ function setVisual(on) {
   document.querySelectorAll(".fbar .vis-only").forEach(b => { b.hidden = !on; });
   $("#fmode").innerHTML = fmodeHtml();
 }
-const fmodeHtml = () => `<button class="${state.visual ? "on" : ""}" type="button" onclick="setVisual(true)" title="Ver el texto con formato, como en Word">Aa Formato</button><button class="${state.visual ? "" : "on"}" type="button" onclick="setVisual(false)" title="Ver el texto como se guarda (marcas ** y $)">‹/› Código</button>`;
+const fmodeHtml = () => state.visual ? "" : `<button class="ib on" type="button" onclick="setVisual(true)" title="Estás viendo el texto como se guarda (marcas ** y $)">‹/› Código · volver al formato</button>`;
 
 // Format commands. In the Word-style view they act on the selection; in the code view they wrap it in markup.
 function richCmd(cmd, arg) {
@@ -1155,6 +2036,10 @@ function richCmd(cmd, arg) {
       return;
     }
     if (cmd === "clear") { document.execCommand("removeFormat"); document.execCommand("justifyLeft"); return; }
+    if (cmd === "small") { richSmall(rich); return; }
+    if (cmd === "fuente") { richFuente(rich); return; }
+    if (cmd === "cita" || cmd === "poema") { richBlockStyle(rich, cmd); return; }
+    if (cmd === "espacio") { richSpace(rich); return; }
     document.execCommand(cmd, false, arg ?? null);
     return;
   }
@@ -1165,9 +2050,128 @@ function richCmd(cmd, arg) {
     insertOrderedList: `\n\n<ol>${sel.split("\n").map(l => `<li>${l}</li>`).join("")}</ol>\n\n`,
     justifyCenter: `\n\n<p style="text-align:center">${sel}</p>\n\n`, justifyRight: `\n\n<p style="text-align:right">${sel}</p>\n\n`,
     justifyFull: `\n\n<p style="text-align:justify">${sel}</p>\n\n`, justifyLeft: sel,
+    small: `<small>${sel}</small>`, espacio: `\n\n<div class="espacio"></div>\n\n`,
+    cita: `\n\n<div class="cita">${sel.trim().replace(/\n/g, "<br>")}</div>\n\n`, poema: `\n\n<div class="poema">${sel.trim().replace(/\n/g, "<br>")}</div>\n\n`, fuente: `\n\n<p class="fuente">${sel}</p>\n\n`,
     table: "\n| Columna 1 | Columna 2 |\n|---|---|\n| | |\n", clear: sel.replace(/<[^>]+>|\*\*/g, ""),
   }[cmd];
   if (wrap != null) insertAt(area, wrap);
+}
+
+// Smaller text: wraps the selection in <small>; on text that is already small, puts it back to normal size.
+function richSmall(rich) {
+  const s = window.getSelection();
+  if (!s.rangeCount || !rich.contains(s.anchorNode)) { toast("Selecciona el texto que quieres más pequeño"); return; }
+  const at = (n) => (n.nodeType === 1 ? n : n.parentElement)?.closest("small");
+  const cur = at(s.anchorNode);
+  if (cur && rich.contains(cur)) {
+    cur.replaceWith(...cur.childNodes);
+  } else {
+    const r = s.getRangeAt(0);
+    if (r.collapsed) { toast("Selecciona el texto que quieres más pequeño"); return; }
+    const small = document.createElement("small");
+    small.append(r.extractContents());
+    small.querySelectorAll("small").forEach(x => x.replaceWith(...x.childNodes));
+    r.insertNode(small);
+    s.removeAllRanges(); const nr = document.createRange(); nr.selectNodeContents(small); s.addRange(nr);
+  }
+  rich.normalize();
+  rich.dispatchEvent(new Event("input"));
+  richToolbarState();
+}
+// The source line under a text ("Tomado de: ..."): the paragraph under the caret becomes <p class="fuente">.
+function richFuente(rich) {
+  const s = window.getSelection();
+  if (!s.rangeCount || !rich.contains(s.anchorNode)) { toast("Pon el cursor en el párrafo de la fuente"); return; }
+  let top = s.anchorNode;
+  while (top.parentNode !== rich) top = top.parentNode;
+  if (top.nodeType === 3 || top.tagName === "BR" || /^(B|I|EM|STRONG|U|SUB|SUP|SMALL|SPAN)$/.test(top.tagName)) {
+    // loose text straight in the field: the run of inline nodes around the caret is the paragraph
+    const run = [top];
+    const inline = (n) => n && (n.nodeType === 3 || (n.nodeType === 1 && !RICH_BLOCK.test(n.tagName) && n.tagName !== "BR" && !n.classList.contains("figblock")));
+    while (inline(run[0].previousSibling)) run.unshift(run[0].previousSibling);
+    while (inline(run[run.length - 1].nextSibling)) run.push(run[run.length - 1].nextSibling);
+    const div = document.createElement("div");
+    run[0].before(div); div.append(...run);
+    top = div;
+  }
+  if (top.classList.contains("figblock") || /^(TABLE|UL|OL)$/.test(top.tagName)) { toast("Pon el cursor en un párrafo de texto"); return; }
+  const on = top.tagName === "P" && top.classList.contains("fuente");
+  const next = document.createElement(on ? "div" : "p");
+  if (!on) next.className = "fuente";
+  next.append(...top.childNodes);
+  top.replaceWith(next);
+  const r = document.createRange(); r.selectNodeContents(next); r.collapse(false); s.removeAllRanges(); s.addRange(r);
+  rich.dispatchEvent(new Event("input"));
+  richToolbarState();
+}
+
+// The top-level blocks of a field the selection touches (loose text around the caret becomes one).
+function selectedBlocks(rich) {
+  const s = window.getSelection();
+  if (!s.rangeCount || !rich.contains(s.anchorNode)) return [];
+  const topOf = (n) => { if (n === rich) return null; while (n.parentNode !== rich) n = n.parentNode; return n; };
+  const inline = (n) => n && (n.nodeType === 3 || (n.nodeType === 1 && !RICH_BLOCK.test(n.tagName) && n.tagName !== "BR" && !n.classList.contains("figblock")));
+  const wrapRun = (n) => {
+    if (!inline(n) && n.tagName !== "BR") return n;
+    const run = [n];
+    while (inline(run[0].previousSibling)) run.unshift(run[0].previousSibling);
+    while (inline(run[run.length - 1].nextSibling)) run.push(run[run.length - 1].nextSibling);
+    const div = document.createElement("div");
+    run[0].before(div); div.append(...run);
+    return div;
+  };
+  const r = s.getRangeAt(0);
+  const a = topOf(r.startContainer === rich ? rich.childNodes[r.startOffset] || rich.lastChild : r.startContainer);
+  const b = topOf(r.endContainer === rich ? rich.childNodes[Math.max(0, r.endOffset - 1)] || rich.lastChild : r.endContainer);
+  if (!a) return [];
+  const out = [];
+  for (let n = a; n; n = n.nextSibling) { out.push(n); if (n === b || !b) break; }
+  return [...new Set(out.filter(n => n.nodeType !== 3 || n.nodeValue.trim()).map(wrapRun))]
+    .filter(n => !n.classList.contains("figblock") && !n.classList.contains("espacio") && !/^(TABLE|UL|OL)$/.test(n.tagName));
+}
+// Cita / Poema: the paragraphs under the selection become one quote or poem block; on a block that already is one,
+// it goes back to plain paragraphs. Paragraphs inside are kept apart by an empty line (stanzas in a poem).
+function richBlockStyle(rich, cls) {
+  const blocks = selectedBlocks(rich);
+  if (!blocks.length) { toast("Pon el cursor en el párrafo, o selecciona los párrafos"); return; }
+  const s = window.getSelection();
+  let last;
+  if (blocks.every(b => b.classList.contains(cls))) {
+    blocks.forEach(b => {
+      // back to plain paragraphs, split where the block had an empty line
+      const parts = [[]];
+      [...b.childNodes].forEach(n => {
+        if (n.nodeName === "BR" && n.nextSibling?.nodeName === "BR") return;
+        if (n.nodeName === "BR" && n.previousSibling?.nodeName === "BR") { parts.push([]); return; }
+        parts[parts.length - 1].push(n);
+      });
+      const divs = parts.filter(p => p.length).map(p => { const d = document.createElement("div"); d.append(...p); return d; });
+      b.replaceWith(...divs);
+      last = divs[divs.length - 1];
+    });
+  } else {
+    const box = document.createElement("div");
+    box.className = cls;
+    blocks.forEach((b, i) => {
+      if (i) box.append(document.createElement("br"), document.createElement("br"));
+      const inner = b.classList.contains("cita") || b.classList.contains("poema") || b.tagName === "P" || b.tagName === "DIV" ? [...b.childNodes] : [b];
+      box.append(...inner);
+    });
+    blocks[0].before(box);
+    blocks.forEach(b => b.isConnected && b !== box && b.remove());
+    last = box;
+  }
+  if (last) { const r = document.createRange(); r.selectNodeContents(last); r.collapse(false); s.removeAllRanges(); s.addRange(r); }
+  rich.dispatchEvent(new Event("input"));
+  richToolbarState();
+}
+// Espacio: an empty line of space under the paragraph at the caret, kept when saving.
+function richSpace(rich) {
+  const s = window.getSelection();
+  const sp = Object.assign(document.createElement("div"), { className: "espacio", contentEditable: "false" });
+  if (!s.rangeCount || !rich.contains(s.anchorNode)) rich.append(sp);
+  else { let n = s.anchorNode; if (n === rich) n = rich.childNodes[s.anchorOffset - 1] || rich.firstChild; while (n && n.parentNode !== rich) n = n.parentNode; n ? n.after(sp) : rich.append(sp); }
+  rich.dispatchEvent(new Event("input"));
 }
 
 // Rows and columns of a table being edited in a text field.
@@ -1192,12 +2196,519 @@ function richToolbarState() {
   const s = window.getSelection();
   const inRich = s?.anchorNode && (s.anchorNode.nodeType === 1 ? s.anchorNode : s.anchorNode.parentElement)?.closest(".rich");
   bar.querySelectorAll("[data-cmd]").forEach(b => { let on = false; try { on = !!inRich && document.queryCommandState(b.dataset.cmd); } catch (e) { /* not a state command */ } b.classList.toggle("on", on); });
+  const here = inRich ? (s.anchorNode.nodeType === 1 ? s.anchorNode : s.anchorNode.parentElement) : null;
+  bar.querySelector("[data-small]")?.classList.toggle("on", !!here?.closest("small"));
+  bar.querySelector("[data-fuente]")?.classList.toggle("on", !!here?.closest("p.fuente"));
+  bar.querySelectorAll("[data-block]").forEach(b => b.classList.toggle("on", !!here?.closest("." + b.dataset.block)));
   const inTable = !!inRich && !!(s.anchorNode.nodeType === 1 ? s.anchorNode : s.anchorNode.parentElement).closest("td,th");
   const tb = $("#ftable");
   if (tb) tb.hidden = !inTable;
 }
 
 const SYMBOLS = ["≤", "≥", "≠", "≈", "±", "×", "÷", "√", "π", "°", "²", "³", "½", "¼", "∞", "→", "←", "↔", "α", "β", "Δ", "θ", "λ", "μ", "Ω", "%", "€", "—"];
+// ----- formula editor: a MathLive field that formats as you type (like Desmos) and stores $LaTeX$ -----------
+// Formulas stay on one line: one that is wider than its column is drawn smaller until it fits (down to half size).
+function fitMath(root = document) {
+  root.querySelectorAll(".katex").forEach(k => {
+    if (k.closest(".mathedit")) return;
+    k.style.fontSize = "";
+    const box = k.closest(".mathchip")?.parentElement || k.parentElement;
+    let host = box;
+    while (host && getComputedStyle(host).display.startsWith("inline")) host = host.parentElement;
+    if (!host) return;
+    const cs = getComputedStyle(host);
+    const room = host.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 8;
+    if (room <= 0) return;
+    // the width does not scale exactly with the type (rules, spacing), so it is measured again after each step
+    let scale = 1, tooWide = Infinity;
+    for (let i = 0; i < 5; i++) {
+      const wide = k.getBoundingClientRect().width;
+      if (wide > room) { tooWide = scale; scale = Math.max(0.5, scale * room / wide * 0.98); }
+      else if (wide < room * 0.95 && scale < 1 && scale < tooWide * 0.99) scale = Math.min(1, tooWide * 0.99, scale * room / wide * 0.98);
+      else break;
+      k.style.fontSize = scale === 1 ? "" : `${scale.toFixed(3)}em`;
+      if (scale === 0.5) break;
+    }
+  });
+}
+let fitQueued = false;
+const queueFit = () => { if (fitQueued) return; fitQueued = true; requestAnimationFrame(() => { fitQueued = false; fitMath(); }); };
+const fitSizes = new ResizeObserver(queueFit);  // columns change width when the split is dragged
+new MutationObserver(muts => {
+  if (!muts.some(m => [...m.addedNodes].some(n => n.nodeType === 1 && (n.matches?.(".katex, .mathchip") || n.querySelector?.(".katex"))))) return;
+  document.querySelectorAll(".rich, #preview").forEach(el => fitSizes.observe(el));
+  queueFit();
+}).observe(document.body, { childList: true, subtree: true });
+
+// ----- formulas: found on the PDF page, placed with one click, edited in place -------------------------
+
+// Formulas printed on the page are found by the server (fraction bars + OCR) and outlined in blue. A click puts the
+// formula, already built, where the caret was in the text (or in place of a [fórmula] gap).
+const fxCache = {};
+async function loadFormulaHits() {
+  const layer = $("#fxl");
+  if (!layer || STATIC || !state.detail) return;
+  const key = `${state.detail.exam}:${state.page}`;
+  try {
+    fxCache[key] ??= api(`/api/exams/${encodeURIComponent(state.detail.exam)}/formulas/${state.page}`);
+    const { formulas } = await fxCache[key];
+    if ($("#fxl") !== layer || `${state.detail.exam}:${state.page}` !== key) return;
+    layer.innerHTML = formulas.map((f, i) => {
+      const [x0, y0, x1, y1] = f.box;
+      const used = usedTex().has(f.tex) ? " used" : "";
+      return `<div class="fxhit${used}" data-i="${i}" style="left:${x0 * 100}%;top:${y0 * 100}%;width:${(x1 - x0) * 100}%;height:${(y1 - y0) * 100}%"
+        title="Clic: poner esta fórmula en ${esc(fieldName(state.lastArea))}"><span class="tag">${used ? "✓ ya está en el texto" : "ƒx poner en el texto"}</span></div>`;
+    }).join("");
+    layer.querySelectorAll(".fxhit").forEach(el => el.onclick = (e) => { e.stopPropagation(); useFormula(formulas[+el.dataset.i].tex, el); });
+  } catch { delete fxCache[key]; }
+}
+// Most words of the formula appear in the text (accents and case aside).
+function sameWords(text, tex) {
+  const norm = (x) => x.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().match(/[a-z]{3,}/g) || [];
+  const want = norm(tex.replace(/\\[a-z]+/g, " "));
+  if (want.length < 3) return false;
+  const have = new Set(norm(text));
+  return want.filter(w => have.has(w)).length / want.length >= 0.7;
+}
+const usedTex = () => new Set([...document.querySelectorAll("#form textarea")].flatMap(t => [...t.value.matchAll(/\$([^$\n]+?)\$/g)].map(m => m[1])));
+const FORMULA_GAP = /\[\s*(f[óo]rmula|ecuaci[óo]n)[^\]]*\]/i;
+
+function useFormula(tex, hit) {
+  // Where it goes: the field with the [fórmula] gap, else the field and caret used last, else the enunciado.
+  const fields = [...document.querySelectorAll("#form #f-stimulus, #form #f-passage, #form #f-stem, #f-opts textarea[data-letter]")];
+  const gap = fields.find(t => FORMULA_GAP.test(t.value));
+  // A table typed by hand to imitate this formula (same words) is replaced by it.
+  const twin = !gap && state.visual ? fields.map(t => [t, [...(richOf(t)?.querySelectorAll("table") || [])].find(tb => sameWords(tb.textContent, tex))]).find(x => x[1]) : null;
+  let ta = gap || twin?.[0] || (state.lastArea?.isConnected ? state.lastArea : $("#f-stem"));
+  if (twin) {
+    const rich = richOf(ta), div = document.createElement("div");
+    div.innerHTML = mathChip(tex);
+    twin[1].replaceWith(div);
+    rich.dispatchEvent(new Event("input"));
+  } else if (gap) {
+    ta.value = ta.value.replace(FORMULA_GAP, `$${tex}$`);
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
+  } else if (state.visual && richOf(ta)) {
+    const rich = richOf(ta);
+    const range = rich._range && rich.contains(rich._range.startContainer) ? rich._range.cloneRange() : null;
+    const block = range && endOfBlock(rich, range);
+    if (block) {
+      // at the end of a paragraph, a formula from the page gets a line of its own, as printed
+      const div = document.createElement("div"); div.innerHTML = mathChip(tex);
+      block.after(div);
+      rich.dispatchEvent(new Event("input"));
+    } else placeChip(rich, range, tex);
+  } else insertAt(ta, `$${tex}$`);
+  state.lastArea = ta;
+  hit?.classList.add("used");
+  if (hit) hit.querySelector(".tag").textContent = "✓ ya está en el texto";
+  const chip = [...(richOf(ta)?.querySelectorAll(".mathchip") || [])].find(c => c.dataset.tex === tex);
+  if (chip) { chip.scrollIntoView({ block: "center", behavior: "smooth" }); chip.classList.add("flash"); setTimeout(() => chip.classList.remove("flash"), 2200); }
+  toast(`Fórmula puesta en ${fieldName(ta)}. Haz clic en ella para cambiar algo.`);
+}
+
+// The paragraph a caret sits at the end of (only blank text after it), or null.
+function endOfBlock(rich, range) {
+  let node = range.endContainer;
+  let block = node.nodeType === 1 ? node : node.parentElement;
+  while (block && block.parentElement !== rich) block = block.parentElement;
+  if (!block || block === rich) return null;
+  const after = document.createRange();
+  after.setStart(range.endContainer, range.endOffset);
+  after.setEndAfter(block);
+  return after.toString().trim() ? null : block;
+}
+// Puts a formula chip at a caret (or at the end) of a Word-style field and returns it.
+function placeChip(rich, range, tex, html = null) {
+  rich.focus();
+  const s = window.getSelection(); s.removeAllRanges();
+  if (range) s.addRange(range); else { const r = document.createRange(); r.selectNodeContents(rich); r.collapse(false); s.addRange(r); }
+  // insertHTML would split the paragraph around the formula; a marker typed in its place is swapped for the chip.
+  document.execCommand("insertText", false, "\u2063f\u2063");
+  const walk = document.createTreeWalker(rich, NodeFilter.SHOW_TEXT);
+  let chip = null;
+  for (let t = walk.nextNode(); t; t = walk.nextNode()) {
+    const at = t.nodeValue.indexOf("\u2063f\u2063");
+    if (at < 0) continue;
+    const after = t.splitText(at); after.nodeValue = "\u00a0" + after.nodeValue.slice(3);
+    const box = document.createElement("span"); box.innerHTML = html ?? mathChip(tex);
+    chip = box.firstChild;
+    t.after(chip);
+    const r = document.createRange(); r.setStart(after, 1); r.collapse(true); s.removeAllRanges(); s.addRange(r);
+    break;
+  }
+  rich.dispatchEvent(new Event("input"));
+  return chip;
+}
+
+// "ƒx Fórmula": an empty formula opens right where the caret is, to type in place.
+// Chemistry: mhchem text such as "2H2 + O2 -> 2H2O" or "Fe^3+ (aq)", stored as $\ce{...}$ and drawn by KaTeX.
+const CHEM_KEYS = [["→", " -> "], ["⇌", " <=> "], ["←", " <- "], ["+", " + "], ["(s)", "(s)"], ["(l)", "(l)"], ["(g)", "(g)"], ["(aq)", "(aq)"],
+  ["↑ gas", " ^"], ["↓ precipitado", " v"], ["carga +", "^+"], ["carga −", "^-"], ["2+", "^{2+}"], ["·  hidrato", " * "], ["Δ sobre la flecha", " ->[\\Delta] "]];
+function openChem(area = state.lastArea, chip = null) {
+  if (!area?.isConnected) area = $("#f-stem");
+  const rich = state.visual && richOf(area);
+  const range = rich?._range && rich.contains(rich._range.startContainer) ? rich._range.cloneRange() : null;
+  const start = chip ? (chip.dataset.tex.match(/^\\ce\{([\s\S]*)\}$/)?.[1] ?? "") : "";
+  overlay(`<div class="label">Ecuación química</div>
+    <p class="muted" style="margin:0 0 8px;font-size:13px">Escribe como en el cuaderno: los números después de una letra quedan como subíndices. Ej.: <code>2H2 + O2 -> 2H2O</code>, <code>CaCO3 (s) -> CaO (s) + CO2 ^</code>, <code>Fe^3+</code>, <code>SO4^2-</code>.</p>
+    <input id="chem-in" spellcheck="false" autocomplete="off" value="${esc(start)}" style="width:100%;font:16px ui-monospace,monospace;padding:10px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--text)">
+    <div class="row" style="flex-wrap:wrap;gap:6px;margin:8px 0">${CHEM_KEYS.map(([l, v], i) => `<button class="ib" type="button" data-k="${i}">${esc(l)}</button>`).join("")}</div>
+    <div id="chem-prev" class="paper" style="min-height:56px;font-size:20px;text-align:center"></div>
+    <div class="row" style="gap:8px;margin-top:10px">
+      <button class="ib go" type="button" id="chem-ok">${chip ? "Listo" : "Poner en el texto"}</button>
+      ${chip ? '<button class="ib warn" type="button" id="chem-del">Quitar</button>' : ""}
+      <button class="ib" type="button" onclick="closeOverlay()">Cancelar</button></div>`);
+  const inp = $("#chem-in");
+  const draw = () => { $("#chem-prev").innerHTML = inp.value.trim() ? window.renderRich(`$\\ce{${inp.value.trim()}}$`) : '<span class="muted" style="font-size:13px">Aquí se ve la ecuación</span>'; };
+  inp.addEventListener("input", draw);
+  document.querySelectorAll("#overlay [data-k]").forEach(b => b.onclick = () => {
+    const v = CHEM_KEYS[+b.dataset.k][1];
+    const a = inp.selectionStart ?? inp.value.length, z = inp.selectionEnd ?? a;
+    inp.value = inp.value.slice(0, a) + v + inp.value.slice(z);
+    inp.focus(); inp.setSelectionRange(a + v.length, a + v.length); draw();
+  });
+  const done = () => {
+    const src = inp.value.trim();
+    closeOverlay();
+    if (!src) return;
+    const tex = `\\ce{${src}}`;
+    if (chip) { chip.outerHTML = mathChip(tex); rich?.dispatchEvent(new Event("input")); return; }
+    if (rich) { placeChip(rich, range, tex); return; }
+    insertAt(area, `$${tex}$`);
+  };
+  $("#chem-ok").onclick = done;
+  if ($("#chem-del")) $("#chem-del").onclick = () => { closeOverlay(); chip.remove(); rich?.dispatchEvent(new Event("input")); };
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); done(); } });
+  draw(); inp.focus();
+}
+// Molecules drawn expanded, as ICFES prints them: H-C(H,H)-C(=O)-OH, stored as $\mol{...}$ (see renderer/src/molecule.js).
+const MOL_KEYS = [["C con H arriba y abajo", "-C(H,H)"], ["C=O", "-C(=O)"], ["–OH", "-OH"], ["–O–", "-O"], ["–H", "-H"], ["CH₃", "-CH3"],
+  ["N con H", "-N(H)"], ["doble =", "="], ["triple ≡", "#"], ["+", " + "], ["→", " -> "], ["→ con algo debajo", " ->[H^+] "],
+  ["→ con algo encima", " ->{calor} "], ["⇌", " <=> "], ["nombre debajo", ' "Nombre"']];
+function openMol(area = state.lastArea, chip = null) {
+  if (!area?.isConnected) area = $("#f-stem");
+  const rich = state.visual && richOf(area);
+  const range = rich?._range && rich.contains(rich._range.startContainer) ? rich._range.cloneRange() : null;
+  const start = chip ? (chip.dataset.tex.match(/^\\mol\{([\s\S]*)\}$/)?.[1] ?? "") : "";
+  overlay(`<div class="label">Molécula o reacción (fórmula desarrollada)</div>
+    <p class="muted" style="margin:0 0 8px;font-size:13px">Escribe los átomos de izquierda a derecha unidos con <code>-</code> (o <code>=</code> doble, <code>#</code> triple). Lo que cuelga de un átomo va entre paréntesis: <code>C(H,H)</code> pone un H arriba y otro abajo, <code>C(=O)</code> un O con doble enlace arriba. Ej.: <code>H-C(H,H)-C(=O)-OH</code>. Reacción: <code>A "Éster" ->[H^+] B + C "Alcohol"</code> (el texto entre comillas va debajo de la molécula anterior).</p>
+    <textarea id="mol-in" spellcheck="false" autocomplete="off" rows="2" style="width:100%;font:16px ui-monospace,monospace;padding:10px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--text)">${esc(start)}</textarea>
+    <div class="row" style="flex-wrap:wrap;gap:6px;margin:8px 0">${MOL_KEYS.map(([l, v], i) => `<button class="ib" type="button" data-k="${i}">${esc(l)}</button>`).join("")}</div>
+    <div id="mol-prev" class="paper" style="min-height:80px;font-size:18px;text-align:center;overflow-x:auto"></div>
+    <div class="row" style="gap:8px;margin-top:10px">
+      <button class="ib go" type="button" id="mol-ok">${chip ? "Listo" : "Poner en el texto"}</button>
+      ${chip ? '<button class="ib warn" type="button" id="mol-del">Quitar</button>' : ""}
+      <button class="ib" type="button" onclick="closeOverlay()">Cancelar</button></div>`);
+  const inp = $("#mol-in");
+  const src = () => inp.value.replace(/\s*\n\s*/g, " ").trim();
+  const draw = () => { $("#mol-prev").innerHTML = src() ? window.renderRich(`$\\mol{${src()}}$`) : '<span class="muted" style="font-size:13px">Aquí se ve la molécula</span>'; };
+  inp.addEventListener("input", draw);
+  document.querySelectorAll("#overlay [data-k]").forEach(b => b.onclick = () => {
+    let v = MOL_KEYS[+b.dataset.k][1];
+    const a = inp.selectionStart ?? inp.value.length, z = inp.selectionEnd ?? a;
+    if (a === 0 && /^-/.test(v)) v = v.slice(1);
+    inp.value = inp.value.slice(0, a) + v + inp.value.slice(z);
+    inp.focus(); inp.setSelectionRange(a + v.length, a + v.length); draw();
+  });
+  const done = () => {
+    const body = src();
+    closeOverlay();
+    if (!body) return;
+    const tex = `\\mol{${body}}`;
+    if (chip) { chip.outerHTML = mathChip(tex); rich?.dispatchEvent(new Event("input")); return; }
+    if (rich) { placeChip(rich, range, tex); return; }
+    insertAt(area, `$${tex}$`);
+  };
+  $("#mol-ok").onclick = done;
+  if ($("#mol-del")) $("#mol-del").onclick = () => { closeOverlay(); chip.remove(); rich?.dispatchEvent(new Event("input")); };
+  inp.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); done(); } });
+  draw(); inp.focus();
+}
+// ----- English: fill-in-the-blank gaps ------------------------------------------------------------------
+// The gaps already written in the shared text and this question's texts.
+function gapsPlaced() {
+  const seen = new Set();
+  for (const id of ["f-passage", "f-stimulus", "f-stem"]) for (const m of ($("#" + id)?.value || "").matchAll(GAP_TOKEN)) if (m[1]) seen.add(+m[1]);
+  return seen;
+}
+// A gap in the shared text takes the first question of the group still without one; elsewhere it has no number.
+function suggestedGap(area) {
+  const d = state.detail, g = d?.group;
+  if (!["f-passage", "f-stimulus"].includes(area?.id)) return "";
+  const placed = gapsPlaced();
+  if (g) for (let n = g.from; n <= g.to; n++) if (!placed.has(n)) return n;
+  return placed.has(d?.number) ? "" : (d?.number ?? "");
+}
+function newGap() {
+  const area = state.lastArea?.isConnected ? state.lastArea : $("#f-passage") || $("#f-stem");
+  const rich = state.visual && richOf(area);
+  const n = suggestedGap(area);
+  if (!rich) { insertAt(area, gapToken(n, "")); return; }
+  const range = rich._range && rich.contains(rich._range.startContainer) ? rich._range.cloneRange() : null;
+  placeChip(rich, range, null, gapChip(n, ""));
+  toast(n === "" ? "Hueco sin número puesto. Haz clic en él para darle un número." : `Hueco (${n}) puesto. Haz clic en él para cambiar el número.`);
+}
+function openGap(area, chip) {
+  const rich = richOf(area);
+  overlay(`<div class="label">Hueco para completar</div>
+    <p class="muted" style="margin:0 0 8px;font-size:13px">El número es el de la pregunta que pide la palabra de este espacio. Déjalo vacío si el hueco está en una sola frase del enunciado. Para el ejemplo (0) escribe la palabra que lo completa.</p>
+    <div class="row" style="gap:10px;align-items:end;flex-wrap:wrap">
+      <label style="font-size:13px">Número<br><input id="gap-n" inputmode="numeric" value="${esc(chip.dataset.gap)}" style="width:90px;font:16px system-ui;padding:8px;border-radius:8px;border:2px solid var(--line);background:var(--surface);color:var(--text)"></label>
+      <label style="font-size:13px;flex:1">Palabra ya escrita (solo el ejemplo)<br><input id="gap-w" value="${esc(chip.dataset.word)}" style="width:100%;font:16px system-ui;padding:8px;border-radius:8px;border:2px solid var(--line);background:var(--surface);color:var(--text)"></label>
+    </div>
+    <div id="gap-prev" class="paper" style="margin-top:10px;font-size:18px;text-align:center"></div>
+    <div class="row" style="gap:8px;margin-top:10px">
+      <button class="ib go" type="button" id="gap-ok">Listo</button>
+      <button class="ib warn" type="button" id="gap-del">Quitar</button>
+      <button class="ib" type="button" onclick="closeOverlay()">Cancelar</button></div>`);
+  const num = () => $("#gap-n").value.replace(/\D/g, "").slice(0, 3), word = () => $("#gap-w").value.trim();
+  const draw = () => { $("#gap-prev").innerHTML = `… ${window.gapHtml(num() || null, word())} …`; };
+  ["gap-n", "gap-w"].forEach(id => $("#" + id).addEventListener("input", draw));
+  const done = () => { const html = gapChip(num(), word()); closeOverlay(); chip.outerHTML = html; rich?.dispatchEvent(new Event("input")); };
+  $("#gap-ok").onclick = done;
+  $("#gap-del").onclick = () => { closeOverlay(); chip.remove(); rich?.dispatchEvent(new Event("input")); };
+  document.querySelectorAll("#gap-n, #gap-w").forEach(i => i.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); done(); } }));
+  draw(); $("#gap-n").focus();
+}
+// The worked example (0): prompt, options one per line, and the right letter. Without options the answer is
+// a letter of a list shown elsewhere (the matching part, A–H).
+function openExample(area = state.lastArea, block = null) {
+  if (!area?.isConnected) area = $("#f-passage") || $("#f-stimulus");
+  const rich = state.visual && richOf(area);
+  const range = rich?._range && rich.contains(rich._range.startContainer) ? rich._range.cloneRange() : null;
+  const ex = (block && window.parseExample(block.dataset.src)) || { answer: "", prompt: "", options: [] };
+  const field = "width:100%;font:15px system-ui;padding:8px;border-radius:8px;border:2px solid var(--line);background:var(--surface);color:var(--text);box-sizing:border-box";
+  overlay(`<div class="label">Ejemplo (0)</div>
+    <p class="muted" style="margin:0 0 8px;font-size:13px">El ejemplo que trae resuelto cada parte de inglés. Si el ejemplo es un aviso con imagen, pon la imagen encima con ✂ Imagen. El ejemplo de un texto con huecos va dentro del texto: haz clic en el hueco (0) y escribe la palabra.</p>
+    <label style="font-size:13px">Pregunta, aviso o frase del ejemplo<br><input id="ex-q" value="${esc(ex.prompt)}" style="${field}"></label>
+    <label style="font-size:13px;display:block;margin-top:8px">Opciones, una por línea (A, B, C… en orden). Déjalo vacío si la respuesta es una letra de una lista, como en la parte 2.<br>
+      <textarea id="ex-o" rows="4" style="${field}">${esc(ex.options.join("\n"))}</textarea></label>
+    <label style="font-size:13px;display:block;margin-top:8px">Respuesta <select id="ex-a" style="font:15px system-ui;padding:6px;border-radius:8px">${["", ..."ABCDEFGH"].map(l => `<option ${l === ex.answer ? "selected" : ""} value="${l}">${l || "—"}</option>`).join("")}</select></label>
+    <div id="ex-prev" class="paper" style="margin-top:10px;font-size:16px"></div>
+    <div class="row" style="gap:8px;margin-top:10px">
+      <button class="ib go" type="button" id="ex-ok">${block ? "Listo" : "Poner en el texto"}</button>
+      ${block ? '<button class="ib warn" type="button" id="ex-del">Quitar</button>' : ""}
+      <button class="ib" type="button" onclick="closeOverlay()">Cancelar</button></div>`);
+  const read = () => ({ answer: $("#ex-a").value, prompt: $("#ex-q").value.trim(), options: $("#ex-o").value.split("\n").map(x => x.trim()).filter(Boolean) });
+  const draw = () => { $("#ex-prev").innerHTML = window.renderRich(exToken(read())); };
+  ["ex-q", "ex-o", "ex-a"].forEach(id => $("#" + id).addEventListener("input", draw));
+  $("#ex-a").addEventListener("change", draw);
+  $("#ex-ok").onclick = () => {
+    const v = read();
+    closeOverlay();
+    if (!v.prompt) return;
+    const box = document.createElement("div"); box.innerHTML = exBlock(exToken(v));
+    const el = box.firstChild;
+    if (block) block.replaceWith(el);
+    else if (rich) insertBlockAt(rich, range, el);
+    else { insertAt(area, `\n\n${exToken(v)}\n\n`); return; }
+    rich?.dispatchEvent(new Event("input"));
+  };
+  if ($("#ex-del")) $("#ex-del").onclick = () => { closeOverlay(); block.remove(); rich?.dispatchEvent(new Event("input")); };
+  draw(); $("#ex-q").focus();
+}
+// Texts read from the scan mark a blank as "(97)", "(97)____" or "(97) ......"; this turns the ones of this
+// group (and the example 0) into gaps. Other numbers in brackets are left alone.
+function markGapsIn(text, from, to) {
+  return text.split(MATH_SPLIT).map((part, i) => (i % 2 ? part : part.replace(/\((\d{1,3})\)[ \t]*(?:[_.…]{2,}[ \t]*)?/g, (m, n) => {
+    const k = +n;
+    return k === 0 || (k >= from && k <= to) ? gapToken(k, "") + (/[ \t]$/.test(m) ? " " : "") : m;
+  }))).join("");
+}
+function gapsToMark() {
+  const g = state.detail?.group, ta = $("#f-passage");
+  if (!g || !ta) return 0;
+  return [...ta.value.matchAll(/\((\d{1,3})\)/g)].filter(m => +m[1] === 0 || (+m[1] >= g.from && +m[1] <= g.to)).length;
+}
+function markGaps() {
+  const g = state.detail?.group, ta = $("#f-passage");
+  if (!g || !ta) return;
+  const before = ta.value, after = markGapsIn(before, g.from, g.to);
+  if (after === before) { toast("No encontré espacios como (97) en el texto compartido."); return; }
+  ta.value = after; ta.dispatchEvent(new Event("input", { bubbles: true }));
+  const missing = [];
+  for (let n = g.from; n <= g.to; n++) if (!gapsPlaced().has(n)) missing.push(n);
+  toast(missing.length ? `Huecos marcados. Faltan en el texto: ${missing.join(", ")}; ponlos con ▁ Hueco.` : "Huecos marcados: cada pregunta tiene su espacio en el texto.");
+  updateGapBar();
+}
+function updateGapBar() {
+  const btn = $("#gap-mark");
+  if (btn) btn.hidden = !gapsToMark();
+}
+function newFormula() {
+  const area = state.lastArea?.isConnected ? state.lastArea : $("#f-stem");
+  const rich = state.visual && richOf(area);
+  if (!rich || !window.MathfieldElement) { openMath(area); return; }
+  const range = rich._range && rich.contains(rich._range.startContainer) ? rich._range.cloneRange() : null;
+  const chip = placeChip(rich, range, "x");
+  if (chip) editMathInline(area, chip, "");
+}
+
+// Editing a formula happens inside the text: the chip turns into a live formula box (tap a slot to type in it).
+function editMathInline(ta, chip, start = null) {
+  if (start === null && /^\\ce\{/.test(chip.dataset.tex || "")) { openChem(ta, chip); return; }
+  if (start === null && /^\\mol\{/.test(chip.dataset.tex || "")) { openMol(ta, chip); return; }
+  if (!window.MathfieldElement) { openMath(ta, chip); return; }
+  const rich = richOf(ta);
+  const tex = start ?? chip.dataset.tex;
+  const wrap = document.createElement("span");
+  wrap.className = "mathedit"; wrap.contentEditable = "false"; wrap.dataset.tex = tex;
+  wrap.innerHTML = `<math-field></math-field>
+    <button class="mb" data-a="text" title="Escribir palabras con espacios (vuelve a pulsar para números)">Aa</button>
+    <button class="mb" data-a="frac" title="Fracción">a/b</button>
+    <button class="mb" data-a="read" title="Leer esta fórmula de un recuadro en la página">📷</button>
+    <button class="mb" data-a="del" title="Quitar la fórmula">🗑</button>
+    <button class="mb go" data-a="ok">Listo</button>`;
+  chip.replaceWith(wrap);
+  const mf = wrap.querySelector("math-field");
+  mf.mathVirtualKeyboardPolicy = "manual";
+  mf.smartFence = true;
+  mf.value = tex;
+  const as_read = texOf(mf);  // MathLive's spelling of the same formula: unchanged means keep the original text
+  let closed = false;
+  const finish = (keep = true) => {
+    if (closed) return; closed = true;
+    const now = !keep || texOf(mf) === as_read ? tex : texOf(mf);
+    if (now) { const box = document.createElement("span"); box.innerHTML = mathChip(now); wrap.replaceWith(box.firstChild); }
+    else wrap.remove();
+    rich.dispatchEvent(new Event("input"));
+    loadFormulaHits();
+  };
+  wrap.querySelectorAll(".mb").forEach(b => {
+    b.addEventListener("pointerdown", e => e.preventDefault());
+    b.onclick = (e) => {
+      e.stopPropagation();
+      const a = b.dataset.a;
+      if (a === "ok") finish();
+      else if (a === "del") { mf.value = ""; finish(); }
+      else if (a === "text") { mf.focus(); mf.executeCommand(["switchMode", mf.mode === "text" ? "math" : "text"]); }
+      else if (a === "frac") { mf.focus(); mf.executeCommand(["switchMode", "math"]); mf.insert("\\frac{#?}{#?}", { focus: true, selectionMode: "placeholder" }); }
+      else if (a === "read") { const c = (finish(), [...rich.querySelectorAll(".mathchip")].pop()); formulaFromPage(ta, c); }
+    };
+  });
+  wrap.addEventListener("click", e => e.stopPropagation());
+  mf.addEventListener("input", e => e.stopPropagation());
+  mf.addEventListener("keydown", e => {
+    e.stopPropagation();
+    if (e.key === "Enter") { e.preventDefault(); finish(); }
+    if (e.key === "Escape") { e.preventDefault(); finish(false); }
+  });
+  mf.addEventListener("focusout", () => setTimeout(() => { if (!wrap.contains(document.activeElement) && document.activeElement !== mf) finish(); }, 150));
+  setTimeout(() => { mf.focus(); mf.executeCommand?.("moveToMathfieldEnd"); }, 30);
+}
+
+function openMath(area = state.lastArea, chip = null, readTex = null) {
+  if (!area || !area.isConnected) { toast("Primero haz clic en un campo de texto"); return; }
+  if (!window.MathfieldElement) { toast("El editor de fórmulas aún se está cargando; intenta de nuevo", true); return; }
+  const rich = state.visual && richOf(area);
+  // Where the formula goes: the chip being edited, the caret in the field, or the selection in the code view.
+  const range = rich && !chip ? (rich._range && rich.contains(rich._range.startContainer) ? rich._range.cloneRange() : null) : null;
+  const sel = !rich ? [area.selectionStart, area.selectionEnd] : null;
+  const picked = !rich ? area.value.slice(sel[0], sel[1]).replace(/^\$|\$$/g, "") : range ? range.toString() : "";
+  const start = readTex ?? (chip ? chip.dataset.tex : picked);
+  overlay(`<div class="label">${chip ? "Editar fórmula" : "Nueva fórmula"}</div>
+    <math-field id="mf" style="width:100%;font-size:26px;padding:10px;border-radius:12px;border:2px solid var(--accent);background:#fff;color:#000"></math-field>
+    <p class="muted" style="font-size:13px;margin:8px 0">Escribe como en Desmos: <b>/</b> hace una fracción, <b>^</b> un exponente, <b>_</b> un subíndice, <b>sqrt</b> una raíz, <b>pi</b> π, <b>*</b> ×, <b>&lt;=</b> ≤. Las flechas mueven el cursor dentro de la fórmula. Para palabras con espacios, pulsa <b>Aa Palabras</b> (o la tecla <b>"</b>) y escribe.</p>
+    <div class="row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+      <button class="ib" id="mf-text" title="Escribir palabras normales dentro de la fórmula (vuelve a pulsar para seguir con números)">Aa Palabras</button>
+      <button class="ib" id="mf-wfrac" title="Una fracción con palabras arriba y abajo">▭⁄▭ Fracción con palabras</button>
+      <span id="mf-wf" style="display:none;gap:6px;align-items:center;width:100%">
+        <input id="mf-top" placeholder="Arriba, p. ej. Volumen del lago (m3)" style="flex:1">
+        <span>/</span>
+        <input id="mf-bot" placeholder="Abajo, p. ej. Cauce (m3/años)" style="flex:1">
+        <button class="ib go" id="mf-wf-ok">Poner</button>
+      </span>
+      <button class="ib" data-ins="\\text{m}^{2}" title="metros cuadrados">m²</button>
+      <button class="ib" data-ins="\\text{m}^{3}" title="metros cúbicos">m³</button>
+      <button class="ib" data-ins="=">=</button>
+      <span class="spacer" style="flex:1"></span>
+      <button class="ib" id="mf-read" title="Dibuja un recuadro sobre la fórmula impresa y se escribe sola">📷 Leer de la página</button>
+    </div>
+    <div class="row" style="display:flex;gap:8px;align-items:center">
+      <button class="ib" onclick="window.mathVirtualKeyboard.visible ? window.mathVirtualKeyboard.hide() : window.mathVirtualKeyboard.show()">⌨ Teclado</button>
+      <span class="spacer" style="flex:1"></span>
+      ${chip ? `<button class="ib warn" id="mf-del">Quitar fórmula</button>` : ""}
+      <button class="ib" onclick="closeOverlay()">Cancelar</button>
+      <button class="ib go" id="mf-ok">${chip ? "Listo" : "Insertar"} (Enter)</button>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:8px">Se guarda como <code id="mf-tex"></code></div>`);
+  const mf = $("#mf");
+  mf.mathVirtualKeyboardPolicy = "manual";
+  mf.smartFence = true;
+  mf.value = start || "";
+  const show = () => { $("#mf-tex").textContent = `$${texOf(mf)}$`; };
+  mf.addEventListener("input", show); show();
+  const done = () => {
+    const tex = texOf(mf);
+    window.mathVirtualKeyboard?.hide?.();
+    closeOverlay();
+    if (!tex) return;
+    if (chip) { chip.outerHTML = mathChip(tex); rich.dispatchEvent(new Event("input")); return; }
+    if (rich) {
+      rich.focus();
+      const s = window.getSelection(); s.removeAllRanges();
+      if (range) s.addRange(range); else { const r = document.createRange(); r.selectNodeContents(rich); r.collapse(false); s.addRange(r); }
+      // insertHTML would split the paragraph around the formula; a marker typed in its place is swapped for the chip.
+      document.execCommand("insertText", false, "\u2063f\u2063");
+      const walk = document.createTreeWalker(rich, NodeFilter.SHOW_TEXT);
+      for (let t = walk.nextNode(); t; t = walk.nextNode()) {
+        const at = t.nodeValue.indexOf("\u2063f\u2063");
+        if (at < 0) continue;
+        const after = t.splitText(at); after.nodeValue = "\u00a0" + after.nodeValue.slice(3);
+        const box = document.createElement("span"); box.innerHTML = mathChip(tex);
+        t.after(box.firstChild);
+        const r = document.createRange(); r.setStart(after, 1); r.collapse(true); s.removeAllRanges(); s.addRange(r);
+        break;
+      }
+      rich.dispatchEvent(new Event("input"));
+      return;
+    }
+    area.focus(); area.setSelectionRange(sel[0], sel[1]);
+    insertAt(area, `$${tex}$`);
+  };
+  $("#mf-ok").onclick = done;
+  // Words: MathLive's text mode keeps spaces and writes \text{...}.
+  const textMode = () => { mf.focus(); mf.executeCommand(["switchMode", mf.mode === "text" ? "math" : "text"]); };
+  $("#mf-text").onclick = textMode;
+  // Keep the caret in the formula when a button is pressed.
+  document.querySelectorAll("#mf-text, [data-ins]").forEach(b => b.addEventListener("pointerdown", e => e.preventDefault()));
+  document.querySelectorAll("#overlay [data-ins]").forEach(b => b.onclick = () => { mf.focus(); mf.executeCommand(["switchMode", "math"]); mf.insert(b.dataset.ins, { focus: true }); });
+  // A fraction of words is typed in two plain boxes: MathLive's placeholders do not take text mode well.
+  $("#mf-wfrac").onclick = () => { $("#mf-wf").style.display = "flex"; $("#mf-top").focus(); };
+  const putWordFrac = () => {
+    const top = $("#mf-top").value.trim(), bot = $("#mf-bot").value.trim();
+    if (!top || !bot) { toast("Escribe lo de arriba y lo de abajo", true); return; }
+    mf.focus(); mf.executeCommand(["switchMode", "math"]);
+    mf.insert(`\\frac{${texWords(top)}}{${texWords(bot)}}`, { focus: true, selectionMode: "after" });
+    $("#mf-top").value = $("#mf-bot").value = ""; $("#mf-wf").style.display = "none";
+  };
+  $("#mf-wf-ok").onclick = putWordFrac;
+  for (const id of ["#mf-top", "#mf-bot"]) $(id).addEventListener("keydown", e => {
+    e.stopPropagation();
+    if (e.key === "Enter") { e.preventDefault(); if (id === "#mf-top") $("#mf-bot").focus(); else putWordFrac(); }
+  });
+  $("#mf-read").onclick = () => { window.mathVirtualKeyboard?.hide?.(); formulaFromPage(area, chip); };
+  if ($("#mf-del")) $("#mf-del").onclick = () => { closeOverlay(); chip.remove(); rich.dispatchEvent(new Event("input")); };
+  mf.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); done(); } if (e.key === "Escape") { e.stopPropagation(); closeOverlay(); } });
+  setTimeout(() => { mf.focus(); mf.executeCommand?.("moveToMathfieldEnd"); }, 50);
+}
+// Words as LaTeX, the same way the server reads a printed formula: \text{...} with units such as m3 or m³ as m^{3}.
+function texWords(text) {
+  const special = { "\\": "\\textbackslash{}", "{": "\\{", "}": "\\}", "%": "\\%", "$": "\\$", "#": "\\#", "&": "\\&", "_": "\\_" };
+  const t = (x) => !x ? "" : /^[0-9.,]+$/.test(x.trim()) ? x.trim() : `\\text{${[...x].map(c => special[c] || c).join("")}}`;
+  text = text.split(/\s+/).join(" ");
+  const unit = /(?<![A-Za-zÀ-ÿ])(m|cm|mm|km|dm|s|g|kg|L)(?:([²³])|([23])(?![0-9]))/g;
+  let out = "", pos = 0;
+  for (const m of text.matchAll(unit)) {
+    out += t(text.slice(pos, m.index) + m[1]) + `^{${m[2] ? { "²": 2, "³": 3 }[m[2]] : m[3]}}`;
+    pos = m.index + m[0].length;
+  }
+  return out + t(text.slice(pos));
+}
+// The LaTeX the app renders: no empty placeholders, and $ never inside.
+const texOf = (mf) => mf.getValue("latex-without-placeholders").replace(/\$/g, "\\$").trim();
+
 function fmtInsert(kind) {
   const area = state.lastArea;
   if (!area || !area.isConnected) { toast("Primero haz clic en un campo de texto"); return; }
@@ -1244,16 +2755,18 @@ function pdfPane() {
       <span class="muted">pág.</span><input id="pg" type="number" min="1" value="${state.page}"><span class="muted">${sc.count ? "de " + sc.count : ""}</span>
       <button class="ib" onclick="turnPage(1)" title="Página siguiente">›</button>
       <span class="spacer"></span>
+      <span class="muted">Zoom</span>
       <button class="ib" onclick="zoomBy(1/1.25)" title="Alejar">−</button>
-      <button class="ib" onclick="zoomBy(0)" title="Ajustar al ancho">Ancho</button>
+      <button class="ib" onclick="zoomBy(0)" title="Ajustar al ancho del panel">Ajustar</button>
       <button class="ib" onclick="zoomBy(1.25)" title="Acercar">+</button>
-      ${STATIC ? "" : `<button class="ib ${state.cropping ? "on" : ""}" id="cropbtn" onclick="state.cropping ? cancelCrop() : startCrop()" title="Dibuja un recuadro para recortar una figura o copiar su texto">✂ Recuadro</button>`}
+      ${STATIC || state.group ? "" : `<button class="ib ${state.cropping ? "on" : ""}" id="cropbtn" onclick="state.cropping ? cancelCrop() : startCrop()" title="Dibuja un recuadro en la página para recortar una figura o copiar su texto (R)">✂ Recortar o leer</button>`}
     </div>
     ${est ? `<div class="note warn" style="margin:8px 10px 0">Página estimada: busca la pregunta con ‹ ›.</div>` : ""}
     <div class="pdfscroll" id="pdfscroll">
       <div class="pdfpage ${state.cropping ? "cropping" : ""}" id="pdfpage" style="width:${Math.round(state.zoom * 100)}%">
         <img id="pdfimg" alt="página ${state.page} del PDF original" src="/api/scan/${encodeURIComponent(d.exam)}/${state.page}" draggable="false" onerror="pageMissing(this)">
         <div class="ov" id="ov">${anchorMark()}</div>
+        <div class="fxl" id="fxl"></div>
       </div>
     </div>`;
 }
@@ -1274,24 +2787,49 @@ function bindPdf() {
   const ov = $("#ov");
   let start = null;
   const frac = (ev) => { const r = ov.getBoundingClientRect(); return [Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width)), Math.min(1, Math.max(0, (ev.clientY - r.top) / r.height))]; };
+  let adjust = null;  // {edges, from, box}: dragging an edge, a corner or the whole box drawn before
   ov.onpointerdown = (ev) => {
     if (!state.cropping || ev.button !== 0) return;
     ev.preventDefault();
     ov.setPointerCapture(ev.pointerId);
-    start = frac(ev);
+    const p = frac(ev);
+    const hit = state.box && boxGrip(state.box, p, ov.getBoundingClientRect());
+    if (hit) { adjust = { edges: hit, from: p, box: [...state.box] }; start = p; return; }
+    adjust = null;
+    start = p;
     state.box = [...start, ...start];
     drawBox(false);
   };
-  ov.onpointermove = (ev) => { if (!start) return; const p = frac(ev); state.box = [start[0], start[1], p[0], p[1]]; drawBox(false); };
+  ov.onpointermove = (ev) => {
+    const p = frac(ev);
+    if (!start) { if (state.cropping && state.box) ov.style.cursor = gripCursor(boxGrip(state.box, p, ov.getBoundingClientRect())); return; }
+    if (adjust) {
+      const [dx, dy] = [p[0] - adjust.from[0], p[1] - adjust.from[1]], b = [...adjust.box], e = adjust.edges;
+      if (e === "move") { const mx = Math.min(1 - b[2], Math.max(-b[0], dx)), my = Math.min(1 - b[3], Math.max(-b[1], dy)); state.box = [b[0] + mx, b[1] + my, b[2] + mx, b[3] + my]; }
+      else { if (e.includes("l")) b[0] += dx; if (e.includes("r")) b[2] += dx; if (e.includes("t")) b[1] += dy; if (e.includes("b")) b[3] += dy; state.box = b.map(v => Math.min(1, Math.max(0, v))); }
+      drawBox(false); return;
+    }
+    state.box = [start[0], start[1], p[0], p[1]]; drawBox(false);
+  };
   ov.onpointerup = () => {
     if (!start) return;
-    start = null;
+    start = null; adjust = null;
     const [x0, y0, x1, y1] = state.box;
     if (Math.abs(x1 - x0) < 0.01 || Math.abs(y1 - y0) < 0.01) { state.box = null; drawBox(false); return; }
     state.box = [Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1), Math.max(y0, y1)];
     drawBox(true);
   };
+  loadFormulaHits();
 }
+// Which part of a drawn box is under the pointer: an edge or corner ("t", "bl"…), "move" inside, or null outside.
+function boxGrip(box, p, rect) {
+  const [x0, y0, x1, y1] = box, tx = 10 / rect.width, ty = 10 / rect.height;
+  if (p[0] < x0 - tx || p[0] > x1 + tx || p[1] < y0 - ty || p[1] > y1 + ty) return null;
+  const e = (Math.abs(p[1] - y0) < ty ? "t" : Math.abs(p[1] - y1) < ty ? "b" : "") + (Math.abs(p[0] - x0) < tx ? "l" : Math.abs(p[0] - x1) < tx ? "r" : "");
+  return e || "move";
+}
+const gripCursor = (g) => !g ? "crosshair" : g === "move" ? "move" : { t: "ns-resize", b: "ns-resize", l: "ew-resize", r: "ew-resize", tl: "nwse-resize", br: "nwse-resize", tr: "nesw-resize", bl: "nesw-resize" }[g];
+
 function scrollToAnchor() {
   const a = state.detail.anchor, sc = $("#pdfscroll"), page = $("#pdfpage");
   if (!sc || !page || !a || a.page !== state.page || state.scrolled === `${state.detail.number}:${state.page}`) return;
@@ -1299,6 +2837,7 @@ function scrollToAnchor() {
   sc.scrollTop = Math.max(0, page.offsetTop + a.y * page.offsetHeight - 40);
 }
 
+const cleanToggle = () => `<label class="switch" style="width:100%;font-size:12px" title="Antes de guardar, quita el fondo o tapa texto encima del dibujo"><input type="checkbox" ${state.cleanCrop ? "checked" : ""} onchange="state.cleanCrop = this.checked; remember('cleanCrop', this.checked)"> ✨ Limpiar la imagen antes de guardarla</label>`;
 function drawBox(withBar) {
   const ov = $("#ov");
   ov.innerHTML = anchorMark();
@@ -1317,18 +2856,27 @@ function drawBox(withBar) {
   const eng = `<select class="ib" title="Motor de OCR" onchange="setEngine(this.value)">${sel(ENGINES, state.engine)}</select>`;
   if (tgt?.kind === "replace") bar.innerHTML = `<span class="lbl">Cambiar la figura por este recorte</span>
        <button class="ib go" onclick="cropTo('${esc(tgt.option || "")}', '${esc(tgt.replaces)}')">Usar este recorte</button>
-       <button class="ib" onclick="cancelCrop()">Cancelar</button>`;
+       <button class="ib" onclick="cancelCrop()">Cancelar</button>${cleanToggle()}`;
+  else if (tgt?.kind === "place") bar.innerHTML = `<span class="lbl">Poner esta imagen en el ${esc(fieldName($("#" + tgt.field)))}, donde está el cursor</span>
+       <button class="ib go" onclick="cropTo('', null, state.cropTarget)">✂ Poner la imagen</button>
+       <button class="ib" onclick="cancelCrop()">Cancelar</button>${cleanToggle()}`;
+  else if (tgt?.kind === "formula") bar.innerHTML = `<span class="lbl">Leer la fórmula del recuadro</span>
+       <button class="ib go" onclick="formulaFromBox()">ƒx Leer fórmula</button>
+       ${eng}<button class="ib" onclick="cancelCrop()">✕</button>`;
   else if (tgt?.kind === "field") bar.innerHTML = `<span class="lbl">Leer el texto del recuadro</span>
        <button class="ib go" onclick="ocrTo('${tgt.field}')">${tgt.field === "opts" ? "Repartir en opciones A–D" : `Escribir en ${esc(fieldName($("#" + tgt.field)))}`}</button>
        ${eng}<button class="ib" onclick="cancelCrop()">✕</button>`;
   else bar.innerHTML = `<span class="lbl">Imagen del recuadro en…</span>
        <button class="ib" onclick="cropTo('')">Enunciado</button>
+       ${TEXT_FIELDS.includes(state.lastArea?.id) && state.lastArea.isConnected ? `<button class="ib" onclick="cropTo('', null, placeTarget(state.lastArea.id))" title="La imagen queda dentro del texto, donde está el cursor">En el ${esc(fieldName(state.lastArea))}, en el cursor</button>` : ""}
        ${letters.map(l => `<button class="ib" onclick="cropTo('${esc(l)}')">Opción ${esc(l)}</button>`).join("")}
+       ${cleanToggle()}
        <span class="lbl">Texto del recuadro (OCR)</span>
        <button class="ib go" onclick="ocrTo('last')" title="Escribe el texto en el último campo que usaste">→ ${esc(fieldName(state.lastArea))}</button>
        <button class="ib" onclick="ocrTo('opts')">Repartir en A–D</button>
        <button class="ib" onclick="ocrTo('copy')">Copiar</button>
        <button class="ib" onclick="tableFromBox()" title="Convierte la tabla del recuadro en una tabla editable">▦ Tabla</button>
+       <button class="ib" onclick="formulaFromBox()" title="Lee la fórmula del recuadro (también fracciones con palabras) y la abre en el editor de fórmulas">ƒx Fórmula</button>
        ${eng}<button class="ib" onclick="cancelCrop()">✕</button>`;
   ov.appendChild(bar);
   bar.addEventListener("pointerdown", e => e.stopPropagation());
@@ -1354,13 +2902,232 @@ function cancelCrop() {
   $("#cropbtn")?.classList.remove("on");
   if ($("#ov")) drawBox(false);
 }
-async function cropTo(option, replaces = null) {
+// An image cut from the page that goes inside a text field at the caret (kept from when the crop started).
+function placeTarget(field) {
+  const rich = richOf($("#" + field));
+  return { kind: "place", field, range: rich?._range && rich.contains(rich._range.startContainer) ? rich._range.cloneRange() : null };
+}
+function imageInto(field) {
+  state.lastArea = $("#" + field);
+  state.cropping = true;
+  state.cropTarget = placeTarget(field);
+  state.box = null;
+  $("#pdfpage")?.classList.add("cropping");
+  $("#cropbtn")?.classList.add("on");
+  drawBox(false);
+  toast(`Dibuja un recuadro sobre la imagen. Quedará en el ${fieldName($("#" + field))}, donde estaba el cursor.`);
+}
+// After a crop is saved: the one new figure goes into the text when the crop was meant for it.
+async function afterCrop(place, before, msg, oldId = null) {
+  await reloadFigures(place ? null : msg);
+  const added = state.detail.figures.find(f => !before.has(f.figure_id));
+  // a cleaned copy of a crop that sits in the text takes its place there
+  if (oldId && added) TEXT_FIELDS.forEach(id => {
+    const ta = $("#" + id);
+    if (!ta || !placedIds(ta.value).has(oldId)) return;
+    ta.value = ta.value.split(`[[figura:${oldId}]]`).join(`[[figura:${added.figure_id}]]`);
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  if (!place) return;
+  if (added) placeFigure(added.figure_id, $("#" + place.field), place.range);
+  else toast(msg);
+}
+async function cropTo(option, replaces = null, place = null) {
+  if (state.cleanCrop) { openCleaner({ page: state.page, box: state.box, option: option || null, replaces, place }); return; }
   try {
+    const before = new Set(state.detail.figures.map(f => f.figure_id));
     await api(`${qpath()}/crop`, J("POST", { page: state.page, box: state.box, option: option || null, replaces }));
     cancelCrop();
-    await reloadFigures(option ? `Imagen guardada en la opción ${option}` : "Imagen guardada en el enunciado");
+    await afterCrop(place, before, option ? `Imagen guardada en la opción ${option}` : "Imagen guardada en el enunciado");
   } catch (e) { toast(e.message, true); }
 }
+// ----- cleaning a crop before it is saved --------------------------------------------------------------
+// The crop opens on a canvas: one click turns the paper white or transparent, and a brush, a cover box and an
+// eraser hide text printed over the drawing. The eraser brings back the original pixels. The result is saved as the crop PNG.
+
+state.cleanCrop = recall("cleanCrop") ?? true;
+const cleaner = { orig: null, hist: [], tool: "rect", color: "#ffffff", size: 14, bg: null, level: 200 };
+
+async function openCleaner(target) {
+  try {
+    let blob;
+    if (target.src) blob = await (await fetch(target.src)).blob();
+    else {
+      const res = await fetch(`/api/exams/${encodeURIComponent(state.exam)}/crop-image`, J("POST", { page: target.page, box: target.box }));
+      if (!res.ok) throw new Error((await res.json()).error || `HTTP ${res.status}`);
+      blob = await res.blob();
+    }
+    const img = await createImageBitmap(blob);
+    Object.assign(cleaner, { target, hist: [], bg: null });
+    document.body.insertAdjacentHTML("beforeend", `<div class="studio" id="cleaner">
+      <div class="stbar">
+        <b style="font:700 18px 'Bricolage Grotesque'">Limpiar recorte · Q${state.detail.number}${target.option ? ` · opción ${esc(target.option)}` : ""}</b>
+        <span class="spacer"></span>
+        <button class="ib" onclick="closeCleaner()">Cancelar (Esc)</button>
+        <button class="ib go" onclick="saveCleaner()">Guardar imagen</button>
+      </div>
+      <div class="clgrid">
+        <div class="cltools" id="cl-tools"></div>
+        <div class="clstage" id="cl-stage"><canvas id="cl-canvas"></canvas></div>
+      </div></div>`);
+    const cv = $("#cl-canvas");
+    cv.width = img.width; cv.height = img.height;
+    const ctx = cv.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0);
+    cleaner.orig = ctx.getImageData(0, 0, cv.width, cv.height);
+    cleaner.base = cleaner.orig;
+    clTools();
+    clBind(cv);
+  } catch (e) { toast(e.message, true); }
+}
+function closeCleaner() { $("#cleaner")?.remove(); cleaner.orig = null; }
+
+function clTools() {
+  const t = (id, label, title) => `<button class="ib ${cleaner.tool === id ? "on" : ""}" onclick="clTool('${id}')" title="${title}">${label}</button>`;
+  $("#cl-tools").innerHTML = `
+    <div class="label">Fondo</div>
+    <div class="row"><button class="ib ${cleaner.bg === "white" ? "on" : ""}" onclick="clBackground('white')" title="El papel gris o amarillento queda blanco">Fondo blanco</button>
+      <button class="ib ${cleaner.bg === "clear" ? "on" : ""}" onclick="clBackground('clear')" title="El papel desaparece; solo queda el dibujo">Fondo transparente</button></div>
+    <label class="muted" style="font-size:12px">Cuánto quitar <input type="range" min="120" max="250" value="${cleaner.level}" oninput="clLevel(this.value)" style="width:100%"></label>
+    <div class="label" style="margin-top:12px">Tapar y dibujar</div>
+    <div class="row">${t("rect", "▭ Tapar", "Arrastra un recuadro sobre el texto que quieres tapar")}${t("brush", "✎ Pincel", "Pinta con el color elegido")}${t("erase", "⌫ Borrador", "Devuelve la imagen original donde pasas")}</div>
+    <div class="row">${[["#ffffff", "Blanco"], ["#000000", "Negro"], ["clear", "Transparente"]].map(([v, l]) => `<button class="sw ${cleaner.color === v ? "on" : ""}" title="${l}" style="background:${v === "clear" ? "repeating-conic-gradient(#ccc 0 25%,#fff 0 50%) 0 0/10px 10px" : v}" onclick="clColor('${v}')"></button>`).join("")}</div>
+    <label class="muted" style="font-size:12px">Grosor <input type="range" min="2" max="60" value="${cleaner.size}" oninput="cleaner.size=+this.value" style="width:100%"></label>
+    <div class="row" style="margin-top:12px"><button class="ib" onclick="clUndo()" ${cleaner.hist.length ? "" : "disabled"} title="Ctrl+Z">↶ Deshacer</button>
+      <button class="ib" onclick="clReset()" title="Vuelve al recorte original">Empezar de nuevo</button></div>
+    <p class="muted" style="font-size:12px">El fondo a cuadros es transparente. La imagen se guarda tal como se ve aquí.</p>`;
+}
+function clTool(t) { cleaner.tool = t; clTools(); }
+function clColor(c) { cleaner.color = c; if (cleaner.tool === "erase") cleaner.tool = "brush"; clTools(); }
+const clCtx = () => $("#cl-canvas").getContext("2d", { willReadFrequently: true });
+function clPush() {
+  const cv = $("#cl-canvas");
+  cleaner.hist.push(clCtx().getImageData(0, 0, cv.width, cv.height));
+  if (cleaner.hist.length > 40) cleaner.hist.shift();
+  clTools();
+}
+function clUndo() { const last = cleaner.hist.pop(); if (last) clCtx().putImageData(last, 0, 0); clTools(); }
+function clReset() { clPush(); cleaner.bg = null; cleaner.base = cleaner.orig; clCtx().putImageData(cleaner.orig, 0, 0); clTools(); }
+
+// Paper is every pixel lighter than the level: it turns white, or transparent. Strokes and drawing stay as they are.
+function clPaper(src, mode, level) {
+  const out = new ImageData(new Uint8ClampedArray(src.data), src.width, src.height), d = out.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const light = Math.min(d[i], d[i + 1], d[i + 2]);
+    if (light >= level || d[i + 3] === 0) { if (mode === "white") { d[i] = d[i + 1] = d[i + 2] = d[i + 3] = 255; } else d[i + 3] = 0; }
+  }
+  return out;
+}
+function clBackground(mode) {
+  clPush();
+  cleaner.bg = mode;
+  // Applied to what is on the canvas now, so covers and strokes already made are kept.
+  cleaner.bgFrom = cleaner.hist[cleaner.hist.length - 1];
+  clCtx().putImageData(clPaper(cleaner.bgFrom, mode, cleaner.level), 0, 0);
+  cleaner.base = clPaper(cleaner.orig, mode, cleaner.level);
+  clTools();
+}
+function clLevel(v) {
+  cleaner.level = +v;
+  if (!cleaner.bg || !cleaner.bgFrom) return;
+  clCtx().putImageData(clPaper(cleaner.bgFrom, cleaner.bg, cleaner.level), 0, 0);
+  cleaner.base = clPaper(cleaner.orig, cleaner.bg, cleaner.level);
+}
+
+function clBind(cv) {
+  const at = (e) => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; };
+  let start = null, last = null, snap = null;
+  const ctx = clCtx();
+  // Pixels of the base (original, with the chosen background) inside a circle: the eraser paints these back.
+  const restore = (x, y, r) => {
+    const x0 = Math.max(0, Math.floor(x - r)), y0 = Math.max(0, Math.floor(y - r));
+    const w = Math.min(cv.width, Math.ceil(x + r)) - x0, h = Math.min(cv.height, Math.ceil(y + r)) - y0;
+    if (w <= 0 || h <= 0) return;
+    const cur = ctx.getImageData(x0, y0, w, h), b = cleaner.base.data;
+    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+      if ((x0 + i - x) ** 2 + (y0 + j - y) ** 2 > r * r) continue;
+      const s = ((y0 + j) * cv.width + x0 + i) * 4, t = (j * w + i) * 4;
+      cur.data[t] = b[s]; cur.data[t + 1] = b[s + 1]; cur.data[t + 2] = b[s + 2]; cur.data[t + 3] = b[s + 3];
+    }
+    ctx.putImageData(cur, x0, y0);
+  };
+  const stroke = (a, b) => {
+    const r = cleaner.size / 2 * (cv.width / cv.getBoundingClientRect().width);
+    if (cleaner.tool === "erase") {
+      const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / (r / 2)));
+      for (let k = 0; k <= n; k++) restore(a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n, r);
+      return;
+    }
+    ctx.save();
+    ctx.globalCompositeOperation = cleaner.color === "clear" ? "destination-out" : "source-over";
+    ctx.strokeStyle = cleaner.color === "clear" ? "#000" : cleaner.color;
+    ctx.lineWidth = r * 2; ctx.lineCap = ctx.lineJoin = "round";
+    ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b); ctx.stroke();
+    ctx.restore();
+  };
+  cv.addEventListener("pointerdown", e => {
+    cv.setPointerCapture(e.pointerId);
+    clPush();
+    start = last = at(e);
+    snap = cleaner.tool === "rect" ? ctx.getImageData(0, 0, cv.width, cv.height) : null;
+    if (cleaner.tool !== "rect") stroke(start, start);
+  });
+  cv.addEventListener("pointermove", e => {
+    if (!start) return;
+    const p = at(e);
+    if (cleaner.tool === "rect") {
+      ctx.putImageData(snap, 0, 0);
+      clCover(ctx, start, p, true);
+    } else { stroke(last, p); last = p; }
+  });
+  cv.addEventListener("pointerup", e => {
+    if (!start) return;
+    if (cleaner.tool === "rect") { ctx.putImageData(snap, 0, 0); clCover(ctx, start, at(e), false); }
+    start = last = snap = null;
+  });
+}
+// The cover box takes the background: white, or a hole when the background is transparent (or that colour is chosen).
+function clCover(ctx, a, b, outline) {
+  const x = Math.min(a[0], b[0]), y = Math.min(a[1], b[1]), w = Math.abs(b[0] - a[0]), h = Math.abs(b[1] - a[1]);
+  const hole = cleaner.color === "clear" || (cleaner.bg === "clear" && cleaner.color === "#ffffff");
+  if (hole) ctx.clearRect(x, y, w, h);
+  else { ctx.fillStyle = cleaner.color; ctx.fillRect(x, y, w, h); }
+  if (outline) { ctx.save(); ctx.setLineDash([6, 4]); ctx.strokeStyle = "#1a6ef5"; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h); ctx.restore(); }
+}
+
+async function saveCleaner() {
+  const t = cleaner.target;
+  try {
+    const blob = await new Promise(r => $("#cl-canvas").toBlob(r, "image/png"));
+    const q = new URLSearchParams();
+    if (t.option) q.set("option", t.option);
+    if (t.replaces) q.set("replaces", t.replaces);
+    if (t.page) q.set("page", t.page);
+    if (t.box) q.set("box", t.box.map(v => (+v).toFixed(4)).join(","));
+    const before = new Set(state.detail.figures.map(f => f.figure_id));
+    const res = await fetch(`${qpath()}/scan-figures?${q}`, { method: "POST", headers: { "Content-Type": "image/png" }, body: blob });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+    // A cleaned copy of a saved crop takes its place.
+    if (t.oldId) await api(`${qpath()}/scan-figures/${encodeURIComponent(t.oldId)}`, { method: "DELETE" });
+    closeCleaner();
+    cancelCrop();
+    await afterCrop(t.place, before, t.option ? `Imagen limpia guardada en la opción ${t.option}` : "Imagen limpia guardada en el enunciado", t.oldId);
+  } catch (e) { toast(e.message, true); }
+}
+function cleanSaved(id) {
+  const f = state.detail.figures.find(x => x.figure_id === id);
+  if (!f) return;
+  openCleaner({ src: scanUrl(f), option: traceOption(f), replaces: f.spec_id !== f.figure_id ? f.spec_id : null, oldId: f.figure_id, page: f.page, box: f.box_page_fraction });
+}
+function cleanerKey(e) {
+  if (e.key === "Escape") { closeCleaner(); return true; }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); clUndo(); return true; }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); saveCleaner(); return true; }
+  if (e.key === "Enter" && !/INPUT|BUTTON/.test(e.target.tagName)) { e.preventDefault(); saveCleaner(); return true; }
+  return true;
+}
+
 const ENGINES = [["auto", "OCR: el mejor disponible"], ["saved", "Azure (lectura guardada)"], ["azure", "Azure (leer ahora)"], ["local", "RapidOCR (sin internet)"]];
 const ENGINE_NAMES = { saved: "Azure guardado", azure: "Azure", local: "RapidOCR" };
 function setEngine(v) { state.engine = v; remember("engine", v); }
@@ -1375,6 +3142,40 @@ function readInto(field) {
   $("#cropbtn")?.classList.add("on");
   drawBox(false);
   toast(field === "opts" ? "Dibuja un recuadro sobre las opciones A–D" : `Dibuja un recuadro sobre el texto del ${fieldName($("#" + field))}`);
+}
+
+// A formula from a box on the page: fraction bars come from the picture, the words from the OCR. It opens in the
+// formula editor so it can be checked before it goes into the text.
+function formulaFromPage(area, chip) {
+  if (!$("#pdfpage")) { toast("Abre la página original (Más ▾ → mostrar página) para leer una fórmula de ella", true); return; }
+  closeOverlay();
+  state.cropping = true;
+  state.cropTarget = { kind: "formula", area, chip };
+  state.box = null;
+  $("#pdfpage").classList.add("cropping");
+  $("#cropbtn")?.classList.add("on");
+  drawBox(false);
+  toast("Dibuja un recuadro sobre la fórmula de la página");
+}
+async function formulaFromBox() {
+  const tgt = state.cropTarget?.kind === "formula" ? state.cropTarget : null;
+  try {
+    setSave("Leyendo la fórmula…", "");
+    const { tex, engine } = await api(`/api/exams/${encodeURIComponent(state.detail.exam)}/read`, J("POST", { page: state.page, box: state.box, engine: state.engine, want: "formula" }));
+    cancelCrop();
+    const area = tgt?.area?.isConnected ? tgt.area : state.lastArea?.isConnected ? state.lastArea : $("#f-stem");
+    if (tgt?.chip?.isConnected && richOf(area)) {
+      // reading a formula for one being edited: it takes that one's place and stays open to check
+      const box = document.createElement("span"); box.innerHTML = mathChip(tex);
+      const chip = box.firstChild; tgt.chip.replaceWith(chip);
+      richOf(area).dispatchEvent(new Event("input"));
+      editMathInline(area, chip);
+    } else {
+      state.lastArea = area;
+      useFormula(tex);
+    }
+  } catch (e) { toast(e.message, true); }
+  finally { setSave(state.dirty ? "Cambios sin guardar" : "Sin cambios", state.dirty ? "dirty" : ""); }
 }
 
 async function readBox(want) {
