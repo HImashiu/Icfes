@@ -39,3 +39,14 @@ describe("structural formulas", () => {
     expect(html).toContain('class="mol-row"');
   });
 });
+
+describe("fill-in gaps", () => {
+  it("draws a numbered blank and the worked example filled in", () => {
+    const html = renderRich("<p>She [[hueco:97]] there and [[hueco:0|covers]] it.</p>");
+    expect(html).toContain('data-gap="97"');
+    expect(html).toContain('class="gap-n"');
+    expect(html).toContain('class="gap-fill"');
+    expect(html).toContain("covers");
+    expect(html).not.toContain("[[hueco");
+  });
+});

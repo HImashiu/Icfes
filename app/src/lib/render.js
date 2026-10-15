@@ -6,6 +6,7 @@ import DOMPurify from "dompurify";
 import katex from "katex";
 import "katex/contrib/mhchem";
 import "katex/dist/katex.min.css";
+import { renderGaps } from "./gaps.js";
 import { expandMol, molParts } from "./molecule.js";
 import { isMathSpan, normalizeField, outsideMath } from "./text-normalize.js";
 
@@ -34,7 +35,7 @@ export function renderRich(source) {
   const withoutPictures = source.replace(IMG, "").replace(MD_IMG, "");
   const cleaned = normalizeField(withoutPictures);
   // **bold** in the exam text (for example a bold NO in a stem) becomes <strong>.
-  const bold = outsideMath(paragraphs(cleaned), (part) => part.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>"));
+  const bold = outsideMath(paragraphs(cleaned), (part) => renderGaps(part.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")));
   const withMath = bold.replace(MATH, (whole, tex) => {
     if (!isMathSpan(tex)) return whole;
     const pieces = molParts(tex);
