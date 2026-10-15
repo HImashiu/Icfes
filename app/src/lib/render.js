@@ -4,6 +4,7 @@
 // specs (FigureBlock), so <img> tags and markdown image references are removed here.
 import DOMPurify from "dompurify";
 import katex from "katex";
+import "katex/contrib/mhchem";
 import "katex/dist/katex.min.css";
 import { isMathSpan, normalizeField, outsideMath } from "./text-normalize.js";
 

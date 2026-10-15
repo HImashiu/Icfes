@@ -16,3 +16,13 @@ describe("editor markup blocks", () => {
     expect(html).toContain("<small>Autor</small>");
   });
 });
+
+describe("chemistry in math", () => {
+  it("renders mhchem equations with their arrows", () => {
+    const html = renderRich("<p>Reacción: $\\ce{N2 (g) + 3H2 (g) <=> 2NH3 (g)}$</p>");
+    expect(html).toContain("katex");
+    expect(html).toContain("NH");
+    expect(html).toContain("\u21cc");
+    expect(html).not.toContain("$\\ce");
+  });
+});
