@@ -858,6 +858,7 @@ function formPane(q, g) {
       <button class="ib" type="button" data-cmd="insertUnorderedList" onclick="richCmd('insertUnorderedList')" title="Lista con viñetas">• Lista</button>
       <button class="ib" type="button" onclick="richCmd('table')" title="Insertar una tabla de texto">▦ Tabla</button>
       <button class="ib" type="button" onclick="openChem()" title="Ecuación química: escribe 2H2 + O2 -> 2H2O y se ve con subíndices y flecha">⚗ Química</button>
+      <button class="ib" type="button" onclick="openMol()" title="Molécula desarrollada con todos los H, como en el ICFES: H-C(H,H)-C(=O)-OH. También reacciones con flecha y nombres debajo">⌬ Molécula</button>
       <button class="ib" type="button" onclick="newFormula()" title="Escribe una fórmula donde está el cursor. Las fórmulas del PDF salen marcadas en azul: un clic y quedan puestas.">ƒx Fórmula</button>
       <select class="ib" onchange="if (this.value) { fmtInsert('sym', this.value); this.value = ''; }" title="Símbolos">
         <option value="">Ω Símbolo</option>${SYMBOLS.map(x => `<option>${x}</option>`).join("")}</select>
@@ -1538,7 +1539,7 @@ function toVisual(src) {
     .replace(/<div class="espacio"><\/div>/g, '<div class="espacio" contenteditable="false"></div>');
 }
 // Prices like "$200.000, ... $" pair up as dollars too; only real formulas become chips, the rest stays text.
-const isTex = (part) => !/\n/.test(part) && (!part.includes("<") || part.startsWith("$\\ce{")) && !/^\$\s|\s\$$/.test(part) && !/^\$\d{1,3}(\.\d{3})+([,;:]|\s|\$)/.test(part);
+const isTex = (part) => !/\n/.test(part) && (!part.includes("<") || /^\$\\(ce|mol)\{/.test(part)) && !/^\$\s|\s\$$/.test(part) && !/^\$\d{1,3}(\.\d{3})+([,;:]|\s|\$)/.test(part);
 function mathChip(tex) {
   const drawn = window.renderRich ? window.renderRich(`$${tex}$`).replace(/^\s*<p>|<\/p>\s*$/g, "") : esc(tex);
   return `<span class="mathchip" contenteditable="false" data-tex="${esc(tex)}" title="Clic para editar la fórmula">${drawn}</span>`;
@@ -2144,6 +2145,49 @@ function openChem(area = state.lastArea, chip = null) {
   inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); done(); } });
   draw(); inp.focus();
 }
+// Molecules drawn expanded, as ICFES prints them: H-C(H,H)-C(=O)-OH, stored as $\mol{...}$ (see renderer/src/molecule.js).
+const MOL_KEYS = [["C con H arriba y abajo", "-C(H,H)"], ["C=O", "-C(=O)"], ["–OH", "-OH"], ["–O–", "-O"], ["–H", "-H"], ["CH₃", "-CH3"],
+  ["N con H", "-N(H)"], ["doble =", "="], ["triple ≡", "#"], ["+", " + "], ["→", " -> "], ["→ con algo debajo", " ->[H^+] "],
+  ["→ con algo encima", " ->{calor} "], ["⇌", " <=> "], ["nombre debajo", ' "Nombre"']];
+function openMol(area = state.lastArea, chip = null) {
+  if (!area?.isConnected) area = $("#f-stem");
+  const rich = state.visual && richOf(area);
+  const range = rich?._range && rich.contains(rich._range.startContainer) ? rich._range.cloneRange() : null;
+  const start = chip ? (chip.dataset.tex.match(/^\\mol\{([\s\S]*)\}$/)?.[1] ?? "") : "";
+  overlay(`<div class="label">Molécula o reacción (fórmula desarrollada)</div>
+    <p class="muted" style="margin:0 0 8px;font-size:13px">Escribe los átomos de izquierda a derecha unidos con <code>-</code> (o <code>=</code> doble, <code>#</code> triple). Lo que cuelga de un átomo va entre paréntesis: <code>C(H,H)</code> pone un H arriba y otro abajo, <code>C(=O)</code> un O con doble enlace arriba. Ej.: <code>H-C(H,H)-C(=O)-OH</code>. Reacción: <code>A "Éster" ->[H^+] B + C "Alcohol"</code> (el texto entre comillas va debajo de la molécula anterior).</p>
+    <textarea id="mol-in" spellcheck="false" autocomplete="off" rows="2" style="width:100%;font:16px ui-monospace,monospace;padding:10px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--text)">${esc(start)}</textarea>
+    <div class="row" style="flex-wrap:wrap;gap:6px;margin:8px 0">${MOL_KEYS.map(([l, v], i) => `<button class="ib" type="button" data-k="${i}">${esc(l)}</button>`).join("")}</div>
+    <div id="mol-prev" class="paper" style="min-height:80px;font-size:18px;text-align:center;overflow-x:auto"></div>
+    <div class="row" style="gap:8px;margin-top:10px">
+      <button class="ib go" type="button" id="mol-ok">${chip ? "Listo" : "Poner en el texto"}</button>
+      ${chip ? '<button class="ib warn" type="button" id="mol-del">Quitar</button>' : ""}
+      <button class="ib" type="button" onclick="closeOverlay()">Cancelar</button></div>`);
+  const inp = $("#mol-in");
+  const src = () => inp.value.replace(/\s*\n\s*/g, " ").trim();
+  const draw = () => { $("#mol-prev").innerHTML = src() ? window.renderRich(`$\\mol{${src()}}$`) : '<span class="muted" style="font-size:13px">Aquí se ve la molécula</span>'; };
+  inp.addEventListener("input", draw);
+  document.querySelectorAll("#overlay [data-k]").forEach(b => b.onclick = () => {
+    let v = MOL_KEYS[+b.dataset.k][1];
+    const a = inp.selectionStart ?? inp.value.length, z = inp.selectionEnd ?? a;
+    if (a === 0 && /^-/.test(v)) v = v.slice(1);
+    inp.value = inp.value.slice(0, a) + v + inp.value.slice(z);
+    inp.focus(); inp.setSelectionRange(a + v.length, a + v.length); draw();
+  });
+  const done = () => {
+    const body = src();
+    closeOverlay();
+    if (!body) return;
+    const tex = `\\mol{${body}}`;
+    if (chip) { chip.outerHTML = mathChip(tex); rich?.dispatchEvent(new Event("input")); return; }
+    if (rich) { placeChip(rich, range, tex); return; }
+    insertAt(area, `$${tex}$`);
+  };
+  $("#mol-ok").onclick = done;
+  if ($("#mol-del")) $("#mol-del").onclick = () => { closeOverlay(); chip.remove(); rich?.dispatchEvent(new Event("input")); };
+  inp.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); done(); } });
+  draw(); inp.focus();
+}
 function newFormula() {
   const area = state.lastArea?.isConnected ? state.lastArea : $("#f-stem");
   const rich = state.visual && richOf(area);
@@ -2156,6 +2200,7 @@ function newFormula() {
 // Editing a formula happens inside the text: the chip turns into a live formula box (tap a slot to type in it).
 function editMathInline(ta, chip, start = null) {
   if (start === null && /^\\ce\{/.test(chip.dataset.tex || "")) { openChem(ta, chip); return; }
+  if (start === null && /^\\mol\{/.test(chip.dataset.tex || "")) { openMol(ta, chip); return; }
   if (!window.MathfieldElement) { openMath(ta, chip); return; }
   const rich = richOf(ta);
   const tex = start ?? chip.dataset.tex;
