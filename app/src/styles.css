@@ -995,3 +995,8 @@ p.fuente { font-size: 0.78em; line-height: 1.35; text-align: right; margin: 14px
 
 /* Questions that share one text are shown as one block: the text once, then each question. */
 .block-q + .block-q { margin-top: 28px; }
+
+/* AI enrichment in review: preliminary, generated. */
+.ai-analysis .ai-wrong { margin: 8px 0 0; padding-left: 18px; }
+.ai-analysis .ai-wrong li { margin: 4px 0; }
+.ai-analysis .ai-hint { margin-top: 8px; }

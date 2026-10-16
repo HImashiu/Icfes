@@ -74,11 +74,12 @@ export default function App() {
     if (!entry || entry.status === "proximamente") return;
     setOpening(true);
     try {
-      const [raw, rawKey, rawFigures, rawSidecar] = await Promise.all([
+      const [raw, rawKey, rawFigures, rawSidecar, rawEnrich] = await Promise.all([
         getJson(`exams/${slug}.json`),
         entry.hasKey ? getJson(`exams/${slug}.key.json`) : null,
         entry.hasFigures ? getJson(`exams/${slug}.figures.json`) : null,
         entry.hasSidecar ? getJson(`exams/${slug}.sidecar.json`) : null,
+        entry.hasEnrich ? getJson(`exams/${slug}.enrich.json`) : null,
       ]);
       const parsed = parseExam(raw);
       const figures = linkFigures(parsed, parseFigureSpecs(rawFigures), rawFigures);
@@ -88,6 +89,8 @@ export default function App() {
         key: parseKey(rawKey),
         keyStatus: entry.keyStatus ?? null,
         notes: parseKeyNotes(rawSidecar),
+        enrich: rawEnrich?.questions ?? null,
+        enrichMeta: rawEnrich ? { note: rawEnrich.note, estimated: rawEnrich.estimated } : null,
         figures,
       });
     } catch (err) {
@@ -250,6 +253,8 @@ export default function App() {
           answerKey={selected.key}
           keyStatus={selected.keyStatus}
           notes={selected.notes}
+          enrich={selected.enrich}
+          enrichMeta={selected.enrichMeta}
           figures={selected.figures}
           examLabel={selected.exam.title}
           startIndex={reviewStart}

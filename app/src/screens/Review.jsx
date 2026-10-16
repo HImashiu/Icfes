@@ -1,6 +1,7 @@
 import { useState } from "react";
 import QuestionView from "../components/QuestionView.jsx";
 import ReportError from "../components/ReportError.jsx";
+import AiAnalysis from "../components/AiAnalysis.jsx";
 import Icon from "../components/Icon.jsx";
 import { areaColor } from "../lib/brand.js";
 
@@ -12,7 +13,7 @@ const CONFIDENCE = { high: "alta", medium: "media", low: "baja" };
 
 // Revisión: filters with counts, a strip of colored question cells, the question card,
 // the student's pick against the key, and the preliminary-key chips.
-export default function Review({ questions, attempt, answerKey, keyStatus, notes, onBack, figures, examLabel, startIndex = 0, startNumber = null }) {
+export default function Review({ questions, attempt, answerKey, keyStatus, notes, enrich, enrichMeta, onBack, figures, examLabel, startIndex = 0, startNumber = null }) {
   const [filter, setFilter] = useState("all");
   // A saved report opens on its own question; otherwise the review starts at startIndex.
   const [index, setIndex] = useState(() => (startNumber != null ? Math.max(0, questions.findIndex((q) => q.number === startNumber)) : startIndex));
@@ -115,6 +116,7 @@ export default function Review({ questions, attempt, answerKey, keyStatus, notes
             examLabel={examLabel}
             report={false}
           />
+          <AiAnalysis row={enrich?.[String(q.number)]} correctLetter={answerKey?.get(q.key) ?? null} meta={enrichMeta} />
           <div className="card why">
             <span className="label">{note?.reason && answerKey && looksSpanish(note.reason) ? "Por qué" : "Detalles"}</span>
             {note?.reason && answerKey && looksSpanish(note.reason) && <p>{note.reason}</p>}

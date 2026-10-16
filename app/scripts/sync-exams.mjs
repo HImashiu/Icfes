@@ -362,6 +362,34 @@ for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
     writeFileSync(join(out, `${slug}.sidecar.json`), JSON.stringify({ exam: sidecar.exam ?? null, source: sidecar.source ?? null, answers }, null, 2));
     hasSidecar = true;
   }
+  // AI enrichment (data/enrichment/<slug>.json, when it exists): skills, difficulty, and explanations for review.
+  // When the model's key disagrees with ours, its explanation and why-wrong text are left out until the key is confirmed.
+  let hasEnrich = false;
+  const enrichFile = join(src, "enrichment", `${slug}.json`);
+  if (existsSync(enrichFile)) {
+    const raw = JSON.parse(readFileSync(enrichFile, "utf8"));
+    const questions = Object.fromEntries(
+      Object.entries(raw.questions ?? {}).map(([num, row]) => {
+        const e = row.enrich ?? {};
+        const disagree = row.key_check === "DISAGREE" || e.clave_coherente === false;
+        const hide = (value) => (disagree ? null : value ?? null);
+        return [num, {
+          competencia: e.competencia ?? null,
+          componente: e.componente ?? null,
+          tema: e.tema ?? null,
+          afirmacion: e.afirmacion ?? null,
+          dificultad: e.dificultad ?? null,
+          nivel_desempeno: e.nivel_desempeno ?? null,
+          disagree,
+          explicacion: hide(e.explicacion_es),
+          distractores: hide(e.distractores_porque),
+          pista: hide(e.pista),
+        }];
+      }),
+    );
+    writeFileSync(join(out, `${slug}.enrich.json`), JSON.stringify({ exam: raw.exam ?? null, estimated: raw.estimated ?? true, note: raw.note ?? null, questions }));
+    hasEnrich = true;
+  }
   exams.push({
     slug,
     title: booklet(exam.exam?.title ?? slug),
@@ -370,6 +398,7 @@ for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
     hasKey,
     keyStatus,
     hasSidecar,
+    hasEnrich,
     hasFigures,
     // Ready needs golden text, a figure spec and a key; otherwise the exam is listed as coming soon.
     status: hasKey && hasFigures ? "ready" : "proximamente",
