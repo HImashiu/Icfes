@@ -23,7 +23,11 @@ export function parseExam(raw) {
   }
   if (!Array.isArray(raw.questions)) throw new ExamFormatError("Exam has no questions array");
 
-  const groups = new Map((raw.groups ?? []).map((g) => [g.id, g]));
+  // The sync stores a group's crops by id only; the image sits once on the member question, so it is put back here.
+  const crops = new Map(raw.questions.flatMap((q) => (q.traced ?? []).map((t) => [t.figure_id, t])));
+  const groups = new Map(
+    (raw.groups ?? []).map((g) => [g.id, g.traced ? { ...g, traced: g.traced.map((t) => crops.get(t.figure_id) ?? t) } : g]),
+  );
   const questions = raw.questions
     .slice()
     .sort((a, b) => a.number - b.number)

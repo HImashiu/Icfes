@@ -17,6 +17,18 @@ describe("parseExam", () => {
     expect(exam.questions[2].group).toBeNull();
   });
 
+  it("puts a group's crops back from the member question, which holds the image", () => {
+    const crop = { url: "data:image/png;base64,AAAA", figure_id: "crop-1" };
+    const raw = {
+      ...tiny,
+      groups: tiny.groups.map((g) => (g.id === tiny.questions[0].group_id ? { ...g, traced: [{ figure_id: "crop-1" }] } : g)),
+      questions: tiny.questions.map((q, i) => (i === 0 ? { ...q, traced: [crop] } : q)),
+    };
+    const exam = parseExam(raw);
+    expect(exam.questions[0].group.traced).toEqual([crop]);
+    expect(raw.groups.find((g) => g.traced)?.traced).toEqual([{ figure_id: "crop-1" }]);
+  });
+
   it("groups questions into areas in cover order", () => {
     const exam = parseExam(tiny);
     expect(exam.sections.map((s) => [s.name, s.questions.length])).toEqual([

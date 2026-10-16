@@ -184,7 +184,8 @@ function prepareExam(exam, specPath, slug, report) {
     const members = (exam.questions ?? []).filter((q) => q.group_id === g.id);
     const named = new Set(tokenIds(g.passage_md, g.stimulus_md, ...members.flatMap((q) => [q.stem_md, q.stimulus_md])));
     const shared = members.flatMap((q) => q.traced ?? []).filter((t) => named.has(t.figure_id) || named.has(t.spec_id));
-    if (shared.length) g.traced = shared;
+    // Stored by id only: the image sits once on the member question and the app puts it back (restoreGroupCrops).
+    if (shared.length) g.traced = shared.map((t) => ({ figure_id: t.figure_id }));
     else delete g.traced;
   }
   const knownFigureIds = new Set([...specIds, ...[...traced.values()].flat().flatMap((t) => [t.figure_id, t.spec_id])]);
