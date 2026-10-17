@@ -21,6 +21,8 @@ import { linkFigures, parseFigureSpecs, prepareExam } from "./lib/figures.js";
 import { applyTheme, currentTheme } from "./lib/theme.js";
 import { useAuth } from "./lib/auth.jsx";
 import Consent from "./screens/Consent.jsx";
+import FamilyReport from "./screens/FamilyReport.jsx";
+import { tokenFromHash } from "./lib/family.js";
 import { TEACHER_SLUG, teacherExam } from "./lib/teacherExam.js";
 import LivePlay, { LiveJoin } from "./screens/LivePlay.jsx";
 import { CONSENT_VERSION, needsTerms } from "./lib/consent.js";
@@ -132,7 +134,7 @@ export default function App() {
   useEffect(() => {
     const open = exams?.filter((e) => e.status !== "proximamente") ?? [];
     const first = open.find((e) => e.sections?.includes("Inglés")) ?? open[0];
-    if (first && !selected && !opening && !openError) openExam(first.slug);
+    if (first && !selected && !opening && !openError && !tokenFromHash(window.location.hash)) openExam(first.slug);
   }, [exams, selected, opening, openError, openExam]);
 
   // Keep an attempt in this browser so a reload does not lose answers.
@@ -249,6 +251,9 @@ export default function App() {
 
   // Dev check of the figure engine kinds (not in the navigation): open the app with #figuras.
   if (typeof window !== "undefined" && window.location.hash === "#figuras") return <FigureCheck />;
+  // A family opens a report link with no account: only the report is shown, nothing else loads.
+  const familyToken = typeof window !== "undefined" ? tokenFromHash(window.location.hash) : null;
+  if (familyToken && auth.api) return <FamilyReport api={auth.api} token={familyToken} />;
   // Internal review of every figure spec (not in the student navigation).
   if (typeof window !== "undefined" && window.location.hash === "#revision-figuras") return <FigureReview />;
   if (signedIn && consents === null) return <main className="frame"><p className="muted">Cargando…</p></main>;

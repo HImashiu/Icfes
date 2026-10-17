@@ -45,7 +45,7 @@ export function createApi(client) {
       return unwrap(
         await client
           .from("assignments")
-          .select("id, course_id, kind, title, exam_slug, scope, question_keys, opens_at, due_at, time_limit_min, reveal_policy, max_attempts, status, created_at, courses(name)")
+          .select("id, course_id, kind, title, exam_slug, scope, question_keys, opens_at, due_at, time_limit_min, reveal_policy, max_attempts, assignee_id, status, created_at, courses(name)")
           .order("created_at", { ascending: false }),
       );
     },
@@ -86,6 +86,23 @@ export function createApi(client) {
     },
     async setRole(profileId, role) {
       return unwrap(await client.rpc("set_profile_role", { p_profile: profileId, p_role: role }));
+    },
+
+    // Per-student work, paper results and family reports.
+    async studentAttempts(profileId) {
+      return unwrap(await client.from("attempts").select("profile_id, submitted_at, mode, score").eq("profile_id", profileId).not("submitted_at", "is", null));
+    },
+    async paperSubmit(assignmentId, profileId, answers, score) {
+      unwrap(await client.rpc("paper_submit", { p_assignment: assignmentId, p_profile: profileId, p_answers: answers, p_score: score }));
+    },
+    async createFamilyReport(profileId, payload) {
+      return unwrap(await client.rpc("create_family_report", { p_profile: profileId, p_payload: payload }));
+    },
+    async revokeFamilyReport(token) {
+      unwrap(await client.rpc("revoke_family_report", { p_token: token }));
+    },
+    async familyReport(token) {
+      return unwrap(await client.rpc("family_report", { p_token: token }));
     },
 
     // Teacher-written questions. Row-level security returns the ones this person may read.

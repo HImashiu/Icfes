@@ -234,3 +234,56 @@ select pg_temp.expect('student sees only the assigned question', (select count(*
   and (select id from teacher_questions) = '55555555-5555-5555-5555-555555555551');
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d', 'dora@otro.edu.co');
 select pg_temp.expect('other school sees none', (select count(*) from teacher_questions) = 0);
+
+-- 13. personal assignments, paper results, family reports
+reset role;
+-- state: ana is teacher+admin of Colegio (set in 9), beto admin (12), cami and the course 3333 student rows
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'ana@colegio.edu.co');
+insert into assignments (id, course_id, created_by, kind, title, exam_slug, scope, question_keys, assignee_id)
+values ('66666666-6666-6666-6666-666666666666', '33333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-00000000000a',
+        'task', 'Refuerzo de Cami', 'S11-A_1ra', 'all', array['1'], '00000000-0000-0000-0000-00000000000c');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c', 'cami@colegio.edu.co');
+select pg_temp.expect('cami sees her personal assignment', (select count(*) from assignments where id = '66666666-6666-6666-6666-666666666666') = 1);
+reset role;
+-- a classmate who is a member of the course: add dani (student) to course 3333
+insert into auth.users values ('00000000-0000-0000-0000-000000000010', 'dani@colegio.edu.co');
+insert into course_members (course_id, email, full_name) values ('33333333-3333-3333-3333-333333333333', 'dani@colegio.edu.co', 'Dani');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000010', 'dani@colegio.edu.co');
+select claim_profile(null, 'Dani');
+select pg_temp.expect('a classmate does not see it', (select count(*) from assignments where id = '66666666-6666-6666-6666-666666666666') = 0);
+do $$ begin
+  insert into attempts (profile_id, assignment_id, client_id, exam_slug, mode, started_at)
+  values ('00000000-0000-0000-0000-000000000010', '66666666-6666-6666-6666-666666666666', 'dx', 'S11-A_1ra', 'practice', now());
+  raise exception 'FAILED: classmate attempted someone elses personal assignment';
+exception when insufficient_privilege then null; when others then if sqlstate <> '42501' then raise; end if; end $$;
+-- paper results
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'ana@colegio.edu.co');
+select paper_submit('44444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-000000000010', '{"1":"A"}', '{"correct":1,"total":3,"keyed":true}');
+select paper_submit('44444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-000000000010', '{"1":"B"}', '{"correct":0,"total":3,"keyed":true}');
+select pg_temp.expect('paper result stored once and replaced', (select count(*) from attempts where mode = 'paper') = 1 and (select answers ->> '1' from attempts where mode = 'paper') = 'B');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d', 'dora@otro.edu.co');
+do $$ begin perform paper_submit('44444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-00000000000d', '{}', '{}'); raise exception 'FAILED: outsider submitted paper results';
+  exception when others then if sqlerrm <> 'not_allowed' then raise; end if; end $$;
+-- family report: needs the school's guardian authorization (recorded in section 10), readable without login by token
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'ana@colegio.edu.co');
+create temp table _fr (token text);
+grant all on _fr to authenticated, anon;
+insert into _fr select create_family_report('00000000-0000-0000-0000-000000000010', '{"student":"Dani","band":{"low":220,"high":280}}');
+do $$ begin perform create_family_report('00000000-0000-0000-0000-00000000000d', '{}'); raise exception 'FAILED: report for a student of another school';
+  exception when others then if sqlerrm <> 'not_found' then raise; end if; end $$;
+reset role;
+set role anon;
+select pg_temp.expect('anyone with the token reads it', (select family_report((select token from _fr)) ->> 'school') = 'Colegio');
+select pg_temp.expect('a wrong token reads nothing', family_report('nope') is null);
+do $$ begin perform * from family_reports; raise exception 'FAILED: anon listed reports';
+  exception when insufficient_privilege then null; end $$;
+reset role;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'ana@colegio.edu.co');
+select revoke_family_report((select token from _fr));
+set role anon;
+select pg_temp.expect('revoked link reads nothing', family_report((select token from _fr)) is null);
+reset role;
+delete from school_consents;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'ana@colegio.edu.co');
+do $$ begin perform create_family_report('00000000-0000-0000-0000-000000000010', '{}'); raise exception 'FAILED: report without guardian authorization';
+  exception when others then if sqlerrm <> 'no_guardian_authorization' then raise; end if; end $$;

@@ -21,5 +21,6 @@ SQL
 "${P[@]}" -f "$here/../migrations/0003_attempt_limits_roles_consent.sql"
 "${P[@]}" -f "$here/../migrations/0004_live_sessions.sql"
 "${P[@]}" -f "$here/../migrations/0005_teacher_questions.sql"
+"${P[@]}" -f "$here/../migrations/0006_personal_assignments_paper_family.sql"
 "${P[@]}" -f "$here/rls_scenarios.sql"
 echo "rls: all checks passed"

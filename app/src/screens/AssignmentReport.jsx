@@ -5,6 +5,7 @@ import { areaColor } from "../lib/brand.js";
 import QuestionView from "../components/QuestionView.jsx";
 import AutopsyCard from "../components/AutopsyCard.jsx";
 import { Bars, Histogram, Kpi } from "./Dashboard.jsx";
+import { familyPayload, reportUrl, whatsappLink } from "../lib/family.js";
 
 const shortDate = (iso) => new Date(iso).toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "short" });
 function download(name, text) {
@@ -20,6 +21,8 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
   const [bundle, setBundle] = useState(null);
   const [allItems, setAllItems] = useState(false);
   const [board, setBoard] = useState(null);
+  const [share, setShare] = useState(null);
+  const [familyMsg, setFamilyMsg] = useState(null);
 
   useEffect(() => {
     guard(async () => {
@@ -58,6 +61,21 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
   const closeNow = () => guard(async () => { await api.setAssignmentStatus(assignment.id, "closed"); await reload(); });
   const remove = () => {
     if (window.confirm("¿Borrar esta asignación? Los intentos de los estudiantes se conservan.")) guard(async () => { await api.deleteAssignment(assignment.id); await reload(); });
+  };
+  const family = (r) => {
+    const profileId = r.attempt?.profile_id ?? data.members.find((m) => m.id === r.id)?.profile_id;
+    if (!profileId) return;
+    setFamilyMsg(null);
+    guard(async () => {
+      try {
+        const attempts = await api.studentAttempts(profileId);
+        const token = await api.createFamilyReport(profileId, familyPayload({ studentName: r.name, attempts }));
+        setShare({ token, name: r.name });
+      } catch (e) {
+        if (String(e.message).includes("no_guardian_authorization")) { setFamilyMsg("Antes de compartir informes con familias, la coordinación debe registrar la autorización de acudientes en Ajustes."); return; }
+        throw e;
+      }
+    });
   };
   const reinforce = () => {
     const keys = sorted.slice(0, 10).map((i) => i.key);
@@ -98,7 +116,7 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
 
       <div className="table-wrap">
         <table className="t-table">
-          <thead><tr><th>Estudiante</th><th>Estado</th><th>Puntaje</th>{timed && <th>Banda estimada</th>}<th>Entregado</th></tr></thead>
+          <thead><tr><th>Estudiante</th><th>Estado</th><th>Puntaje</th>{timed && <th>Banda estimada</th>}<th>Entregado</th><th className="no-print" /></tr></thead>
           <tbody>
             {rows.map((r) => (
               <tr key={r.id}>
@@ -107,12 +125,27 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
                 <td>{r.pct == null ? "—" : `${r.pct} %`}</td>
                 {timed && <td>{r.band?.global == null ? "—" : `${r.band.low}–${r.band.high}`}</td>}
                 <td>{r.at ? shortDate(r.at) : "—"}</td>
+                <td className="no-print">{r.done && <button type="button" className="link" onClick={() => family(r)}>Informe familiar</button>}</td>
               </tr>
             ))}
-            {rows.length === 0 && <tr><td colSpan={5} className="caption">El curso no tiene estudiantes.</td></tr>}
+            {rows.length === 0 && <tr><td colSpan={6} className="caption">El curso no tiene estudiantes.</td></tr>}
           </tbody>
         </table>
       </div>
+      {familyMsg && <p className="notice no-print" role="alert">{familyMsg}</p>}
+      {share && (
+        <div className="notice no-print" role="status" style={{ display: "grid", gap: 8 }}>
+          <strong>Informe de {share.name} listo</strong>
+          <input readOnly aria-label="Enlace del informe" value={reportUrl(share.token)} onFocus={(e) => e.target.select()} />
+          <div className="report-actions">
+            <button type="button" className="secondary" onClick={() => navigator.clipboard?.writeText(reportUrl(share.token))}>Copiar enlace</button>
+            <a className="secondary" href={whatsappLink(reportUrl(share.token), share.name)} target="_blank" rel="noreferrer">Enviar por WhatsApp</a>
+            <a className="secondary" href={reportUrl(share.token)} target="_blank" rel="noreferrer">Ver como la familia</a>
+            <button type="button" className="link" onClick={() => guard(async () => { await api.revokeFamilyReport(share.token); setShare(null); })}>Retirar enlace</button>
+          </div>
+          <span className="caption">Quien tenga el enlace puede ver el informe, sin iniciar sesión. Envíalo solo a la familia.</span>
+        </div>
+      )}
       {timed && <span className="caption">La banda (0–500) usa una curva provisional y la clave preliminar: es un estimado, no el puntaje oficial.</span>}
 
       {sorted.length > 0 && (
