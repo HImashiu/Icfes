@@ -9,20 +9,21 @@ const pctOf = (a) => (a.score?.total ? (a.score.correct / a.score.total) * 100 :
 // members: student course_members; attempts: delivered attempts with score (profile_id, submitted_at, mode).
 export function studentSummaries(members, attempts) {
   const byProfile = new Map();
-  for (const a of attempts) if (a.submitted_at && a.score?.keyed) byProfile.set(a.profile_id, [...(byProfile.get(a.profile_id) ?? []), a]);
+  const who = (a) => a.profile_id ?? a.member_id;
+  for (const a of attempts) if (a.submitted_at && a.score?.keyed) byProfile.set(who(a), [...(byProfile.get(who(a)) ?? []), a]);
   const seen = new Set();
   const out = [];
   for (const m of members) {
     if (m.role !== "student") continue;
-    const key = m.profile_id ?? m.email;
+    const key = m.profile_id ?? m.id;
     if (seen.has(key)) continue;
     seen.add(key);
-    const list = (m.profile_id ? byProfile.get(m.profile_id) : null)?.slice().sort((x, y) => ts(x) - ts(y)) ?? [];
+    const list = [...new Set([...(m.profile_id ? byProfile.get(m.profile_id) ?? [] : []), ...(byProfile.get(m.id) ?? [])])].sort((x, y) => ts(x) - ts(y));
     const pcts = list.map(pctOf).filter((p) => p != null);
-    const timed = list.filter((a) => a.mode === "timed");
+    const timed = list.filter((a) => a.mode !== "practice");
     const lastTimed = timed[timed.length - 1];
     out.push({
-      profileId: m.profile_id, email: m.email, name: m.full_name || m.email, courseId: m.course_id, joined: Boolean(m.profile_id),
+      profileId: m.profile_id, email: m.email, name: m.full_name || m.email, courseId: m.course_id, joined: Boolean(m.profile_id) || list.length > 0,
       attempts: list, count: list.length,
       avg: round(mean(pcts)), last: pcts.length ? round(pcts[pcts.length - 1]) : null,
       lastAt: list.length ? ts(list[list.length - 1]) : null,

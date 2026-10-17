@@ -13,7 +13,7 @@ const GENERIC_TIP = "Practicar un poco cada día, empezando por las preguntas qu
 // attempts: the student's delivered attempts (score, mode, submitted_at). Returns the payload stored with the link.
 export function familyPayload({ studentName, attempts }) {
   const done = attempts.filter((a) => a.submitted_at && a.score?.keyed);
-  const timed = done.filter((a) => a.mode === "timed").sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at));
+  const timed = done.filter((a) => a.mode !== "practice").sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at));
   const last = timed[timed.length - 1];
   const band = last ? bandFor(last.score.perArea) : null;
   const all = areaAverages(done);

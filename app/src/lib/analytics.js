@@ -49,7 +49,7 @@ export function bestPerStudentAssignment(attempts) {
   const best = new Map();
   for (const a of attempts) {
     if (!a.submitted_at || !a.score?.keyed) continue;
-    const k = `${a.profile_id}|${a.assignment_id ?? a.client_id}`;
+    const k = `${a.profile_id ?? a.member_id}|${a.assignment_id ?? a.client_id}`;
     const ratio = a.score.total ? a.score.correct / a.score.total : 0;
     const prev = best.get(k);
     if (!prev || ratio > prev.ratio) best.set(k, { ...a, ratio });
@@ -65,7 +65,7 @@ export function areaAverages(attempts) {
       const cur = acc.get(ar.name) ?? { name: ar.name, correct: 0, total: 0, students: new Set() };
       cur.correct += ar.correct;
       cur.total += ar.total;
-      cur.students.add(a.profile_id);
+      cur.students.add(a.profile_id ?? a.member_id);
       acc.set(ar.name, cur);
     }
   }
@@ -141,7 +141,7 @@ export function schoolSummary({ courses, members, assignments, attempts }) {
       areas: areaAverages(cBest),
     };
   });
-  const full = best.filter((a) => a.mode === "timed");
+  const full = best.filter((a) => a.mode !== "practice");
   const bands = full.map((a) => bandFor(a.score.perArea).global).filter((g) => g != null);
   return {
     students: new Set(students.map((m) => m.email)).size,

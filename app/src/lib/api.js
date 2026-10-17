@@ -66,12 +66,12 @@ export function createApi(client) {
       return unwrap(await client.from("attempts").select("assignment_id, submitted_at, mode, score, client_id").not("assignment_id", "is", null));
     },
     async assignmentAttempts(assignmentId) {
-      return unwrap(await client.from("attempts").select("profile_id, client_id, assignment_id, submitted_at, mode, score, answers, duration_sec").eq("assignment_id", assignmentId));
+      return unwrap(await client.from("attempts").select("profile_id, member_id, client_id, assignment_id, submitted_at, mode, score, answers, duration_sec").eq("assignment_id", assignmentId));
     },
 
     // Every delivered attempt on one booklet that this teacher may read, with answers (for "weak spots" and item analysis).
     async examAttempts(slug) {
-      return unwrap(await client.from("attempts").select("profile_id, client_id, assignment_id, submitted_at, mode, score, answers").eq("exam_slug", slug).not("submitted_at", "is", null));
+      return unwrap(await client.from("attempts").select("profile_id, member_id, client_id, assignment_id, submitted_at, mode, score, answers").eq("exam_slug", slug).not("submitted_at", "is", null));
     },
 
     // School-wide reads for the coordinator (row-level security gives a teacher only their own courses).
@@ -79,7 +79,7 @@ export function createApi(client) {
       return unwrap(await client.from("course_members").select("id, course_id, profile_id, email, full_name, role"));
     },
     async allAttempts() {
-      return unwrap(await client.from("attempts").select("profile_id, client_id, assignment_id, submitted_at, mode, score, exam_slug").not("assignment_id", "is", null));
+      return unwrap(await client.from("attempts").select("profile_id, member_id, client_id, assignment_id, submitted_at, mode, score, exam_slug").not("assignment_id", "is", null));
     },
     async listStaff() {
       return unwrap(await client.from("profiles").select("id, email, full_name, role, created_at").in("role", ["teacher", "school_admin"]).order("full_name"));
@@ -92,8 +92,8 @@ export function createApi(client) {
     async studentAttempts(profileId) {
       return unwrap(await client.from("attempts").select("profile_id, submitted_at, mode, score").eq("profile_id", profileId).not("submitted_at", "is", null));
     },
-    async paperSubmit(assignmentId, profileId, answers, score) {
-      unwrap(await client.rpc("paper_submit", { p_assignment: assignmentId, p_profile: profileId, p_answers: answers, p_score: score }));
+    async paperSubmit(assignmentId, memberId, answers, score) {
+      unwrap(await client.rpc("paper_submit", { p_assignment: assignmentId, p_member: memberId, p_answers: answers, p_score: score }));
     },
     async createFamilyReport(profileId, payload) {
       return unwrap(await client.rpc("create_family_report", { p_profile: profileId, p_payload: payload }));

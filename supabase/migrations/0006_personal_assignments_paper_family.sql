@@ -27,27 +27,63 @@ create policy attempts_insert on public.attempts for insert
   );
 
 -- ---------------------------------------------------------------- paper simulacro
+-- A paper result belongs to a roster row, so students who never signed in (many schools run paper only) still count.
 alter table public.attempts drop constraint if exists attempts_mode_check;
 alter table public.attempts add constraint attempts_mode_check check (mode in ('practice', 'timed', 'paper'));
+alter table public.attempts alter column profile_id drop not null;
+alter table public.attempts add column if not exists member_id uuid references public.course_members (id) on delete cascade;
+alter table public.attempts drop constraint if exists attempts_who_check;
+alter table public.attempts add constraint attempts_who_check check (profile_id is not null or member_id is not null);
+create index if not exists attempts_member_idx on public.attempts (member_id) where member_id is not null;
 
 -- The teacher enters (or the phone scan reads) a student's paper sheet. Only for students of the teacher's course.
-create or replace function public.paper_submit(p_assignment uuid, p_profile uuid, p_answers jsonb, p_score jsonb)
+create or replace function public.paper_submit(p_assignment uuid, p_member uuid, p_answers jsonb, p_score jsonb)
 returns void
 language plpgsql security definer set search_path = public as $$
-declare v_a assignments;
+declare v_a assignments; v_m course_members;
 begin
   select * into v_a from assignments where id = p_assignment;
   if not found or not public.is_course_teacher(v_a.course_id) then raise exception 'not_allowed'; end if;
-  if not exists (select 1 from course_members where course_id = v_a.course_id and profile_id = p_profile and role = 'student') then
-    raise exception 'not_a_student_of_course';
-  end if;
-  insert into attempts (profile_id, assignment_id, client_id, exam_slug, scope, mode, started_at, submitted_at, answers, score, device)
-  values (p_profile, p_assignment, 'paper-' || p_assignment::text, v_a.exam_slug, v_a.scope, 'paper', now(), now(), p_answers, p_score, 'paper')
-  on conflict (profile_id, client_id) do update
-    set answers = excluded.answers, score = excluded.score, submitted_at = now();
+  select * into v_m from course_members where id = p_member and course_id = v_a.course_id and role = 'student';
+  if not found then raise exception 'not_a_student_of_course'; end if;
+  delete from attempts where assignment_id = p_assignment and member_id = p_member and mode = 'paper';
+  insert into attempts (profile_id, member_id, assignment_id, client_id, exam_slug, scope, mode, started_at, submitted_at, answers, score, device)
+  values (v_m.profile_id, p_member, p_assignment, 'paper-' || p_assignment::text || '-' || p_member::text, v_a.exam_slug, v_a.scope, 'paper', now(), now(), p_answers, p_score, 'paper');
 end $$;
 revoke all on function public.paper_submit(uuid, uuid, jsonb, jsonb) from public, anon;
 grant execute on function public.paper_submit(uuid, uuid, jsonb, jsonb) to authenticated;
+
+-- When a student signs in for the first time, paper results already stored for their roster rows become theirs.
+create or replace function public.claim_profile(p_teacher_code text default null, p_full_name text default null)
+returns public.profiles
+language plpgsql security definer set search_path = public as $$
+declare
+  v_uid   uuid := auth.uid();
+  v_email text := lower(coalesce(auth.jwt() ->> 'email', ''));
+  v_domain text := split_part(v_email, '@', 2);
+  v_school schools;
+  v_role  text := 'student';
+  v_profile profiles;
+begin
+  if v_uid is null then raise exception 'not_signed_in'; end if;
+  select * into v_profile from profiles where id = v_uid;
+  if found then return v_profile; end if;
+  select * into v_school from schools where status = 'active' and v_domain = any (domains) limit 1;
+  if not found then raise exception 'school_not_found'; end if;
+  if p_teacher_code is not null and length(trim(p_teacher_code)) > 0 then
+    if lower(trim(p_teacher_code)) <> lower(v_school.teacher_code) then raise exception 'bad_teacher_code'; end if;
+    v_role := 'teacher';
+  end if;
+  insert into profiles (id, school_id, role, full_name, email)
+  values (v_uid, v_school.id, v_role,
+          coalesce(nullif(trim(p_full_name), ''), auth.jwt() -> 'user_metadata' ->> 'full_name', v_email), v_email)
+  returning * into v_profile;
+  update course_members set profile_id = v_uid, full_name = case when full_name = '' then v_profile.full_name else full_name end
+   where profile_id is null and lower(email) = v_email;
+  update attempts set profile_id = v_uid
+   where profile_id is null and member_id in (select id from course_members where profile_id = v_uid);
+  return v_profile;
+end $$;
 
 -- ---------------------------------------------------------------- family reports
 -- A one-page summary a school sends to a family. The link carries a random token; no login is needed to read it.

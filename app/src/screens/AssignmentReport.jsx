@@ -64,7 +64,7 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
   };
   const family = (r) => {
     const profileId = r.attempt?.profile_id ?? data.members.find((m) => m.id === r.id)?.profile_id;
-    if (!profileId) return;
+    if (!profileId) { setFamilyMsg(`${r.name} todavía no ha ingresado a la plataforma: el informe familiar necesita una cuenta. Cuando ingrese con su correo, sus resultados en papel quedan en su cuenta.`); return; }
     setFamilyMsg(null);
     guard(async () => {
       try {
@@ -121,7 +121,7 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
             {rows.map((r) => (
               <tr key={r.id}>
                 <td>{r.name}</td>
-                <td>{r.done ? "Entregado" : r.joined ? "Pendiente" : "Sin ingresar"}</td>
+                <td>{r.done ? (r.paper ? "Entregado (papel)" : "Entregado") : r.joined ? "Pendiente" : "Sin ingresar"}</td>
                 <td>{r.pct == null ? "—" : `${r.pct} %`}</td>
                 {timed && <td>{r.band?.global == null ? "—" : `${r.band.low}–${r.band.high}`}</td>}
                 <td>{r.at ? shortDate(r.at) : "—"}</td>

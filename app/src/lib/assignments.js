@@ -79,30 +79,36 @@ export function attemptRow(attempt, questions, key, keyStatus) {
 export function scorePct(row) {
   const s = row?.score;
   if (!s?.keyed) return null;
-  const out = row.mode === "timed" ? s.total : s.answered;
+  const out = row.mode === "practice" ? s.answered : s.total;
   return out > 0 ? Math.round((s.correct / out) * 100) : null;
 }
 
+// Who an attempt belongs to: the signed-in student, or the roster row for paper results of students who never signed in.
+export const whoOf = (a) => a.profile_id ?? a.member_id ?? null;
+
 // Per student: did they deliver, and with what result. The best delivered attempt counts.
 export function progressRows(members, attempts) {
-  const byProfile = new Map();
+  const byWho = new Map();
   for (const a of attempts) {
     if (!a.submitted_at) continue;
-    const prev = byProfile.get(a.profile_id);
-    if (!prev || (scorePct(a) ?? -1) > (scorePct(prev) ?? -1)) byProfile.set(a.profile_id, a);
+    const k = whoOf(a);
+    const prev = byWho.get(k);
+    if (!prev || (scorePct(a) ?? -1) > (scorePct(prev) ?? -1)) byWho.set(k, a);
   }
   const rows = members
     .filter((m) => m.role === "student")
     .map((m) => {
-      const a = m.profile_id ? byProfile.get(m.profile_id) : null;
+      const cands = [m.profile_id ? byWho.get(m.profile_id) : null, byWho.get(m.id)].filter(Boolean);
+      const a = cands.sort((x, y) => (scorePct(y) ?? -1) - (scorePct(x) ?? -1))[0] ?? null;
       return {
         id: m.id,
         name: m.full_name || m.email,
         email: m.email,
-        joined: Boolean(m.profile_id),
+        joined: Boolean(m.profile_id) || Boolean(a),
         done: Boolean(a),
         pct: a ? scorePct(a) : null,
         attempt: a ?? null,
+        paper: a?.mode === "paper",
         at: a?.submitted_at ?? null,
       };
     });

@@ -256,14 +256,25 @@ do $$ begin
   values ('00000000-0000-0000-0000-000000000010', '66666666-6666-6666-6666-666666666666', 'dx', 'S11-A_1ra', 'practice', now());
   raise exception 'FAILED: classmate attempted someone elses personal assignment';
 exception when insufficient_privilege then null; when others then if sqlstate <> '42501' then raise; end if; end $$;
--- paper results
+-- paper results belong to roster rows, so students who never signed in still count
+reset role;
+insert into course_members (id, course_id, email, full_name) values ('77777777-7777-7777-7777-777777777777', '33333333-3333-3333-3333-333333333333', 'eva@colegio.edu.co', 'Eva');
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'ana@colegio.edu.co');
-select paper_submit('44444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-000000000010', '{"1":"A"}', '{"correct":1,"total":3,"keyed":true}');
-select paper_submit('44444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-000000000010', '{"1":"B"}', '{"correct":0,"total":3,"keyed":true}');
-select pg_temp.expect('paper result stored once and replaced', (select count(*) from attempts where mode = 'paper') = 1 and (select answers ->> '1' from attempts where mode = 'paper') = 'B');
+select paper_submit('44444444-4444-4444-4444-444444444444', '77777777-7777-7777-7777-777777777777', '{"1":"A"}', '{"correct":1,"total":3,"keyed":true}');
+select paper_submit('44444444-4444-4444-4444-444444444444', '77777777-7777-7777-7777-777777777777', '{"1":"B"}', '{"correct":0,"total":3,"keyed":true}');
+select pg_temp.expect('paper result stored once and replaced, with no profile', (select count(*) from attempts where mode = 'paper') = 1 and (select answers ->> '1' from attempts where mode = 'paper') = 'B' and (select profile_id from attempts where mode = 'paper') is null);
+select pg_temp.expect('teacher reads the paper result', (select count(*) from attempts where member_id is not null) = 1);
+do $$ begin perform paper_submit('44444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-00000000dead', '{}', '{}'); raise exception 'FAILED: paper result for a stranger';
+  exception when others then if sqlerrm <> 'not_a_student_of_course' then raise; end if; end $$;
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d', 'dora@otro.edu.co');
-do $$ begin perform paper_submit('44444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-00000000000d', '{}', '{}'); raise exception 'FAILED: outsider submitted paper results';
+do $$ begin perform paper_submit('44444444-4444-4444-4444-444444444444', '77777777-7777-7777-7777-777777777777', '{}', '{}'); raise exception 'FAILED: outsider submitted paper results';
   exception when others then if sqlerrm <> 'not_allowed' then raise; end if; end $$;
+-- Eva signs in later: her paper result becomes hers
+reset role;
+insert into auth.users values ('00000000-0000-0000-0000-000000000011', 'eva@colegio.edu.co');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011', 'eva@colegio.edu.co');
+select claim_profile(null, 'Eva');
+select pg_temp.expect('paper result follows the student after sign-in', (select count(*) from attempts where mode = 'paper' and profile_id = '00000000-0000-0000-0000-000000000011') = 1);
 -- family report: needs the school's guardian authorization (recorded in section 10), readable without login by token
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'ana@colegio.edu.co');
 create temp table _fr (token text);
