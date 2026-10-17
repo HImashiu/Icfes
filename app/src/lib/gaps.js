@@ -25,3 +25,18 @@ export function gapHtml(number, word) {
 }
 
 export const renderGaps = (text) => text.replace(GAP, (m, n, word) => gapHtml(n, word));
+
+// The sentence around blank `number` in a passage, as plain text that still carries its blank tokens, or "" when the
+// passage has no such blank. Shown with the question on a phone, where the passage sits behind its own tab.
+export function gapSentence(html, number) {
+  const text = (html ?? "").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ");
+  const at = [...text.matchAll(GAP)].find((m) => m[1] === String(number));
+  if (!at) return "";
+  // Sentence ends outside the tokens: tokens are blanked to the same length so their offsets stay put.
+  const plain = text.replace(GAP, (m) => "_".repeat(m.length));
+  const before = plain.slice(0, at.index);
+  const start = Math.max(...[".", "!", "?"].map((c) => before.lastIndexOf(c))) + 1;
+  const after = plain.slice(at.index + at[0].length).search(/[.!?]/);
+  const end = after < 0 ? text.length : at.index + at[0].length + after + 1;
+  return text.slice(start, end).trim();
+}

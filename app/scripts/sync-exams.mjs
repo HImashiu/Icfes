@@ -12,7 +12,7 @@
 //         answer-keys/<name>.key.sidecar.json  (per-question confidence and reasons)
 // A key in the data folder counts as official; one from answer-keys is labelled preliminary.
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync, rmSync, copyFileSync } from "node:fs";
-import { join, dirname, basename } from "node:path";
+import { join, dirname, basename, extname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import { normalizeField } from "../src/lib/text-normalize.js";
@@ -118,7 +118,9 @@ function loadTraced(slug) {
     const from = join(root, "figures", e.svg);
     if (!existsSync(from)) continue;
     // Inlined as a data URI so each exam is one JSON file (a published page takes a limited number of files).
-    const url = `data:image/svg+xml;base64,${readFileSync(from).toString("base64")}`;
+    // Box crops from the editor are PNG; traces are SVG. The data URI must name the right type or the image breaks.
+    const mime = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp" }[extname(from).toLowerCase()] ?? "image/svg+xml";
+    const url = `data:${mime};base64,${readFileSync(from).toString("base64")}`;
     // A figure named for one option (for example "...-opt-A-" or "...-opcion-b-") belongs to that option.
     const option = /[-_](?:opt|opcion|opción)[-_]([a-d])(?=[-_]|$)/i.exec(e.figure_id ?? "")?.[1]?.toUpperCase() ?? null;
     const list = traced.get(e.question) ?? [];

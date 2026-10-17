@@ -885,7 +885,8 @@ details.answers-area > summary::-webkit-details-marker { display: none; }
 /* Markdown tables from the exam text, drawn as real tables (see text-normalize.js). */
 .exam-table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
 .exam-table th, .exam-table td { padding: 6px 10px; border: 1px solid #000; text-align: left; vertical-align: top; }
-.exam-table th { font-weight: 600; background: var(--surface-2); }
+.exam-table th { font-weight: 600; background: rgba(127, 127, 127, 0.16); color: inherit; }
+.option .exam-table th, .option .exam-table td { border-color: var(--line); }
 
 /* Rich text written by the admin editor (lists, underline, sub/sup), kept visible inside question cards. */
 .paper-card .stem ul, .paper-card .stem ol, .paper-card .stimulus ul, .paper-card .stimulus ol,
@@ -1067,3 +1068,28 @@ p.fuente { font-size: 0.78em; line-height: 1.35; text-align: right; margin: 14px
   .review { max-width: 1560px; }
   .rv-body { grid-template-columns: 260px minmax(0, 1fr); }
 }
+
+/* Phone: a long text and its question take turns (see TextToggle.jsx). The tabs stay under the top bar. */
+.text-toggle {
+  position: sticky; top: var(--topbar-h, 78px); z-index: 8;
+  display: flex; gap: 4px; padding: 4px; border-radius: 16px;
+  background: var(--surface-2); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+.text-toggle .seg { min-height: 44px; }
+.text-toggle .seg.active { background: var(--accent); color: var(--on-accent); }
+.toggle-text .stimulus { font-family: Newsreader, Georgia, serif; font-size: 17px; line-height: 1.5; color: var(--paper-ink); }
+.toggle-text .directions { margin-bottom: 8px; }
+.toggle-text .source { display: block; margin-top: 10px; font-size: 12px; color: var(--paper-2); font-weight: 600; }
+.toggle-text .gap { cursor: pointer; }
+.toggle-text .to-question { width: 100%; margin-top: 4px; }
+.test-main.view-text .block-q, .toggle-text[hidden] { display: none; }
+
+/* Hint before answering (practice only). */
+.hint { display: grid; gap: 8px; }
+.hint-btn {
+  justify-self: start; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px;
+  border: 1px dashed var(--line); border-radius: 999px; background: transparent; color: var(--text); font-weight: 700; font-size: 14px;
+}
+.hint.open .hint-btn { border-style: solid; }
+.hint-text { margin: 0; padding: 12px 14px; border-radius: 14px; background: var(--accent-soft); color: var(--text); line-height: 1.45; }
+.hint-text .caption { color: var(--text-2); font-size: 12px; }

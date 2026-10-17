@@ -5,6 +5,7 @@ import FigureBlock from "./FigureBlock.jsx";
 import { SOURCE_LINE } from "../lib/exam.js";
 import ReportError from "./ReportError.jsx";
 import Zoomable from "./Zoomable.jsx";
+import { gapSentence } from "../lib/gaps.js";
 
 // Traced scans are inlined as data URIs by the sync; other paths sit under the app's base URL.
 const tracedSrc = (url) => (url.startsWith("data:") ? url : `${import.meta.env.BASE_URL}${url}`);
@@ -84,6 +85,7 @@ export default function QuestionView({
   onToggleFlag,
   report = true,
   textTarget = null,
+  gapLine = false,
 }) {
   const { group } = question;
   const wide = useWide();
@@ -132,6 +134,8 @@ export default function QuestionView({
   const stemInPassage = stemText.length > 20 && plainText(group?.stimulus_md).includes(stemText);
   // A fill-in question beside its text only repeats "Blank (N): choose the option that completes the text".
   const clozeStem = Boolean(paneKind) && /^blank \(\d+\)/.test(stemText) && stemText.length < 90;
+  // With `gapLine` (the text is behind a tab) such a question shows the sentence of its blank instead.
+  const blankLine = gapLine && clozeStem ? gapSentence(paneKind === "group" ? group?.stimulus_md : question.stimulus_md, question.number) : "";
 
   // Many questions repeat their passage in stimulus_md, which the group already shows.
   const ownStimulus = question.stimulus_md && question.stimulus_md.trim() !== group?.stimulus_md?.trim();
@@ -209,6 +213,7 @@ export default function QuestionView({
               </button>
             )}
           </div>
+          {blankLine && <RichText html={blankLine} className="stem gap-line" />}
           {!stemInPassage && !clozeStem && <RichText html={question.stem_md} className="stem" resolve={resolveToken} />}
           {!hasContext && !paneKind && source}
         </article>

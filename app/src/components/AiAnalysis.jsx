@@ -1,6 +1,7 @@
 // The AI enrichment for one question, shown after a finished attempt. It is generated and preliminary.
 // Until the key is settled and matches the model's blind answer, its explanation is not shown: only the skills and the difficulty are.
-export default function AiAnalysis({ row, correctLetter, meta }) {
+// `hint={false}` leaves the hint out where it was already offered before answering.
+export default function AiAnalysis({ row, correctLetter, meta, hint = true }) {
   if (!row) return null;
   const wrong = Object.entries(row.distractores ?? {}).filter(([letter]) => letter !== correctLetter);
   return (
@@ -25,7 +26,7 @@ export default function AiAnalysis({ row, correctLetter, meta }) {
               ))}
             </ul>
           )}
-          {row.pista && (
+          {hint && row.pista && (
             <details className="ai-hint">
               <summary>Pista</summary>
               <p>{row.pista}</p>

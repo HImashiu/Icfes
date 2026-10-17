@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import Test from "../src/screens/Test.jsx";
 import { parseExam } from "../src/lib/exam.js";
 
@@ -15,13 +15,13 @@ const enrich = {
   1: { competencia: "Lectura crítica", explicacion: "La explicación de la IA", distractores: { A: "Porque no.", B: "Es la correcta." }, pista: "Mira el texto", dificultad: 2 },
 };
 
-function renderPractice(key, row) {
+function renderPractice(key, row, current = attempt) {
   return render(
     <Test
       title="Prueba"
       examLabel="S11-X"
       questions={questions}
-      attempt={attempt}
+      attempt={current}
       answerKey={new Map([["1", key]])}
       onChange={() => {}}
       onSubmit={() => {}}
@@ -41,7 +41,21 @@ describe("practice verdict and AI analysis", () => {
     expect(screen.getByText("Análisis con IA · preliminar")).toBeTruthy();
     expect(screen.getByText("La explicación de la IA")).toBeTruthy();
     expect(screen.getByText("Porque no.")).toBeTruthy();
+    // The hint was offered before answering, so the analysis does not repeat it.
+    expect(screen.queryByText("Mira el texto")).toBeNull();
+  });
+
+  it("offers the hint before the student answers", () => {
+    renderPractice("B", enrich[1], { ...attempt, answers: {}, checked: {} });
+    expect(screen.queryByText("Mira el texto")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Ver pista/ }));
     expect(screen.getByText("Mira el texto")).toBeTruthy();
+    expect(screen.queryByText("La explicación de la IA")).toBeNull();
+  });
+
+  it("offers no hint where the key is not settled", () => {
+    renderPractice("B", { ...enrich[1], hidden: true }, { ...attempt, answers: {}, checked: {} });
+    expect(screen.queryByRole("button", { name: /Ver pista/ })).toBeNull();
   });
 
   it("hides the explanation until the key is settled", () => {

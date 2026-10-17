@@ -1,5 +1,7 @@
-import { describe, expect, it } from "vitest";
-import { render, screen, fireEvent, within } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, render, screen, fireEvent, within } from "@testing-library/react";
+
+afterEach(cleanup);
 import { useState } from "react";
 import Test from "../src/screens/Test.jsx";
 import { parseExam } from "../src/lib/exam.js";
@@ -58,27 +60,32 @@ function LongHarness() {
 }
 
 describe("Test screen long text (phone)", () => {
-  it("docks the shared text and shows one question at a time", () => {
+  it("opens a new text on the text tab, with one question at a time behind the other tab", () => {
     const { container } = render(<LongHarness />);
-    expect(container.querySelector(".text-dock .stimulus")).toBeTruthy();
+    expect(container.querySelector(".toggle-text .stimulus")).toBeTruthy();
+    expect(container.querySelector(".test-main.view-text")).toBeTruthy();
     expect(container.querySelectorAll(".block-q")).toHaveLength(1);
     expect(container.textContent.split("Texto largo del pasaje.").length - 1).toBe(30);
   });
 
-  it("jumps to the question of a blank tapped in the text, and fills the blank with the chosen word", () => {
+  it("switches between the text and the question with the tabs", () => {
     const { container } = render(<LongHarness />);
-    fireEvent.click(container.querySelector('.text-dock .gap[data-gap="2"]'));
-    expect(container.querySelector(".block-q.current")?.dataset.qkey).toBe("2");
-    fireEvent.click(within(container.querySelector('[data-qkey="2"]')).getByText("C"));
-    expect(container.querySelector('.text-dock .gap[data-gap="2"] .gap-fill')?.textContent).toBe("Opción C de 2");
+    fireEvent.click(screen.getByRole("tab", { name: "Pregunta 1" }));
+    expect(container.querySelector(".test-main.view-text")).toBeNull();
+    expect(container.querySelector(".toggle-text").hidden).toBe(true);
+    fireEvent.click(screen.getByRole("tab", { name: "Texto" }));
+    expect(container.querySelector(".test-main.view-text")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Ir a la pregunta 1" }));
+    expect(container.querySelector(".test-main.view-text")).toBeNull();
   });
 
-  it("hides and shows the docked text", () => {
+  it("jumps to the question of a blank tapped in the text, and fills the blank with the chosen word", () => {
     const { container } = render(<LongHarness />);
-    fireEvent.click(within(container.querySelector(".dock-bar")).getByText("Ocultar"));
-    expect(container.querySelector(".text-dock.min")).toBeTruthy();
-    fireEvent.click(within(container.querySelector(".dock-bar")).getByText("Ver texto"));
-    expect(container.querySelector(".text-dock.min")).toBeNull();
+    fireEvent.click(container.querySelector('.toggle-text .gap[data-gap="2"]'));
+    expect(container.querySelector(".block-q.current")?.dataset.qkey).toBe("2");
+    expect(container.querySelector(".test-main.view-text")).toBeNull();
+    fireEvent.click(within(container.querySelector('[data-qkey="2"]')).getByText("C"));
+    expect(container.querySelector('.toggle-text .gap[data-gap="2"] .gap-fill')?.textContent).toBe("Opción C de 2");
   });
 });
 

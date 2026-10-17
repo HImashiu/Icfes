@@ -3,7 +3,8 @@ import Navigator from "../components/Navigator.jsx";
 import QuestionView, { textPaneKind } from "../components/QuestionView.jsx";
 import Icon from "../components/Icon.jsx";
 import AiAnalysis from "../components/AiAnalysis.jsx";
-import TextDock from "../components/TextDock.jsx";
+import TextToggle from "../components/TextToggle.jsx";
+import Hint from "../components/Hint.jsx";
 import { useMedia } from "../lib/media.js";
 import { formatClock } from "../lib/exam.js";
 import { areaColor, fmtInt } from "../lib/brand.js";
@@ -68,7 +69,23 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   const dockText = !roomy && paneKind !== null;
   const block = dockText ? [q] : fullBlock;
   const [textEl, setTextEl] = useState(null);
-  const [dock, setDock] = useState("open"); // open | tall | min
+  // Phone: the text or the question fills the screen. A text seen for the first time opens on the text; moving to the
+  // next question of the same text opens on the question.
+  const [view, setView] = useState("text"); // text | question
+  const textKey = dockText ? (paneKind === "group" ? `g:${q.group.id}` : `q:${q.key}`) : null;
+  const seenTexts = useRef(new Set());
+  const lastKey = useRef(null);
+  if (textKey !== lastKey.current) {
+    lastKey.current = textKey;
+    const fresh = textKey && !seenTexts.current.has(textKey);
+    if (textKey) seenTexts.current.add(textKey);
+    const next = fresh ? "text" : "question";
+    if (view !== next) setView(next);
+  }
+  const switchView = (next) => {
+    setView(next);
+    window.scrollTo({ top: 0 });
+  };
   const textTarget = sideText || dockText ? textEl : null;
 
   // The docked panel and the side pane sit just under the top bar, whatever height it has.
@@ -107,6 +124,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
     if (!gap?.dataset.gap) return;
     const index = questions.findIndex((x, i) => i >= blockFrom && i <= blockTo && String(x.number) === gap.dataset.gap);
     if (index >= 0 && index !== current) go(index, { stay: true });
+    if (index >= 0 && dockText) switchView("question");
   };
 
   // Keyboard (desktop): A–D answer, ←/→ move, M flags. Inputs are left alone.
@@ -161,7 +179,9 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   const hasKey = Boolean(answerKey);
   // The verdict of one question of the block (every checked question keeps its own), then its AI analysis.
   const feedbackOf = (qq) => {
-    if (!practice || !attempt.checked?.[qq.key]) return null;
+    const row = enrich?.[String(qq.number)];
+    if (practice && !attempt.checked?.[qq.key]) return row && !row.hidden ? <Hint key={qq.key} text={row.pista} /> : null;
+    if (!practice) return null;
     const cl = answerKey?.get(qq.key) ?? null;
     const right = Boolean(cl) && attempt.answers[qq.key] === cl;
     return (
@@ -175,7 +195,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
             <span>{hasKey ? "Clave preliminar, no oficial" : "Esta pregunta todavía no tiene clave."}</span>
           </div>
         </div>
-        <AiAnalysis row={enrich?.[String(qq.number)]} correctLetter={cl} meta={enrichMeta} />
+        <AiAnalysis row={row} correctLetter={cl} meta={enrichMeta} hint={false} />
       </>
     );
   };
@@ -271,8 +291,9 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
             flagged={Boolean(attempt.flags[qq.key])}
             onToggleFlag={toggleFlagOf(qq)}
             feedback={feedbackOf(qq)}
-            footer={i === block.length - 1 ? lastFooter : null}
+            footer={i === block.length - 1 && !dockText ? lastFooter : null}
             textTarget={textTarget}
+            gapLine={dockText}
           />
         </section>
       );
@@ -321,8 +342,8 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
       </header>
 
       <div className="test-body" ref={mainRef} onClick={onBodyClick}>
-        <main className="test-main">
-          {dockText && <TextDock state={dock} onState={setDock} bodyRef={setTextEl} />}
+        <main className={dockText && view === "text" ? "test-main view-text" : "test-main"}>
+          {dockText && <TextToggle view={view} onView={switchView} number={q.number} bodyRef={setTextEl} />}
           {sideText ? (
             <div className="read-split">
               <aside className="read-text paper-card" ref={setTextEl} aria-label="Texto de las preguntas" />
@@ -334,6 +355,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
           ) : (
             renderBlock(footer)
           )}
+          {dockText && footer}
         </main>
         <aside className="test-side" aria-label="Mapa de preguntas">
           <span className="label map-title">Mapa de preguntas</span>
