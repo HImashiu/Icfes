@@ -49,6 +49,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
   const [attempts, setAttempts] = useState("");
   const [reveal, setReveal] = useState("after_submit");
   const [hints, setHints] = useState(true);
+  const [instant, setInstant] = useState(true);
   const [seconds, setSeconds] = useState("60");
   const [liveCourse, setLiveCourse] = useState("");
 
@@ -130,6 +131,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
           reveal_policy: reveal, status: "active",
           // Sent only when switched off, so creating assignments keeps working before migration 0007 runs.
           ...(hints ? {} : { allow_hints: false }),
+          ...(instant || kind === "exam" ? {} : { instant_feedback: false }),
         });
       }
       onSaved(last, courseIds.length);
@@ -288,6 +290,13 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
         </select></label>
       <label className="field"><span className="label">Mostrar respuestas y explicaciones</span>
         <select value={reveal} onChange={(e) => setReveal(e.target.value)}>{REVEAL.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+      {kind !== "exam" && (
+        <label className="field"><span className="label">Corrección de cada pregunta</span>
+          <select value={instant ? "now" : "end"} onChange={(e) => setInstant(e.target.value === "now")}>
+            <option value="now">Inmediata: ve si acertó al tocar “Comprobar”</option>
+            <option value="end">Al final: responde todo y ve los resultados al terminar</option>
+          </select></label>
+      )}
       {kind !== "exam" && (
         <label className="check-row"><input type="checkbox" checked={hints} onChange={(e) => setHints(e.target.checked)} />
           <span>Permitir pistas antes de responder <span className="caption">(“Pista”, generada con IA)</span></span></label>

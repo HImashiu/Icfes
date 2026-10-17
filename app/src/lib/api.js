@@ -44,9 +44,13 @@ export function createApi(client) {
     async listAssignments() {
       const cols = "id, course_id, kind, title, exam_slug, scope, question_keys, opens_at, due_at, time_limit_min, reveal_policy, max_attempts, assignee_id, status, created_at, courses(name)";
       const query = (c) => client.from("assignments").select(c).order("created_at", { ascending: false });
-      // allow_hints arrives with migration 0007; until it runs, every assignment offers hints.
-      const first = await query(`${cols}, allow_hints`);
-      if (first.error && /allow_hints/.test(first.error.message ?? "")) return unwrap(await query(cols));
+      // allow_hints and instant_feedback arrive with migrations 0007 and 0008; until they run, every assignment
+      // offers hints and immediate feedback.
+      const first = await query(`${cols}, allow_hints, instant_feedback`);
+      if (first.error && /allow_hints|instant_feedback/.test(first.error.message ?? "")) {
+        const hintsOnly = await query(`${cols}, allow_hints`);
+        return unwrap(hintsOnly.error ? await query(cols) : hintsOnly);
+      }
       return unwrap(first);
     },
     async createAssignment(a) {
