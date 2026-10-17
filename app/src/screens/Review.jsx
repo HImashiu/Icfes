@@ -46,7 +46,8 @@ export default function Review({ questions, attempt, answerKey, keyStatus, notes
   const wide = useMedia("(min-width: 1200px)");
   const paneKind = q ? textPaneKind(q) : null;
   const [textEl, setTextEl] = useState(null);
-  const [dock, setDock] = useState("open");
+  // The student has read the text already: the panel starts as its bar, and "Ver texto" opens it in the page flow.
+  const [dock, setDock] = useState("min");
 
   const questionView = q && (
     <QuestionView
