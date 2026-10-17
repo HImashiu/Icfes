@@ -24,7 +24,7 @@ export function sheetLayout(n) {
     const row = q % ROWS;
     LETTERS.forEach((letter, li) => bubbles.push({ q, letter, x: 22 + col * 33 + 9 + li * 6.5, y: 78 + row * 6 }));
   }
-  const labels = Array.from({ length: n }, (_, q) => ({ q, x: 22 + Math.floor(q / ROWS) * 33 + 3, y: 78 + (q % ROWS) * 6 }));
+  const labels = Array.from({ length: n }, (_, q) => ({ q, x: 22 + Math.floor(q / ROWS) * 33 + 5.5, y: 78 + (q % ROWS) * 6 }));
   const idCells = Array.from({ length: ID_CELLS }, (_, i) => ({ i, x: 58 + i * 8, y: 46 }));
   return { n, cols, bubbles, labels, idCells, bubbleR: BUBBLE_R, idSize: 5 };
 }
