@@ -9,7 +9,7 @@ const DAYS = ["L", "M", "X", "J", "V", "S", "D"];
 
 // Inicio: streak, continue, quick cards, weekly XP, mastery by area, league teaser.
 // Streak, XP, weekly, mastery and league values are SAMPLE data (see data/mock.js).
-export default function Home({ exam, resumable, onContinue, onPractice, onSetup, onLeague, xpSession, assigned, onStartAssigned }) {
+export default function Home({ exam, resumable, onContinue, onPractice, onSetup, onLeague, xpSession, assigned, onStartAssigned, onLive, realName }) {
   const todayIndex = (new Date().getDay() + 6) % 7;
   const xp = SAMPLE_STUDENT.xp + (xpSession ?? 0);
   const me = SAMPLE_LEAGUE.find((r) => r.me);
@@ -26,14 +26,21 @@ export default function Home({ exam, resumable, onContinue, onPractice, onSetup,
       <header className="home-head">
         <div className="avatar" aria-hidden="true">E</div>
         <div className="greet">
-          <span className="caption">{SAMPLE_STUDENT.course}</span>
-          <strong>Hola, {SAMPLE_STUDENT.name}</strong>
+          <span className="caption">{realName ? "Tu colegio" : SAMPLE_STUDENT.course}</span>
+          <strong>Hola, {realName ?? SAMPLE_STUDENT.name}</strong>
         </div>
         <div className="pills">
           <span className="pill"><Icon name="flame" size={16} className="flame-ico" /><b className="flame-text">{SAMPLE_STUDENT.streak}</b></span>
           <span className="pill"><Icon name="bolt" size={16} className="accent-ico" /><b className="accent-text">{fmtInt(xp)}</b></span>
         </div>
       </header>
+
+      {onLive && (
+        <button type="button" className="card quick-row" onClick={onLive}>
+          <Icon name="bolt" size={20} className="accent-ico" />
+          <span><strong>Juego en vivo</strong><br /><span className="caption">Entra con el código que proyecta tu docente</span></span>
+        </button>
+      )}
 
       {assigned && <AssignedList assignments={assigned.assignments} attempts={assigned.attempts} onStart={onStartAssigned} />}
 

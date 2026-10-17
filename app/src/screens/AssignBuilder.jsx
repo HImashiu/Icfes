@@ -22,7 +22,7 @@ const KIND_HELP = {
 };
 
 // Constructor de asignaciones: explora el banco, filtra, previsualiza, elige a mano o automático, ordena y asigna.
-export default function AssignBuilder({ api, courses, exams, fetchExam, guard, onCancel, onSaved }) {
+export default function AssignBuilder({ api, courses, exams, fetchExam, guard, onCancel, onSaved, live = null }) {
   const ready = exams.filter((e) => e.status !== "proximamente");
   const cache = useRef(new Map());
   const [slug, setSlug] = useState(ready[0]?.slug ?? "");
@@ -47,6 +47,8 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
   const [limit, setLimit] = useState("");
   const [attempts, setAttempts] = useState("");
   const [reveal, setReveal] = useState("after_submit");
+  const [seconds, setSeconds] = useState("60");
+  const [liveCourse, setLiveCourse] = useState("");
 
   useEffect(() => {
     if (!slug) return undefined;
@@ -100,6 +102,12 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
     e.preventDefault();
     setMsg(null);
     if (picked.length === 0) return setMsg("Elige al menos una pregunta.");
+    if (live) {
+      setBusy(true);
+      guard(() => live.onCreate({ keys: picked, slug, seconds: Number(seconds), title: title.trim() || `En vivo · ${picked.length} preguntas`, course: liveCourse }))
+        .finally(() => setBusy(false));
+      return undefined;
+    }
     if (courseIds.length === 0) return setMsg("Elige al menos un curso.");
     if (due && due < isoDay(new Date())) return setMsg("La fecha de entrega debe ser hoy o después.");
     if (due && due < opens) return setMsg("La entrega no puede ser antes de la apertura.");
@@ -202,8 +210,8 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
   );
 
   const mine = (
-    <form className="card t-card b-mine assign-form" onSubmit={submit} aria-label="Tu asignación">
-      <div className="section-head"><strong>Tu asignación</strong><span className="muted">{summary.total} preguntas</span></div>
+    <form className="card t-card b-mine assign-form" onSubmit={submit} aria-label={live ? "Tu sala" : "Tu asignación"}>
+      <div className="section-head"><strong>{live ? "Tu sala" : "Tu asignación"}</strong><span className="muted">{summary.total} preguntas</span></div>
       {summary.total > 0 && (
         <div className="b-summary">
           <span className="chips-row">{summary.areas.map((a) => <span key={a.name} className="badge" style={{ borderLeft: `4px solid ${areaColor(a.name)}` }}>{a.name} · {a.n}</span>)}</span>
@@ -238,6 +246,22 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
       )}
 
       <hr className="b-sep" />
+      {live ? (
+        <>
+          <label className="field"><span className="label">Nombre de la sala (opcional)</span><input value={title} onChange={(e) => setTitle(e.target.value)} /></label>
+          <label className="field"><span className="label">Tiempo por pregunta</span>
+            <select value={seconds} onChange={(e) => setSeconds(e.target.value)}>
+              {[30, 45, 60, 90, 120, 180].map((n) => <option key={n} value={n}>{n} segundos</option>)}
+            </select>
+            <span className="caption">Las preguntas ICFES con lectura necesitan 60 a 120 segundos.</span></label>
+          <label className="field"><span className="label">Curso (opcional)</span>
+            <select value={liveCourse} onChange={(e) => setLiveCourse(e.target.value)}>
+              <option value="">Cualquiera con el código</option>
+              {courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select></label>
+        </>
+      ) : (
+        <>
       <fieldset className="field"><legend className="label">Cursos</legend>
         {courses.map((c) => (
           <label key={c.id} className="b-check"><input type="checkbox" checked={courseIds.includes(c.id)} onChange={() => setCourseIds(courseIds.includes(c.id) ? courseIds.filter((x) => x !== c.id) : [...courseIds, c.id])} /> {c.name}{c.grade ? ` · Grado ${c.grade}` : ""}</label>
@@ -260,10 +284,12 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
         </select></label>
       <label className="field"><span className="label">Mostrar respuestas y explicaciones</span>
         <select value={reveal} onChange={(e) => setReveal(e.target.value)}>{REVEAL.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+        </>
+      )}
       {msg && <p className="notice error" role="alert">{msg}</p>}
       <div className="report-actions">
         <button type="button" className="secondary" onClick={onCancel}>Cancelar</button>
-        <button type="submit" className="primary" disabled={busy}>{busy ? "Guardando…" : courseIds.length > 1 ? `Asignar a ${courseIds.length} cursos` : "Asignar"}</button>
+        <button type="submit" className="primary" disabled={busy}>{busy ? "Guardando…" : live ? "Crear sala" : courseIds.length > 1 ? `Asignar a ${courseIds.length} cursos` : "Asignar"}</button>
       </div>
     </form>
   );

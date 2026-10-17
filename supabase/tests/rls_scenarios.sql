@@ -154,3 +154,56 @@ do $$ begin insert into school_consents (school_id, kind, version, granted_by) v
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'ana@colegio.edu.co');
 insert into school_consents (school_id, kind, version, granted_by) values ('11111111-1111-1111-1111-111111111111', 'guardian_authorization', 'v1', '00000000-0000-0000-0000-00000000000a');
 select pg_temp.expect('admin reads school consent and a student consent', (select count(*) from school_consents) = 1 and (select count(*) from consents) = 1);
+
+-- 11. live sessions: teachers host, anyone with the code joins, answers are timed and final
+reset role;
+insert into auth.users values ('00000000-0000-0000-0000-00000000000f', '');   -- an anonymous guest has no email
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b', 'beto@colegio.edu.co');   -- beto was promoted to teacher in section 9
+create temp table _ls (id uuid, code text);
+grant all on _ls to authenticated;
+insert into _ls select id, code from live_create('Juego', 'S11-A_1ra', array['1','2'], 30, null);
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c', 'cami@colegio.edu.co');   -- cami is a plain student
+do $$ begin perform live_create('X', 'S11-A_1ra', array['1'], 30, null); raise exception 'FAILED: student created a live room';
+  exception when others then if sqlerrm <> 'not_allowed' then raise; end if; end $$;
+select pg_temp.expect('student finds nothing before joining', (select count(*) from live_sessions) = 0);
+select pg_temp.expect('student joins by code', (select state from live_join((select code from _ls), 'Cami')) = 'lobby');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000f', '');
+select pg_temp.expect('guest joins by code', (select state from live_join((select code from _ls), 'Invitado')) = 'lobby');
+do $$ begin perform live_join('000000x', 'Nadie'); raise exception 'FAILED: bad code joined';
+  exception when others then if sqlerrm <> 'session_not_found' then raise; end if; end $$;
+-- answers only while a question is open
+do $$ begin insert into live_answers (session_id, player_id, question_index, option) select id, '00000000-0000-0000-0000-00000000000f', 0, 'A' from _ls;
+  raise exception 'FAILED: answer accepted in the lobby';
+  exception when insufficient_privilege then null; when others then if sqlstate <> '42501' then raise; end if; end $$;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b', 'beto@colegio.edu.co');
+select pg_temp.expect('host opens question 0', (select state from live_next((select id from _ls), 0)) = 'question');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000f', '');
+insert into live_answers (session_id, player_id, question_index, option) select id, '00000000-0000-0000-0000-00000000000f', 0, 'B' from _ls;
+do $$ begin insert into live_answers (session_id, player_id, question_index, option) select id, '00000000-0000-0000-0000-00000000000f', 0, 'C' from _ls;
+  raise exception 'FAILED: second answer accepted';
+  exception when unique_violation then null; end $$;
+do $$ begin insert into live_answers (session_id, player_id, question_index, option) select id, '00000000-0000-0000-0000-00000000000c', 0, 'C' from _ls;
+  raise exception 'FAILED: answered as another player';
+  exception when insufficient_privilege then null; when others then if sqlstate <> '42501' then raise; end if; end $$;
+select pg_temp.expect('guest cannot read other answers', (select count(*) from live_answers) = 1);
+select pg_temp.expect('guest sees both players', (select count(*) from live_players) = 2);
+do $$ begin perform live_reveal((select id from _ls), array['B'], '[]'); raise exception 'FAILED: guest revealed';
+  exception when others then if sqlerrm <> 'not_allowed' then raise; end if; end $$;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b', 'beto@colegio.edu.co');
+select pg_temp.expect('host reads answers', (select count(*) from live_answers) = 1);
+select pg_temp.expect('reveal', (select state from live_reveal((select id from _ls), array['B'], '[{"player_id":"00000000-0000-0000-0000-00000000000f","points":900}]')) = 'reveal');
+select pg_temp.expect('score and streak updated', (select score from live_players where player_id = '00000000-0000-0000-0000-00000000000f') = 900
+  and (select streak from live_players where player_id = '00000000-0000-0000-0000-00000000000f') = 1
+  and (select streak from live_players where player_id = '00000000-0000-0000-0000-00000000000c') = 0);
+select pg_temp.expect('answer points stored', (select points from live_answers) = 900);
+reset role;
+update live_sessions set question_started_at = now() - interval '5 minutes', state = 'question', current_index = 1;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000f', '');
+do $$ begin insert into live_answers (session_id, player_id, question_index, option) select id, '00000000-0000-0000-0000-00000000000f', 1, 'A' from _ls;
+  raise exception 'FAILED: answer accepted after the time ran out';
+  exception when insufficient_privilege then null; when others then if sqlstate <> '42501' then raise; end if; end $$;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d', 'dora@otro.edu.co');
+select pg_temp.expect('outsider sees no live data', (select count(*) from live_sessions) = 0 and (select count(*) from live_players) = 0);
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b', 'beto@colegio.edu.co');
+select pg_temp.expect('host ends the room', (select state from live_end((select id from _ls))) = 'ended');
+select pg_temp.expect('clock', live_now() is not null);

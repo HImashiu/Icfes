@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { backendConfigured, supabase } from "./supabase.js";
 import { createApi } from "./api.js";
 
-// status: demo (no backend configured), loading, signed-out, needs-profile (signed in, first visit), ready.
+// status: demo (no backend configured), loading, signed-out, guest (anonymous, only for live games), needs-profile (signed in, first visit), ready.
 // Practice never requires an account; signing in only unlocks the school features.
 const AuthContext = createContext({ status: "demo", profile: null, api: null });
 export const useAuth = () => useContext(AuthContext);
@@ -25,6 +25,7 @@ export function AuthProvider({ children }) {
     const { data } = await supabase.auth.getSession();
     const user = data?.session?.user ?? null;
     if (!user) return setState({ status: "signed-out", profile: null, user: null, error: null });
+    if (user.is_anonymous) return setState({ status: "guest", profile: null, user, error: null });
     try {
       const profile = await api.getProfile();
       setState({ status: profile ? "ready" : "needs-profile", profile, user, error: null });
@@ -49,6 +50,11 @@ export function AuthProvider({ children }) {
           provider: "google",
           options: { redirectTo: window.location.origin + window.location.pathname, queryParams: { prompt: "select_account" } },
         }),
+      // A guest plays a live game with a nickname and keeps nothing: no profile, no school data.
+      joinAsGuest: async () => {
+        const { error } = await supabase.auth.signInAnonymously();
+        if (error) throw error;
+      },
       signInWithMicrosoft: () =>
         supabase.auth.signInWithOAuth({
           provider: "azure",

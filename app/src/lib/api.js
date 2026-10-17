@@ -88,6 +88,50 @@ export function createApi(client) {
       return unwrap(await client.rpc("set_profile_role", { p_profile: profileId, p_role: role }));
     },
 
+    // Live answering. The database clock decides when a question opens and closes.
+    async liveNow() {
+      return unwrap(await client.rpc("live_now"));
+    },
+    async liveCreate({ title, exam, keys, seconds, course }) {
+      return unwrap(await client.rpc("live_create", { p_title: title, p_exam: exam, p_keys: keys, p_seconds: seconds, p_course: course || null }));
+    },
+    async liveJoin(code, nickname) {
+      return unwrap(await client.rpc("live_join", { p_code: code, p_nickname: nickname }));
+    },
+    async liveNext(id, index) {
+      return unwrap(await client.rpc("live_next", { p_session: id, p_index: index }));
+    },
+    async liveReveal(id, correct, points) {
+      return unwrap(await client.rpc("live_reveal", { p_session: id, p_correct: correct, p_points: points }));
+    },
+    async liveEnd(id) {
+      return unwrap(await client.rpc("live_end", { p_session: id }));
+    },
+    async liveSession(id) {
+      return unwrap(await client.from("live_sessions").select("*").eq("id", id).maybeSingle());
+    },
+    async livePlayers(id) {
+      return unwrap(await client.from("live_players").select("player_id, nickname, profile_id, score, streak").eq("session_id", id));
+    },
+    async liveAnswers(id, index) {
+      return unwrap(await client.from("live_answers").select("player_id, question_index, option, answered_at, points").eq("session_id", id).eq("question_index", index));
+    },
+    async liveMyAnswers(id) {
+      const { data: auth } = await client.auth.getUser();
+      return unwrap(await client.from("live_answers").select("question_index, option, points").eq("session_id", id).eq("player_id", auth.user.id));
+    },
+    async liveAnswer(id, index, option) {
+      const { data: auth } = await client.auth.getUser();
+      unwrap(await client.from("live_answers").insert({ session_id: id, player_id: auth.user.id, question_index: index, option }));
+    },
+    async myLiveSessions() {
+      return unwrap(await client.from("live_sessions").select("*").neq("state", "ended").order("created_at", { ascending: false }).limit(10));
+    },
+    async myPlayerId() {
+      const { data: auth } = await client.auth.getUser();
+      return auth?.user?.id ?? null;
+    },
+
     async myConsents() {
       return unwrap(await client.from("consents").select("kind, version, granted_at"));
     },

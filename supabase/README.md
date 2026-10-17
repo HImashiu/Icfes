@@ -50,3 +50,10 @@ Example: `supabase/tests/rls.sh -h /tmp/pgt -p 5499 -U postgres`.
 - `reveal_policy`, `opens_at` and attempts-allowed exist in the schema but the teacher form and student app do not enforce them yet.
 - Responses are stored as JSON on the attempt; a per-response table comes with the IRT work (grading phase 2).
 - No consent screen or privacy notice yet. Required before real students use it (decision D5 in the plan).
+
+
+## Later migrations (run in order, each once)
+
+- `0003_attempt_limits_roles_consent.sql`: attempts allowed per assignment, opening and closing enforced by the database, coordinator can change roles (`set_profile_role`), consent tables.
+- `0004_live_sessions.sql`: live answering rooms, players and answers. The app polls every 1-2 seconds, so Realtime does not need to be enabled.
+  Guests join through anonymous sign-in: Authentication > Sign In / Providers > turn on "Allow anonymous sign-ins". Without it, only signed-in students can join a room.

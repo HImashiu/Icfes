@@ -1150,3 +1150,22 @@ fieldset.field { border: 0; padding: 0; margin: 0; }
   .t-main { padding: 0; }
   .card { break-inside: avoid; box-shadow: none; }
 }
+
+/* ---- Live answering ---- */
+.live { display: grid; gap: 12px; align-content: start; padding-bottom: 32px; }
+.live-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.live-wait { text-align: center; display: grid; gap: 8px; justify-items: center; padding: 28px 16px; }
+.live-timer { text-align: center; font-size: 18px; }
+.live-timer strong { font-size: 32px; font-variant-numeric: tabular-nums; }
+.live-result { text-align: center; display: grid; gap: 6px; }
+.live-result.ok { border: 2px solid var(--ok); background: var(--ok-soft); }
+.live-result.bad { border: 2px solid var(--bad); background: var(--bad-soft); }
+.live-board { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; width: 100%; }
+.live-board li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 12px; background: var(--surface-2); border-radius: 10px; }
+.live-board.big li { font-size: 20px; }
+.live-host { display: grid; gap: 14px; }
+.live-lobby { text-align: center; justify-items: center; }
+.live-code { font-family: "Bricolage Grotesque", sans-serif; font-size: clamp(56px, 12vw, 120px); letter-spacing: 0.12em; line-height: 1; }
+.live-status { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; }
+.live-clock { font-size: 36px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.live-join { max-width: 420px; margin: 0 auto; padding-top: 24px; }

@@ -21,6 +21,7 @@ import { linkFigures, parseFigureSpecs, prepareExam } from "./lib/figures.js";
 import { applyTheme, currentTheme } from "./lib/theme.js";
 import { useAuth } from "./lib/auth.jsx";
 import Consent from "./screens/Consent.jsx";
+import LivePlay, { LiveJoin } from "./screens/LivePlay.jsx";
 import { CONSENT_VERSION, needsTerms } from "./lib/consent.js";
 import { attemptForAssignment, attemptRow, attemptsLeft, questionsForAttempt, revealAllowed } from "./lib/assignments.js";
 
@@ -168,6 +169,7 @@ export default function App() {
 
   // Terms acceptance: with an account, nothing opens until the current version is accepted.
   // null = still asking; a failed read does not lock anyone out (the check repeats on the next sign-in).
+  const [live, setLive] = useState(null);
   const [consents, setConsents] = useState(null);
   useEffect(() => {
     if (!signedIn) return setConsents(null);
@@ -291,6 +293,8 @@ export default function App() {
           onGo={setView}
           assigned={assigned}
           onStartAssigned={startAssigned}
+          realName={signedIn ? (auth.profile.full_name || auth.profile.email).split(" ")[0] : null}
+          onLive={auth.status !== "demo" && auth.status !== "loading" ? () => setView("liveJoin") : null}
         />
       )}
 
@@ -354,6 +358,9 @@ export default function App() {
           onBack={() => setView(attempt.from === "reports" ? "reports" : "results")}
         />
       )}
+
+      {view === "liveJoin" && <LiveJoin auth={auth} onBack={() => setView("home")} onJoined={(row, nickname) => { setLive({ row, nickname }); setView("livePlay"); }} />}
+      {view === "livePlay" && live && <LivePlay api={auth.api} initial={live.row} nickname={live.nickname} fetchExam={fetchExam} onExit={() => { setLive(null); setView("home"); }} />}
 
       {view === "league" && <League onBack={() => setView("home")} />}
       {view === "profile" && <Profile theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} onReports={() => setView("reports")} onLogin={() => setView("login")} />}
