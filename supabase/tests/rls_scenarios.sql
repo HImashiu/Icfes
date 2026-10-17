@@ -38,8 +38,10 @@ select pg_temp.expect('student without code', (select role from claim_profile(nu
 
 -- 2. teacher creates a course, adds a roster before the students sign in
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'ana@colegio.edu.co');
+-- RETURNING is what the app does (insert ... select): the creator must be able to read the row it just made
 insert into courses (id, school_id, name, created_by) values
- ('33333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111', '11-A', '00000000-0000-0000-0000-00000000000a');
+ ('33333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111', '11-A', '00000000-0000-0000-0000-00000000000a')
+ returning id;
 insert into course_members (course_id, email, full_name) values
  ('33333333-3333-3333-3333-333333333333', 'beto@colegio.edu.co', 'Beto'),
  ('33333333-3333-3333-3333-333333333333', 'cami@colegio.edu.co', 'Cami');

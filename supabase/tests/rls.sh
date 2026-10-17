@@ -17,5 +17,6 @@ create function auth.jwt() returns jsonb language sql stable as $$
 grant usage on schema auth, public to authenticated, anon;
 SQL
 "${P[@]}" -f "$here/../migrations/0001_accounts_courses_assignments.sql"
+"${P[@]}" -f "$here/../migrations/0002_course_creator_can_read.sql"
 "${P[@]}" -f "$here/rls_scenarios.sql"
 echo "rls: all checks passed"
