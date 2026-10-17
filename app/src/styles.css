@@ -1111,6 +1111,7 @@ p.fuente { font-size: 0.78em; line-height: 1.35; text-align: right; margin: 14px
 .b-text { color: var(--text-2); font-size: 13px; overflow-wrap: anywhere; }
 .b-summary { display: grid; gap: 4px; }
 .b-picked li { display: grid; grid-template-columns: 26px 1fr auto; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.b-picked li.caption { display: block; border-bottom: 0; }
 .b-num { font-weight: 700; color: var(--text-2); text-align: center; }
 .b-name { text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .b-move { display: inline-flex; gap: 2px; }

@@ -237,7 +237,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
             </li>
           );
         })}
-        {picked.length === 0 && <li className="caption">Aún no hay preguntas. Elige en el banco o usa la selección automática.</li>}
+        {picked.length === 0 && <li className="caption" style={{ display: "block" }}>Aún no hay preguntas. Elige en el banco o usa la selección automática.</li>}
       </ol>
       {picked.length > 1 && (
         <div className="report-actions">
