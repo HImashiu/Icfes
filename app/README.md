@@ -44,6 +44,12 @@ la app muestra "Clave pendiente" y guarda las respuestas sin calcular puntaje.
 Las imágenes del examen se reemplazan por un espacio `figure-slot` (ver `src/lib/render.js`).
 Ahí irá el renderizador de gráficas nativas cuando esté listo el catálogo de figuras.
 
+## Cuentas y colegios (opcional)
+
+Con `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` (ver `app/.env.example`) aparecen el ingreso con Google, el panel docente real
+(cursos, lista de estudiantes por CSV, asignaciones, avance, exportar CSV) y las tareas en Inicio. Sin ellas todo sigue como antes.
+Configuración y reglas de acceso: `supabase/README.md`.
+
 ## Límites conocidos
 
 - Los tiempos del simulacro son una referencia de práctica, no cifras oficiales del ICFES.

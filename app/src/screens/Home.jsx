@@ -1,5 +1,6 @@
 import Icon from "../components/Icon.jsx";
 import Mascot from "../components/Mascot.jsx";
+import AssignedList from "./AssignedList.jsx";
 import { SAMPLE_LEAGUE, SAMPLE_STUDENT } from "../data/mock.js";
 import { areaColor, fmtDec, fmtInt, fmtPct } from "../lib/brand.js";
 import { formatClock, questionsFor } from "../lib/exam.js";
@@ -8,7 +9,7 @@ const DAYS = ["L", "M", "X", "J", "V", "S", "D"];
 
 // Inicio: streak, continue, quick cards, weekly XP, mastery by area, league teaser.
 // Streak, XP, weekly, mastery and league values are SAMPLE data (see data/mock.js).
-export default function Home({ exam, resumable, onContinue, onPractice, onSetup, onLeague, xpSession }) {
+export default function Home({ exam, resumable, onContinue, onPractice, onSetup, onLeague, xpSession, assigned, onStartAssigned }) {
   const todayIndex = (new Date().getDay() + 6) % 7;
   const xp = SAMPLE_STUDENT.xp + (xpSession ?? 0);
   const me = SAMPLE_LEAGUE.find((r) => r.me);
@@ -33,6 +34,8 @@ export default function Home({ exam, resumable, onContinue, onPractice, onSetup,
           <span className="pill"><Icon name="bolt" size={16} className="accent-ico" /><b className="accent-text">{fmtInt(xp)}</b></span>
         </div>
       </header>
+
+      {assigned && <AssignedList assignments={assigned.assignments} attempts={assigned.attempts} onStart={onStartAssigned} />}
 
       <div className="card streak-card">
         <Mascot size={72} />
