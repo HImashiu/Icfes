@@ -3,25 +3,14 @@ import Navigator from "../components/Navigator.jsx";
 import QuestionView, { textPaneKind } from "../components/QuestionView.jsx";
 import Icon from "../components/Icon.jsx";
 import AiAnalysis from "../components/AiAnalysis.jsx";
+import TextDock from "../components/TextDock.jsx";
+import { useMedia } from "../lib/media.js";
 import { formatClock } from "../lib/exam.js";
 import { areaColor, fmtInt } from "../lib/brand.js";
 import { plainText } from "../lib/render.js";
 import { xpFor } from "../lib/xp.js";
 
 // +10 XP per correct practice answer, double in the weakest area.
-
-// True while the viewport matches the media query.
-function useMedia(query) {
-  const [on, setOn] = useState(() => window.matchMedia?.(query).matches ?? false);
-  useEffect(() => {
-    const mql = window.matchMedia?.(query);
-    if (!mql) return undefined;
-    const onChange = (e) => setOn(e.matches);
-    mql.addEventListener("change", onChange);
-    return () => mql.removeEventListener("change", onChange);
-  }, [query]);
-  return on;
-}
 
 // Scrolls a pane (not the page) so `el` sits in the middle of it.
 function centerIn(pane, el) {
@@ -333,24 +322,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
 
       <div className="test-body" ref={mainRef} onClick={onBodyClick}>
         <main className="test-main">
-          {dockText && (
-            <div className={`text-dock ${dock}`} role="region" aria-label="Texto de la pregunta">
-              <div className="dock-body" ref={setTextEl} />
-              <div className="dock-bar">
-                <strong>{dock === "min" ? "Texto oculto" : "Texto"}</strong>
-                <span className="dock-actions">
-                  {dock !== "min" && (
-                    <button type="button" className="link" onClick={() => setDock(dock === "tall" ? "open" : "tall")}>
-                      {dock === "tall" ? "Reducir" : "Ampliar"}
-                    </button>
-                  )}
-                  <button type="button" className="link" onClick={() => setDock(dock === "min" ? "open" : "min")} aria-expanded={dock !== "min"}>
-                    {dock === "min" ? "Ver texto" : "Ocultar"}
-                  </button>
-                </span>
-              </div>
-            </div>
-          )}
+          {dockText && <TextDock state={dock} onState={setDock} bodyRef={setTextEl} />}
           {sideText ? (
             <div className="read-split">
               <aside className="read-text paper-card" ref={setTextEl} aria-label="Texto de las preguntas" />
