@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import QuestionView from "../components/QuestionView.jsx";
-import { leaderboard, liveMessage, secondsLeft } from "../lib/live.js";
+import { liveMessage, secondsLeft } from "../lib/live.js";
+import { buzz, confetti, play } from "../lib/motion.js";
 import { usePoll } from "../lib/poll.js";
 
 // Unirse a un juego en vivo: código de 6 dígitos y apodo. Sin cuenta se entra como invitado (no se guarda nada).
@@ -41,7 +42,8 @@ export function LiveJoin({ auth, onJoined, onBack }) {
   );
 }
 
-// La pantalla del estudiante durante el juego: sala de espera, pregunta, resultado de la pregunta y podio.
+// La pantalla del estudiante durante el juego: sala de espera, pregunta, resultado y resumen final.
+// Sin ranking: cada estudiante ve solo su propio progreso (aciertos, puntos, racha).
 export default function LivePlay({ api, initial, nickname, fetchExam, onExit }) {
   const [session, setSession] = useState(initial);
   const [players, setPlayers] = useState([]);
@@ -78,8 +80,19 @@ export default function LivePlay({ api, initial, nickname, fetchExam, onExit }) 
     return bundle.exam.questions.find((x) => x.key === key) ?? null;
   }, [bundle, idx, session.question_keys]);
   const myAnswer = mine.find((a) => a.question_index === idx) ?? null;
-  const board = leaderboard(players);
-  const rank = board.find((p) => p.player_id === me);
+  const myPlayer = players.find((p) => p.player_id === me) ?? null;
+  const hits = mine.filter((a) => a.points > 0).length;
+  const resultRef = useRef(null);
+  const cheered = useRef(-1);
+  // A right answer gets the same cheer as practice, once per question.
+  useEffect(() => {
+    if (session.state !== "reveal" || cheered.current === idx) return;
+    cheered.current = idx;
+    const own = mine.find((a) => a.question_index === idx);
+    if (!own) return;
+    if (session.current_correct.includes(own.option)) { play("correct"); buzz(18); setTimeout(() => confetti(resultRef.current), 50); }
+    else { play("wrong"); buzz([30, 40, 30]); }
+  }, [session.state, idx, mine, session.current_correct]);
   // Until the clock is calibrated the full time shows, so a phone with a wrong clock never closes a question early.
   const left = calibrated ? secondsLeft(session, now, offset) : session.seconds_per_question;
 
@@ -94,7 +107,7 @@ export default function LivePlay({ api, initial, nickname, fetchExam, onExit }) 
     <main className="frame live">
       <header className="live-bar">
         <strong>{nickname}</strong>
-        <span className="muted">{rank ? `${rank.score} pts · puesto ${rank.rank} de ${board.length}` : ""}</span>
+        <span className="muted">{myPlayer ? `${myPlayer.score} pts · ${hits} ${hits === 1 ? "acierto" : "aciertos"}` : ""}</span>
         <button type="button" className="link" onClick={onExit}>Salir</button>
       </header>
       {error && <p className="notice error" role="alert">{error}</p>}
@@ -105,7 +118,7 @@ export default function LivePlay({ api, initial, nickname, fetchExam, onExit }) 
 
       {session.state === "question" && q && (
         <>
-          <div className="live-timer" aria-live="polite"><strong>{left}</strong> s · pregunta {idx + 1} de {session.question_keys.length}</div>
+          <div className={left <= 5 ? "live-timer urgent" : "live-timer"} aria-live="polite"><strong>{left}</strong> s · pregunta {idx + 1} de {session.question_keys.length}</div>
           {myAnswer ? (
             <div className="card live-wait"><h2>Respuesta enviada: {myAnswer.option}</h2><p className="caption">Espera a que el docente cierre la pregunta.</p></div>
           ) : left <= 0 ? (
@@ -118,10 +131,10 @@ export default function LivePlay({ api, initial, nickname, fetchExam, onExit }) 
 
       {session.state === "reveal" && q && (
         <>
-          <div className={`card live-result ${myAnswer && session.current_correct.includes(myAnswer.option) ? "ok" : "bad"}`}>
+          <div ref={resultRef} className={`card live-result ${myAnswer && session.current_correct.includes(myAnswer.option) ? "ok" : "bad"}`}>
             <h1>{!myAnswer ? "Sin respuesta" : session.current_correct.includes(myAnswer.option) ? `¡Correcto! +${myAnswer.points}` : "Incorrecto"}</h1>
             <p>Respuesta: {session.current_correct.join(" o ") || "—"}{myAnswer ? ` · tú elegiste ${myAnswer.option}` : ""}</p>
-            {rank && <p className="caption">{rank.score} puntos · puesto {rank.rank} de {board.length}{rank.streak > 1 ? ` · racha de ${rank.streak}` : ""}</p>}
+            {myPlayer && <p className="caption">Llevas {myPlayer.score} puntos y {hits} {hits === 1 ? "acierto" : "aciertos"}{myPlayer.streak > 1 ? ` · racha de ${myPlayer.streak}` : ""}</p>}
           </div>
           <QuestionView question={q} answer={myAnswer?.option} graded review={{ correctLetter: session.current_correct[0] ?? null }} figures={bundle.figures} examLabel={bundle.exam.title} report={false} />
         </>
@@ -129,9 +142,9 @@ export default function LivePlay({ api, initial, nickname, fetchExam, onExit }) 
 
       {session.state === "ended" && (
         <div className="card live-wait">
-          <h1>{rank ? `Terminaste en el puesto ${rank.rank}` : "Fin del juego"}</h1>
-          {rank && <p>{rank.score} puntos de {board.length} jugadores.</p>}
-          <ol className="live-board">{board.slice(0, 5).map((p) => <li key={p.player_id}><span>{p.rank}. {p.nickname}</span><strong>{p.score}</strong></li>)}</ol>
+          <h1>¡Terminaste!</h1>
+          <p>Acertaste {hits} de {session.question_keys.length} {session.question_keys.length === 1 ? "pregunta" : "preguntas"}.</p>
+          {myPlayer && <div className="live-me"><span className="pill"><b className="accent-text">{myPlayer.score}</b> puntos</span></div>}
           <button type="button" className="primary" onClick={onExit}>Listo</button>
         </div>
       )}

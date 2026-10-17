@@ -1,4 +1,5 @@
-// Live answering helpers: scoring, leaderboard, answer counts and the shared countdown. Pure, no network.
+// Live answering helpers: scoring, answer counts, the class's share of right answers and the shared countdown.
+// Pure, no network. There is no leaderboard: students see the whole class's answers and their own progress, never a ranking.
 
 export const LETTERS = ["A", "B", "C", "D"];
 
@@ -26,8 +27,10 @@ export function scoreQuestion(session, players, answers, correct) {
   }));
 }
 
-export function leaderboard(players) {
-  return [...players].sort((a, b) => b.score - a.score || a.nickname.localeCompare(b.nickname, "es")).map((p, i) => ({ ...p, rank: i + 1 }));
+// How much of the class got a question right: { answered, right, pct } (pct is null when nobody answered).
+export function classShare(answers, correct) {
+  const right = answers.filter((a) => correct.includes(a.option)).length;
+  return { answered: answers.length, right, pct: answers.length ? Math.round((right / answers.length) * 100) : null };
 }
 
 export function distribution(answers, letters = LETTERS) {
@@ -45,8 +48,9 @@ export function secondsLeft(session, nowMs, offsetMs = 0) {
 
 export const resultsCsv = (title, players) => {
   const cell = (v) => (/[",;\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v));
-  const rows = leaderboard(players).map((p) => [p.rank, p.nickname, p.score, p.profile_id ? "Con cuenta" : "Invitado"].map(cell).join(","));
-  return `﻿${[cell(title), "Puesto,Apodo,Puntos,Tipo", ...rows].join("\n")}\n`;
+  // For the teacher only, in alphabetical order (no positions).
+  const rows = [...players].sort((a, b) => a.nickname.localeCompare(b.nickname, "es")).map((p) => [p.nickname, p.score, p.profile_id ? "Con cuenta" : "Invitado"].map(cell).join(","));
+  return `﻿${[cell(title), "Apodo,Puntos,Tipo", ...rows].join("\n")}\n`;
 };
 
 export function liveMessage(err) {

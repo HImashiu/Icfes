@@ -6,7 +6,6 @@ const ITEMS = [
   { id: "home", label: "Inicio", icon: "home" },
   { id: "setup", label: "Practicar", icon: "book" },
   { id: "history", label: "Mis simulacros", short: "Simulacros", icon: "clock" },
-  { id: "league", label: "Liga", icon: "trophy" },
   { id: "profile", label: "Perfil", icon: "user" },
 ];
 

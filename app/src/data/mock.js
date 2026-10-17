@@ -1,4 +1,4 @@
-// SAMPLE data for the prototype: streak, XP, league, mastery and the teacher view.
+// SAMPLE data for the prototype: streak, XP, mastery and the teacher view.
 // None of it comes from real students; screens that use it say "datos de muestra".
 export const SAMPLE_STUDENT = {
   name: "Estudiante",
@@ -6,20 +6,11 @@ export const SAMPLE_STUDENT = {
   streak: 5,
   xp: 1240,
   weeklyXp: [40, 95, 60, 130, 80, 150, 120],
-  classXp: [60, 80, 70, 90, 85, 100, 95],
+  dailyGoal: 100,
   mastery: { "Matemáticas": 58, "Ciencias naturales": 72, "Sociales y ciudadanas": 64, "Inglés": 41 },
 };
 
 export const WEAKEST_AREA = Object.entries(SAMPLE_STUDENT.mastery).sort((a, b) => a[1] - b[1])[0][0];
-
-export const SAMPLE_LEAGUE = [
-  { name: "Ana M.", xp: 2140, streak: 12 },
-  { name: "Tomás R.", xp: 1985, streak: 8 },
-  { name: "Sofía L.", xp: 1760, streak: 6 },
-  { name: "Tú", xp: 1240, streak: 5, me: true },
-  { name: "Diego P.", xp: 1130, streak: 3 },
-  { name: "Camila V.", xp: 990, streak: 1 },
-];
 
 export const SAMPLE_TEACHER = {
   assignments: [
