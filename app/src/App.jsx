@@ -4,7 +4,6 @@ import Setup from "./screens/Setup.jsx";
 import Test from "./screens/Test.jsx";
 import Results from "./screens/Results.jsx";
 import Review from "./screens/Review.jsx";
-import League from "./screens/League.jsx";
 import Profile from "./screens/Profile.jsx";
 import Teacher from "./screens/Teacher.jsx";
 import TeacherLive from "./screens/TeacherLive.jsx";
@@ -280,7 +279,7 @@ export default function App() {
   const scopeTitle = attempt && attempt.scope !== "all" ? attempt.scope : "Examen completo";
   const examTitle = selected ? `${selected.exam.title} · ${scopeTitle}` : "";
   // The sidebar stays on every screen except the test; results and review belong to Practicar, reports to Perfil.
-  const navView = { home: "home", setup: "setup", results: "setup", review: "setup", history: "history", league: "league", profile: "profile", login: "profile", reports: "profile" }[view] ?? null;
+  const navView = { home: "home", setup: "setup", results: "setup", review: "setup", history: "history", profile: "profile", login: "profile", reports: "profile" }[view] ?? null;
   const resumable = selected && view === "home" ? findResumable(selected.slug, selected.exam) : null;
 
   return (
@@ -300,7 +299,6 @@ export default function App() {
           }}
           onPractice={() => { setPreset(null); setView("setup"); }}
           onSetup={(p) => { setPreset(p); setView("setup"); }}
-          onLeague={() => setView("league")}
           onGo={setView}
           assigned={assigned}
           onStartAssigned={startAssigned}
@@ -373,7 +371,6 @@ export default function App() {
       {view === "liveJoin" && <LiveJoin auth={auth} onBack={() => setView("home")} onJoined={(row, nickname) => { setLive({ row, nickname }); setView("livePlay"); }} />}
       {view === "livePlay" && live && <LivePlay api={auth.api} initial={live.row} nickname={live.nickname} fetchExam={fetchExam} onExit={() => { setLive(null); setView("home"); }} />}
 
-      {view === "league" && <League onBack={() => setView("home")} />}
       {view === "profile" && <Profile theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} onReports={() => setView("reports")} onLogin={() => setView("login")} />}
       {view === "login" && <Login onBack={() => setView("profile")} />}
       {view === "history" && <History onBack={() => setView("home")} onNew={() => setView("setup")} onOpen={openFromHistory} />}

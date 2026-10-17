@@ -48,6 +48,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
   const [limit, setLimit] = useState("");
   const [attempts, setAttempts] = useState("");
   const [reveal, setReveal] = useState("after_submit");
+  const [hints, setHints] = useState(true);
   const [seconds, setSeconds] = useState("60");
   const [liveCourse, setLiveCourse] = useState("");
 
@@ -127,6 +128,8 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
           time_limit_min: kind === "exam" && limit ? Number(limit) : null,
           max_attempts: attempts ? Number(attempts) : kind === "exam" ? 1 : null,
           reveal_policy: reveal, status: "active",
+          // Sent only when switched off, so creating assignments keeps working before migration 0007 runs.
+          ...(hints ? {} : { allow_hints: false }),
         });
       }
       onSaved(last, courseIds.length);
@@ -285,6 +288,10 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
         </select></label>
       <label className="field"><span className="label">Mostrar respuestas y explicaciones</span>
         <select value={reveal} onChange={(e) => setReveal(e.target.value)}>{REVEAL.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+      {kind !== "exam" && (
+        <label className="check-row"><input type="checkbox" checked={hints} onChange={(e) => setHints(e.target.checked)} />
+          <span>Permitir pistas antes de responder <span className="caption">(“Pista”, generada con IA)</span></span></label>
+      )}
         </>
       )}
       {msg && <p className="notice error" role="alert">{msg}</p>}

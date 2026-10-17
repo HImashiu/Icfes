@@ -1,11 +1,15 @@
 import Icon from "../components/Icon.jsx";
 import { SAMPLE_STUDENT } from "../data/mock.js";
+import { useState } from "react";
 import { useAuth } from "../lib/auth.jsx";
+import { play, setSoundOn, soundOn } from "../lib/motion.js";
 
 // Perfil: theme choice (dark is the default) and the teacher view entry.
 export default function Profile({ theme, onTheme, onTeacher, onReports, onLogin }) {
   const auth = useAuth();
   const staff = auth.status === "ready" && auth.profile.role !== "student";
+  const [sound, setSound] = useState(soundOn);
+  const pickSound = (on) => { setSoundOn(on); setSound(on); if (on) play("correct"); };
   return (
     <section className="profile">
       <header className="screen-head"><h1>Perfil</h1></header>
@@ -22,6 +26,14 @@ export default function Profile({ theme, onTheme, onTeacher, onReports, onLogin 
         <div className="segmented" role="radiogroup" aria-label="Tema">
           <button type="button" role="radio" aria-checked={theme === "dark"} className={theme === "dark" ? "seg active" : "seg"} onClick={() => onTheme("dark")}>Oscuro</button>
           <button type="button" role="radio" aria-checked={theme === "light"} className={theme === "light" ? "seg active" : "seg"} onClick={() => onTheme("light")}>Claro</button>
+        </div>
+      </div>
+
+      <div className="card">
+        <span className="label">Sonidos al responder</span>
+        <div className="segmented" role="radiogroup" aria-label="Sonidos al responder">
+          <button type="button" role="radio" aria-checked={sound} className={sound ? "seg active" : "seg"} onClick={() => pickSound(true)}>Activados</button>
+          <button type="button" role="radio" aria-checked={!sound} className={!sound ? "seg active" : "seg"} onClick={() => pickSound(false)}>Silencio</button>
         </div>
       </div>
 

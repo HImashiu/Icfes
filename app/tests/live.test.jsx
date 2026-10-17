@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { distribution, leaderboard, pointsFor, scoreQuestion, secondsLeft } from "../src/lib/live.js";
+import { classShare, distribution, pointsFor, resultsCsv, scoreQuestion, secondsLeft } from "../src/lib/live.js";
 import LiveHost from "../src/screens/LiveHost.jsx";
 import LivePlay from "../src/screens/LivePlay.jsx";
 
@@ -30,8 +30,11 @@ describe("live scoring", () => {
     expect(scoreQuestion(s, players, answers, ["B"]).map((x) => x.points)).toEqual([800 + 100, 0]);
     expect(scoreQuestion(s, players, answers, ["B", "C"])[1].points).toBe(Math.round(1000 - 400 / 6));
   });
-  it("ranks players, counts options and runs the countdown against the database clock", () => {
-    expect(leaderboard([{ nickname: "b", score: 5 }, { nickname: "a", score: 9 }]).map((p) => [p.nickname, p.rank])).toEqual([["a", 1], ["b", 2]]);
+  it("shares the class's right answers, never ranks, counts options and runs the countdown against the database clock", () => {
+    expect(classShare([{ option: "A" }, { option: "B" }, { option: "A" }, { option: "C" }], ["A"])).toEqual({ answered: 4, right: 2, pct: 50 });
+    expect(classShare([], ["A"]).pct).toBeNull();
+    expect(resultsCsv("T", [{ nickname: "b", score: 9 }, { nickname: "a", score: 5 }])).not.toMatch(/Puesto/);
+    expect(resultsCsv("T", [{ nickname: "b", score: 9 }, { nickname: "a", score: 5 }]).split("\n").slice(2, 4)).toEqual(["a,5,Invitado", "b,9,Invitado"]);
     expect(distribution([{ option: "A" }, { option: "A" }, { option: "C" }])).toEqual({ A: 2, B: 0, C: 1, D: 0 });
     const s = session({ state: "question", question_started_at: "2026-10-17T10:00:00Z" });
     const t = new Date("2026-10-17T10:00:20Z").getTime();
