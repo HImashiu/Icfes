@@ -1122,6 +1122,8 @@ p.fuente { font-size: 0.78em; line-height: 1.35; text-align: right; margin: 14px
 fieldset.field { border: 0; padding: 0; margin: 0; }
 .b-modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: grid; place-items: start center; padding: 24px 12px; overflow-y: auto; z-index: 50; }
 .b-modal-card { background: var(--bg); border-radius: 16px; padding: 16px; width: min(760px, 100%); display: grid; gap: 12px; }
+.b-modal .q-context, .b-modal .text-dock { position: static; max-height: none; overflow: visible; }
+.b-modal .q-main { display: grid; gap: 12px; }
 @media (max-width: 900px) {
   .b-tabs { display: inline-flex; }
   .b-grid { grid-template-columns: 1fr; }
