@@ -140,7 +140,7 @@ export default function QuestionView({
   // Many questions repeat their passage in stimulus_md, which the group already shows.
   const ownStimulus = question.stimulus_md && question.stimulus_md.trim() !== group?.stimulus_md?.trim();
   const ownInCard = ownStimulus && !(inPane && paneKind === "own");
-  const source = <span className="source">{examLabel ? `${SOURCE_LINE}, ${examLabel}` : SOURCE_LINE}</span>;
+  const source = <span className="source">{question.sourceLine ?? (examLabel ? `${SOURCE_LINE}, ${examLabel}` : SOURCE_LINE)}</span>;
   const pane = inPane && createPortal(
     paneKind === "group" ? (
       <div className="pane-text" aria-label={`Texto para las preguntas ${group.from} a ${group.to}`}>
@@ -258,7 +258,7 @@ export default function QuestionView({
           })}
         </ul>
         {feedback}
-        {report && <ReportError question={question} examLabel={examLabel} />}
+        {report && !question.sourceLine && <ReportError question={question} examLabel={examLabel} />}
         {footer}
       </div>
     </div>

@@ -3,6 +3,7 @@ import QuestionView from "../components/QuestionView.jsx";
 import AiAnalysis from "../components/AiAnalysis.jsx";
 import { weakCompetencias } from "../lib/analytics.js";
 import { KINDS } from "../lib/assignments.js";
+import { TEACHER_ENTRY } from "../lib/teacherExam.js";
 import { areaColor } from "../lib/brand.js";
 import {
   autoPick, bankItems, DIFFICULTY_LABEL, EMPTY_FILTER, facet, filterItems, moveKey, sortByBooklet, summarize, withGroupMates,
@@ -23,7 +24,7 @@ const KIND_HELP = {
 
 // Constructor de asignaciones: explora el banco, filtra, previsualiza, elige a mano o automático, ordena y asigna.
 export default function AssignBuilder({ api, courses, exams, fetchExam, guard, onCancel, onSaved, live = null }) {
-  const ready = exams.filter((e) => e.status !== "proximamente");
+  const ready = [...exams.filter((e) => e.status !== "proximamente"), ...(api.teacherQuestions ? [TEACHER_ENTRY] : [])];
   const cache = useRef(new Map());
   const [slug, setSlug] = useState(ready[0]?.slug ?? "");
   const [bundle, setBundle] = useState(null);

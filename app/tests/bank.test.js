@@ -38,3 +38,17 @@ describe("bank", () => {
     expect(summarize(["1", "2", "5"], items)).toMatchObject({ total: 3, avgDifficulty: 3, noKey: 1, areas: [{ name: "Matemáticas", n: 2 }, { name: "Lectura crítica", n: 1 }] });
   });
 });
+
+import { autopsy } from "../src/lib/analytics.js";
+describe("autopsy", () => {
+  const row = { tema: "Tablas", competencia: "Interpretación", pista: "Lee la tabla por filas", distractores: { A: "Confunde costo con precio", C: "Mira la columna equivocada" } };
+  it("names the most chosen wrong option with the AI note and a re-teach idea", () => {
+    const a = autopsy({ A: 2, B: 5, C: 9, D: 1 }, ["B"], row);
+    expect(a).toMatchObject({ answered: 17, rightPct: 29, topWrong: { letter: "C", n: 9, pct: 53, note: "Mira la columna equivocada" }, idea: "Lee la tabla por filas", tema: "Tablas" });
+  });
+  it("hides the notes when the key is not settled, and handles no answers or no wrong ones", () => {
+    expect(autopsy({ A: 0, B: 4, C: 4 }, ["B"], { ...row, hidden: true }).topWrong.note).toBeNull();
+    expect(autopsy({ A: 0, B: 4 }, ["B"], row).topWrong).toBeNull();
+    expect(autopsy({ A: 0, B: 0 }, ["B"], null).rightPct).toBeNull();
+  });
+});

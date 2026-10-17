@@ -180,3 +180,22 @@ export function weakCompetencias(items, key, attempts, { minAnswered = 8 } = {})
     .map((c) => ({ competencia: c.competencia, answered: c.answered, pct: Math.round((c.correct / c.answered) * 100) }))
     .sort((a, b) => a.pct - b.pct);
 }
+
+// "Error autopsy" for one question: what most people chose instead, why a student might pick it (from the AI notes,
+// when the booklet has them and the key is settled), and a short idea to re-teach. `enrichRow` may be null.
+// counts: { A: n, B: n, ... }, correct: letters that count as right.
+export function autopsy(counts, correct, enrichRow) {
+  const answered = Object.values(counts).reduce((a, b) => a + b, 0);
+  const wrong = Object.entries(counts).filter(([l]) => !correct.includes(l)).sort((a, b) => b[1] - a[1]);
+  const top = wrong[0] && wrong[0][1] > 0 ? wrong[0] : null;
+  const usable = enrichRow && !enrichRow.hidden;
+  const note = top && usable ? enrichRow.distractores?.[top[0]] ?? null : null;
+  return {
+    answered,
+    rightPct: answered ? Math.round((correct.reduce((acc, l) => acc + (counts[l] ?? 0), 0) / answered) * 100) : null,
+    topWrong: top ? { letter: top[0], n: top[1], pct: Math.round((top[1] / answered) * 100), note } : null,
+    tema: enrichRow?.tema ?? null,
+    competencia: enrichRow?.competencia ?? null,
+    idea: usable ? enrichRow.pista ?? enrichRow.afirmacion ?? null : null,
+  };
+}

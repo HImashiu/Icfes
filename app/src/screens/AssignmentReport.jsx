@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { areaAverages, bandFor, histogram, itemsCsv, itemStats, mean, round } from "../lib/analytics.js";
 import { assignmentState, progressRows, questionsForAttempt, resultsCsv } from "../lib/assignments.js";
 import { areaColor } from "../lib/brand.js";
+import QuestionView from "../components/QuestionView.jsx";
+import AutopsyCard from "../components/AutopsyCard.jsx";
 import { Bars, Histogram, Kpi } from "./Dashboard.jsx";
 
 const shortDate = (iso) => new Date(iso).toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "short" });
@@ -17,10 +19,11 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
   const [data, setData] = useState(null);
   const [bundle, setBundle] = useState(null);
   const [allItems, setAllItems] = useState(false);
+  const [board, setBoard] = useState(null);
 
   useEffect(() => {
     guard(async () => {
-      const [members, attempts, b] = await Promise.all([api.listMembers(assignment.course_id), api.assignmentAttempts(assignment.id), fetchExam(assignment.exam_slug)]);
+      const [members, attempts, b] = await Promise.all([api.listMembers(assignment.course_id), api.assignmentAttempts(assignment.id), fetchExam(assignment.exam_slug, assignment.question_keys)]);
       setBundle(b);
       setData({ members, attempts });
     });
@@ -132,9 +135,32 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
               </tbody>
             </table>
           </div>
+          <div className="report-actions no-print"><button type="button" className="secondary" onClick={() => setBoard(0)}>Proyectar la autopsia de las más falladas</button></div>
           {sorted.length > 10 && <button type="button" className="link" onClick={() => setAllItems(!allItems)}>{allItems ? "Ver solo las 10 más falladas" : `Ver las ${sorted.length}`}</button>}
         </div>
       )}
+
+      {board !== null && sorted[board] && bundle && (() => {
+        const it = sorted[board];
+        const q = view.questions.find((x) => x.key === it.key);
+        const top5 = sorted.slice(0, 5);
+        return (
+          <div className="b-modal" role="dialog" aria-modal="true" aria-label="Autopsia de la pregunta">
+            <div className="b-modal-card">
+              <div className="section-head">
+                <strong>Pregunta {it.number} · {board + 1} de {top5.length}</strong>
+                <span>
+                  <button type="button" className="link" disabled={board === 0} onClick={() => setBoard(board - 1)}>Anterior</button>{" "}
+                  <button type="button" className="link" disabled={board >= top5.length - 1} onClick={() => setBoard(board + 1)}>Siguiente</button>{" "}
+                  <button type="button" className="link" onClick={() => setBoard(null)}>Cerrar</button>
+                </span>
+              </div>
+              <AutopsyCard counts={Object.fromEntries((q?.options ?? []).map((o) => [o.letter, it.dist[o.letter] ?? 0]))} correct={it.keyed ? [it.keyed] : []} enrichRow={bundle.enrich?.[String(it.number)]} meta={bundle.enrichMeta} />
+              {q && <QuestionView question={q} answer={null} graded review={{ correctLetter: it.keyed }} figures={bundle.figures} examLabel={bundle.exam.title} report={false} />}
+            </div>
+          </div>
+        );
+      })()}
 
       <span className="caption">Puntaje según la clave preliminar, no oficial.</span>
       <div className="report-actions no-print">

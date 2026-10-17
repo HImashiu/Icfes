@@ -207,3 +207,30 @@ select pg_temp.expect('outsider sees no live data', (select count(*) from live_s
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000b', 'beto@colegio.edu.co');
 select pg_temp.expect('host ends the room', (select state from live_end((select id from _ls))) = 'ended');
 select pg_temp.expect('clock', live_now() is not null);
+
+-- 12. teacher questions: owner and school-shared staff, students only through an assignment, never other schools
+reset role;
+update profiles set role = 'school_admin' where id = '00000000-0000-0000-0000-00000000000b';  -- beto is the admin of Colegio for this section
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'ana@colegio.edu.co');
+insert into teacher_questions (id, school_id, owner_id, area, question_json, answer) values
+ ('55555555-5555-5555-5555-555555555551', '11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-00000000000a', 'Matemáticas', '{"stem_md":"2+2","options":[]}', 'B'),
+ ('55555555-5555-5555-5555-555555555552', '11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-00000000000a', 'Matemáticas', '{"stem_md":"3+3","options":[]}', 'C');
+update teacher_questions set visibility = 'school' where id = '55555555-5555-5555-5555-555555555552';
+do $$ begin
+  insert into teacher_questions (school_id, owner_id, area, question_json, answer) values ('22222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-00000000000a', '', '{}', 'A');
+  raise exception 'FAILED: question created in another school';
+exception when insufficient_privilege then null; when others then if sqlstate <> '42501' then raise; end if; end $$;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b', 'beto@colegio.edu.co');
+select pg_temp.expect('staff sees only the shared question', (select count(*) from teacher_questions) = 1);
+do $$ begin update teacher_questions set answer = 'D' where id = '55555555-5555-5555-5555-555555555552';
+  if found then raise exception 'FAILED: another teacher edited a question'; end if; end $$;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c', 'cami@colegio.edu.co');
+select pg_temp.expect('student sees none before an assignment', (select count(*) from teacher_questions) = 0);
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'ana@colegio.edu.co');
+insert into assignments (course_id, created_by, kind, title, exam_slug, scope, question_keys)
+values ('33333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-00000000000a', 'task', 'Propias', 'teacher', 'all', array['55555555-5555-5555-5555-555555555551']);
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c', 'cami@colegio.edu.co');
+select pg_temp.expect('student sees only the assigned question', (select count(*) from teacher_questions) = 1
+  and (select id from teacher_questions) = '55555555-5555-5555-5555-555555555551');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d', 'dora@otro.edu.co');
+select pg_temp.expect('other school sees none', (select count(*) from teacher_questions) = 0);

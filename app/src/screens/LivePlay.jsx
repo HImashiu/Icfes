@@ -55,7 +55,7 @@ export default function LivePlay({ api, initial, nickname, fetchExam, onExit }) 
   const sent = useRef(new Set());
 
   useEffect(() => { api.myPlayerId().then(setMe); }, [api]);
-  useEffect(() => { fetchExam(initial.exam_slug).then(setBundle).catch((e) => setError(e.message)); }, [fetchExam, initial.exam_slug]);
+  useEffect(() => { fetchExam(initial.exam_slug, initial.question_keys).then(setBundle).catch((e) => setError(e.message)); }, [fetchExam, initial.exam_slug]);
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 500); return () => clearInterval(t); }, []);
   // Calibrate the countdown against the database clock, now and every half minute.
   usePoll(async () => {

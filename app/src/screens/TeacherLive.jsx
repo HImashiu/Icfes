@@ -6,12 +6,14 @@ import { CONSENT_VERSION, GUARDIAN_TEXT, hasGuardianAuth } from "../lib/consent.
 import AssignBuilder from "./AssignBuilder.jsx";
 import AssignmentReport from "./AssignmentReport.jsx";
 import Dashboard from "./Dashboard.jsx";
+import QuestionBuilder from "./QuestionBuilder.jsx";
 import { LiveSection } from "./LiveHost.jsx";
 
 const NAV = [
   { label: "Resumen", section: "home" },
   { label: "Cursos y estudiantes", section: "courses" },
   { label: "Asignaciones", section: "assign" },
+  { label: "Mis preguntas", section: "questions" },
   { label: "En vivo", section: "live" },
   { label: "Docentes", section: "staff", admin: true },
   { label: "Ajustes", section: "settings", admin: true },
@@ -67,6 +69,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
         {section === "assign" && (
           <Assignments api={api} courses={courses} assignments={assignments} exams={exams} fetchExam={fetchExam} reload={reload} guard={guard} setNotice={setNotice} />
         )}
+        {section === "questions" && <QuestionBuilder api={api} profile={profile} guard={guard} setNotice={setNotice} />}
         {section === "live" && <LiveSection api={api} courses={courses} exams={exams} fetchExam={fetchExam} guard={guard} AssignBuilder={AssignBuilder} />}
         {section === "staff" && <Staff api={api} profile={profile} guard={guard} setNotice={setNotice} />}
         {section === "settings" && <Settings api={api} profile={profile} guard={guard} setNotice={setNotice} />}

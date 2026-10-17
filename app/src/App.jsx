@@ -21,6 +21,7 @@ import { linkFigures, parseFigureSpecs, prepareExam } from "./lib/figures.js";
 import { applyTheme, currentTheme } from "./lib/theme.js";
 import { useAuth } from "./lib/auth.jsx";
 import Consent from "./screens/Consent.jsx";
+import { TEACHER_SLUG, teacherExam } from "./lib/teacherExam.js";
 import LivePlay, { LiveJoin } from "./screens/LivePlay.jsx";
 import { CONSENT_VERSION, needsTerms } from "./lib/consent.js";
 import { attemptForAssignment, attemptRow, attemptsLeft, questionsForAttempt, revealAllowed } from "./lib/assignments.js";
@@ -81,7 +82,12 @@ export default function App() {
   }, []);
 
   // The index says whether a key and figures exist, so missing files are never requested.
-  const fetchExam = useCallback(async (slug) => {
+  const fetchExam = useCallback(async (slug, keys = null) => {
+    // Questions written by teachers come from the database, in the order of the assignment's keys.
+    if (slug === TEACHER_SLUG) {
+      if (!auth.api) throw new Error("Las preguntas de docentes necesitan una cuenta.");
+      return teacherExam(keys ? await auth.api.teacherQuestionsByIds(keys) : await auth.api.teacherQuestions(), keys);
+    }
     const entry = exams?.find((e) => e.slug === slug);
     if (!entry || entry.status === "proximamente") throw new Error("Ese cuadernillo todavía no está disponible.");
     const [raw, rawKey, rawFigures, rawSidecar, rawEnrich] = await Promise.all([
@@ -103,15 +109,15 @@ export default function App() {
       enrichMeta: rawEnrich ? { note: rawEnrich.note, estimated: rawEnrich.estimated } : null,
       figures,
     };
-  }, [exams]);
+  }, [exams, auth.api]);
 
-  const openExam = useCallback(async (slug) => {
+  const openExam = useCallback(async (slug, keys = null) => {
     setOpenError(null);
     const entry = exams?.find((e) => e.slug === slug);
-    if (!entry || entry.status === "proximamente") return null;
+    if (slug !== TEACHER_SLUG && (!entry || entry.status === "proximamente")) return null;
     setOpening(true);
     try {
-      const next = await fetchExam(slug);
+      const next = await fetchExam(slug, keys);
       setSelected(next);
       return next;
     } catch (err) {
@@ -177,7 +183,7 @@ export default function App() {
   }, [signedIn, auth.api]);
 
   const startAssigned = async (a) => {
-    const sel = await openExam(a.exam_slug);
+    const sel = await openExam(a.exam_slug, a.question_keys);
     if (!sel) return;
     const saved = loadAttempt(a.exam_slug, `asg-${a.id}`);
     if (saved && !saved.submittedAt) {

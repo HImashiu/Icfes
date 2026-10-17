@@ -88,6 +88,22 @@ export function createApi(client) {
       return unwrap(await client.rpc("set_profile_role", { p_profile: profileId, p_role: role }));
     },
 
+    // Teacher-written questions. Row-level security returns the ones this person may read.
+    async teacherQuestions() {
+      return unwrap(await client.from("teacher_questions").select("*").order("created_at", { ascending: false }));
+    },
+    async teacherQuestionsByIds(ids) {
+      if (!ids?.length) return [];
+      return unwrap(await client.from("teacher_questions").select("*").in("id", ids));
+    },
+    async saveTeacherQuestion(row, id = null) {
+      const q = client.from("teacher_questions");
+      return unwrap(id ? await q.update(row).eq("id", id).select().single() : await q.insert(row).select().single());
+    },
+    async deleteTeacherQuestion(id) {
+      unwrap(await client.from("teacher_questions").delete().eq("id", id));
+    },
+
     // Live answering. The database clock decides when a question opens and closes.
     async liveNow() {
       return unwrap(await client.rpc("live_now"));

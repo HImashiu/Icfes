@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import QuestionView from "../components/QuestionView.jsx";
 import { distribution, LETTERS, leaderboard, liveMessage, resultsCsv, scoreQuestion, secondsLeft } from "../lib/live.js";
 import { usePoll } from "../lib/poll.js";
+import AutopsyCard from "../components/AutopsyCard.jsx";
 import { Bars } from "./Dashboard.jsx";
 
 function download(name, text) {
@@ -24,7 +25,7 @@ export default function LiveHost({ api, initial, fetchExam, guard, onExit }) {
   const [busy, setBusy] = useState(false);
   const closing = useRef(null);
 
-  useEffect(() => { guard(() => fetchExam(initial.exam_slug)).then((b) => setBundle(b ?? null)); }, [fetchExam, initial.exam_slug, guard]);
+  useEffect(() => { guard(() => fetchExam(initial.exam_slug, initial.question_keys)).then((b) => setBundle(b ?? null)); }, [fetchExam, initial.exam_slug, guard]);
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 500); return () => clearInterval(t); }, []);
   usePoll(async () => {
     const t0 = Date.now();
@@ -134,6 +135,8 @@ export default function LiveHost({ api, initial, fetchExam, guard, onExit }) {
             <div className="card t-card"><strong>Los mejores</strong>
               <ol className="live-board">{board.slice(0, 5).map((p) => <li key={p.player_id}><span>{p.rank}. {p.nickname}{p.streak > 1 ? ` · racha ${p.streak}` : ""}</span><strong>{p.score}</strong></li>)}</ol></div>
           </div>
+          <div className="card t-card"><strong>Autopsia de la pregunta</strong>
+            <AutopsyCard counts={dist} correct={session.current_correct} enrichRow={bundle.enrich?.[String(q.number)]} meta={bundle.enrichMeta} /></div>
           <QuestionView question={q} answer={null} graded review={{ correctLetter: session.current_correct[0] ?? null }} figures={bundle.figures} examLabel={bundle.exam.title} report={false} />
         </>
       )}
