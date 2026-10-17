@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Mascot from "../components/Mascot.jsx";
+import Logo from "../components/Logo.jsx";
 import Icon from "../components/Icon.jsx";
 import CountUp from "../components/CountUp.jsx";
 import { APP_NAME, MASCOT_NAME, areaColor } from "../lib/brand.js";
@@ -46,50 +47,84 @@ function SampleTag({ children = "Datos de ejemplo" }) {
   return <span className="pz-sample">{children}</span>;
 }
 
+// A list in the look of the app's answer options: an icon tile, a bold line and an optional second line.
+function Features({ items, d = 0.15, compact = false }) {
+  return (
+    <ul className={`pz-feats${compact ? " compact" : ""}`}>
+      {items.map(([icon, title, sub], i) => (
+        <li key={title} className="option pz-feat pz-rise" style={{ animationDelay: `${d + i * 0.08}s` }}>
+          <span className="letter-tile"><Icon name={icon} size={compact ? 20 : 24} /></span>
+          <span className="pz-feat-body"><strong>{title}</strong>{sub && <span>{sub}</span>}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// Cóndi says the punchline, like the tips on the home screen.
+function Tip({ children, d = 0.5 }) {
+  return (
+    <Rise className="pz-tip" d={d}>
+      <Logo size={64} />
+      <p className="pz-bubble">{children}</p>
+    </Rise>
+  );
+}
+
 /* ---------- Slides ---------- */
 
 function Cover() {
   return (
     <div className="pz-cover">
       <div className="pz-cover-text">
-        <Rise className="pz-brand"><span className="pz-logo-dot" />{APP_NAME}</Rise>
+        <Rise className="pz-brand"><Logo size={56} />{APP_NAME}</Rise>
         <Rise as="h1" className="pz-hero" d={0.08}>
           Preparación <span className="accent-text">Saber 11</span> para todo tu colegio
         </Rise>
         <Rise as="p" className="pz-lead" d={0.16}>
-          Práctica con preguntas reales del ICFES, explicaciones con IA y un panel para docentes y coordinación.
+          Preguntas reales del ICFES, explicaciones con IA y un panel para docentes y coordinación.
         </Rise>
         <Rise className="pz-pills" d={0.24}>
-          <span className="pill"><Icon name="book" size={18} className="accent-ico" /> Estudiantes</span>
-          <span className="pill"><Icon name="pencil" size={18} className="accent-ico" /> Docentes</span>
-          <span className="pill"><Icon name="school" size={18} className="accent-ico" /> Coordinación</span>
+          <span className="pill"><Icon name="book" size={20} className="accent-ico" /> Estudiantes</span>
+          <span className="pill"><Icon name="pencil" size={20} className="accent-ico" /> Docentes</span>
+          <span className="pill"><Icon name="school" size={20} className="accent-ico" /> Coordinación</span>
         </Rise>
       </div>
       <div className="pz-cover-art pz-pop">
         <div className="pz-halo" />
-        <Mascot size={420} idle />
+        <Logo size={460} className="pz-bob" />
       </div>
     </div>
   );
 }
 
 function Problem() {
-  const items = [
-    { icon: "clock", title: "Poco tiempo para preparar", text: "Armar, imprimir y calificar un simulacro le quita días a cada docente." },
-    { icon: "chart", title: "Resultados tarde", text: "El colegio se entera de cómo le fue a cada curso cuando ya no hay tiempo de reforzar." },
-    { icon: "flame", title: "Motivación que se apaga", text: "Practicar solo con fotocopias es aburrido y nadie ve su avance." },
+  const step = useSteps([900, 1400, 1900]);
+  const rows = [
+    ["Calificar 40 hojas a mano toma una tarde entera", "Fotos con el celular y queda calificado"],
+    ["El colegio ve los resultados cuando ya es tarde", "Panel por curso y por área cada semana"],
+    ["Practicar con fotocopias aburre y nadie ve su avance", "Racha, XP y celebración en cada acierto"],
   ];
   return (
     <div className="pz-pad">
       <Kicker icon="flag">El reto</Kicker>
-      <Title>El Saber 11 define becas y admisiones, pero prepararlo bien cuesta mucho</Title>
-      <div className="pz-grid3">
-        {items.map((it, i) => (
-          <Rise key={it.title} className="card pz-card" d={0.15 + i * 0.08}>
-            <span className="pz-ico"><Icon name={it.icon} size={34} /></span>
-            <strong className="pz-card-title">{it.title}</strong>
-            <p className="pz-card-text">{it.text}</p>
-          </Rise>
+      <Title>El Saber 11 define becas y admisiones, pero <span className="accent-text">prepararlo cuesta mucho</span></Title>
+      <div className="pz-vs">
+        <Rise className="pz-vs-head" d={0.1}><span className="label">Hoy</span><span className="label accent-text">Con {APP_NAME}</span></Rise>
+        {rows.map(([bad, ok], i) => (
+          <div key={bad} className="pz-vs-row">
+            <Rise className="feedback bad pz-verdict" d={0.15 + i * 0.1}>
+              <span className="verdict-ico"><Icon name="x" size={22} /></span>
+              <div><strong>{bad}</strong></div>
+            </Rise>
+            <Icon name="arrow" size={30} className={`pz-vs-arrow${step > i ? " on" : ""}`} />
+            {step > i ? (
+              <div className="feedback ok pz-verdict pz-pop-fast">
+                <span className="verdict-ico"><Icon name="check" size={22} /></span>
+                <div><strong>{ok}</strong></div>
+              </div>
+            ) : <div className="pz-verdict pz-ghost" />}
+          </div>
         ))}
       </div>
     </div>
@@ -97,25 +132,57 @@ function Problem() {
 }
 
 function WhatIs() {
-  const cols = [
-    { icon: "book", who: "Estudiantes", lines: ["Practican desde el celular o el computador", "Explicación de cada respuesta", "Racha y XP para volver cada día"] },
-    { icon: "pencil", who: "Docentes", lines: ["Asignan tareas y simulacros en minutos", "Juego en vivo en clase", "Simulacros en papel calificados con fotos"] },
-    { icon: "school", who: "Coordinación", lines: ["Panel de todo el colegio por área", "Alertas de quién se está quedando", "Informes para las familias"] },
-  ];
+  const days = ["L", "M", "M", "J", "V", "S", "D"];
   return (
     <div className="pz-pad">
       <Kicker icon="bolt">Qué es {APP_NAME}</Kicker>
-      <Title>Una sola plataforma para quien practica, quien enseña y quien dirige</Title>
-      <div className="pz-grid3">
-        {cols.map((c, i) => (
-          <Rise key={c.who} className="card pz-card" d={0.15 + i * 0.1}>
-            <span className="pz-ico"><Icon name={c.icon} size={34} /></span>
-            <strong className="pz-card-title">{c.who}</strong>
-            <ul className="pz-checks">
-              {c.lines.map((l) => <li key={l}><Icon name="check" size={20} />{l}</li>)}
-            </ul>
-          </Rise>
-        ))}
+      <Title>Una sola app para quien <span className="accent-text">practica</span>, quien <span className="accent-text">enseña</span> y quien <span className="accent-text">dirige</span></Title>
+      <div className="pz-roles">
+        <Rise className="pz-role" d={0.15}>
+          <div className="pz-role-head"><span className="letter-tile"><Icon name="book" size={24} /></span><strong>Estudiantes</strong></div>
+          <div className="card streak-card pz-mini">
+            <div>
+              <span className="label">Racha</span>
+              <p className="display"><Icon name="flame" size={28} className="flame-ico" /> 12 días</p>
+              <div className="week-row">
+                {days.map((d, i) => <span key={i} className={`day ${i < 4 ? "done" : i === 4 ? "today" : "future"}`} style={{ animationDelay: `${0.5 + i * 0.07}s` }}>{d}</span>)}
+              </div>
+            </div>
+          </div>
+          <span className="primary pz-mini-btn">Seguir practicando <Icon name="arrow" size={20} /></span>
+          <p className="pz-role-sub">Practican en el celular o el computador, con explicación de cada respuesta.</p>
+        </Rise>
+        <Rise className="pz-role" d={0.25}>
+          <div className="pz-role-head"><span className="letter-tile"><Icon name="pencil" size={24} /></span><strong>Docentes</strong></div>
+          <div className="card pz-mini">
+            <span className="label">Asignaciones</span>
+            {[["Matemáticas", "Simulacro · 11-A", 18, 24], ["Lectura crítica", "Tarea · 11-B", 27, 30]].map(([a, t, n, of], i) => (
+              <div key={t} className="pz-asg">
+                <span className="assign-tile" style={{ background: areaColor(a) }} />
+                <div><strong>{a}</strong><span className="caption">{t}</span>
+                  <div className="progress thin"><span className="pz-grow" style={{ width: `${(n / of) * 100}%`, animationDelay: `${0.6 + i * 0.15}s` }} /></div>
+                </div>
+                <span className="pz-asg-n">{n}/{of}</span>
+              </div>
+            ))}
+          </div>
+          <span className="secondary pz-mini-btn">Nueva asignación</span>
+          <p className="pz-role-sub">Asignan en minutos, juegan en vivo y califican el papel con fotos.</p>
+        </Rise>
+        <Rise className="pz-role" d={0.35}>
+          <div className="pz-role-head"><span className="letter-tile"><Icon name="school" size={24} /></span><strong>Coordinación</strong></div>
+          <div className="card pz-mini">
+            <span className="label">Resumen del colegio</span>
+            {AREAS.slice(0, 3).map(([a, p], i) => (
+              <div key={a} className="area-row">
+                <div className="area-row-head"><span><span className="dot" style={{ background: areaColor(a) }} />{a}</span><span>{p} %</span></div>
+                <div className="progress thin"><span className="pz-grow" style={{ width: `${p}%`, background: areaColor(a), animationDelay: `${0.7 + i * 0.1}s` }} /></div>
+              </div>
+            ))}
+          </div>
+          <span className="pz-alert-pill"><Icon name="flag" size={18} /> 3 alertas esta semana</span>
+          <p className="pz-role-sub">Ven todo el colegio por área, quién se está quedando y qué reforzar.</p>
+        </Rise>
       </div>
     </div>
   );
@@ -141,13 +208,13 @@ function Practice() {
     <div className="pz-split">
       <div className="pz-split-text">
         <Kicker icon="book">Práctica</Kicker>
-        <Title>Preguntas reales del ICFES, como en el examen</Title>
-        <Rise as="ul" className="pz-checks big" d={0.15}>
-          <li><Icon name="check" size={24} />Cuadernillos oficiales publicados, con sus textos, gráficas y tablas</li>
-          <li><Icon name="check" size={24} />Por área o examen completo, en práctica o con tiempo</li>
-          <li><Icon name="check" size={24} />Corrección al instante, con sonido y celebración</li>
-          <li><Icon name="check" size={24} />Cada pregunta dice su fuente: ICFES, Saber 11. Practicar es gratis</li>
-        </Rise>
+        <Title>Preguntas <span className="accent-text">reales</span> del ICFES, como en el examen</Title>
+        <Features items={[
+          ["book", "Cuadernillos oficiales", "Con sus textos, gráficas y tablas"],
+          ["clock", "Por área o completo", "En práctica o con tiempo"],
+          ["check", "Corrección al instante", "Con sonido y celebración"],
+        ]} />
+        <Tip>Cada pregunta dice su fuente: ICFES, Saber 11. ¡Practicar es gratis!</Tip>
       </div>
       <Rise className="pz-device" d={0.2}>
         <div className="paper-card pz-q">
@@ -183,13 +250,13 @@ function Explain() {
     <div className="pz-split">
       <div className="pz-split-text">
         <Kicker icon="bulb">Explicaciones con IA</Kicker>
-        <Title>Cada error se vuelve una lección</Title>
-        <Rise as="ul" className="pz-checks big" d={0.15}>
-          <li><Icon name="check" size={24} />Una pista antes de responder, si el docente la permite</li>
-          <li><Icon name="check" size={24} />Por qué la correcta es correcta</li>
-          <li><Icon name="check" size={24} />Por qué cada opción equivocada engaña</li>
-          <li><Icon name="check" size={24} />Competencia, tema y dificultad de cada pregunta</li>
-        </Rise>
+        <Title>Cada error se vuelve una <span className="accent-text">lección</span></Title>
+        <Features items={[
+          ["bulb", "Pista antes de responder", "Si el docente la permite"],
+          ["check", "Por qué la correcta es correcta", "Paso a paso"],
+          ["x", "Por qué engaña cada trampa", "Una línea por opción"],
+          ["chart", "Competencia y dificultad", "De cada pregunta"],
+        ]} />
       </div>
       <div className="pz-stack">
         <Rise className="card pz-hint" d={0.2}>
@@ -221,11 +288,12 @@ function Motivation() {
     <div className="pz-split">
       <div className="pz-split-text">
         <Kicker icon="flame">Motivación</Kicker>
-        <Title>Ganas de volver, sin rankings entre compañeros</Title>
-        <Rise as="p" className="pz-lead" d={0.15}>
-          Cada estudiante compite consigo mismo: racha de días, XP y metas semanales. No hay tablas de posiciones que
-          dejen a nadie de último.
-        </Rise>
+        <Title>Ganas de volver, <span className="accent-text">sin rankings</span></Title>
+        <Features items={[
+          ["flame", "Racha de días", "Volver cada día se nota"],
+          ["bolt", "XP y metas semanales", "Cada acierto suma"],
+          ["users", "Cada uno contra sí mismo", "Sin tablas de posiciones: nadie queda de último"],
+        ]} />
       </div>
       <div className="pz-stack">
         <Rise className="card streak-card pz-streak" d={0.2}>
@@ -255,13 +323,13 @@ function Assign() {
     <div className="pz-split">
       <div className="pz-split-text">
         <Kicker icon="pencil">Para docentes</Kicker>
-        <Title>Una tarea lista en tres clics</Title>
-        <Rise as="ul" className="pz-checks big" d={0.15}>
-          <li><Icon name="check" size={24} />Filtra por área, competencia y dificultad</li>
-          <li><Icon name="check" size={24} />Decide si hay pistas y si se corrige al instante o al final</li>
-          <li><Icon name="check" size={24} />Escribe tus propias preguntas y mézclalas con las del ICFES</li>
-          <li><Icon name="check" size={24} />Fecha de entrega, intentos y avance en vivo</li>
-        </Rise>
+        <Title>Una tarea lista en <span className="accent-text">tres clics</span></Title>
+        <Features items={[
+          ["map", "Filtra lo que necesitas", "Área, competencia y dificultad"],
+          ["bulb", "Tú decides las reglas", "Pistas, corrección al instante o al final"],
+          ["pencil", "Tus propias preguntas", "Mézclalas con las del ICFES"],
+          ["clock", "Avance en vivo", "Fecha de entrega e intentos"],
+        ]} />
       </div>
       <Rise className="card pz-builder" d={0.2}>
         <span className="label">Nueva asignación · 11-A</span>
@@ -297,11 +365,12 @@ function Live() {
     <div className="pz-split">
       <div className="pz-split-text">
         <Kicker icon="play">Juego en vivo</Kicker>
-        <Title>La clase entera responde desde el celular</Title>
-        <Rise as="p" className="pz-lead" d={0.15}>
-          El docente proyecta la pregunta, los estudiantes entran con un código y al cerrar cada pregunta se ve qué
-          eligió el curso. Sin puntajes públicos: lo que se celebra es el acierto del grupo.
-        </Rise>
+        <Title>La clase entera responde <span className="accent-text">desde el celular</span></Title>
+        <Features items={[
+          ["play", "Entran con un código", "El docente proyecta la pregunta"],
+          ["chart", "Qué eligió el curso", "Al cerrar cada pregunta"],
+          ["users", "Sin puntajes públicos", "Se celebra el acierto del grupo"],
+        ]} />
       </div>
       <Rise className="card pz-live" d={0.2}>
         <span className="label">Entra a {APP_NAME}, toca “Juego en vivo” y escribe el código</span>
@@ -411,12 +480,12 @@ function Autopsy() {
     <div className="pz-split">
       <div className="pz-split-text">
         <Kicker icon="map">Autopsia y refuerzo</Kicker>
-        <Title>Saber por qué fallan, y darle a cada uno lo que necesita</Title>
-        <Rise as="ul" className="pz-checks big" d={0.15}>
-          <li><Icon name="check" size={24} />Las preguntas más falladas, con la opción trampa que más eligieron</li>
-          <li><Icon name="check" size={24} />Refuerzo personal: un set distinto para cada estudiante</li>
-          <li><Icon name="check" size={24} />Armado con sus errores y sus dos competencias más débiles</li>
-        </Rise>
+        <Title>Saber <span className="accent-text">por qué</span> fallan y darle a cada uno lo que necesita</Title>
+        <Features items={[
+          ["map", "Las más falladas", "Con la opción trampa que más eligieron"],
+          ["bolt", "Refuerzo personal", "Un set distinto para cada estudiante"],
+          ["chart", "Armado con sus errores", "Y sus dos competencias más débiles"],
+        ]} />
       </div>
       <div className="pz-stack">
         <Rise className="card pz-autopsy" d={0.2}>
@@ -445,11 +514,13 @@ function Families() {
     <div className="pz-split">
       <div className="pz-split-text">
         <Kicker icon="chat">Familias</Kicker>
-        <Title>Las familias ven el avance, sin crear cuentas</Title>
-        <Rise as="p" className="pz-lead" d={0.15}>
-          Un clic y el docente comparte por WhatsApp un informe claro: cómo va por área, en qué es fuerte y qué practicar
-          esta semana. El enlace vence y el colegio puede retirarlo.
-        </Rise>
+        <Title>Las familias ven el avance, <span className="accent-text">sin crear cuentas</span></Title>
+        <Features items={[
+          ["chat", "Un clic por WhatsApp", "El docente comparte el informe"],
+          ["chart", "Cómo va por área", "Y en qué es fuerte"],
+          ["bulb", "Qué practicar esta semana", "Un consejo concreto"],
+          ["shield", "El enlace vence", "Y el colegio puede retirarlo"],
+        ]} />
       </div>
       <Rise className="pz-phone" d={0.2}>
         <div className="pz-phone-screen">
@@ -476,46 +547,64 @@ function Families() {
 }
 
 function Accounts() {
-  const items = [
-    { icon: "school", t: "Ingreso con Google del colegio", s: "Cada estudiante entra con su correo institucional. Sin contraseñas nuevas." },
-    { icon: "users", t: "Cursos en minutos", s: "Pega la lista o sube un CSV con nombre, apellidos y correo." },
-    { icon: "shield", t: "Datos protegidos", s: "Consentimiento de datos de menores y acceso solo para el colegio." },
-    { icon: "user", t: "Roles claros", s: "Estudiante, docente y coordinación ven solo lo que les corresponde." },
-  ];
+  const step = useSteps([1200, 1500, 1800, 2100, 2400]);
+  const roster = ["Ana Gómez", "Bruno Díaz", "Carla Ruiz", "David Mora", "Elena Paz"];
   return (
-    <div className="pz-pad">
-      <Kicker icon="shield">Cuentas del colegio</Kicker>
-      <Title>Fácil de empezar, seguro para los estudiantes</Title>
-      <div className="pz-grid2">
-        {items.map((it, i) => (
-          <Rise key={it.t} className="card pz-card row" d={0.15 + i * 0.08}>
-            <span className="pz-ico"><Icon name={it.icon} size={34} /></span>
-            <div><strong className="pz-card-title">{it.t}</strong><p className="pz-card-text">{it.s}</p></div>
-          </Rise>
-        ))}
+    <div className="pz-split">
+      <div className="pz-split-text">
+        <Kicker icon="shield">Cuentas del colegio</Kicker>
+        <Title>Fácil de empezar, <span className="accent-text">seguro</span> para los estudiantes</Title>
+        <Features items={[
+          ["school", "Ingreso con Google del colegio", "El correo institucional, sin contraseñas nuevas"],
+          ["users", "Cursos en minutos", "Pega la lista o sube un CSV"],
+          ["shield", "Datos protegidos", "Consentimiento de menores y acceso solo del colegio"],
+          ["user", "Roles claros", "Cada quien ve solo lo suyo"],
+        ]} />
+      </div>
+      <div className="pz-stack">
+        <Rise className="card pz-login" d={0.2}>
+          <Logo size={72} />
+          <strong className="pz-login-title">Usa la cuenta de tu colegio</strong>
+          <span className="caption">Con tu cuenta ves las tareas de tu curso y tu docente ve cómo vas.</span>
+          <span className={`primary pz-google${step >= 1 ? " pressed" : ""}`}><span className="pz-g">G</span> Continuar con Google</span>
+        </Rise>
+        <Rise className="card pz-roster" d={0.35}>
+          <div className="card-row"><span className="label">11-A · importado desde CSV</span><span className="badge ok">{Math.max(0, step - 1) * 8} estudiantes</span></div>
+          <div className="pz-roster-list">
+            {roster.slice(0, Math.max(0, step)).map((n) => (
+              <span key={n} className="pz-person"><span className="avatar">{n[0]}</span>{n}</span>
+            ))}
+          </div>
+        </Rise>
       </div>
     </div>
   );
 }
 
 function Model() {
-  const paid = ["Panel del colegio y de cada curso", "Asignaciones, juego en vivo y simulacros en papel", "Explicaciones, pistas y refuerzo personal", "Preguntas limpias, gráficas nítidas y claves de respuesta", "Acompañamiento para arrancar"];
   return (
     <div className="pz-pad">
       <Kicker icon="bolt">Modelo</Kicker>
-      <Title>Las preguntas son gratis. El colegio paga por la plataforma</Title>
+      <Title>Las preguntas son <span className="accent-text">gratis</span>. El colegio paga por la plataforma</Title>
       <div className="pz-model">
-        <Rise className="card pz-free" d={0.15}>
+        <Rise className="pz-free" d={0.15}>
           <span className="label">Siempre gratis</span>
-          <strong className="pz-card-title">Preguntas del ICFES</strong>
-          <p className="pz-card-text">Son un recurso público. En {APP_NAME} cada una lleva su fuente: “ICFES, Saber 11”.</p>
+          <div className="paper-card pz-q">
+            <span className="card-label">Preguntas del ICFES</span>
+            <p className="stem">Son un recurso público. Cualquier estudiante puede practicarlas en {APP_NAME} sin pagar.</p>
+            <span className="source">Fuente: ICFES, Saber 11</span>
+          </div>
         </Rise>
         <Rise className="card pz-paid" d={0.25}>
           <span className="label accent-text">Licencia del colegio</span>
           <strong className="pz-card-title">Todo el trabajo detrás</strong>
-          <ul className="pz-checks">
-            {paid.map((p) => <li key={p}><Icon name="check" size={20} />{p}</li>)}
-          </ul>
+          <Features compact d={0.35} items={[
+            ["chart", "Panel del colegio y de cada curso"],
+            ["pencil", "Asignaciones, juego en vivo y papel"],
+            ["bulb", "Explicaciones, pistas y refuerzo personal"],
+            ["book", "Preguntas limpias y gráficas nítidas"],
+            ["users", "Acompañamiento para arrancar"],
+          ]} />
         </Rise>
       </div>
     </div>
@@ -528,22 +617,22 @@ function Start() {
     const id = setTimeout(() => { confetti(ref.current, { count: 50, spread: 1.4 }); play("finish"); }, 700);
     return () => clearTimeout(id);
   }, []);
-  const steps = ["Creamos las cuentas del colegio", "Cargamos los cursos de grado 11", "Primer simulacro en la app o en papel", "Revisamos juntos el primer informe"];
   return (
     <div className="pz-cover">
       <div className="pz-cover-text">
         <Kicker icon="arrow">Cómo empezamos</Kicker>
         <Rise as="h2" className="pz-hero small" d={0.05}>Un piloto con un curso, <span className="accent-text">esta misma semana</span></Rise>
-        <ol className="pz-start">
-          {steps.map((s, i) => (
-            <Rise as="li" key={s} d={0.15 + i * 0.08}><span className="pz-step-n">{i + 1}</span>{s}</Rise>
-          ))}
-        </ol>
+        <Features d={0.15} items={[
+          ["school", "Creamos las cuentas del colegio"],
+          ["users", "Cargamos los cursos de grado 11"],
+          ["print", "Primer simulacro en la app o en papel"],
+          ["chart", "Revisamos juntos el primer informe"],
+        ]} />
         <Rise d={0.5}><span className="primary pz-cta">Probemos {APP_NAME} en tu colegio <Icon name="arrow" size={22} /></span></Rise>
       </div>
       <div className="pz-cover-art pz-pop" ref={ref}>
         <div className="pz-halo" />
-        <Mascot size={400} pose="celebrating" />
+        <Logo size={420} className="pz-bob" />
       </div>
     </div>
   );
@@ -647,7 +736,7 @@ export default function Presentation({ onExit }) {
           <C />
         </section>
         <footer className="pz-foot">
-          <span className="pz-foot-brand"><Mascot size={36} /> {APP_NAME} · Saber 11</span>
+          <span className="pz-foot-brand"><Logo size={36} /> {APP_NAME} · Saber 11</span>
           {SLIDES[i].sample && <SampleTag />}
           <span className="pz-foot-n">{i + 1} / {SLIDES.length}</span>
         </footer>

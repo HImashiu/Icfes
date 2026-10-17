@@ -438,7 +438,8 @@ select.booklet-pick {
   background: var(--side); border-right: 1px solid var(--line); padding: 20px 16px;
   display: flex; flex-direction: column; gap: 6px;
 }
-.t-logo { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 20px; padding: 4px 8px 16px; color: var(--accent-ink); }
+.t-logo { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 20px; padding: 4px 8px 16px; color: var(--accent-ink); display: flex; align-items: center; gap: 8px; }
+.logo { display: block; flex: none; border-radius: 50%; }
 .t-nav {
   position: relative; min-height: 44px; border: 0; background: transparent; color: var(--text-2);
   text-align: left; padding: 0 12px; border-radius: 12px; font-weight: 600;

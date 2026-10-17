@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import Logo from "../components/Logo.jsx";
 import Icon from "../components/Icon.jsx";
 import { SAMPLE_ROSTER, SAMPLE_TEACHER, TEACHER_AREAS } from "../data/mock.js";
 import { addAssignment, loadAssignments } from "../lib/local.js";
@@ -169,7 +170,7 @@ export default function Teacher({ onExit }) {
   return (
     <div className="teacher">
       <aside className="t-side" aria-label="Navegación docente">
-        <strong className="t-logo">Cóndor</strong>
+        <strong className="t-logo"><Logo size={30} /> Cóndor</strong>
         <nav>
           {NAV.map((item) => {
             const active = section === item.section;

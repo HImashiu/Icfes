@@ -1,7 +1,6 @@
 /* Sales deck (#presentacion). A fixed 1600×900 stage scaled to the screen; built on the app tokens and classes. */
 .pz-deck {
   position: fixed; inset: 0; overflow: hidden; background: var(--bg); color: var(--text);
-  background-image: radial-gradient(1200px 700px at 85% 10%, var(--accent-soft), transparent 60%);
   user-select: none; -webkit-user-select: none; touch-action: pan-y;
 }
 .pz-deck .pz-stage { position: absolute; left: 50%; top: 50%; transform-origin: center; }
@@ -35,7 +34,7 @@
 }
 .pz-deck .pz-hero.small { font-size: 72px; }
 .pz-deck .pz-lead { font-size: 28px; line-height: 1.4; color: var(--text-2); margin: 0 0 28px; max-width: 760px; text-wrap: pretty; }
-.pz-deck .pz-brand { display: inline-flex; align-items: center; gap: 12px; font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 34px; color: var(--accent-ink); }
+.pz-deck .pz-brand { display: inline-flex; align-items: center; gap: 14px; font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 34px; color: var(--accent-ink); }
 .pz-deck .pz-logo-dot { width: 18px; height: 18px; border-radius: 6px; background: var(--accent); box-shadow: 0 4px 0 var(--accent-shadow); }
 .pz-deck .pz-pills { display: flex; gap: 12px; flex-wrap: wrap; }
 .pz-deck .pz-pills .pill { height: 52px; padding: 0 20px; font-size: 20px; gap: 10px; }
@@ -242,3 +241,82 @@
 @media (prefers-reduced-motion: reduce) {
   .pz-deck *, .pz-deck *::before, .pz-deck *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
+
+/* Feature rows drawn like the app's answer options */
+.pz-deck .pz-feats { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+.pz-deck .pz-feat { min-height: 76px; padding: 14px 20px; grid-template-columns: 48px minmax(0, 1fr); column-gap: 18px; cursor: default; }
+.pz-deck .pz-feat .letter-tile { grid-row: auto; align-self: center; width: 48px; height: 48px; border-radius: 14px; background: var(--accent-soft); color: var(--accent-ink); }
+.pz-deck .pz-feat-body { display: grid; gap: 2px; min-width: 0; }
+.pz-deck .pz-feat-body strong { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 26px; line-height: 1.15; }
+.pz-deck .pz-feat-body span { font-size: 19px; color: var(--text-2); }
+.pz-deck .pz-feats.compact { gap: 10px; }
+.pz-deck .pz-feats.compact .pz-feat { min-height: 60px; padding: 10px 16px; grid-template-columns: 40px minmax(0, 1fr); }
+.pz-deck .pz-feats.compact .letter-tile { width: 40px; height: 40px; border-radius: 12px; }
+.pz-deck .pz-feats.compact .pz-feat-body strong { font-family: Figtree, sans-serif; font-weight: 700; font-size: 21px; }
+.pz-deck .pz-split-text .pz-feats + .pz-tip { margin-top: 24px; }
+
+/* Cóndi tip */
+.pz-deck .pz-tip { display: flex; align-items: center; gap: 16px; }
+.pz-deck .pz-bubble {
+  position: relative; margin: 0; padding: 14px 20px; border-radius: 18px; background: var(--surface); border: 2px solid var(--line);
+  font-size: 20px; font-weight: 600; line-height: 1.35;
+}
+.pz-deck .pz-bubble::before { content: ""; position: absolute; left: -9px; top: 50%; width: 14px; height: 14px; background: var(--surface); border-left: 2px solid var(--line); border-bottom: 2px solid var(--line); transform: translateY(-50%) rotate(45deg); }
+
+.pz-deck .pz-bob { animation: bob 3.2s ease-in-out infinite; position: relative; }
+.pz-deck .pz-pop-fast { animation: pop-in 0.4s cubic-bezier(0.3, 0.7, 0.4, 1.5); }
+
+/* Problem: today vs with Cóndor, as the app's verdict bars */
+.pz-deck .pz-vs { display: grid; gap: 16px; }
+.pz-deck .pz-vs-head, .pz-deck .pz-vs-row { display: grid; grid-template-columns: 1fr 56px 1fr; align-items: center; gap: 18px; }
+.pz-deck .pz-vs-head .label:last-child { grid-column: 3; }
+.pz-deck .pz-vs-head .label { font-size: 16px; }
+.pz-deck .pz-verdict { min-height: 96px; align-items: center; border-radius: 20px; padding: 18px 22px; }
+.pz-deck .pz-verdict strong { font-size: 25px; line-height: 1.2; }
+.pz-deck .pz-verdict.bad strong { color: var(--text); }
+.pz-deck .pz-verdict.ok strong { color: var(--text); }
+.pz-deck .pz-verdict .verdict-ico { width: 46px; height: 46px; }
+.pz-deck .pz-verdict.bad .verdict-ico { color: var(--bad); }
+.pz-deck .pz-verdict.ok .verdict-ico { color: var(--ok); }
+.pz-deck .pz-ghost { border: 2px dashed var(--line); border-radius: 20px; }
+.pz-deck .pz-vs-arrow { color: var(--line); justify-self: center; transition: color 0.3s, transform 0.3s; }
+.pz-deck .pz-vs-arrow.on { color: var(--accent-ink); transform: translateX(4px); }
+
+/* What is: three roles, each with a real piece of the app */
+.pz-deck .pz-roles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; align-items: start; }
+.pz-deck .pz-role { display: grid; gap: 14px; }
+.pz-deck .pz-role-head { display: flex; align-items: center; gap: 12px; }
+.pz-deck .pz-role-head .letter-tile { width: 48px; height: 48px; border-radius: 14px; background: var(--accent); color: var(--on-accent); }
+.pz-deck .pz-role-head strong { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 32px; }
+.pz-deck .pz-mini { padding: 20px; display: grid; gap: 10px; min-height: 236px; align-content: start; }
+.pz-deck .pz-mini .display { font-size: 38px; display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+.pz-deck .pz-mini .day { height: 38px; font-size: 14px; }
+.pz-deck .pz-mini .area-row-head { font-size: 17px; }
+.pz-deck .pz-mini-btn { min-height: 56px; font-size: 19px; }
+.pz-deck .pz-role-sub { margin: 0; font-size: 20px; line-height: 1.4; color: var(--text-2); }
+.pz-deck .pz-asg { display: grid; grid-template-columns: 8px 1fr auto; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.pz-deck .pz-asg:last-child { border-bottom: 0; }
+.pz-deck .pz-asg > div { display: grid; gap: 4px; font-size: 18px; }
+.pz-deck .pz-asg .caption { font-size: 15px; }
+.pz-deck .pz-asg .assign-tile { width: 8px; height: 56px; border-radius: 999px; }
+.pz-deck .pz-asg-n { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 22px; }
+.pz-deck .pz-alert-pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 56px; border-radius: 16px; font-weight: 700; font-size: 19px; color: var(--flame); background: color-mix(in srgb, var(--flame) 14%, transparent); border: 2px solid color-mix(in srgb, var(--flame) 40%, transparent); }
+
+/* Accounts */
+.pz-deck .pz-login { display: grid; gap: 12px; justify-items: start; padding: 28px; }
+.pz-deck .pz-login-title { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 30px; }
+.pz-deck .pz-login .caption { font-size: 18px; }
+.pz-deck .pz-google { width: 100%; min-height: 62px; font-size: 21px; margin-top: 6px; }
+.pz-deck .pz-google.pressed { transform: translateY(4px); box-shadow: 0 0 0 var(--accent-shadow); transition: transform 0.08s, box-shadow 0.08s; }
+.pz-deck .pz-g { width: 30px; height: 30px; border-radius: 50%; background: #fff; color: #4285F4; display: grid; place-items: center; font-weight: 800; font-size: 18px; }
+.pz-deck .pz-roster { display: grid; gap: 12px; padding: 22px 24px; min-height: 170px; align-content: start; }
+.pz-deck .pz-roster .badge { font-size: 15px; }
+.pz-deck .pz-roster-list { display: flex; flex-wrap: wrap; gap: 10px; }
+.pz-deck .pz-person { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 6px; border-radius: 999px; background: var(--surface-2); font-weight: 600; font-size: 17px; animation: pop-in 0.35s cubic-bezier(0.3, 0.7, 0.4, 1.5); }
+.pz-deck .pz-person .avatar { width: 32px; height: 32px; font-size: 15px; }
+
+/* Model */
+.pz-deck .pz-free { display: grid; gap: 12px; padding: 0; }
+.pz-deck .pz-free .stem { font-size: 24px; margin: 0; }
+.pz-deck .pz-free .source { font-size: 15px; }
+.pz-deck .pz-cover-text .pz-feats { margin-bottom: 32px; }
