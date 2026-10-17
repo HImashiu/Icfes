@@ -34,6 +34,8 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   const [justChecked, setJustChecked] = useState(null);
   const timed = Boolean(attempt.durationSec);
   const practice = !timed;
+  // Practice normally checks each answer at once; a teacher can hold the answers until the end ("Al final").
+  const instant = practice && attempt.instant !== false;
   const remaining = timed ? attempt.durationSec - (now - attempt.startedAt) / 1000 : null;
   const timeUp = remaining !== null && remaining <= 0;
 
@@ -198,7 +200,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
     const row = enrich?.[String(qq.number)];
     // The teacher can switch hints off for an assignment.
     if (practice && !attempt.checked?.[qq.key]) return row && !row.hidden && attempt.hints !== false ? <Hint key={qq.key} text={row.pista} /> : null;
-    if (!practice) return null;
+    if (!instant) return null;
     const cl = answerKey?.get(qq.key) ?? null;
     const right = Boolean(cl) && attempt.answers[qq.key] === cl;
     // The current question's verdict lives in the bottom bar; other checked questions of the block keep theirs here.
@@ -222,7 +224,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   // Practice: with nothing picked the main button skips ahead, so a hard question never blocks the student.
   // On the last question the main button finishes instead of sitting disabled.
   const last = current >= questions.length - 1;
-  const mainAction = practice && !checked ? (
+  const mainAction = instant && !checked ? (
     picked ? (
       <button type="button" className="primary big" onClick={check}>Comprobar</button>
     ) : (
@@ -232,13 +234,13 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
     <button type="button" className="primary big" onClick={submit}>{practice ? "Ver resultados" : "Entregar"}</button>
   ) : (
     <button type="button" className="primary big" onClick={() => go(current + 1)}>
-      {practice ? "Continuar" : "Siguiente"}
+      {instant ? "Continuar" : "Siguiente"}
     </button>
   );
 
   // Practice, once checked: the bottom bar turns green or red and says how it went, like a coach at your side.
   const right = checked && Boolean(correctLetter) && picked === correctLetter;
-  const verdict = practice && checked ? (!hasKey || !correctLetter ? "neutral" : right ? "ok" : "bad") : null;
+  const verdict = instant && checked ? (!hasKey || !correctLetter ? "neutral" : right ? "ok" : "bad") : null;
   const cheer = run >= 3 && right ? `${run} seguidas` : null;
   const aiRow = q ? enrich?.[String(q.number)] : null;
   const explained = Boolean(aiRow && !aiRow.hidden && aiRow.explicacion);
@@ -423,8 +425,10 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
           </span>
           {timed ? (
             <span className={remaining < 300 ? "clock low" : "clock"} aria-live="off">{formatClock(remaining)}</span>
-          ) : (
+          ) : instant ? (
             <span className="meta-mode">Práctica · <b key={attempt.xp ?? 0} className="xp-bump">{fmtInt(attempt.xp ?? 0)} XP</b></span>
+          ) : (
+            <span className="meta-mode">Práctica · respuestas al final</span>
           )}
         </div>
         <span className="sr-only">{title}{examLabel ? ` · ${examLabel}` : ""}</span>

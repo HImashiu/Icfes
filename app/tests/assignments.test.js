@@ -86,3 +86,11 @@ describe("assignment hints", () => {
     expect(attemptForAssignment({ ...a, allow_hints: false }, []).hints).toBe(false);
   });
 });
+
+describe("assignment feedback timing", () => {
+  it("checks each answer at once unless the teacher holds answers until the end", () => {
+    const a = { id: "x", kind: "task", exam_slug: "s", scope: "all", question_keys: null };
+    expect(attemptForAssignment(a, []).instant).toBe(true);
+    expect(attemptForAssignment({ ...a, instant_feedback: false }, []).instant).toBe(false);
+  });
+});
