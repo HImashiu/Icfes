@@ -1057,3 +1057,13 @@ p.fuente { font-size: 0.78em; line-height: 1.35; text-align: right; margin: 14px
   }
   .block-q + .block-q { margin-top: 0; }
 }
+
+/* Review has no sticky top bar: its docked text sits at the very top, and its text column leaves the 1200px
+   view room for the question list. */
+.review .text-dock { top: 0; }
+.review .read-text { top: 16px; max-height: calc(100vh - 32px); }
+.review .read-qs .options { grid-template-columns: 1fr; }
+@media (min-width: 1200px) {
+  .review { max-width: 1560px; }
+  .rv-body { grid-template-columns: 260px minmax(0, 1fr); }
+}

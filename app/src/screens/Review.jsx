@@ -1,5 +1,7 @@
 import { useState } from "react";
-import QuestionView from "../components/QuestionView.jsx";
+import QuestionView, { textPaneKind } from "../components/QuestionView.jsx";
+import TextDock from "../components/TextDock.jsx";
+import { useMedia } from "../lib/media.js";
 import ReportError from "../components/ReportError.jsx";
 import AiAnalysis from "../components/AiAnalysis.jsx";
 import Icon from "../components/Icon.jsx";
@@ -38,6 +40,26 @@ export default function Review({ questions, attempt, answerKey, keyStatus, notes
   const i = Math.min(index, Math.max(0, visible.length - 1));
   const q = visible[i];
   const note = q && notes?.get(q.key);
+
+  // A long text gets its own pane, as on the test screen: a column beside the question on a wide screen,
+  // a docked panel above it otherwise.
+  const wide = useMedia("(min-width: 1200px)");
+  const paneKind = q ? textPaneKind(q) : null;
+  const [textEl, setTextEl] = useState(null);
+  const [dock, setDock] = useState("open");
+
+  const questionView = q && (
+    <QuestionView
+      question={q}
+      answer={attempt.answers[q.key]}
+      graded={Boolean(answerKey)}
+      review={{ correctLetter: answerKey?.get(q.key) ?? null }}
+      figures={figures}
+      examLabel={examLabel}
+      report={false}
+      textTarget={paneKind ? textEl : null}
+    />
+  );
 
   return (
     <section className="review">
@@ -107,15 +129,15 @@ export default function Review({ questions, attempt, answerKey, keyStatus, notes
 
       {q ? (
         <>
-          <QuestionView
-            question={q}
-            answer={attempt.answers[q.key]}
-            graded={Boolean(answerKey)}
-            review={{ correctLetter: answerKey?.get(q.key) ?? null }}
-            figures={figures}
-            examLabel={examLabel}
-            report={false}
-          />
+          {paneKind && !wide && <TextDock state={dock} onState={setDock} bodyRef={setTextEl} />}
+          {paneKind && wide ? (
+            <div className="read-split">
+              <aside className="read-text paper-card" ref={setTextEl} aria-label="Texto de la pregunta" />
+              <div className="read-qs">{questionView}</div>
+            </div>
+          ) : (
+            questionView
+          )}
           <AiAnalysis row={enrich?.[String(q.number)]} correctLetter={answerKey?.get(q.key) ?? null} meta={enrichMeta} />
           <div className="card why">
             <span className="label">{note?.reason && answerKey && looksSpanish(note.reason) ? "Por qué" : "Detalles"}</span>
