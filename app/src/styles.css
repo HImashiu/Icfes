@@ -1262,12 +1262,6 @@ button.card:active:not(:disabled), .mode-card:active, .chip:active, .answer-cell
 .test.has-verdict .test-body { padding-bottom: 196px; }
 /* On a phone the bar slides up from the bottom edge. */
 @media (max-width: 899px) { .test-bottom:has(.verdict) { animation: slide-up 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); } }
-@media (min-width: 900px) {
-  .test-bottom.verdict-ok, .test-bottom.verdict-bad, .test-bottom.verdict-neutral { padding: 14px 16px; border-radius: 20px; border: 2px solid var(--line); }
-  .test-bottom.verdict-ok { border-color: var(--ok); }
-  .test-bottom.verdict-bad { border-color: var(--bad); }
-  .test.has-verdict .test-body { padding-bottom: 112px; }
-}
 
 /* Cóndi breathes and blinks; when celebrating it hops. */
 .mascot { overflow: visible; }
@@ -1344,3 +1338,40 @@ button.card:active:not(:disabled), .mode-card:active, .chip:active, .answer-cell
 .nav-item.active { background: var(--accent-soft); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent); }
 .nav-item.active .icon-fill { opacity: 0.45; }
 .icon { flex: none; }
+
+/* The action bar. Phone: a compact bar fixed at the bottom; the verdict adds one short row above the buttons.
+   Computer: one full-width bar fixed at the bottom of the window, like Duolingo: "Anterior" on the left,
+   the verdict or the keyboard hint in the middle, the main button on the right. */
+.verdict { gap: 10px; padding: 0 0 4px; }
+.verdict-ico { width: 32px; height: 32px; }
+.verdict strong { font-size: 18px; }
+.verdict span { font-size: 12px; }
+.test-bottom { gap: 8px; padding-top: 8px; padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+.test-bottom .big { min-height: 48px; }
+.test-bottom .secondary.map-btn { width: 48px; min-height: 48px; }
+.test.has-verdict .test-body { padding-bottom: 150px; }
+@media (min-width: 900px) {
+  .test .test-bottom, .test .read-qs .test-bottom {
+    position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 20; margin: 0; max-width: none;
+    display: flex; flex-wrap: nowrap; align-items: center; gap: 16px;
+    padding: 14px max(28px, calc((100vw - 1100px) / 2)) calc(14px + env(safe-area-inset-bottom));
+    background: var(--bg); border: 0; border-top: 2px solid var(--line); border-radius: 0;
+  }
+  .test .test-bottom > * { order: 1; }
+  .test .test-bottom .secondary.desk-only { order: 0; display: inline-flex; min-height: 48px; flex: none; }
+  .test .test-bottom .big { order: 2; flex: 0 0 200px; min-height: 48px; }
+  .test .test-bottom .map-btn, .test .test-bottom .submit-link { display: none; }
+  .test .test-bottom .kbd-hint { display: block; flex: 1 1 auto; min-width: 0; text-align: center; font-size: 12px; color: var(--text-2); }
+  .test .test-bottom:has(.verdict) .kbd-hint { display: none; }
+  .test .test-bottom .verdict { flex: 1 1 auto; min-width: 0; padding: 0; animation: drop-in 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .test .test-bottom.verdict-ok { background: color-mix(in srgb, var(--ok) 16%, var(--bg)); border-top-color: var(--ok); }
+  .test .test-bottom.verdict-bad { background: color-mix(in srgb, var(--bad) 16%, var(--bg)); border-top-color: var(--bad); }
+  .test .test-bottom.verdict-neutral { background: var(--surface); }
+  .test .test-body, .test.has-verdict .test-body { padding-bottom: 104px; }
+  .test .read-text, .test .test-main .q-context { max-height: calc(100vh - var(--topbar-h, 78px) - 120px); }
+  .test .test-bottom:has(.verdict) { animation: slide-up 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+}
+/* Between 900 and 1199px the top bar has no "Terminar", so the bar keeps its link. */
+@media (min-width: 900px) and (max-width: 1199px) {
+  .test .test-bottom .submit-link { display: inline-flex; align-items: center; order: 3; flex: none; }
+}
