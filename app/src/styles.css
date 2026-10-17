@@ -1456,3 +1456,36 @@ button.card:active:not(:disabled), .mode-card:active, .chip:active, .answer-cell
   .print-body > .sheet-page:last-child { break-after: auto !important; page-break-after: auto !important; }
 }
 .paper-pick select { width: 100%; }
+
+/* ---- Live rooms ---- */
+.empty-card { justify-items: center; text-align: center; padding: 28px 18px; }
+.drop-ico {
+  width: 60px; height: 60px; border-radius: 20px; display: grid; place-items: center;
+  background: var(--accent-soft); color: var(--accent-ink);
+}
+.live-rooms { display: grid; gap: 10px; }
+.room-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.room-card {
+  display: grid; gap: 8px; text-align: left; padding: 18px; border-radius: 22px; color: var(--text);
+  background: var(--surface); border: 2px solid var(--line); box-shadow: 0 4px 0 var(--line);
+  transition: transform 0.08s, box-shadow 0.08s, border-color 0.15s; animation: rise-in 0.4s cubic-bezier(.2,.9,.3,1.2) both;
+}
+.room-card:hover { border-color: color-mix(in srgb, var(--accent) 60%, var(--line)); }
+.room-card:active { transform: translateY(4px); box-shadow: 0 0 0 var(--line); }
+.room-live {
+  justify-self: start; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--bad); background: var(--bad-soft);
+}
+.room-live i { width: 8px; height: 8px; border-radius: 50%; background: var(--bad); animation: live-dot 1.2s ease-in-out infinite; }
+@keyframes live-dot { 50% { transform: scale(1.6); opacity: 0.4; } }
+.room-title { font-size: 17px; }
+.room-code {
+  font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 40px; letter-spacing: 0.08em;
+  color: var(--accent-ink); font-variant-numeric: tabular-nums; line-height: 1.1;
+}
+.room-foot { display: flex; justify-content: space-between; align-items: center; color: var(--text-2); font-size: 14px; }
+.room-foot > span { display: inline-flex; align-items: center; gap: 6px; }
+.room-go { color: var(--accent-ink); font-weight: 700; }
+.room-card:hover .room-go .icon { transform: translateX(3px); }
+.room-go .icon { transition: transform 0.15s; }
+.t-head .primary .icon { margin-left: -4px; }

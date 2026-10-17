@@ -46,6 +46,8 @@ const ICONS = {
     fill: "M7 3.5h10v5.5a5 5 0 0 1-10 0z",
     d: "M8.5 20.5h7M12 14v6.5M7 3.5h10v5.5a5 5 0 0 1-10 0zM7 5.5H4.5v1.5A3 3 0 0 0 7 10M17 5.5h2.5v1.5A3 3 0 0 1 17 10",
   },
+  play: { fill: "M7 4.5v15l12-7.5z", d: "M7 4.5v15l12-7.5z", solid: true },
+  plus: { d: "M12 5v14M5 12h14" },
 };
 
 export default function Icon({ name, size = 18, strokeWidth = 2.4, className }) {

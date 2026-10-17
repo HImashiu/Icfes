@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import Icon from "../components/Icon.jsx";
 import QuestionView from "../components/QuestionView.jsx";
 import { classShare, distribution, LETTERS, resultsCsv, scoreQuestion, secondsLeft } from "../lib/live.js";
 import { usePoll } from "../lib/poll.js";
@@ -197,20 +198,30 @@ export function LiveSection({ api, courses, exams, fetchExam, guard, AssignBuild
     <>
       <header className="t-head">
         <div><h1>En vivo</h1><span className="caption">Juego en clase estilo Kahoot con preguntas ICFES: los estudiantes responden desde el celular.</span></div>
-        <button type="button" className="primary" onClick={() => setCreating(true)}>Nueva sala</button>
+        <button type="button" className="primary" onClick={() => setCreating(true)}><Icon name="plus" size={18} />Nueva sala</button>
       </header>
       {open.length > 0 && (
-        <div className="card t-card">
-          <strong>Salas abiertas</strong>
-          {open.map((s) => (
-            <button key={s.id} type="button" className="assign-row" style={{ width: "100%", textAlign: "left" }} onClick={() => setActive(s)}>
-              <span className="assign-tile" />
-              <div className="assign-body"><strong>{s.title || "En vivo"} · código {s.code}</strong><span className="caption">{s.question_keys.length} preguntas</span></div>
-            </button>
-          ))}
+        <section className="live-rooms" aria-label="Salas abiertas">
+          <span className="label">Salas abiertas</span>
+          <div className="room-grid">
+            {open.map((s) => (
+              <button key={s.id} type="button" className="room-card" onClick={() => setActive(s)}>
+                <span className="room-live"><i aria-hidden="true" />En vivo</span>
+                <strong className="room-title">{s.title || "En vivo"}</strong>
+                <span className="room-code" aria-label={`Código ${s.code}`}>{String(s.code).replace(/(\d{3})(?=\d)/, "$1 ")}</span>
+                <span className="room-foot"><span><Icon name="book" size={16} />{s.question_keys.length} {s.question_keys.length === 1 ? "pregunta" : "preguntas"}</span><span className="room-go">Abrir <Icon name="arrow" size={16} /></span></span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+      {open.length === 0 && (
+        <div className="card t-card empty-card">
+          <span className="drop-ico"><Icon name="play" size={26} /></span>
+          <strong>Todavía no hay salas abiertas</strong>
+          <span className="caption">Crea una, proyecta el código y empieza cuando los estudiantes hayan entrado.</span>
         </div>
       )}
-      {open.length === 0 && <div className="card t-card"><strong>Todavía no hay salas abiertas</strong><span className="caption">Crea una, proyecta el código y empieza cuando los estudiantes hayan entrado.</span></div>}
     </>
   );
 }
