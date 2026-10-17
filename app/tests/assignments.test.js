@@ -78,3 +78,11 @@ describe("progress and export", () => {
     expect(csv).toContain("Sin ingresar");
   });
 });
+
+describe("assignment hints", () => {
+  it("offers hints unless the teacher switched them off", () => {
+    const a = { id: "x", kind: "practice", exam_slug: "s", scope: "all", question_keys: null };
+    expect(attemptForAssignment(a, []).hints).toBe(true);
+    expect(attemptForAssignment({ ...a, allow_hints: false }, []).hints).toBe(false);
+  });
+});

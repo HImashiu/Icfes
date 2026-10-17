@@ -1046,13 +1046,24 @@ p.fuente { font-size: 0.78em; line-height: 1.35; text-align: right; margin: 14px
 
 /* Hint before answering (practice only). */
 .hint { display: grid; gap: 8px; }
+/* "Pista": a small 3D chip with an amber bulb, like the other buttons; it opens into a soft amber note. */
 .hint-btn {
-  justify-self: start; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px;
-  border: 1px dashed var(--line); border-radius: 999px; background: transparent; color: var(--text); font-weight: 700; font-size: 14px;
+  justify-self: start; display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 16px 0 12px;
+  border: 2px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--text);
+  font-weight: 800; font-size: 14px; letter-spacing: 0.01em; box-shadow: 0 3px 0 var(--line);
 }
-.hint.open .hint-btn { border-style: solid; }
-.hint-text { margin: 0; padding: 12px 14px; border-radius: 14px; background: var(--accent-soft); color: var(--text); line-height: 1.45; }
+.hint-btn:active { transform: translateY(3px) !important; box-shadow: none; }
+.hint-ico { color: #FFB547; }
+.hint.open .hint-btn { border-color: #FFB547; box-shadow: 0 3px 0 #C98A1E; }
+.hint-text {
+  margin: 0; padding: 12px 14px; border-radius: 14px; line-height: 1.45; color: var(--text);
+  background: color-mix(in srgb, #FFB547 14%, var(--surface)); border: 1px solid color-mix(in srgb, #FFB547 45%, transparent);
+  display: grid; gap: 4px;
+}
+.hint-text p { margin: 0; }
 .hint-text .caption { color: var(--text-2); font-size: 12px; }
+.check-row { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; cursor: pointer; }
+.check-row input { width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--accent-shadow); flex: none; }
 
 /* ---- Assignment builder (teacher) ---- */
 .builder { display: grid; gap: 12px; }
@@ -1304,3 +1315,32 @@ button.card:active:not(:disabled), .mode-card:active, .chip:active, .answer-cell
     transition-duration: 0.01ms !important; scroll-behavior: auto !important;
   }
 }
+
+/* Questions that share a text: a strip that says how many there are, one chip per question. */
+.block-nav {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  padding: 10px 12px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line);
+}
+.block-nav-label { font-size: 13px; font-weight: 700; color: var(--text-2); }
+.block-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.block-chip {
+  min-width: 40px; height: 36px; padding: 0 10px; border-radius: 12px; border: 2px solid var(--line);
+  background: var(--surface); color: var(--text); font-weight: 800; font-variant-numeric: tabular-nums;
+  box-shadow: 0 2px 0 var(--line); transition: transform 0.1s, background-color 0.15s, border-color 0.15s;
+}
+.block-chip.done { background: var(--accent-soft); border-color: var(--accent-shadow); }
+.block-chip.current { border-color: var(--accent); background: var(--accent); color: var(--on-accent); box-shadow: 0 2px 0 var(--accent-shadow); }
+.block-chip:active { transform: translateY(2px); box-shadow: none; }
+@media (min-width: 900px) {
+  .read-qs .block-nav { position: sticky; top: calc(var(--topbar-h, 78px) + 12px); z-index: 7; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25); }
+  .read-qs .block-q { scroll-margin-top: calc(var(--topbar-h, 78px) + 84px); }
+  /* Inside the questions column, a question's own text or figure sits above it, never in a third column. */
+  .read-qs .q-split:not(.solo) { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; gap: 12px; }
+  .read-qs .q-context { position: static !important; max-height: none !important; overflow: visible !important; }
+}
+
+/* Navigation: the active tab sits in a soft lime pill; icons are rounded and two-tone. */
+.nav-item { position: relative; }
+.nav-item.active { background: var(--accent-soft); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent); }
+.nav-item.active .icon-fill { opacity: 0.45; }
+.icon { flex: none; }

@@ -42,12 +42,12 @@ export function createApi(client) {
     },
 
     async listAssignments() {
-      return unwrap(
-        await client
-          .from("assignments")
-          .select("id, course_id, kind, title, exam_slug, scope, question_keys, opens_at, due_at, time_limit_min, reveal_policy, max_attempts, assignee_id, status, created_at, courses(name)")
-          .order("created_at", { ascending: false }),
-      );
+      const cols = "id, course_id, kind, title, exam_slug, scope, question_keys, opens_at, due_at, time_limit_min, reveal_policy, max_attempts, assignee_id, status, created_at, courses(name)";
+      const query = (c) => client.from("assignments").select(c).order("created_at", { ascending: false });
+      // allow_hints arrives with migration 0007; until it runs, every assignment offers hints.
+      const first = await query(`${cols}, allow_hints`);
+      if (first.error && /allow_hints/.test(first.error.message ?? "")) return unwrap(await query(cols));
+      return unwrap(first);
     },
     async createAssignment(a) {
       return unwrap(await client.from("assignments").insert(a).select().single());

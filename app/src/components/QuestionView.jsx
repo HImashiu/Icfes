@@ -44,9 +44,11 @@ function LongText({ html, className, long, resolve }) {
 // Which text of a question is long enough to live in its own pane (a docked panel on phone, a left column
 // on desktop): the text its group shares, or its own stimulus. Short texts stay inside the question card.
 export const TEXT_PANE_MIN = 400;
-export function textPaneKind(question) {
+// `groupMin` lowers the bar for a shared text: on a wide screen any shared text gets the side column, so the
+// questions of the text are listed together beside it instead of each carrying its own copy.
+export function textPaneKind(question, groupMin = TEXT_PANE_MIN) {
   const shared = question.group?.stimulus_md ?? "";
-  if (shared.length > TEXT_PANE_MIN) return "group";
+  if (shared.trim() && shared.length > groupMin) return "group";
   const own = question.stimulus_md?.trim() && question.stimulus_md.trim() !== shared.trim() ? question.stimulus_md : "";
   return own.length > TEXT_PANE_MIN ? "own" : null;
 }
@@ -86,6 +88,7 @@ export default function QuestionView({
   report = true,
   textTarget = null,
   gapLine = false,
+  paneGroupMin = TEXT_PANE_MIN,
 }) {
   const { group } = question;
   const wide = useWide();
@@ -98,7 +101,7 @@ export default function QuestionView({
   const inText = new Set(tokenIdsOf(question.stem_md, question.stimulus_md, group?.stimulus_md));
   // With `textTarget` (a node of the test screen) the long text is drawn there, in its own pane, through a portal:
   // the shared text and the figures of the group go with it; the question keeps its own figures.
-  const paneKind = textTarget ? textPaneKind(question) : null;
+  const paneKind = textTarget ? textPaneKind(question, paneGroupMin) : null;
   const inPane = Boolean(paneKind === "own" || (paneKind === "group" && showPassage));
   const groupFigures = group ? figures?.get(`group:${group.id}`) ?? [] : [];
   const stemFigures = [

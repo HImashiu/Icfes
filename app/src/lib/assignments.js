@@ -44,6 +44,7 @@ export function attemptForAssignment(a, questions, now = Date.now()) {
     mode,
     maxAttempts: a.max_attempts ?? null,
     reveal: a.reveal_policy ?? "after_submit",
+    hints: a.allow_hints !== false,
     durationSec: mode === "timed" ? (a.time_limit_min ? a.time_limit_min * 60 : timedSeconds(questions)) : null,
     startedAt: now,
     answers: {},

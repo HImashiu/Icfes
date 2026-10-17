@@ -63,13 +63,17 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   while (blockTo < questions.length - 1 && sameText(questions[blockTo + 1], q)) blockTo++;
   const fullBlock = questions.slice(blockFrom, blockTo + 1);
   const mainRef = useRef(null);
+  const keepScroll = useRef(false);
+  const navAt = useRef(0);
   const topRef = useRef(null);
 
   // A long text lives in its own pane so it never has to be scrolled past: a column beside the questions when there
   // is room (every question of the text is listed, the pane stays put), otherwise a panel docked under the top bar
   // that shows one question at a time. Short texts stay inside the question card.
   const roomy = useMedia("(min-width: 900px)");
-  const paneKind = q ? textPaneKind(q) : null;
+  // Wide screens put every shared text, short or long, in the side column.
+  const groupMin = roomy ? 0 : undefined;
+  const paneKind = q ? textPaneKind(q, groupMin) : null;
   const sideText = roomy && (paneKind === "group" || (paneKind === "own" && fullBlock.length === 1));
   const dockText = !roomy && paneKind !== null;
   const block = dockText ? [q] : fullBlock;
@@ -110,6 +114,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
     onChange((a) => ({ ...a, current: index }));
     setSheetOpen(false);
     setJustChecked(null);
+    navAt.current = Date.now();
     const sameBlock = index >= blockFrom && index <= blockTo && !dockText;
     if (!(stay || sameBlock)) window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -147,7 +152,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   // A tap on an option of another question in the block moves the current question there first.
   const answerIn = (qq) => (letter) => {
     const index = questions.indexOf(qq);
-    if (index !== current) onChange((a) => ({ ...a, current: index }));
+    if (index !== current) { keepScroll.current = true; onChange((a) => ({ ...a, current: index })); }
     setAnswerFor(qq, letter);
   };
   const toggleFlagOf = (qq) => () =>
@@ -191,7 +196,8 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   // The verdict of one question of the block (every checked question keeps its own), then its AI analysis.
   const feedbackOf = (qq) => {
     const row = enrich?.[String(qq.number)];
-    if (practice && !attempt.checked?.[qq.key]) return row && !row.hidden ? <Hint key={qq.key} text={row.pista} /> : null;
+    // The teacher can switch hints off for an assignment.
+    if (practice && !attempt.checked?.[qq.key]) return row && !row.hidden && attempt.hints !== false ? <Hint key={qq.key} text={row.pista} /> : null;
     if (!practice) return null;
     const cl = answerKey?.get(qq.key) ?? null;
     const right = Boolean(cl) && attempt.answers[qq.key] === cl;
@@ -286,10 +292,38 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
     const pane = gap?.closest(".text-dock .dock-body, .read-text");
     if (gap && pane) centerIn(pane, gap);
     else if (gap) gap.scrollIntoView?.({ block: "center", behavior: "smooth" });
-    if (!dockText && current > blockFrom) {
+    // A question that became current because the student scrolled to it or tapped in it stays where it is.
+    if (!dockText && current > blockFrom && !keepScroll.current) {
       root.querySelector(`[data-qkey="${q?.key}"]`)?.scrollIntoView?.({ block: "start", behavior: "smooth" });
     }
+    keepScroll.current = false;
   }, [current, textEl, dockText]);
+
+  // Beside a shared text, the question being read follows the scroll, so the chips and the bottom bar match it.
+  useEffect(() => {
+    if (!sideText || fullBlock.length < 2) return undefined;
+    let raf = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        // Not while a jump the student asked for (a chip, Continuar) is still scrolling.
+        if (Date.now() - navAt.current < 900) return;
+        const line = window.innerHeight * 0.4;
+        const cards = [...(mainRef.current?.querySelectorAll(".read-qs .block-q") ?? [])];
+        let pick = null;
+        for (const el of cards) if (el.getBoundingClientRect().top <= line) pick = el.dataset.qkey;
+        const atEnd = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 4;
+        if (atEnd && cards.length) pick = cards[cards.length - 1].dataset.qkey;
+        const index = pick ? questions.findIndex((x) => x.key === pick) : -1;
+        if (index >= 0 && index !== current) {
+          keepScroll.current = true;
+          onChange((a) => ({ ...a, current: index }));
+        }
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => { window.removeEventListener("scroll", onScroll); cancelAnimationFrame(raf); };
+  }, [sideText, blockFrom, blockTo, current]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const footer = (
     <footer className={verdict ? `test-bottom verdict-${verdict}` : "test-bottom"}>
@@ -304,6 +338,26 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
       <button type="button" className="link submit-link" onClick={submit}>{practice ? "Terminar" : "Entregar"}</button>
       <span className="kbd-hint desk-only">A–D responder · Enter comprobar · ← → mover · M marcar</span>
     </footer>
+  );
+
+  // A text with several questions says so up front, with a chip per question (answered ones filled), so the
+  // ones further down are never a surprise.
+  const blockNav = fullBlock.length > 1 && (
+    <nav className="block-nav" aria-label="Preguntas de este texto">
+      <span className="block-nav-label">Este texto tiene {fullBlock.length} preguntas</span>
+      <div className="block-chips">
+        {fullBlock.map((qq) => {
+          const index = questions.indexOf(qq);
+          const cls = `block-chip${index === current ? " current" : ""}${attempt.answers[qq.key] ? " done" : ""}`;
+          return (
+            <button key={qq.key} type="button" className={cls} aria-current={index === current ? "true" : undefined}
+              onClick={() => { go(index, { stay: true }); if (dockText) switchView("question"); }}>
+              {qq.number}
+            </button>
+          );
+        })}
+      </div>
+    </nav>
   );
 
   // Every question of the block (one on a phone with a docked text), each with its own card and verdict.
@@ -327,6 +381,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
             feedback={feedbackOf(qq)}
             footer={i === block.length - 1 && !dockText ? lastFooter : null}
             textTarget={textTarget}
+            paneGroupMin={groupMin}
             gapLine={dockText}
           />
         </section>
@@ -378,10 +433,12 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
       <div className="test-body" ref={mainRef} onClick={onBodyClick}>
         <main className={dockText && view === "text" ? "test-main view-text" : "test-main"}>
           {dockText && <TextToggle view={view} onView={switchView} number={q.number} bodyRef={setTextEl} />}
+          {dockText && view === "question" && blockNav}
           {sideText ? (
             <div className="read-split">
               <aside className="read-text paper-card" ref={setTextEl} aria-label="Texto de las preguntas" />
               <div className="read-qs">
+                {blockNav}
                 {renderBlock(null)}
                 {footer}
               </div>
