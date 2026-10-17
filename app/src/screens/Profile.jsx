@@ -1,16 +1,23 @@
 import Icon from "../components/Icon.jsx";
 import { SAMPLE_STUDENT } from "../data/mock.js";
+import { useState } from "react";
+import { useAuth } from "../lib/auth.jsx";
+import { play, setSoundOn, soundOn } from "../lib/motion.js";
 
 // Perfil: theme choice (dark is the default) and the teacher view entry.
-export default function Profile({ theme, onTheme, onTeacher, onReports }) {
+export default function Profile({ theme, onTheme, onTeacher, onReports, onLogin }) {
+  const auth = useAuth();
+  const staff = auth.status === "ready" && auth.profile.role !== "student";
+  const [sound, setSound] = useState(soundOn);
+  const pickSound = (on) => { setSoundOn(on); setSound(on); if (on) play("correct"); };
   return (
     <section className="profile">
       <header className="screen-head"><h1>Perfil</h1></header>
       <div className="card profile-card">
         <div className="avatar big" aria-hidden="true">E</div>
         <div className="profile-name">
-          <strong>{SAMPLE_STUDENT.name}</strong>
-          <span className="caption">{SAMPLE_STUDENT.course} · datos de muestra</span>
+          <strong>{auth.status === "ready" ? auth.profile.full_name || auth.profile.email : SAMPLE_STUDENT.name}</strong>
+          <span className="caption">{auth.status === "ready" ? auth.profile.email : `${SAMPLE_STUDENT.course} · datos de muestra`}</span>
         </div>
       </div>
 
@@ -22,6 +29,30 @@ export default function Profile({ theme, onTheme, onTeacher, onReports }) {
         </div>
       </div>
 
+      <div className="card">
+        <span className="label">Sonidos al responder</span>
+        <div className="segmented" role="radiogroup" aria-label="Sonidos al responder">
+          <button type="button" role="radio" aria-checked={sound} className={sound ? "seg active" : "seg"} onClick={() => pickSound(true)}>Activados</button>
+          <button type="button" role="radio" aria-checked={!sound} className={!sound ? "seg active" : "seg"} onClick={() => pickSound(false)}>Silencio</button>
+        </div>
+      </div>
+
+      {auth.status !== "demo" && (
+        auth.status === "ready" ? (
+          <button type="button" className="card quick-row" onClick={auth.signOut}>
+            <Icon name="user" />
+            <span>Cerrar sesión</span>
+            <Icon name="right" />
+          </button>
+        ) : (
+          <button type="button" className="card quick-row" onClick={onLogin} disabled={auth.status === "loading"}>
+            <Icon name="user" />
+            <span>Ingresar con la cuenta del colegio</span>
+            <Icon name="right" />
+          </button>
+        )
+      )}
+
       <button type="button" className="card quick-row" onClick={onReports}>
         <Icon name="flag" />
         <span>Mis reportes de errores</span>
@@ -30,7 +61,7 @@ export default function Profile({ theme, onTheme, onTeacher, onReports }) {
 
       <button type="button" className="card quick-row" onClick={onTeacher}>
         <Icon name="user" />
-        <span>Vista de docente (datos de muestra)</span>
+        <span>{staff ? "Panel docente" : "Vista de docente (datos de muestra)"}</span>
         <Icon name="right" />
       </button>
     </section>

@@ -48,14 +48,25 @@ describe("practice verdict and AI analysis", () => {
   it("offers the hint before the student answers", () => {
     renderPractice("B", enrich[1], { ...attempt, answers: {}, checked: {} });
     expect(screen.queryByText("Mira el texto")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: /Ver pista/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Pista/ }));
     expect(screen.getByText("Mira el texto")).toBeTruthy();
     expect(screen.queryByText("La explicación de la IA")).toBeNull();
   });
 
+  it("holds the verdict until the end when the teacher chose it", () => {
+    renderPractice("B", enrich[1], { ...attempt, answers: { 1: "B" }, checked: {}, instant: false });
+    expect(screen.queryByRole("button", { name: "Comprobar" })).toBeNull();
+    expect(screen.getByText(/respuestas al final/)).toBeTruthy();
+  });
+
+  it("offers no hint when the teacher switched hints off", () => {
+    renderPractice("B", enrich[1], { ...attempt, answers: {}, checked: {}, hints: false });
+    expect(screen.queryByRole("button", { name: /Pista/ })).toBeNull();
+  });
+
   it("offers no hint where the key is not settled", () => {
     renderPractice("B", { ...enrich[1], hidden: true }, { ...attempt, answers: {}, checked: {} });
-    expect(screen.queryByRole("button", { name: /Ver pista/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Pista/ })).toBeNull();
   });
 
   it("hides the explanation until the key is settled", () => {

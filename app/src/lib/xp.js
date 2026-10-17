@@ -5,7 +5,8 @@ export const xpFor = (section) => (section === WEAKEST_AREA ? 20 : 10);
 
 // XP for a whole attempt. Practice counts as it goes (Test.jsx); timed attempts are graded at delivery.
 export function attemptXp(questions, attempt, answerKey) {
-  if (attempt.mode !== "timed") return attempt.xp ?? 0;
+  // Practice with immediate feedback counts as it goes; without it, XP is counted at the end like a simulacro.
+  if (attempt.mode !== "timed" && attempt.instant !== false) return attempt.xp ?? 0;
   if (!answerKey) return 0;
   return questions.reduce((sum, q) => {
     const given = attempt.answers[q.key];

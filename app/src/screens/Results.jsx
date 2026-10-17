@@ -1,4 +1,7 @@
-import { useEffect } from "react";
+import { bandFor } from "../lib/analytics.js";
+import { useEffect, useRef } from "react";
+import CountUp from "../components/CountUp.jsx";
+import { confetti, play } from "../lib/motion.js";
 import Mascot from "../components/Mascot.jsx";
 import { recordAttempt } from "../lib/local.js";
 import { scoreAttempt } from "../lib/exam.js";
@@ -18,13 +21,14 @@ function headline(pct, answered) {
 }
 const isPhone = typeof window !== "undefined" && !window.matchMedia?.("(min-width: 768px)").matches;
 
-export default function Results({ title, questions, attempt, answerKey, keyStatus, onReview, onReviewAt, onHome, onRetry }) {
+export default function Results({ title, questions, attempt, answerKey, keyStatus, onReview, onReviewAt, onHome, onRetry, locked = false, lockedNote = null }) {
   const score = scoreAttempt(questions, attempt.answers, answerKey);
   const preliminary = keyStatus !== "official";
   // A simulacro is graded like the real exam: blanks count as wrong, so the score is out of every question.
   // Practice is graded on what was answered, since stopping early is normal there.
   const outOf = attempt.mode === "timed" ? score.total : score.answered;
   const pct = score.keyed && outOf > 0 ? (score.correct / outOf) * 100 : null;
+  const band = bandFor(score.perArea);
   const wrong = score.keyed ? score.answered - score.correct : 0;
   const flagged = Object.keys(attempt.flags).length;
   const delivered = Boolean(attempt.submittedAt);
@@ -61,11 +65,20 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [delivered, attempt.startedAt]);
+  // A good result is celebrated once: confetti over the hero and a short fanfare.
+  const heroRef = useRef(null);
+  useEffect(() => {
+    if (!delivered || pct === null || pct < 50) return undefined;
+    const t = setTimeout(() => { play("finish"); confetti(heroRef.current, { count: 60, spread: 1.6 }); }, 450);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attempt.startedAt]);
+
   // Per-question grade for the answers grid: ok or bad when a key exists, answered or blank otherwise.
   const cellGrade = (q) => {
     const given = attempt.answers[q.key];
     if (!given) return "blank";
-    const correct = answerKey?.get(q.key);
+    const correct = locked ? null : answerKey?.get(q.key);
     if (!correct) return "answered";
     return correct === given ? "ok" : "bad";
   };
@@ -73,7 +86,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
 
   return (
     <section className="results">
-      <div className="results-hero card">
+      <div className="results-hero card" ref={heroRef}>
         <div className="hero-row">
           <Mascot pose={pct !== null && pct >= 50 ? "celebrating" : "normal"} size={84} />
           <div className="hero-text">
@@ -85,12 +98,19 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
         <div className="stat-grid">
           <div className="stat">
             <span className="label">Correctas</span>
-            <strong className="display">{score.keyed ? fmtPct(pct ?? 0) : "—"}</strong>
+            <strong className="display">{score.keyed ? <CountUp value={pct ?? 0} format={fmtPct} delay={250} /> : "—"}</strong>
             <span className="caption">{score.keyed ? `${fmtInt(score.correct)} de ${fmtInt(outOf)}${attempt.mode === "timed" && score.answered < score.total ? " · en blanco cuentan como error" : ""}` : "Clave pendiente"}</span>
           </div>
+          {delivered && attempt.mode === "timed" && score.keyed && band.global != null && (
+            <div className="stat">
+              <span className="label">Banda estimada</span>
+              <strong className="display">{band.low}–{band.high}</strong>
+              <span className="caption">de 500 · estimado con curva provisional y clave preliminar</span>
+            </div>
+          )}
           <div className="stat">
             <span className="label">XP ganado</span>
-            <strong className="display accent">{fmtInt(xpEarned)}</strong>
+            <strong className="display accent">+<CountUp value={xpEarned} format={(n) => fmtInt(Math.round(n))} delay={350} /></strong>
           </div>
           <div className="stat">
             <span className="label">Respondidas</span>
@@ -146,6 +166,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
                   key={q.key}
                   type="button"
                   className={`answer-cell ${cellGrade(q)}`}
+                  disabled={locked}
                   onClick={() => (onReviewAt ? onReviewAt(n) : onReview())}
                   aria-label={`Pregunta ${q.number}, ${GRADE_LABEL[cellGrade(q)]}`}
                 >
@@ -159,12 +180,13 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
       </div>
 
       <div className="results-actions">
-        {score.keyed && wrong > 0 ? (
+        {locked && <p className="notice">{lockedNote ?? "Tu docente mostrará las respuestas más adelante."}</p>}
+        {!locked && (score.keyed && wrong > 0 ? (
           <button type="button" className="primary big" onClick={onReview}>Revisar {fmtInt(wrong)} {wrong === 1 ? "error" : "errores"}</button>
         ) : (
           <button type="button" className="primary big" onClick={onReview}>Revisar respuestas</button>
-        )}
-        <button type="button" className="secondary big" onClick={onRetry}>Practicar de nuevo</button>
+        ))}
+        {onRetry && <button type="button" className="secondary big" onClick={onRetry}>{attempt.assignmentId ? "Otro intento" : "Practicar de nuevo"}</button>}
         <button type="button" className="text-btn" onClick={onHome}>Volver al inicio</button>
       </div>
     </section>

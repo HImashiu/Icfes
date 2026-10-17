@@ -1,32 +1,32 @@
 import Icon from "../components/Icon.jsx";
 import Mascot from "../components/Mascot.jsx";
-import { SAMPLE_LEAGUE, SAMPLE_STUDENT } from "../data/mock.js";
+import AssignedList from "./AssignedList.jsx";
+import { SAMPLE_STUDENT } from "../data/mock.js";
 import { areaColor, fmtDec, fmtInt, fmtPct } from "../lib/brand.js";
 import { formatClock, questionsFor } from "../lib/exam.js";
 
 const DAYS = ["L", "M", "X", "J", "V", "S", "D"];
 
-// Inicio: streak, continue, quick cards, weekly XP, mastery by area, league teaser.
-// Streak, XP, weekly, mastery and league values are SAMPLE data (see data/mock.js).
-export default function Home({ exam, resumable, onContinue, onPractice, onSetup, onLeague, xpSession }) {
+// Inicio: streak, continue, quick cards, weekly XP, mastery by area. No class ranking: progress is measured
+// against the student's own goal, never against classmates.
+// Streak, XP, weekly and mastery values are SAMPLE data (see data/mock.js).
+export default function Home({ exam, resumable, onContinue, onPractice, onSetup, xpSession, assigned, onStartAssigned, onLive, realName }) {
   const todayIndex = (new Date().getDay() + 6) % 7;
   const xp = SAMPLE_STUDENT.xp + (xpSession ?? 0);
-  const me = SAMPLE_LEAGUE.find((r) => r.me);
-  const pos = [...SAMPLE_LEAGUE].sort((a, b) => b.xp - a.xp).findIndex((r) => r.me) + 1;
 
-  // Weekly XP as a line: you in accent, class average in text-2.
+  // Weekly XP as a line in accent, with the daily goal as a dashed line.
   const w = 300, h = 120, max = 200;
   const pt = (v, i) => `${(i * (w / 6)).toFixed(1)},${(h - (v / max) * h).toFixed(1)}`;
   const mine = SAMPLE_STUDENT.weeklyXp.map(pt).join(" ");
-  const avg = SAMPLE_STUDENT.classXp.map(pt).join(" ");
+  const goalY = h - (SAMPLE_STUDENT.dailyGoal / max) * h;
 
   return (
     <section className="home">
       <header className="home-head">
         <div className="avatar" aria-hidden="true">E</div>
         <div className="greet">
-          <span className="caption">{SAMPLE_STUDENT.course}</span>
-          <strong>Hola, {SAMPLE_STUDENT.name}</strong>
+          <span className="caption">{realName ? "Tu colegio" : SAMPLE_STUDENT.course}</span>
+          <strong>Hola, {realName ?? SAMPLE_STUDENT.name}</strong>
         </div>
         <div className="pills">
           <span className="pill"><Icon name="flame" size={16} className="flame-ico" /><b className="flame-text">{SAMPLE_STUDENT.streak}</b></span>
@@ -34,8 +34,17 @@ export default function Home({ exam, resumable, onContinue, onPractice, onSetup,
         </div>
       </header>
 
+      {onLive && (
+        <button type="button" className="card quick-row" onClick={onLive}>
+          <Icon name="bolt" size={20} className="accent-ico" />
+          <span><strong>Juego en vivo</strong><br /><span className="caption">Entra con el código que proyecta tu docente</span></span>
+        </button>
+      )}
+
+      {assigned && <AssignedList assignments={assigned.assignments} attempts={assigned.attempts} onStart={onStartAssigned} />}
+
       <div className="card streak-card">
-        <Mascot size={72} />
+        <Mascot size={72} idle />
         <div>
           <span className="label">Racha</span>
           <strong className="display">{SAMPLE_STUDENT.streak} días</strong>
@@ -90,12 +99,12 @@ export default function Home({ exam, resumable, onContinue, onPractice, onSetup,
       <div className="card">
         <div className="section-head">
           <span className="label">Progreso semanal</span>
-          <span className="caption">XP por día · <span className="accent-text">tú</span> · <span className="muted">promedio</span></span>
+          <span className="caption">XP por día · <span className="accent-text">tú</span> · <span className="muted">meta diaria ({SAMPLE_STUDENT.dailyGoal})</span></span>
         </div>
-        <svg className="week-chart" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" role="img" aria-label="XP de la semana frente al promedio del curso">
+        <svg className="week-chart" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" role="img" aria-label="XP de la semana frente a tu meta diaria">
           {[30, 60, 90].map((y) => <line key={y} x1="0" x2={w} y1={y} y2={y} stroke="var(--line)" strokeWidth="1" />)}
-          <polyline points={avg} fill="none" stroke="var(--text-2)" strokeWidth="2" strokeDasharray="4 4" />
-          <polyline points={mine} fill="none" stroke="var(--accent-ink)" strokeWidth="3" strokeLinejoin="round" />
+          <line x1="0" x2={w} y1={goalY} y2={goalY} stroke="var(--text-2)" strokeWidth="2" strokeDasharray="4 4" />
+          <polyline className="mine" points={mine} fill="none" stroke="var(--accent-ink)" strokeWidth="3" strokeLinejoin="round" />
         </svg>
         <div className="week-axis">{DAYS.map((d) => <span key={d}>{d}</span>)}</div>
       </div>
@@ -116,15 +125,7 @@ export default function Home({ exam, resumable, onContinue, onPractice, onSetup,
         ))}
       </div>
 
-      <button type="button" className="card league-teaser" onClick={onLeague}>
-        <Icon name="trophy" />
-        <div>
-          <strong>Liga de la semana</strong>
-          <span className="caption">Vas {pos}.º con {fmtInt(me.xp)} XP</span>
-        </div>
-        <Icon name="right" />
-      </button>
-      <span className="caption sample-note">Racha, XP, liga y dominio son datos de muestra.</span>
+      <span className="caption sample-note">Racha, XP y dominio son datos de muestra.</span>
     </section>
   );
 }

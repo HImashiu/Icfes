@@ -10,8 +10,10 @@ import { formatClock } from "../lib/exam.js";
 import { areaColor, fmtInt } from "../lib/brand.js";
 import { plainText } from "../lib/render.js";
 import { xpFor } from "../lib/xp.js";
+import { buzz, confetti, play } from "../lib/motion.js";
 
 // +10 XP per correct practice answer, double in the weakest area.
+const PRAISE = ["¡Correcto!", "¡Muy bien!", "¡Excelente!", "¡Así se hace!", "¡Bien pensado!"];
 
 // Scrolls a pane (not the page) so `el` sits in the middle of it.
 function centerIn(pane, el) {
@@ -22,13 +24,18 @@ function centerIn(pane, el) {
 }
 
 // The answering screen. Shows only the progress, the timer or mode, the flag, the question,
-// the options and the map: no streak, XP chart or league here.
+// the options and the map: no streak or XP chart here.
 export default function Test({ title, examLabel, questions, attempt, answerKey, onChange, onSubmit, onExit, figures, enrich, enrichMeta }) {
   const [now, setNow] = useState(() => Date.now());
   const [sheetOpen, setSheetOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  // Practice rewards: correct answers in a row (this session only) and the question just checked, which animates once.
+  const [run, setRun] = useState(0);
+  const [justChecked, setJustChecked] = useState(null);
   const timed = Boolean(attempt.durationSec);
   const practice = !timed;
+  // Practice normally checks each answer at once; a teacher can hold the answers until the end ("Al final").
+  const instant = practice && attempt.instant !== false;
   const remaining = timed ? attempt.durationSec - (now - attempt.startedAt) / 1000 : null;
   const timeUp = remaining !== null && remaining <= 0;
 
@@ -58,13 +65,17 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   while (blockTo < questions.length - 1 && sameText(questions[blockTo + 1], q)) blockTo++;
   const fullBlock = questions.slice(blockFrom, blockTo + 1);
   const mainRef = useRef(null);
+  const keepScroll = useRef(false);
+  const navAt = useRef(0);
   const topRef = useRef(null);
 
   // A long text lives in its own pane so it never has to be scrolled past: a column beside the questions when there
   // is room (every question of the text is listed, the pane stays put), otherwise a panel docked under the top bar
   // that shows one question at a time. Short texts stay inside the question card.
   const roomy = useMedia("(min-width: 900px)");
-  const paneKind = q ? textPaneKind(q) : null;
+  // Wide screens put every shared text, short or long, in the side column.
+  const groupMin = roomy ? 0 : undefined;
+  const paneKind = q ? textPaneKind(q, groupMin) : null;
   const sideText = roomy && (paneKind === "group" || (paneKind === "own" && fullBlock.length === 1));
   const dockText = !roomy && paneKind !== null;
   const block = dockText ? [q] : fullBlock;
@@ -99,21 +110,13 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
     return () => observer?.disconnect();
   }, []);
 
-  // After "Comprobar" the verdict sits under the options; on a phone that is below the fold, so bring it up.
-  const showVerdict = () => setTimeout(() => {
-    const el = document.querySelector(".test .feedback");
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    const bar = document.querySelector(".test-bottom")?.getBoundingClientRect();
-    const bottom = bar && bar.top > 0 && bar.top < window.innerHeight ? bar.top : window.innerHeight;
-    if (r.bottom > bottom) window.scrollBy({ top: r.bottom - bottom + 16, behavior: "smooth" });
-  }, 60);
-
   // `stay` keeps the page where it is: the next effect brings the question into view inside its block.
   const go = (index, { stay = false } = {}) => {
     if (index < 0 || index >= questions.length) return;
     onChange((a) => ({ ...a, current: index }));
     setSheetOpen(false);
+    setJustChecked(null);
+    navAt.current = Date.now();
     const sameBlock = index >= blockFrom && index <= blockTo && !dockText;
     if (!(stay || sameBlock)) window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -135,6 +138,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
       if (e.key === "ArrowRight") go(current + 1);
       if (e.key === "ArrowLeft") go(current - 1);
       if (e.key === "m" || e.key === "M") toggleFlag();
+      if (e.key === "Enter" && !e.target.closest?.("button:not(.option), a, summary")) { e.preventDefault(); mainRef.current?.closest(".test")?.querySelector(".test-bottom .big:not(:disabled)")?.click(); }
       const letter = e.key.toUpperCase();
       if (["A", "B", "C", "D"].includes(letter) && q && !checked && q.options.some((o) => o.letter === letter)) setAnswer(letter);
     };
@@ -150,7 +154,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   // A tap on an option of another question in the block moves the current question there first.
   const answerIn = (qq) => (letter) => {
     const index = questions.indexOf(qq);
-    if (index !== current) onChange((a) => ({ ...a, current: index }));
+    if (index !== current) { keepScroll.current = true; onChange((a) => ({ ...a, current: index })); }
     setAnswerFor(qq, letter);
   };
   const toggleFlagOf = (qq) => () =>
@@ -163,13 +167,27 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   const toggleFlag = toggleFlagOf(q);
 
   // Practice: "Comprobar" reveals the grade for this question once. XP counts only the first correct check.
+  // A right answer gets a chime, confetti from the right option and, every few in a row, a bigger cheer.
   const check = () => {
+    if (attempt.checked?.[q.key]) return;
+    const hit = Boolean(correctLetter) && attempt.answers[q.key] === correctLetter;
     onChange((a) => {
       if (a.checked?.[q.key]) return a;
-      const hit = Boolean(correctLetter) && a.answers[q.key] === correctLetter;
       return { ...a, checked: { ...(a.checked ?? {}), [q.key]: true }, xp: (a.xp ?? 0) + (hit ? xpFor(q.section) : 0) };
     });
-    showVerdict();
+    setJustChecked(q.key);
+    if (!correctLetter) return;
+    const nextRun = hit ? run + 1 : 0;
+    setRun(nextRun);
+    if (hit) {
+      const milestone = nextRun >= 3 && (nextRun === 3 || nextRun % 5 === 0);
+      play(milestone ? "combo" : "correct");
+      buzz(18);
+      setTimeout(() => confetti(document.querySelector(`[data-qkey="${q.key}"] .option.correct`), { count: milestone ? 44 : 22, spread: milestone ? 1.4 : 1 }), 60);
+    } else {
+      play("wrong");
+      buzz([30, 40, 30]);
+    }
   };
 
   // Entregar asks first in the app itself (a browser confirm() is blocked inside embedded previews).
@@ -180,10 +198,13 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   // The verdict of one question of the block (every checked question keeps its own), then its AI analysis.
   const feedbackOf = (qq) => {
     const row = enrich?.[String(qq.number)];
-    if (practice && !attempt.checked?.[qq.key]) return row && !row.hidden ? <Hint key={qq.key} text={row.pista} /> : null;
-    if (!practice) return null;
+    // The teacher can switch hints off for an assignment.
+    if (practice && !attempt.checked?.[qq.key]) return row && !row.hidden && attempt.hints !== false ? <Hint key={qq.key} text={row.pista} /> : null;
+    if (!instant) return null;
     const cl = answerKey?.get(qq.key) ?? null;
     const right = Boolean(cl) && attempt.answers[qq.key] === cl;
+    // The current question's verdict lives in the bottom bar; other checked questions of the block keep theirs here.
+    if (qq.key === q?.key) return <AiAnalysis row={row} correctLetter={cl} meta={enrichMeta} hint={false} />;
     return (
       <>
         <div className={`feedback ${hasKey ? (right ? "ok" : "bad") : "neutral"}`} role="status">
@@ -201,17 +222,37 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   };
 
   // Practice: with nothing picked the main button skips ahead, so a hard question never blocks the student.
+  // On the last question the main button finishes instead of sitting disabled.
   const last = current >= questions.length - 1;
-  const mainAction = practice && !checked ? (
+  const mainAction = instant && !checked ? (
     picked ? (
       <button type="button" className="primary big" onClick={check}>Comprobar</button>
     ) : (
       <button type="button" className="secondary big" disabled={last} onClick={() => go(current + 1)}>Saltar</button>
     )
+  ) : last ? (
+    <button type="button" className="primary big" onClick={submit}>{practice ? "Ver resultados" : "Entregar"}</button>
   ) : (
-    <button type="button" className="primary big" disabled={last} onClick={() => go(current + 1)}>
-      Siguiente
+    <button type="button" className="primary big" onClick={() => go(current + 1)}>
+      {instant ? "Continuar" : "Siguiente"}
     </button>
+  );
+
+  // Practice, once checked: the bottom bar turns green or red and says how it went, like a coach at your side.
+  const right = checked && Boolean(correctLetter) && picked === correctLetter;
+  const verdict = instant && checked ? (!hasKey || !correctLetter ? "neutral" : right ? "ok" : "bad") : null;
+  const cheer = run >= 3 && right ? `${run} seguidas` : null;
+  const aiRow = q ? enrich?.[String(q.number)] : null;
+  const explained = Boolean(aiRow && !aiRow.hidden && aiRow.explicacion);
+  const verdictBar = verdict && (
+    <div className="verdict" role="status" key={q.key}>
+      <span className="verdict-ico" aria-hidden="true"><Icon name={verdict === "ok" ? "check" : verdict === "bad" ? "x" : "flag"} size={22} /></span>
+      <div>
+        <strong>{verdict === "neutral" ? "Clave pendiente" : right ? PRAISE[(current + run) % PRAISE.length] : `La respuesta es ${correctLetter}`}</strong>
+        <span>{verdict === "neutral" ? "Esta pregunta todavía no tiene clave." : right ? `+${xpFor(q.section)} XP · clave preliminar` : explained ? "Mira la explicación abajo · clave preliminar" : "Clave preliminar, no oficial"}</span>
+      </div>
+      {cheer && <span className="verdict-run"><Icon name="flame" size={16} /> {cheer}</span>}
+    </div>
   );
 
   const flagged = Boolean(attempt.flags[q?.key]);
@@ -253,13 +294,42 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
     const pane = gap?.closest(".text-dock .dock-body, .read-text");
     if (gap && pane) centerIn(pane, gap);
     else if (gap) gap.scrollIntoView?.({ block: "center", behavior: "smooth" });
-    if (!dockText && current > blockFrom) {
+    // A question that became current because the student scrolled to it or tapped in it stays where it is.
+    if (!dockText && current > blockFrom && !keepScroll.current) {
       root.querySelector(`[data-qkey="${q?.key}"]`)?.scrollIntoView?.({ block: "start", behavior: "smooth" });
     }
+    keepScroll.current = false;
   }, [current, textEl, dockText]);
 
+  // Beside a shared text, the question being read follows the scroll, so the chips and the bottom bar match it.
+  useEffect(() => {
+    if (!sideText || fullBlock.length < 2) return undefined;
+    let raf = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        // Not while a jump the student asked for (a chip, Continuar) is still scrolling.
+        if (Date.now() - navAt.current < 900) return;
+        const line = window.innerHeight * 0.4;
+        const cards = [...(mainRef.current?.querySelectorAll(".read-qs .block-q") ?? [])];
+        let pick = null;
+        for (const el of cards) if (el.getBoundingClientRect().top <= line) pick = el.dataset.qkey;
+        const atEnd = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 4;
+        if (atEnd && cards.length) pick = cards[cards.length - 1].dataset.qkey;
+        const index = pick ? questions.findIndex((x) => x.key === pick) : -1;
+        if (index >= 0 && index !== current) {
+          keepScroll.current = true;
+          onChange((a) => ({ ...a, current: index }));
+        }
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => { window.removeEventListener("scroll", onScroll); cancelAnimationFrame(raf); };
+  }, [sideText, blockFrom, blockTo, current]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const footer = (
-    <footer className="test-bottom">
+    <footer className={verdict ? `test-bottom verdict-${verdict}` : "test-bottom"}>
+      {verdictBar}
       <button type="button" className="secondary map-btn" onClick={() => setSheetOpen(true)} aria-label="Mapa de preguntas">
         <Icon name="map" />
       </button>
@@ -268,8 +338,28 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
       </button>
       {mainAction}
       <button type="button" className="link submit-link" onClick={submit}>{practice ? "Terminar" : "Entregar"}</button>
-      <span className="kbd-hint desk-only">A–D responder · ← → mover · M marcar</span>
+      <span className="kbd-hint desk-only">A–D responder · Enter comprobar · ← → mover · M marcar</span>
     </footer>
+  );
+
+  // A text with several questions says so up front, with a chip per question (answered ones filled), so the
+  // ones further down are never a surprise.
+  const blockNav = fullBlock.length > 1 && (
+    <nav className="block-nav" aria-label="Preguntas de este texto">
+      <span className="block-nav-label">Este texto tiene {fullBlock.length} preguntas</span>
+      <div className="block-chips">
+        {fullBlock.map((qq) => {
+          const index = questions.indexOf(qq);
+          const cls = `block-chip${index === current ? " current" : ""}${attempt.answers[qq.key] ? " done" : ""}`;
+          return (
+            <button key={qq.key} type="button" className={cls} aria-current={index === current ? "true" : undefined}
+              onClick={() => { go(index, { stay: true }); if (dockText) switchView("question"); }}>
+              {qq.number}
+            </button>
+          );
+        })}
+      </div>
+    </nav>
   );
 
   // Every question of the block (one on a phone with a docked text), each with its own card and verdict.
@@ -278,7 +368,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
       const memberChecked = Boolean(attempt.checked?.[qq.key]);
       const memberCorrect = answerKey?.get(qq.key) ?? null;
       return (
-        <section key={qq.key} data-qkey={qq.key} className={qq.key === q?.key ? "block-q current" : "block-q"}>
+        <section key={qq.key} data-qkey={qq.key} className={`block-q${qq.key === q?.key ? " current" : ""}${qq.key === justChecked ? " just-checked" : ""}`}>
           <QuestionView
             question={qq}
             answer={attempt.answers[qq.key]}
@@ -293,6 +383,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
             feedback={feedbackOf(qq)}
             footer={i === block.length - 1 && !dockText ? lastFooter : null}
             textTarget={textTarget}
+            paneGroupMin={groupMin}
             gapLine={dockText}
           />
         </section>
@@ -300,7 +391,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
     });
 
   return (
-    <div className="test">
+    <div className={verdict ? "test has-verdict" : "test"}>
       <header className="test-top" ref={topRef}>
         <div className="test-row">
           <button type="button" className="icon-btn" onClick={onExit} aria-label="Salir del simulacro">
@@ -334,8 +425,10 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
           </span>
           {timed ? (
             <span className={remaining < 300 ? "clock low" : "clock"} aria-live="off">{formatClock(remaining)}</span>
+          ) : instant ? (
+            <span className="meta-mode">Práctica · <b key={attempt.xp ?? 0} className="xp-bump">{fmtInt(attempt.xp ?? 0)} XP</b></span>
           ) : (
-            <span className="meta-mode">Práctica · {fmtInt(attempt.xp ?? 0)} XP</span>
+            <span className="meta-mode">Práctica · respuestas al final</span>
           )}
         </div>
         <span className="sr-only">{title}{examLabel ? ` · ${examLabel}` : ""}</span>
@@ -344,10 +437,12 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
       <div className="test-body" ref={mainRef} onClick={onBodyClick}>
         <main className={dockText && view === "text" ? "test-main view-text" : "test-main"}>
           {dockText && <TextToggle view={view} onView={switchView} number={q.number} bodyRef={setTextEl} />}
+          {dockText && view === "question" && blockNav}
           {sideText ? (
             <div className="read-split">
               <aside className="read-text paper-card" ref={setTextEl} aria-label="Texto de las preguntas" />
               <div className="read-qs">
+                {blockNav}
                 {renderBlock(null)}
                 {footer}
               </div>
