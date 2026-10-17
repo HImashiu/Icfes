@@ -20,7 +20,9 @@ import { clearAttempt, loadAttempt, saveAttempt } from "./lib/storage.js";
 import { linkFigures, parseFigureSpecs, prepareExam } from "./lib/figures.js";
 import { applyTheme, currentTheme } from "./lib/theme.js";
 import { useAuth } from "./lib/auth.jsx";
-import { attemptForAssignment, attemptRow, questionsForAttempt } from "./lib/assignments.js";
+import Consent from "./screens/Consent.jsx";
+import { CONSENT_VERSION, needsTerms } from "./lib/consent.js";
+import { attemptForAssignment, attemptRow, attemptsLeft, questionsForAttempt, revealAllowed } from "./lib/assignments.js";
 
 const base = import.meta.env.BASE_URL;
 
@@ -164,6 +166,14 @@ export default function App() {
   }, [signedIn, auth.api]);
   useEffect(() => { loadAssigned(); }, [loadAssigned]);
 
+  // Terms acceptance: with an account, nothing opens until the current version is accepted.
+  // null = still asking; a failed read does not lock anyone out (the check repeats on the next sign-in).
+  const [consents, setConsents] = useState(null);
+  useEffect(() => {
+    if (!signedIn) return setConsents(null);
+    auth.api.myConsents().then(setConsents).catch(() => setConsents([{ kind: "terms", version: CONSENT_VERSION }]));
+  }, [signedIn, auth.api]);
+
   const startAssigned = async (a) => {
     const sel = await openExam(a.exam_slug);
     if (!sel) return;
@@ -233,10 +243,27 @@ export default function App() {
   if (typeof window !== "undefined" && window.location.hash === "#figuras") return <FigureCheck />;
   // Internal review of every figure spec (not in the student navigation).
   if (typeof window !== "undefined" && window.location.hash === "#revision-figuras") return <FigureReview />;
+  if (signedIn && consents === null) return <main className="frame"><p className="muted">Cargando…</p></main>;
+  if (signedIn && needsTerms(consents)) {
+    return (
+      <Consent
+        onSignOut={auth.signOut}
+        onAccept={async () => {
+          await auth.api.acceptConsent(auth.profile.id, "terms", CONSENT_VERSION);
+          setConsents([...(consents ?? []), { kind: "terms", version: CONSENT_VERSION }]);
+        }}
+      />
+    );
+  }
   if (exams === null) return <main className="frame"><p className="muted">Cargando…</p></main>;
   if (!selected) return <main className="frame"><p className="muted">{opening ? "Cargando cuadernillo…" : "Todavía no hay cuadernillos listos."}</p></main>;
 
   const questions = selected && attempt ? questionsForAttempt(selected.exam, attempt) : [];
+  // Answers of an assigned attempt can be held back by the teacher (until the assignment closes, or for good).
+  const assignedOf = attempt?.assignmentId ? assigned.assignments.find((a) => a.id === attempt.assignmentId) : null;
+  const locked = Boolean(attempt?.assignmentId) && !revealAllowed(attempt.reveal, assignedOf);
+  const usedOf = attempt?.assignmentId ? assigned.attempts.filter((x) => x.assignment_id === attempt.assignmentId && x.submitted_at).length : 0;
+  const retryAssigned = assignedOf && attemptsLeft(assignedOf, usedOf) > 0 ? () => startAssigned(assignedOf) : null;
   const scopeTitle = attempt && attempt.scope !== "all" ? attempt.scope : "Examen completo";
   const examTitle = selected ? `${selected.exam.title} · ${scopeTitle}` : "";
   // The sidebar stays on every screen except the test; results and review belong to Practicar, reports to Perfil.
@@ -285,7 +312,7 @@ export default function App() {
           examLabel={selected.exam.title}
           questions={questions}
           attempt={attempt}
-          answerKey={selected.key}
+          answerKey={locked ? null : selected.key}
           onChange={setAttempt}
           onSubmit={submit}
           onExit={goHome}
@@ -305,7 +332,9 @@ export default function App() {
           onReview={() => { setReviewStart(0); setView("review"); }}
           onReviewAt={(n) => { setReviewStart(n); setView("review"); }}
           onHome={goHome}
-          onRetry={() => startAttempt(attempt.scope, attempt.mode)}
+          locked={locked}
+          lockedNote={attempt?.reveal === "after_close" ? "Tu docente mostrará las respuestas cuando cierre la asignación." : undefined}
+          onRetry={attempt.assignmentId ? retryAssigned : () => startAttempt(attempt.scope, attempt.mode)}
         />
       )}
 

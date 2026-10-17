@@ -1093,3 +1093,60 @@ p.fuente { font-size: 0.78em; line-height: 1.35; text-align: right; margin: 14px
 .hint.open .hint-btn { border-style: solid; }
 .hint-text { margin: 0; padding: 12px 14px; border-radius: 14px; background: var(--accent-soft); color: var(--text); line-height: 1.45; }
 .hint-text .caption { color: var(--text-2); font-size: 12px; }
+
+/* ---- Assignment builder (teacher) ---- */
+.builder { display: grid; gap: 12px; }
+.b-tabs { display: none; }
+.b-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr); gap: 16px; align-items: start; }
+.b-mine { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; }
+.b-facet { display: grid; gap: 4px; }
+.b-toggles, .b-actions { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.b-auto { display: inline-flex; gap: 6px; align-items: center; }
+.b-auto input { width: 64px; text-align: center; }
+.b-list, .b-picked { list-style: none; margin: 0; padding: 0; display: grid; }
+.b-row { display: grid; grid-template-columns: 22px 8px 1fr auto; gap: 10px; align-items: start; padding: 10px 6px; border-bottom: 1px solid var(--line); border-radius: 8px; }
+.b-row.on { background: var(--accent-soft); }
+.b-row .assign-tile { align-self: stretch; border-radius: 4px; }
+.b-body { display: grid; gap: 4px; min-width: 0; }
+.b-text { color: var(--text-2); font-size: 13px; overflow-wrap: anywhere; }
+.b-summary { display: grid; gap: 4px; }
+.b-picked li { display: grid; grid-template-columns: 26px 1fr auto; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.b-num { font-weight: 700; color: var(--text-2); text-align: center; }
+.b-name { text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.b-move { display: inline-flex; gap: 2px; }
+.b-btn { min-width: 32px; min-height: 32px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; color: var(--text); cursor: pointer; }
+.b-btn:disabled { opacity: 0.35; cursor: default; }
+.b-sep { border: 0; border-top: 1px solid var(--line); width: 100%; margin: 4px 0; }
+.b-check { display: flex; gap: 8px; align-items: center; }
+fieldset.field { border: 0; padding: 0; margin: 0; }
+.b-modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: grid; place-items: start center; padding: 24px 12px; overflow-y: auto; z-index: 50; }
+.b-modal-card { background: var(--bg); border-radius: 16px; padding: 16px; width: min(760px, 100%); display: grid; gap: 12px; }
+@media (max-width: 900px) {
+  .b-tabs { display: inline-flex; }
+  .b-grid { grid-template-columns: 1fr; }
+  .b-grid.show-bank .b-mine, .b-grid.show-mine .b-bank { display: none; }
+  .b-mine { position: static; max-height: none; }
+}
+
+/* ---- Dashboards ---- */
+.d-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.d-kpi { display: grid; gap: 2px; align-content: start; }
+.d-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; align-items: start; }
+.d-bars { display: grid; gap: 8px; }
+.d-bar-row { display: grid; grid-template-columns: minmax(90px, 150px) 1fr 52px; gap: 8px; align-items: center; font-size: 13px; }
+.d-bar-track { height: 12px; background: var(--surface-2); border-radius: 999px; overflow: hidden; display: block; }
+.d-bar-track > span { display: block; height: 100%; border-radius: inherit; }
+.d-bar-num { text-align: right; font-variant-numeric: tabular-nums; }
+.d-hist { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; align-items: end; height: 140px; padding-top: 16px; }
+.d-hist-col { display: grid; grid-template-rows: 14px 1fr 16px; height: 100%; text-align: center; font-size: 11px; align-items: end; }
+.d-hist-bar { display: block; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 2px; align-self: end; }
+.d-hist-n { font-weight: 700; }
+.d-hist-x { color: var(--text-2); }
+.d-opt { display: inline-block; margin-right: 8px; font-variant-numeric: tabular-nums; color: var(--text-2); }
+.d-opt.key { color: var(--ok); font-weight: 700; }
+@media print {
+  .t-side, .no-print, .t-head button, .b-modal { display: none !important; }
+  .teacher { display: block; }
+  .t-main { padding: 0; }
+  .card { break-inside: avoid; box-shadow: none; }
+}

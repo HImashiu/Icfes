@@ -15,8 +15,8 @@ describe("question selection", () => {
     expect(pickQuestionKeys(qs, 20)).toBeNull();
     expect(pickQuestionKeys(qs, 5)).toEqual(["1", "3", "5", "7", "9"]);
   });
-  it("an attempt keeps only the assignment's keys, in booklet order", () => {
-    expect(questionsForAttempt(exam, { scope: "all", keys: ["4", "2"] }).map((x) => x.key)).toEqual(["2", "4"]);
+  it("an attempt keeps only the assignment keys, in the teacher order", () => {
+    expect(questionsForAttempt(exam, { scope: "all", keys: ["4", "2", "99"] }).map((x) => x.key)).toEqual(["4", "2"]);
     expect(questionsForAttempt(exam, { scope: "Inglés", keys: null }).map((x) => x.key)).toEqual(["5"]);
   });
 });

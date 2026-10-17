@@ -20,7 +20,10 @@ export function pickQuestionKeys(questions, count) {
 // The questions an attempt covers: the whole scope, or the assignment's chosen keys in booklet order.
 export function questionsForAttempt(exam, attempt) {
   const all = questionsFor(exam, attempt.scope);
-  return attempt.keys ? all.filter((q) => attempt.keys.includes(q.key)) : all;
+  if (!attempt.keys) return all;
+  // The teacher's order wins; a key that no longer exists in the booklet is skipped.
+  const byKey = new Map(all.map((q) => [q.key, q]));
+  return attempt.keys.map((k) => byKey.get(k)).filter(Boolean);
 }
 
 export function assignmentState(a, now = Date.now()) {
@@ -39,6 +42,8 @@ export function attemptForAssignment(a, questions, now = Date.now()) {
     keys: a.question_keys ?? null,
     assignmentId: a.id,
     mode,
+    maxAttempts: a.max_attempts ?? null,
+    reveal: a.reveal_policy ?? "after_submit",
     durationSec: mode === "timed" ? (a.time_limit_min ? a.time_limit_min * 60 : timedSeconds(questions)) : null,
     startedAt: now,
     answers: {},
@@ -97,6 +102,7 @@ export function progressRows(members, attempts) {
         joined: Boolean(m.profile_id),
         done: Boolean(a),
         pct: a ? scorePct(a) : null,
+        attempt: a ?? null,
         at: a?.submitted_at ?? null,
       };
     });
@@ -113,4 +119,18 @@ export function resultsCsv(title, rows) {
   const head = ["Estudiante", "Correo", "Estado", "Puntaje (%) clave preliminar", "Entregado"];
   const lines = rows.map((r) => [r.name, r.email, r.done ? "Entregado" : r.joined ? "Pendiente" : "Sin ingresar", r.pct ?? "", r.at ?? ""].map(csvCell).join(","));
   return `﻿${[`${csvCell(title)}`, head.join(","), ...lines].join("\n")}\n`;
+}
+
+// Attempts a student may make: exams default to one, other kinds to no limit (null = no limit).
+export const effectiveMax = (a) => a.max_attempts ?? (a.kind === "exam" ? 1 : null);
+export function attemptsLeft(a, used) {
+  const max = effectiveMax(a);
+  return max == null ? Infinity : Math.max(0, max - used);
+}
+
+// Whether a student may see the right answers of an assigned attempt now.
+export function revealAllowed(policy, assignment, now = Date.now()) {
+  if (!policy || policy === "after_submit") return true;
+  if (policy === "never") return false;
+  return assignment ? assignmentState(assignment, now) === "closed" : false;
 }

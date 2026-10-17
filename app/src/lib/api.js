@@ -32,8 +32,8 @@ export function createApi(client) {
       return unwrap(await client.from("course_members").select("id, profile_id, email, full_name, role").eq("course_id", courseId).order("full_name"));
     },
     // Existing emails are left alone, so importing the same file twice is harmless.
-    async addStudents(courseId, rows) {
-      const payload = rows.map((r) => ({ course_id: courseId, email: r.email, full_name: r.fullName, role: "student" }));
+    async addStudents(courseId, rows, role = "student") {
+      const payload = rows.map((r) => ({ course_id: courseId, email: r.email, full_name: r.fullName, role }));
       unwrap(await client.from("course_members").upsert(payload, { onConflict: "course_id,email", ignoreDuplicates: true }));
       return payload.length;
     },
@@ -45,7 +45,7 @@ export function createApi(client) {
       return unwrap(
         await client
           .from("assignments")
-          .select("id, course_id, kind, title, exam_slug, scope, question_keys, opens_at, due_at, time_limit_min, reveal_policy, status, created_at, courses(name)")
+          .select("id, course_id, kind, title, exam_slug, scope, question_keys, opens_at, due_at, time_limit_min, reveal_policy, max_attempts, status, created_at, courses(name)")
           .order("created_at", { ascending: false }),
       );
     },
@@ -66,7 +66,39 @@ export function createApi(client) {
       return unwrap(await client.from("attempts").select("assignment_id, submitted_at, mode, score, client_id").not("assignment_id", "is", null));
     },
     async assignmentAttempts(assignmentId) {
-      return unwrap(await client.from("attempts").select("profile_id, submitted_at, mode, score").eq("assignment_id", assignmentId));
+      return unwrap(await client.from("attempts").select("profile_id, client_id, assignment_id, submitted_at, mode, score, answers, duration_sec").eq("assignment_id", assignmentId));
+    },
+
+    // Every delivered attempt on one booklet that this teacher may read, with answers (for "weak spots" and item analysis).
+    async examAttempts(slug) {
+      return unwrap(await client.from("attempts").select("profile_id, client_id, assignment_id, submitted_at, mode, score, answers").eq("exam_slug", slug).not("submitted_at", "is", null));
+    },
+
+    // School-wide reads for the coordinator (row-level security gives a teacher only their own courses).
+    async allMembers() {
+      return unwrap(await client.from("course_members").select("id, course_id, profile_id, email, full_name, role"));
+    },
+    async allAttempts() {
+      return unwrap(await client.from("attempts").select("profile_id, client_id, assignment_id, submitted_at, mode, score, exam_slug").not("assignment_id", "is", null));
+    },
+    async listStaff() {
+      return unwrap(await client.from("profiles").select("id, email, full_name, role, created_at").in("role", ["teacher", "school_admin"]).order("full_name"));
+    },
+    async setRole(profileId, role) {
+      return unwrap(await client.rpc("set_profile_role", { p_profile: profileId, p_role: role }));
+    },
+
+    async myConsents() {
+      return unwrap(await client.from("consents").select("kind, version, granted_at"));
+    },
+    async acceptConsent(profileId, kind, version) {
+      unwrap(await client.from("consents").upsert({ profile_id: profileId, kind, version }, { onConflict: "profile_id,kind,version", ignoreDuplicates: true }));
+    },
+    async schoolConsents() {
+      return unwrap(await client.from("school_consents").select("kind, version, granted_at"));
+    },
+    async recordSchoolConsent(schoolId, userId, kind, version) {
+      unwrap(await client.from("school_consents").upsert({ school_id: schoolId, granted_by: userId, kind, version }, { onConflict: "school_id,kind,version", ignoreDuplicates: true }));
     },
   };
 }

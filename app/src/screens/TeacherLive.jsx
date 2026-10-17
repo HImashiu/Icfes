@@ -1,29 +1,27 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { assignmentState, KINDS, pickQuestionKeys, progressRows, resultsCsv } from "../lib/assignments.js";
+import { assignmentState } from "../lib/assignments.js";
 import { areaColor } from "../lib/brand.js";
-import { questionsFor } from "../lib/exam.js";
 import { parseRoster } from "../lib/roster.js";
+import { CONSENT_VERSION, GUARDIAN_TEXT, hasGuardianAuth } from "../lib/consent.js";
+import AssignBuilder from "./AssignBuilder.jsx";
+import AssignmentReport from "./AssignmentReport.jsx";
+import Dashboard from "./Dashboard.jsx";
 
 const NAV = [
+  { label: "Resumen", section: "home" },
   { label: "Cursos y estudiantes", section: "courses" },
   { label: "Asignaciones", section: "assign" },
-  { label: "Ajustes", section: "settings" },
+  { label: "Docentes", section: "staff", admin: true },
+  { label: "Ajustes", section: "settings", admin: true },
 ];
 const shortDate = (iso) => new Date(iso).toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "short" });
-const isoDay = (d) => d.toISOString().slice(0, 10);
 const STATE_LABEL = { active: "Activa", scheduled: "Programada", closed: "Cerrada", draft: "Borrador" };
-
-function download(name, text) {
-  const url = URL.createObjectURL(new Blob([text], { type: "text/csv;charset=utf-8" }));
-  const a = Object.assign(document.createElement("a"), { href: url, download: name });
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 // Panel docente con cuentas reales: cursos, listas de estudiantes, asignaciones y su avance.
 export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
   const { api, profile } = auth;
-  const [section, setSection] = useState("courses");
+  const [section, setSection] = useState("home");
+  const [focusCourse, setFocusCourse] = useState(null);
   const [courses, setCourses] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [error, setError] = useState(null);
@@ -44,7 +42,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
       <aside className="t-side" aria-label="Navegación docente">
         <strong className="t-logo">Cóndor</strong>
         <nav>
-          {NAV.filter((n) => n.section !== "settings" || profile.role === "school_admin").map((n) => (
+          {NAV.filter((n) => !n.admin || profile.role === "school_admin").map((n) => (
             <button key={n.section} type="button" className={section === n.section ? "t-nav active" : "t-nav"} aria-current={section === n.section ? "page" : undefined} onClick={() => { setSection(n.section); setNotice(null); }}>
               {n.label}
             </button>
@@ -62,20 +60,22 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
       <main className="t-main">
         {error && <p className="notice error" role="alert">{error}</p>}
         {notice && <p className="notice">{notice}</p>}
-        {section === "courses" && <Courses api={api} profile={profile} courses={courses} reload={reload} guard={guard} setNotice={setNotice} />}
+        {section === "home" && <Dashboard api={api} profile={profile} guard={guard} onOpenCourse={(id) => { setFocusCourse(id); setSection("courses"); }} />}
+        {section === "courses" && <Courses api={api} profile={profile} courses={courses} reload={reload} guard={guard} setNotice={setNotice} focus={focusCourse} />}
         {section === "assign" && (
           <Assignments api={api} courses={courses} assignments={assignments} exams={exams} fetchExam={fetchExam} reload={reload} guard={guard} setNotice={setNotice} />
         )}
-        {section === "settings" && <Settings api={api} guard={guard} />}
+        {section === "staff" && <Staff api={api} profile={profile} guard={guard} setNotice={setNotice} />}
+        {section === "settings" && <Settings api={api} profile={profile} guard={guard} setNotice={setNotice} />}
       </main>
     </div>
   );
 }
 
-function Courses({ api, profile, courses, reload, guard, setNotice }) {
+function Courses({ api, profile, courses, reload, guard, setNotice, focus }) {
   const [name, setName] = useState("");
   const [grade, setGrade] = useState("11");
-  const [open, setOpen] = useState(null);
+  const [open, setOpen] = useState(focus ?? null);
 
   const create = (e) => {
     e.preventDefault();
@@ -137,8 +137,24 @@ function Roster({ api, course, guard, setNotice, reload }) {
   };
 
   const students = members.filter((m) => m.role === "student");
+  const teachers = members.filter((m) => m.role === "teacher");
+  const [coEmail, setCoEmail] = useState("");
+  const addTeacher = (e) => {
+    e.preventDefault();
+    const email = coEmail.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+    guard(async () => { await api.addStudents(course.id, [{ email, fullName: "" }], "teacher"); setCoEmail(""); setNotice(`${email} ahora es docente de ${course.name}.`); await load(); });
+  };
   return (
     <div style={{ display: "grid", gap: 12 }}>
+      <div>
+        <span className="label">Docentes del curso</span>
+        <p className="caption">{teachers.map((t) => t.full_name || t.email).join(" · ") || "—"}</p>
+        <form className="b-auto" onSubmit={addTeacher}>
+          <input type="email" aria-label="Correo del docente" placeholder="docente@colegio.edu.co" value={coEmail} onChange={(e) => setCoEmail(e.target.value)} />
+          <button type="submit" className="secondary" disabled={!coEmail.trim()}>Agregar docente</button>
+        </form>
+      </div>
       <label className="field">
         <span className="label">Pegar lista o subir CSV (nombre, apellidos, correo)</span>
         <textarea rows={5} value={text} onChange={(e) => setText(e.target.value)} placeholder={"nombre,apellidos,correo\nAna,Pérez,ana@colegio.edu.co"} />
@@ -188,9 +204,9 @@ function Assignments({ api, courses, assignments, exams, fetchExam, reload, guar
       </header>
       {courses.length === 0 && <p className="caption">Crea un curso primero.</p>}
       {composing && (
-        <AssignForm api={api} courses={courses} exams={exams} fetchExam={fetchExam} guard={guard}
+        <AssignBuilder api={api} courses={courses} exams={exams} fetchExam={fetchExam} guard={guard}
           onCancel={() => setComposing(false)}
-          onSaved={(a) => { setComposing(false); setNotice(`Asignado: ${a.title}.`); reload(); }} />
+          onSaved={(a, n) => { setComposing(false); setNotice(n > 1 ? `Asignado a ${n} cursos: ${a.title}.` : `Asignado: ${a.title}.`); reload(); }} />
       )}
       <div className="card t-card">
         <div className="section-head">
@@ -212,127 +228,62 @@ function Assignments({ api, courses, assignments, exams, fetchExam, reload, guar
           </button>
         ))}
       </div>
-      {detail && <Progress key={detail} api={api} assignment={assignments.find((a) => a.id === detail)} guard={guard} reload={reload} />}
+      {detail && assignments.find((a) => a.id === detail) && <AssignmentReport key={detail} api={api} assignment={assignments.find((a) => a.id === detail)} fetchExam={fetchExam} guard={guard} reload={reload} />}
     </>
   );
 }
 
-function AssignForm({ api, courses, exams, fetchExam, guard, onCancel, onSaved }) {
-  const ready = exams.filter((e) => e.status !== "proximamente");
-  const [courseId, setCourseId] = useState(courses[0].id);
-  const [kind, setKind] = useState("homework");
-  const [slug, setSlug] = useState(ready[0]?.slug ?? "");
-  const [scope, setScope] = useState("all");
-  const [count, setCount] = useState("");
-  const [due, setDue] = useState(isoDay(new Date(Date.now() + 7 * 864e5)));
-  const [limit, setLimit] = useState("");
-  const [title, setTitle] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState(null);
-  const entry = ready.find((e) => e.slug === slug);
-
-  const submit = (e) => {
-    e.preventDefault();
-    setMsg(null);
-    if (due < isoDay(new Date())) return setMsg("La fecha de entrega debe ser hoy o después.");
-    setBusy(true);
-    guard(async () => {
-      const exam = await fetchExam(slug);
-      const pool = questionsFor(exam.exam, scope);
-      if (pool.length === 0) throw new Error("Esa área no tiene preguntas disponibles en este cuadernillo.");
-      const keys = pickQuestionKeys(pool, count);
-      const kindLabel = KINDS.find((k) => k.id === kind).label;
-      const auto = `${kindLabel} · ${scope === "all" ? "Examen completo" : scope} · ${exam.exam.title}`;
-      const saved = await api.createAssignment({
-        course_id: courseId, created_by: (await api.getProfile()).id, kind, title: title.trim() || auto,
-        exam_slug: slug, scope, question_keys: keys,
-        due_at: new Date(`${due}T23:59:00`).toISOString(),
-        time_limit_min: kind === "exam" && limit ? Number(limit) : null, status: "active",
-      });
-      onSaved(saved);
-    }).finally(() => setBusy(false));
+function Staff({ api, profile, guard, setNotice }) {
+  const [staff, setStaff] = useState([]);
+  const load = useCallback(() => guard(async () => setStaff(await api.listStaff())), [api, guard]);
+  useEffect(() => { load(); }, [load]);
+  const change = (p, role) => {
+    const verb = role === "school_admin" ? "coordinación" : role === "teacher" ? "docente" : "estudiante";
+    if (!window.confirm(`¿Cambiar a ${p.full_name || p.email} a ${verb}?`)) return;
+    guard(async () => { await api.setRole(p.id, role); setNotice(`${p.full_name || p.email} ahora es ${verb}.`); await load(); });
   };
-
+  const LABEL = { teacher: "Docente", school_admin: "Coordinación" };
   return (
-    <form className="card t-card assign-form" onSubmit={submit}>
-      <strong>Nueva asignación</strong>
-      <label className="field"><span className="label">Curso</span>
-        <select value={courseId} onChange={(e) => setCourseId(e.target.value)}>{courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
-      <label className="field"><span className="label">Tipo</span>
-        <select value={kind} onChange={(e) => setKind(e.target.value)}>{KINDS.map((k) => <option key={k.id} value={k.id}>{k.label}</option>)}</select></label>
-      <label className="field"><span className="label">Cuadernillo</span>
-        <select value={slug} onChange={(e) => { setSlug(e.target.value); setScope("all"); }}>{ready.map((x) => <option key={x.slug} value={x.slug}>{x.slug}</option>)}</select></label>
-      <label className="field"><span className="label">Área</span>
-        <select value={scope} onChange={(e) => setScope(e.target.value)}>
-          <option value="all">Examen completo</option>
-          {(entry?.sections ?? []).map((s) => <option key={s}>{s}</option>)}
-        </select></label>
-      <label className="field"><span className="label">Cantidad de preguntas (vacío = todas)</span>
-        <input inputMode="numeric" value={count} onChange={(e) => setCount(e.target.value.replace(/\D/g, ""))} /></label>
-      {kind === "exam" && (
-        <label className="field"><span className="label">Tiempo en minutos (vacío = el estándar)</span>
-          <input inputMode="numeric" value={limit} onChange={(e) => setLimit(e.target.value.replace(/\D/g, ""))} /></label>
-      )}
-      <label className="field"><span className="label">Fecha de entrega</span>
-        <input type="date" value={due} min={isoDay(new Date())} onChange={(e) => setDue(e.target.value)} /></label>
-      <label className="field"><span className="label">Título (opcional)</span><input value={title} onChange={(e) => setTitle(e.target.value)} /></label>
-      {msg && <p className="notice error">{msg}</p>}
-      <div className="report-actions">
-        <button type="button" className="secondary" onClick={onCancel}>Cancelar</button>
-        <button type="submit" className="primary" disabled={busy || !slug}>{busy ? "Guardando…" : "Asignar"}</button>
+    <>
+      <header className="t-head"><div><h1>Docentes</h1><span className="caption">Quién puede crear cursos y asignaciones en el colegio.</span></div></header>
+      <div className="card t-card">
+        <div className="table-wrap">
+          <table className="t-table">
+            <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th /></tr></thead>
+            <tbody>
+              {staff.map((p) => (
+                <tr key={p.id}>
+                  <td>{p.full_name || "—"}</td><td>{p.email}</td><td>{LABEL[p.role] ?? p.role}</td>
+                  <td>{p.id !== profile.id && (
+                    <>
+                      {p.role === "teacher" && <button type="button" className="link" onClick={() => change(p, "school_admin")}>Hacer coordinación</button>}
+                      {p.role === "school_admin" && <button type="button" className="link" onClick={() => change(p, "teacher")}>Pasar a docente</button>}
+                      {" "}<button type="button" className="link" onClick={() => change(p, "student")}>Quitar permisos</button>
+                    </>
+                  )}</td>
+                </tr>
+              ))}
+              {staff.length === 0 && <tr><td colSpan={4} className="caption">Todavía no hay docentes.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+        <span className="caption">Para sumar un docente nuevo: compártele el código de docente (en Ajustes). Lo escribe la primera vez que ingresa con su correo del colegio.</span>
       </div>
-    </form>
+    </>
   );
 }
 
-function Progress({ api, assignment, guard, reload }) {
-  const [data, setData] = useState(null);
-  useEffect(() => {
-    guard(async () => {
-      const [members, attempts] = await Promise.all([api.listMembers(assignment.course_id), api.assignmentAttempts(assignment.id)]);
-      setData(progressRows(members, attempts));
-    });
-  }, [api, assignment, guard]);
-  if (!data) return <p className="caption">Cargando avance…</p>;
-  const closeNow = () => guard(async () => { await api.setAssignmentStatus(assignment.id, "closed"); await reload(); });
-  const remove = () => {
-    if (window.confirm("¿Borrar esta asignación? Los intentos de los estudiantes se conservan.")) guard(async () => { await api.deleteAssignment(assignment.id); await reload(); });
-  };
-  return (
-    <div className="card t-card">
-      <div className="section-head">
-        <strong>{assignment.title}</strong>
-        <span className="muted">{data.done} de {data.total} entregaron ({data.completion} %)</span>
-      </div>
-      <div className="progress thin"><span style={{ width: `${data.completion}%` }} /></div>
-      <div className="table-wrap">
-        <table className="t-table">
-          <thead><tr><th>Estudiante</th><th>Estado</th><th>Puntaje</th><th>Entregado</th></tr></thead>
-          <tbody>
-            {data.rows.map((r) => (
-              <tr key={r.id}>
-                <td>{r.name}</td>
-                <td>{r.done ? "Entregado" : r.joined ? "Pendiente" : "Sin ingresar"}</td>
-                <td>{r.pct == null ? "—" : `${r.pct} %`}</td>
-                <td>{r.at ? shortDate(r.at) : "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <span className="caption">Puntaje según la clave preliminar, no oficial.</span>
-      <div className="report-actions">
-        <button type="button" className="secondary" onClick={() => download(`${assignment.title}.csv`, resultsCsv(assignment.title, data.rows))}>Exportar CSV</button>
-        {assignmentState(assignment) !== "closed" && <button type="button" className="secondary" onClick={closeNow}>Cerrar ahora</button>}
-        <button type="button" className="link" onClick={remove}>Borrar</button>
-      </div>
-    </div>
-  );
-}
-
-function Settings({ api, guard }) {
+function Settings({ api, profile, guard, setNotice }) {
   const [code, setCode] = useState(null);
-  useEffect(() => { guard(async () => setCode(await api.teacherCode())); }, [api, guard]);
+  const [school, setSchool] = useState(null);
+  const [ok, setOk] = useState(false);
+  useEffect(() => { guard(async () => { setCode(await api.teacherCode()); setSchool(await api.schoolConsents()); }); }, [api, guard]);
+  const recorded = hasGuardianAuth(school);
+  const record = () => guard(async () => {
+    await api.recordSchoolConsent(profile.school_id, profile.id, "guardian_authorization", CONSENT_VERSION);
+    setSchool(await api.schoolConsents());
+    setNotice("Quedó registrada la autorización de acudientes del colegio.");
+  });
   return (
     <>
       <header className="t-head"><div><h1>Ajustes del colegio</h1></div></header>
@@ -340,6 +291,19 @@ function Settings({ api, guard }) {
         <span className="label">Código de docente</span>
         <strong className="display">{code ?? "…"}</strong>
         <span className="caption">Cada docente lo escribe la primera vez que ingresa. No lo compartas con estudiantes.</span>
+      </div>
+      <div className="card t-card">
+        <span className="label">Autorización de acudientes</span>
+        {recorded ? (
+          <span className="caption">Registrada. Los estudiantes aceptan además los términos de uso al ingresar.</span>
+        ) : (
+          <>
+            <p className="caption">{GUARDIAN_TEXT}</p>
+            <label className="b-check"><input type="checkbox" checked={ok} onChange={(e) => setOk(e.target.checked)} /> Lo declaro en nombre del colegio</label>
+            <div className="report-actions"><button type="button" className="primary" disabled={!ok || school === null} onClick={record}>Registrar</button></div>
+          </>
+        )}
+        <span className="caption">Textos legales en borrador (versión {CONSENT_VERSION}): deben revisarse con un abogado antes de usar la plataforma con estudiantes reales.</span>
       </div>
     </>
   );

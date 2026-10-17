@@ -18,5 +18,6 @@ grant usage on schema auth, public to authenticated, anon;
 SQL
 "${P[@]}" -f "$here/../migrations/0001_accounts_courses_assignments.sql"
 "${P[@]}" -f "$here/../migrations/0002_course_creator_can_read.sql"
+"${P[@]}" -f "$here/../migrations/0003_attempt_limits_roles_consent.sql"
 "${P[@]}" -f "$here/rls_scenarios.sql"
 echo "rls: all checks passed"

@@ -1,3 +1,4 @@
+import { bandFor } from "../lib/analytics.js";
 import { useEffect } from "react";
 import Mascot from "../components/Mascot.jsx";
 import { recordAttempt } from "../lib/local.js";
@@ -18,13 +19,14 @@ function headline(pct, answered) {
 }
 const isPhone = typeof window !== "undefined" && !window.matchMedia?.("(min-width: 768px)").matches;
 
-export default function Results({ title, questions, attempt, answerKey, keyStatus, onReview, onReviewAt, onHome, onRetry }) {
+export default function Results({ title, questions, attempt, answerKey, keyStatus, onReview, onReviewAt, onHome, onRetry, locked = false, lockedNote = null }) {
   const score = scoreAttempt(questions, attempt.answers, answerKey);
   const preliminary = keyStatus !== "official";
   // A simulacro is graded like the real exam: blanks count as wrong, so the score is out of every question.
   // Practice is graded on what was answered, since stopping early is normal there.
   const outOf = attempt.mode === "timed" ? score.total : score.answered;
   const pct = score.keyed && outOf > 0 ? (score.correct / outOf) * 100 : null;
+  const band = bandFor(score.perArea);
   const wrong = score.keyed ? score.answered - score.correct : 0;
   const flagged = Object.keys(attempt.flags).length;
   const delivered = Boolean(attempt.submittedAt);
@@ -65,7 +67,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
   const cellGrade = (q) => {
     const given = attempt.answers[q.key];
     if (!given) return "blank";
-    const correct = answerKey?.get(q.key);
+    const correct = locked ? null : answerKey?.get(q.key);
     if (!correct) return "answered";
     return correct === given ? "ok" : "bad";
   };
@@ -88,6 +90,13 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
             <strong className="display">{score.keyed ? fmtPct(pct ?? 0) : "—"}</strong>
             <span className="caption">{score.keyed ? `${fmtInt(score.correct)} de ${fmtInt(outOf)}${attempt.mode === "timed" && score.answered < score.total ? " · en blanco cuentan como error" : ""}` : "Clave pendiente"}</span>
           </div>
+          {delivered && attempt.mode === "timed" && score.keyed && band.global != null && (
+            <div className="stat">
+              <span className="label">Banda estimada</span>
+              <strong className="display">{band.low}–{band.high}</strong>
+              <span className="caption">de 500 · estimado con curva provisional y clave preliminar</span>
+            </div>
+          )}
           <div className="stat">
             <span className="label">XP ganado</span>
             <strong className="display accent">{fmtInt(xpEarned)}</strong>
@@ -146,6 +155,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
                   key={q.key}
                   type="button"
                   className={`answer-cell ${cellGrade(q)}`}
+                  disabled={locked}
                   onClick={() => (onReviewAt ? onReviewAt(n) : onReview())}
                   aria-label={`Pregunta ${q.number}, ${GRADE_LABEL[cellGrade(q)]}`}
                 >
@@ -159,12 +169,13 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
       </div>
 
       <div className="results-actions">
-        {score.keyed && wrong > 0 ? (
+        {locked && <p className="notice">{lockedNote ?? "Tu docente mostrará las respuestas más adelante."}</p>}
+        {!locked && (score.keyed && wrong > 0 ? (
           <button type="button" className="primary big" onClick={onReview}>Revisar {fmtInt(wrong)} {wrong === 1 ? "error" : "errores"}</button>
         ) : (
           <button type="button" className="primary big" onClick={onReview}>Revisar respuestas</button>
-        )}
-        <button type="button" className="secondary big" onClick={onRetry}>Practicar de nuevo</button>
+        ))}
+        {onRetry && <button type="button" className="secondary big" onClick={onRetry}>{attempt.assignmentId ? "Otro intento" : "Practicar de nuevo"}</button>}
         <button type="button" className="text-btn" onClick={onHome}>Volver al inicio</button>
       </div>
     </section>

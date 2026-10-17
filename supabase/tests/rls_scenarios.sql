@@ -103,3 +103,54 @@ do $$ begin
   insert into course_members (course_id, email) values ('33333333-3333-3333-3333-333333333333', 'z@colegio.edu.co');
   raise exception 'FAILED: student edited roster';
 exception when insufficient_privilege then null; when others then if sqlstate <> '42501' then raise; end if; end $$;
+
+-- 8. attempt limits and the open window (0003)
+reset role;
+update assignments set max_attempts = 1 where id = '44444444-4444-4444-4444-444444444444';
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b', 'beto@colegio.edu.co');
+-- the retried upload of the first attempt (same client_id) still works
+insert into attempts (profile_id, assignment_id, client_id, exam_slug, scope, mode, started_at, submitted_at, answers, score)
+values ('00000000-0000-0000-0000-00000000000b', '44444444-4444-4444-4444-444444444444', 'c1', 'S11-A_1ra', 'Matemáticas', 'practice', now(), now(), '{"1":"A"}', '{"correct":1,"total":3}')
+on conflict (profile_id, client_id) do nothing;
+do $$ begin
+  insert into attempts (profile_id, assignment_id, client_id, exam_slug, mode, started_at)
+  values ('00000000-0000-0000-0000-00000000000b', '44444444-4444-4444-4444-444444444444', 'c2', 'S11-A_1ra', 'practice', now());
+  raise exception 'FAILED: second attempt allowed with max_attempts = 1';
+exception when insufficient_privilege then null; when others then if sqlstate <> '42501' then raise; end if; end $$;
+reset role;
+update assignments set max_attempts = null, due_at = now() - interval '3 hours' where id = '44444444-4444-4444-4444-444444444444';
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b', 'beto@colegio.edu.co');
+do $$ begin
+  insert into attempts (profile_id, assignment_id, client_id, exam_slug, mode, started_at)
+  values ('00000000-0000-0000-0000-00000000000b', '44444444-4444-4444-4444-444444444444', 'c3', 'S11-A_1ra', 'practice', now());
+  raise exception 'FAILED: attempt accepted long after the due date';
+exception when insufficient_privilege then null; when others then if sqlstate <> '42501' then raise; end if; end $$;
+reset role;
+update assignments set due_at = null where id = '44444444-4444-4444-4444-444444444444';
+
+-- 9. roles: only the coordinator changes them, only in their school, never their own
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'ana@colegio.edu.co');
+do $$ begin perform set_profile_role('00000000-0000-0000-0000-00000000000b', 'teacher'); raise exception 'FAILED: teacher changed a role';
+  exception when others then if sqlerrm <> 'not_allowed' then raise; end if; end $$;
+reset role;
+update profiles set role = 'school_admin' where id = '00000000-0000-0000-0000-00000000000a';
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'ana@colegio.edu.co');
+select pg_temp.expect('admin promotes student', (select role from set_profile_role('00000000-0000-0000-0000-00000000000b', 'teacher')) = 'teacher');
+do $$ begin perform set_profile_role('00000000-0000-0000-0000-00000000000a', 'student'); raise exception 'FAILED: admin changed own role';
+  exception when others then if sqlerrm <> 'not_yourself' then raise; end if; end $$;
+do $$ begin perform set_profile_role('00000000-0000-0000-0000-00000000000d', 'teacher'); raise exception 'FAILED: admin changed another school';
+  exception when others then if sqlerrm <> 'not_found' then raise; end if; end $$;
+select pg_temp.expect('admin sees teachers of the school', (select count(*) from profiles where role in ('teacher', 'school_admin')) = 2);
+
+-- 10. consent: own records, the coordinator records the school's, nobody forges another person's
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c', 'cami@colegio.edu.co');
+insert into consents (profile_id, kind, version) values ('00000000-0000-0000-0000-00000000000c', 'terms', 'v1');
+do $$ begin insert into consents (profile_id, kind, version) values ('00000000-0000-0000-0000-00000000000b', 'terms', 'v1');
+  raise exception 'FAILED: consent forged for another person';
+  exception when insufficient_privilege then null; when others then if sqlstate <> '42501' then raise; end if; end $$;
+do $$ begin insert into school_consents (school_id, kind, version, granted_by) values ('11111111-1111-1111-1111-111111111111', 'guardian_authorization', 'v1', '00000000-0000-0000-0000-00000000000c');
+  raise exception 'FAILED: student recorded school consent';
+  exception when insufficient_privilege then null; when others then if sqlstate <> '42501' then raise; end if; end $$;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'ana@colegio.edu.co');
+insert into school_consents (school_id, kind, version, granted_by) values ('11111111-1111-1111-1111-111111111111', 'guardian_authorization', 'v1', '00000000-0000-0000-0000-00000000000a');
+select pg_temp.expect('admin reads school consent and a student consent', (select count(*) from school_consents) = 1 and (select count(*) from consents) = 1);
