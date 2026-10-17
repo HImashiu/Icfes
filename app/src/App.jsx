@@ -12,6 +12,7 @@ import History from "./screens/History.jsx";
 import Reports from "./screens/Reports.jsx";
 import FigureCheck from "./screens/FigureCheck.jsx";
 import FigureReview from "./screens/FigureReview.jsx";
+import Presentation from "./screens/Presentation.jsx";
 import BottomNav from "./components/BottomNav.jsx";
 import { ExamContext } from "./lib/exam-context.js";
 import { parseExam, parseKey, parseKeyNotes, questionsFor, timedSeconds } from "./lib/exam.js";
@@ -248,6 +249,10 @@ export default function App() {
     setAttempt(null);
   };
 
+  // Presentation for schools (not in the navigation): open the app with #presentacion.
+  if (typeof window !== "undefined" && window.location.hash.startsWith("#presentacion")) {
+    return <Presentation onExit={() => { window.location.hash = ""; window.location.reload(); }} />;
+  }
   // Dev check of the figure engine kinds (not in the navigation): open the app with #figuras.
   if (typeof window !== "undefined" && window.location.hash === "#figuras") return <FigureCheck />;
   // A family opens a report link with no account: only the report is shown, nothing else loads.
