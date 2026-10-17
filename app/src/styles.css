@@ -1375,3 +1375,84 @@ button.card:active:not(:disabled), .mode-card:active, .chip:active, .answer-cell
 @media (min-width: 900px) and (max-width: 1199px) {
   .test .test-bottom .submit-link { display: inline-flex; align-items: center; order: 3; flex: none; }
 }
+
+/* ---------------------------------------------------------------- Papel (simulacro impreso) */
+.paper-pick { display: grid; gap: 12px; }
+.paper-stats { display: flex; flex-wrap: wrap; gap: 8px; }
+.paper-stats .chip strong { color: var(--accent-ink); margin-right: 4px; }
+.paper-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.paper-step { position: relative; display: grid; gap: 8px; align-content: start; padding-top: 22px; animation: rise-in 0.35s both; }
+.paper-step:nth-child(2) { animation-delay: 0.06s; }
+.paper-step:nth-child(3) { animation-delay: 0.12s; }
+.paper-step h2 { margin: 0; font-size: 18px; font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; }
+.paper-step .caption { margin: 0; min-height: 3.9em; }
+.paper-step > button { width: 100%; margin-top: 4px; }
+.step-badge { position: absolute; top: 12px; right: 14px; width: 26px; height: 26px; border-radius: 999px; display: grid; place-items: center; font-size: 13px; font-weight: 800; background: var(--surface-2); color: var(--text-2); }
+.step-icon { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-ink); box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--accent) 35%, transparent); }
+.primary-step { border-color: var(--accent); }
+.primary-step .step-badge { background: var(--accent); color: var(--on-accent); }
+.paper-note { margin: 0; }
+.paper-empty { display: grid; justify-items: center; gap: 8px; text-align: center; padding: 32px 16px; color: var(--text-2); }
+.paper-scan-item { display: grid; gap: 8px; border-left: 4px solid var(--line); }
+.paper-scan-item.is-ok { border-left-color: var(--ok); }
+.paper-scan-item.is-bad { border-left-color: var(--bad); }
+.paper-scan-item.is-doubt { border-left-color: var(--flame); }
+.paper-drop { display: grid; justify-items: center; gap: 6px; padding: 20px; border: 2px dashed var(--line); border-radius: 16px; background: var(--surface-2); cursor: pointer; text-align: center; font-weight: 700; }
+.paper-drop:hover, .paper-drop:focus-within { border-color: var(--accent); background: var(--accent-soft); }
+.paper-drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .paper-step { animation: none; } }
+
+/* The print overlay: on screen a full-page preview, when printing the only thing on the page. */
+.print-overlay { position: fixed; inset: 0; z-index: 60; overflow: auto; background: #d9dcd6; color: #000; }
+.print-bar { position: sticky; top: 0; z-index: 2; display: flex; gap: 10px; align-items: center; padding: 10px 16px; background: var(--surface); color: var(--text); border-bottom: 1px solid var(--line); }
+.print-bar-title { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.print-bar-title span { font-size: 13px; color: var(--text-2); }
+.print-bar .primary, .print-bar .secondary { min-height: 44px; padding: 0 16px; font-size: 15px; display: inline-flex; align-items: center; gap: 6px; }
+.print-body { padding: 18px 12px 40px; display: grid; justify-items: center; gap: 18px; }
+.print-body > .sheet-page { box-shadow: 0 2px 14px rgba(0, 0, 0, 0.25); max-width: 100%; height: auto !important; }
+.pb { width: min(100%, 190mm); background: #fff; color: #000; padding: 14mm; box-shadow: 0 2px 14px rgba(0, 0, 0, 0.25); font-family: Newsreader, Georgia, "Times New Roman", serif; font-size: 11pt; line-height: 1.4; box-sizing: content-box; }
+.pb *, .pb .katex { color: #000; }
+.pb h1 { font-family: "Bricolage Grotesque", Arial, sans-serif; font-size: 26pt; margin: 4pt 0 14pt; }
+.pb-kicker { margin: 0; font: 700 9pt Figtree, Arial, sans-serif; letter-spacing: 0.12em; text-transform: uppercase; }
+.pb-cover { padding-bottom: 14pt; margin-bottom: 14pt; border-bottom: 2px solid #000; break-after: page; page-break-after: always; }
+.pb-fields { display: grid; gap: 14pt; margin: 18pt 0; font-family: Figtree, Arial, sans-serif; font-size: 11pt; }
+.pb-fields p { margin: 0; display: flex; align-items: flex-end; gap: 6pt; }
+.pb-fields span { flex: 1; border-bottom: 1px solid #000; min-height: 1.1em; padding: 0 4pt; }
+.pb-fields span.short { max-width: 60mm; }
+.pb-instr { font-family: Figtree, Arial, sans-serif; font-size: 10.5pt; padding-left: 18pt; display: grid; gap: 5pt; }
+.pb-areas { border-collapse: collapse; font-family: Figtree, Arial, sans-serif; font-size: 10pt; margin-top: 10pt; }
+.pb-areas td { border: 1px solid #000; padding: 3pt 10pt; }
+.pb-source { font: 8.5pt Figtree, Arial, sans-serif; margin: 14pt 0 0; }
+.pb-section { font: 800 14pt "Bricolage Grotesque", Arial, sans-serif; text-transform: uppercase; letter-spacing: 0.04em; margin: 16pt 0 8pt; padding-bottom: 3pt; border-bottom: 1.5px solid #000; break-before: page; page-break-before: always; break-after: avoid; }
+.pb-unit:first-of-type .pb-section { break-before: auto; page-break-before: auto; }
+.pb-passage { margin: 10pt 0 6pt; padding: 8pt 10pt; border: 1px solid #000; border-radius: 4pt; }
+.pb-range { margin: 0 0 4pt; font: 700 8.5pt Figtree, Arial, sans-serif; text-transform: uppercase; letter-spacing: 0.06em; }
+.pb-directions { margin: 0 0 4pt; font-style: italic; }
+.pb-question { margin: 8pt 0 10pt; break-inside: avoid; page-break-inside: avoid; }
+.pb-text p { margin: 0 0 4pt; }
+.pb-inline { display: inline; }
+.pb-inline p { display: inline; }
+.pb-stem { margin-bottom: 4pt; font-weight: 500; }
+.pb-num { margin-right: 3pt; }
+.pb-options { list-style: none; margin: 0; padding: 0 0 0 14pt; display: grid; gap: 2.5pt; }
+.pb-options li { display: flex; gap: 6pt; align-items: baseline; }
+.pb-options li b { flex: none; width: 12pt; }
+.pb-grid { grid-template-columns: 1fr 1fr; gap: 6pt 14pt; }
+.pb-grid li { align-items: center; }
+.pb .figure, .pb .traced-figure, .pb-fig { max-width: 100%; margin: 4pt 0; background: #fff; }
+.pb img, .pb svg { max-width: 100%; height: auto; }
+.pb-opt-img { max-height: 55mm; }
+.pb .zoom-hint, .pb .zoomable button { display: none; }
+
+@media print {
+  :root { color-scheme: light !important; }
+  html:has(body.print-overlay-open), body.print-overlay-open { background: #fff !important; }
+  body.print-overlay-open #root { display: none !important; }
+  .print-overlay { position: static; overflow: visible; background: #fff; }
+  .print-bar { display: none !important; }
+  .print-body { display: block; padding: 0; }
+  .pb { width: auto; padding: 0; box-shadow: none; }
+  .print-body > .sheet-page { box-shadow: none; width: 210mm !important; height: 297mm !important; max-width: none; }
+  .print-body > .sheet-page:last-child { break-after: auto !important; page-break-after: auto !important; }
+}
+.paper-pick select { width: 100%; }

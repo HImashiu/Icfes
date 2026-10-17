@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import QuestionView from "../components/QuestionView.jsx";
+import { createPortal } from "react-dom";
+import PrintBooklet from "../components/PrintBooklet.jsx";
+import Icon from "../components/Icon.jsx";
 import { questionsForAttempt } from "../lib/assignments.js";
 import { scoreAttempt } from "../lib/exam.js";
 import AnswerSheet from "../components/AnswerSheet.jsx";
@@ -9,44 +11,30 @@ import { fileToGray } from "../lib/scan.js";
 // The roster order the sheets are printed with and read back with. Keep the list unchanged between printing and scanning.
 export const sheetRoster = (members) => members.filter((m) => m.role === "student").sort((a, b) => a.email.toLowerCase().localeCompare(b.email.toLowerCase()));
 
-const PRINT_CSS = (page) => `
-@media print {
-  body * { visibility: hidden; }
-  .paper-overlay, .paper-overlay * { visibility: visible; }
-  .paper-overlay { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
-  .paper-bar { display: none !important; }
-  @page { size: A4; margin: ${page}; }
-}`;
-
-function Overlay({ title, onClose, children, page = "0" }) {
-  return (
-    <div className="paper-overlay" style={{ position: "fixed", inset: 0, zIndex: 60, background: "#fff", color: "#000", overflow: "auto" }}>
-      <style>{PRINT_CSS(page)}</style>
-      <div className="paper-bar" style={{ position: "sticky", top: 0, display: "flex", gap: 12, alignItems: "center", padding: 12, background: "#f3f4f1", borderBottom: "1px solid #ccc" }}>
-        <strong style={{ flex: 1 }}>{title}</strong>
-        <button type="button" className="primary" onClick={() => window.print()}>Imprimir</button>
+// The overlay lives in <body>, outside the app root, so printing can hide the app and print the overlay as ordinary flowing pages.
+function Overlay({ title, hint, onClose, children, page = "0" }) {
+  useEffect(() => {
+    document.body.classList.add("print-overlay-open");
+    return () => document.body.classList.remove("print-overlay-open");
+  }, []);
+  return createPortal(
+    <div className="print-overlay">
+      <style>{`@page { size: A4; margin: ${page}; }`}</style>
+      <div className="print-bar">
+        <div className="print-bar-title"><strong>{title}</strong>{hint && <span>{hint}</span>}</div>
+        <button type="button" className="primary" onClick={() => window.print()}><Icon name="book" size={16} /> Imprimir</button>
         <button type="button" className="secondary" onClick={onClose}>Cerrar</button>
       </div>
-      {children}
-    </div>
+      <div className="print-body">{children}</div>
+    </div>,
+    document.body,
   );
 }
 
-function Booklet({ bundle, questions, title, onClose }) {
+function Booklet({ bundle, questions, title, course, onClose }) {
   return (
-    <Overlay title="Cuadernillo para imprimir" onClose={onClose} page="12mm">
-      <div style={{ maxWidth: 780, margin: "0 auto", padding: 16, display: "grid", gap: 14 }}>
-        <header>
-          <h1 style={{ margin: 0 }}>{title}</h1>
-          <p style={{ margin: "4px 0" }}>Nombre: ______________________________ Curso: ________ Fecha: ____________</p>
-          <p style={{ margin: 0, fontSize: 13 }}>Responde en la hoja de respuestas, no en este cuadernillo. {questions.length} preguntas.</p>
-        </header>
-        {questions.map((q, i) => (
-          <div key={q.key} style={{ breakInside: "avoid", pageBreakInside: "avoid" }}>
-            <QuestionView question={{ ...q, number: i + 1 }} answer={null} figures={bundle.figures} examLabel={bundle.exam.title} report={false} />
-          </div>
-        ))}
-      </div>
+    <Overlay title="Cuadernillo" hint={`${questions.length} preguntas · se imprime en hojas A4 con márgenes`} onClose={onClose} page="14mm 14mm 16mm">
+      <PrintBooklet questions={questions} figures={bundle.figures} examLabel={bundle.exam.title} title={title} course={course} />
     </Overlay>
   );
 }
@@ -54,8 +42,7 @@ function Booklet({ bundle, questions, title, onClose }) {
 function Sheets({ assignment, questions, roster, course, onClose }) {
   const layout = useMemo(() => sheetLayout(questions.length), [questions.length]);
   return (
-    <Overlay title={`Hojas de respuestas · ${roster.length} estudiantes`} onClose={onClose} page="0">
-      <p className="paper-bar" style={{ padding: "8px 16px", margin: 0 }}>Imprime en tamaño real (100 %, sin márgenes ni “ajustar a la página”). Una hoja por estudiante.</p>
+    <Overlay title={`Hojas de respuestas · ${roster.length} estudiantes`} hint="Imprime al 100 %, sin márgenes ni “ajustar a la página”. Una hoja por estudiante." onClose={onClose} page="0">
       {roster.map((m, i) => <AnswerSheet key={m.id} layout={layout} title={assignment.title} course={course} student={m.full_name || m.email} index={i} />)}
     </Overlay>
   );
@@ -114,13 +101,12 @@ function Scan({ api, assignment, bundle, questions, roster, guard, setNotice, on
     <div className="card t-card">
       <div className="section-head"><strong>Calificar hojas fotografiadas</strong><button type="button" className="link" onClick={onClose}>Cerrar</button></div>
       <p className="caption">Fotografía cada hoja completa, con buena luz y las cuatro marcas negras visibles. Puedes elegir varias fotos a la vez.</p>
-      <input ref={inputRef} type="file" accept="image/*" multiple aria-label="Fotos de las hojas" onChange={onFiles} disabled={busy} />
-      {busy && <p className="caption">Leyendo…</p>}
+      <label className="paper-drop"><Icon name="flag" size={24} /><span>{busy ? "Leyendo…" : "Elegir fotos de las hojas"}</span><input ref={inputRef} type="file" accept="image/*" multiple aria-label="Fotos de las hojas" onChange={onFiles} disabled={busy} /></label>
       {items.map((it) => {
         const s = it.read.ok ? scoreOf(it) : null;
         const doubtful = it.flags.filter(Boolean).length;
         return (
-          <div key={it.id} className="card" style={{ display: "grid", gap: 8 }}>
+          <div key={it.id} className={`card paper-scan-item ${!it.read.ok ? "is-bad" : doubtful ? "is-doubt" : "is-ok"}`}>
             <div className="section-head"><strong>{it.name}</strong><button type="button" className="link" onClick={() => setItems((cur) => cur.filter((x) => x.id !== it.id))}>Quitar</button></div>
             {!it.read.ok ? <p className="notice error">{it.read.error}</p> : (
               <>
@@ -158,12 +144,13 @@ function Scan({ api, assignment, bundle, questions, roster, guard, setNotice, on
 
 // Sección “Papel”: simulacro impreso para colegios sin un dispositivo por estudiante.
 export default function Paper({ api, assignments, fetchExam, guard, setNotice }) {
-  const [id, setId] = useState(assignments[0]?.id ?? "");
+  const choices = assignments.filter((a) => !a.assignee_id);
+  const [id, setId] = useState(choices[0]?.id ?? "");
   const [mode, setMode] = useState(null);
   const [bundle, setBundle] = useState(null);
   const [roster, setRoster] = useState([]);
   const [course, setCourse] = useState("");
-  const assignment = assignments.find((a) => a.id === id) ?? null;
+  const assignment = choices.find((a) => a.id === id) ?? choices[0] ?? null;
 
   useEffect(() => {
     if (!assignment) return;
@@ -179,28 +166,50 @@ export default function Paper({ api, assignments, fetchExam, guard, setNotice })
 
   const questions = useMemo(() => (bundle && assignment ? questionsForAttempt(bundle.exam, { scope: assignment.scope, keys: assignment.question_keys }) : []), [bundle, assignment]);
   const tooMany = questions.length > MAX_QUESTIONS;
-  const personal = assignment?.assignee_id;
+  const noRoster = roster.length === 0;
+  const areas = new Set(questions.map((q) => q.section)).size;
+  const ready = Boolean(bundle) && !tooMany;
+  const steps = [
+    { n: 1, icon: "book", title: "Cuadernillo", text: "Las preguntas en hojas A4, en blanco y negro, con el texto de cada grupo una sola vez.", action: "Imprimir cuadernillo", mode: "booklet", off: !ready },
+    { n: 2, icon: "user", title: "Hojas de respuestas", text: "Una hoja por estudiante, con su código y las burbujas A a D. Imprime al 100 %.", action: "Imprimir hojas", mode: "sheets", off: !ready || noRoster },
+    { n: 3, icon: "bolt", title: "Calificar fotos", text: "Fotografía las hojas llenas con el celular. Los resultados entran junto a los demás.", action: "Calificar fotos", mode: "scan", off: !ready || noRoster, primary: true },
+  ];
 
   return (
     <>
-      <header className="t-head"><div><h1>Papel</h1><span className="caption">Imprime el cuadernillo y las hojas de respuestas, fotografía las hojas con el celular y los resultados aparecen junto a los demás.</span></div></header>
-      {assignments.length === 0 ? <p className="caption">Crea primero una asignación (con las preguntas del simulacro) y vuelve aquí.</p> : (
-        <div className="card t-card assign-form">
-          <label className="field"><span className="label">Asignación</span>
-            <select value={id} onChange={(e) => setId(e.target.value)}>{assignments.filter((a) => !a.assignee_id).map((a) => <option key={a.id} value={a.id}>{a.courses?.name} · {a.title}</option>)}</select></label>
-          {!bundle && assignment && <p className="caption">Cargando preguntas…</p>}
-          {bundle && <p className="caption">{questions.length} preguntas · {roster.length} estudiantes en la lista.</p>}
-          {tooMany && <p className="notice error">Una hoja admite hasta {MAX_QUESTIONS} preguntas.</p>}
-          {personal && <p className="notice error">Esta asignación es personal.</p>}
-          <div className="report-actions">
-            <button type="button" className="secondary" disabled={!bundle || tooMany} onClick={() => setMode("booklet")}>Imprimir cuadernillo</button>
-            <button type="button" className="secondary" disabled={!bundle || tooMany || roster.length === 0} onClick={() => setMode("sheets")}>Imprimir hojas de respuestas</button>
-            <button type="button" className="primary" disabled={!bundle || tooMany || roster.length === 0} onClick={() => setMode("scan")}>Calificar fotos</button>
+      <header className="t-head"><div><h1>Papel</h1><span className="caption">Simulacro impreso para salones sin un dispositivo por estudiante. Tres pasos: imprimir, resolver, fotografiar.</span></div></header>
+      {choices.length === 0 ? <div className="card paper-empty"><Icon name="book" size={28} /><p>Crea primero una asignación con las preguntas del simulacro y vuelve aquí.</p></div> : (
+        <>
+          <div className="card paper-pick">
+            <label className="field"><span className="label">Asignación</span>
+              <select value={assignment?.id ?? ""} onChange={(e) => setId(e.target.value)}>{choices.map((a) => <option key={a.id} value={a.id}>{a.courses?.name} · {a.title}</option>)}</select></label>
+            <div className="paper-stats" aria-live="polite">
+              {!bundle ? <span className="chip">Cargando preguntas…</span> : (
+                <>
+                  <span className="chip"><strong>{questions.length}</strong> preguntas</span>
+                  <span className="chip"><strong>{areas}</strong> {areas === 1 ? "área" : "áreas"}</span>
+                  <span className="chip"><strong>{roster.length}</strong> estudiantes</span>
+                </>
+              )}
+            </div>
+            {tooMany && <p className="notice error">Una hoja admite hasta {MAX_QUESTIONS} preguntas.</p>}
+            {bundle && noRoster && <p className="notice error">Este curso no tiene estudiantes en la lista. Agrégalos en “Cursos y estudiantes”.</p>}
           </div>
-          <p className="caption">La lista de estudiantes se ordena por correo. No agregues ni quites estudiantes entre imprimir y calificar: cada hoja lleva el código de su estudiante.</p>
-        </div>
+          <div className="paper-steps">
+            {steps.map((st) => (
+              <section key={st.n} className={st.primary ? "card paper-step primary-step" : "card paper-step"}>
+                <span className="step-badge" aria-hidden="true">{st.n}</span>
+                <span className="step-icon" aria-hidden="true"><Icon name={st.icon} size={26} /></span>
+                <h2>{st.title}</h2>
+                <p className="caption">{st.text}</p>
+                <button type="button" className={st.primary ? "primary" : "secondary"} disabled={st.off} onClick={() => setMode(st.mode)}>{st.action}</button>
+              </section>
+            ))}
+          </div>
+          <p className="caption paper-note">La lista de estudiantes se ordena por correo. No agregues ni quites estudiantes entre imprimir y calificar: cada hoja lleva el código de su estudiante.</p>
+        </>
       )}
-      {mode === "booklet" && bundle && <Booklet bundle={bundle} questions={questions} title={assignment.title} onClose={() => setMode(null)} />}
+      {mode === "booklet" && bundle && <Booklet bundle={bundle} questions={questions} title={assignment.title} course={course} onClose={() => setMode(null)} />}
       {mode === "sheets" && bundle && <Sheets assignment={assignment} questions={questions} roster={roster} course={course} onClose={() => setMode(null)} />}
       {mode === "scan" && bundle && <Scan api={api} assignment={assignment} bundle={bundle} questions={questions} roster={roster} guard={guard} setNotice={setNotice} onClose={() => setMode(null)} />}
     </>
