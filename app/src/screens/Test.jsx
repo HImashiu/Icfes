@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import Navigator from "../components/Navigator.jsx";
 import QuestionView from "../components/QuestionView.jsx";
 import Icon from "../components/Icon.jsx";
+import AiAnalysis from "../components/AiAnalysis.jsx";
 import { formatClock } from "../lib/exam.js";
 import { areaColor, fmtInt } from "../lib/brand.js";
 import { plainText } from "../lib/render.js";
@@ -11,7 +12,7 @@ import { xpFor } from "../lib/xp.js";
 
 // The answering screen. Shows only the progress, the timer or mode, the flag, the question,
 // the options and the map: no streak, XP chart or league here.
-export default function Test({ title, examLabel, questions, attempt, answerKey, onChange, onSubmit, onExit, figures }) {
+export default function Test({ title, examLabel, questions, attempt, answerKey, onChange, onSubmit, onExit, figures, enrich, enrichMeta }) {
   const [now, setNow] = useState(() => Date.now());
   const [sheetOpen, setSheetOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -114,21 +115,24 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   const blank = questions.length - answered;
 
   const hasKey = Boolean(answerKey);
-  // The verdict of one question of the block (every checked question keeps its own).
+  // The verdict of one question of the block (every checked question keeps its own), then its AI analysis.
   const feedbackOf = (qq) => {
     if (!practice || !attempt.checked?.[qq.key]) return null;
     const cl = answerKey?.get(qq.key) ?? null;
     const right = Boolean(cl) && attempt.answers[qq.key] === cl;
     return (
-      <div className={`feedback ${hasKey ? (right ? "ok" : "bad") : "neutral"}`} role="status">
-        <Icon name={hasKey && right ? "check" : "x"} size={22} />
-        <div>
-          <strong>
-            {!hasKey ? "Clave pendiente" : right ? `¡Correcto! +${xpFor(qq.section)} XP` : `Casi. La respuesta es ${cl}`}
-          </strong>
-          <span>{hasKey ? "Clave preliminar, no oficial" : "Esta pregunta todavía no tiene clave."}</span>
+      <>
+        <div className={`feedback ${hasKey ? (right ? "ok" : "bad") : "neutral"}`} role="status">
+          <Icon name={hasKey && right ? "check" : "x"} size={22} />
+          <div>
+            <strong>
+              {!hasKey ? "Clave pendiente" : right ? `¡Correcto! +${xpFor(qq.section)} XP` : `Casi. La respuesta es ${cl}`}
+            </strong>
+            <span>{hasKey ? "Clave preliminar, no oficial" : "Esta pregunta todavía no tiene clave."}</span>
+          </div>
         </div>
-      </div>
+        <AiAnalysis row={enrich?.[String(qq.number)]} correctLetter={cl} meta={enrichMeta} />
+      </>
     );
   };
 

@@ -229,6 +229,8 @@ export default function App() {
           onSubmit={submit}
           onExit={goHome}
           figures={selected.figures}
+          enrich={selected.enrich}
+          enrichMeta={selected.enrichMeta}
         />
       )}
 
