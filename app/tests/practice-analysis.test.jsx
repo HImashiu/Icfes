@@ -44,9 +44,9 @@ describe("practice verdict and AI analysis", () => {
     expect(screen.getByText("Mira el texto")).toBeTruthy();
   });
 
-  it("hides the explanation when the model disagrees with the key", () => {
-    renderPractice("B", { ...enrich[1], disagree: true });
-    expect(screen.getByText(/La IA no coincide con la clave/)).toBeTruthy();
+  it("hides the explanation until the key is settled", () => {
+    renderPractice("B", { ...enrich[1], hidden: true });
+    expect(screen.getByText(/Su explicación queda oculta/)).toBeTruthy();
     expect(screen.queryByText("La explicación de la IA")).toBeNull();
   });
 });

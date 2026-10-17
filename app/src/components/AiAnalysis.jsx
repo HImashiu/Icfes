@@ -1,5 +1,5 @@
 // The AI enrichment for one question, shown after a finished attempt. It is generated and preliminary.
-// Where the model disagrees with our key, its explanation is not shown: only the skills and the difficulty are.
+// Until the key is settled and matches the model's blind answer, its explanation is not shown: only the skills and the difficulty are.
 export default function AiAnalysis({ row, correctLetter, meta }) {
   if (!row) return null;
   const wrong = Object.entries(row.distractores ?? {}).filter(([letter]) => letter !== correctLetter);
@@ -13,8 +13,8 @@ export default function AiAnalysis({ row, correctLetter, meta }) {
         {row.nivel_desempeno && <span className="badge">Nivel de desempeño {row.nivel_desempeno}</span>}
       </div>
       {row.afirmacion && <p className="caption">{row.afirmacion}</p>}
-      {row.disagree ? (
-        <p className="notice">La IA no coincide con la clave de esta pregunta. Su explicación queda oculta hasta confirmar la clave.</p>
+      {row.hidden ? (
+        <p className="notice">Su explicación queda oculta: la clave de esta pregunta aún no está confirmada o no coincide con la IA.</p>
       ) : (
         <>
           {row.explicacion && <p>{row.explicacion}</p>}

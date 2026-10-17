@@ -364,16 +364,25 @@ for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
     hasSidecar = true;
   }
   // AI enrichment (data/enrichment/<slug>.json, when it exists): skills, difficulty, and explanations for review.
-  // When the model's key disagrees with ours, its explanation and why-wrong text are left out until the key is confirmed.
+  // An explanation shows only where the final key equals the model's blind answer and the key review kept the
+  // question as settled. Everywhere else the explanation and why-wrong text are left out (hidden).
+  const AMBIGUOUS = {
+    "S11-A_1ra": [10, 30, 35, 57, 58, 59, 64, 80],
+    "S11-A_2da": [24, 46, 55, 63, 66, 83, 105],
+  };
   let hasEnrich = false;
   const enrichFile = join(src, "enrichment", `${slug}.json`);
   if (existsSync(enrichFile)) {
     const raw = JSON.parse(readFileSync(enrichFile, "utf8"));
+    const finalKeyFile = existsSync(join(src, keyFile)) ? join(src, keyFile) : prelimKey;
+    const finalAnswers = existsSync(finalKeyFile) ? JSON.parse(readFileSync(finalKeyFile, "utf8")).answers ?? {} : {};
+    const ambiguous = new Set(AMBIGUOUS[slug] ?? []);
     const questions = Object.fromEntries(
       Object.entries(raw.questions ?? {}).map(([num, row]) => {
         const e = row.enrich ?? {};
-        const disagree = row.key_check === "DISAGREE" || e.clave_coherente === false;
-        const hide = (value) => (disagree ? null : value ?? null);
+        const settled = !ambiguous.has(Number(num)) && Boolean(finalAnswers[num]) && row.blind?.respuesta === finalAnswers[num];
+        const hidden = !settled;
+        const hide = (value) => (hidden ? null : value ?? null);
         return [num, {
           competencia: e.competencia ?? null,
           componente: e.componente ?? null,
@@ -381,7 +390,7 @@ for (const file of files.filter((f) => f.endsWith(".golden.json"))) {
           afirmacion: e.afirmacion ?? null,
           dificultad: e.dificultad ?? null,
           nivel_desempeno: e.nivel_desempeno ?? null,
-          disagree,
+          hidden,
           explicacion: hide(e.explicacion_es),
           distractores: hide(e.distractores_porque),
           pista: hide(e.pista),
