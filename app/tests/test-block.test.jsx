@@ -33,6 +33,55 @@ function Harness() {
   );
 }
 
+const longText = `<p>${"Texto largo del pasaje. ".repeat(30)}</p><p>Hay un [[hueco:1]] aquí y otro [[hueco:2]] allá.</p>`;
+const longRaw = {
+  format: "icfes-golden/1",
+  groups: [{ id: "g1", from: 1, to: 2, stimulus_md: longText, directions: "" }],
+  questions: raw.questions.slice(0, 2).map((q) => ({ ...q, stem_md: `<p>Blank (${q.number}): choose</p>` })),
+};
+
+function LongHarness() {
+  const [attempt, setAttempt] = useState({ current: 0, answers: {}, checked: {}, flags: {}, xp: 0, startedAt: Date.now(), durationSec: null });
+  return (
+    <Test
+      title="Prueba"
+      examLabel="S11-X"
+      questions={parseExam(longRaw).questions}
+      attempt={attempt}
+      answerKey={null}
+      onChange={(fn) => setAttempt((a) => (typeof fn === "function" ? fn(a) : fn))}
+      onSubmit={() => {}}
+      onExit={() => {}}
+      figures={new Map()}
+    />
+  );
+}
+
+describe("Test screen long text (phone)", () => {
+  it("docks the shared text and shows one question at a time", () => {
+    const { container } = render(<LongHarness />);
+    expect(container.querySelector(".text-dock .stimulus")).toBeTruthy();
+    expect(container.querySelectorAll(".block-q")).toHaveLength(1);
+    expect(container.textContent.split("Texto largo del pasaje.").length - 1).toBe(30);
+  });
+
+  it("jumps to the question of a blank tapped in the text, and fills the blank with the chosen word", () => {
+    const { container } = render(<LongHarness />);
+    fireEvent.click(container.querySelector('.text-dock .gap[data-gap="2"]'));
+    expect(container.querySelector(".block-q.current")?.dataset.qkey).toBe("2");
+    fireEvent.click(within(container.querySelector('[data-qkey="2"]')).getByText("C"));
+    expect(container.querySelector('.text-dock .gap[data-gap="2"] .gap-fill')?.textContent).toBe("Opción C de 2");
+  });
+
+  it("hides and shows the docked text", () => {
+    const { container } = render(<LongHarness />);
+    fireEvent.click(within(container.querySelector(".dock-bar")).getByText("Ocultar"));
+    expect(container.querySelector(".text-dock.min")).toBeTruthy();
+    fireEvent.click(within(container.querySelector(".dock-bar")).getByText("Ver texto"));
+    expect(container.querySelector(".text-dock.min")).toBeNull();
+  });
+});
+
 describe("Test screen blocks", () => {
   it("shows the shared text once with every question of its block", () => {
     const { container } = render(<Harness />);

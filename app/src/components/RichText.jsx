@@ -34,10 +34,11 @@ function fitMath(root) {
 
 // A figure the editor placed in the text: [[figura:ID]] on a line of its own (the paragraph tags are optional).
 const FIGURE_TOKEN = /(?:<p>\s*)?\[\[figura:([^\]\s]+)\]\](?:\s*<\/p>)?/g;
-function splitFigureTokens(html) {
+function splitFigureTokens(source) {
+  const html = source ?? "";
   const parts = [];
   let last = 0;
-  for (const m of (html ?? "").matchAll(FIGURE_TOKEN)) {
+  for (const m of html.matchAll(FIGURE_TOKEN)) {
     parts.push({ text: html.slice(last, m.index) });
     parts.push({ id: m[1] });
     last = m.index + m[0].length;

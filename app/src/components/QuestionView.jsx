@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import RichText from "./RichText.jsx";
 import FigureBlock from "./FigureBlock.jsx";
 import { SOURCE_LINE } from "../lib/exam.js";
@@ -39,6 +40,16 @@ function LongText({ html, className, long, resolve }) {
   );
 }
 
+// Which text of a question is long enough to live in its own pane (a docked panel on phone, a left column
+// on desktop): the text its group shares, or its own stimulus. Short texts stay inside the question card.
+export const TEXT_PANE_MIN = 400;
+export function textPaneKind(question) {
+  const shared = question.group?.stimulus_md ?? "";
+  if (shared.length > TEXT_PANE_MIN) return "group";
+  const own = question.stimulus_md?.trim() && question.stimulus_md.trim() !== shared.trim() ? question.stimulus_md : "";
+  return own.length > TEXT_PANE_MIN ? "own" : null;
+}
+
 // True on desktop, where the context (passage, figure) sits in its own column and is never collapsed.
 function useWide() {
   const query = "(min-width: 1200px)";
@@ -72,6 +83,7 @@ export default function QuestionView({
   flagged = false,
   onToggleFlag,
   report = true,
+  textTarget = null,
 }) {
   const { group } = question;
   const wide = useWide();
@@ -82,10 +94,16 @@ export default function QuestionView({
 
   // A figure placed in the text by the editor is drawn there, not in the usual slot above the stem.
   const inText = new Set(tokenIdsOf(question.stem_md, question.stimulus_md, group?.stimulus_md));
+  // With `textTarget` (a node of the test screen) the long text is drawn there, in its own pane, through a portal:
+  // the shared text and the figures of the group go with it; the question keeps its own figures.
+  const paneKind = textTarget ? textPaneKind(question) : null;
+  const inPane = Boolean(paneKind === "own" || (paneKind === "group" && showPassage));
+  const groupFigures = group ? figures?.get(`group:${group.id}`) ?? [] : [];
   const stemFigures = [
     ...(figures?.get(question.key) ?? []),
-    ...(group ? figures?.get(`group:${group.id}`) ?? [] : []),
+    ...(inPane || (paneKind === "group" && !showPassage) ? [] : groupFigures),
   ].filter((f) => f.target === "stem" && !inText.has(f.id));
+  const paneFigures = paneKind === "group" && inPane ? groupFigures.filter((f) => f.target === "stem" && !inText.has(f.id)) : [];
 
   // Draws the figure a token names: a native figure not replaced by a crop, then a crop by figure id, then by spec id.
   const allNative = [...(figures?.values() ?? [])].flat();
@@ -112,11 +130,31 @@ export default function QuestionView({
   const plainText = (html) => (html ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
   const stemText = plainText(question.stem_md);
   const stemInPassage = stemText.length > 20 && plainText(group?.stimulus_md).includes(stemText);
+  // A fill-in question beside its text only repeats "Blank (N): choose the option that completes the text".
+  const clozeStem = Boolean(paneKind) && /^blank \(\d+\)/.test(stemText) && stemText.length < 90;
 
   // Many questions repeat their passage in stimulus_md, which the group already shows.
   const ownStimulus = question.stimulus_md && question.stimulus_md.trim() !== group?.stimulus_md?.trim();
+  const ownInCard = ownStimulus && !(inPane && paneKind === "own");
+  const source = <span className="source">{examLabel ? `${SOURCE_LINE}, ${examLabel}` : SOURCE_LINE}</span>;
+  const pane = inPane && createPortal(
+    paneKind === "group" ? (
+      <div className="pane-text" aria-label={`Texto para las preguntas ${group.from} a ${group.to}`}>
+        {group.directions && <p className="directions">{group.directions}</p>}
+        <RichText html={group.stimulus_md} className="stimulus" resolve={resolveToken} />
+        {paneFigures.map((f) => <FigureBlock key={f.id} figure={f} alt={f.id} />)}
+        {source}
+      </div>
+    ) : (
+      <div className="pane-text">
+        <RichText html={question.stimulus_md} className="stimulus" resolve={resolveToken} />
+        {source}
+      </div>
+    ),
+    textTarget,
+  );
 
-  const passage = group && showPassage && (
+  const passage = group && showPassage && !inPane && (
     <section className="passage paper-passage" aria-label={`Texto para las preguntas ${group.from} a ${group.to}`}>
       {group.directions && <p className="directions">{group.directions}</p>}
       <LongText html={group.stimulus_md} className="stimulus" long={!wide && (group.stimulus_md ?? "").length > LONG_TEXT} resolve={resolveToken} />
@@ -125,11 +163,11 @@ export default function QuestionView({
 
   // A traced figure (a scan trace from figures/traced) stands in for the native spec it replaces.
   const traced = (question.traced ?? []).filter((t) => !inText.has(t.figure_id) && !inText.has(t.spec_id));
-  const hasContext = Boolean(passage || ownStimulus || stemFigures.length || traced.length);
-  const source = <span className="source">{examLabel ? `${SOURCE_LINE}, ${examLabel}` : SOURCE_LINE}</span>;
+  const hasContext = Boolean(passage || ownInCard || stemFigures.length || traced.length);
 
   return (
     <div className={hasContext ? "q-split" : "q-split solo"}>
+      {pane}
       {hasContext && (
         <section className="paper-card q-context" aria-label="Texto y gráfica de la pregunta">
           {passage && (collapsed ? (
@@ -138,7 +176,7 @@ export default function QuestionView({
               {passage}
             </details>
           ) : passage)}
-          {ownStimulus && <LongText html={question.stimulus_md} className="stimulus" long={!wide && question.stimulus_md.length > LONG_TEXT} resolve={resolveToken} />}
+          {ownInCard && <LongText html={question.stimulus_md} className="stimulus" long={!wide && question.stimulus_md.length > LONG_TEXT} resolve={resolveToken} />}
           {traced.map((t) => (
             <figure className="traced-figure" key={t.figure_id}>
               <Zoomable src={tracedSrc(t.url)} alt={t.figure_id}>
@@ -171,8 +209,8 @@ export default function QuestionView({
               </button>
             )}
           </div>
-          {!stemInPassage && <RichText html={question.stem_md} className="stem" resolve={resolveToken} />}
-          {!hasContext && source}
+          {!stemInPassage && !clozeStem && <RichText html={question.stem_md} className="stem" resolve={resolveToken} />}
+          {!hasContext && !paneKind && source}
         </article>
 
         <ul className={chartOptions ? "options charts" : "options"} role="radiogroup" aria-label={`Opciones de la pregunta ${question.number}`}>

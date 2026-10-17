@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Navigator from "../components/Navigator.jsx";
-import QuestionView from "../components/QuestionView.jsx";
+import QuestionView, { textPaneKind } from "../components/QuestionView.jsx";
 import Icon from "../components/Icon.jsx";
 import { formatClock } from "../lib/exam.js";
 import { areaColor, fmtInt } from "../lib/brand.js";
@@ -8,6 +8,27 @@ import { plainText } from "../lib/render.js";
 import { xpFor } from "../lib/xp.js";
 
 // +10 XP per correct practice answer, double in the weakest area.
+
+// True while the viewport matches the media query.
+function useMedia(query) {
+  const [on, setOn] = useState(() => window.matchMedia?.(query).matches ?? false);
+  useEffect(() => {
+    const mql = window.matchMedia?.(query);
+    if (!mql) return undefined;
+    const onChange = (e) => setOn(e.matches);
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, [query]);
+  return on;
+}
+
+// Scrolls a pane (not the page) so `el` sits in the middle of it.
+function centerIn(pane, el) {
+  if (!pane || !el) return;
+  const p = pane.getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  pane.scrollTo?.({ top: pane.scrollTop + (r.top - p.top) - (p.height - r.height) / 2, behavior: "smooth" });
+}
 
 // The answering screen. Shows only the progress, the timer or mode, the flag, the question,
 // the options and the map: no streak, XP chart or league here.
@@ -44,8 +65,32 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   let blockTo = current;
   while (blockFrom > 0 && sameText(questions[blockFrom - 1], q)) blockFrom--;
   while (blockTo < questions.length - 1 && sameText(questions[blockTo + 1], q)) blockTo++;
-  const block = questions.slice(blockFrom, blockTo + 1);
+  const fullBlock = questions.slice(blockFrom, blockTo + 1);
   const mainRef = useRef(null);
+  const topRef = useRef(null);
+
+  // A long text lives in its own pane so it never has to be scrolled past: a column beside the questions when there
+  // is room (every question of the text is listed, the pane stays put), otherwise a panel docked under the top bar
+  // that shows one question at a time. Short texts stay inside the question card.
+  const roomy = useMedia("(min-width: 900px)");
+  const paneKind = q ? textPaneKind(q) : null;
+  const sideText = roomy && (paneKind === "group" || (paneKind === "own" && fullBlock.length === 1));
+  const dockText = !roomy && paneKind !== null;
+  const block = dockText ? [q] : fullBlock;
+  const [textEl, setTextEl] = useState(null);
+  const [dock, setDock] = useState("open"); // open | tall | min
+  const textTarget = sideText || dockText ? textEl : null;
+
+  // The docked panel and the side pane sit just under the top bar, whatever height it has.
+  useLayoutEffect(() => {
+    const bar = topRef.current;
+    if (!bar) return undefined;
+    const set = () => document.documentElement.style.setProperty("--topbar-h", `${bar.offsetHeight}px`);
+    set();
+    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(set) : null;
+    observer?.observe(bar);
+    return () => observer?.disconnect();
+  }, []);
 
   // After "Comprobar" the verdict sits under the options; on a phone that is below the fold, so bring it up.
   const showVerdict = () => setTimeout(() => {
@@ -57,11 +102,21 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
     if (r.bottom > bottom) window.scrollBy({ top: r.bottom - bottom + 16, behavior: "smooth" });
   }, 60);
 
-  const go = (index) => {
+  // `stay` keeps the page where it is: the next effect brings the question into view inside its block.
+  const go = (index, { stay = false } = {}) => {
     if (index < 0 || index >= questions.length) return;
     onChange((a) => ({ ...a, current: index }));
     setSheetOpen(false);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    const sameBlock = index >= blockFrom && index <= blockTo && !dockText;
+    if (!(stay || sameBlock)) window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Tapping a blank in the text jumps to the question that asks for it.
+  const onBodyClick = (e) => {
+    const gap = e.target.closest?.(".gap");
+    if (!gap?.dataset.gap) return;
+    const index = questions.findIndex((x, i) => i >= blockFrom && i <= blockTo && String(x.number) === gap.dataset.gap);
+    if (index >= 0 && index !== current) go(index, { stay: true });
   };
 
   // Keyboard (desktop): A–D answer, ←/→ move, M flags. Inputs are left alone.
@@ -161,7 +216,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
       if (el.previousSibling?.nodeType === Node.TEXT_NODE) el.previousSibling.remove();
       el.remove();
     });
-    block.forEach((qq) => {
+    fullBlock.forEach((qq) => {
       const chosen = attempt.answers[qq.key] ? qq.options.find((o) => o.letter === attempt.answers[qq.key]) : null;
       const fill = chosen ? plainText(chosen.text_md) : "";
       root.querySelectorAll(`.gap[data-gap="${qq.number}"]`).forEach((g) => {
@@ -174,19 +229,21 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
         g.append(" ", el);
       });
     });
-  }, [current, attempt.answers, blockFrom, blockTo, questions]);
+  }, [current, attempt.answers, blockFrom, blockTo, questions, textEl, dockText]);
 
-  // Once per question: bring the blank into view, or the question card when it is not the first of its block.
+  // Once per question: show its blank in the text pane, and bring the question card into view when it is not the
+  // first of its block.
   useEffect(() => {
     const root = mainRef.current;
     if (!root) return;
     const gap = root.querySelector(".gap-now");
-    if (gap) {
-      gap.scrollIntoView?.({ block: "center", behavior: "smooth" });
-    } else if (current > blockFrom) {
+    const pane = gap?.closest(".text-dock .dock-body, .read-text");
+    if (gap && pane) centerIn(pane, gap);
+    else if (gap) gap.scrollIntoView?.({ block: "center", behavior: "smooth" });
+    if (!dockText && current > blockFrom) {
       root.querySelector(`[data-qkey="${q?.key}"]`)?.scrollIntoView?.({ block: "start", behavior: "smooth" });
     }
-  }, [current]);
+  }, [current, textEl, dockText]);
 
   const footer = (
     <footer className="test-bottom">
@@ -202,9 +259,35 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
     </footer>
   );
 
+  // Every question of the block (one on a phone with a docked text), each with its own card and verdict.
+  const renderBlock = (lastFooter) =>
+    block.map((qq, i) => {
+      const memberChecked = Boolean(attempt.checked?.[qq.key]);
+      const memberCorrect = answerKey?.get(qq.key) ?? null;
+      return (
+        <section key={qq.key} data-qkey={qq.key} className={qq.key === q?.key ? "block-q current" : "block-q"}>
+          <QuestionView
+            question={qq}
+            answer={attempt.answers[qq.key]}
+            onAnswer={answerIn(qq)}
+            graded={memberChecked}
+            review={hasKey && memberChecked ? { correctLetter: memberCorrect } : null}
+            figures={figures}
+            showPassage={i === 0}
+            examLabel={examLabel}
+            flagged={Boolean(attempt.flags[qq.key])}
+            onToggleFlag={toggleFlagOf(qq)}
+            feedback={feedbackOf(qq)}
+            footer={i === block.length - 1 ? lastFooter : null}
+            textTarget={textTarget}
+          />
+        </section>
+      );
+    });
+
   return (
     <div className="test">
-      <header className="test-top">
+      <header className="test-top" ref={topRef}>
         <div className="test-row">
           <button type="button" className="icon-btn" onClick={onExit} aria-label="Salir del simulacro">
             <Icon name="close" />
@@ -244,30 +327,37 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
         <span className="sr-only">{title}{examLabel ? ` · ${examLabel}` : ""}</span>
       </header>
 
-      <div className="test-body">
-        <main className="test-main" ref={mainRef}>
-          {block.map((qq, i) => {
-            const memberChecked = Boolean(attempt.checked?.[qq.key]);
-            const memberCorrect = answerKey?.get(qq.key) ?? null;
-            return (
-              <section key={qq.key} data-qkey={qq.key} className={qq.key === q?.key ? "block-q current" : "block-q"}>
-                <QuestionView
-                  question={qq}
-                  answer={attempt.answers[qq.key]}
-                  onAnswer={answerIn(qq)}
-                  graded={memberChecked}
-                  review={hasKey && memberChecked ? { correctLetter: memberCorrect } : null}
-                  figures={figures}
-                  showPassage={i === 0}
-                  examLabel={examLabel}
-                  flagged={Boolean(attempt.flags[qq.key])}
-                  onToggleFlag={toggleFlagOf(qq)}
-                  feedback={feedbackOf(qq)}
-                  footer={i === block.length - 1 ? footer : null}
-                />
-              </section>
-            );
-          })}
+      <div className="test-body" ref={mainRef} onClick={onBodyClick}>
+        <main className="test-main">
+          {dockText && (
+            <div className={`text-dock ${dock}`} role="region" aria-label="Texto de la pregunta">
+              <div className="dock-body" ref={setTextEl} />
+              <div className="dock-bar">
+                <strong>{dock === "min" ? "Texto oculto" : "Texto"}</strong>
+                <span className="dock-actions">
+                  {dock !== "min" && (
+                    <button type="button" className="link" onClick={() => setDock(dock === "tall" ? "open" : "tall")}>
+                      {dock === "tall" ? "Reducir" : "Ampliar"}
+                    </button>
+                  )}
+                  <button type="button" className="link" onClick={() => setDock(dock === "min" ? "open" : "min")} aria-expanded={dock !== "min"}>
+                    {dock === "min" ? "Ver texto" : "Ocultar"}
+                  </button>
+                </span>
+              </div>
+            </div>
+          )}
+          {sideText ? (
+            <div className="read-split">
+              <aside className="read-text paper-card" ref={setTextEl} aria-label="Texto de las preguntas" />
+              <div className="read-qs">
+                {renderBlock(null)}
+                {footer}
+              </div>
+            </div>
+          ) : (
+            renderBlock(footer)
+          )}
         </main>
         <aside className="test-side" aria-label="Mapa de preguntas">
           <span className="label map-title">Mapa de preguntas</span>

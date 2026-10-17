@@ -16,4 +16,8 @@ describe("RichText figure tokens", () => {
     const out = renderToStaticMarkup(<RichText html="<p>Hola</p>" resolve={() => null} />);
     expect(out).toContain("Hola");
   });
+
+  it("renders nothing, and does not throw, when the field is missing", () => {
+    expect(() => renderToStaticMarkup(<RichText html={undefined} resolve={() => null} />)).not.toThrow();
+  });
 });
