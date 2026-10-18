@@ -17,6 +17,7 @@ $$;
 -- hours of grace for a phone that was offline) and while attempts remain. A retried upload of the same attempt
 -- (same client_id) never counts against the limit.
 drop policy if exists attempts_insert on public.attempts;
+drop policy if exists attempts_insert on public.attempts;
 create policy attempts_insert on public.attempts for insert
   with check (
     profile_id = auth.uid()
@@ -72,12 +73,16 @@ create table if not exists public.school_consents (
 alter table public.consents enable row level security;
 alter table public.school_consents enable row level security;
 
+drop policy if exists consents_select on public.consents;
 create policy consents_select on public.consents for select
   using (profile_id = auth.uid() or (public.my_role() = 'school_admin'
          and exists (select 1 from public.profiles p where p.id = consents.profile_id and p.school_id = public.my_school())));
+drop policy if exists consents_insert on public.consents;
 create policy consents_insert on public.consents for insert with check (profile_id = auth.uid());
 
+drop policy if exists school_consents_select on public.school_consents;
 create policy school_consents_select on public.school_consents for select
   using (school_id = public.my_school());
+drop policy if exists school_consents_insert on public.school_consents;
 create policy school_consents_insert on public.school_consents for insert
   with check (school_id = public.my_school() and granted_by = auth.uid() and public.my_role() = 'school_admin');

@@ -12,6 +12,7 @@ import History from "./screens/History.jsx";
 import Reports from "./screens/Reports.jsx";
 import FigureCheck from "./screens/FigureCheck.jsx";
 import FigureReview from "./screens/FigureReview.jsx";
+import Presentation from "./screens/Presentation.jsx";
 import BottomNav from "./components/BottomNav.jsx";
 import { ExamContext } from "./lib/exam-context.js";
 import { parseExam, parseKey, parseKeyNotes, questionsFor, timedSeconds } from "./lib/exam.js";
@@ -24,6 +25,7 @@ import FamilyReport from "./screens/FamilyReport.jsx";
 import { tokenFromHash } from "./lib/family.js";
 import { TEACHER_SLUG, teacherExam } from "./lib/teacherExam.js";
 import LivePlay, { LiveJoin } from "./screens/LivePlay.jsx";
+import { joinCodeFromHash } from "./lib/joinLink.js";
 import { CONSENT_VERSION, needsTerms } from "./lib/consent.js";
 import { attemptForAssignment, attemptRow, attemptsLeft, questionsForAttempt, revealAllowed } from "./lib/assignments.js";
 
@@ -61,7 +63,9 @@ export default function App() {
   const [selected, setSelected] = useState(null); // { slug, exam, key, keyStatus, notes, figures }
   const [opening, setOpening] = useState(false);
   const [openError, setOpenError] = useState(null);
-  const [view, setView] = useState("home");
+  // A student who scans a room's QR code lands on the join screen with the code filled in.
+  const [joinCode] = useState(() => (typeof window !== "undefined" ? joinCodeFromHash(window.location.hash) : ""));
+  const [view, setView] = useState(() => (joinCode ? "liveJoin" : "home"));
   const [reviewStart, setReviewStart] = useState(0);
   const [reviewNumber, setReviewNumber] = useState(null);
   // What the home card asked for (area, mode), so "Reto del día" or "Simulacro completo" open set up that way.
@@ -248,6 +252,10 @@ export default function App() {
     setAttempt(null);
   };
 
+  // Presentation for schools (not in the navigation): open the app with #presentacion.
+  if (typeof window !== "undefined" && window.location.hash.startsWith("#presentacion")) {
+    return <Presentation onExit={() => { window.location.hash = ""; window.location.reload(); }} />;
+  }
   // Dev check of the figure engine kinds (not in the navigation): open the app with #figuras.
   if (typeof window !== "undefined" && window.location.hash === "#figuras") return <FigureCheck />;
   // A family opens a report link with no account: only the report is shown, nothing else loads.
@@ -368,7 +376,7 @@ export default function App() {
         />
       )}
 
-      {view === "liveJoin" && <LiveJoin auth={auth} onBack={() => setView("home")} onJoined={(row, nickname) => { setLive({ row, nickname }); setView("livePlay"); }} />}
+      {view === "liveJoin" && <LiveJoin auth={auth} initialCode={joinCode} onBack={() => setView("home")} onJoined={(row, nickname) => { setLive({ row, nickname }); setView("livePlay"); }} />}
       {view === "livePlay" && live && <LivePlay api={auth.api} initial={live.row} nickname={live.nickname} fetchExam={fetchExam} onExit={() => { setLive(null); setView("home"); }} />}
 
       {view === "profile" && <Profile theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} onReports={() => setView("reports")} onLogin={() => setView("login")} />}

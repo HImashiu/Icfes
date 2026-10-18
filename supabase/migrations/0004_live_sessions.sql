@@ -3,7 +3,7 @@
 -- The app polls these tables every second or two, so Realtime does not need to be enabled.
 -- Guests join through Supabase anonymous sign-in (Authentication > Sign In / Providers > "Allow anonymous sign-ins").
 
-create table public.live_sessions (
+create table if not exists public.live_sessions (
   id                  uuid primary key default gen_random_uuid(),
   code                text not null,
   host_id             uuid not null references public.profiles (id),
@@ -20,11 +20,11 @@ create table public.live_sessions (
   current_correct     text[] not null default '{}',
   created_at          timestamptz not null default now()
 );
-create unique index live_sessions_open_code on public.live_sessions (code) where state <> 'ended';
-create index live_sessions_host_idx on public.live_sessions (host_id, created_at desc);
+create unique index if not exists live_sessions_open_code on public.live_sessions (code) where state <> 'ended';
+create index if not exists live_sessions_host_idx on public.live_sessions (host_id, created_at desc);
 
 -- player_id is auth.uid(): a signed-in student or an anonymous guest.
-create table public.live_players (
+create table if not exists public.live_players (
   session_id uuid not null references public.live_sessions (id) on delete cascade,
   player_id  uuid not null,
   nickname   text not null check (char_length(btrim(nickname)) between 1 and 24),
@@ -35,7 +35,7 @@ create table public.live_players (
   primary key (session_id, player_id)
 );
 
-create table public.live_answers (
+create table if not exists public.live_answers (
   session_id     uuid not null,
   player_id      uuid not null,
   question_index int not null check (question_index >= 0),
@@ -70,12 +70,16 @@ alter table public.live_sessions enable row level security;
 alter table public.live_players  enable row level security;
 alter table public.live_answers  enable row level security;
 
+drop policy if exists live_sessions_select on public.live_sessions;
 create policy live_sessions_select on public.live_sessions for select
   using (host_id = auth.uid() or public.is_live_player(id));
+drop policy if exists live_players_select on public.live_players;
 create policy live_players_select on public.live_players for select
   using (public.is_live_host(session_id) or public.is_live_player(session_id));
+drop policy if exists live_answers_select on public.live_answers;
 create policy live_answers_select on public.live_answers for select
   using (player_id = auth.uid() or public.is_live_host(session_id));
+drop policy if exists live_answers_insert on public.live_answers;
 create policy live_answers_insert on public.live_answers for insert
   with check (player_id = auth.uid() and public.live_answer_open(session_id, question_index));
 -- No update or delete policies: answers are final, and scores change only through the functions below.

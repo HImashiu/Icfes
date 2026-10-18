@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Logo from "../components/Logo.jsx";
 import { assignmentState } from "../lib/assignments.js";
 import { areaColor } from "../lib/brand.js";
 import { parseRoster } from "../lib/roster.js";
@@ -10,6 +11,8 @@ import Paper from "./Paper.jsx";
 import Reinforcement from "./Reinforcement.jsx";
 import QuestionBuilder from "./QuestionBuilder.jsx";
 import { LiveSection } from "./LiveHost.jsx";
+import { FilePicker, confirmDialog } from "../components/Controls.jsx";
+import Icon from "../components/Icon.jsx";
 
 const NAV = [
   { label: "Resumen", section: "home" },
@@ -23,6 +26,7 @@ const NAV = [
   { label: "Ajustes", section: "settings", admin: true },
 ];
 const shortDate = (iso) => new Date(iso).toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "short" });
+const KIND_ICON = { task: "bolt", homework: "book", exam: "clock" };
 const STATE_LABEL = { active: "Activa", scheduled: "Programada", closed: "Cerrada", draft: "Borrador" };
 
 // Panel docente con cuentas reales: cursos, listas de estudiantes, asignaciones y su avance.
@@ -48,7 +52,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
   return (
     <div className="teacher">
       <aside className="t-side" aria-label="Navegación docente">
-        <strong className="t-logo">Cóndor</strong>
+        <strong className="t-logo"><Logo size={30} /> Cóndor</strong>
         <nav>
           {NAV.filter((n) => !n.admin || profile.role === "school_admin").map((n) => (
             <button key={n.section} type="button" className={section === n.section ? "t-nav active" : "t-nav"} aria-current={section === n.section ? "page" : undefined} onClick={() => { setSection(n.section); setNotice(null); }}>
@@ -143,8 +147,8 @@ function Roster({ api, course, guard, setNotice, reload }) {
       await load();
     });
   const remove = (id) => guard(async () => { await api.removeMember(id); await load(); });
-  const del = () => {
-    if (!window.confirm(`¿Borrar el curso ${course.name} con sus tareas y resultados?`)) return;
+  const del = async () => {
+    if (!(await confirmDialog(`¿Borrar el curso ${course.name} con sus tareas y resultados?`, { confirmLabel: "Borrar curso", danger: true }))) return;
     guard(async () => { await api.deleteCourse(course.id); await reload(); });
   };
 
@@ -171,7 +175,7 @@ function Roster({ api, course, guard, setNotice, reload }) {
         <span className="label">Pegar lista o subir CSV (nombre, apellidos, correo)</span>
         <textarea rows={5} value={text} onChange={(e) => setText(e.target.value)} placeholder={"nombre,apellidos,correo\nAna,Pérez,ana@colegio.edu.co"} />
       </label>
-      <input type="file" accept=".csv,.txt,text/csv" onChange={onFile} aria-label="Subir archivo CSV" />
+      <FilePicker accept=".csv,.txt,text/csv" onChange={onFile} aria-label="Subir archivo CSV" label="Subir archivo CSV" hint="o arrástralo aquí" />
       {parsed && (
         <div>
           <p className="caption">{parsed.rows.length} válidos{parsed.errors.length ? `, ${parsed.errors.length} con problema` : ""}.</p>
@@ -230,15 +234,24 @@ function Assignments({ api, courses, assignments, exams, fetchExam, reload, guar
           </div>
         </div>
         {shown.length === 0 && <p className="caption">No hay asignaciones en esta pestaña.</p>}
-        {shown.map((a) => (
-          <button key={a.id} type="button" className="assign-row" style={{ width: "100%", textAlign: "left" }} onClick={() => setDetail(detail === a.id ? null : a.id)}>
-            <span className="assign-tile" style={{ background: areaColor(a.scope === "all" ? "" : a.scope) }} />
-            <div className="assign-body">
-              <strong>{a.title}</strong>
-              <span className="caption">{a.courses?.name} · {STATE_LABEL[assignmentState(a)]}{a.due_at ? ` · Entrega ${shortDate(a.due_at)}` : ""}</span>
-            </div>
-          </button>
-        ))}
+        <div className="assign-cards">
+          {shown.map((a) => {
+            const state = assignmentState(a);
+            return (
+              <button key={a.id} type="button" className={`assign-card state-${state}`} aria-expanded={detail === a.id} onClick={() => setDetail(detail === a.id ? null : a.id)}>
+                <span className="assign-icon" style={{ "--tile": a.scope === "all" ? "var(--accent)" : areaColor(a.scope) }} aria-hidden="true">
+                  <Icon name={KIND_ICON[a.kind] ?? "book"} size={22} strokeWidth={2.4} />
+                </span>
+                <span className="assign-body">
+                  <strong>{a.title}</strong>
+                  <span className="caption">{a.courses?.name}{a.due_at ? ` · Entrega ${shortDate(a.due_at)}` : ""}</span>
+                </span>
+                <span className="assign-state">{STATE_LABEL[state]}</span>
+                <span className="assign-chevron" aria-hidden="true"><Icon name="right" size={18} strokeWidth={2.8} /></span>
+              </button>
+            );
+          })}
+        </div>
       </div>
       {detail && assignments.find((a) => a.id === detail) && <AssignmentReport key={detail} api={api} assignment={assignments.find((a) => a.id === detail)} fetchExam={fetchExam} guard={guard} reload={reload} />}
     </>
@@ -249,9 +262,9 @@ function Staff({ api, profile, guard, setNotice }) {
   const [staff, setStaff] = useState([]);
   const load = useCallback(() => guard(async () => setStaff(await api.listStaff())), [api, guard]);
   useEffect(() => { load(); }, [load]);
-  const change = (p, role) => {
+  const change = async (p, role) => {
     const verb = role === "school_admin" ? "coordinación" : role === "teacher" ? "docente" : "estudiante";
-    if (!window.confirm(`¿Cambiar a ${p.full_name || p.email} a ${verb}?`)) return;
+    if (!(await confirmDialog(`¿Cambiar a ${p.full_name || p.email} a ${verb}?`, { confirmLabel: "Cambiar" }))) return;
     guard(async () => { await api.setRole(p.id, role); setNotice(`${p.full_name || p.email} ahora es ${verb}.`); await load(); });
   };
   const LABEL = { teacher: "Docente", school_admin: "Coordinación" };

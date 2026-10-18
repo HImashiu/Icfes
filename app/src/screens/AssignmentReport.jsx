@@ -5,7 +5,10 @@ import { areaColor } from "../lib/brand.js";
 import QuestionView from "../components/QuestionView.jsx";
 import AutopsyCard from "../components/AutopsyCard.jsx";
 import { Bars, Histogram, Kpi } from "./Dashboard.jsx";
+import StudentRun from "./StudentRun.jsx";
+import { classTimes, fmtDuration } from "../lib/studentRun.js";
 import { familyPayload, reportUrl, whatsappLink } from "../lib/family.js";
+import { confirmDialog } from "../components/Controls.jsx";
 
 const shortDate = (iso) => new Date(iso).toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "short" });
 function download(name, text) {
@@ -23,6 +26,7 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
   const [board, setBoard] = useState(null);
   const [share, setShare] = useState(null);
   const [familyMsg, setFamilyMsg] = useState(null);
+  const [student, setStudent] = useState(null);
 
   useEffect(() => {
     guard(async () => {
@@ -47,6 +51,7 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
     const pcts = rows.map((r) => r.pct).filter((p) => p != null);
     return {
       prog, rows, questions, items, timed,
+      avgTimes: classTimes(questions, delivered),
       avg: round(mean(pcts)),
       hist: histogram(pcts, 0, 100, 5),
       areas: areaAverages(rows.map((r) => r.attempt).filter(Boolean).map((a) => ({ ...a, profile_id: a.profile_id }))),
@@ -58,9 +63,13 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
   const sorted = [...items].filter((i) => i.pct != null).sort((a, b) => a.pct - b.pct);
   const shown = allItems ? sorted : sorted.slice(0, 10);
 
+  const openStudent = (id) => {
+    setStudent(id);
+    setTimeout(() => document.getElementById("student-run")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+  };
   const closeNow = () => guard(async () => { await api.setAssignmentStatus(assignment.id, "closed"); await reload(); });
-  const remove = () => {
-    if (window.confirm("¿Borrar esta asignación? Los intentos de los estudiantes se conservan.")) guard(async () => { await api.deleteAssignment(assignment.id); await reload(); });
+  const remove = async () => {
+    if (await confirmDialog("¿Borrar esta asignación? Los intentos de los estudiantes se conservan.", { confirmLabel: "Borrar", danger: true })) guard(async () => { await api.deleteAssignment(assignment.id); await reload(); });
   };
   const family = (r) => {
     const profileId = r.attempt?.profile_id ?? data.members.find((m) => m.id === r.id)?.profile_id;
@@ -77,9 +86,9 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
       }
     });
   };
-  const reinforce = () => {
+  const reinforce = async () => {
     const keys = sorted.slice(0, 10).map((i) => i.key);
-    if (keys.length === 0 || !window.confirm(`Crear una práctica nueva con las ${keys.length} preguntas más falladas para este curso?`)) return;
+    if (keys.length === 0 || !(await confirmDialog(`¿Crear una práctica nueva con las ${keys.length} preguntas más falladas para este curso?`, { confirmLabel: "Crear práctica" }))) return;
     guard(async () => {
       const me = await api.getProfile();
       await api.createAssignment({
@@ -116,22 +125,30 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
 
       <div className="table-wrap">
         <table className="t-table">
-          <thead><tr><th>Estudiante</th><th>Estado</th><th>Puntaje</th>{timed && <th>Banda estimada</th>}<th>Entregado</th><th className="no-print" /></tr></thead>
+          <thead><tr><th>Estudiante</th><th>Estado</th><th>Puntaje</th>{timed && <th>Banda estimada</th>}<th>Entregado</th><th>Tiempo</th><th>Intentos</th><th className="no-print" /></tr></thead>
           <tbody>
             {rows.map((r) => (
               <tr key={r.id}>
-                <td>{r.name}</td>
+                <td>{r.done ? <button type="button" className="link" onClick={() => openStudent(r.id)}>{r.name}</button> : r.name}</td>
                 <td>{r.done ? (r.paper ? "Entregado (papel)" : "Entregado") : r.joined ? "Pendiente" : "Sin ingresar"}</td>
                 <td>{r.pct == null ? "—" : `${r.pct} %`}</td>
                 {timed && <td>{r.band?.global == null ? "—" : `${r.band.low}–${r.band.high}`}</td>}
                 <td>{r.at ? shortDate(r.at) : "—"}</td>
-                <td className="no-print">{r.done && <button type="button" className="link" onClick={() => family(r)}>Informe familiar</button>}</td>
+                <td>{r.done && !r.paper ? fmtDuration(r.attempt?.duration_sec) : "—"}</td>
+                <td>{r.attempts.length || "—"}</td>
+                <td className="no-print">{r.done && <button type="button" className="link" onClick={() => openStudent(r.id)}>Ver detalle</button>}{r.done && <button type="button" className="link" onClick={() => family(r)}>Informe familiar</button>}</td>
               </tr>
             ))}
-            {rows.length === 0 && <tr><td colSpan={6} className="caption">El curso no tiene estudiantes.</td></tr>}
+            {rows.length === 0 && <tr><td colSpan={8} className="caption">El curso no tiene estudiantes.</td></tr>}
           </tbody>
         </table>
       </div>
+      {student && (() => {
+        const row = rows.find((r) => r.id === student);
+        return row && row.attempts.length > 0 && bundle ? (
+          <StudentRun key={student} name={row.name} attempts={row.attempts} questions={view.questions} answerKey={bundle.key} avgTimes={view.avgTimes} onClose={() => setStudent(null)} />
+        ) : null;
+      })()}
       {familyMsg && <p className="notice no-print" role="alert">{familyMsg}</p>}
       {share && (
         <div className="notice no-print" role="status" style={{ display: "grid", gap: 8 }}>
@@ -153,7 +170,7 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
           <span className="label">Análisis por pregunta · las más falladas primero</span>
           <div className="table-wrap">
             <table className="t-table">
-              <thead><tr><th>N.°</th><th>Área</th><th>Acierto</th><th>Respuestas (A · B · C · D)</th><th>Clave</th><th /></tr></thead>
+              <thead><tr><th>N.°</th><th>Área</th><th>Acierto</th><th>Respuestas (A · B · C · D)</th><th>Clave</th><th>Error común</th><th>Tiempo medio</th><th /></tr></thead>
               <tbody>
                 {shown.map((i) => (
                   <tr key={i.key}>
@@ -162,6 +179,8 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
                     <td>{i.pct} %</td>
                     <td>{["A", "B", "C", "D"].map((l) => <span key={l} className={l === i.keyed ? "d-opt key" : "d-opt"}>{l} {i.dist[l] ?? 0}</span>)}</td>
                     <td>{i.keyed ?? "—"}</td>
+                    <td>{i.topWrong ? `${i.topWrong} (${i.dist[i.topWrong]})` : "—"}</td>
+                    <td>{i.avgSec == null ? "—" : fmtDuration(i.avgSec)}</td>
                     <td>{i.suspect && <span className="badge pending" title="La mayoría eligió otra opción: revisa la clave, que es preliminar.">Revisar clave</span>}</td>
                   </tr>
                 ))}

@@ -4,7 +4,7 @@ import { FID_CENTERS, FID_SIZE, idBits, LETTERS } from "../lib/omr.js";
 export default function AnswerSheet({ layout, title, course, student, index }) {
   const bits = idBits(index);
   return (
-    <svg className="sheet-page" viewBox="0 0 210 297" width="210mm" height="297mm" style={{ display: "block", background: "#fff", pageBreakAfter: "always", breakAfter: "page" }} role="img" aria-label={`Hoja de respuestas de ${student}`}>
+    <svg className="sheet-page" viewBox="0 0 210 297" width="210mm" height="297mm" style={{ display: "block", background: "#fff", breakAfter: "page", pageBreakAfter: "always" }} role="img" aria-label={`Hoja de respuestas de ${student}`}>
       {FID_CENTERS.map(([x, y]) => <rect key={`${x}-${y}`} x={x - FID_SIZE / 2} y={y - FID_SIZE / 2} width={FID_SIZE} height={FID_SIZE} fill="#000" />)}
       <text x="105" y="14" textAnchor="middle" fontSize="5.5" fontWeight="700" fill="#000">{title}</text>
       <text x="30" y="26" fontSize="4" fill="#000">Estudiante: {student}</text>

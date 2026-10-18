@@ -1,7 +1,7 @@
 -- M2b: questions written by teachers. Stored apart from the ICFES bank, never pooled into it or into the band.
 -- An assignment or live room built from them uses exam_slug = 'teacher' and the question ids as question_keys.
 
-create table public.teacher_questions (
+create table if not exists public.teacher_questions (
   id          uuid primary key default gen_random_uuid(),
   school_id   uuid not null references public.schools (id),
   owner_id    uuid not null references public.profiles (id),
@@ -17,8 +17,8 @@ create table public.teacher_questions (
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
-create index teacher_questions_owner_idx on public.teacher_questions (owner_id, created_at desc);
-create index teacher_questions_school_idx on public.teacher_questions (school_id);
+create index if not exists teacher_questions_owner_idx on public.teacher_questions (owner_id, created_at desc);
+create index if not exists teacher_questions_school_idx on public.teacher_questions (school_id);
 
 -- Who may read a question: its owner, staff of the school when it is shared with the school, and the students
 -- (and live players) of an assignment or room that uses it.
@@ -42,13 +42,18 @@ language sql stable security definer set search_path = public as $$
 $$;
 
 alter table public.teacher_questions enable row level security;
+drop policy if exists tq_select on public.teacher_questions;
 create policy tq_select on public.teacher_questions for select using (public.can_read_teacher_question(id));
+drop policy if exists tq_insert on public.teacher_questions;
 create policy tq_insert on public.teacher_questions for insert
   with check (owner_id = auth.uid() and school_id = public.my_school() and public.my_role() in ('teacher', 'school_admin'));
+drop policy if exists tq_update on public.teacher_questions;
 create policy tq_update on public.teacher_questions for update
   using (owner_id = auth.uid()) with check (owner_id = auth.uid() and school_id = public.my_school());
+drop policy if exists tq_delete on public.teacher_questions;
 create policy tq_delete on public.teacher_questions for delete using (owner_id = auth.uid());
 
 create or replace function public.tq_touch() returns trigger language plpgsql as $$
 begin new.updated_at := now(); return new; end $$;
+drop trigger if exists tq_touch on public.teacher_questions;
 create trigger tq_touch before update on public.teacher_questions for each row execute function public.tq_touch();
