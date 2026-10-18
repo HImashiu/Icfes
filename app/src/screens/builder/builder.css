@@ -129,21 +129,7 @@
 .qb-optimg { display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 14px; background: var(--paper); }
 .qb-optimg img { max-width: 70%; max-height: 120px; }
 
-/* dropdown, toggle, segmented */
-.qb-pick { position: relative; }
-.qb-pick-btn {
-  width: 100%; min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 12px;
-  border-radius: 12px; border: 2px solid var(--line); background: var(--surface); color: var(--text); font-size: 15px; font-weight: 600; text-align: left;
-}
-.qb-pick-btn[aria-expanded="true"] { border-color: var(--accent); }
-.qb-caret { color: var(--text-2); font-size: 12px; }
-.qb-menu {
-  position: absolute; z-index: 10; top: calc(100% + 6px); left: 0; min-width: 100%; max-height: 300px; overflow: auto; margin: 0; padding: 6px;
-  list-style: none; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 14px 34px rgba(0, 0, 0, 0.4);
-}
-.qb-menu button { width: 100%; min-height: 38px; padding: 0 10px; border: 0; border-radius: 10px; background: transparent; color: var(--text); text-align: left; font-size: 14px; white-space: nowrap; }
-.qb-menu button:hover { background: var(--surface-2); }
-.qb-menu button.on { background: var(--accent-soft); font-weight: 700; }
+/* toggle, segmented */
 .qb-toggle {
   display: inline-flex; align-items: center; gap: 8px; min-height: 34px; padding: 0 10px 0 4px; border-radius: 999px; border: 1px solid var(--line);
   background: var(--surface); color: var(--text); font-size: 13px; font-weight: 600;

@@ -6,6 +6,7 @@ import QuestionView from "../components/QuestionView.jsx";
 import AutopsyCard from "../components/AutopsyCard.jsx";
 import { Bars, Histogram, Kpi } from "./Dashboard.jsx";
 import { familyPayload, reportUrl, whatsappLink } from "../lib/family.js";
+import { confirmDialog } from "../components/Controls.jsx";
 
 const shortDate = (iso) => new Date(iso).toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "short" });
 function download(name, text) {
@@ -59,8 +60,8 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
   const shown = allItems ? sorted : sorted.slice(0, 10);
 
   const closeNow = () => guard(async () => { await api.setAssignmentStatus(assignment.id, "closed"); await reload(); });
-  const remove = () => {
-    if (window.confirm("¿Borrar esta asignación? Los intentos de los estudiantes se conservan.")) guard(async () => { await api.deleteAssignment(assignment.id); await reload(); });
+  const remove = async () => {
+    if (await confirmDialog("¿Borrar esta asignación? Los intentos de los estudiantes se conservan.", { confirmLabel: "Borrar", danger: true })) guard(async () => { await api.deleteAssignment(assignment.id); await reload(); });
   };
   const family = (r) => {
     const profileId = r.attempt?.profile_id ?? data.members.find((m) => m.id === r.id)?.profile_id;
@@ -77,9 +78,9 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
       }
     });
   };
-  const reinforce = () => {
+  const reinforce = async () => {
     const keys = sorted.slice(0, 10).map((i) => i.key);
-    if (keys.length === 0 || !window.confirm(`Crear una práctica nueva con las ${keys.length} preguntas más falladas para este curso?`)) return;
+    if (keys.length === 0 || !(await confirmDialog(`¿Crear una práctica nueva con las ${keys.length} preguntas más falladas para este curso?`, { confirmLabel: "Crear práctica" }))) return;
     guard(async () => {
       const me = await api.getProfile();
       await api.createAssignment({

@@ -3,6 +3,7 @@ import Icon from "../components/Icon.jsx";
 import { SAMPLE_ROSTER, SAMPLE_TEACHER, TEACHER_AREAS } from "../data/mock.js";
 import { addAssignment, loadAssignments } from "../lib/local.js";
 import { areaColor, fmtInt } from "../lib/brand.js";
+import { DateField, Select } from "../components/Controls.jsx";
 
 // Sample calendar and "today": October 2026, Monday first, today is the 10th (matches the header).
 const CAL_YEAR = 2026;
@@ -96,20 +97,20 @@ function AssignForm({ onSaved, onCancel }) {
       <strong>Nueva asignación</strong>
       <label className="field">
         <span className="label">Simulacro</span>
-        <select value={scope} onChange={(e) => setScope(e.target.value)}>
+        <Select value={scope} onChange={(v) => setScope(v)}>
           <option>{FULL_EXAM}</option>
           {TEACHER_AREAS.map((a) => <option key={a}>{a}</option>)}
-        </select>
+        </Select>
       </label>
       <label className="field">
         <span className="label">Curso</span>
-        <select value={course} onChange={(e) => setCourse(e.target.value)}>
+        <Select value={course} onChange={(v) => setCourse(v)}>
           {COURSES.map((c) => <option key={c}>{c}</option>)}
-        </select>
+        </Select>
       </label>
       <label className="field">
         <span className="label">Fecha de entrega</span>
-        <input type="date" value={due} min={TODAY_ISO} onChange={(e) => setDue(e.target.value)} />
+        <DateField value={due} min={TODAY_ISO} onChange={(v) => setDue(v)} />
       </label>
       {error && <p className="notice error">{error}</p>}
       <div className="report-actions">
@@ -377,9 +378,9 @@ function Tabs({ value, onChange }) {
 
 function CourseFilter({ value, onChange }) {
   return (
-    <select className="course-filter" aria-label="Curso" value={value} onChange={(e) => onChange(e.target.value)}>
+    <Select className="course-filter" aria-label="Curso" value={value} onChange={(v) => onChange(v)}>
       {["Todos", ...COURSES].map((c) => <option key={c}>{c}</option>)}
-    </select>
+    </Select>
   );
 }
 

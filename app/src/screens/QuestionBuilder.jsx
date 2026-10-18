@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { confirmDialog } from "../components/Controls.jsx";
 import { DIFFICULTY_LABEL } from "../lib/bank.js";
 import { clearSession, loadSession } from "../lib/builder/docStore.js";
 import { draftFromRow } from "../lib/teacherExam.js";
@@ -17,8 +18,8 @@ export default function QuestionBuilder({ api, profile, guard, setNotice }) {
   useEffect(() => { if (!work) loadSession(profile.id).then((s) => setResume(s?.drafts?.length ? s : null)); }, [work, profile.id]);
 
   const shown = rows.filter((r) => `${r.question_json?.stem_md ?? ""} ${r.question_json?.group?.stimulus_md ?? ""} ${r.area} ${r.tema ?? ""} ${r.competencia ?? ""}`.toLowerCase().includes(filter.trim().toLowerCase()));
-  const remove = (r) => {
-    if (!window.confirm("¿Borrar esta pregunta? Las asignaciones que ya la usan dejarán de mostrarla.")) return;
+  const remove = async (r) => {
+    if (!(await confirmDialog("¿Borrar esta pregunta? Las asignaciones que ya la usan dejarán de mostrarla.", { confirmLabel: "Borrar", danger: true }))) return;
     guard(async () => { await api.deleteTeacherQuestion(r.id); await load(); });
   };
   // A question that shares its text opens with the rest of its group (the ones this teacher owns), in list order.

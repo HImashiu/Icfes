@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { confirmDialog, Select } from "../../components/Controls.jsx";
 import QuestionView from "../../components/QuestionView.jsx";
 import RichText from "../../components/RichText.jsx";
 import { DIFFICULTY_LABEL } from "../../lib/bank.js";
@@ -11,7 +12,7 @@ import FormulaDialog from "./FormulaDialog.jsx";
 import { placeFigure, placeFormula, RichCtx, RichField, Toolbar, useRichFields } from "./RichField.jsx";
 import SourcePane from "./SourcePane.jsx";
 import "./builder.css";
-import { Dialog, FileButton, Pick, Segmented } from "./ui.jsx";
+import { Dialog, FileButton, Segmented } from "./ui.jsx";
 
 const LETTERS = ["A", "B", "C", "D"];
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -200,8 +201,8 @@ export default function Workspace({ api, profile, guard, initial, startAt = 0, o
     }));
   };
   const leaveGroup = () => update((x) => ({ ...x, groupId: null, stimulus: [x.groupText, x.stimulus].filter((t) => t.trim()).join("\n\n"), figures: [...(x.figures ?? []), ...(x.groupFigures ?? [])], groupText: "", groupFigures: [] }));
-  const removeDraft = () => {
-    if (d.id && !window.confirm("Esta pregunta ya está guardada. ¿Quitarla solo de esta lista? (Sigue guardada en Mis preguntas.)")) return;
+  const removeDraft = async () => {
+    if (d.id && !(await confirmDialog("Esta pregunta ya está guardada. ¿Quitarla solo de esta lista? Sigue guardada en Mis preguntas.", { confirmLabel: "Quitar de la lista" }))) return;
     setDrafts((ds) => (ds.length === 1 ? [withUid(emptyDraft())] : ds.filter((_, i) => i !== cur)));
     setCur(Math.max(0, cur - 1));
   };
@@ -359,9 +360,12 @@ export default function Workspace({ api, profile, guard, initial, startAt = 0, o
 
               <div className="qb-meta">
                 <label className="qb-field inline"><span className="label">Área</span>
-                  <Pick label="Área" value={d.area} onChange={set("area")} options={TEACHER_AREAS.map((a) => ({ value: a, label: a }))} /></label>
+                  <Select aria-label="Área" value={d.area} onChange={set("area")}>{TEACHER_AREAS.map((a) => <option key={a} value={a}>{a}</option>)}</Select></label>
                 <label className="qb-field inline"><span className="label">Dificultad</span>
-                  <Pick label="Dificultad" value={d.dificultad} onChange={set("dificultad")} options={[{ value: "", label: "Sin indicar" }, ...[1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: `${n} · ${DIFFICULTY_LABEL[n]}` }))]} /></label>
+                  <Select aria-label="Dificultad" value={d.dificultad} onChange={set("dificultad")}>
+                    <option value="">Sin indicar</option>
+                    {[1, 2, 3, 4, 5].map((n) => <option key={n} value={String(n)}>{n} · {DIFFICULTY_LABEL[n]}</option>)}
+                  </Select></label>
                 <label className="qb-field inline"><span className="label">Competencia</span>
                   <input className="qb-input" value={d.competencia} onChange={(e) => set("competencia")(e.target.value)} placeholder="Opcional" /></label>
                 <label className="qb-field inline"><span className="label">Tema</span>
