@@ -1,5 +1,6 @@
 // Pure helpers for assignments: which questions, what state, who has finished. No network, no React.
 import { questionsFor, scoreAttempt, timedSeconds } from "./exam.js";
+import { roundedTimes } from "./studentRun.js";
 
 export const KINDS = [
   { id: "task", label: "Práctica", mode: "practice" },
@@ -51,6 +52,9 @@ export function attemptForAssignment(a, questions, now = Date.now()) {
     answers: {},
     flags: {},
     checked: {},
+    times: {},
+    hintsUsed: {},
+    changes: {},
     xp: 0,
     current: 0,
     submittedAt: null,
@@ -71,6 +75,9 @@ export function attemptRow(attempt, questions, key, keyStatus) {
     submitted_at: new Date(attempt.submittedAt).toISOString(),
     duration_sec: Math.round((attempt.submittedAt - attempt.startedAt) / 1000),
     answers: attempt.answers,
+    times: roundedTimes(attempt.times),
+    // How the student worked, for the teacher's view of one run: hints opened and answers changed, per question.
+    activity: { hints: attempt.hintsUsed ?? {}, changes: attempt.changes ?? {} },
     score: { keyed: s.keyed, correct: s.correct, answered: s.answered, total: s.total, perArea: s.perArea },
     key_status: keyStatus ?? "preliminary",
     device: typeof window !== "undefined" && window.matchMedia?.("(min-width: 768px)").matches ? "desktop" : "phone",
@@ -91,9 +98,11 @@ export const whoOf = (a) => a.profile_id ?? a.member_id ?? null;
 // Per student: did they deliver, and with what result. The best delivered attempt counts.
 export function progressRows(members, attempts) {
   const byWho = new Map();
+  const all = new Map();
   for (const a of attempts) {
     if (!a.submitted_at) continue;
     const k = whoOf(a);
+    all.set(k, [...(all.get(k) ?? []), a]);
     const prev = byWho.get(k);
     if (!prev || (scorePct(a) ?? -1) > (scorePct(prev) ?? -1)) byWho.set(k, a);
   }
@@ -110,6 +119,7 @@ export function progressRows(members, attempts) {
         done: Boolean(a),
         pct: a ? scorePct(a) : null,
         attempt: a ?? null,
+        attempts: [m.profile_id, m.id].filter(Boolean).flatMap((id) => all.get(id) ?? []).sort((x, y) => String(x.submitted_at).localeCompare(String(y.submitted_at))),
         paper: a?.mode === "paper",
         at: a?.submitted_at ?? null,
       };

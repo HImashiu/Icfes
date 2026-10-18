@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Navigator from "../components/Navigator.jsx";
 import QuestionView, { textPaneKind } from "../components/QuestionView.jsx";
 import Icon from "../components/Icon.jsx";
@@ -10,6 +10,7 @@ import { formatClock } from "../lib/exam.js";
 import { areaColor, fmtInt } from "../lib/brand.js";
 import { plainText } from "../lib/render.js";
 import { xpFor } from "../lib/xp.js";
+import { addTime } from "../lib/studentRun.js";
 import { buzz, confetti, play } from "../lib/motion.js";
 
 // +10 XP per correct practice answer, double in the weakest area.
@@ -45,9 +46,34 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
     return () => clearInterval(t);
   }, [timed]);
 
+  // Time on each question (only while the tab is visible), so the teacher can see where a student spent it.
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+  const seg = useRef({ key: null, t: 0 });
+  const finished = useRef(false);
+  const flush = useCallback((nextKey) => {
+    const { key, t } = seg.current;
+    const stamp = Date.now();
+    if (key && t && !finished.current) {
+      const sec = (stamp - t) / 1000;
+      if (sec > 0) onChangeRef.current((a) => ({ ...a, times: addTime(a.times, key, sec) }));
+    }
+    seg.current = { key: nextKey, t: nextKey && document.visibilityState !== "hidden" ? stamp : 0 };
+  }, []);
+  const submitNow = useCallback((opts) => {
+    flush(null);
+    finished.current = true;
+    onSubmit(opts);
+  }, [flush, onSubmit]);
   useEffect(() => {
-    if (timeUp) onSubmit({ auto: true });
-  }, [timeUp, onSubmit]);
+    const onVisible = () => flush(seg.current.key);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { document.removeEventListener("visibilitychange", onVisible); flush(null); };
+  }, [flush]);
+
+  useEffect(() => {
+    if (timeUp) submitNow({ auto: true });
+  }, [timeUp, submitNow]);
 
   const current = Math.min(attempt.current, questions.length - 1);
   const q = questions[current];
@@ -56,6 +82,8 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   const correctLetter = q ? answerKey?.get(q.key) ?? null : null;
   const picked = q && attempt.answers[q.key];
   const area = q?.section;
+  const currentKey = q?.key;
+  useEffect(() => { flush(currentKey ?? null); }, [currentKey, flush]);
 
   // Questions that share one text are shown together as one block: the text once, then each question.
   const sameText = (a, b) => Boolean(a?.group) && a.group?.id === b?.group?.id;
@@ -148,7 +176,11 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
 
   const setAnswerFor = (qq, letter) => {
     if (attempt.checked?.[qq.key]) return;
-    onChange((a) => ({ ...a, answers: { ...a.answers, [qq.key]: letter } }));
+    onChange((a) => {
+      const before = a.answers[qq.key];
+      const changes = before && before !== letter ? { ...(a.changes ?? {}), [qq.key]: (a.changes?.[qq.key] ?? 0) + 1 } : a.changes;
+      return { ...a, answers: { ...a.answers, [qq.key]: letter }, changes };
+    });
   };
   const setAnswer = (letter) => setAnswerFor(q, letter);
   // A tap on an option of another question in the block moves the current question there first.
@@ -199,7 +231,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   const feedbackOf = (qq) => {
     const row = enrich?.[String(qq.number)];
     // The teacher can switch hints off for an assignment.
-    if (practice && !attempt.checked?.[qq.key]) return row && !row.hidden && attempt.hints !== false ? <Hint key={qq.key} text={row.pista} /> : null;
+    if (practice && !attempt.checked?.[qq.key]) return row && !row.hidden && attempt.hints !== false ? <Hint key={qq.key} text={row.pista} onOpen={() => onChange((a) => (a.hintsUsed?.[qq.key] ? a : { ...a, hintsUsed: { ...(a.hintsUsed ?? {}), [qq.key]: true } }))} /> : null;
     if (!instant) return null;
     const cl = answerKey?.get(qq.key) ?? null;
     const right = Boolean(cl) && attempt.answers[qq.key] === cl;
@@ -468,7 +500,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
                 : "Respondiste todas las preguntas."}
             </p>
             <div className="confirm-actions">
-              <button type="button" className="primary big" autoFocus onClick={() => { setConfirmOpen(false); onSubmit({ auto: false }); }}>
+              <button type="button" className="primary big" autoFocus onClick={() => { setConfirmOpen(false); submitNow({ auto: false }); }}>
                 {practice ? "Terminar y ver resultados" : "Entregar"}
               </button>
               <button type="button" className="secondary big" onClick={() => setConfirmOpen(false)}>Seguir respondiendo</button>

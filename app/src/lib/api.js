@@ -64,13 +64,25 @@ export function createApi(client) {
     },
 
     async uploadAttempt(row, profileId) {
-      unwrap(await client.from("attempts").upsert({ ...row, profile_id: profileId }, { onConflict: "profile_id,client_id" }));
+      const put = (r) => client.from("attempts").upsert({ ...r, profile_id: profileId }, { onConflict: "profile_id,client_id" });
+      const first = await put(row);
+      // `activity` arrives with migration 0009; until it runs, the attempt is saved without it.
+      if (first.error && /activity/.test(first.error.message ?? "")) {
+        const { activity, ...rest } = row;
+        unwrap(await put(rest));
+        return;
+      }
+      unwrap(first);
     },
     async myAttempts() {
       return unwrap(await client.from("attempts").select("assignment_id, submitted_at, mode, score, client_id").not("assignment_id", "is", null));
     },
     async assignmentAttempts(assignmentId) {
-      return unwrap(await client.from("attempts").select("profile_id, member_id, client_id, assignment_id, submitted_at, mode, score, answers, duration_sec").eq("assignment_id", assignmentId));
+      const cols = "profile_id, member_id, client_id, assignment_id, submitted_at, mode, score, answers, duration_sec";
+      const query = (c) => client.from("attempts").select(c).eq("assignment_id", assignmentId);
+      const first = await query(`${cols}, started_at, times, activity`);
+      if (first.error && /activity/.test(first.error.message ?? "")) return unwrap(await query(`${cols}, started_at, times`));
+      return unwrap(first);
     },
 
     // Every delivered attempt on one booklet that this teacher may read, with answers (for "weak spots" and item analysis).

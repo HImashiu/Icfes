@@ -1408,3 +1408,23 @@ button.card:active:not(:disabled), .mode-card:active, .chip:active, .answer-cell
 .room-card:hover .room-go .icon { transform: translateX(3px); }
 .room-go .icon { transition: transform 0.15s; }
 .t-head .primary .icon { margin-left: -4px; }
+
+/* Assignment list rows are buttons: no browser grey, a soft hover and a chevron so they read as tappable */
+button.assign-row { width: 100%; text-align: left; background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 12px; padding: 12px 10px; color: inherit; transition: background .15s ease; }
+button.assign-row:hover { background: var(--accent-soft); }
+button.assign-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+button.assign-row.on { background: var(--accent-soft); }
+button.assign-row::after { content: "›"; color: var(--text-2); font-size: 22px; line-height: 1; }
+button.assign-row.closed .assign-tile { opacity: 0.45; }
+
+/* One student's run of an assignment */
+.student-run { scroll-margin-top: 16px; }
+.area-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.run-verdict { font-weight: 600; }
+.run-verdict.ok { color: var(--ok); }
+.run-verdict.bad { color: var(--bad); }
+.run-verdict.blank, .run-verdict.open { color: var(--text-2); }
+.run-time { display: inline-flex; align-items: center; gap: 8px; min-width: 150px; }
+.run-bar { flex: 0 0 64px; height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.run-bar > span { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+.run-bar > span.slow { background: var(--bad); }

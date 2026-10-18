@@ -231,7 +231,7 @@ function Assignments({ api, courses, assignments, exams, fetchExam, reload, guar
         </div>
         {shown.length === 0 && <p className="caption">No hay asignaciones en esta pestaña.</p>}
         {shown.map((a) => (
-          <button key={a.id} type="button" className="assign-row" style={{ width: "100%", textAlign: "left" }} onClick={() => setDetail(detail === a.id ? null : a.id)}>
+          <button key={a.id} type="button" className={`assign-row${detail === a.id ? " on" : ""}${assignmentState(a) === "closed" ? " closed" : ""}`} onClick={() => setDetail(detail === a.id ? null : a.id)}>
             <span className="assign-tile" style={{ background: areaColor(a.scope === "all" ? "" : a.scope) }} />
             <div className="assign-body">
               <strong>{a.title}</strong>
