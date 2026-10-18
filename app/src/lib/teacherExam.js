@@ -6,6 +6,7 @@ export const TEACHER_AREAS = ["Matemáticas", "Lectura crítica", "Sociales y ci
 const LETTERS = ["A", "B", "C", "D"];
 
 // Row from teacher_questions -> question the app draws. `number` is the position in the list shown.
+// A question that shares its text with others carries `group` ({ id, stimulus_md, traced }); teacherExam numbers it.
 export function rowToQuestion(row, number) {
   const j = row.question_json ?? {};
   return {
@@ -14,12 +15,12 @@ export function rowToQuestion(row, number) {
     section: row.area || "Otra",
     part: null,
     item_type: "standard",
-    group_id: null,
-    group: null,
+    group_id: j.group?.id ?? null,
+    group: j.group ? { id: j.group.id, stimulus_md: j.group.stimulus_md ?? "", traced: j.group.traced ?? [], directions: null, from: number, to: number } : null,
     stimulus_md: j.stimulus_md ?? "",
     stem_md: j.stem_md ?? "",
     expected_options: 4,
-    options: (j.options ?? []).map((o) => ({ letter: o.letter, text_md: o.text_md ?? "", marked_in_scan: false })),
+    options: (j.options ?? []).map((o) => ({ letter: o.letter, text_md: o.text_md ?? "", marked_in_scan: false, ...(o.traced?.url ? { traced: o.traced } : {}) })),
     traced: j.traced ?? [],
     sourceLine: "Pregunta de tu docente",
   };
@@ -30,6 +31,12 @@ export function teacherExam(rows, order = null) {
   const byId = new Map(rows.map((r) => [r.id, r]));
   const list = order ? order.map((id) => byId.get(id)).filter(Boolean) : rows;
   const questions = list.map((r, i) => rowToQuestion(r, i + 1));
+  // Questions that share a text are numbered "from–to" by the run they form in this list.
+  for (const q of questions) {
+    if (!q.group) continue;
+    const same = questions.filter((o) => o.group?.id === q.group.id).map((o) => o.number);
+    q.group = { ...q.group, from: Math.min(...same), to: Math.max(...same) };
+  }
   const names = [...new Set(questions.map((q) => q.section))];
   const sections = names.map((name) => ({ name, expected: null, questions: questions.filter((q) => q.section === name) }));
   const enrich = {};
@@ -48,33 +55,56 @@ export function teacherExam(rows, order = null) {
   };
 }
 
-export const emptyDraft = () => ({
+// A question being written. Figures are crops or photos kept inside the question ({ id, url }); `optionImages`
+// holds an image per option (or null). Questions of one group share `groupId`, `groupText` and `groupFigures`.
+export const emptyDraft = (over = {}) => ({
   area: "Matemáticas", competencia: "", tema: "", dificultad: "", visibility: "private",
-  stimulus: "", stem: "", options: ["", "", "", ""], answer: "", explanation: "", image: null,
+  stimulus: "", stem: "", options: ["", "", "", ""], optionImages: [null, null, null, null], answer: "", explanation: "",
+  figures: [], groupId: null, groupText: "", groupFigures: [], source: null, ...over,
 });
 
 export function draftFromRow(row) {
   const j = row.question_json ?? {};
-  return {
+  const opt = (l) => (j.options ?? []).find((o) => o.letter === l);
+  return emptyDraft({
     id: row.id, area: row.area || "Otra", competencia: row.competencia ?? "", tema: row.tema ?? "", dificultad: row.dificultad ? String(row.dificultad) : "",
     visibility: row.visibility, stimulus: j.stimulus_md ?? "", stem: j.stem_md ?? "",
-    options: LETTERS.map((l) => (j.options ?? []).find((o) => o.letter === l)?.text_md ?? ""),
-    answer: row.answer, explanation: row.explanation ?? "", image: j.traced?.[0]?.url ?? null,
-  };
+    options: LETTERS.map((l) => opt(l)?.text_md ?? ""),
+    optionImages: LETTERS.map((l) => opt(l)?.traced?.url ?? null),
+    answer: row.answer, explanation: row.explanation ?? "",
+    figures: (j.traced ?? []).map((t) => ({ id: t.figure_id, url: t.url })),
+    groupId: j.group?.id ?? null, groupText: j.group?.stimulus_md ?? "", groupFigures: (j.group?.traced ?? []).map((t) => ({ id: t.figure_id, url: t.url })),
+    source: j.source ?? null,
+  });
 }
+
+// The row may hold up to 800 KB (a database check); a little room is left for the rest of the row.
+export const QUESTION_BYTES = 760000;
 
 // Problems that keep a question from being used; empty when it is ready.
 export function validateDraft(d) {
   const out = [];
-  if (!d.stem.trim()) out.push("Escribe el enunciado.");
-  d.options.forEach((o, i) => { if (!o.trim()) out.push(`Falta la opción ${LETTERS[i]}.`); });
+  if (!d.stem.trim() && !(d.groupId && d.groupText.trim())) out.push("Escribe el enunciado.");
+  const images = d.optionImages ?? [];
+  d.options.forEach((o, i) => { if (!o.trim() && !images[i]) out.push(`Falta la opción ${LETTERS[i]}.`); });
   const filled = d.options.map((o) => o.trim().toLowerCase()).filter(Boolean);
   if (new Set(filled).size !== filled.length) out.push("Hay opciones repetidas.");
   if (!d.answer) out.push("Marca cuál es la respuesta correcta.");
+  if (out.length === 0 && JSON.stringify(draftToRow(d, {}).question_json).length > QUESTION_BYTES) {
+    out.push("La pregunta pesa demasiado: quita alguna imagen o recórtala más pequeña.");
+  }
   return out;
 }
 
+const traced = (figs) => (figs ?? []).map((f) => ({ figure_id: f.id, url: f.url }));
+const placed = (text, id) => text.includes(`[[figura:${id}]]`);
+
 export function draftToRow(d, { schoolId, ownerId }) {
+  const images = d.optionImages ?? [];
+  // A figure of the shared text that is not placed in it goes at its end, so every question of the group shows it.
+  const groupText = d.groupId
+    ? [d.groupText.trim(), ...(d.groupFigures ?? []).filter((f) => !placed(d.groupText, f.id)).map((f) => `[[figura:${f.id}]]`)].filter(Boolean).join("\n\n")
+    : "";
   return {
     school_id: schoolId,
     owner_id: ownerId,
@@ -86,8 +116,10 @@ export function draftToRow(d, { schoolId, ownerId }) {
     question_json: {
       stimulus_md: d.stimulus.trim(),
       stem_md: d.stem.trim(),
-      options: d.options.map((text, i) => ({ letter: LETTERS[i], text_md: text.trim() })),
-      traced: d.image ? [{ figure_id: "img1", url: d.image }] : [],
+      options: d.options.map((text, i) => ({ letter: LETTERS[i], text_md: text.trim(), ...(images[i] ? { traced: { figure_id: `opt-${LETTERS[i]}`, url: images[i] } } : {}) })),
+      traced: traced(d.figures ?? (d.image ? [{ id: "img1", url: d.image }] : [])),
+      ...(d.groupId ? { group: { id: d.groupId, stimulus_md: groupText, traced: traced(d.groupFigures) } } : {}),
+      ...(d.source ? { source: d.source } : {}),
     },
     answer: d.answer,
     explanation: d.explanation.trim() || null,
