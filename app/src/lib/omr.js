@@ -138,16 +138,30 @@ export function findFiducials(bin, w, h) {
     return b.area / (bw * bh) > 0.6 && bw / bh > 0.5 && bw / bh < 2;
   });
   if (squares.length < 4) return null;
-  const biggest = Math.max(...squares.map((s) => s.area));
-  const group = squares.filter((s) => s.area >= biggest * 0.45 && s.area <= biggest * 1.6);
-  if (group.length < 4) return null;
-  const pick = (score) => group.reduce((best, s) => (score(s) > score(best) ? s : best));
-  const tl = pick((s) => -(s.cx + s.cy)), br = pick((s) => s.cx + s.cy), tr = pick((s) => s.cx - s.cy), bl = pick((s) => -(s.cx - s.cy));
-  if (new Set([tl, tr, bl, br]).size < 4) return null;
+  // Try every set of four among the biggest solid squares and keep the one that looks most like the sheet's corners:
+  // similar sizes, a near-parallelogram, and the sheet's 180 x 267 proportions.
+  const top = squares.sort((a, b) => b.area - a.area).slice(0, 10);
+  let best = null;
   const dist = (a, b) => Math.hypot(a.cx - b.cx, a.cy - b.cy);
-  const ratio = dist(tl, tr) / dist(tl, bl); // 180 / 267 on the sheet
-  if (ratio < 0.4 || ratio > 1.0) return null;
-  return [tl, tr, bl, br].map((s) => [s.cx, s.cy]);
+  for (let i = 0; i < top.length; i += 1) for (let j = i + 1; j < top.length; j += 1) for (let k = j + 1; k < top.length; k += 1) for (let l = k + 1; l < top.length; l += 1) {
+    const g = [top[i], top[j], top[k], top[l]];
+    const areas = g.map((s) => s.area);
+    const spread = Math.max(...areas) / Math.min(...areas);
+    if (spread > 2.2) continue;
+    const pick = (score) => g.reduce((bst, s) => (score(s) > score(bst) ? s : bst));
+    const tl = pick((s) => -(s.cx + s.cy)), br = pick((s) => s.cx + s.cy), tr = pick((s) => s.cx - s.cy), bl = pick((s) => -(s.cx - s.cy));
+    if (new Set([tl, tr, bl, br]).size < 4) continue;
+    const ratio = dist(tl, tr) / dist(tl, bl);
+    if (ratio < 0.4 || ratio > 1.0) continue;
+    const diag = Math.hypot(tl.cx + br.cx - tr.cx - bl.cx, tl.cy + br.cy - tr.cy - bl.cy) / dist(tl, br);
+    const cost = Math.abs(Math.log(ratio / (180 / 267))) + diag * 3 + Math.log(spread);
+    // a bigger frame is the sheet, not a cluster of marks on it
+    const size = dist(tl, br);
+    const score = cost - Math.log(size / Math.hypot(w, h)) * 0.5;
+    if (!best || score < best.score) best = { score, g: [tl, tr, bl, br] };
+  }
+  if (!best) return null;
+  return best.g.map((s) => [s.cx, s.cy]);
 }
 
 // Share of dark pixels inside a circle (image pixels).
@@ -169,25 +183,141 @@ export function rotate90(gray, w, h) {
   return { gray: out, w: h, h: w };
 }
 
-// Reads one sheet. Returns { ok, error, studentIndex, answers: [letter|null], flags: [bool], marks: [[4 darkness values]] }.
-export function readSheet(gray, w, h, n) {
-  const layout = sheetLayout(n);
-  const bin = binarize(gray, w, h);
-  const corners = findFiducials(bin, w, h);
-  if (!corners) return { ok: false, error: "No encontré las cuatro marcas negras de las esquinas. Fotografía la hoja completa, sin sombras fuertes." };
-  const H = homography(FID_CENTERS, corners);
-  // pixels per millimetre near the middle of the sheet
-  const [ax, ay] = applyH(H, 100, 150), [bx, by] = applyH(H, 110, 150);
-  const mm = Math.hypot(bx - ax, by - ay) / 10;
-  const cell = (x, y, r) => { const [px, py] = applyH(H, x, y); return darkness(bin, w, h, px, py, r * mm); };
+// ---------------------------------------------------------------- rectified reading
+// The photo is warped so the sheet is a flat 210 x 297 mm image (S pixels per mm); every later step works on that image.
+export function rectify(gray, w, h, H, S) {
+  const Wr = Math.round(PAGE.w * S), Hr = Math.round(PAGE.h * S);
+  const out = new Uint8ClampedArray(Wr * Hr);
+  for (let y = 0; y < Hr; y += 1) {
+    for (let x = 0; x < Wr; x += 1) {
+      const [px, py] = applyH(H, x / S, y / S);
+      const x0 = Math.floor(px), y0 = Math.floor(py);
+      if (x0 < 0 || y0 < 0 || x0 >= w - 1 || y0 >= h - 1) { out[y * Wr + x] = 255; continue; }
+      const fx = px - x0, fy = py - y0, i = y0 * w + x0;
+      out[y * Wr + x] = gray[i] * (1 - fx) * (1 - fy) + gray[i + 1] * fx * (1 - fy) + gray[i + w] * (1 - fx) * fy + gray[i + w + 1] * fx * fy;
+    }
+  }
+  return { img: out, w: Wr, h: Hr, S };
+}
 
-  const idCells = layout.idCells.map((c) => (cell(c.x, c.y, 1.6) > 0.5 ? 1 : 0));
-  const studentIndex = decodeIdBits(idCells);
+function dilate(bin, w, h) {
+  const out = new Uint8Array(w * h);
+  for (let y = 1; y < h - 1; y += 1) {
+    for (let x = 1; x < w - 1; x += 1) {
+      const i = y * w + x;
+      out[i] = bin[i] | bin[i - 1] | bin[i + 1] | bin[i - w] | bin[i + w] | bin[i - w - 1] | bin[i - w + 1] | bin[i + w - 1] | bin[i + w + 1];
+    }
+  }
+  return out;
+}
 
+const median = (a) => { const b = a.slice().sort((x, y) => x - y); return b.length ? b[b.length >> 1] : 0; };
+// 1-D clusters of sorted values: a new cluster starts when the gap to the previous value exceeds tol.
+function cluster1d(values, tol) {
+  const v = values.slice().sort((a, b) => a - b);
+  const groups = [];
+  for (const x of v) {
+    const g = groups[groups.length - 1];
+    if (g && x - g[g.length - 1] <= tol) g.push(x); else groups.push([x]);
+  }
+  return groups;
+}
+
+// Dark share of a square-ish disc at (x, y) mm, radius r mm, on the rectified binary image.
+function discDark(bin, W, Hh, S, x, y, r) {
+  const cx = x * S, cy = y * S, rr = r * S;
+  let dark = 0, total = 0;
+  for (let yy = Math.max(0, Math.floor(cy - rr)); yy <= Math.min(Hh - 1, Math.ceil(cy + rr)); yy += 1) {
+    for (let xx = Math.max(0, Math.floor(cx - rr)); xx <= Math.min(W - 1, Math.ceil(cx + rr)); xx += 1) {
+      if ((xx - cx) ** 2 + (yy - cy) ** 2 <= rr * rr) { total += 1; dark += bin[yy * W + xx]; }
+    }
+  }
+  return total ? dark / total : 0;
+}
+function ringDark(bin, W, Hh, S, x, y, r0, r1) {
+  const cx = x * S, cy = y * S;
+  let dark = 0, total = 0;
+  for (let yy = Math.max(0, Math.floor(cy - r1 * S)); yy <= Math.min(Hh - 1, Math.ceil(cy + r1 * S)); yy += 1) {
+    for (let xx = Math.max(0, Math.floor(cx - r1 * S)); xx <= Math.min(W - 1, Math.ceil(cx + r1 * S)); xx += 1) {
+      const d = Math.hypot(xx - cx, yy - cy) / S;
+      if (d >= r0 && d <= r1) { total += 1; dark += bin[yy * W + xx]; }
+    }
+  }
+  return total ? dark / total : 0;
+}
+
+// Does the printed layout sit where it should? Share of expected rings that show ink around them.
+function ringEvidence(bin, W, Hh, S, layout) {
+  const e = layout.bubbles.map((b) => ringDark(bin, W, Hh, S, b.x, b.y, BUBBLE_R - 0.4, BUBBLE_R + 0.4));
+  return median(e);
+}
+
+// Layout-free reading: finds the printed rings in the rectified image and builds the grid from them, so a sheet whose
+// bubbles are not exactly where the layout says (printer scaling, a copy of a copy) still reads.
+function detectGrid(bin, W, Hh, S, n) {
+  const closed = dilate(bin, W, Hh);
+  const all = blobs(closed, W, Hh, Math.round(8 * S * S / 4));
+  const lo = 2.8 * S, hi = 7.5 * S;
+  const cand = all.filter((b) => {
+    const bw = b.x1 - b.x0 + 1, bh = b.y1 - b.y0 + 1;
+    return bw >= lo && bw <= hi && bh >= lo && bh <= hi && bw / bh > 0.7 && bw / bh < 1.4 && b.cy > 20 * S && b.cy < 276 * S;
+  });
+  if (cand.length < Math.min(n, 8) * 3) return null;
+  const size = median(cand.map((b) => (b.x1 - b.x0 + b.y1 - b.y0 + 2) / 2));
+  // rows
+  const rowGroups = cluster1d(cand.map((b) => b.cy), size * 0.3);
+  const rowOf = (b) => rowGroups.findIndex((g) => b.cy >= g[0] - 1e-6 && b.cy <= g[g.length - 1] + 1e-6);
+  const byRow = rowGroups.map(() => []);
+  for (const b of cand) byRow[rowOf(b)].push(b);
+  // the student-code strip: one row of 12 to 16 evenly spaced squares, wider spaced than bubble columns
+  let idRow = -1;
+  byRow.forEach((r, i) => { if (r.length >= 12 && r.length <= 16 && (idRow < 0 || r.length > byRow[idRow].length)) idRow = i; });
+  const idBlobs = idRow >= 0 ? byRow[idRow].slice().sort((a, b) => a.cx - b.cx) : null;
+  const bubbleBlobs = cand.filter((b) => rowOf(b) !== idRow);
+  if (bubbleBlobs.length < Math.min(n, 8) * 3) return null;
+  // Columns first: the x positions shared by many blobs. Then rows from the blobs that sit on those columns.
+  const colGroups = cluster1d(bubbleBlobs.map((b) => b.cx), size * 0.3);
+  const maxCol = Math.max(...colGroups.map((g) => g.length));
+  const cols = colGroups.filter((g) => g.length >= Math.max(4, maxCol * 0.4)).map((g) => median(g)).sort((a, c) => a - c);
+  const onCols = bubbleBlobs.filter((b) => cols.some((c) => Math.abs(b.cx - c) <= size * 0.4));
+  const rows = cluster1d(onCols.map((b) => b.cy), size * 0.3).filter((g) => g.length >= 2).map((g) => median(g));
+  if (rows.length < 2) return null;
+  // Bubble rows are evenly spaced; the longest evenly spaced chain wins, and a skipped row is filled in.
+  const pitch = median(rows.slice(1).map((y, i) => y - rows[i]));
+  let best = [], run = [rows[0]];
+  for (let i = 1; i < rows.length; i += 1) {
+    const d = rows[i] - rows[i - 1];
+    const k = Math.round(d / pitch);
+    if (k >= 1 && k <= 2 && Math.abs(d - k * pitch) <= pitch * 0.25) {
+      if (k === 2) run.push(rows[i - 1] + d / 2);
+      run.push(rows[i]);
+    } else { if (run.length > best.length) best = run; run = [rows[i]]; }
+  }
+  if (run.length > best.length) best = run;
+  const rowCenters = best;
+  if (!rowCenters.length || cols.length < 4 || cols.length % 4 !== 0) return null;
+  const blocksN = cols.length / 4;
+  const R = rowCenters.length;
+  if (blocksN * R < n || (blocksN - 1) * R >= n) return null;
   const marks = Array.from({ length: n }, () => [0, 0, 0, 0]);
-  for (const b of layout.bubbles) marks[b.q][LETTERS.indexOf(b.letter)] = cell(b.x, b.y, READ_R);
-  const answers = [];
-  const flags = [];
+  const rad = (size / 2 / S) * 0.62;
+  for (let q = 0; q < n; q += 1) {
+    const b = Math.floor(q / R), r = q % R;
+    for (let li = 0; li < 4; li += 1) marks[q][li] = discDark(bin, W, Hh, S, cols[b * 4 + li] / S, rowCenters[r] / S, rad);
+  }
+  let idCells = null;
+  if (idBlobs && idBlobs.length >= 12 && median(idBlobs.map((b) => b.cy)) < rowCenters[0]) {
+    const xs = idBlobs.map((b) => b.cx), y = median(idBlobs.map((b) => b.cy));
+    const pitch = median(xs.slice(1).map((x, i) => x - xs[i]).filter((d) => d > size * 1.2));
+    if (pitch > 0) {
+      idCells = Array.from({ length: ID_CELLS }, (_, i) => (discDark(bin, W, Hh, S, (xs[0] + i * pitch) / S, y / S, (size / 2 / S) * 0.5) > 0.5 ? 1 : 0));
+    }
+  }
+  return { marks, idCells };
+}
+
+function classify(marks) {
+  const answers = [], flags = [];
   for (const m of marks) {
     const order = [0, 1, 2, 3].sort((i, j) => m[j] - m[i]);
     const best = m[order[0]], second = m[order[1]];
@@ -196,7 +326,37 @@ export function readSheet(gray, w, h, n) {
     answers.push(multiple ? null : LETTERS[order[0]]);
     flags.push(multiple || best < 0.5 || best - second < 0.25);
   }
-  return { ok: true, error: null, studentIndex, answers, flags, marks };
+  return { answers, flags };
+}
+
+// Reads one sheet. Returns { ok, error, studentIndex, answers: [letter|null], flags: [bool], marks: [[4 darkness values]], mode }.
+export function readSheet(gray, w, h, n) {
+  const layout = sheetLayout(n);
+  const bin0 = binarize(gray, w, h);
+  const corners = findFiducials(bin0, w, h);
+  if (!corners) return { ok: false, error: "No encontré las cuatro marcas negras de las esquinas. Fotografía la hoja completa, sin sombras fuertes." };
+  const H = homography(FID_CENTERS, corners);
+  // pixels per millimetre near the middle of the sheet
+  const [ax, ay] = applyH(H, 100, 150), [bx, by] = applyH(H, 110, 150);
+  const mm = Math.hypot(bx - ax, by - ay) / 10;
+  const S = Math.max(4, Math.min(7, mm * 1.2));
+  const rect = rectify(gray, w, h, H, S);
+  const bin = binarize(rect.img, rect.w, rect.h);
+
+  let marks = null, idCells, mode = "layout";
+  if (ringEvidence(bin, rect.w, rect.h, S, layout) < 0.22) {
+    const g = detectGrid(bin, rect.w, rect.h, S, n);
+    if (g) { marks = g.marks; idCells = g.idCells; mode = "detected"; }
+  }
+  if (!marks) {
+    // too blurred to see the rings: trust the printed layout
+    idCells = layout.idCells.map((c) => (discDark(bin, rect.w, rect.h, S, c.x, c.y, 1.6) > 0.5 ? 1 : 0));
+    marks = Array.from({ length: n }, () => [0, 0, 0, 0]);
+    for (const b of layout.bubbles) marks[b.q][LETTERS.indexOf(b.letter)] = discDark(bin, rect.w, rect.h, S, b.x, b.y, READ_R);
+  }
+  const studentIndex = idCells ? decodeIdBits(idCells) : null;
+  const { answers, flags } = classify(marks);
+  return { ok: true, error: null, studentIndex, answers, flags, marks, mode };
 }
 
 // Tries the photo as taken and turned by 90, 180 and 270 degrees; the right turn is the one whose student code checks out.
@@ -208,7 +368,30 @@ export function readSheetAnyRotation(gray, w, h, n) {
     try { r = readSheet(cur.gray, cur.w, cur.h, n); } catch (e) { r = { ok: false, error: e.message }; }
     if (!first) first = r;
     if (r.ok && r.studentIndex != null) return { ...r, turns: turn };
+    // no corner marks upright or on their side means no sheet in the picture: turning it further will not help
+    if (turn === 1 && !first.ok && !r.ok) return first;
     cur = rotate90(cur.gray, cur.w, cur.h);
   }
   return first.ok ? { ...first, turns: 0 } : first;
+}
+
+// Cheap check for a live camera: where the four corner marks are in this frame (image points), or null.
+export function findSheetCorners(gray, w, h) {
+  const bin = binarize(gray, w, h);
+  return findFiducials(bin, w, h);
+}
+
+// The frame as a grayscale array scaled so its longest side is at most maxSide.
+export function frameToGray(source, canvas, maxSide = 1280) {
+  const sw = source.videoWidth || source.width, sh = source.videoHeight || source.height;
+  const scale = Math.min(1, maxSide / Math.max(sw, sh));
+  const w = Math.max(1, Math.round(sw * scale)), h = Math.max(1, Math.round(sh * scale));
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(source, 0, 0, w, h);
+  const { data } = ctx.getImageData(0, 0, w, h);
+  const gray = new Uint8ClampedArray(w * h);
+  for (let i = 0; i < gray.length; i += 1) gray[i] = (data[i * 4] * 299 + data[i * 4 + 1] * 587 + data[i * 4 + 2] * 114) / 1000;
+  return { gray, w, h };
 }

@@ -1489,3 +1489,46 @@ button.card:active:not(:disabled), .mode-card:active, .chip:active, .answer-cell
 .room-card:hover .room-go .icon { transform: translateX(3px); }
 .room-go .icon { transition: transform 0.15s; }
 .t-head .primary .icon { margin-left: -4px; }
+
+/* Custom choice list (no native select) */
+.picker { position: relative; }
+.picker-btn { width: 100%; min-height: 46px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 14px; border-radius: 14px; border: 2px solid var(--line); background: var(--surface-2); color: var(--text); font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
+.picker-btn.empty { color: var(--text-2); }
+.picker-btn:hover, .picker-btn[aria-expanded="true"] { border-color: var(--accent); }
+.picker-caret { transform: rotate(90deg); transition: transform 0.15s; flex: none; }
+.picker-caret.open { transform: rotate(-90deg); }
+.picker-list { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 6px); margin: 0; padding: 6px; list-style: none; max-height: 280px; overflow: auto; border-radius: 14px; border: 2px solid var(--line); background: var(--surface); box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35); animation: fade-in 0.12s both; }
+.picker-list button { width: 100%; min-height: 42px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 10px; border: 0; border-radius: 10px; background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.picker-list button:hover, .picker-list button:focus-visible { background: var(--accent-soft); outline: none; }
+.picker-list button.on { font-weight: 700; color: var(--accent-ink); }
+
+/* Scan modes and the live scanner */
+.scan-modes { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; }
+.scan-camera { flex: 1 1 240px; min-height: 52px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; }
+.paper-drop.compact { flex: 1 1 160px; position: relative; grid-auto-flow: column; justify-content: center; align-items: center; padding: 0 16px; min-height: 52px; border-radius: 16px; }
+.paper-drop.busy { opacity: 0.7; pointer-events: none; }
+.scan-name { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
+.scan-thumb { width: 34px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); }
+.scanner { position: fixed; inset: 0; z-index: 80; background: #000; color: #fff; display: grid; grid-template-rows: auto 1fr auto; overflow: hidden; }
+.scanner-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000; }
+.scanner-quad { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.scanner-quad polygon { fill: rgba(200, 240, 74, 0.08); stroke: #ffd23f; stroke-width: 6; stroke-linejoin: round; transition: stroke 0.15s; }
+.scanner-quad polygon.hold { stroke: var(--accent); }
+.scanner-quad polygon.ok { stroke: #5fd48a; fill: rgba(95, 212, 138, 0.18); }
+.scanner-top { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; }
+.scanner-close { width: 44px; height: 44px; border-radius: 999px; border: 0; display: grid; place-items: center; background: rgba(0, 0, 0, 0.55); color: #fff; cursor: pointer; }
+.scanner-count { background: rgba(0, 0, 0, 0.55); border-color: transparent; color: #fff; }
+.scanner-bottom { position: relative; z-index: 1; grid-row: 3; display: grid; gap: 10px; padding: 14px 16px calc(16px + env(safe-area-inset-bottom)); background: linear-gradient(transparent, rgba(0, 0, 0, 0.78) 40%); }
+.scanner-hint { margin: 0; text-align: center; font-weight: 700; text-shadow: 0 1px 6px #000; }
+.scanner-flash { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: #5fd48a; color: #0d110f; animation: pop-in 0.25s both; }
+.scanner-flash div { display: grid; }
+.scanner-flash span:not(.scanner-tick) { font-size: 13px; }
+.scanner-tick { width: 38px; height: 38px; border-radius: 999px; display: grid; place-items: center; background: #0d110f; color: #5fd48a; flex: none; }
+.scanner-strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+.scanner-strip figure { margin: 0; flex: none; width: 64px; text-align: center; font-size: 10px; border-radius: 8px; border: 2px solid #5fd48a; background: rgba(0, 0, 0, 0.6); overflow: hidden; }
+.scanner-strip figure.warn { border-color: #ffd23f; }
+.scanner-strip img { display: block; width: 100%; height: 56px; object-fit: cover; }
+.scanner-strip figcaption { padding: 2px 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.scanner-done { min-height: 52px; }
+.scanner-msg { position: relative; z-index: 1; grid-row: 2; align-self: center; margin: 0 20px; padding: 20px; border-radius: 18px; background: var(--surface); color: var(--text); display: grid; gap: 12px; justify-items: center; text-align: center; }
+@media (prefers-reduced-motion: reduce) { .scanner-flash { animation: none; } }

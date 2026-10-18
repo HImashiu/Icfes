@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import { applyH, decodeIdBits, FID_CENTERS, FID_SIZE, homography, idBits, invertH, readSheet, readSheetAnyRotation, rotate90, sheetLayout } from "../src/lib/omr.js";
 
 // Renders a sheet into a grayscale image through a known homography (sheet mm -> pixels), with uneven light and noise.
-function render({ n, answers, student, H, w, h, shade = true, seed = 7 }) {
+function render({ n, answers, student, H, w, h, shade = true, seed = 7, grid = null }) {
   const layout = sheetLayout(n);
+  // grid: draws the bubbles away from where the layout says (a sheet printed from another layout)
+  if (grid) layout.bubbles = layout.bubbles.map((b) => ({ ...b, x: b.x * grid.sx + grid.dx, y: (b.y - 78) * grid.sy + 78 + grid.dy }));
   const inv = invertH(H);
   const bits = idBits(student);
   let s = seed;
@@ -15,8 +17,8 @@ function render({ n, answers, student, H, w, h, shade = true, seed = 7 }) {
       const [u, v] = applyH(inv, x, y);
       let ink = false;
       for (const [cx, cy] of FID_CENTERS) if (Math.abs(u - cx) <= FID_SIZE / 2 && Math.abs(v - cy) <= FID_SIZE / 2) ink = true;
-      if (!ink) for (const c of layout.idCells) if (bits[c.i] && Math.abs(u - c.x) <= 2.5 && Math.abs(v - c.y) <= 2.5) ink = true;
-      if (!ink && v > 74 && v < 264) for (const b of layout.bubbles) {
+      if (!ink) for (const c of layout.idCells) { const d = Math.max(Math.abs(u - c.x), Math.abs(v - c.y)); if (d <= 2.5 && (bits[c.i] || d >= 2.2)) ink = true; }
+      if (!ink && v > 60 && v < 270) for (const b of layout.bubbles) {
         if (Math.abs(v - b.y) > 3) continue;
         const d = Math.hypot(u - b.x, v - b.y);
         if (d > 3) continue;
@@ -85,6 +87,16 @@ describe("reading a photographed sheet", () => {
     expect(r.studentIndex).toBe(41);
     expect(r.answers).toEqual(answers);
     expect(r.turns).toBeGreaterThan(0);
+  });
+  it("finds the bubbles by their rings when the grid is not where the layout says", () => {
+    const m = 13;
+    const ans = Array.from({ length: m }, (_, q) => (q === 6 ? null : "ABCD"[(q * 5 + 2) % 4]));
+    const odd = render({ n: m, answers: ans, student: 0, H: TRUE, w: W, h: H_, grid: { sx: 1.25, sy: 1.3, dx: -6, dy: 14 } });
+    const r = readSheet(odd, W, H_, m);
+    expect(r.ok).toBe(true);
+    expect(r.mode).toBe("detected");
+    expect(r.studentIndex).toBe(0);
+    expect(r.answers).toEqual(ans);
   });
   it("explains when the corner marks are not in the photo", () => {
     const blank = new Uint8ClampedArray(W * H_).fill(210);

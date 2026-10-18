@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import PrintBooklet from "../components/PrintBooklet.jsx";
 import Icon from "../components/Icon.jsx";
+import LiveScanner from "../components/LiveScanner.jsx";
+import Picker from "../components/Picker.jsx";
 import { questionsForAttempt } from "../lib/assignments.js";
 import { scoreAttempt } from "../lib/exam.js";
 import AnswerSheet from "../components/AnswerSheet.jsx";
@@ -48,28 +50,35 @@ function Sheets({ assignment, questions, roster, course, onClose }) {
   );
 }
 
-// Calificar fotos: cada foto se lee en el navegador, se muestra para corregir lo dudoso y se guarda con el resto de resultados.
+// Calificar hojas: la cámara en vivo o fotos subidas. Cada hoja se lee en el navegador, se muestra para corregir lo dudoso y se guarda con el resto de resultados.
 function Scan({ api, assignment, bundle, questions, roster, guard, setNotice, onClose }) {
   const [items, setItems] = useState([]);
   const [busy, setBusy] = useState(false);
+  const [camera, setCamera] = useState(false);
   const inputRef = useRef(null);
   const n = questions.length;
 
-  const toResult = (file, read) => {
+  const toResult = (id, name, read, thumb = null) => {
     const member = read.ok && read.studentIndex != null ? roster[read.studentIndex] ?? null : null;
-    return { id: `${file.name}-${file.size}-${file.lastModified}`, name: file.name, read, memberId: member?.id ?? "", answers: read.ok ? read.answers.slice() : [], flags: read.ok ? read.flags.slice() : [] };
+    return { id, name, thumb, read, memberId: member?.id ?? "", answers: read.ok ? read.answers.slice() : [], flags: read.ok ? read.flags.slice() : [] };
+  };
+  // A sheet read again (a second photo, a second pass of the camera) replaces the earlier one of the same student.
+  const addItem = (item) => setItems((cur) => [...cur.filter((x) => !(item.memberId && x.memberId === item.memberId)), item]);
+  const onCameraSheet = (read, thumb) => {
+    const who = read.studentIndex != null ? roster[read.studentIndex] : null;
+    addItem(toResult(`cam-${Date.now()}-${Math.random()}`, who ? `Hoja de ${who.full_name || who.email}` : "Hoja sin código", read, thumb));
   };
   const onFiles = async (e) => {
     const files = [...(e.target.files ?? [])];
     e.target.value = "";
     setBusy(true);
     for (const file of files) {
+      const id = `${file.name}-${file.size}-${file.lastModified}`;
       try {
         const { gray, w, h } = await fileToGray(file);
-        const read = readSheetAnyRotation(gray, w, h, n);
-        setItems((cur) => [...cur, toResult(file, read)]);
+        addItem(toResult(id, file.name, readSheetAnyRotation(gray, w, h, n)));
       } catch {
-        setItems((cur) => [...cur, { id: `${file.name}-${Math.random()}`, name: file.name, read: { ok: false, error: "No se pudo abrir esa imagen." }, memberId: "", answers: [], flags: [] }]);
+        setItems((cur) => [...cur, { id: `${id}-${Math.random()}`, name: file.name, read: { ok: false, error: "No se pudo abrir esa imagen." }, memberId: "", answers: [], flags: [] }]);
       }
       await new Promise((r) => setTimeout(r, 0));
     }
@@ -99,24 +108,25 @@ function Scan({ api, assignment, bundle, questions, roster, guard, setNotice, on
 
   return (
     <div className="card t-card">
-      <div className="section-head"><strong>Calificar hojas fotografiadas</strong><button type="button" className="link" onClick={onClose}>Cerrar</button></div>
-      <p className="caption">Fotografía cada hoja completa, con buena luz y las cuatro marcas negras visibles. Puedes elegir varias fotos a la vez.</p>
-      <label className="paper-drop"><Icon name="flag" size={24} /><span>{busy ? "Leyendo…" : "Elegir fotos de las hojas"}</span><input ref={inputRef} type="file" accept="image/*" multiple aria-label="Fotos de las hojas" onChange={onFiles} disabled={busy} /></label>
+      <div className="section-head"><strong>Escanear hojas</strong><button type="button" className="link" onClick={onClose}>Cerrar</button></div>
+      <p className="caption">Con la cámara, pasa las hojas una tras otra frente al celular: cada una se lee sola cuando queda quieta. También puedes subir fotos; deben mostrar la hoja completa, con buena luz y las cuatro marcas negras.</p>
+      <div className="scan-modes">
+        <button type="button" className="primary scan-camera" onClick={() => setCamera(true)}><Icon name="bolt" size={20} /> Escanear con la cámara</button>
+        <label className={busy ? "paper-drop compact busy" : "paper-drop compact"}><Icon name="flag" size={20} /><span>{busy ? "Leyendo…" : "Subir fotos"}</span><input ref={inputRef} type="file" accept="image/*" multiple aria-label="Fotos de las hojas" onChange={onFiles} disabled={busy} /></label>
+      </div>
+      {camera && <LiveScanner n={n} roster={roster} onCapture={onCameraSheet} onClose={() => setCamera(false)} />}
       {items.map((it) => {
         const s = it.read.ok ? scoreOf(it) : null;
         const doubtful = it.flags.filter(Boolean).length;
         return (
           <div key={it.id} className={`card paper-scan-item ${!it.read.ok ? "is-bad" : doubtful ? "is-doubt" : "is-ok"}`}>
-            <div className="section-head"><strong>{it.name}</strong><button type="button" className="link" onClick={() => setItems((cur) => cur.filter((x) => x.id !== it.id))}>Quitar</button></div>
+            <div className="section-head"><strong className="scan-name">{it.thumb && <img className="scan-thumb" src={it.thumb} alt="" />}{it.name}</strong><button type="button" className="link" onClick={() => setItems((cur) => cur.filter((x) => x.id !== it.id))}>Quitar</button></div>
             {!it.read.ok ? <p className="notice error">{it.read.error}</p> : (
               <>
-                <label className="field"><span className="label">Estudiante</span>
-                  <select value={it.memberId} onChange={(e) => setMember(it.id, e.target.value)}>
-                    <option value="">Elegir…</option>
-                    {roster.map((m) => <option key={m.id} value={m.id}>{m.full_name || m.email}</option>)}
-                  </select>
+                <div className="field"><span className="label">Estudiante</span>
+                  <Picker label="Estudiante de la hoja" value={it.memberId} onChange={(v) => setMember(it.id, v)} placeholder="Elegir estudiante…" options={roster.map((m) => ({ value: m.id, label: m.full_name || m.email }))} />
                   {it.read.studentIndex == null && <span className="caption">No pude leer el código del estudiante: elígelo a mano.</span>}
-                </label>
+                </div>
                 <span className="caption">{s.answered} de {s.total} marcadas · {s.keyed ? `${s.correct} correctas (clave preliminar)` : "sin clave"}{doubtful ? ` · ${doubtful} para revisar` : ""}</span>
                 <details open={doubtful > 0}>
                   <summary>Respuestas leídas{doubtful ? ` (revisa las marcadas en amarillo)` : ""}</summary>
@@ -172,7 +182,7 @@ export default function Paper({ api, assignments, fetchExam, guard, setNotice })
   const steps = [
     { n: 1, icon: "book", title: "Cuadernillo", text: "Las preguntas en hojas A4, en blanco y negro, con el texto de cada grupo una sola vez.", action: "Imprimir cuadernillo", mode: "booklet", off: !ready },
     { n: 2, icon: "user", title: "Hojas de respuestas", text: "Una hoja por estudiante, con su código y las burbujas A a D. Imprime al 100 %.", action: "Imprimir hojas", mode: "sheets", off: !ready || noRoster },
-    { n: 3, icon: "bolt", title: "Calificar fotos", text: "Fotografía las hojas llenas con el celular. Los resultados entran junto a los demás.", action: "Calificar fotos", mode: "scan", off: !ready || noRoster, primary: true },
+    { n: 3, icon: "bolt", title: "Escanear hojas", text: "Pasa las hojas llenas frente a la cámara del celular, o sube fotos. Los resultados entran junto a los demás.", action: "Escanear hojas", mode: "scan", off: !ready || noRoster, primary: true },
   ];
 
   return (
@@ -181,8 +191,8 @@ export default function Paper({ api, assignments, fetchExam, guard, setNotice })
       {choices.length === 0 ? <div className="card paper-empty"><Icon name="book" size={28} /><p>Crea primero una asignación con las preguntas del simulacro y vuelve aquí.</p></div> : (
         <>
           <div className="card paper-pick">
-            <label className="field"><span className="label">Asignación</span>
-              <select value={assignment?.id ?? ""} onChange={(e) => setId(e.target.value)}>{choices.map((a) => <option key={a.id} value={a.id}>{a.courses?.name} · {a.title}</option>)}</select></label>
+            <div className="field"><span className="label">Asignación</span>
+              <Picker label="Asignación" value={assignment?.id ?? ""} onChange={setId} options={choices.map((a) => ({ value: a.id, label: `${a.courses?.name} · ${a.title}` }))} /></div>
             <div className="paper-stats" aria-live="polite">
               {!bundle ? <span className="chip">Cargando preguntas…</span> : (
                 <>
