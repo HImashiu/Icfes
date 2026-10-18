@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Navigator from "../components/Navigator.jsx";
 import QuestionView, { textPaneKind } from "../components/QuestionView.jsx";
 import Icon from "../components/Icon.jsx";
+import Mascot from "../components/Mascot.jsx";
 import AiAnalysis from "../components/AiAnalysis.jsx";
 import TextToggle from "../components/TextToggle.jsx";
 import Hint from "../components/Hint.jsx";
@@ -246,7 +247,11 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   const explained = Boolean(aiRow && !aiRow.hidden && aiRow.explicacion);
   const verdictBar = verdict && (
     <div className="verdict" role="status" key={q.key}>
-      <span className="verdict-ico" aria-hidden="true"><Icon name={verdict === "ok" ? "check" : verdict === "bad" ? "x" : "flag"} size={22} /></span>
+      {verdict === "neutral" ? (
+        <span className="verdict-ico" aria-hidden="true"><Icon name="flag" size={22} /></span>
+      ) : (
+        <span className="verdict-owl" aria-hidden="true"><Mascot pose={right ? "happy" : "sad"} size={52} /></span>
+      )}
       <div>
         <strong>{verdict === "neutral" ? "Clave pendiente" : right ? PRAISE[(current + run) % PRAISE.length] : `La respuesta es ${correctLetter}`}</strong>
         <span>{verdict === "neutral" ? "Esta pregunta todavía no tiene clave." : right ? `+${xpFor(q.section)} XP · clave preliminar` : explained ? "Mira la explicación abajo · clave preliminar" : "Clave preliminar, no oficial"}</span>

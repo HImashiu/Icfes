@@ -1,0 +1,12 @@
+{
+  "name": "Cóndor · Saber 11",
+  "short_name": "Cóndor",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0D110F",
+  "theme_color": "#0D110F",
+  "icons": [
+    { "src": "brand/condor-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "brand/condor-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

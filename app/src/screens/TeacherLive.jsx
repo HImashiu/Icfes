@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Logo from "../components/Logo.jsx";
 import { assignmentState } from "../lib/assignments.js";
 import { areaColor } from "../lib/brand.js";
 import { parseRoster } from "../lib/roster.js";
@@ -48,7 +49,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
   return (
     <div className="teacher">
       <aside className="t-side" aria-label="Navegación docente">
-        <strong className="t-logo">Cóndor</strong>
+        <strong className="t-logo"><Logo size={30} /> Cóndor</strong>
         <nav>
           {NAV.filter((n) => !n.admin || profile.role === "school_admin").map((n) => (
             <button key={n.section} type="button" className={section === n.section ? "t-nav active" : "t-nav"} aria-current={section === n.section ? "page" : undefined} onClick={() => { setSection(n.section); setNotice(null); }}>

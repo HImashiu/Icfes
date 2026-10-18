@@ -1,5 +1,5 @@
 import Icon from "./Icon.jsx";
-import Mascot from "./Mascot.jsx";
+import Logo from "./Logo.jsx";
 import { SAMPLE_STUDENT } from "../data/mock.js";
 
 const ITEMS = [
@@ -16,7 +16,7 @@ export default function BottomNav({ active, onGo }) {
   return (
     <nav className="bottom-nav" aria-label="Navegación principal">
       <div className="nav-brand" aria-hidden="true">
-        <Mascot size={36} />
+        <Logo size={36} />
         <strong>Cóndor</strong>
       </div>
       {ITEMS.map((item) => (
