@@ -1498,6 +1498,19 @@ button.card:active:not(:disabled), .mode-card:active, .chip:active, .answer-cell
 .room-go .icon { transition: transform 0.15s; }
 .t-head .primary .icon { margin-left: -4px; }
 
+
+/* One student's run of an assignment */
+.student-run { scroll-margin-top: 16px; }
+.area-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.run-verdict { font-weight: 600; }
+.run-verdict.ok { color: var(--ok); }
+.run-verdict.bad { color: var(--bad); }
+.run-verdict.blank, .run-verdict.open { color: var(--text-2); }
+.run-time { display: inline-flex; align-items: center; gap: 8px; min-width: 150px; }
+.run-bar { flex: 0 0 64px; height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.run-bar > span { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+.run-bar > span.slow { background: var(--bad); }
+
 /* ---- Form controls: drawn by the app, no browser chrome (components/Controls.jsx has Select, DateField,
    FilePicker and confirmDialog). Text fields, checkboxes and radios stay native elements styled here. ---- */
 :root { --ring: var(--accent); --sel: rgba(200, 240, 74, 0.32); }
