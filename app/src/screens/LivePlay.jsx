@@ -5,8 +5,8 @@ import { buzz, confetti, play } from "../lib/motion.js";
 import { usePoll } from "../lib/poll.js";
 
 // Unirse a un juego en vivo: código de 6 dígitos y apodo. Sin cuenta se entra como invitado (no se guarda nada).
-export function LiveJoin({ auth, onJoined, onBack }) {
-  const [code, setCode] = useState("");
+export function LiveJoin({ auth, initialCode = "", onJoined, onBack }) {
+  const [code, setCode] = useState(initialCode);
   const [nick, setNick] = useState(auth.status === "ready" ? (auth.profile.full_name || "").split(" ")[0] : "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);

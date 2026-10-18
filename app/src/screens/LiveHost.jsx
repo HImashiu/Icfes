@@ -4,6 +4,8 @@ import QuestionView from "../components/QuestionView.jsx";
 import { classShare, distribution, LETTERS, resultsCsv, scoreQuestion, secondsLeft } from "../lib/live.js";
 import { usePoll } from "../lib/poll.js";
 import AutopsyCard from "../components/AutopsyCard.jsx";
+import LiveQr from "../components/LiveQr.jsx";
+import { joinUrl } from "../lib/joinLink.js";
 import { Bars } from "./Dashboard.jsx";
 
 function download(name, text) {
@@ -92,8 +94,14 @@ export default function LiveHost({ api, initial, fetchExam, guard, onExit }) {
 
       {session.state === "lobby" && (
         <div className="card t-card live-lobby">
-          <span className="label">Entra a la app de Cóndor, toca “Juego en vivo” y escribe el código</span>
-          <strong className="live-code">{session.code}</strong>
+          <div className="live-invite">
+            <LiveQr value={joinUrl(String(session.code))} size={300} />
+            <div className="live-invite-text">
+              <span className="label">Escanea el código con la cámara del celular</span>
+              <span className="caption">o entra a la app de Cóndor, toca “Juego en vivo” y escribe el código</span>
+              <strong className="live-code">{session.code}</strong>
+            </div>
+          </div>
           <span className="caption">{players.length} {players.length === 1 ? "jugador" : "jugadores"} · {session.question_keys.length} preguntas · {session.seconds_per_question} s cada una</span>
           <div className="chips-row">{players.map((p) => <span key={p.player_id} className="badge">{p.nickname}</span>)}</div>
           <div className="report-actions">

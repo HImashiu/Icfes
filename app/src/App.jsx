@@ -25,6 +25,7 @@ import FamilyReport from "./screens/FamilyReport.jsx";
 import { tokenFromHash } from "./lib/family.js";
 import { TEACHER_SLUG, teacherExam } from "./lib/teacherExam.js";
 import LivePlay, { LiveJoin } from "./screens/LivePlay.jsx";
+import { joinCodeFromHash } from "./lib/joinLink.js";
 import { CONSENT_VERSION, needsTerms } from "./lib/consent.js";
 import { attemptForAssignment, attemptRow, attemptsLeft, questionsForAttempt, revealAllowed } from "./lib/assignments.js";
 
@@ -62,7 +63,9 @@ export default function App() {
   const [selected, setSelected] = useState(null); // { slug, exam, key, keyStatus, notes, figures }
   const [opening, setOpening] = useState(false);
   const [openError, setOpenError] = useState(null);
-  const [view, setView] = useState("home");
+  // A student who scans a room's QR code lands on the join screen with the code filled in.
+  const [joinCode] = useState(() => (typeof window !== "undefined" ? joinCodeFromHash(window.location.hash) : ""));
+  const [view, setView] = useState(() => (joinCode ? "liveJoin" : "home"));
   const [reviewStart, setReviewStart] = useState(0);
   const [reviewNumber, setReviewNumber] = useState(null);
   // What the home card asked for (area, mode), so "Reto del día" or "Simulacro completo" open set up that way.
@@ -373,7 +376,7 @@ export default function App() {
         />
       )}
 
-      {view === "liveJoin" && <LiveJoin auth={auth} onBack={() => setView("home")} onJoined={(row, nickname) => { setLive({ row, nickname }); setView("livePlay"); }} />}
+      {view === "liveJoin" && <LiveJoin auth={auth} initialCode={joinCode} onBack={() => setView("home")} onJoined={(row, nickname) => { setLive({ row, nickname }); setView("livePlay"); }} />}
       {view === "livePlay" && live && <LivePlay api={auth.api} initial={live.row} nickname={live.nickname} fetchExam={fetchExam} onExit={() => { setLive(null); setView("home"); }} />}
 
       {view === "profile" && <Profile theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} onReports={() => setView("reports")} onLogin={() => setView("login")} />}
