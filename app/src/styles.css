@@ -1488,14 +1488,42 @@ details[open] > summary::before { transform: rotate(45deg) translate(-2px, -2px)
 details.answers-area > summary { justify-content: flex-start; }
 details.answers-area > summary > :last-child { margin-left: auto; }
 
-/* Rows that are buttons: no grey browser button face or white border */
-button.assign-row {
-  background: none; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; color: inherit; font: inherit;
-  cursor: pointer; transition: background-color 0.15s;
+/* Teacher assignment list: chunky cards like the live rooms, not full-width tinted strips */
+.assign-cards { display: grid; gap: 10px; margin-top: 4px; }
+.assign-card {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) auto 20px; gap: 14px; align-items: center;
+  width: 100%; padding: 12px 14px; text-align: left; font: inherit; color: var(--text);
+  background: var(--surface); border: 2px solid var(--line); border-radius: 18px; box-shadow: 0 4px 0 var(--line);
+  transition: transform 0.08s, box-shadow 0.08s, border-color 0.15s, background-color 0.15s;
 }
-button.assign-row:hover { background: var(--accent-soft); }
-button.assign-row[aria-expanded="true"] { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
-button.assign-row:focus-visible { outline-offset: -3px; border-radius: 10px; }
+.assign-card:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.assign-card:active { transform: translateY(4px); box-shadow: 0 0 0 var(--line); }
+.assign-card[aria-expanded="true"] {
+  border-color: var(--accent); box-shadow: 0 4px 0 var(--accent-shadow);
+}
+.assign-card[aria-expanded="true"]:active { box-shadow: 0 0 0 var(--accent-shadow); }
+.assign-icon {
+  display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px;
+  background: var(--tile); color: #0D110F; box-shadow: 0 3px 0 color-mix(in srgb, var(--tile) 60%, #000);
+}
+.assign-card .assign-body { gap: 2px; }
+.assign-card .assign-body strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.assign-state {
+  padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;
+  background: var(--surface-2); color: var(--text-2);
+}
+.state-active .assign-state { background: var(--ok-soft); color: var(--ok); }
+.state-scheduled .assign-state { background: var(--accent-soft); color: var(--accent-ink); }
+.assign-chevron { display: inline-flex; color: var(--text-2); transition: transform 0.2s, color 0.15s; }
+.assign-card:hover .assign-chevron { color: var(--accent-ink); }
+.assign-card[aria-expanded="true"] .assign-chevron { transform: rotate(90deg); color: var(--accent-ink); }
+@media (max-width: 520px) {
+  .assign-card { grid-template-columns: 40px minmax(0, 1fr) 18px; }
+  .assign-card .assign-icon { width: 40px; height: 40px; }
+  .assign-state { grid-column: 2; grid-row: 2; justify-self: start; }
+  .assign-chevron { grid-column: 3; grid-row: 1; }
+  .assign-card .assign-body strong { white-space: normal; }
+}
 
 /* Select and DateField trigger */
 .ui-select {

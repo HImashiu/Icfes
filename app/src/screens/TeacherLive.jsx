@@ -11,6 +11,7 @@ import Reinforcement from "./Reinforcement.jsx";
 import QuestionBuilder from "./QuestionBuilder.jsx";
 import { LiveSection } from "./LiveHost.jsx";
 import { FilePicker, confirmDialog } from "../components/Controls.jsx";
+import Icon from "../components/Icon.jsx";
 
 const NAV = [
   { label: "Resumen", section: "home" },
@@ -24,6 +25,7 @@ const NAV = [
   { label: "Ajustes", section: "settings", admin: true },
 ];
 const shortDate = (iso) => new Date(iso).toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "short" });
+const KIND_ICON = { task: "bolt", homework: "book", exam: "clock" };
 const STATE_LABEL = { active: "Activa", scheduled: "Programada", closed: "Cerrada", draft: "Borrador" };
 
 // Panel docente con cuentas reales: cursos, listas de estudiantes, asignaciones y su avance.
@@ -231,15 +233,24 @@ function Assignments({ api, courses, assignments, exams, fetchExam, reload, guar
           </div>
         </div>
         {shown.length === 0 && <p className="caption">No hay asignaciones en esta pestaña.</p>}
-        {shown.map((a) => (
-          <button key={a.id} type="button" className="assign-row" aria-expanded={detail === a.id} style={{ width: "100%", textAlign: "left" }} onClick={() => setDetail(detail === a.id ? null : a.id)}>
-            <span className="assign-tile" style={{ background: areaColor(a.scope === "all" ? "" : a.scope) }} />
-            <div className="assign-body">
-              <strong>{a.title}</strong>
-              <span className="caption">{a.courses?.name} · {STATE_LABEL[assignmentState(a)]}{a.due_at ? ` · Entrega ${shortDate(a.due_at)}` : ""}</span>
-            </div>
-          </button>
-        ))}
+        <div className="assign-cards">
+          {shown.map((a) => {
+            const state = assignmentState(a);
+            return (
+              <button key={a.id} type="button" className={`assign-card state-${state}`} aria-expanded={detail === a.id} onClick={() => setDetail(detail === a.id ? null : a.id)}>
+                <span className="assign-icon" style={{ "--tile": a.scope === "all" ? "var(--accent)" : areaColor(a.scope) }} aria-hidden="true">
+                  <Icon name={KIND_ICON[a.kind] ?? "book"} size={22} strokeWidth={2.4} />
+                </span>
+                <span className="assign-body">
+                  <strong>{a.title}</strong>
+                  <span className="caption">{a.courses?.name}{a.due_at ? ` · Entrega ${shortDate(a.due_at)}` : ""}</span>
+                </span>
+                <span className="assign-state">{STATE_LABEL[state]}</span>
+                <span className="assign-chevron" aria-hidden="true"><Icon name="right" size={18} strokeWidth={2.8} /></span>
+              </button>
+            );
+          })}
+        </div>
       </div>
       {detail && assignments.find((a) => a.id === detail) && <AssignmentReport key={detail} api={api} assignment={assignments.find((a) => a.id === detail)} fetchExam={fetchExam} guard={guard} reload={reload} />}
     </>
