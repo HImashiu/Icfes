@@ -4,6 +4,7 @@ import Mascot from "../components/Mascot.jsx";
 import { formatClock, questionsFor, timedSeconds } from "../lib/exam.js";
 import { areaColor, fmtInt } from "../lib/brand.js";
 import { WEAKEST_AREA } from "../data/mock.js";
+import { Select } from "../components/Controls.jsx";
 
 // Nuevo simulacro: booklet, scope (whole exam or one area), mode, and a sticky start button.
 // 225 min reads as "3 h 45 min".
@@ -46,13 +47,13 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, 
         <span className="label">Cuadernillo</span>
         {exams.length <= 1 && <strong>{exam.title}</strong>}
         {exams.length > 1 && (
-          <select className="booklet-pick" value={slug} onChange={(e) => onPickExam(e.target.value)} aria-label="Cambiar cuadernillo">
+          <Select className="booklet-select" value={slug} onChange={(v) => onPickExam(v)} aria-label="Cambiar cuadernillo">
             {exams.map((e) => (
               <option key={e.slug} value={e.slug} disabled={e.status === "proximamente"}>
                 {e.status === "proximamente" ? `${e.title} · Próximamente` : e.title}
               </option>
             ))}
-          </select>
+          </Select>
         )}
         <span className="caption">Fuente: ICFES, Saber 11 · {exam.questions.length} preguntas</span>
       </div>

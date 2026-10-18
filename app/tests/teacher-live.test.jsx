@@ -57,8 +57,10 @@ describe("TeacherLive", () => {
     fireEvent.click(screen.getByLabelText("Elegir pregunta 3"));
     fireEvent.click(screen.getByLabelText("Elegir pregunta 1"));
     fireEvent.click(screen.getByLabelText("Subir pregunta 1"));
-    fireEvent.change(screen.getByLabelText("Intentos permitidos"), { target: { value: "2" } });
-    fireEvent.change(screen.getByLabelText("Mostrar respuestas y explicaciones"), { target: { value: "after_close" } });
+    fireEvent.click(screen.getByLabelText("Intentos permitidos"));
+    fireEvent.click(screen.getByRole("option", { name: "2" }));
+    fireEvent.click(screen.getByLabelText("Mostrar respuestas y explicaciones"));
+    fireEvent.click(screen.getByRole("option", { name: "Cuando cierre la asignación" }));
     fireEvent.click(screen.getByRole("button", { name: "Asignar" }));
     await waitFor(() => expect(api.createAssignment).toHaveBeenCalled());
     expect(api.createAssignment.mock.calls[0][0]).toMatchObject({

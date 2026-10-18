@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { bankItems } from "../lib/bank.js";
 import { reinforcementSet } from "../lib/students.js";
+import { DateField, Select } from "../components/Controls.jsx";
 
 const isoDay = (d) => d.toISOString().slice(0, 10);
 
@@ -51,12 +52,12 @@ export default function Reinforcement({ api, courses, exams, fetchExam, guard, s
       {tagged.length === 0 && <p className="notice">Ningún cuadernillo tiene todavía competencias generadas. El refuerzo necesita ese análisis.</p>}
       <div className="card t-card assign-form">
         <label className="field"><span className="label">Curso</span>
-          <select value={courseId} onChange={(e) => { setCourseId(e.target.value); setPlans(null); }}>{courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+          <Select value={courseId} onChange={(v) => { setCourseId(v); setPlans(null); }}>{courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</Select></label>
         <label className="field"><span className="label">Cuadernillo del que salen las respuestas</span>
-          <select value={slug} onChange={(e) => { setSlug(e.target.value); setPlans(null); }}>{tagged.map((e) => <option key={e.slug} value={e.slug}>{e.title ?? e.slug}</option>)}</select></label>
+          <Select value={slug} onChange={(v) => { setSlug(v); setPlans(null); }}>{tagged.map((e) => <option key={e.slug} value={e.slug}>{e.title ?? e.slug}</option>)}</Select></label>
         <label className="field"><span className="label">Preguntas por estudiante</span>
-          <select value={size} onChange={(e) => { setSize(e.target.value); setPlans(null); }}>{[10, 15, 20].map((n) => <option key={n}>{n}</option>)}</select></label>
-        <label className="field"><span className="label">Fecha de entrega</span><input type="date" value={due} min={isoDay(new Date())} onChange={(e) => setDue(e.target.value)} /></label>
+          <Select value={size} onChange={(v) => { setSize(v); setPlans(null); }}>{[10, 15, 20].map((n) => <option key={n}>{n}</option>)}</Select></label>
+        <label className="field"><span className="label">Fecha de entrega</span><DateField value={due} min={isoDay(new Date())} onChange={(v) => setDue(v)} /></label>
         <div className="report-actions"><button type="button" className="primary" disabled={busy || !courseId || !slug} onClick={compute}>{busy && !plans ? "Calculando…" : "Calcular planes"}</button></div>
       </div>
       {plans && (

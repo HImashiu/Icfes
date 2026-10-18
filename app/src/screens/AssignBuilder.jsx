@@ -5,6 +5,7 @@ import { weakCompetencias } from "../lib/analytics.js";
 import { KINDS } from "../lib/assignments.js";
 import { TEACHER_ENTRY } from "../lib/teacherExam.js";
 import { areaColor } from "../lib/brand.js";
+import { confirmDialog, DateField, Select } from "../components/Controls.jsx";
 import {
   autoPick, bankItems, DIFFICULTY_LABEL, EMPTY_FILTER, facet, filterItems, moveKey, sortByBooklet, summarize, withGroupMates,
 } from "../lib/bank.js";
@@ -77,8 +78,8 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
   const set = (field, value) => { setFilter((f) => ({ ...f, [field]: value })); setLimitShown(PAGE); };
   const toggleIn = (field, value) => set(field, filter[field].includes(value) ? filter[field].filter((v) => v !== value) : [...filter[field], value]);
 
-  const changeExam = (next) => {
-    if (picked.length && !window.confirm("Cambiar de cuadernillo vacía la selección. ¿Continuar?")) return;
+  const changeExam = async (next) => {
+    if (picked.length && !(await confirmDialog("Cambiar de cuadernillo vacía la selección. ¿Continuar?", { confirmLabel: "Cambiar" }))) return;
     setSlug(next); setPicked([]); setFilter(EMPTY_FILTER); setWeak(null); setBundle(null);
   };
   const add = (keys) => {
@@ -159,9 +160,9 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
   const bank = (
     <section className="card t-card b-bank" aria-label="Banco de preguntas">
       <div className="section-head"><strong>Banco de preguntas</strong>
-        <select aria-label="Cuadernillo" value={slug} onChange={(e) => changeExam(e.target.value)}>
+        <Select aria-label="Cuadernillo" value={slug} onChange={(v) => changeExam(v)}>
           {ready.map((x) => <option key={x.slug} value={x.slug}>{x.title ?? x.slug}</option>)}
-        </select>
+        </Select>
       </div>
       <input type="search" placeholder="Buscar por palabra, tema o competencia" aria-label="Buscar preguntas" value={filter.text} onChange={(e) => set("text", e.target.value)} />
       {chips("areas", areaFacet, "Área")}
@@ -256,15 +257,15 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
         <>
           <label className="field"><span className="label">Nombre de la sala (opcional)</span><input value={title} onChange={(e) => setTitle(e.target.value)} /></label>
           <label className="field"><span className="label">Tiempo por pregunta</span>
-            <select value={seconds} onChange={(e) => setSeconds(e.target.value)}>
+            <Select value={seconds} onChange={(v) => setSeconds(v)}>
               {[30, 45, 60, 90, 120, 180].map((n) => <option key={n} value={n}>{n} segundos</option>)}
-            </select>
+            </Select>
             <span className="caption">Las preguntas ICFES con lectura necesitan 60 a 120 segundos.</span></label>
           <label className="field"><span className="label">Curso (opcional)</span>
-            <select value={liveCourse} onChange={(e) => setLiveCourse(e.target.value)}>
+            <Select value={liveCourse} onChange={(v) => setLiveCourse(v)}>
               <option value="">Cualquiera con el código</option>
               {courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select></label>
+            </Select></label>
         </>
       ) : (
         <>
@@ -274,28 +275,28 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
         ))}
       </fieldset>
       <label className="field"><span className="label">Tipo</span>
-        <select value={kind} onChange={(e) => setKind(e.target.value)}>{KINDS.map((k) => <option key={k.id} value={k.id}>{k.label}</option>)}</select>
+        <Select value={kind} onChange={(v) => setKind(v)}>{KINDS.map((k) => <option key={k.id} value={k.id}>{k.label}</option>)}</Select>
         <span className="caption">{KIND_HELP[kind]}</span></label>
       <label className="field"><span className="label">Título (opcional)</span><input value={title} onChange={(e) => setTitle(e.target.value)} /></label>
-      <label className="field"><span className="label">Abre</span><input type="date" value={opens} onChange={(e) => setOpens(e.target.value)} /></label>
-      <label className="field"><span className="label">Fecha de entrega</span><input type="date" value={due} min={isoDay(new Date())} onChange={(e) => setDue(e.target.value)} /></label>
+      <label className="field"><span className="label">Abre</span><DateField value={opens} onChange={(v) => setOpens(v)} /></label>
+      <label className="field"><span className="label">Fecha de entrega</span><DateField value={due} min={isoDay(new Date())} onChange={(v) => setDue(v)} /></label>
       {kind === "exam" && (
         <label className="field"><span className="label">Tiempo en minutos (vacío = el estándar)</span>
           <input inputMode="numeric" value={limit} onChange={(e) => setLimit(e.target.value.replace(/\D/g, ""))} placeholder={summary.total ? `≈ ${summary.minutes}` : ""} /></label>
       )}
       <label className="field"><span className="label">Intentos permitidos</span>
-        <select value={attempts} onChange={(e) => setAttempts(e.target.value)}>
+        <Select value={attempts} onChange={(v) => setAttempts(v)}>
           <option value="">{kind === "exam" ? "Uno (simulacro)" : "Sin límite"}</option>
           {[1, 2, 3, 5].map((n) => <option key={n} value={n}>{n}</option>)}
-        </select></label>
+        </Select></label>
       <label className="field"><span className="label">Mostrar respuestas y explicaciones</span>
-        <select value={reveal} onChange={(e) => setReveal(e.target.value)}>{REVEAL.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+        <Select value={reveal} onChange={(v) => setReveal(v)}>{REVEAL.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select></label>
       {kind !== "exam" && (
         <label className="field"><span className="label">Corrección de cada pregunta</span>
-          <select value={instant ? "now" : "end"} onChange={(e) => setInstant(e.target.value === "now")}>
+          <Select value={instant ? "now" : "end"} onChange={(v) => setInstant(v === "now")}>
             <option value="now">Inmediata: ve si acertó al tocar “Comprobar”</option>
             <option value="end">Al final: responde todo y ve los resultados al terminar</option>
-          </select></label>
+          </Select></label>
       )}
       {kind !== "exam" && (
         <label className="check-row"><input type="checkbox" checked={hints} onChange={(e) => setHints(e.target.checked)} />

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import QuestionView from "../components/QuestionView.jsx";
 import { DIFFICULTY_LABEL } from "../lib/bank.js";
 import { draftFromRow, draftToRow, emptyDraft, rowToQuestion, shrinkImage, TEACHER_AREAS, validateDraft } from "../lib/teacherExam.js";
+import { confirmDialog, FilePicker, Select } from "../components/Controls.jsx";
 
 const LETTERS = ["A", "B", "C", "D"];
 
@@ -14,8 +15,8 @@ export default function QuestionBuilder({ api, profile, guard, setNotice }) {
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const shown = rows.filter((r) => `${r.question_json?.stem_md ?? ""} ${r.area} ${r.tema ?? ""} ${r.competencia ?? ""}`.toLowerCase().includes(filter.trim().toLowerCase()));
-  const remove = (r) => {
-    if (!window.confirm("¿Borrar esta pregunta? Las asignaciones que ya la usan dejarán de mostrarla.")) return;
+  const remove = async (r) => {
+    if (!(await confirmDialog("¿Borrar esta pregunta? Las asignaciones que ya la usan dejarán de mostrarla.", { confirmLabel: "Borrar", danger: true }))) return;
     guard(async () => { await api.deleteTeacherQuestion(r.id); await load(); });
   };
 
@@ -93,21 +94,21 @@ function Editor({ api, profile, guard, draft: initial, onCancel, onSaved }) {
       <div className="b-grid" style={{ gridTemplateColumns: "minmax(0,1.2fr) minmax(0,1fr)" }}>
         <form className="card t-card assign-form" onSubmit={save}>
           <label className="field"><span className="label">Área</span>
-            <select value={d.area} onChange={(e) => set("area", e.target.value)}>{TEACHER_AREAS.map((a) => <option key={a}>{a}</option>)}</select></label>
+            <Select value={d.area} onChange={(v) => set("area", v)}>{TEACHER_AREAS.map((a) => <option key={a}>{a}</option>)}</Select></label>
           <label className="field"><span className="label">Competencia (opcional)</span><input value={d.competencia} onChange={(e) => set("competencia", e.target.value)} placeholder="Ej. Razonamiento y argumentación" /></label>
           <label className="field"><span className="label">Tema (opcional)</span><input value={d.tema} onChange={(e) => set("tema", e.target.value)} placeholder="Ej. Proporcionalidad" /></label>
           <label className="field"><span className="label">Dificultad</span>
-            <select value={d.dificultad} onChange={(e) => set("dificultad", e.target.value)}>
+            <Select value={d.dificultad} onChange={(v) => set("dificultad", v)}>
               <option value="">Sin indicar</option>
               {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n} · {DIFFICULTY_LABEL[n]}</option>)}
-            </select></label>
+            </Select></label>
           <label className="field"><span className="label">Texto de apoyo (opcional: lectura, datos…)</span>
             <textarea rows={4} value={d.stimulus} onChange={(e) => set("stimulus", e.target.value)} /></label>
           <label className="field"><span className="label">Enunciado</span>
             <textarea rows={3} value={d.stem} onChange={(e) => set("stem", e.target.value)} />
             <span className="caption">Fórmulas entre signos de dólar, por ejemplo $\frac{"{1}{2}"}$ o $x^2+1$. Negrita con **texto**. Deja una línea en blanco para un párrafo nuevo.</span></label>
           <div className="field"><span className="label">Imagen o gráfica (opcional)</span>
-            <input type="file" accept="image/*" aria-label="Subir imagen" onChange={onImage} />
+            <FilePicker accept="image/*" aria-label="Subir imagen" onChange={onImage} label="Subir imagen" hint="o arrástrala aquí" />
             {d.image && <><img src={d.image} alt="Vista de la imagen" style={{ maxWidth: 220, borderRadius: 8 }} /><button type="button" className="link" onClick={() => set("image", null)}>Quitar imagen</button></>}</div>
           <fieldset className="field"><legend className="label">Opciones (marca la correcta)</legend>
             {LETTERS.map((l, i) => (
@@ -121,10 +122,10 @@ function Editor({ api, profile, guard, draft: initial, onCancel, onSaved }) {
           <label className="field"><span className="label">Explicación (opcional, la ven los estudiantes al revisar)</span>
             <textarea rows={3} value={d.explanation} onChange={(e) => set("explanation", e.target.value)} /></label>
           <label className="field"><span className="label">Quién puede usarla</span>
-            <select value={d.visibility} onChange={(e) => set("visibility", e.target.value)}>
+            <Select value={d.visibility} onChange={(v) => set("visibility", v)}>
               <option value="private">Solo yo</option>
               <option value="school">Docentes de mi colegio</option>
-            </select></label>
+            </Select></label>
           <p className="caption">Sube solo material propio o que tengas derecho a usar, sin datos de estudiantes.</p>
           {msgs.length > 0 && <div role="alert" className="notice error">{msgs.map((m) => <div key={m}>{m}</div>)}</div>}
           <div className="report-actions">

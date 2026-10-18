@@ -806,11 +806,6 @@ details.answers-area > summary::-webkit-details-marker { display: none; }
 .t-row-link.selected td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 .assign-form { display: grid; gap: 12px; }
 .assign-form .field { display: grid; gap: 6px; }
-.assign-form select, .assign-form input, .course-filter {
-  min-height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line);
-  background: var(--surface-2); color: var(--text); font: inherit;
-}
-.course-filter { min-height: 36px; }
 .avg-row td { border-top: 2px solid var(--line); }
 .area-cell {
   display: block; padding: 6px 8px; border-radius: 8px; font-weight: 700; color: #0D110F; min-width: 64px;
@@ -1073,7 +1068,8 @@ p.fuente { font-size: 0.78em; line-height: 1.35; text-align: right; margin: 14px
 .b-facet { display: grid; gap: 4px; }
 .b-toggles, .b-actions { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
 .b-auto { display: inline-flex; gap: 6px; align-items: center; }
-.b-auto input { width: 64px; text-align: center; }
+.b-auto input[inputmode="numeric"] { width: 64px; text-align: center; }
+.b-auto input[type="email"] { width: min(320px, 100%); }
 .b-list, .b-picked { list-style: none; margin: 0; padding: 0; display: grid; }
 .b-row { display: grid; grid-template-columns: 22px 8px 1fr auto; gap: 10px; align-items: start; padding: 10px 6px; border-bottom: 1px solid var(--line); border-radius: 8px; }
 .b-row.on { background: var(--accent-soft); }
@@ -1408,3 +1404,221 @@ button.card:active:not(:disabled), .mode-card:active, .chip:active, .answer-cell
 .room-card:hover .room-go .icon { transform: translateX(3px); }
 .room-go .icon { transition: transform 0.15s; }
 .t-head .primary .icon { margin-left: -4px; }
+
+/* ---- Form controls: drawn by the app, no browser chrome (components/Controls.jsx has Select, DateField,
+   FilePicker and confirmDialog). Text fields, checkboxes and radios stay native elements styled here. ---- */
+:root { --ring: var(--accent); --sel: rgba(200, 240, 74, 0.32); }
+:root[data-theme="light"] { --ring: #6E8C12; --sel: rgba(141, 176, 30, 0.3); }
+@media (prefers-color-scheme: light) { :root:not([data-theme]) { --ring: #6E8C12; --sel: rgba(141, 176, 30, 0.3); } }
+html { -webkit-tap-highlight-color: transparent; }
+::selection { background: var(--sel); color: inherit; }
+:focus:not(:focus-visible) { outline: none; }
+:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
+button { -webkit-user-select: none; user-select: none; }
+textarea { font: inherit; color: inherit; }
+
+/* Text fields (zero specificity, so any screen's own input rule still wins) */
+:where(input:not([type="checkbox"], [type="radio"], [type="file"], [type="range"], [type="color"]), textarea, select) {
+  -webkit-appearance: none; appearance: none; min-height: 44px; padding: 9px 14px; margin: 0;
+  border-radius: 12px; border: 2px solid var(--line); background-color: var(--surface-2); color: var(--text);
+  font: inherit; caret-color: var(--accent-ink); transition: border-color 0.15s, box-shadow 0.15s;
+}
+:where(textarea) { width: 100%; min-height: 88px; max-height: 60vh; line-height: 1.45; resize: none; field-sizing: content; }
+:where(input, textarea)::placeholder { color: var(--text-2); opacity: 0.75; }
+:where(input:not([type="checkbox"], [type="radio"], [type="file"]), textarea, select):hover:not(:disabled) { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
+:where(input:not([type="checkbox"], [type="radio"], [type="file"]), textarea, select):focus {
+  outline: none; border-color: var(--ring); box-shadow: 0 0 0 4px var(--accent-soft);
+}
+:where(input, textarea, select):disabled { opacity: 0.55; cursor: not-allowed; }
+:where(input[readonly]) { background-color: var(--surface); }
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
+input::-webkit-inner-spin-button, input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
+input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text); -webkit-box-shadow: 0 0 0 100px var(--surface-2) inset; transition: background-color 9999s;
+}
+/* Leftover native selects and date inputs (code not yet on Select/DateField) at least look like the app when closed */
+:where(select) {
+  padding-right: 40px; cursor: pointer; font-weight: 600;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-2) 50%), linear-gradient(135deg, var(--text-2) 50%, transparent 50%);
+  background-position: calc(100% - 20px) 50%, calc(100% - 15px) 50%; background-size: 5px 5px; background-repeat: no-repeat;
+}
+input::-webkit-calendar-picker-indicator { opacity: 0.6; cursor: pointer; }
+input[type="file"]::file-selector-button {
+  font: inherit; font-weight: 700; color: var(--text); background: transparent; border: 2px solid var(--line);
+  border-radius: 12px; min-height: 40px; padding: 0 14px; margin-right: 10px; cursor: pointer;
+}
+
+/* Checkbox and radio */
+input[type="checkbox"], input[type="radio"] {
+  -webkit-appearance: none; appearance: none; flex: none; margin: 0; width: 22px; height: 22px;
+  display: inline-grid; place-content: center; vertical-align: middle; cursor: pointer;
+  border: 2px solid var(--line); border-radius: 7px; background: var(--surface-2); accent-color: auto;
+  transition: background-color 0.15s, border-color 0.15s, transform 0.1s;
+}
+input[type="radio"] { border-radius: 50%; }
+input[type="checkbox"]::before {
+  content: ""; width: 14px; height: 14px; background: var(--on-accent); transform: scale(0);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6.5 9.5 17 4 11.5'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6.5 9.5 17 4 11.5'/%3E%3C/svg%3E") center / contain no-repeat;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+input[type="radio"]::before {
+  content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--on-accent); transform: scale(0);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+input[type="checkbox"]:checked, input[type="radio"]:checked { background: var(--accent); border-color: var(--accent-shadow); }
+input[type="checkbox"]:checked::before, input[type="radio"]:checked::before { transform: scale(1); }
+input[type="checkbox"]:hover:not(:disabled):not(:checked), input[type="radio"]:hover:not(:disabled):not(:checked) { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+input[type="checkbox"]:active:not(:disabled), input[type="radio"]:active:not(:disabled) { transform: scale(0.88); }
+input[type="checkbox"]:disabled, input[type="radio"]:disabled { opacity: 0.4; cursor: not-allowed; }
+label:has(> input[type="checkbox"]), label:has(> input[type="radio"]) { cursor: pointer; }
+.check-row input { width: 22px; height: 22px; }
+
+/* Expandable sections: an app chevron instead of the browser's triangle */
+summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+summary::-webkit-details-marker { display: none; }
+summary::before {
+  content: ""; flex: none; width: 7px; height: 7px; margin: 0 3px 0 1px;
+  border-right: 2.5px solid currentColor; border-bottom: 2.5px solid currentColor; border-radius: 1px;
+  transform: rotate(-45deg); transition: transform 0.2s;
+}
+details[open] > summary::before { transform: rotate(45deg) translate(-2px, -2px); }
+details.answers-area > summary { justify-content: flex-start; }
+details.answers-area > summary > :last-child { margin-left: auto; }
+
+/* Teacher assignment list: chunky cards like the live rooms, not full-width tinted strips */
+.assign-cards { display: grid; gap: 10px; margin-top: 4px; }
+.assign-card {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) auto 20px; gap: 14px; align-items: center;
+  width: 100%; padding: 12px 14px; text-align: left; font: inherit; color: var(--text);
+  background: var(--surface); border: 2px solid var(--line); border-radius: 18px; box-shadow: 0 4px 0 var(--line);
+  transition: transform 0.08s, box-shadow 0.08s, border-color 0.15s, background-color 0.15s;
+}
+.assign-card:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.assign-card:active { transform: translateY(4px); box-shadow: 0 0 0 var(--line); }
+.assign-card[aria-expanded="true"] {
+  border-color: var(--accent); box-shadow: 0 4px 0 var(--accent-shadow);
+}
+.assign-card[aria-expanded="true"]:active { box-shadow: 0 0 0 var(--accent-shadow); }
+.assign-icon {
+  display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px;
+  background: var(--tile); color: #0D110F; box-shadow: 0 3px 0 color-mix(in srgb, var(--tile) 60%, #000);
+}
+.assign-card .assign-body { gap: 2px; }
+.assign-card .assign-body strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.assign-state {
+  padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;
+  background: var(--surface-2); color: var(--text-2);
+}
+.state-active .assign-state { background: var(--ok-soft); color: var(--ok); }
+.state-scheduled .assign-state { background: var(--accent-soft); color: var(--accent-ink); }
+.assign-chevron { display: inline-flex; color: var(--text-2); transition: transform 0.2s, color 0.15s; }
+.assign-card:hover .assign-chevron { color: var(--accent-ink); }
+.assign-card[aria-expanded="true"] .assign-chevron { transform: rotate(90deg); color: var(--accent-ink); }
+@media (max-width: 520px) {
+  .assign-card { grid-template-columns: 40px minmax(0, 1fr) 18px; }
+  .assign-card .assign-icon { width: 40px; height: 40px; }
+  .assign-state { grid-column: 2; grid-row: 2; justify-self: start; }
+  .assign-chevron { grid-column: 3; grid-row: 1; }
+  .assign-card .assign-body strong { white-space: normal; }
+}
+
+/* Select and DateField trigger */
+.ui-select {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%;
+  min-height: 44px; padding: 0 12px 0 14px; border-radius: 12px; border: 2px solid var(--line);
+  background: var(--surface-2); color: var(--text); font: inherit; font-weight: 600; text-align: left;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.ui-select:hover:not(:disabled) { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
+.ui-select.open { border-color: var(--ring); box-shadow: 0 0 0 4px var(--accent-soft); }
+.ui-select:disabled { opacity: 0.55; }
+.ui-select-value { flex: 1 1 0; width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-select-value.placeholder { color: var(--text-2); font-weight: 500; }
+.ui-chevron { display: inline-flex; color: var(--text-2); transform: rotate(90deg); transition: transform 0.2s; }
+.ui-select.open .ui-chevron { transform: rotate(-90deg); color: var(--accent-ink); }
+.ui-chevron.cal, .ui-select.open .ui-chevron.cal { transform: none; }
+.ui-select.booklet-select { margin: 6px 0; }
+.course-filter.ui-select { width: auto; min-height: 36px; }
+.course-filter .ui-select-value { flex: none; width: auto; }
+
+/* Floating panel */
+.ui-pop {
+  position: fixed; z-index: 200; max-width: calc(100vw - 16px); padding: 6px;
+  background: var(--surface); color: var(--text); border: 2px solid var(--line); border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35), 0 4px 0 var(--line);
+  animation: ui-pop-in 0.16s cubic-bezier(0.34, 1.4, 0.64, 1);
+  transform-origin: top center;
+}
+.ui-pop.up { transform-origin: bottom center; }
+@keyframes ui-pop-in { from { opacity: 0; transform: translateY(-4px) scale(0.97); } }
+.ui-list { list-style: none; margin: 0; padding: 0; max-height: min(320px, 50vh); overflow-y: auto; overscroll-behavior: contain; }
+.ui-option {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 42px; padding: 8px 12px; border-radius: 10px; cursor: pointer; font-weight: 500;
+}
+.ui-option.active { background: var(--surface-2); }
+.ui-option.selected { color: var(--accent-ink); font-weight: 700; }
+.ui-option.selected.active { background: var(--accent-soft); }
+.ui-option[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
+
+/* Calendar */
+.ui-cal { width: 300px; padding: 10px; }
+.ui-cal-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.ui-cal-head strong { font-family: "Bricolage Grotesque", Figtree, sans-serif; font-size: 16px; }
+.ui-icon-btn {
+  display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 10px;
+  background: transparent; border: 0; color: var(--text);
+}
+.ui-icon-btn:hover { background: var(--surface-2); }
+.ui-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.ui-cal-wd { text-align: center; font-size: 12px; font-weight: 700; color: var(--text-2); padding: 4px 0; }
+.ui-day {
+  height: 36px; border: 0; border-radius: 10px; background: transparent; color: var(--text);
+  font: inherit; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.ui-day:hover:not(:disabled) { background: var(--surface-2); }
+.ui-day.off { color: var(--text-2); opacity: 0.6; }
+.ui-day.today { box-shadow: inset 0 0 0 2px var(--line); }
+.ui-day.on { background: var(--accent); color: var(--on-accent); box-shadow: 0 3px 0 var(--accent-shadow); }
+.ui-day:disabled { opacity: 0.25; cursor: not-allowed; }
+.ui-day:focus-visible { outline-offset: 0; }
+.ui-cal-foot { display: flex; justify-content: space-between; margin-top: 6px; }
+.ui-text-btn { background: none; border: 0; padding: 8px 10px; border-radius: 10px; color: var(--accent-ink); font: inherit; font-weight: 700; }
+.ui-text-btn:hover { background: var(--accent-soft); }
+
+/* File drop zone */
+.ui-drop { position: relative; border: 2px dashed var(--line); border-radius: 16px; transition: border-color 0.15s, background-color 0.15s; }
+.ui-drop:hover:not(.disabled), .ui-drop.over { border-color: var(--accent-shadow); background: var(--accent-soft); }
+.ui-drop.disabled { opacity: 0.55; }
+.ui-drop-btn {
+  display: flex; align-items: center; gap: 14px; width: 100%; min-height: 64px; padding: 12px 16px;
+  background: none; border: 0; border-radius: 14px; color: var(--text); font: inherit; text-align: left;
+}
+.ui-drop-icon {
+  display: inline-grid; place-items: center; width: 42px; height: 42px; flex: none; border-radius: 12px;
+  background: var(--accent); color: var(--on-accent); box-shadow: 0 3px 0 var(--accent-shadow);
+}
+.ui-drop-text { display: grid; gap: 2px; }
+
+/* Confirm dialog */
+.ui-dialog-back {
+  position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; padding: 16px;
+  background: rgba(0, 0, 0, 0.5); animation: ui-fade 0.15s ease-out;
+}
+@keyframes ui-fade { from { opacity: 0; } }
+.ui-dialog {
+  width: min(420px, 100%); padding: 22px; border-radius: 22px; background: var(--surface); color: var(--text);
+  border: 2px solid var(--line); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+  animation: ui-pop-in 0.2s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+.ui-dialog p { margin: 0 0 18px; font-size: 16px; line-height: 1.45; }
+.ui-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.ui-dialog-actions .primary, .ui-dialog-actions .secondary { min-height: 46px; }
+.primary.danger { background: var(--bad); color: #fff; box-shadow: 0 4px 0 color-mix(in srgb, var(--bad) 60%, #000); }
+@media (prefers-reduced-motion: reduce) {
+  .ui-pop, .ui-dialog, .ui-dialog-back { animation: none; }
+  input[type="checkbox"]::before, input[type="radio"]::before { transition: none; }
+}
