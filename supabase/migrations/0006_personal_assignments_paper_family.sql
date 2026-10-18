@@ -6,10 +6,12 @@ alter table public.assignments
   add column if not exists assignee_id uuid references public.profiles (id) on delete cascade;
 
 drop policy if exists assignments_select on public.assignments;
+drop policy if exists assignments_select on public.assignments;
 create policy assignments_select on public.assignments for select
   using (public.is_course_teacher(course_id)
          or (public.is_course_member(course_id) and status <> 'draft' and (assignee_id is null or assignee_id = auth.uid())));
 
+drop policy if exists attempts_insert on public.attempts;
 drop policy if exists attempts_insert on public.attempts;
 create policy attempts_insert on public.attempts for insert
   with check (
@@ -100,6 +102,7 @@ create table if not exists public.family_reports (
 );
 create index if not exists family_reports_profile_idx on public.family_reports (profile_id);
 alter table public.family_reports enable row level security;
+drop policy if exists family_reports_select on public.family_reports;
 create policy family_reports_select on public.family_reports for select
   using (school_id = public.my_school() and public.my_role() in ('teacher', 'school_admin'));
 
