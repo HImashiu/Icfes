@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import QuestionView from "../components/QuestionView.jsx";
+import Logo from "../components/Logo.jsx";
 import { questionsForAttempt } from "../lib/assignments.js";
 import { scoreAttempt } from "../lib/exam.js";
 import AnswerSheet from "../components/AnswerSheet.jsx";
@@ -38,6 +39,7 @@ function Booklet({ bundle, questions, title, onClose }) {
     <Overlay title="Cuadernillo para imprimir" onClose={onClose} page="12mm">
       <div style={{ maxWidth: 780, margin: "0 auto", padding: 16, display: "grid", gap: 14 }}>
         <header>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}><Logo size={28} /><strong>Cóndor</strong></div>
           <h1 style={{ margin: 0 }}>{title}</h1>
           <p style={{ margin: "4px 0" }}>Nombre: ______________________________ Curso: ________ Fecha: ____________</p>
           <p style={{ margin: 0, fontSize: 13 }}>Responde en la hoja de respuestas, no en este cuadernillo. {questions.length} preguntas.</p>

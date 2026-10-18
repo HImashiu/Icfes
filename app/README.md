@@ -50,6 +50,11 @@ Con `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` (ver `app/.env.example`) apar
 (cursos, lista de estudiantes por CSV, asignaciones, avance, exportar CSV) y las tareas en Inicio. Sin ellas todo sigue como antes.
 Configuración y reglas de acceso: `supabase/README.md`.
 
+## Presentación para colegios
+
+Abre la app con `#presentacion` (o `#presentacion/5` para una diapositiva). Se maneja con las flechas, espacio o un
+clicker (Re Pág/Av Pág); F pone pantalla completa y Esc vuelve a la app. Usa datos de ejemplo, no contenido de exámenes.
+
 ## Límites conocidos
 
 - Los tiempos del simulacro son una referencia de práctica, no cifras oficiales del ICFES.

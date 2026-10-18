@@ -438,7 +438,8 @@ select.booklet-pick {
   background: var(--side); border-right: 1px solid var(--line); padding: 20px 16px;
   display: flex; flex-direction: column; gap: 6px;
 }
-.t-logo { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 20px; padding: 4px 8px 16px; color: var(--accent-ink); }
+.t-logo { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 20px; padding: 4px 8px 16px; color: var(--accent-ink); display: flex; align-items: center; gap: 8px; }
+.logo { display: block; flex: none; border-radius: 50%; }
 .t-nav {
   position: relative; min-height: 44px; border: 0; background: transparent; color: var(--text-2);
   text-align: left; padding: 0 12px; border-radius: 12px; font-weight: 600;
@@ -1259,11 +1260,22 @@ button.card:active:not(:disabled), .mode-card:active, .chip:active, .answer-cell
 /* On a phone the bar slides up from the bottom edge. */
 @media (max-width: 899px) { .test-bottom:has(.verdict) { animation: slide-up 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); } }
 
-/* Cóndi breathes and blinks; when celebrating it hops. */
+/* The owl is Juan's drawing; it only blinks, makes faces and moves gently as a whole. */
 .mascot { overflow: visible; }
-.mascot.idle { animation: bob 3.2s ease-in-out infinite; }
-.mascot .m-eyes { transform-box: fill-box; transform-origin: center; animation: blink 4.5s infinite; }
-.mascot.celebrating { animation: hop 0.9s cubic-bezier(0.3, 0.7, 0.4, 1) 0.2s 2 backwards; }
+.mascot .m-art { transform-box: fill-box; transform-origin: 50% 100%; }
+.mascot .m-lid { transform-box: fill-box; transform-origin: 50% 0; transform: scaleY(0); animation: lid 4.6s infinite; }
+.mascot .m-cheek { transform-box: fill-box; transform-origin: center; animation: pop-in 0.4s cubic-bezier(0.3, 0.7, 0.4, 1.5) 0.15s backwards; }
+.mascot.idle .m-art { animation: breathe 3.4s ease-in-out infinite; }
+.mascot.pose-happy .m-art { animation: owl-hop 0.7s cubic-bezier(0.3, 0.7, 0.4, 1) backwards; }
+.mascot.celebrating .m-art { animation: owl-hop 0.8s cubic-bezier(0.3, 0.7, 0.4, 1) 0.2s 2 backwards, owl-wiggle 0.8s ease-in-out 1.8s 1; }
+.mascot.pose-sad .m-art { transform-origin: 50% 90%; animation: owl-droop 0.7s ease-out forwards; }
+@keyframes lid { 0%, 93%, 100% { transform: scaleY(0); } 95.5%, 97% { transform: scaleY(1); } }
+@keyframes breathe { 0%, 100% { transform: translateY(0) scale(1, 1); } 50% { transform: translateY(-2px) scale(1.012, 0.99); } }
+@keyframes owl-hop { 0%, 100% { transform: translateY(0) scale(1, 1); } 15% { transform: translateY(0) scale(1.04, 0.95); } 40% { transform: translateY(-9%) scale(0.98, 1.03); } 70% { transform: translateY(0) scale(1.03, 0.97); } }
+@keyframes owl-wiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-4deg); } 75% { transform: rotate(4deg); } }
+@keyframes owl-droop { from { transform: rotate(0) translateY(0); } to { transform: rotate(-5deg) translateY(2%); } }
+/* The small owl that cheers or consoles in the answer bar. */
+.verdict-owl { flex: none; display: grid; place-items: center; }
 
 /* Home: the streak flame flickers and today's day pulses. */
 .flame-ico { transform-origin: 50% 90%; animation: flicker 1.6s ease-in-out infinite; }
