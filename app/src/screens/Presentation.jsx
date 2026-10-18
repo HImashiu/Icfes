@@ -65,7 +65,7 @@ function Features({ items, d = 0.15, compact = false }) {
 function Tip({ children, d = 0.5 }) {
   return (
     <Rise className="pz-tip" d={d}>
-      <Logo size={64} />
+      <Mascot size={64} idle />
       <p className="pz-bubble">{children}</p>
     </Rise>
   );
@@ -92,7 +92,7 @@ function Cover() {
       </div>
       <div className="pz-cover-art pz-pop">
         <div className="pz-halo" />
-        <Logo size={460} className="pz-bob" />
+        <Mascot size={460} idle />
       </div>
     </div>
   );
@@ -632,7 +632,7 @@ function Start() {
       </div>
       <div className="pz-cover-art pz-pop" ref={ref}>
         <div className="pz-halo" />
-        <Logo size={420} className="pz-bob" />
+        <Mascot size={420} pose="celebrating" />
       </div>
     </div>
   );
