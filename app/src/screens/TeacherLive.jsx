@@ -10,6 +10,7 @@ import Paper from "./Paper.jsx";
 import Reinforcement from "./Reinforcement.jsx";
 import QuestionBuilder from "./QuestionBuilder.jsx";
 import { LiveSection } from "./LiveHost.jsx";
+import { FilePicker, confirmDialog } from "../components/Controls.jsx";
 
 const NAV = [
   { label: "Resumen", section: "home" },
@@ -143,8 +144,8 @@ function Roster({ api, course, guard, setNotice, reload }) {
       await load();
     });
   const remove = (id) => guard(async () => { await api.removeMember(id); await load(); });
-  const del = () => {
-    if (!window.confirm(`¿Borrar el curso ${course.name} con sus tareas y resultados?`)) return;
+  const del = async () => {
+    if (!(await confirmDialog(`¿Borrar el curso ${course.name} con sus tareas y resultados?`, { confirmLabel: "Borrar curso", danger: true }))) return;
     guard(async () => { await api.deleteCourse(course.id); await reload(); });
   };
 
@@ -171,7 +172,7 @@ function Roster({ api, course, guard, setNotice, reload }) {
         <span className="label">Pegar lista o subir CSV (nombre, apellidos, correo)</span>
         <textarea rows={5} value={text} onChange={(e) => setText(e.target.value)} placeholder={"nombre,apellidos,correo\nAna,Pérez,ana@colegio.edu.co"} />
       </label>
-      <input type="file" accept=".csv,.txt,text/csv" onChange={onFile} aria-label="Subir archivo CSV" />
+      <FilePicker accept=".csv,.txt,text/csv" onChange={onFile} aria-label="Subir archivo CSV" label="Subir archivo CSV" hint="o arrástralo aquí" />
       {parsed && (
         <div>
           <p className="caption">{parsed.rows.length} válidos{parsed.errors.length ? `, ${parsed.errors.length} con problema` : ""}.</p>
@@ -231,7 +232,7 @@ function Assignments({ api, courses, assignments, exams, fetchExam, reload, guar
         </div>
         {shown.length === 0 && <p className="caption">No hay asignaciones en esta pestaña.</p>}
         {shown.map((a) => (
-          <button key={a.id} type="button" className={`assign-row${detail === a.id ? " on" : ""}${assignmentState(a) === "closed" ? " closed" : ""}`} onClick={() => setDetail(detail === a.id ? null : a.id)}>
+          <button key={a.id} type="button" className="assign-row" aria-expanded={detail === a.id} onClick={() => setDetail(detail === a.id ? null : a.id)}>
             <span className="assign-tile" style={{ background: areaColor(a.scope === "all" ? "" : a.scope) }} />
             <div className="assign-body">
               <strong>{a.title}</strong>
@@ -249,9 +250,9 @@ function Staff({ api, profile, guard, setNotice }) {
   const [staff, setStaff] = useState([]);
   const load = useCallback(() => guard(async () => setStaff(await api.listStaff())), [api, guard]);
   useEffect(() => { load(); }, [load]);
-  const change = (p, role) => {
+  const change = async (p, role) => {
     const verb = role === "school_admin" ? "coordinación" : role === "teacher" ? "docente" : "estudiante";
-    if (!window.confirm(`¿Cambiar a ${p.full_name || p.email} a ${verb}?`)) return;
+    if (!(await confirmDialog(`¿Cambiar a ${p.full_name || p.email} a ${verb}?`, { confirmLabel: "Cambiar" }))) return;
     guard(async () => { await api.setRole(p.id, role); setNotice(`${p.full_name || p.email} ahora es ${verb}.`); await load(); });
   };
   const LABEL = { teacher: "Docente", school_admin: "Coordinación" };

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { areaColor } from "../lib/brand.js";
 import { fmtDuration, studentRun } from "../lib/studentRun.js";
+import { Select } from "../components/Controls.jsx";
 import { Kpi } from "./Dashboard.jsx";
 
 const stamp = (iso) => (iso ? new Date(iso).toLocaleString("es-CO", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }) : "—");
@@ -27,9 +28,8 @@ export default function StudentRun({ name, attempts, questions, answerKey, avgTi
       {attempts.length > 1 && (
         <label className="field">
           <span className="label">Intento</span>
-          <select value={index} onChange={(e) => setIndex(Number(e.target.value))} aria-label="Intento">
-            {attempts.map((a, i) => <option key={a.client_id ?? i} value={i}>Intento {i + 1} de {attempts.length} · {stamp(a.submitted_at)}</option>)}
-          </select>
+          <Select value={index} onChange={(v) => setIndex(Number(v))} aria-label="Intento"
+            options={attempts.map((a, i) => ({ value: i, label: `Intento ${i + 1} de ${attempts.length} · ${stamp(a.submitted_at)}` }))} />
         </label>
       )}
       <p className="caption">
