@@ -5,6 +5,7 @@ import { scoreAttempt } from "../lib/exam.js";
 import AnswerSheet from "../components/AnswerSheet.jsx";
 import { LETTERS, MAX_QUESTIONS, readSheetAnyRotation, sheetLayout } from "../lib/omr.js";
 import { fileToGray } from "../lib/scan.js";
+import { FilePicker, Select } from "../components/Controls.jsx";
 
 // The roster order the sheets are printed with and read back with. Keep the list unchanged between printing and scanning.
 export const sheetRoster = (members) => members.filter((m) => m.role === "student").sort((a, b) => a.email.toLowerCase().localeCompare(b.email.toLowerCase()));
@@ -114,7 +115,7 @@ function Scan({ api, assignment, bundle, questions, roster, guard, setNotice, on
     <div className="card t-card">
       <div className="section-head"><strong>Calificar hojas fotografiadas</strong><button type="button" className="link" onClick={onClose}>Cerrar</button></div>
       <p className="caption">Fotografía cada hoja completa, con buena luz y las cuatro marcas negras visibles. Puedes elegir varias fotos a la vez.</p>
-      <input ref={inputRef} type="file" accept="image/*" multiple aria-label="Fotos de las hojas" onChange={onFiles} disabled={busy} />
+      <FilePicker inputRef={inputRef} accept="image/*" multiple aria-label="Fotos de las hojas" onChange={onFiles} disabled={busy} label="Elegir fotos de las hojas" hint="o arrástralas aquí" />
       {busy && <p className="caption">Leyendo…</p>}
       {items.map((it) => {
         const s = it.read.ok ? scoreOf(it) : null;
@@ -125,10 +126,10 @@ function Scan({ api, assignment, bundle, questions, roster, guard, setNotice, on
             {!it.read.ok ? <p className="notice error">{it.read.error}</p> : (
               <>
                 <label className="field"><span className="label">Estudiante</span>
-                  <select value={it.memberId} onChange={(e) => setMember(it.id, e.target.value)}>
+                  <Select value={it.memberId} onChange={(v) => setMember(it.id, v)}>
                     <option value="">Elegir…</option>
                     {roster.map((m) => <option key={m.id} value={m.id}>{m.full_name || m.email}</option>)}
-                  </select>
+                  </Select>
                   {it.read.studentIndex == null && <span className="caption">No pude leer el código del estudiante: elígelo a mano.</span>}
                 </label>
                 <span className="caption">{s.answered} de {s.total} marcadas · {s.keyed ? `${s.correct} correctas (clave preliminar)` : "sin clave"}{doubtful ? ` · ${doubtful} para revisar` : ""}</span>
@@ -187,7 +188,7 @@ export default function Paper({ api, assignments, fetchExam, guard, setNotice })
       {assignments.length === 0 ? <p className="caption">Crea primero una asignación (con las preguntas del simulacro) y vuelve aquí.</p> : (
         <div className="card t-card assign-form">
           <label className="field"><span className="label">Asignación</span>
-            <select value={id} onChange={(e) => setId(e.target.value)}>{assignments.filter((a) => !a.assignee_id).map((a) => <option key={a.id} value={a.id}>{a.courses?.name} · {a.title}</option>)}</select></label>
+            <Select value={id} onChange={(v) => setId(v)}>{assignments.filter((a) => !a.assignee_id).map((a) => <option key={a.id} value={a.id}>{a.courses?.name} · {a.title}</option>)}</Select></label>
           {!bundle && assignment && <p className="caption">Cargando preguntas…</p>}
           {bundle && <p className="caption">{questions.length} preguntas · {roster.length} estudiantes en la lista.</p>}
           {tooMany && <p className="notice error">Una hoja admite hasta {MAX_QUESTIONS} preguntas.</p>}

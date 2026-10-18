@@ -88,6 +88,8 @@ export function itemStats(questions, key, attempts) {
       answered += 1;
       dist[given] = (dist[given] ?? 0) + 1;
     }
+    const times = rows.map((a) => a.times?.[q.key]).filter((t) => Number.isFinite(t));
+    const hintN = rows.filter((a) => a.activity?.hints?.[q.key]).length;
     const correct = keyed ? dist[keyed] ?? 0 : 0;
     const wrong = Object.entries(dist).filter(([l]) => l !== keyed).sort((a, b) => b[1] - a[1])[0];
     const suspect = Boolean(keyed) && answered >= 5 && wrong && wrong[1] >= correct * 2 && wrong[1] / answered >= 0.5;
@@ -95,6 +97,8 @@ export function itemStats(questions, key, attempts) {
       key: q.key, number: q.number, section: q.section, keyed, n: rows.length, answered, dist,
       pct: answered && keyed ? Math.round((correct / answered) * 100) : null,
       topWrong: wrong ? wrong[0] : null,
+      avgSec: times.length ? times.reduce((x, y) => x + y, 0) / times.length : null,
+      hintN,
       suspect,
     };
   });
@@ -106,13 +110,13 @@ const csvCell = (v) => {
   return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 export function itemsCsv(title, questions, key, students) {
-  const head = ["Estudiante", "Correo", "Pregunta", "Área", "Respuesta", "Clave preliminar", "Acierto"];
+  const head = ["Estudiante", "Correo", "Pregunta", "Área", "Respuesta", "Clave preliminar", "Acierto", "Segundos", "Pista"];
   const lines = [];
   for (const s of students) {
     for (const q of questions) {
       const given = s.answers?.[q.key] ?? "";
       const k = key?.get(q.key) ?? "";
-      lines.push([s.name, s.email, q.number, q.section, given, k, given && k ? (given === k ? 1 : 0) : ""].map(csvCell).join(","));
+      lines.push([s.name, s.email, q.number, q.section, given, k, given && k ? (given === k ? 1 : 0) : "", s.attempt?.times?.[q.key] ?? "", s.attempt?.activity?.hints?.[q.key] ? 1 : ""].map(csvCell).join(","));
     }
   }
   return `﻿${[csvCell(title), head.join(","), ...lines].join("\n")}\n`;
