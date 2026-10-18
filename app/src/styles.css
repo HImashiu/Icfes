@@ -1264,45 +1264,20 @@ button.card:active:not(:disabled), .mode-card:active, .chip:active, .answer-cell
 /* On a phone the bar slides up from the bottom edge. */
 @media (max-width: 899px) { .test-bottom:has(.verdict) { animation: slide-up 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); } }
 
-/* The owl: every part moves on its own. It always blinks and sways its tassel; idle it breathes and looks around;
-   happy it hops and flaps once; celebrating it throws its wings up and spins the tassel; sad it droops and looks down. */
+/* The owl is Juan's drawing; it only blinks, makes faces and moves gently as a whole. */
 .mascot { overflow: visible; }
-.mascot .m-body, .mascot .m-head, .mascot .m-wing, .mascot .m-open, .mascot .m-pupils, .mascot .m-tassel, .mascot .m-cheek { transform-box: fill-box; }
-.mascot .m-open { transform-origin: center; animation: blink 4.5s infinite; }
-.mascot .m-head { transform-origin: 50% 90%; }
-.mascot .m-body { transform-origin: 50% 100%; }
-.mascot .m-wing-l { transform-origin: 80% 15%; }
-.mascot .m-wing-r { transform-origin: 20% 15%; }
-.mascot .m-tassel { transform-origin: 50% 0; animation: tassel 2.6s ease-in-out infinite; }
-.mascot.idle { animation: bob 3.2s ease-in-out infinite; }
-.mascot.idle .m-body { animation: breathe 3.2s ease-in-out infinite; }
-.mascot.idle .m-head { animation: look 7s ease-in-out infinite; }
-.mascot.idle .m-pupils { animation: glance 7s ease-in-out infinite; }
-.mascot.pose-happy { animation: hop 0.8s cubic-bezier(0.3, 0.7, 0.4, 1) backwards; }
-.mascot.pose-happy .m-wing-l { animation: flap-l 0.4s ease-in-out 2; }
-.mascot.pose-happy .m-wing-r { animation: flap-r 0.4s ease-in-out 2; }
-.mascot.pose-happy .m-cheek, .mascot.pose-celebrating .m-cheek { transform-origin: center; animation: pop-in 0.4s cubic-bezier(0.3, 0.7, 0.4, 1.5) 0.15s backwards; }
-.mascot.celebrating { animation: hop 0.9s cubic-bezier(0.3, 0.7, 0.4, 1) 0.2s 3 backwards; }
-.mascot.pose-celebrating .m-wing-l { animation: cheer-l 0.45s ease-in-out 0.2s 6 alternate backwards; }
-.mascot.pose-celebrating .m-wing-r { animation: cheer-r 0.45s ease-in-out 0.2s 6 alternate backwards; }
-.mascot.pose-celebrating .m-tassel { animation: twirl 0.9s ease-in-out 0.2s 3; }
-.mascot.pose-celebrating .m-head { animation: wiggle 0.9s ease-in-out 0.2s 3; }
-.mascot.pose-sad .m-head { animation: droop 0.6s ease-out forwards, sigh 3.6s ease-in-out 0.6s infinite; }
-.mascot.pose-sad .m-pupils { transform: translateY(2px); }
-.mascot.pose-sad .m-tassel { animation: none; transform: rotate(6deg); }
-.mascot.pose-sad .m-wing { transition: transform 0.4s; }
-@keyframes breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.03, 0.98); } }
-@keyframes look { 0%, 40%, 100% { transform: rotate(0); } 48%, 58% { transform: rotate(-6deg); } 66%, 76% { transform: rotate(5deg); } 84% { transform: rotate(0); } }
-@keyframes glance { 0%, 40%, 100% { transform: translateX(0); } 48%, 58% { transform: translateX(-1.6px); } 66%, 76% { transform: translateX(1.6px); } 84% { transform: translateX(0); } }
-@keyframes tassel { 0%, 100% { transform: rotate(-7deg); } 50% { transform: rotate(9deg); } }
-@keyframes twirl { 0% { transform: rotate(0); } 50% { transform: rotate(35deg); } 100% { transform: rotate(0); } }
-@keyframes flap-l { 50% { transform: rotate(28deg); } }
-@keyframes flap-r { 50% { transform: rotate(-28deg); } }
-@keyframes cheer-l { from { transform: rotate(0); } to { transform: rotate(120deg); } }
-@keyframes cheer-r { from { transform: rotate(0); } to { transform: rotate(-120deg); } }
-@keyframes wiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-7deg); } 75% { transform: rotate(7deg); } }
-@keyframes droop { from { transform: rotate(0) translateY(0); } to { transform: rotate(-9deg) translateY(2px); } }
-@keyframes sigh { 0%, 100% { transform: rotate(-9deg) translateY(2px); } 50% { transform: rotate(-6deg) translateY(1px); } }
+.mascot .m-art { transform-box: fill-box; transform-origin: 50% 100%; }
+.mascot .m-lid { transform-box: fill-box; transform-origin: 50% 0; transform: scaleY(0); animation: lid 4.6s infinite; }
+.mascot .m-cheek { transform-box: fill-box; transform-origin: center; animation: pop-in 0.4s cubic-bezier(0.3, 0.7, 0.4, 1.5) 0.15s backwards; }
+.mascot.idle .m-art { animation: breathe 3.4s ease-in-out infinite; }
+.mascot.pose-happy .m-art { animation: owl-hop 0.7s cubic-bezier(0.3, 0.7, 0.4, 1) backwards; }
+.mascot.celebrating .m-art { animation: owl-hop 0.8s cubic-bezier(0.3, 0.7, 0.4, 1) 0.2s 2 backwards, owl-wiggle 0.8s ease-in-out 1.8s 1; }
+.mascot.pose-sad .m-art { transform-origin: 50% 90%; animation: owl-droop 0.7s ease-out forwards; }
+@keyframes lid { 0%, 93%, 100% { transform: scaleY(0); } 95.5%, 97% { transform: scaleY(1); } }
+@keyframes breathe { 0%, 100% { transform: translateY(0) scale(1, 1); } 50% { transform: translateY(-2px) scale(1.012, 0.99); } }
+@keyframes owl-hop { 0%, 100% { transform: translateY(0) scale(1, 1); } 15% { transform: translateY(0) scale(1.04, 0.95); } 40% { transform: translateY(-9%) scale(0.98, 1.03); } 70% { transform: translateY(0) scale(1.03, 0.97); } }
+@keyframes owl-wiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-4deg); } 75% { transform: rotate(4deg); } }
+@keyframes owl-droop { from { transform: rotate(0) translateY(0); } to { transform: rotate(-5deg) translateY(2%); } }
 /* The small owl that cheers or consoles in the answer bar. */
 .verdict-owl { flex: none; display: grid; place-items: center; }
 
