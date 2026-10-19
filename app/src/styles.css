@@ -1773,3 +1773,16 @@ details.answers-area > summary > :last-child { margin-left: auto; }
 .scanner-done { min-height: 52px; }
 .scanner-msg { position: relative; z-index: 1; grid-row: 2; align-self: center; margin: 0 20px; padding: 20px; border-radius: 18px; background: var(--surface); color: var(--text); display: grid; gap: 12px; justify-items: center; text-align: center; }
 @media (prefers-reduced-motion: reduce) { .scanner-flash { animation: none; } }
+
+/* Exam monitoring notice, shown to the student while a monitored assignment is open. */
+.proctor-note { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; padding: 8px 12px; border-radius: 12px; font-size: 13px; background: var(--surface-2, rgba(128,128,128,.12)); color: var(--muted, inherit); }
+
+.bank-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 8px; }
+
+.proctor-alert { border-left: 4px solid var(--flame, #ff8a3d); }
+.proctor-timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 13px; }
+
+/* Teacher navigation: grouped, with icons. */
+.t-group { display: block; margin: 14px 12px 4px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; opacity: .55; }
+.t-nav { display: flex; align-items: center; gap: 10px; }
+@media (max-width: 767px) { .t-group { display: none; } .t-nav span { white-space: nowrap; } }

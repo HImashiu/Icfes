@@ -22,7 +22,7 @@ const withUid = (d) => ({ ...d, uid: d.uid ?? uid() });
 // The full-screen question builder: the teacher's PDF on the left, the question form in the middle and the
 // student's view on the right, like the admin editor. Several questions are worked on at once (the strip at the
 // top); questions that share a text form a group.
-export default function Workspace({ api, profile, guard, initial, startAt = 0, onClose }) {
+export default function Workspace({ api, profile, guard, initial, startAt = 0, onClose, saver = null }) {
   const [drafts, setDrafts] = useState(() => (initial.length ? initial : [emptyDraft()]).map(withUid));
   const [cur, setCur] = useState(Math.min(startAt, Math.max(0, initial.length - 1)));
   const [doc, setDoc] = useState(null);
@@ -231,7 +231,8 @@ export default function Workspace({ api, profile, guard, initial, startAt = 0, o
 
   // ---- saving ----------------------------------------------------------------------------------------------
   const saveOne = async (x) => {
-    const saved = await api.saveTeacherQuestion(draftToRow(x, { schoolId: profile.school_id, ownerId: profile.id }), x.id ?? null);
+    // `saver` stores the draft somewhere else (a school's version of a bank question) and returns { id }.
+    const saved = saver ? await saver(x) : await api.saveTeacherQuestion(draftToRow(x, { schoolId: profile.school_id, ownerId: profile.id }), x.id ?? null);
     anySaved.current = true;
     return { ...x, id: saved?.id ?? x.id, dirty: false };
   };
