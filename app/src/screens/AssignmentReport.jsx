@@ -9,6 +9,7 @@ import StudentRun from "./StudentRun.jsx";
 import { sampleRunAttempt } from "../lib/studentRun.js";
 import { classTimes, fmtDuration } from "../lib/studentRun.js";
 import { familyPayload, reportUrl, whatsappLink } from "../lib/family.js";
+import ProctorPanel from "./ProctorPanel.jsx";
 import { confirmDialog } from "../components/Controls.jsx";
 
 const shortDate = (iso) => new Date(iso).toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "short" });
@@ -152,6 +153,7 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
           <button type="button" className="secondary no-print" onClick={() => setSample(true)}>Ver un ejemplo de reporte individual</button>
         )
       )}
+      {assignment.proctor && <ProctorPanel api={api} assignment={assignment} members={data.members} />}
       {student && (() => {
         const row = rows.find((r) => r.id === student);
         return row && row.attempts.length > 0 && bundle ? (

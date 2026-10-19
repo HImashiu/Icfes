@@ -1,4 +1,5 @@
 // Pure helpers for assignments: which questions, what state, who has finished. No network, no React.
+import { summarizeProctor } from "./proctor.js";
 import { questionsFor, scoreAttempt, timedSeconds } from "./exam.js";
 import { roundedTimes } from "./studentRun.js";
 import { orderQuestions } from "./order.js";
@@ -49,6 +50,8 @@ export function attemptForAssignment(a, questions, now = Date.now()) {
     hints: a.allow_hints !== false,
     glossary: a.allow_definitions ? a.definitions ?? [] : [],
     instant: a.instant_feedback !== false,
+    proctor: a.proctor === true,
+    proctorLog: [],
     durationSec: mode === "timed" ? (a.time_limit_min ? a.time_limit_min * 60 : timedSeconds(questions)) : null,
     startedAt: now,
     answers: {},
@@ -79,6 +82,7 @@ export function attemptRow(attempt, questions, key, keyStatus) {
     answers: attempt.answers,
     times: roundedTimes(attempt.times),
     // How the student worked, for the teacher's view of one run: hints opened and answers changed, per question.
+    proctor: summarizeProctor(attempt.proctorLog),
     activity: { hints: attempt.hintsUsed ?? {}, changes: attempt.changes ?? {} },
     score: { keyed: s.keyed, correct: s.correct, answered: s.answered, total: s.total, perArea: s.perArea },
     key_status: keyStatus ?? "preliminary",

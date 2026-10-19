@@ -54,6 +54,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
   const [instant, setInstant] = useState(true);
   const [defsOn, setDefsOn] = useState(false);
   const [defs, setDefs] = useState([{ term: "", def: "" }]);
+  const [proctor, setProctor] = useState(false);
   const [seconds, setSeconds] = useState("60");
   const [liveCourse, setLiveCourse] = useState("");
 
@@ -135,6 +136,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
           reveal_policy: reveal, status: "active",
           // Sent only when switched off, so creating assignments keeps working before migration 0007 runs.
           ...(hints ? {} : { allow_hints: false }),
+          ...(proctor ? { proctor: true } : {}),
           ...(instant || kind === "exam" ? {} : { instant_feedback: false }),
           // Sent only when switched on, so creating assignments keeps working before migration 0011 runs.
           ...(defsOn && cleanGlossary(defs).length ? { allow_definitions: true, definitions: cleanGlossary(defs) } : {}),
@@ -303,6 +305,8 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
             <option value="end">Al final: responde todo y ve los resultados al terminar</option>
           </Select></label>
       )}
+      <label className="check-row"><input type="checkbox" checked={proctor} onChange={(e) => setProctor(e.target.checked)} />
+        <span>Monitorear el examen <span className="caption">(avisarte cuando un estudiante sale de la pestaña; el estudiante lo ve)</span></span></label>
       {kind !== "exam" && (
         <label className="check-row"><input type="checkbox" checked={hints} onChange={(e) => setHints(e.target.checked)} />
           <span>Permitir pistas antes de responder <span className="caption">(“Pista”, generada con IA)</span></span></label>

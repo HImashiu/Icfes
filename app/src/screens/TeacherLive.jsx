@@ -13,17 +13,26 @@ import QuestionBuilder from "./QuestionBuilder.jsx";
 import { LiveSection } from "./LiveHost.jsx";
 import { FilePicker, confirmDialog } from "../components/Controls.jsx";
 import Icon from "../components/Icon.jsx";
+import BankEditor from "./BankEditor.jsx";
+import TeacherReports from "./TeacherReports.jsx";
+import { GRADES, SUBJECTS, gradeLabel, spaceName } from "../lib/spaces.js";
+import { Select } from "../components/Controls.jsx";
 
 const NAV = [
-  { label: "Resumen", section: "home" },
-  { label: "Cursos y estudiantes", section: "courses" },
-  { label: "Asignaciones", section: "assign" },
-  { label: "Mis preguntas", section: "questions" },
-  { label: "Papel", section: "paper" },
-  { label: "Refuerzo", section: "reinforce" },
-  { label: "En vivo", section: "live" },
-  { label: "Docentes", section: "staff", admin: true },
-  { label: "Ajustes", section: "settings", admin: true },
+  { group: "Mi clase" },
+  { label: "Resumen", section: "home", icon: "home" },
+  { label: "Espacios de clase", section: "courses", icon: "users" },
+  { label: "Asignaciones", section: "assign", icon: "book" },
+  { label: "Reportes", section: "reports", icon: "chart" },
+  { group: "Contenido" },
+  { label: "Banco de preguntas", section: "bank", icon: "school" },
+  { label: "Mis preguntas", section: "questions", icon: "pencil" },
+  { label: "Papel", section: "paper", icon: "print" },
+  { label: "Refuerzo", section: "reinforce", icon: "bolt" },
+  { label: "En vivo", section: "live", icon: "play" },
+  { group: "Colegio", admin: true },
+  { label: "Docentes", section: "staff", admin: true, icon: "shield" },
+  { label: "Ajustes", section: "settings", admin: true, icon: "user" },
 ];
 const shortDate = (iso) => new Date(iso).toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "short" });
 const KIND_ICON = { task: "bolt", homework: "book", exam: "clock" };
@@ -54,9 +63,11 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
       <aside className="t-side" aria-label="Navegación docente">
         <strong className="t-logo"><Logo size={30} /> Cóndor</strong>
         <nav>
-          {NAV.filter((n) => !n.admin || profile.role === "school_admin").map((n) => (
+          {NAV.filter((n) => !n.admin || profile.role === "school_admin").map((n) => n.group ? (
+            <span key={n.group} className="t-group">{n.group}</span>
+          ) : (
             <button key={n.section} type="button" className={section === n.section ? "t-nav active" : "t-nav"} aria-current={section === n.section ? "page" : undefined} onClick={() => { setSection(n.section); setNotice(null); }}>
-              {n.label}
+              <Icon name={n.icon} size={18} strokeWidth={2.4} /><span>{n.label}</span>
             </button>
           ))}
         </nav>
@@ -77,6 +88,8 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
         {section === "assign" && (
           <Assignments api={api} courses={courses} assignments={assignments} exams={exams} fetchExam={fetchExam} reload={reload} guard={guard} setNotice={setNotice} />
         )}
+        {section === "reports" && <TeacherReports api={api} courses={courses} assignments={assignments} guard={guard} />}
+        {section === "bank" && <BankEditor api={api} profile={profile} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
         {section === "paper" && <Paper api={api} assignments={assignments} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
         {section === "reinforce" && <Reinforcement api={api} courses={courses} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
         {section === "questions" && <QuestionBuilder api={api} profile={profile} guard={guard} setNotice={setNotice} />}
@@ -89,17 +102,20 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
 }
 
 function Courses({ api, profile, courses, reload, guard, setNotice, focus }) {
-  const [name, setName] = useState("");
-  const [grade, setGrade] = useState("11");
+  const [subject, setSubject] = useState("Inglés");
+  const [grade, setGrade] = useState("9");
+  const [group, setGroup] = useState("A");
+  const [custom, setCustom] = useState(null);
   const [open, setOpen] = useState(focus ?? null);
+  const name = custom ?? spaceName({ subject, grade, group });
 
   const create = (e) => {
     e.preventDefault();
     if (!name.trim()) return;
     guard(async () => {
-      const c = await api.createCourse({ schoolId: profile.school_id, userId: profile.id, name: name.trim(), grade });
-      setName("");
-      setNotice(`Curso ${c.name} creado. Ahora agrega a sus estudiantes.`);
+      const c = await api.createCourse({ schoolId: profile.school_id, userId: profile.id, name: name.trim(), grade, subject, groupLabel: group.trim() });
+      setCustom(null);
+      setNotice(`Espacio ${c.name} creado. Ahora agrega a sus estudiantes.`);
       await reload();
       setOpen(c.id);
     });
@@ -107,18 +123,22 @@ function Courses({ api, profile, courses, reload, guard, setNotice, focus }) {
 
   return (
     <>
-      <header className="t-head"><div><h1>Cursos y estudiantes</h1></div></header>
+      <header className="t-head"><div><h1>Espacios de clase</h1><span className="caption">Un espacio por materia, grado y grupo (por ejemplo «Inglés 9no A»). Las asignaciones y los reportes se organizan por espacio.</span></div></header>
       <form className="card t-card assign-form" onSubmit={create}>
-        <strong>Nuevo curso</strong>
-        <label className="field"><span className="label">Nombre (por ejemplo 11-A)</span><input value={name} onChange={(e) => setName(e.target.value)} /></label>
-        <label className="field"><span className="label">Grado</span><input value={grade} onChange={(e) => setGrade(e.target.value)} /></label>
-        <div className="report-actions"><button type="submit" className="primary" disabled={!name.trim()}>Crear curso</button></div>
+        <strong>Nuevo espacio</strong>
+        <label className="field"><span className="label">Materia</span>
+          <Select value={subject} onChange={(v) => { setSubject(v); setCustom(null); }} aria-label="Materia">{SUBJECTS.map((x) => <option key={x}>{x}</option>)}</Select></label>
+        <label className="field"><span className="label">Grado</span>
+          <Select value={grade} onChange={(v) => { setGrade(v); setCustom(null); }} aria-label="Grado">{GRADES.map((g) => <option key={g} value={g}>{gradeLabel(g)}</option>)}</Select></label>
+        <label className="field"><span className="label">Grupo (A, B, 01…)</span><input value={group} onChange={(e) => { setGroup(e.target.value); setCustom(null); }} /></label>
+        <label className="field"><span className="label">Nombre del espacio</span><input value={name} onChange={(e) => setCustom(e.target.value)} /></label>
+        <div className="report-actions"><button type="submit" className="primary" disabled={!name.trim()}>Crear espacio</button></div>
       </form>
-      {courses.length === 0 && <p className="caption">Todavía no tienes cursos.</p>}
+      {courses.length === 0 && <p className="caption">Todavía no tienes espacios de clase.</p>}
       {courses.map((c) => (
         <div key={c.id} className="card t-card">
           <div className="section-head">
-            <strong>{c.name}{c.grade ? ` · Grado ${c.grade}` : ""}</strong>
+            <strong>{c.name}{c.grade && !c.subject ? ` · Grado ${c.grade}` : ""}</strong>
             <button type="button" className="secondary" onClick={() => setOpen(open === c.id ? null : c.id)}>{open === c.id ? "Cerrar" : "Estudiantes"}</button>
           </div>
           {open === c.id && <Roster api={api} course={c} guard={guard} setNotice={setNotice} reload={reload} />}
@@ -210,7 +230,8 @@ function Assignments({ api, courses, assignments, exams, fetchExam, reload, guar
   const [composing, setComposing] = useState(false);
   const [detail, setDetail] = useState(null);
   const [tab, setTab] = useState("active");
-  const shown = assignments.filter((a) => (tab === "active" ? ["active", "scheduled"] : ["closed", "draft"]).includes(assignmentState(a)));
+  const [space, setSpace] = useState("");
+  const shown = assignments.filter((a) => (!space || a.course_id === space) && (tab === "active" ? ["active", "scheduled"] : ["closed", "draft"]).includes(assignmentState(a)));
 
   return (
     <>
@@ -218,7 +239,7 @@ function Assignments({ api, courses, assignments, exams, fetchExam, reload, guar
         <div><h1>Asignaciones</h1></div>
         <button type="button" className="primary" onClick={() => { setComposing(true); setDetail(null); }} disabled={courses.length === 0}>Nueva asignación</button>
       </header>
-      {courses.length === 0 && <p className="caption">Crea un curso primero.</p>}
+      {courses.length === 0 && <p className="caption">Crea un espacio de clase primero.</p>}
       {composing && (
         <AssignBuilder api={api} courses={courses} exams={exams} fetchExam={fetchExam} guard={guard}
           onCancel={() => setComposing(false)}
@@ -227,6 +248,7 @@ function Assignments({ api, courses, assignments, exams, fetchExam, reload, guar
       <div className="card t-card">
         <div className="section-head">
           <strong>Asignaciones</strong>
+          {courses.length > 1 && <Select className="course-filter" aria-label="Espacio de clase" value={space} onChange={setSpace}><option value="">Todos los espacios</option>{courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</Select>}
           <div className="segmented small" role="tablist">
             {[["active", "Activas"], ["closed", "Cerradas"]].map(([id, label]) => (
               <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? "seg active" : "seg"} onClick={() => setTab(id)}>{label}</button>

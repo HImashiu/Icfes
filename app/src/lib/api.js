@@ -20,10 +20,16 @@ export function createApi(client) {
     },
 
     async listCourses() {
-      return unwrap(await client.from("courses").select("id, name, grade, year, created_at").order("created_at", { ascending: false }));
+      const query = (c) => client.from("courses").select(c).order("created_at", { ascending: false });
+      const first = await query("id, name, grade, year, created_at, subject, group_label");
+      return unwrap(first.error && /subject|group_label/.test(first.error.message ?? "") ? await query("id, name, grade, year, created_at") : first);
     },
-    async createCourse({ schoolId, userId, name, grade }) {
-      return unwrap(await client.from("courses").insert({ school_id: schoolId, created_by: userId, name, grade: grade || null }).select().single());
+    async createCourse({ schoolId, userId, name, grade, subject, groupLabel }) {
+      const row = { school_id: schoolId, created_by: userId, name, grade: grade || null };
+      // subject and group_label arrive with migration 0012; until it runs the course is saved by name only.
+      const first = await client.from("courses").insert({ ...row, subject: subject || null, group_label: groupLabel || null }).select().single();
+      if (first.error && /subject|group_label/.test(first.error.message ?? "")) return unwrap(await client.from("courses").insert(row).select().single());
+      return unwrap(first);
     },
     async deleteCourse(id) {
       unwrap(await client.from("courses").delete().eq("id", id));
@@ -46,10 +52,10 @@ export function createApi(client) {
       const query = (c) => client.from("assignments").select(c).order("created_at", { ascending: false });
       // allow_hints and instant_feedback arrive with migrations 0007 and 0008; until they run, every assignment
       // offers hints and immediate feedback.
-      // allow_definitions and definitions arrive with migration 0011.
-      const withDefs = await query(`${cols}, allow_hints, instant_feedback, allow_definitions, definitions`);
-      if (!withDefs.error) return unwrap(withDefs);
-      if (!/allow_definitions|definitions/.test(withDefs.error.message ?? "")) unwrap(withDefs);
+      // allow_definitions, definitions and proctor arrive with migrations 0011 and 0012.
+      const full = await query(`${cols}, allow_hints, instant_feedback, allow_definitions, definitions, proctor`);
+      if (!full.error) return unwrap(full);
+      if (!/allow_definitions|definitions|proctor/.test(full.error.message ?? "")) unwrap(full);
       const first = await query(`${cols}, allow_hints, instant_feedback`);
       if (first.error && /allow_hints|instant_feedback/.test(first.error.message ?? "")) {
         const hintsOnly = await query(`${cols}, allow_hints`);
@@ -75,8 +81,8 @@ export function createApi(client) {
       const put = (r) => client.from("attempts").upsert({ ...r, profile_id: profileId }, { onConflict: "profile_id,client_id" });
       const first = await put(row);
       // `activity` arrives with migration 0009; until it runs, the attempt is saved without it.
-      if (first.error && /activity/.test(first.error.message ?? "")) {
-        const { activity, ...rest } = row;
+      if (first.error && /activity|proctor/.test(first.error.message ?? "")) {
+        const { activity, proctor, ...rest } = row;
         unwrap(await put(rest));
         return;
       }
@@ -98,6 +104,8 @@ export function createApi(client) {
     async assignmentAttempts(assignmentId) {
       const cols = "profile_id, member_id, client_id, assignment_id, submitted_at, mode, score, answers, duration_sec";
       const query = (c) => client.from("attempts").select(c).eq("assignment_id", assignmentId);
+      const full = await query(`${cols}, started_at, times, activity, proctor`);
+      if (!full.error) return full.data;
       const first = await query(`${cols}, started_at, times, activity`);
       if (first.error && /activity/.test(first.error.message ?? "")) return unwrap(await query(`${cols}, started_at, times`));
       return unwrap(first);
@@ -114,6 +122,13 @@ export function createApi(client) {
     },
     async allAttempts() {
       return unwrap(await client.from("attempts").select("profile_id, member_id, client_id, assignment_id, submitted_at, mode, score, exam_slug").not("assignment_id", "is", null));
+    },
+    // Everything the activity report needs per attempt: result, time and (with migration 0012) monitoring totals.
+    async reportAttempts() {
+      const cols = "profile_id, member_id, assignment_id, submitted_at, mode, score, duration_sec";
+      const query = (c) => client.from("attempts").select(c).not("assignment_id", "is", null).not("submitted_at", "is", null);
+      const full = await query(`${cols}, proctor`);
+      return unwrap(full.error ? await query(cols) : full);
     },
     async listStaff() {
       return unwrap(await client.from("profiles").select("id, email, full_name, role, created_at").in("role", ["teacher", "school_admin"]).order("full_name"));
@@ -153,6 +168,34 @@ export function createApi(client) {
     },
     async deleteTeacherQuestion(id) {
       unwrap(await client.from("teacher_questions").delete().eq("id", id));
+    },
+
+    // School versions of bank questions (migration 0012). A missing table means "no versions yet".
+    async questionOverrides(slug) {
+      const r = await client.from("question_overrides").select("id, qkey, question_json, answer, explanation, updated_at").eq("exam_slug", slug);
+      return r.error ? [] : r.data;
+    },
+    async allOverrides() {
+      const r = await client.from("question_overrides").select("id, exam_slug, qkey, updated_at");
+      return r.error ? [] : r.data;
+    },
+    async saveOverride(row) {
+      return unwrap(await client.from("question_overrides").upsert(row, { onConflict: "school_id,exam_slug,qkey" }).select("id").single());
+    },
+    async deleteOverride(id) {
+      unwrap(await client.from("question_overrides").delete().eq("id", id));
+    },
+
+    // Exam monitoring (migration 0012). Failures are silent: monitoring never blocks a student.
+    async proctorSend(rows) {
+      const r = await client.from("proctor_events").insert(rows);
+      return !r.error;
+    },
+    async proctorEvents(assignmentId, sinceIso = null) {
+      let q = client.from("proctor_events").select("id, profile_id, client_id, kind, at, question_key, secs").eq("assignment_id", assignmentId).order("at");
+      if (sinceIso) q = q.gte("at", sinceIso);
+      const r = await q;
+      return r.error ? [] : r.data;
     },
 
     // Live answering. The database clock decides when a question opens and closes.

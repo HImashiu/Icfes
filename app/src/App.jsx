@@ -23,6 +23,7 @@ import { useAuth } from "./lib/auth.jsx";
 import Consent from "./screens/Consent.jsx";
 import FamilyReport from "./screens/FamilyReport.jsx";
 import { tokenFromHash } from "./lib/family.js";
+import { applyOverrides } from "./lib/overrides.js";
 import { TEACHER_SLUG, teacherExam } from "./lib/teacherExam.js";
 import LivePlay, { LiveJoin } from "./screens/LivePlay.jsx";
 import { joinCodeFromHash } from "./lib/joinLink.js";
@@ -126,7 +127,7 @@ export default function App() {
     ]);
     const parsed = parseExam(raw);
     const figures = linkFigures(parsed, parseFigureSpecs(rawFigures), rawFigures);
-    return {
+    const bundle = {
       slug,
       exam: prepareExam(parsed, figures),
       key: parseKey(rawKey),
@@ -136,7 +137,11 @@ export default function App() {
       enrichMeta: rawEnrich ? { note: rawEnrich.note, estimated: rawEnrich.estimated } : null,
       figures,
     };
-  }, [exams, auth.api]);
+    // The school's own versions of questions (edited by its teachers) are laid over the shared bank.
+    let versions = [];
+    if (auth.api && auth.status === "ready") { try { versions = await auth.api.questionOverrides(slug); } catch { versions = []; } }
+    return applyOverrides(bundle, versions);
+  }, [exams, auth.api, auth.status]);
 
   const openExam = useCallback(async (slug, keys = null) => {
     setOpenError(null);
@@ -381,6 +386,7 @@ export default function App() {
           examLabel={selected.exam.title}
           questions={questions}
           attempt={attempt}
+          onProctorEvent={(ev, a) => { if (auth.api && a.assignmentId) auth.api.proctorSend([{ assignment_id: a.assignmentId, client_id: String(a.startedAt), ...ev }]).catch(() => {}); }}
           answerKey={locked ? null : selected.key}
           onChange={(next) => setAttempt((a) => (a ? (typeof next === "function" ? next(a) : next) : a))}
           onSubmit={submit}

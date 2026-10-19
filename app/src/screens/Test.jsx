@@ -12,6 +12,7 @@ import { areaColor, fmtInt } from "../lib/brand.js";
 import { plainText } from "../lib/render.js";
 import { xpFor } from "../lib/xp.js";
 import { addTime } from "../lib/studentRun.js";
+import { useProctor } from "../lib/proctor.js";
 import { buzz, confetti, play } from "../lib/motion.js";
 
 // +10 XP per correct practice answer, double in the weakest area.
@@ -27,7 +28,7 @@ function centerIn(pane, el) {
 
 // The answering screen. Shows only the progress, the timer or mode, the flag, the question,
 // the options and the map: no streak or XP chart here.
-export default function Test({ title, examLabel, questions, attempt, answerKey, onChange, onSubmit, onExit, figures, enrich, enrichMeta }) {
+export default function Test({ title, examLabel, questions, attempt, answerKey, onChange, onSubmit, onExit, figures, enrich, enrichMeta, onProctorEvent }) {
   const [now, setNow] = useState(() => Date.now());
   const [sheetOpen, setSheetOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -78,6 +79,12 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
 
   const current = Math.min(attempt.current, questions.length - 1);
   const q = questions[current];
+
+  // The teacher can monitor an assignment: tab leaves, pointer exits and idle time are logged and sent along.
+  useProctor(Boolean(attempt.proctor) && !attempt.readOnly, (ev) => {
+    onChangeRef.current((a) => ({ ...a, proctorLog: [...(a.proctorLog ?? []), ev] }));
+    onProctorEvent?.(ev, attempt);
+  }, q?.key);
   const answered = Object.keys(attempt.answers).length;
   const checked = Boolean(attempt.checked?.[q?.key]);
   const correctLetter = q ? answerKey?.get(q.key) ?? null : null;
@@ -429,6 +436,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
 
   return (
     <div className={verdict ? "test has-verdict" : "test"}>
+      {attempt.proctor && <p className="proctor-note" role="note"><Icon name="shield" size={16} /> Este examen está monitoreado: tu docente ve cuándo sales de la pestaña.</p>}
       <header className="test-top" ref={topRef}>
         <div className="test-row">
           <button type="button" className="icon-btn" onClick={onExit} aria-label="Salir del simulacro">
