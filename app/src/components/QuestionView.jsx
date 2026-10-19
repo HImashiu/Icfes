@@ -6,6 +6,7 @@ import { SOURCE_LINE } from "../lib/exam.js";
 import ReportError from "./ReportError.jsx";
 import Zoomable from "./Zoomable.jsx";
 import { gapSentence } from "../lib/gaps.js";
+import { QuestionNotes, useAnnotations } from "./Annotations.jsx";
 
 // Traced scans are inlined as data URIs by the sync; other paths sit under the app's base URL.
 const tracedSrc = (url) => (url.startsWith("data:") ? url : `${import.meta.env.BASE_URL}${url}`);
@@ -26,13 +27,13 @@ const tokenIdsOf = (...texts) => texts.flatMap((t) => [...(typeof t === "string"
 
 // Long stimuli on phone: the first lines show with a fade, and "Leer texto completo" opens the rest.
 const LONG_TEXT = 600;
-function LongText({ html, className, long, resolve }) {
+function LongText({ html, className, long, resolve, ann, qkey }) {
   const [open, setOpen] = useState(false);
-  if (!long) return <RichText html={html} className={className} resolve={resolve} />;
+  if (!long) return <RichText html={html} className={className} resolve={resolve} ann={ann} qkey={qkey} />;
   return (
     <div className="long-text">
       <div className={open ? "clamp open" : "clamp"}>
-        <RichText html={html} className={className} resolve={resolve} />
+        <RichText html={html} className={className} resolve={resolve} ann={ann} qkey={qkey} />
       </div>
       <button type="button" className="link" onClick={() => setOpen(!open)} aria-expanded={open}>
         {open ? "Mostrar menos" : "Leer texto completo"}
@@ -91,6 +92,9 @@ export default function QuestionView({
   paneGroupMin = TEXT_PANE_MIN,
 }) {
   const { group } = question;
+  const groupAnn = group ? `g:${group.id}:stimulus` : undefined;
+  const ownAnn = `q:${question.key}:stimulus`;
+  const annotations = useAnnotations();
   const wide = useWide();
 
   const [groupOpen, setGroupOpen] = useState(!collapsedGroup);
@@ -148,13 +152,13 @@ export default function QuestionView({
     paneKind === "group" ? (
       <div className="pane-text" aria-label={`Texto para las preguntas ${group.from} a ${group.to}`}>
         {group.directions && <p className="directions">{group.directions}</p>}
-        <RichText html={group.stimulus_md} className="stimulus" resolve={resolveToken} />
+        <RichText html={group.stimulus_md} className="stimulus" resolve={resolveToken} ann={groupAnn} qkey={question.key} />
         {paneFigures.map((f) => <FigureBlock key={f.id} figure={f} alt={f.id} />)}
         {source}
       </div>
     ) : (
       <div className="pane-text">
-        <RichText html={question.stimulus_md} className="stimulus" resolve={resolveToken} />
+        <RichText html={question.stimulus_md} className="stimulus" resolve={resolveToken} ann={ownAnn} qkey={question.key} />
         {source}
       </div>
     ),
@@ -164,7 +168,7 @@ export default function QuestionView({
   const passage = group && showPassage && !inPane && (
     <section className="passage paper-passage" aria-label={`Texto para las preguntas ${group.from} a ${group.to}`}>
       {group.directions && <p className="directions">{group.directions}</p>}
-      <LongText html={group.stimulus_md} className="stimulus" long={!wide && (group.stimulus_md ?? "").length > LONG_TEXT} resolve={resolveToken} />
+      <LongText html={group.stimulus_md} className="stimulus" long={!wide && (group.stimulus_md ?? "").length > LONG_TEXT} resolve={resolveToken} ann={groupAnn} qkey={question.key} />
     </section>
   );
 
@@ -183,7 +187,7 @@ export default function QuestionView({
               {passage}
             </details>
           ) : passage)}
-          {ownInCard && <LongText html={question.stimulus_md} className="stimulus" long={!wide && question.stimulus_md.length > LONG_TEXT} resolve={resolveToken} />}
+          {ownInCard && <LongText html={question.stimulus_md} className="stimulus" long={!wide && question.stimulus_md.length > LONG_TEXT} resolve={resolveToken} ann={ownAnn} qkey={question.key} />}
           {traced.map((t) => (
             <figure className="traced-figure" key={t.figure_id}>
               <Zoomable src={tracedSrc(t.url)} alt={t.figure_id}>
@@ -217,8 +221,9 @@ export default function QuestionView({
             )}
           </div>
           {blankLine && <RichText html={blankLine} className="stem gap-line" />}
-          {!stemInPassage && !clozeStem && <RichText html={question.stem_md} className="stem" resolve={resolveToken} />}
+          {!stemInPassage && !clozeStem && <RichText html={question.stem_md} className="stem" resolve={resolveToken} ann={`q:${question.key}:stem`} qkey={question.key} />}
           {!hasContext && !paneKind && source}
+          {annotations && <QuestionNotes qkey={question.key} annPrefix={`q:${question.key}:`} />}
         </article>
 
         <ul className={chartOptions ? "options charts" : "options"} role="radiogroup" aria-label={`Opciones de la pregunta ${question.number}`}>
@@ -238,7 +243,7 @@ export default function QuestionView({
                   // The golden file marks an option whose figure is not drawn yet: say so, never show a scan.
                   <span className="pending-fig">Figura pendiente de dibujar</span>
                 ) : (
-                  <RichText html={opt.text_md} className="option-text" />
+                  <RichText html={opt.text_md} className="option-text" ann={`q:${question.key}:opt:${opt.letter}`} qkey={question.key} />
                 )}
                 {STATE_LABEL[state] && <span className="option-tag">{STATE_LABEL[state]}</span>}
               </>

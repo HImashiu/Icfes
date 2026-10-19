@@ -6,6 +6,7 @@ import { KINDS } from "../lib/assignments.js";
 import { TEACHER_ENTRY } from "../lib/teacherExam.js";
 import { areaColor } from "../lib/brand.js";
 import { confirmDialog, DateField, Select } from "../components/Controls.jsx";
+import { cleanGlossary } from "../lib/glossary.js";
 import {
   autoPick, bankItems, DIFFICULTY_LABEL, EMPTY_FILTER, facet, filterItems, moveKey, sortByBooklet, summarize, withGroupMates,
 } from "../lib/bank.js";
@@ -51,6 +52,8 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
   const [reveal, setReveal] = useState("after_submit");
   const [hints, setHints] = useState(true);
   const [instant, setInstant] = useState(true);
+  const [defsOn, setDefsOn] = useState(false);
+  const [defs, setDefs] = useState([{ term: "", def: "" }]);
   const [seconds, setSeconds] = useState("60");
   const [liveCourse, setLiveCourse] = useState("");
 
@@ -133,6 +136,8 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
           // Sent only when switched off, so creating assignments keeps working before migration 0007 runs.
           ...(hints ? {} : { allow_hints: false }),
           ...(instant || kind === "exam" ? {} : { instant_feedback: false }),
+          // Sent only when switched on, so creating assignments keeps working before migration 0011 runs.
+          ...(defsOn && cleanGlossary(defs).length ? { allow_definitions: true, definitions: cleanGlossary(defs) } : {}),
         });
       }
       onSaved(last, courseIds.length);
@@ -301,6 +306,20 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
       {kind !== "exam" && (
         <label className="check-row"><input type="checkbox" checked={hints} onChange={(e) => setHints(e.target.checked)} />
           <span>Permitir pistas antes de responder <span className="caption">(“Pista”, generada con IA)</span></span></label>
+      )}
+      <label className="check-row"><input type="checkbox" checked={defsOn} onChange={(e) => setDefsOn(e.target.checked)} />
+        <span>Mostrar definiciones de palabras <span className="caption">(las escribes tú; salen al tocar la palabra en textos y opciones)</span></span></label>
+      {defsOn && (
+        <div className="glossary-edit">
+          {defs.map((d, i) => (
+            <div key={i} className="glossary-row">
+              <input aria-label="Palabra" placeholder="Palabra" value={d.term} onChange={(e) => setDefs(defs.map((x, j) => (j === i ? { ...x, term: e.target.value } : x)))} />
+              <input aria-label="Definición" placeholder="Definición" value={d.def} onChange={(e) => setDefs(defs.map((x, j) => (j === i ? { ...x, def: e.target.value } : x)))} />
+              {defs.length > 1 && <button type="button" className="link" onClick={() => setDefs(defs.filter((_, j) => j !== i))} aria-label="Quitar palabra">Quitar</button>}
+            </div>
+          ))}
+          <button type="button" className="link" onClick={() => setDefs([...defs, { term: "", def: "" }])}>+ Agregar palabra</button>
+        </div>
       )}
         </>
       )}

@@ -1,5 +1,6 @@
 import { Fragment, useLayoutEffect, useMemo, useRef } from "react";
 import { renderRich } from "../lib/render.js";
+import { markTerms, useGlossary } from "./Glossary.jsx";
 
 // A formula stays on one line: one wider than its column is drawn with a smaller font, down to half size.
 // Same rule as the editor (icfes_admin fitMath); the room is the nearest block ancestor's content width less 8px.
@@ -49,7 +50,8 @@ function splitFigureTokens(source) {
 
 // Renders exam HTML (with math and figure slots) as text, never as raw markup.
 // With `resolve` (an id to element function), each [[figura:ID]] token is drawn in place of its text.
-export default function RichText({ html, className, resolve }) {
+export default function RichText({ html, className, resolve, ann, qkey }) {
+  const glossary = useGlossary();
   const parts = useMemo(() => (resolve ? splitFigureTokens(html) : null), [html, resolve]);
   const inline = Boolean(parts?.some((p) => p.id));
   const safe = useMemo(() => (inline ? "" : renderRich(html)), [html, inline]);
@@ -57,10 +59,11 @@ export default function RichText({ html, className, resolve }) {
   useLayoutEffect(() => {
     const node = ref.current;
     fitMath(node);
+    if (!inline) markTerms(node, glossary);
     const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(() => fitMath(node)) : null;
     observer?.observe(node);
     return () => observer?.disconnect();
-  }, [safe, inline]);
+  }, [safe, inline, glossary]);
   if (inline) {
     return (
       <div ref={ref} className={className}>
@@ -68,5 +71,5 @@ export default function RichText({ html, className, resolve }) {
       </div>
     );
   }
-  return <div ref={ref} className={className} dangerouslySetInnerHTML={{ __html: safe }} />;
+  return <div ref={ref} className={className} data-ann={ann} data-annq={qkey} dangerouslySetInnerHTML={{ __html: safe }} />;
 }

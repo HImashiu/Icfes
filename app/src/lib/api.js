@@ -46,6 +46,10 @@ export function createApi(client) {
       const query = (c) => client.from("assignments").select(c).order("created_at", { ascending: false });
       // allow_hints and instant_feedback arrive with migrations 0007 and 0008; until they run, every assignment
       // offers hints and immediate feedback.
+      // allow_definitions and definitions arrive with migration 0011.
+      const withDefs = await query(`${cols}, allow_hints, instant_feedback, allow_definitions, definitions`);
+      if (!withDefs.error) return unwrap(withDefs);
+      if (!/allow_definitions|definitions/.test(withDefs.error.message ?? "")) unwrap(withDefs);
       const first = await query(`${cols}, allow_hints, instant_feedback`);
       if (first.error && /allow_hints|instant_feedback/.test(first.error.message ?? "")) {
         const hintsOnly = await query(`${cols}, allow_hints`);
@@ -77,6 +81,16 @@ export function createApi(client) {
         return;
       }
       unwrap(first);
+    },
+    // A student's highlights and notes on one booklet (migration 0011). Without the table, both calls fail quietly.
+    async myAnnotations(slug) {
+      const row = unwrap(await client.from("annotations").select("items").eq("exam_slug", slug).maybeSingle());
+      return row?.items ?? [];
+    },
+    async saveAnnotations(slug, items) {
+      const { data: auth } = await client.auth.getUser();
+      if (!auth?.user) return;
+      unwrap(await client.from("annotations").upsert({ profile_id: auth.user.id, exam_slug: slug, items, updated_at: new Date().toISOString() }, { onConflict: "profile_id,exam_slug" }));
     },
     async myAttempts() {
       return unwrap(await client.from("attempts").select("assignment_id, submitted_at, mode, score, client_id").not("assignment_id", "is", null));

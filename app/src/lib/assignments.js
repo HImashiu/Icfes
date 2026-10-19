@@ -1,6 +1,7 @@
 // Pure helpers for assignments: which questions, what state, who has finished. No network, no React.
 import { questionsFor, scoreAttempt, timedSeconds } from "./exam.js";
 import { roundedTimes } from "./studentRun.js";
+import { orderQuestions } from "./order.js";
 
 export const KINDS = [
   { id: "task", label: "Práctica", mode: "practice" },
@@ -20,7 +21,7 @@ export function pickQuestionKeys(questions, count) {
 
 // The questions an attempt covers: the whole scope, or the assignment's chosen keys in booklet order.
 export function questionsForAttempt(exam, attempt) {
-  const all = questionsFor(exam, attempt.scope);
+  const all = attempt.keys ? questionsFor(exam, attempt.scope) : orderQuestions(questionsFor(exam, attempt.scope), attempt.scope === "all" ? attempt.order : null);
   if (!attempt.keys) return all;
   // The teacher's order wins; a key that no longer exists in the booklet is skipped.
   const byKey = new Map(all.map((q) => [q.key, q]));
@@ -46,6 +47,7 @@ export function attemptForAssignment(a, questions, now = Date.now()) {
     maxAttempts: a.max_attempts ?? null,
     reveal: a.reveal_policy ?? "after_submit",
     hints: a.allow_hints !== false,
+    glossary: a.allow_definitions ? a.definitions ?? [] : [],
     instant: a.instant_feedback !== false,
     durationSec: mode === "timed" ? (a.time_limit_min ? a.time_limit_min * 60 : timedSeconds(questions)) : null,
     startedAt: now,

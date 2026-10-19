@@ -8,6 +8,8 @@ import { scoreAttempt } from "../lib/exam.js";
 import { attemptXp } from "../lib/xp.js";
 import { WEAKEST_AREA } from "../data/mock.js";
 import { areaColor, fmtInt, fmtPct } from "../lib/brand.js";
+import { fmtSec, timeSummary } from "../lib/timing.js";
+import { missedKeys, rightKeys } from "../lib/repechaje.js";
 
 // Resultados: celebrating mascot, three stats, per-area bars, the preliminary-key notice and the next steps.
 // Phone: each area folds to one line; the areas with errors start open. Desktop shows every area.
@@ -21,7 +23,7 @@ function headline(pct, answered) {
 }
 const isPhone = typeof window !== "undefined" && !window.matchMedia?.("(min-width: 768px)").matches;
 
-export default function Results({ title, questions, attempt, answerKey, keyStatus, onReview, onReviewAt, onHome, onRetry, locked = false, lockedNote = null }) {
+export default function Results({ title, questions, attempt, answerKey, keyStatus, onReview, onReviewAt, onHome, onRetry, locked = false, lockedNote = null, onReviewTimes, onRepechaje }) {
   const score = scoreAttempt(questions, attempt.answers, answerKey);
   const preliminary = keyStatus !== "official";
   // A simulacro is graded like the real exam: blanks count as wrong, so the score is out of every question.
@@ -33,6 +35,10 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
   const flagged = Object.keys(attempt.flags).length;
   const delivered = Boolean(attempt.submittedAt);
   const xpEarned = attemptXp(questions, attempt, answerKey);
+  const time = timeSummary(questions, attempt.times);
+  // A repechaje round reports how many second chances were won.
+  const again = attempt.repechaje || attempt.assignmentId || attempt.readOnly ? [] : missedKeys(questions, attempt.answers, answerKey, attempt.mode);
+  const won = attempt.repechaje ? score.correct : 0;
 
   // Keep the finished attempt in "Mis simulacros" (once per attempt, stored in this browser).
   useEffect(() => {
@@ -50,6 +56,8 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
       percent: pct ?? 0,
       perArea: score.perArea.map((a) => ({ name: a.name, correct: a.correct, answered: a.answered, total: a.total })),
       xp: xpEarned,
+      missed: attempt.readOnly ? [] : missedKeys(questions, attempt.answers, answerKey, attempt.mode),
+      right: attempt.readOnly ? [] : rightKeys(questions, attempt.answers, answerKey),
       // What "Abrir" needs to show this attempt again (its answers and flags, no key).
       snapshot: {
         slug: attempt.slug,
@@ -57,6 +65,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
         mode: attempt.mode,
         answers: attempt.answers,
         flags: attempt.flags,
+        times: attempt.times,
         startedAt: attempt.startedAt,
         submittedAt: attempt.submittedAt,
         auto: attempt.auto,
@@ -139,6 +148,41 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
         })}
         <p className="footnote">+10 XP por acierto{score.perArea.some((a) => a.name === WEAKEST_AREA) ? ` · +20 en ${WEAKEST_AREA}` : ""}.{preliminary ? " Clave preliminar, no oficial: el puntaje es orientativo." : ""}</p>
       </div>
+
+      {attempt.repechaje && delivered && score.keyed && (
+        <div className="card repechaje-card">
+          <Mascot pose={won > 0 ? "celebrating" : "normal"} size={48} />
+          <div><strong>Repechaje: recuperaste {fmtInt(won)} de {fmtInt(score.total)}</strong><span className="caption">{won === score.total ? "¡Todas! Esas preguntas ya no están pendientes." : "Las que aún fallas siguen en tu lista de repechaje."}</span></div>
+        </div>
+      )}
+      {!attempt.repechaje && delivered && !locked && again.length > 0 && onRepechaje && (
+        <div className="card repechaje-card">
+          <Mascot size={48} />
+          <div><strong>Segunda oportunidad</strong><span className="caption">Fallaste {fmtInt(again.length)} {again.length === 1 ? "pregunta" : "preguntas"}. Inténtalas otra vez ahora.</span></div>
+          <button type="button" className="primary" onClick={() => onRepechaje(again)}>Repechaje</button>
+        </div>
+      )}
+
+      {time.has && (
+        <div className="card time-card">
+          <span className="label">Tiempo por pregunta</span>
+          <div className="time-stats">
+            <span><strong className="display">{fmtSec(time.total)}</strong> <span className="caption">en total</span></span>
+            <span><strong className="display">{fmtSec(time.avg)}</strong> <span className="caption">por pregunta</span></span>
+          </div>
+          {time.perArea.length > 1 && time.perArea.map((a) => (
+            <div key={a.name} className="area-row-head"><span><span className="dot" style={{ background: areaColor(a.name) }} /> {a.name}</span><span className="muted">{fmtSec(a.avg)} por pregunta</span></div>
+          ))}
+          <span className="caption">Las que más tiempo te tomaron</span>
+          <div className="time-slow">
+            {time.slowest.map((r) => (
+              <button key={r.key} type="button" className="time-chip" disabled={locked} onClick={() => onReviewTimes?.(questions.findIndex((q) => q.key === r.key))}>
+                Pregunta {r.number} · {fmtSec(r.sec)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {flagged > 0 && <p className="caption">Marcó {fmtInt(flagged)} {flagged === 1 ? "pregunta" : "preguntas"} para revisar.</p>}
 
