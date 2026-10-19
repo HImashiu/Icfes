@@ -134,8 +134,8 @@ describe("AssignedList", () => {
     rerender(<AssignedList assignments={[a]} attempts={[{ assignment_id: "a1", submitted_at: "2026-10-17T10:00:00Z" }]} onStart={onStart} />);
     expect(screen.getByText("Entregada")).toBeTruthy();
   });
-  it("renders nothing when there are no open tasks", () => {
+  it("explains where tasks will appear when there are none", () => {
     const { container } = render(<AssignedList assignments={[]} attempts={[]} onStart={() => {}} />);
-    expect(container.firstChild).toBeNull();
+    expect(container.textContent).toMatch(/aparecerá aquí/);
   });
 });

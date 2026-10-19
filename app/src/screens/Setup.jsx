@@ -58,34 +58,26 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, 
         <span className="caption">Fuente: ICFES, Saber 11 · {exam.questions.length} preguntas</span>
       </div>
 
-      <div className="segmented" role="tablist" aria-label="Alcance">
-        <button type="button" role="tab" aria-selected={scope === "all"} className={scope === "all" ? "seg active" : "seg"} onClick={() => setScope("all")}>
-          Examen completo
+      <div className="chips scope-chips" role="radiogroup" aria-label="Qué practicar">
+        <button type="button" role="radio" aria-checked={scope === "all"} className={scope === "all" ? "chip on" : "chip"} onClick={() => setScope("all")}>
+          Examen completo <span className="muted">{fmtInt(exam.questions.length)}</span>
         </button>
-        <button type="button" role="tab" aria-selected={scope !== "all"} className={scope !== "all" ? "seg active" : "seg"} onClick={() => setScope(exam.sections[0]?.name)}>
-          Por área
-        </button>
+        {exam.sections.map((s) => (
+          <button
+            key={s.name}
+            type="button"
+            role="radio"
+            aria-checked={scope === s.name}
+            className={scope === s.name ? "chip on" : "chip"}
+            onClick={() => setScope(s.name)}
+          >
+            <span className="dot" style={{ background: areaColor(s.name) }} />
+            {s.name} <span className="muted">{fmtInt(s.questions.length)}</span>
+          </button>
+        ))}
       </div>
       {!exam.sections.some((s) => s.name === "Inglés") && (
         <p className="footnote">Este cuadernillo es de la sesión 1 y no incluye Inglés. Inglés está en los cuadernillos de la sesión 2.</p>
-      )}
-
-      {scope !== "all" && (
-        <div className="chips" role="radiogroup" aria-label="Área">
-          {exam.sections.map((s) => (
-            <button
-              key={s.name}
-              type="button"
-              role="radio"
-              aria-checked={scope === s.name}
-              className={scope === s.name ? "chip on" : "chip"}
-              onClick={() => setScope(s.name)}
-            >
-              <span className="dot" style={{ background: areaColor(s.name) }} />
-              {s.name} <span className="muted">{fmtInt(s.questions.length)}</span>
-            </button>
-          ))}
-        </div>
       )}
 
       <div className="mode-cards" role="radiogroup" aria-label="Modo">

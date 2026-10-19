@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { Component, useCallback, useEffect, useState } from "react";
 import Home from "./screens/Home.jsx";
 import Setup from "./screens/Setup.jsx";
 import Test from "./screens/Test.jsx";
@@ -30,6 +30,24 @@ import { CONSENT_VERSION, needsTerms } from "./lib/consent.js";
 import { attemptForAssignment, attemptRow, attemptsLeft, questionsForAttempt, revealAllowed } from "./lib/assignments.js";
 
 const base = import.meta.env.BASE_URL;
+
+// A screen that throws must never leave a blank page: show a way back instead.
+class ScreenBoundary extends Component {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <main className="frame">
+        <div className="card" style={{ display: "grid", gap: 12, justifyItems: "start" }}>
+          <strong>Algo salió mal en esta pantalla</strong>
+          <span className="caption">Tu avance está guardado en este dispositivo.</span>
+          <button type="button" className="primary" onClick={this.props.onHome}>Volver al inicio</button>
+        </div>
+      </main>
+    );
+  }
+}
 
 async function getJson(path) {
   const res = await fetch(base + path);
@@ -170,6 +188,8 @@ export default function App() {
   const loadAssigned = useCallback(async () => {
     if (!signedIn) return setAssigned({ assignments: [], attempts: [] });
     try {
+      // Roster rows a teacher typed with another spelling of the email are linked to this account (migration 0010).
+      await auth.api.linkRoster();
       const [assignments, attempts] = await Promise.all([auth.api.listAssignments(), auth.api.myAttempts()]);
       setAssigned({ assignments, attempts });
     } catch {
@@ -221,8 +241,9 @@ export default function App() {
   };
 
   const submit = useCallback(({ auto }) => {
+    // A late auto-submit (timer) after the student already left must not open an empty results screen.
     setAttempt((a) => (a && !a.submittedAt ? { ...a, submittedAt: Date.now(), auto } : a));
-    setView("results");
+    setView((v) => (v === "test" ? "results" : v));
   }, []);
 
   // "Mis simulacros": reopen a finished attempt on its results, exactly as it was delivered.
@@ -250,6 +271,7 @@ export default function App() {
   const goHome = () => {
     setView("home");
     setAttempt(null);
+    setLive(null);
   };
 
   // Presentation for schools (not in the navigation): open the app with #presentacion.
@@ -288,11 +310,13 @@ export default function App() {
   const examTitle = selected ? `${selected.exam.title} · ${scopeTitle}` : "";
   // The sidebar stays on every screen except the test; results and review belong to Practicar, reports to Perfil.
   const navView = { home: "home", setup: "setup", results: "setup", review: "setup", history: "history", profile: "profile", login: "profile", reports: "profile" }[view] ?? null;
+  const needsAttempt = view === "test" || view === "results" || view === "review";
   const resumable = selected && view === "home" ? findResumable(selected.slug, selected.exam) : null;
 
   return (
     <ExamContext.Provider value={selected?.slug ?? null}>
     <div className={view === "test" || view === "teacher" ? "app wide" : "app"}>
+      <ScreenBoundary key={view} onHome={goHome}>
       {loadError && <p className="notice error">{loadError}</p>}
       {openError && <p className="notice error">{openError}</p>}
       {opening && <p className="muted pad">Cargando cuadernillo…</p>}
@@ -308,7 +332,8 @@ export default function App() {
           onPractice={() => { setPreset(null); setView("setup"); }}
           onSetup={(p) => { setPreset(p); setView("setup"); }}
           onGo={setView}
-          assigned={assigned}
+          signedOut={auth.status === "signed-out" || auth.status === "guest"}
+          assigned={signedIn ? assigned : null}
           onStartAssigned={startAssigned}
           realName={signedIn ? (auth.profile.full_name || auth.profile.email).split(" ")[0] : null}
           onLive={auth.status !== "demo" && auth.status !== "loading" ? () => setView("liveJoin") : null}
@@ -334,7 +359,7 @@ export default function App() {
           questions={questions}
           attempt={attempt}
           answerKey={locked ? null : selected.key}
-          onChange={setAttempt}
+          onChange={(next) => setAttempt((a) => (a ? (typeof next === "function" ? next(a) : next) : a))}
           onSubmit={submit}
           onExit={goHome}
           figures={selected.figures}
@@ -386,6 +411,9 @@ export default function App() {
       {view === "teacher" && (auth.status === "ready" && auth.profile.role !== "student"
         ? <TeacherLive auth={auth} exams={exams} fetchExam={fetchExam} onExit={() => setView("profile")} />
         : <Teacher onExit={() => setView("profile")} />)}
+
+      {needsAttempt && !attempt && <main className="frame"><p className="muted">Esta actividad ya no está abierta.</p><button type="button" className="primary" onClick={goHome}>Volver al inicio</button></main>}
+      </ScreenBoundary>
 
       {navView && <BottomNav active={navView} onGo={(v) => { if (v === "setup") setPreset(null); setView(v); }} />}
     </div>

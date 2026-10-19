@@ -9,7 +9,14 @@ export default function AssignedList({ assignments, attempts, onStart }) {
   for (const a of attempts) if (a.submitted_at) used.set(a.assignment_id, (used.get(a.assignment_id) ?? 0) + 1);
   const done = new Set(used.keys());
   const open = assignments.filter((a) => assignmentState(a) === "active" || (assignmentState(a) === "closed" && done.has(a.id)));
-  if (open.length === 0) return null;
+  if (open.length === 0) {
+    return (
+      <div className="card">
+        <span className="label">Tareas de tu curso</span>
+        <span className="caption">Cuando tu docente te asigne una tarea, aparecerá aquí. Si ya te la asignó, pídele que revise que tu correo esté en la lista del curso.</span>
+      </div>
+    );
+  }
   return (
     <div className="card">
       <span className="label">Tareas de tu curso</span>

@@ -10,6 +10,7 @@ export default function Login({ onBack }) {
   const [name, setName] = useState("");
   const [error, setError] = useState(auth.error ? claimMessage() : null);
   const [busy, setBusy] = useState(false);
+  const [teacher, setTeacher] = useState(false);
 
   const claim = async (e) => {
     e.preventDefault();
@@ -30,15 +31,19 @@ export default function Login({ onBack }) {
       <section className="profile">
         <header className="screen-head"><h1>Casi listo</h1></header>
         <form className="card t-card assign-form" onSubmit={claim}>
-          <span className="caption">Ingresaste como {auth.user?.email}.</span>
+          <span className="caption">Ingresaste como {auth.user?.email}. Solo falta tu nombre.</span>
           <label className="field">
             <span className="label">Tu nombre</span>
             <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" placeholder="Nombre y apellido" />
           </label>
-          <label className="field">
-            <span className="label">Código de docente (solo si eres docente)</span>
-            <input value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" placeholder="Pídelo a la coordinación" />
-          </label>
+          {!teacher ? (
+            <button type="button" className="link" onClick={() => setTeacher(true)}>Soy docente</button>
+          ) : (
+            <label className="field">
+              <span className="label">Código de docente</span>
+              <input value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" placeholder="Pídelo a la coordinación" />
+            </label>
+          )}
           {error && <p className="notice error" role="alert">{error}</p>}
           <div className="report-actions">
             <button type="button" className="secondary" onClick={auth.signOut}>Salir</button>

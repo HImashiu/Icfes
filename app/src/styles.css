@@ -1773,3 +1773,7 @@ details.answers-area > summary > :last-child { margin-left: auto; }
 .scanner-done { min-height: 52px; }
 .scanner-msg { position: relative; z-index: 1; grid-row: 2; align-self: center; margin: 0 20px; padding: 20px; border-radius: 18px; background: var(--surface); color: var(--text); display: grid; gap: 12px; justify-items: center; text-align: center; }
 @media (prefers-reduced-motion: reduce) { .scanner-flash { animation: none; } }
+
+/* Navigation fixes */
+.home-head .login-btn { padding: 8px 14px; min-height: 0; white-space: nowrap; }
+.scope-chips { flex-wrap: wrap; }

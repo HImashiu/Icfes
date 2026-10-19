@@ -71,3 +71,18 @@ export function studentRun(questions, key, attempt, avgTimes = new Map()) {
     slowest: [...timed].sort((a, b) => b.sec - a.sec).slice(0, 3),
   };
 }
+
+// A made-up delivered attempt so a teacher can preview an individual report before any student has delivered.
+export function sampleRunAttempt(questions, key) {
+  const answers = {}, times = {}, hints = {}, changes = {};
+  questions.forEach((q, i) => {
+    const right = key?.get(q.key);
+    if (i % 7 === 6) { times[q.key] = 6; return; }
+    const letter = ["A", "B", "C", "D"].find((l) => l !== right) ?? "A";
+    answers[q.key] = right && i % 3 !== 2 ? right : letter;
+    times[q.key] = 25 + ((i * 37) % 90);
+    if (i % 5 === 4) hints[q.key] = true;
+    if (i % 6 === 3) changes[q.key] = 1;
+  });
+  return { answers, times, activity: { hints, changes }, duration_sec: Object.values(times).reduce((n, t) => n + t, 0), started_at: new Date(Date.now() - 3600e3).toISOString(), submitted_at: new Date().toISOString() };
+}

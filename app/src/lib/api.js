@@ -53,6 +53,10 @@ export function createApi(client) {
       }
       return unwrap(first);
     },
+    // Links this account to roster rows with the same email; quietly does nothing until migration 0010 has run.
+    async linkRoster() {
+      try { await client.rpc("link_my_roster"); } catch { /* not installed yet */ }
+    },
     async createAssignment(a) {
       return unwrap(await client.from("assignments").insert(a).select().single());
     },

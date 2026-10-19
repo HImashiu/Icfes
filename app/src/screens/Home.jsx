@@ -10,7 +10,7 @@ const DAYS = ["L", "M", "X", "J", "V", "S", "D"];
 // Inicio: streak, continue, quick cards, weekly XP, mastery by area. No class ranking: progress is measured
 // against the student's own goal, never against classmates.
 // Streak, XP, weekly and mastery values are SAMPLE data (see data/mock.js).
-export default function Home({ exam, resumable, onContinue, onPractice, onSetup, xpSession, assigned, onStartAssigned, onLive, realName }) {
+export default function Home({ exam, resumable, onContinue, onPractice, onSetup, xpSession, assigned, onStartAssigned, onLive, realName, signedOut, onGo }) {
   const todayIndex = (new Date().getDay() + 6) % 7;
   const xp = SAMPLE_STUDENT.xp + (xpSession ?? 0);
 
@@ -28,6 +28,7 @@ export default function Home({ exam, resumable, onContinue, onPractice, onSetup,
           <span className="caption">{realName ? "Tu colegio" : SAMPLE_STUDENT.course}</span>
           <strong>Hola, {realName ?? SAMPLE_STUDENT.name}</strong>
         </div>
+        {signedOut && onGo && <button type="button" className="primary login-btn" onClick={() => onGo("login")}>Iniciar sesión</button>}
         <div className="pills">
           <span className="pill"><Icon name="flame" size={16} className="flame-ico" /><b className="flame-text">{SAMPLE_STUDENT.streak}</b></span>
           <span className="pill"><Icon name="bolt" size={16} className="accent-ico" /><b className="accent-text">{fmtInt(xp)}</b></span>

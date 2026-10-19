@@ -6,6 +6,7 @@ import QuestionView from "../components/QuestionView.jsx";
 import AutopsyCard from "../components/AutopsyCard.jsx";
 import { Bars, Histogram, Kpi } from "./Dashboard.jsx";
 import StudentRun from "./StudentRun.jsx";
+import { sampleRunAttempt } from "../lib/studentRun.js";
 import { classTimes, fmtDuration } from "../lib/studentRun.js";
 import { familyPayload, reportUrl, whatsappLink } from "../lib/family.js";
 import { confirmDialog } from "../components/Controls.jsx";
@@ -27,6 +28,7 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
   const [share, setShare] = useState(null);
   const [familyMsg, setFamilyMsg] = useState(null);
   const [student, setStudent] = useState(null);
+  const [sample, setSample] = useState(false);
 
   useEffect(() => {
     guard(async () => {
@@ -143,6 +145,13 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
           </tbody>
         </table>
       </div>
+      {prog.done === 0 && bundle && view.questions.length > 0 && (
+        sample ? (
+          <StudentRun name="Estudiante de ejemplo (datos inventados)" attempts={[sampleRunAttempt(view.questions.slice(0, 20), bundle.key)]} questions={view.questions.slice(0, 20)} answerKey={bundle.key} avgTimes={new Map()} onClose={() => setSample(false)} />
+        ) : (
+          <button type="button" className="secondary no-print" onClick={() => setSample(true)}>Ver un ejemplo de reporte individual</button>
+        )
+      )}
       {student && (() => {
         const row = rows.find((r) => r.id === student);
         return row && row.attempts.length > 0 && bundle ? (
