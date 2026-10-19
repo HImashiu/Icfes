@@ -6,6 +6,7 @@ import ReportError from "../components/ReportError.jsx";
 import AiAnalysis from "../components/AiAnalysis.jsx";
 import Icon from "../components/Icon.jsx";
 import { areaColor } from "../lib/brand.js";
+import { fmtSec, paceOf, timeSummary } from "../lib/timing.js";
 
 // The key sidecar holds internal English notes for some questions; a student sees the explanation
 // only when it is written in Spanish.
@@ -40,6 +41,9 @@ export default function Review({ questions, attempt, answerKey, keyStatus, notes
   const i = Math.min(index, Math.max(0, visible.length - 1));
   const q = visible[i];
   const note = q && notes?.get(q.key);
+  const time = timeSummary(questions, attempt.times);
+  const sec = q ? attempt.times?.[q.key] : null;
+  const pace = paceOf(sec, time.median);
 
   // A long text gets its own pane, as on the test screen: a column beside the question on a wide screen,
   // a docked panel above it otherwise.
@@ -102,6 +106,7 @@ export default function Review({ questions, attempt, answerKey, keyStatus, notes
                   <span className="caption">
                     {yours ? `Tu respuesta ${yours}` : "Sin responder"}
                     {key ? ` · clave ${key}` : ""}
+                    {attempt.times?.[question.key] > 0 ? ` · ${fmtSec(attempt.times[question.key])}` : ""}
                   </span>
                 </span>
                 <span className={`rv-mark ${g}`} aria-hidden="true">{g === "ok" ? "✓" : g === "bad" ? "✕" : "–"}</span>
@@ -140,6 +145,13 @@ export default function Review({ questions, attempt, answerKey, keyStatus, notes
             questionView
           )}
           <AiAnalysis row={enrich?.[String(q.number)]} correctLetter={answerKey?.get(q.key) ?? null} meta={enrichMeta} />
+          {sec > 0 && (
+            <div className="card q-time" aria-label="Tiempo en esta pregunta">
+              <Icon name="clock" size={16} />
+              <span>Tiempo: <strong>{fmtSec(sec)}</strong>{time.median ? ` · tu mediana ${fmtSec(time.median)}` : ""}{pace === "slow" ? " · te tomó más de lo normal" : pace === "fast" ? " · la resolviste rápido" : ""}</span>
+              <span className={pace === "slow" ? "bar slow" : "bar"}><span style={{ width: `${Math.min(100, (sec / Math.max(time.median * 3, sec)) * 100)}%` }} /></span>
+            </div>
+          )}
           <div className="card why">
             <span className="label">{note?.reason && answerKey && looksSpanish(note.reason) ? "Por qué" : "Detalles"}</span>
             {note?.reason && answerKey && looksSpanish(note.reason) && <p>{note.reason}</p>}

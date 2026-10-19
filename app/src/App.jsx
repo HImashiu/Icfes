@@ -27,6 +27,10 @@ import { TEACHER_SLUG, teacherExam } from "./lib/teacherExam.js";
 import LivePlay, { LiveJoin } from "./screens/LivePlay.jsx";
 import { joinCodeFromHash } from "./lib/joinLink.js";
 import { CONSENT_VERSION, needsTerms } from "./lib/consent.js";
+import { AnnotationProvider } from "./components/Annotations.jsx";
+import { GlossaryProvider } from "./components/Glossary.jsx";
+import { loadHistory } from "./lib/local.js";
+import { pendingMisses, repechajeKeys } from "./lib/repechaje.js";
 import { attemptForAssignment, attemptRow, attemptsLeft, questionsForAttempt, revealAllowed } from "./lib/assignments.js";
 
 const base = import.meta.env.BASE_URL;
@@ -52,7 +56,7 @@ function findResumable(slug, exam) {
 }
 
 // An assignment's attempt is saved apart from free practice on the same area.
-const storeScope = (a) => (a.assignmentId ? `asg-${a.assignmentId}` : a.scope);
+const storeScope = (a) => (a.assignmentId ? `asg-${a.assignmentId}` : a.repechaje ? "repechaje" : a.scope);
 
 export default function App() {
   const auth = useAuth();
@@ -146,7 +150,21 @@ export default function App() {
     if (attempt && !attempt.readOnly) saveAttempt(attempt.slug, storeScope(attempt), attempt);
   }, [attempt]);
 
-  const startAttempt = (scope, mode) => {
+  // Second chance: the questions this student missed before and has not answered right since.
+  const pendingKeys = (slug, exam) => {
+    const valid = new Set(exam.questions.map((q) => q.key));
+    return pendingMisses(loadHistory(), slug).filter((k) => valid.has(k));
+  };
+  const startRepechaje = (keys) => {
+    clearAttempt(selected.slug, "repechaje");
+    setAttempt({
+      slug: selected.slug, scope: "all", keys: repechajeKeys(keys), repechaje: true, mode: "practice", durationSec: null,
+      startedAt: Date.now(), answers: {}, flags: {}, checked: {}, xp: 0, current: 0, submittedAt: null, auto: false,
+    });
+    setView("test");
+  };
+
+  const startAttempt = (scope, mode, order) => {
     const questions = questionsFor(selected.exam, scope);
     clearAttempt(selected.slug, scope);
     setAttempt({
@@ -155,6 +173,7 @@ export default function App() {
       mode,
       durationSec: mode === "timed" ? timedSeconds(questions) : null,
       startedAt: Date.now(),
+      order: scope === "all" ? order : undefined,
       answers: {},
       flags: {},
       checked: {},
@@ -324,10 +343,14 @@ export default function App() {
           onPickExam={(slug) => openExam(slug)}
           onBack={() => setView("home")}
           onStart={startAttempt}
+          pendingKeys={pendingKeys(selected.slug, selected.exam)}
+          onRepechaje={() => startRepechaje(pendingKeys(selected.slug, selected.exam))}
         />
       )}
 
       {view === "test" && attempt && selected && (
+        <AnnotationProvider slug={selected.slug} profileId={auth.profile?.id ?? null} api={auth.api}>
+        <GlossaryProvider glossary={attempt.glossary}>
         <Test
           title={examTitle}
           examLabel={selected.exam.title}
@@ -341,6 +364,8 @@ export default function App() {
           enrich={selected.enrich}
           enrichMeta={selected.enrichMeta}
         />
+        </GlossaryProvider>
+        </AnnotationProvider>
       )}
 
       {view === "results" && attempt && selected && (
@@ -355,11 +380,15 @@ export default function App() {
           onHome={goHome}
           locked={locked}
           lockedNote={attempt?.reveal === "after_close" ? "Tu docente mostrará las respuestas cuando cierre la asignación." : undefined}
-          onRetry={attempt.assignmentId ? retryAssigned : () => startAttempt(attempt.scope, attempt.mode)}
+          onRetry={attempt.assignmentId ? retryAssigned : attempt.repechaje ? null : () => startAttempt(attempt.scope, attempt.mode, attempt.order)}
+          onReviewTimes={(n) => { setReviewStart(n); setView("review"); }}
+          onRepechaje={startRepechaje}
         />
       )}
 
       {view === "review" && attempt && selected && (
+        <AnnotationProvider slug={selected.slug} profileId={auth.profile?.id ?? null} api={auth.api}>
+        <GlossaryProvider glossary={attempt.glossary}>
         <Review
           questions={questions}
           attempt={attempt}
@@ -374,6 +403,8 @@ export default function App() {
           startNumber={reviewNumber}
           onBack={() => setView(attempt.from === "reports" ? "reports" : "results")}
         />
+        </GlossaryProvider>
+        </AnnotationProvider>
       )}
 
       {view === "liveJoin" && <LiveJoin auth={auth} initialCode={joinCode} onBack={() => setView("home")} onJoined={(row, nickname) => { setLive({ row, nickname }); setView("livePlay"); }} />}
