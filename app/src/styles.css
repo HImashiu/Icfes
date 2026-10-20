@@ -1843,3 +1843,28 @@ details.answers-area > summary > :last-child { margin-left: auto; }
 .t-group { display: block; margin: 14px 12px 4px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; opacity: .55; }
 .t-nav { display: flex; align-items: center; gap: 10px; }
 @media (max-width: 767px) { .t-group { display: none; } .t-nav span { white-space: nowrap; } }
+
+/* Seating plan for paper tests */
+.seat-card .seat-config { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin: 10px 0; }
+.seat-grid { display: grid; gap: 6px; margin: 12px 0; max-width: 100%; overflow-x: auto; }
+.seat { min-width: 0; min-height: 58px; border-radius: 12px; border: 2px solid var(--line, #d9dde3); background: var(--surface, #fff); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 4px; font: inherit; color: inherit; text-align: center; }
+.seat strong { font-size: 1.05rem; }
+.seat span { font-size: 0.72rem; line-height: 1.15; overflow-wrap: anywhere; }
+button.seat { cursor: pointer; }
+.seat.is-blocked { background: transparent; border-style: dashed; opacity: 0.55; }
+.seat.is-empty { border-style: dashed; }
+.seat.v0 { border-color: #58cc02; } .seat.v1 { border-color: #1cb0f6; } .seat.v2 { border-color: #ff9600; } .seat.v3 { border-color: #ce82ff; } .seat.v4 { border-color: #ff4b4b; } .seat.v5 { border-color: #2b70c9; }
+.seat-board { text-align: center; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.78rem; padding: 6px; border-radius: 10px; background: var(--line, #eef0f3); }
+.seat-apart { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+.seat-apart .chip button { margin-left: 6px; }
+.seat-chart-page { background: #fff; color: #000; padding: 14mm; width: 210mm; min-height: 297mm; box-sizing: border-box; font-family: Arial, sans-serif; }
+.seat-chart-page h1 { font-size: 18pt; margin: 0 0 4pt; }
+.seat-chart-page .seat-board { background: #000; color: #fff; border-radius: 0; margin: 8pt 0; }
+.seat-chart-page .seat-grid { overflow: visible; gap: 4pt; }
+.seat-chart-page .seat { border: 1.5px solid #000; border-radius: 0; background: #fff; min-height: 17mm; }
+.seat-chart-page .seat.is-blocked { border-style: dotted; opacity: 1; }
+.seat-chart-page .seat.is-empty { border-style: dashed; }
+.seat-chart-page .seat strong { font-size: 14pt; }
+.seat-chart-page .seat span { font-size: 8pt; }
+.seat-chart-page .seat-legend { font-size: 9pt; margin-top: 8pt; }
+.pb-version { font-weight: 800; }

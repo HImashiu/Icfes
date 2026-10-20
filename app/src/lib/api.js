@@ -144,6 +144,15 @@ export function createApi(client) {
     async paperSubmit(assignmentId, memberId, answers, score) {
       unwrap(await client.rpc("paper_submit", { p_assignment: assignmentId, p_member: memberId, p_answers: answers, p_score: score }));
     },
+    // The seating plan of a paper assignment (migration 0013). The sheets are printed and scanned with it, so it is kept with the assignment.
+    async getSeating(assignmentId) {
+      const { data, error } = await client.from("paper_seating").select("plan").eq("assignment_id", assignmentId).maybeSingle();
+      if (error) throw Object.assign(new Error(error.message), { code: error.code });
+      return data?.plan ?? null;
+    },
+    async saveSeating(assignmentId, plan) {
+      unwrap(await client.from("paper_seating").upsert({ assignment_id: assignmentId, plan, updated_at: new Date().toISOString() }));
+    },
     async createFamilyReport(profileId, payload) {
       return unwrap(await client.rpc("create_family_report", { p_profile: profileId, p_payload: payload }));
     },
