@@ -1,6 +1,8 @@
 import RichText from "./RichText.jsx";
 import FigureBlock from "./FigureBlock.jsx";
 import { SOURCE_LINE } from "../lib/exam.js";
+import owlUrl from "../assets/owl.svg";
+import { APP_NAME } from "../lib/brand.js";
 
 const tracedSrc = (url) => (url.startsWith("data:") ? url : `${import.meta.env.BASE_URL}${url}`);
 const TOKEN_IDS = /\[\[figura:([^\]\s]+)\]\]/g;
@@ -86,6 +88,7 @@ export default function PrintBooklet({ questions, figures, examLabel, title, cou
   return (
     <div className="pb">
       <section className="pb-cover">
+        <p className="pb-brand"><img src={owlUrl} alt="" width="34" height="34" />{APP_NAME}</p>
         <p className="pb-kicker">Simulacro impreso</p>
         <h1>{title}</h1>
         <div className="pb-fields">
