@@ -9,7 +9,8 @@ const hasDigits = (s) => /\d/.test(s ?? "");
 
 // The printed booklet: black on white, one shared passage printed once before its first question, options as "A." lines.
 // Questions are renumbered 1..n (the number on the answer sheet), so group ranges are recomputed from the printed set.
-export default function PrintBooklet({ questions, figures, examLabel, title, course }) {
+// `variant="worksheet"` swaps the cover for a short header (name, course, date) and asks to circle the letter.
+export default function PrintBooklet({ questions, figures, examLabel, title, course, variant = "booklet" }) {
   const range = new Map();
   questions.forEach((q, i) => {
     const id = q.group?.id;
@@ -85,6 +86,19 @@ export default function PrintBooklet({ questions, figures, examLabel, title, cou
 
   return (
     <div className="pb">
+      {variant === "worksheet" ? (
+        <section className="pb-cover pb-cover-ws">
+          <p className="pb-kicker">Hoja de trabajo</p>
+          <h1>{title}</h1>
+          <div className="pb-fields">
+            <p>Nombre: <span /></p>
+            <p>Curso: <span className="short">{course}</span></p>
+            <p>Fecha: <span className="short" /></p>
+          </div>
+          <p className="pb-instr-line">Encierra en un círculo la letra de la respuesta correcta. {questions.length} {questions.length === 1 ? "pregunta" : "preguntas"}.</p>
+          <p className="pb-source">{source}</p>
+        </section>
+      ) : (
       <section className="pb-cover">
         <p className="pb-kicker">Simulacro impreso</p>
         <h1>{title}</h1>
@@ -101,6 +115,7 @@ export default function PrintBooklet({ questions, figures, examLabel, title, cou
         {areas.length > 1 && <table className="pb-areas"><tbody>{areas.map((a) => <tr key={a.name}><td>{a.name}</td><td>{a.n} preguntas</td></tr>)}</tbody></table>}
         <p className="pb-source">{source}</p>
       </section>
+      )}
       {blocks}
     </div>
   );

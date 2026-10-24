@@ -15,7 +15,7 @@ import { FilePicker, Select } from "../components/Controls.jsx";
 export const sheetRoster = (members) => members.filter((m) => m.role === "student").sort((a, b) => a.email.toLowerCase().localeCompare(b.email.toLowerCase()));
 
 // The overlay lives in <body>, outside the app root, so printing can hide the app and print the overlay as ordinary flowing pages.
-function Overlay({ title, hint, onClose, children, page = "0" }) {
+export function Overlay({ title, hint, onClose, children, page = "0" }) {
   useEffect(() => {
     document.body.classList.add("print-overlay-open");
     return () => document.body.classList.remove("print-overlay-open");
