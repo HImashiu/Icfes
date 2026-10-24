@@ -1,4 +1,5 @@
 import { bandFor } from "../lib/analytics.js";
+import { gradeAttempt, isAdjusted, itemFromAttempt } from "../lib/grading.js";
 import { useEffect, useRef } from "react";
 import CountUp from "../components/CountUp.jsx";
 import { confetti, play } from "../lib/motion.js";
@@ -23,7 +24,7 @@ function headline(pct, answered) {
 }
 const isPhone = typeof window !== "undefined" && !window.matchMedia?.("(min-width: 768px)").matches;
 
-export default function Results({ title, questions, attempt, answerKey, keyStatus, onReview, onReviewAt, onHome, onRetry, locked = false, lockedNote = null, onReviewTimes, onRepechaje }) {
+export default function Results({ title, questions, attempt, answerKey, keyStatus, onReview, onReviewAt, onHome, onRetry, locked = false, lockedNote = null, onReviewTimes, onRepechaje, grading = null }) {
   const score = scoreAttempt(questions, attempt.answers, answerKey);
   const preliminary = keyStatus !== "official";
   // A simulacro is graded like the real exam: blanks count as wrong, so the score is out of every question.
@@ -35,6 +36,8 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
   const flagged = Object.keys(attempt.flags).length;
   const delivered = Boolean(attempt.submittedAt);
   const xpEarned = attemptXp(questions, attempt, answerKey);
+  // The teacher's grading model, only when it says something the percent does not.
+  const grade = grading && delivered && score.keyed && isAdjusted(grading) ? gradeAttempt(itemFromAttempt(attempt, attempt.attemptNo ?? 1), grading, { questions, key: answerKey }) : null;
   const time = timeSummary(questions, attempt.times);
   // A repechaje round reports how many second chances were won.
   const again = attempt.repechaje || attempt.assignmentId || attempt.readOnly ? [] : missedKeys(questions, attempt.answers, answerKey, attempt.mode);
@@ -110,6 +113,13 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
             <strong className="display">{score.keyed ? <CountUp value={pct ?? 0} format={fmtPct} delay={250} /> : "—"}</strong>
             <span className="caption">{score.keyed ? `${fmtInt(score.correct)} de ${fmtInt(outOf)}${attempt.mode === "timed" && score.answered < score.total ? " · en blanco cuentan como error" : ""}` : "Clave pendiente"}</span>
           </div>
+          {grade?.ok && (
+            <div className="stat">
+              <span className="label">Nota de tu docente</span>
+              <strong className="display">{grade.display}</strong>
+              <span className="caption">{grade.passed === false ? "Todavía no alcanza la nota para aprobar · " : ""}{grade.provisional ? "provisional · " : ""}clave preliminar</span>
+            </div>
+          )}
           {delivered && attempt.mode === "timed" && score.keyed && band.global != null && (
             <div className="stat">
               <span className="label">Banda estimada</span>

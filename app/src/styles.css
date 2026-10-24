@@ -1843,3 +1843,16 @@ details.answers-area > summary > :last-child { margin-left: auto; }
 .t-group { display: block; margin: 14px 12px 4px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; opacity: .55; }
 .t-nav { display: flex; align-items: center; gap: 10px; }
 @media (max-width: 767px) { .t-group { display: none; } .t-nav span { white-space: nowrap; } }
+
+/* Calificación: grading models. */
+.grading { max-width: 860px; }
+.grade-box { display: grid; gap: 10px; margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; }
+.grade-box legend { padding: 0 6px; }
+.grade-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; align-items: end; }
+.grade-grid .field { display: grid; gap: 4px; }
+.grade-num { display: flex; align-items: center; gap: 6px; }
+.grade-num input { width: 100%; min-width: 0; }
+.grade-formula { width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 15px; }
+.curve-row { grid-template-columns: minmax(130px, 1.2fr) repeat(2, minmax(120px, 1fr)); }
+.curve-row .label { font-size: 11px; }
+@media (max-width: 600px) { .curve-row { grid-template-columns: 1fr 1fr; } .curve-row > strong { grid-column: 1 / -1; } }

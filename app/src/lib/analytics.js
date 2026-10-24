@@ -6,7 +6,7 @@ export const CURVE_VERSION = "placeholder-1";
 const CHANCE = 0.25;
 // ICFES weights: the four core areas count 3 and English counts 1 in the global score; areas we do not know count 3.
 const WEIGHTS = { "Inglés": 1 };
-const weight = (name) => WEIGHTS[name] ?? 3;
+export const weight = (name) => WEIGHTS[name] ?? 3;
 
 export function areaScale(correct, total) {
   if (!total) return null;
