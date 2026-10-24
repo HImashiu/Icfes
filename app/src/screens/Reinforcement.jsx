@@ -7,7 +7,7 @@ const isoDay = (d) => d.toISOString().slice(0, 10);
 
 // Plan de refuerzo personal: cada estudiante recibe un set con lo que falló y lo nuevo de sus competencias más débiles.
 // El docente revisa la lista y aprueba con un clic; cada estudiante ve solo el suyo.
-export default function Reinforcement({ api, courses, exams, fetchExam, guard, setNotice }) {
+export default function Reinforcement({ api, courses, exams, fetchExam, guard, setNotice, onSaved = null }) {
   const tagged = exams.filter((e) => e.status !== "proximamente" && e.hasEnrich);
   const [courseId, setCourseId] = useState(courses[0]?.id ?? "");
   const [slug, setSlug] = useState(tagged[0]?.slug ?? "");
@@ -41,7 +41,8 @@ export default function Reinforcement({ api, courses, exams, fetchExam, guard, s
           question_keys: p.keys, assignee_id: p.member.profile_id, due_at: new Date(`${due}T23:59:00`).toISOString(), reveal_policy: "after_submit", status: "active",
         });
       }
-      setNotice(`Se asignaron ${chosen.length} planes de refuerzo. Cada estudiante ve el suyo en "Tareas de tu curso".`);
+      if (onSaved) onSaved(chosen.length);
+      else setNotice(`Se asignaron ${chosen.length} planes de refuerzo. Cada estudiante ve el suyo en "Tareas de tu curso".`);
       setPlans(null);
     }).finally(() => setBusy(false));
   };

@@ -35,9 +35,9 @@ export function targetsFor({ profile, courses, assignments }) {
 }
 
 // Calificación: how results become numbers, per school, class space or assignment.
-export default function GradingSettings({ api, profile, courses, assignments, models, reloadModels, guard, setNotice }) {
+export default function GradingSettings({ api, profile, courses, assignments, models, reloadModels, guard, setNotice, initialTarget = null, embedded = false }) {
   const targets = useMemo(() => targetsFor({ profile, courses, assignments }), [profile, courses, assignments]);
-  const [targetKey, setTargetKey] = useState(targets[0]?.key ?? "");
+  const [targetKey, setTargetKey] = useState(initialTarget ?? targets[0]?.key ?? "");
   const target = targets.find((t) => t.key === targetKey) ?? targets[0] ?? null;
   const own = target ? models.find((r) => r.scope === target.scope && r.scope_id === target.id) : null;
   // What applies above this level, shown when there is no model of its own.
@@ -78,7 +78,7 @@ export default function GradingSettings({ api, profile, courses, assignments, mo
 
   return (
     <>
-      <header className="t-head"><div><h1>Calificación</h1><span className="caption">Elige cómo se convierten los aciertos en la nota que ven tú y tus estudiantes. Se aplica por colegio, espacio de clase o asignación; gana el más específico.</span></div></header>
+      {!embedded && <header className="t-head"><div><h1>Calificación</h1><span className="caption">Elige cómo se convierten los aciertos en la nota que ven tú y tus estudiantes. Se aplica por colegio, espacio de clase o asignación; gana el más específico.</span></div></header>}
       <div className="card t-card assign-form grading">
         <label className="field"><span className="label">Aplicar a</span>
           <Select value={target.key} onChange={setTargetKey} aria-label="Aplicar a">{targets.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}</Select>
