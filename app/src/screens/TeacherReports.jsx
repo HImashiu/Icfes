@@ -29,7 +29,7 @@ function Progress({ items }) {
 }
 
 // Reportes: actividad y progreso de cada estudiante por espacio de clase, con exportación a CSV.
-export default function TeacherReports({ api, courses, assignments, guard }) {
+export default function TeacherReports({ api, courses, assignments, guard, onOpenStudent }) {
   const [data, setData] = useState(null);
   const [space, setSpace] = useState("");
   const [filter, setFilter] = useState("all");
@@ -87,7 +87,9 @@ export default function TeacherReports({ api, courses, assignments, guard }) {
                     <td>{r.totalSec ? fmtDuration(r.totalSec) : "—"}</td>
                     <td>{shortDate(r.lastAt)}</td>
                     <td>{r.leaves || "—"}</td>
-                    <td><button type="button" className="link" onClick={() => setOpen(open === r.id ? null : r.id)}>{open === r.id ? "Cerrar" : "Ver detalle"}</button></td>
+                    <td>{onOpenStudent
+                      ? <button type="button" className="link" onClick={() => onOpenStudent(r.email)}>Ver perfil</button>
+                      : <button type="button" className="link" onClick={() => setOpen(open === r.id ? null : r.id)}>{open === r.id ? "Cerrar" : "Ver detalle"}</button>}</td>
                   </tr>
                   {open === r.id && (
                     <tr><td colSpan={8}>

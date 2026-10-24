@@ -21,14 +21,18 @@ function download(name, text) {
 }
 
 // Informe de una asignación: avance, distribución, áreas, análisis por pregunta y tabla de estudiantes.
-export default function AssignmentReport({ api, assignment, fetchExam, guard, reload }) {
+export default function AssignmentReport({ api, assignment, fetchExam, guard, reload, initialStudent = null }) {
   const [data, setData] = useState(null);
   const [bundle, setBundle] = useState(null);
   const [allItems, setAllItems] = useState(false);
   const [board, setBoard] = useState(null);
   const [share, setShare] = useState(null);
   const [familyMsg, setFamilyMsg] = useState(null);
-  const [student, setStudent] = useState(null);
+  const [student, setStudent] = useState(initialStudent);
+  // Opened from a student's profile: scroll to that student's answers once they load.
+  useEffect(() => {
+    if (initialStudent && data) setTimeout(() => document.getElementById("student-run")?.scrollIntoView?.({ behavior: "smooth", block: "start" }), 80);
+  }, [initialStudent, data]);
   const [sample, setSample] = useState(false);
 
   useEffect(() => {

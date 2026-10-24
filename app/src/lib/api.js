@@ -1,9 +1,17 @@
 // All reads and writes to the backend, in one place. `client` is a Supabase client (injected so tests can fake it).
 // Row-level security decides what each role can see; nothing here trusts the browser to filter.
+// A table that is not there yet (its migration has not run): Postgres 42P01 or PostgREST's schema cache miss.
+export const isMissingTable = (error) => error?.code === "42P01" || error?.code === "PGRST205" || /does not exist|schema cache/i.test(error?.message ?? "");
+
 export function createApi(client) {
   const unwrap = ({ data, error }) => {
     if (error) throw Object.assign(new Error(error.message), { code: error.code });
     return data;
+  };
+
+  const unwrapWs = (res) => {
+    if (res.error && isMissingTable(res.error)) throw Object.assign(new Error(res.error.message), { code: "missing" });
+    return unwrap(res);
   };
 
   return {
@@ -240,6 +248,28 @@ export function createApi(client) {
     async myPlayerId() {
       const { data: auth } = await client.auth.getUser();
       return auth?.user?.id ?? null;
+    },
+
+    // Teacher workspace (migration 0014): statuses, follow-up flags, groups, notes and saved views. Until the
+    // migration runs these throw an error with code "missing" and the workspace keeps its data in this browser.
+    async wsList(table, filter = null) {
+      let q = client.from(table).select("*");
+      if (filter) for (const [k, v] of Object.entries(filter)) q = q.eq(k, v);
+      return unwrapWs(await q);
+    },
+    async wsUpsert(table, rows, onConflict) {
+      return unwrapWs(await client.from(table).upsert(rows, onConflict ? { onConflict } : undefined).select());
+    },
+    async wsInsert(table, row) {
+      return unwrapWs(await client.from(table).insert(row).select().single());
+    },
+    async wsUpdate(table, id, patch) {
+      return unwrapWs(await client.from(table).update(patch).eq("id", id).select().single());
+    },
+    async wsDelete(table, match) {
+      let q = client.from(table).delete();
+      for (const [k, v] of Object.entries(match)) q = Array.isArray(v) ? q.in(k, v) : q.eq(k, v);
+      unwrapWs(await q);
     },
 
     async myConsents() {

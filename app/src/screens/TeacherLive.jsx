@@ -15,12 +15,15 @@ import { FilePicker, confirmDialog } from "../components/Controls.jsx";
 import Icon from "../components/Icon.jsx";
 import BankEditor from "./BankEditor.jsx";
 import TeacherReports from "./TeacherReports.jsx";
+import Students from "./Students.jsx";
+import { createWorkspaceStore } from "../lib/workspaceStore.js";
 import { GRADES, SUBJECTS, gradeLabel, spaceName } from "../lib/spaces.js";
 import { Select } from "../components/Controls.jsx";
 
 const NAV = [
   { group: "Mi clase" },
   { label: "Resumen", section: "home", icon: "home" },
+  { label: "Estudiantes", section: "students", icon: "user" },
   { label: "Espacios de clase", section: "courses", icon: "users" },
   { label: "Asignaciones", section: "assign", icon: "book" },
   { label: "Reportes", section: "reports", icon: "chart" },
@@ -47,6 +50,14 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
   const [assignments, setAssignments] = useState([]);
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
+  const [focusStudent, setFocusStudent] = useState(null);
+  const [focusAssign, setFocusAssign] = useState(null);
+  // Statuses, groups, follow-up, notes and saved views (migration 0014; this browser until it runs).
+  const [ws, setWs] = useState(null);
+  const store = useMemo(
+    () => createWorkspaceStore({ api, schoolId: profile.school_id, userId: profile.id, userName: profile.full_name || profile.email, onChange: setWs }),
+    [api, profile.school_id, profile.id, profile.full_name, profile.email],
+  );
 
   const guard = useCallback(async (fn) => {
     setError(null);
@@ -57,6 +68,9 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
     [api, guard],
   );
   useEffect(() => { reload(); }, [reload]);
+  useEffect(() => { guard(() => store.load()); }, [guard, store]);
+  const openStudent = (email) => { setFocusStudent(email); setSection("students"); setNotice(null); };
+  const openAssignment = (id, memberId) => { setFocusAssign({ id, memberId }); setSection("assign"); setNotice(null); };
 
   return (
     <div className="teacher">
@@ -83,12 +97,16 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
       <main className="t-main">
         {error && <p className="notice error" role="alert">{error}</p>}
         {notice && <p className="notice">{notice}</p>}
-        {section === "home" && <Dashboard api={api} profile={profile} guard={guard} onOpenCourse={(id) => { setFocusCourse(id); setSection("courses"); }} onReinforce={() => setSection("reinforce")} />}
+        {section === "home" && <Dashboard api={api} profile={profile} guard={guard} ws={ws} onOpenStudent={openStudent} onOpenQueue={() => openStudent("#queue")} onOpenCourse={(id) => { setFocusCourse(id); setSection("courses"); }} onReinforce={() => setSection("reinforce")} />}
+        {section === "students" && (
+          <Students api={api} profile={profile} courses={courses} assignments={assignments} guard={guard} setNotice={setNotice} ws={ws} store={store}
+            focus={focusStudent} onFocusDone={() => setFocusStudent(null)} onOpenAssignment={openAssignment} onReinforce={() => setSection("reinforce")} />
+        )}
         {section === "courses" && <Courses api={api} profile={profile} courses={courses} reload={reload} guard={guard} setNotice={setNotice} focus={focusCourse} />}
         {section === "assign" && (
-          <Assignments api={api} courses={courses} assignments={assignments} exams={exams} fetchExam={fetchExam} reload={reload} guard={guard} setNotice={setNotice} />
+          <Assignments api={api} courses={courses} assignments={assignments} exams={exams} fetchExam={fetchExam} reload={reload} guard={guard} setNotice={setNotice} focus={focusAssign} onFocusDone={() => setFocusAssign(null)} />
         )}
-        {section === "reports" && <TeacherReports api={api} courses={courses} assignments={assignments} guard={guard} />}
+        {section === "reports" && <TeacherReports api={api} courses={courses} assignments={assignments} guard={guard} onOpenStudent={openStudent} />}
         {section === "bank" && <BankEditor api={api} profile={profile} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
         {section === "paper" && <Paper api={api} assignments={assignments} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
         {section === "reinforce" && <Reinforcement api={api} courses={courses} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
@@ -226,10 +244,13 @@ function Roster({ api, course, guard, setNotice, reload }) {
   );
 }
 
-function Assignments({ api, courses, assignments, exams, fetchExam, reload, guard, setNotice }) {
+function Assignments({ api, courses, assignments, exams, fetchExam, reload, guard, setNotice, focus, onFocusDone }) {
   const [composing, setComposing] = useState(false);
-  const [detail, setDetail] = useState(null);
-  const [tab, setTab] = useState("active");
+  const [detail, setDetail] = useState(focus?.id ?? null);
+  const [focusFor] = useState(focus ?? null);
+  const focused = focus?.id ? assignments.find((a) => a.id === focus.id) : null;
+  const [tab, setTab] = useState(focused && ["closed", "draft"].includes(assignmentState(focused)) ? "closed" : "active");
+  useEffect(() => { if (focus) onFocusDone?.(); }, [focus, onFocusDone]);
   const [space, setSpace] = useState("");
   const shown = assignments.filter((a) => (!space || a.course_id === space) && (tab === "active" ? ["active", "scheduled"] : ["closed", "draft"]).includes(assignmentState(a)));
 
@@ -275,7 +296,7 @@ function Assignments({ api, courses, assignments, exams, fetchExam, reload, guar
           })}
         </div>
       </div>
-      {detail && assignments.find((a) => a.id === detail) && <AssignmentReport key={detail} api={api} assignment={assignments.find((a) => a.id === detail)} fetchExam={fetchExam} guard={guard} reload={reload} />}
+      {detail && assignments.find((a) => a.id === detail) && <AssignmentReport key={detail} api={api} assignment={assignments.find((a) => a.id === detail)} fetchExam={fetchExam} guard={guard} reload={reload} initialStudent={focusFor && detail === focusFor.id ? focusFor.memberId : null} />}
     </>
   );
 }
