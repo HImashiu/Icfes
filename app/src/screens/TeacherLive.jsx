@@ -14,7 +14,7 @@ import { LiveSection } from "./LiveHost.jsx";
 import { FilePicker, confirmDialog } from "../components/Controls.jsx";
 import Icon from "../components/Icon.jsx";
 import BankEditor from "./BankEditor.jsx";
-import TeacherReports from "./TeacherReports.jsx";
+import ChartBuilder from "./ChartBuilder.jsx";
 import { GRADES, SUBJECTS, gradeLabel, spaceName } from "../lib/spaces.js";
 import { Select } from "../components/Controls.jsx";
 
@@ -88,7 +88,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
         {section === "assign" && (
           <Assignments api={api} courses={courses} assignments={assignments} exams={exams} fetchExam={fetchExam} reload={reload} guard={guard} setNotice={setNotice} />
         )}
-        {section === "reports" && <TeacherReports api={api} courses={courses} assignments={assignments} guard={guard} />}
+        {section === "reports" && <ChartBuilder api={api} profile={profile} courses={courses} assignments={assignments} fetchExam={fetchExam} guard={guard} />}
         {section === "bank" && <BankEditor api={api} profile={profile} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
         {section === "paper" && <Paper api={api} assignments={assignments} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
         {section === "reinforce" && <Reinforcement api={api} courses={courses} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
