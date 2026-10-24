@@ -488,7 +488,7 @@ export default function App() {
       {view === "login" && <Login onBack={() => setView("profile")} />}
       {view === "history" && <History onBack={() => setView("home")} onNew={() => setView("setup")} onOpen={openFromHistory} />}
       {view === "reports" && <Reports onBack={() => setView("profile")} onPractice={() => setView("setup")} onOpen={openFromReport} />}
-      {view === "teacher" && (auth.status === "ready" && auth.profile.role !== "student"
+      {view === "teacher" && (rootAuth.status === "ready" && rootAuth.profile.role !== "student"
         ? <AuthContext.Provider value={rootAuth}><TeacherLive auth={rootAuth} exams={exams} fetchExam={fetchExam} onExit={() => { if (window.location.hash.startsWith("#docente")) history.replaceState(null, "", window.location.pathname + window.location.search); setView("profile"); }} /></AuthContext.Provider>
         : <Teacher onExit={() => setView("profile")} />)}
 
