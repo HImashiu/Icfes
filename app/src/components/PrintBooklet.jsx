@@ -9,7 +9,7 @@ const hasDigits = (s) => /\d/.test(s ?? "");
 
 // The printed booklet: black on white, one shared passage printed once before its first question, options as "A." lines.
 // Questions are renumbered 1..n (the number on the answer sheet), so group ranges are recomputed from the printed set.
-export default function PrintBooklet({ questions, figures, examLabel, title, course }) {
+export default function PrintBooklet({ questions, figures, examLabel, title, course, version = null }) {
   const range = new Map();
   questions.forEach((q, i) => {
     const id = q.group?.id;
@@ -86,7 +86,7 @@ export default function PrintBooklet({ questions, figures, examLabel, title, cou
   return (
     <div className="pb">
       <section className="pb-cover">
-        <p className="pb-kicker">Simulacro impreso</p>
+        <p className="pb-kicker">Simulacro impreso{version && <b className="pb-version"> · Versión {version}</b>}</p>
         <h1>{title}</h1>
         <div className="pb-fields">
           <p>Nombre: <span /></p>
