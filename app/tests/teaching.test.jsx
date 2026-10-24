@@ -40,8 +40,8 @@ const auth = (api) => ({ api, profile: { id: "t1", school_id: "s1", role: "teach
 const exams = [{ slug: "S11-A_1ra", title: "S11-A", status: "ready", sections: ["Matemáticas"] }];
 
 const openLesson = async (api) => {
+  window.location.hash = "#docente/biblioteca/clases";
   render(<TeacherLive auth={auth(api)} exams={exams} fetchExam={vi.fn().mockResolvedValue(bundle())} onExit={() => {}} />);
-  fireEvent.click(screen.getByRole("button", { name: "Clases" }));
   fireEvent.click(await screen.findByText("Repaso de álgebra"));
   await screen.findByText(/1\. Enunciado 1/);
 };
@@ -105,9 +105,9 @@ describe("Presenter", () => {
 describe("Clases", () => {
   it("creates a lesson from picked bank questions", async () => {
     const api = fakeApi({ lessons: vi.fn().mockResolvedValue([]) });
+    window.location.hash = "#docente/biblioteca/clases";
     render(<TeacherLive auth={auth(api)} exams={exams} fetchExam={vi.fn().mockResolvedValue(bundle())} onExit={() => {}} />);
-    fireEvent.click(screen.getByRole("button", { name: "Clases" }));
-    fireEvent.click(await screen.findByRole("button", { name: /Nueva clase/ }));
+      fireEvent.click(await screen.findByRole("button", { name: /Nueva clase/ }));
     await screen.findByLabelText("Elegir pregunta 1");
     fireEvent.click(screen.getByLabelText("Elegir pregunta 3"));
     fireEvent.click(screen.getByLabelText("Elegir pregunta 1"));
@@ -122,9 +122,9 @@ describe("Clases", () => {
 
   it("explains a missing migration instead of failing", async () => {
     const api = fakeApi({ lessons: vi.fn().mockResolvedValue(null) });
+    window.location.hash = "#docente/biblioteca/clases";
     render(<TeacherLive auth={auth(api)} exams={exams} fetchExam={vi.fn()} onExit={() => {}} />);
-    fireEvent.click(screen.getByRole("button", { name: "Clases" }));
-    expect(await screen.findByText(/migración 0017/)).toBeTruthy();
+      expect(await screen.findByText(/migración 0017/)).toBeTruthy();
   });
 
   it("adds a text slide and saves the lesson with it", async () => {

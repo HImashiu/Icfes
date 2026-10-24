@@ -178,6 +178,11 @@ export function createApi(client) {
     async listStaff() {
       return unwrap(await client.from("profiles").select("id, email, full_name, role, created_at").in("role", ["teacher", "school_admin"]).order("full_name"));
     },
+    // A student's classes with their teachers' names (migration 0018). null until it runs: the app falls back to course names.
+    async studentClasses() {
+      const r = await client.rpc("student_classes");
+      return r.error ? null : r.data;
+    },
     // Group directors (migration 0018): one teacher per group who reads every subject of it. [] until it runs.
     async groupDirectors() {
       const r = await client.from("group_directors").select("id, grade, group_label, profile_id");

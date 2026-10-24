@@ -8,6 +8,7 @@ import { areaColor } from "../../lib/brand.js";
 import { areaShort, contextColor } from "../../lib/teaching.js";
 
 const greeting = (now = new Date()) => (now.getHours() < 12 ? "Buenos días" : now.getHours() < 19 ? "Buenas tardes" : "Buenas noches");
+const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 const firstName = (p) => String(p.full_name || p.email || "").split(/[\s@]/)[0];
 const ATTN_ICON = { closing: "clock", late: "flag", opens: "book", follow: "user", never: "users" };
 const ATTN_TILE = { closing: "var(--flame)", late: "var(--bad)", opens: "var(--ctx)", follow: "var(--surface)", never: "var(--surface)" };
@@ -55,7 +56,7 @@ export default function Today({ api, profile, courses, assignments, ws, receipts
     <div className="td" style={{ "--ctx": tint }}>
       <section className="td-hero card">
         <div className="td-hello">
-          <span className="caption">{now.toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" })} · {contextName}</span>
+          <span className="caption">{cap(now.toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" }))} · {contextName}</span>
           <h1>{greeting(now)}, {firstName(profile)}</h1>
           <p>{m.attention.length ? `${m.attention.length} ${m.attention.length === 1 ? "cosa pide" : "cosas piden"} tu atención` : "Nada urgente hoy"}{k.active ? ` · ${k.active} ${k.active === 1 ? "actividad abierta" : "actividades abiertas"}` : ""}{m.fresh.length ? ` · ${m.fresh.length} con resultados nuevos` : ""}.</p>
         </div>

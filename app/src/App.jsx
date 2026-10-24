@@ -83,6 +83,7 @@ export default function App() {
   const auth = useAuth();
   const signedIn = auth.status === "ready";
   const [assigned, setAssigned] = useState({ assignments: [], attempts: [], models: [] });
+  const [myClasses, setMyClasses] = useState(null);
   const [exams, setExams] = useState(null);
   const [loadError, setLoadError] = useState(null);
   const [selected, setSelected] = useState(null); // { slug, exam, key, keyStatus, notes, figures }
@@ -90,7 +91,7 @@ export default function App() {
   const [openError, setOpenError] = useState(null);
   // A student who scans a room's QR code lands on the join screen with the code filled in.
   const [joinCode] = useState(() => (typeof window !== "undefined" ? joinCodeFromHash(window.location.hash) : ""));
-  const [view, setView] = useState(() => (joinCode ? "liveJoin" : demoEnabled ? "teacher" : "home"));
+  const [view, setView] = useState(() => (joinCode ? "liveJoin" : demoEnabled || (typeof window !== "undefined" && window.location.hash.startsWith("#docente")) ? "teacher" : "home"));
   const [reviewStart, setReviewStart] = useState(0);
   const [reviewNumber, setReviewNumber] = useState(null);
   // What the home card asked for (area, mode), so "Reto del día" or "Simulacro completo" open set up that way.
@@ -218,6 +219,7 @@ export default function App() {
       await auth.api.linkRoster();
       const [assignments, attempts, models] = await Promise.all([auth.api.listAssignments(), auth.api.myAttempts(), auth.api.gradingModels().catch(() => [])]);
       setAssigned({ assignments, attempts, models });
+      auth.api.studentClasses?.().then(setMyClasses, () => setMyClasses(null));
     } catch {
       setAssigned({ assignments: [], attempts: [] });
     }
@@ -353,6 +355,8 @@ export default function App() {
       {view === "home" && (
         <Home
           exam={selected?.exam}
+          slug={selected?.slug}
+          classes={myClasses}
           resumable={resumable}
           onContinue={() => {
             const saved = loadAttempt(selected.slug, resumable.scope);
@@ -447,12 +451,13 @@ export default function App() {
       {view === "liveJoin" && <LiveJoin auth={auth} initialCode={joinCode} onBack={() => setView("home")} onJoined={(row, nickname) => { setLive({ row, nickname }); setView("livePlay"); }} />}
       {view === "livePlay" && live && <LivePlay api={auth.api} initial={live.row} nickname={live.nickname} fetchExam={fetchExam} onExit={() => { setLive(null); setView("home"); }} />}
 
-      {view === "profile" && <Profile theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} onReports={() => setView("reports")} onLogin={() => setView("login")} />}
+      {view === "profile" && <Profile theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} onReports={() => setView("reports")} onLogin={() => setView("login")}
+        assigned={signedIn ? assigned : null} classes={myClasses} onHistory={() => setView("history")} onPracticeArea={(area) => { setPreset({ scope: area, mode: "practice" }); setView("setup"); }} />}
       {view === "login" && <Login onBack={() => setView("profile")} />}
       {view === "history" && <History onBack={() => setView("home")} onNew={() => setView("setup")} onOpen={openFromHistory} />}
       {view === "reports" && <Reports onBack={() => setView("profile")} onPractice={() => setView("setup")} onOpen={openFromReport} />}
       {view === "teacher" && (auth.status === "ready" && auth.profile.role !== "student"
-        ? <TeacherLive auth={auth} exams={exams} fetchExam={fetchExam} onExit={() => setView("profile")} />
+        ? <TeacherLive auth={auth} exams={exams} fetchExam={fetchExam} onExit={() => { if (window.location.hash.startsWith("#docente")) history.replaceState(null, "", window.location.pathname + window.location.search); setView("profile"); }} />
         : <Teacher onExit={() => setView("profile")} />)}
 
       {needsAttempt && !attempt && <main className="frame"><p className="muted">Esta actividad ya no está abierta.</p><button type="button" className="primary" onClick={goHome}>Volver al inicio</button></main>}

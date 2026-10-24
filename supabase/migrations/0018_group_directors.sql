@@ -45,3 +45,20 @@ drop policy if exists attempts_select_director on public.attempts;
 create policy attempts_select_director on public.attempts for select
   using (assignment_id is not null and exists (
     select 1 from public.assignments a where a.id = attempts.assignment_id and public.is_group_director(a.course_id)));
+
+-- A student's classes with the names of their teachers, for the student's "Mis materias". A student cannot read
+-- the teachers' roster rows, so this function returns only names, and only for classes the student belongs to.
+-- The coordinator who created a class is not listed unless nobody else teaches it.
+create or replace function public.student_classes()
+returns table (id uuid, name text, subject text, grade text, group_label text, teachers text[])
+language sql stable security definer set search_path = public as $$
+  select c.id, c.name, c.subject, c.grade::text, c.group_label,
+    coalesce(
+      nullif(array(select coalesce(nullif(t.full_name, ''), t.email) from course_members t left join profiles tp on tp.id = t.profile_id
+                   where t.course_id = c.id and t.role = 'teacher' and coalesce(tp.role, 'teacher') <> 'school_admin' order by 1), '{}'),
+      array(select coalesce(nullif(t.full_name, ''), t.email) from course_members t where t.course_id = c.id and t.role = 'teacher' order by 1))
+  from courses c
+  where exists (select 1 from course_members m where m.course_id = c.id and m.profile_id = auth.uid() and m.role = 'student')
+  order by c.name
+$$;
+grant execute on function public.student_classes() to authenticated;

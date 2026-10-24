@@ -47,21 +47,16 @@ export function groupOf(course) {
 const teachersOf = (courseId, members) => members.filter((m) => m.course_id === courseId && m.role === "teacher");
 const studentsOf = (courseId, members) => members.filter((m) => m.course_id === courseId && m.role === "student");
 
-// The classes this person works with. Coordination: all. A teacher: the ones they teach or created, plus (read only)
-// every class of a group they direct. Row-level security already limits what the database returns; this narrows
-// the coordinator's view and marks the director's extra classes.
+// The classes this person works with. Row-level security already returns only the classes a teacher teaches or
+// (migration 0018) directs, so every class stays; a directed class the teacher does not teach is read only.
 export function myClasses({ courses, members = [], profile, directors = [] }) {
   if (profile?.role === "school_admin") return courses.map((c) => ({ ...c, readOnly: false }));
   const me = (m) => (profile?.id && m.profile_id === profile.id) || (profile?.email && fold(m.email) === fold(profile.email));
   const directed = new Set(directors.filter((d) => d.profile_id === profile?.id).map((d) => `${d.grade}|${String(d.group_label ?? "").toUpperCase()}`));
-  const out = [];
-  for (const c of courses) {
+  return courses.map((c) => {
     const teaches = c.created_by === profile?.id || teachersOf(c.id, members).some(me);
-    if (teaches) out.push({ ...c, readOnly: false });
-    else if (directed.has(groupOf(c).key)) out.push({ ...c, readOnly: true });
-  }
-  // A teacher whose roster rows are not loaded yet still sees the classes the database gave them.
-  return out.length || members.length ? out : courses.map((c) => ({ ...c, readOnly: false }));
+    return { ...c, readOnly: !teaches && directed.has(groupOf(c).key) };
+  });
 }
 
 // Subjects (by ICFES area) with their classes, for the context switcher.

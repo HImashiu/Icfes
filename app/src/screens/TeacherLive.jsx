@@ -32,6 +32,8 @@ import { assignmentReceipt, loadReceipts, markSeen, reinforcementReceipt, roster
 const shortDate = (iso) => new Date(iso).toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "short" });
 const KIND_ICON = { task: "bolt", homework: "book", exam: "clock" };
 const STATE_LABEL = { active: "Abierta", scheduled: "Programada", closed: "Cerrada", draft: "Borrador" };
+// Extra reads that older databases (or a missing migration) may refuse: they fall back to nothing.
+const soft = (fn) => Promise.resolve().then(fn).then((v) => v ?? []).catch(() => []);
 const ctxKey = (uid) => `condor:ctx:${uid}`;
 const readCtx = (uid) => { try { return JSON.parse(localStorage.getItem(ctxKey(uid)) ?? "null"); } catch { return null; } };
 
@@ -68,7 +70,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
     try { return await fn(); } catch (e) { setError(e.message); return undefined; }
   }, []);
   const reload = useCallback(() => guard(async () => {
-    const [c, a, m, d] = await Promise.all([baseApi.listCourses(), baseApi.listAssignments(), baseApi.allMembers().catch(() => []), baseApi.groupDirectors?.().catch(() => []) ?? []]);
+    const [c, a, m, d] = await Promise.all([baseApi.listCourses(), baseApi.listAssignments(), soft(() => baseApi.allMembers()), soft(() => baseApi.groupDirectors())]);
     setAllCourses(c); setAllAssignments(a); setMembers(m); setDirectors(d ?? []); setLoaded(true);
   }), [baseApi, guard]);
   const reloadModels = useCallback(() => guard(async () => { setModels(await baseApi.gradingModels()); }), [baseApi, guard]);
@@ -115,7 +117,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
   const activityCourse = activity ? allCourses.find((c) => c.id === activity.course_id) : null;
   const trail = crumbs(r, { activityTitle: activity?.title });
   const current = navSection(r);
-  const tabs = (TABS[r.section] ?? []).filter(([id]) => !HIDDEN_TABS.has(id));
+  const tabs = r.section === "actividad" ? [] : (TABS[r.section] ?? []).filter(([id]) => !HIDDEN_TABS.has(id));
 
   return (
     <div className="teacher tl" style={{ "--ctx": tint }}>
@@ -327,23 +329,21 @@ function ResultsByActivity({ api, courses, assignments, go, contextName }) {
   return (
     <section className="card t-card">
       <div className="section-head"><h2>Todas las actividades</h2><span className="caption">{contextName}</span></div>
-      <div className="table-wrap">
-        <table className="t-table">
-          <thead><tr><th>Actividad</th><th>Clase</th><th>Estado</th><th>Entregas</th><th>Promedio</th></tr></thead>
-          <tbody>
-            {(rows ?? []).map(({ a, who, of, avg }) => (
-              <tr key={a.id} className="row-link" onClick={() => go({ section: "actividad", id: a.id, tab: "resultados" })}>
-                <td><button type="button" className="link" onClick={(e) => { e.stopPropagation(); go({ section: "actividad", id: a.id, tab: "resultados" }); }}>{a.title}</button></td>
-                <td>{byCourse[a.course_id] ? groupOf(byCourse[a.course_id]).name : a.courses?.name}</td>
-                <td>{STATE_LABEL[assignmentState(a)]}</td>
-                <td>{who} de {of}</td>
-                <td>{avg == null ? "—" : <span className="td-meter"><span style={{ width: `${avg}%` }} /><b>{avg} %</b></span>}</td>
-              </tr>
-            ))}
-            {rows && rows.length === 0 && <tr><td colSpan={5} className="caption">Sin actividades en {contextName}.</td></tr>}
-            {!rows && <tr><td colSpan={5} className="caption">Cargando…</td></tr>}
-          </tbody>
-        </table>
+      <div className="ra-list">
+        {(rows ?? []).map(({ a, who, of, avg }) => {
+          const c = byCourse[a.course_id];
+          const area = c ? areaOf(c) : null;
+          return (
+            <button key={a.id} type="button" className="ra-row" onClick={() => go({ section: "actividad", id: a.id, tab: "resultados" })}>
+              <span className="ctx-dot" style={{ background: area ? areaColor(area) : "var(--accent)" }} aria-hidden="true" />
+              <span className="ra-main"><strong>{a.title}</strong><span className="caption">{c ? groupOf(c).name : a.courses?.name} · {STATE_LABEL[assignmentState(a)]} · {who} de {of} entregas</span></span>
+              <span className="ra-avg">{avg == null ? <span className="caption">—</span> : <><span className="td-track"><span style={{ width: `${avg}%`, background: avg < 50 ? "var(--flame)" : area ? areaColor(area) : "var(--accent)" }} /></span><b>{avg} %</b></>}</span>
+              <Icon name="right" size={16} strokeWidth={3} />
+            </button>
+          );
+        })}
+        {rows && rows.length === 0 && <p className="caption">Sin actividades en {contextName}.</p>}
+        {!rows && <p className="caption">Cargando…</p>}
       </div>
     </section>
   );
@@ -387,7 +387,7 @@ function Courses({ api, profile, courses, reload, guard, setNotice, focus, onImp
         <div key={c.id} className="card t-card">
           <div className="section-head">
             <strong>{c.name}{c.grade && !c.subject ? ` · Grado ${c.grade}` : ""}</strong>
-            <button type="button" className="secondary" onClick={() => setOpen(open === c.id ? null : c.id)}>{open === c.id ? "Cerrar" : "Estudiantes"}</button>
+            <button type="button" className="secondary" onClick={() => setOpen(open === c.id ? null : c.id)}>{open === c.id ? "Cerrar" : "Ver lista"}</button>
           </div>
           {open === c.id && <Roster api={api} course={c} guard={guard} setNotice={setNotice} reload={reload} onImported={onImported} />}
         </div>
@@ -488,8 +488,8 @@ function Staff({ api, profile, guard, setNotice }) {
   const LABEL = { teacher: "Docente", school_admin: "Coordinación" };
   return (
     <>
-      <div className="section-head tl-sub"><h2>Roles</h2><span className="caption">Quién es docente y quién es coordinación.</span></div>
       <div className="card t-card">
+        <div className="section-head"><h2>Roles</h2><span className="caption">Quién es docente y quién es coordinación.</span></div>
         <div className="table-wrap">
           <table className="t-table">
             <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th /></tr></thead>
