@@ -98,6 +98,11 @@ export default function LessonEditor({ api, profile, row, courses, exams, fetchE
     }).finally(() => setBusy(false));
   };
 
+  // Opened with "Proyectar" from the list: start the projection as soon as the questions are loaded.
+  const [autoDone, setAutoDone] = useState(!autoPresent);
+  const autoReady = Boolean(bundle) && lessonQuestions(lesson, bundle).length > 0;
+  useEffect(() => { if (!autoDone && autoReady) { setAutoDone(true); setPresenting(0); } }, [autoDone, autoReady]);
+
   if (room) return <LiveHost api={api} initial={room} fetchExam={fetchExam} guard={guard} onExit={() => { setRoom(null); setPanel(null); }} />;
 
   if (panel === "add") {
@@ -117,9 +122,6 @@ export default function LessonEditor({ api, profile, row, courses, exams, fetchE
   const questions = bundle ? lessonQuestions(lesson, bundle) : [];
   const courseName = courses.length === 1 ? courses[0].name : "";
   const ready = Boolean(bundle) && questions.length > 0;
-  // Opened with "Proyectar" from the list: start the projection as soon as the questions are loaded.
-  const [autoDone, setAutoDone] = useState(!autoPresent);
-  useEffect(() => { if (!autoDone && ready) { setAutoDone(true); setPresenting(0); } }, [autoDone, ready]);
 
   return (
     <>

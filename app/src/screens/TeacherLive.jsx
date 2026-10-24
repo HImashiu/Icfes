@@ -196,7 +196,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           {r.section === "actividades" && r.tab === "nueva" && (
             courses.length === 0 ? <p className="caption">Primero necesitas una clase (Estudiantes › Listas de clase).</p> : (
               <AssignBuilder api={baseApi} courses={courses.filter((c) => !contexts.subjects.some((s) => s.classes.some((k) => k.id === c.id && k.readOnly)))} exams={exams} fetchExam={fetchExam} guard={guard}
-                onCancel={() => go({ section: "actividades" })}
+                onCancel={() => go({ section: "actividades" })} grading={{ models, profile, onChange: reloadModels }}
                 onSaved={async (a, n) => { await reload(); go({ section: "actividad", id: a.id }); showReceipt(assignmentReceipt({ assignment: a, classes: n })); }} />
             )
           )}
@@ -227,7 +227,10 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
             </>
           )}
           {r.section === "resultados" && r.tab === "actividades" && <ResultsByActivity api={api} courses={courses} assignments={assignments} go={go} contextName={contextName} />}
-          {r.section === "resultados" && r.tab === "grafica" && <ChartBuilder api={api} profile={profile} courses={courses} assignments={assignments} fetchExam={fetchExam} guard={guard} />}
+          {r.section === "resultados" && r.tab === "calificacion" && (
+            <GradingSettings api={baseApi} profile={profile} courses={courses} assignments={assignments} models={models} reloadModels={reloadModels} guard={guard} setNotice={setNotice} />
+          )}
+          {r.section === "resultados" && r.tab === "grafica" && <ChartBuilder api={api} profile={profile} courses={courses} assignments={assignments} fetchExam={fetchExam} guard={guard} ws={ws} />}
 
           {r.section === "biblioteca" && r.tab === "banco" && <BankEditor api={baseApi} profile={profile} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
           {r.section === "biblioteca" && r.tab === "preguntas" && <QuestionBuilder api={baseApi} profile={profile} guard={guard} setNotice={setNotice} />}

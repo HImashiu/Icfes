@@ -19,7 +19,7 @@ export const TABS = {
   hoy: [],
   actividades: [["lista", "Todas"], ["vivo", "Juego en vivo"], ["refuerzo", "Refuerzo"], ["nueva", "Nueva actividad"]],
   estudiantes: [["lista", "Estudiantes"], ["clases", "Listas de clase"]],
-  resultados: [["resumen", "Resumen"], ["actividades", "Por actividad"], ["grafica", "Armar gráfica"]],
+  resultados: [["resumen", "Resumen"], ["actividades", "Por actividad"], ["grafica", "Armar gráfica", "Gráficas"], ["calificacion", "Calificación", "Notas"]],
   biblioteca: [["banco", "Banco de preguntas", "Banco"], ["preguntas", "Mis preguntas"], ["clases", "Clases para proyectar", "Proyectar"]],
   colegio: [["docentes", "Docentes y clases", "Docentes"], ["calificacion", "Calificación"], ["ajustes", "Ajustes"]],
   actividad: [["resultados", "Resultados"], ["papel", "En papel"], ["calificacion", "Calificación"]],
