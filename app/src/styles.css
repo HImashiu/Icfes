@@ -1263,20 +1263,49 @@ button.card:active:not(:disabled), .mode-card:active, .chip:active, .answer-cell
 /* On a phone the bar slides up from the bottom edge. */
 @media (max-width: 899px) { .test-bottom:has(.verdict) { animation: slide-up 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); } }
 
-/* The owl is Juan's drawing; it only blinks, makes faces and moves gently as a whole. */
+/* The owl (Juan's final drawing). Parts move on their own: blink, bob, hop, flap, tassel swing, head tilt. */
 .mascot { overflow: visible; }
-.mascot .m-art { transform-box: fill-box; transform-origin: 50% 100%; }
-.mascot .m-lid { transform-box: fill-box; transform-origin: 50% 0; transform: scaleY(0); animation: lid 4.6s infinite; }
-.mascot .m-cheek { transform-box: fill-box; transform-origin: center; animation: pop-in 0.4s cubic-bezier(0.3, 0.7, 0.4, 1.5) 0.15s backwards; }
-.mascot.idle .m-art { animation: breathe 3.4s ease-in-out infinite; }
-.mascot.pose-happy .m-art { animation: owl-hop 0.7s cubic-bezier(0.3, 0.7, 0.4, 1) backwards; }
-.mascot.celebrating .m-art { animation: owl-hop 0.8s cubic-bezier(0.3, 0.7, 0.4, 1) 0.2s 2 backwards, owl-wiggle 0.8s ease-in-out 1.8s 1; }
-.mascot.pose-sad .m-art { transform-origin: 50% 90%; animation: owl-droop 0.7s ease-out forwards; }
-@keyframes lid { 0%, 93%, 100% { transform: scaleY(0); } 95.5%, 97% { transform: scaleY(1); } }
-@keyframes breathe { 0%, 100% { transform: translateY(0) scale(1, 1); } 50% { transform: translateY(-2px) scale(1.012, 0.99); } }
-@keyframes owl-hop { 0%, 100% { transform: translateY(0) scale(1, 1); } 15% { transform: translateY(0) scale(1.04, 0.95); } 40% { transform: translateY(-9%) scale(0.98, 1.03); } 70% { transform: translateY(0) scale(1.03, 0.97); } }
-@keyframes owl-wiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-4deg); } 75% { transform: rotate(4deg); } }
-@keyframes owl-droop { from { transform: rotate(0) translateY(0); } to { transform: rotate(-5deg) translateY(2%); } }
+.owl g, .owl path { transform-box: view-box; }
+.owl .o-cheek { transform-box: fill-box; transform-origin: center; }
+.owl .o-eye-happy { opacity: 0; }
+.owl .o-eye-open { animation: owl-blink 4.6s infinite; }
+.owl.idle .o-all { animation: owl-bob 2.8s ease-in-out infinite; }
+.owl.idle .o-tassel { animation: owl-sway 2.8s ease-in-out infinite; }
+.owl.idle .o-head { animation: owl-look 5.6s ease-in-out infinite; }
+.owl.pose-happy .o-eye-open, .owl.pose-celebrating .o-eye-open { opacity: 0; animation: none; }
+.owl.pose-happy .o-eye-happy, .owl.pose-celebrating .o-eye-happy { opacity: 1; animation: owl-eye-pop 0.35s cubic-bezier(0.3, 0.7, 0.4, 1.5) backwards; }
+.owl.pose-happy .o-cheek, .owl.pose-celebrating .o-cheek { animation: owl-cheek 0.5s cubic-bezier(0.3, 0.7, 0.4, 1.5) 0.1s backwards; }
+.owl.pose-happy .o-all { animation: owl-hop 0.75s cubic-bezier(0.3, 0.7, 0.4, 1) backwards; }
+.owl.pose-happy .o-wing-l { animation: owl-flap-l 0.19s ease-in-out 0.12s 4 alternate; }
+.owl.pose-happy .o-wing-r { animation: owl-flap-r 0.19s ease-in-out 0.12s 4 alternate; }
+.owl.pose-happy .o-tassel { animation: owl-swing 1.3s ease-out 0.1s; }
+.owl.pose-celebrating .o-all { animation: owl-hop 0.75s cubic-bezier(0.3, 0.7, 0.4, 1) 0.1s 2 backwards, owl-wiggle 0.7s ease-in-out 1.6s; }
+.owl.pose-celebrating .o-wing-l { animation: owl-flap-l 0.17s ease-in-out 0.15s 10 alternate; }
+.owl.pose-celebrating .o-wing-r { animation: owl-flap-r 0.17s ease-in-out 0.15s 10 alternate; }
+.owl.pose-celebrating .o-tassel { animation: owl-swing 1.3s ease-out 0.15s 2; }
+.owl.pose-thinking .o-head { animation: owl-tilt 1.6s cubic-bezier(0.3, 0.7, 0.4, 1) forwards; }
+.owl.pose-thinking .o-pupil { animation: owl-glance 1.6s ease-out forwards; }
+.owl.pose-thinking .o-tassel { animation: owl-tassel-tilt 1.6s ease-out forwards; }
+.owl.pose-thinking .o-wing-r { animation: owl-tap 0.36s ease-in-out 0.5s 2; }
+@keyframes owl-blink { 0%, 91%, 97%, 100% { transform: scaleY(1); } 94% { transform: scaleY(0.08); } }
+@keyframes owl-bob { 0%, 100% { transform: translateY(0) scale(1, 1); } 50% { transform: translateY(-18px) scale(1.01, 0.99); } }
+@keyframes owl-sway { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+@keyframes owl-look { 0%, 40%, 100% { transform: rotate(0); } 55%, 85% { transform: rotate(-3deg); } }
+@keyframes owl-hop { 0%, 100% { transform: translateY(0) scale(1, 1); } 18% { transform: translateY(0) scale(1.07, 0.92); } 45% { transform: translateY(-140px) scale(0.96, 1.05); } 75% { transform: translateY(0) scale(1.05, 0.95); } 88% { transform: translateY(0) scale(0.99, 1.01); } }
+@keyframes owl-flap-l { from { transform: rotate(0); } to { transform: rotate(32deg); } }
+@keyframes owl-flap-r { from { transform: rotate(0); } to { transform: rotate(-32deg); } }
+@keyframes owl-swing { 0%, 100% { transform: rotate(0); } 18% { transform: rotate(-28deg); } 40% { transform: rotate(18deg); } 62% { transform: rotate(-9deg); } 82% { transform: rotate(4deg); } }
+@keyframes owl-wiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-5deg); } 75% { transform: rotate(5deg); } }
+@keyframes owl-eye-pop { from { transform: scale(0.4); } to { transform: scale(1); } }
+@keyframes owl-cheek { 0% { transform: scale(1); } 50% { transform: scale(1.35); } 100% { transform: scale(1.12); } }
+@keyframes owl-tilt { 0% { transform: rotate(0); } 30% { transform: rotate(-8deg); } 55% { transform: rotate(-4.5deg); } 75% { transform: rotate(-7deg); } 100% { transform: rotate(-6deg); } }
+@keyframes owl-glance { 0%, 15% { transform: translate(0, 0); } 45%, 100% { transform: translate(-16px, -26px); } }
+@keyframes owl-tassel-tilt { 0% { transform: rotate(0); } 35% { transform: rotate(16deg); } 65% { transform: rotate(4deg); } 100% { transform: rotate(9deg); } }
+@keyframes owl-tap { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-22deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .owl *, .owl .o-eye-happy { animation: none !important; }
+  .owl.pose-thinking .o-head { transform: rotate(-6deg); }
+}
 /* The small owl that cheers or consoles in the answer bar. */
 .verdict-owl { flex: none; display: grid; place-items: center; }
 
@@ -1424,6 +1453,8 @@ button.card:active:not(:disabled), .mode-card:active, .chip:active, .answer-cell
 .pb { width: min(100%, 190mm); background: #fff; color: #000; padding: 14mm; box-shadow: 0 2px 14px rgba(0, 0, 0, 0.25); font-family: Newsreader, Georgia, "Times New Roman", serif; font-size: 11pt; line-height: 1.4; box-sizing: content-box; }
 .pb *, .pb .katex { color: #000; }
 .pb h1 { font-family: "Bricolage Grotesque", Arial, sans-serif; font-size: 26pt; margin: 4pt 0 14pt; }
+.pb-brand { display: flex; align-items: center; gap: 6pt; margin: 0 0 8pt; font: 800 12pt "Bricolage Grotesque", Arial, sans-serif; }
+.pb-brand img { width: 26pt; height: 26pt; }
 .pb-kicker { margin: 0; font: 700 9pt Figtree, Arial, sans-serif; letter-spacing: 0.12em; text-transform: uppercase; }
 .pb-cover { padding-bottom: 14pt; margin-bottom: 14pt; border-bottom: 2px solid #000; break-after: page; page-break-after: always; }
 .pb-fields { display: grid; gap: 14pt; margin: 18pt 0; font-family: Figtree, Arial, sans-serif; font-size: 11pt; }
