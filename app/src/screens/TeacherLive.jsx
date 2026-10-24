@@ -17,6 +17,7 @@ import Icon from "../components/Icon.jsx";
 import BankEditor from "./BankEditor.jsx";
 import ChartBuilder from "./ChartBuilder.jsx";
 import GradingSettings from "./GradingSettings.jsx";
+import Lessons from "./Lessons.jsx";
 import { GRADES, SUBJECTS, gradeLabel, spaceName } from "../lib/spaces.js";
 import { Select } from "../components/Controls.jsx";
 
@@ -29,6 +30,7 @@ const NAV = [
   { label: "Calificación", section: "grading", icon: "pencil" },
   { group: "Contenido" },
   { label: "Banco de preguntas", section: "bank", icon: "school" },
+  { label: "Clases", section: "lessons", icon: "play" },
   { label: "Mis preguntas", section: "questions", icon: "pencil" },
   { label: "Papel", section: "paper", icon: "print" },
   { label: "Refuerzo", section: "reinforce", icon: "bolt" },
@@ -97,6 +99,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
         {section === "grading" && <GradingSettings api={api} profile={profile} courses={courses} assignments={assignments} models={models} reloadModels={reloadModels} guard={guard} setNotice={setNotice} />}
         {section === "bank" && <BankEditor api={api} profile={profile} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
         {section === "paper" && <Paper api={api} assignments={assignments} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
+        {section === "lessons" && <Lessons api={api} profile={profile} courses={courses} assignments={assignments} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} reload={reload} />}
         {section === "reinforce" && <Reinforcement api={api} courses={courses} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
         {section === "questions" && <QuestionBuilder api={api} profile={profile} guard={guard} setNotice={setNotice} />}
         {section === "live" && <LiveSection api={api} courses={courses} exams={exams} fetchExam={fetchExam} guard={guard} AssignBuilder={AssignBuilder} />}

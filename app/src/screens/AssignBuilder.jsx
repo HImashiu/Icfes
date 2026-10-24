@@ -25,10 +25,12 @@ const KIND_HELP = {
 };
 
 // Constructor de asignaciones: explora el banco, filtra, previsualiza, elige a mano o automático, ordena y asigna.
-export default function AssignBuilder({ api, courses, exams, fetchExam, guard, onCancel, onSaved, live = null }) {
+// With `lesson` ({ onCreate, slug?, label }) it picks the questions of a teaching lesson instead of an assignment;
+// `slug` locks the booklet (adding questions to a lesson that already has some).
+export default function AssignBuilder({ api, courses, exams, fetchExam, guard, onCancel, onSaved, live = null, lesson = null }) {
   const ready = [...exams.filter((e) => e.status !== "proximamente"), ...(api.teacherQuestions ? [TEACHER_ENTRY] : [])];
   const cache = useRef(new Map());
-  const [slug, setSlug] = useState(ready[0]?.slug ?? "");
+  const [slug, setSlug] = useState(lesson?.slug ?? ready[0]?.slug ?? "");
   const [bundle, setBundle] = useState(null);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState(EMPTY_FILTER);
@@ -110,6 +112,11 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
     e.preventDefault();
     setMsg(null);
     if (picked.length === 0) return setMsg("Elige al menos una pregunta.");
+    if (lesson) {
+      setBusy(true);
+      guard(() => lesson.onCreate({ keys: picked, slug, title: title.trim() })).finally(() => setBusy(false));
+      return undefined;
+    }
     if (live) {
       setBusy(true);
       guard(() => live.onCreate({ keys: picked, slug, seconds: Number(seconds), title: title.trim() || `En vivo · ${picked.length} preguntas`, course: liveCourse }))
@@ -167,7 +174,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
   const bank = (
     <section className="card t-card b-bank" aria-label="Banco de preguntas">
       <div className="section-head"><strong>Banco de preguntas</strong>
-        <Select aria-label="Cuadernillo" value={slug} onChange={(v) => changeExam(v)}>
+        <Select aria-label="Cuadernillo" value={slug} disabled={Boolean(lesson?.slug)} onChange={(v) => changeExam(v)}>
           {ready.map((x) => <option key={x.slug} value={x.slug}>{x.title ?? x.slug}</option>)}
         </Select>
       </div>
@@ -224,8 +231,8 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
   );
 
   const mine = (
-    <form className="card t-card b-mine assign-form" onSubmit={submit} aria-label={live ? "Tu sala" : "Tu asignación"}>
-      <div className="section-head"><strong>{live ? "Tu sala" : "Tu asignación"}</strong><span className="muted">{summary.total} preguntas</span></div>
+    <form className="card t-card b-mine assign-form" onSubmit={submit} aria-label={live ? "Tu sala" : lesson ? "Tu clase" : "Tu asignación"}>
+      <div className="section-head"><strong>{live ? "Tu sala" : lesson ? "Tu clase" : "Tu asignación"}</strong><span className="muted">{summary.total} preguntas</span></div>
       {summary.total > 0 && (
         <div className="b-summary">
           <span className="chips-row">{summary.areas.map((a) => <span key={a.name} className="badge" style={{ borderLeft: `4px solid ${areaColor(a.name)}` }}>{a.name} · {a.n}</span>)}</span>
@@ -260,7 +267,9 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
       )}
 
       <hr className="b-sep" />
-      {live ? (
+      {lesson ? (
+        !lesson.slug && <label className="field"><span className="label">Nombre de la clase</span><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Por ejemplo: Repaso de álgebra" /></label>
+      ) : live ? (
         <>
           <label className="field"><span className="label">Nombre de la sala (opcional)</span><input value={title} onChange={(e) => setTitle(e.target.value)} /></label>
           <label className="field"><span className="label">Tiempo por pregunta</span>
@@ -330,7 +339,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
       {msg && <p className="notice error" role="alert">{msg}</p>}
       <div className="report-actions">
         <button type="button" className="secondary" onClick={onCancel}>Cancelar</button>
-        <button type="submit" className="primary" disabled={busy}>{busy ? "Guardando…" : live ? "Crear sala" : courseIds.length > 1 ? `Asignar a ${courseIds.length} cursos` : "Asignar"}</button>
+        <button type="submit" className="primary" disabled={busy}>{busy ? "Guardando…" : lesson ? lesson.label ?? "Guardar clase" : live ? "Crear sala" : courseIds.length > 1 ? `Asignar a ${courseIds.length} cursos` : "Asignar"}</button>
       </div>
     </form>
   );
@@ -340,7 +349,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
     <div className="builder">
       <div className="segmented small b-tabs" role="tablist">
         <button type="button" role="tab" aria-selected={panel === "bank"} className={panel === "bank" ? "seg active" : "seg"} onClick={() => setPanel("bank")}>Banco</button>
-        <button type="button" role="tab" aria-selected={panel === "mine"} className={panel === "mine" ? "seg active" : "seg"} onClick={() => setPanel("mine")}>Tu asignación ({picked.length})</button>
+        <button type="button" role="tab" aria-selected={panel === "mine"} className={panel === "mine" ? "seg active" : "seg"} onClick={() => setPanel("mine")}>{lesson ? "Tu clase" : "Tu asignación"} ({picked.length})</button>
       </div>
       <div className={`b-grid show-${panel}`}>{bank}{mine}</div>
       {open && bundle && (
