@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Logo from "../components/Logo.jsx";
 import { assignmentState } from "../lib/assignments.js";
+import { resolveModel } from "../lib/grading.js";
 import { areaColor } from "../lib/brand.js";
 import { parseRoster } from "../lib/roster.js";
 import { CONSENT_VERSION, GUARDIAN_TEXT, hasGuardianAuth } from "../lib/consent.js";
@@ -15,6 +16,7 @@ import { FilePicker, confirmDialog } from "../components/Controls.jsx";
 import Icon from "../components/Icon.jsx";
 import BankEditor from "./BankEditor.jsx";
 import ChartBuilder from "./ChartBuilder.jsx";
+import GradingSettings from "./GradingSettings.jsx";
 import { GRADES, SUBJECTS, gradeLabel, spaceName } from "../lib/spaces.js";
 import { Select } from "../components/Controls.jsx";
 
@@ -24,6 +26,7 @@ const NAV = [
   { label: "Espacios de clase", section: "courses", icon: "users" },
   { label: "Asignaciones", section: "assign", icon: "book" },
   { label: "Reportes", section: "reports", icon: "chart" },
+  { label: "Calificación", section: "grading", icon: "pencil" },
   { group: "Contenido" },
   { label: "Banco de preguntas", section: "bank", icon: "school" },
   { label: "Mis preguntas", section: "questions", icon: "pencil" },
@@ -45,6 +48,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
   const [focusCourse, setFocusCourse] = useState(null);
   const [courses, setCourses] = useState([]);
   const [assignments, setAssignments] = useState([]);
+  const [models, setModels] = useState([]);
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
 
@@ -56,7 +60,8 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
     () => guard(async () => { setCourses(await api.listCourses()); setAssignments(await api.listAssignments()); }),
     [api, guard],
   );
-  useEffect(() => { reload(); }, [reload]);
+  const reloadModels = useCallback(() => guard(async () => { setModels(await api.gradingModels()); }), [api, guard]);
+  useEffect(() => { reload(); reloadModels(); }, [reload, reloadModels]);
 
   return (
     <div className="teacher">
@@ -86,9 +91,10 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
         {section === "home" && <Dashboard api={api} profile={profile} guard={guard} onOpenCourse={(id) => { setFocusCourse(id); setSection("courses"); }} onReinforce={() => setSection("reinforce")} />}
         {section === "courses" && <Courses api={api} profile={profile} courses={courses} reload={reload} guard={guard} setNotice={setNotice} focus={focusCourse} />}
         {section === "assign" && (
-          <Assignments api={api} courses={courses} assignments={assignments} exams={exams} fetchExam={fetchExam} reload={reload} guard={guard} setNotice={setNotice} />
+          <Assignments api={api} profile={profile} courses={courses} assignments={assignments} models={models} exams={exams} fetchExam={fetchExam} reload={reload} guard={guard} setNotice={setNotice} />
         )}
         {section === "reports" && <ChartBuilder api={api} profile={profile} courses={courses} assignments={assignments} fetchExam={fetchExam} guard={guard} />}
+        {section === "grading" && <GradingSettings api={api} profile={profile} courses={courses} assignments={assignments} models={models} reloadModels={reloadModels} guard={guard} setNotice={setNotice} />}
         {section === "bank" && <BankEditor api={api} profile={profile} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
         {section === "paper" && <Paper api={api} assignments={assignments} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
         {section === "reinforce" && <Reinforcement api={api} courses={courses} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
@@ -226,7 +232,7 @@ function Roster({ api, course, guard, setNotice, reload }) {
   );
 }
 
-function Assignments({ api, courses, assignments, exams, fetchExam, reload, guard, setNotice }) {
+function Assignments({ api, profile, models, courses, assignments, exams, fetchExam, reload, guard, setNotice }) {
   const [composing, setComposing] = useState(false);
   const [detail, setDetail] = useState(null);
   const [tab, setTab] = useState("active");
@@ -275,7 +281,7 @@ function Assignments({ api, courses, assignments, exams, fetchExam, reload, guar
           })}
         </div>
       </div>
-      {detail && assignments.find((a) => a.id === detail) && <AssignmentReport key={detail} api={api} assignment={assignments.find((a) => a.id === detail)} fetchExam={fetchExam} guard={guard} reload={reload} />}
+      {detail && assignments.find((a) => a.id === detail) && <AssignmentReport key={detail} api={api} model={resolveModel(models, { assignmentId: detail, courseId: assignments.find((a) => a.id === detail).course_id, schoolId: profile.school_id })} assignment={assignments.find((a) => a.id === detail)} fetchExam={fetchExam} guard={guard} reload={reload} />}
     </>
   );
 }

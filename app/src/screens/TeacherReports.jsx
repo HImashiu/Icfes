@@ -3,6 +3,8 @@ import { Select } from "../components/Controls.jsx";
 import { activityCsv, activityRows, summaryOf } from "../lib/activityReport.js";
 import { fmtDuration } from "../lib/studentRun.js";
 import { Kpi } from "./Dashboard.jsx";
+import { questionsForAttempt } from "../lib/assignments.js";
+import { formatValue, gradeMany, isAdjusted, itemFromRow, resolveModel } from "../lib/grading.js";
 
 const shortDate = (iso) => (iso ? new Date(iso).toLocaleDateString("es-CO", { day: "numeric", month: "short" }) : "—");
 const FILTERS = [["all", "Todos"], ["late", "Con tareas sin entregar"], ["inactive", "Sin entregar nada"], ["flags", "Con salidas en exámenes"]];
@@ -29,7 +31,7 @@ function Progress({ items }) {
 }
 
 // Reportes: actividad y progreso de cada estudiante por espacio de clase, con exportación a CSV.
-export default function TeacherReports({ api, courses, assignments, guard }) {
+export default function TeacherReports({ api, profile, courses, assignments, models = [], fetchExam, guard }) {
   const [data, setData] = useState(null);
   const [space, setSpace] = useState("");
   const [filter, setFilter] = useState("all");
@@ -42,6 +44,17 @@ export default function TeacherReports({ api, courses, assignments, guard }) {
     });
   }, [api, guard]);
 
+  // The booklets behind the assignments, so partial credit and curves can be applied with the real questions and key.
+  const [bundles, setBundles] = useState({});
+  useEffect(() => {
+    if (!fetchExam) return undefined;
+    let live = true;
+    Promise.all(assignments.filter((a) => a.status !== "draft").map(async (a) => {
+      try { return [a.id, await fetchExam(a.exam_slug, a.question_keys)]; } catch { return null; }
+    })).then((list) => { if (live) setBundles(Object.fromEntries(list.filter(Boolean))); });
+    return () => { live = false; };
+  }, [assignments, fetchExam]);
+
   const nameOf = (id) => courses.find((c) => c.id === id)?.name ?? "";
   const rows = useMemo(() => {
     if (!data) return [];
@@ -49,7 +62,30 @@ export default function TeacherReports({ api, courses, assignments, guard }) {
     return activityRows({ members: data.members.filter((m) => ids.includes(m.course_id)), assignments: assignments.filter((a) => ids.includes(a.course_id)), attempts: data.attempts })
       .sort((a, b) => a.name.localeCompare(b.name, "es"));
   }, [data, space, courses, assignments]);
-  const shown = rows.filter((r) => filter === "all" || (filter === "late" ? r.late > 0 : filter === "inactive" ? r.assigned > 0 && r.done === 0 : r.leaves > 0));
+  // Each assignment is graded with its own model (assignment, then class space, then school), the whole group at once.
+  const graded = useMemo(() => {
+    const byAssignment = new Map();
+    for (const r of rows) for (const i of r.items) if (i.attempt) byAssignment.set(i.id, [...(byAssignment.get(i.id) ?? []), i]);
+    const grade = new Map();
+    for (const [id, list] of byAssignment) {
+      const a = assignments.find((x) => x.id === id);
+      const { model } = resolveModel(models, { assignmentId: id, courseId: a?.course_id, schoolId: profile?.school_id });
+      const b = bundles[id];
+      const ctx = b ? { questions: questionsForAttempt(b.exam, { scope: a.scope, keys: a.question_keys }), key: b.key } : {};
+      const out = gradeMany(list.map((i) => itemFromRow(i.attempt)), model, ctx);
+      list.forEach((i, k) => grade.set(i, { ...out[k], model }));
+    }
+    return rows.map((r) => {
+      const items = r.items.map((i) => ({ ...i, grade: grade.get(i) ?? null }));
+      const g = items.map((i) => i.grade).filter((x) => x?.ok);
+      // An average only means something when every result uses the same model.
+      const sig = new Set(g.map((x) => JSON.stringify([x.model.kind, x.model.scale, x.model.formula])));
+      const avgGrade = g.length && sig.size === 1 ? g.reduce((n, x) => n + x.value, 0) / g.length : null;
+      return { ...r, items, avgGrade, gradeModel: g[0]?.model ?? null };
+    });
+  }, [rows, models, bundles, assignments, profile]);
+  const anyModel = graded.some((r) => r.gradeModel && (r.gradeModel.kind !== "percent" || isAdjusted(r.gradeModel)));
+  const shown = graded.filter((r) => filter === "all" || (filter === "late" ? r.late > 0 : filter === "inactive" ? r.assigned > 0 && r.done === 0 : r.leaves > 0));
   const sum = summaryOf(rows);
 
   return (
@@ -75,14 +111,14 @@ export default function TeacherReports({ api, courses, assignments, guard }) {
         )}
         <div className="table-wrap">
           <table className="t-table">
-            <thead><tr><th>Estudiante</th><th>Entregas</th><th>Promedio</th><th>Cambio</th><th>Tiempo total</th><th>Última entrega</th><th>Salidas</th><th /></tr></thead>
+            <thead><tr><th>Estudiante</th><th>Entregas</th><th>{anyModel ? "Nota media" : "Promedio"}</th><th>Cambio</th><th>Tiempo total</th><th>Última entrega</th><th>Salidas</th><th /></tr></thead>
             <tbody>
               {shown.map((r) => (
                 <Fragment key={r.id}>
                   <tr>
                     <td>{r.name}{!r.joined && <span className="caption"> · sin ingresar</span>}</td>
                     <td>{r.done}/{r.assigned}{r.late > 0 && <span className="badge pending"> {r.late} sin entregar</span>}</td>
-                    <td>{r.avgPct == null ? "—" : `${r.avgPct} %`}</td>
+                    <td>{r.avgGrade != null && r.gradeModel ? formatValue(r.gradeModel, r.avgGrade) : r.avgPct == null ? "—" : `${r.avgPct} %`}</td>
                     <td>{r.trend == null ? "—" : `${r.trend > 0 ? "+" : ""}${r.trend} pts`}</td>
                     <td>{r.totalSec ? fmtDuration(r.totalSec) : "—"}</td>
                     <td>{shortDate(r.lastAt)}</td>
@@ -93,7 +129,7 @@ export default function TeacherReports({ api, courses, assignments, guard }) {
                     <tr><td colSpan={8}>
                       <Progress items={r.items} />
                       <ul className="proctor-timeline">
-                        {r.items.map((i) => <li key={i.id}><strong>{i.title}</strong> · {i.done ? `${i.pct ?? "—"} % · ${shortDate(i.at)}${i.sec ? ` · ${fmtDuration(i.sec)}` : ""}${i.leaves ? ` · ${i.leaves} salidas` : ""}` : i.late ? "Sin entregar" : `Pendiente · entrega ${shortDate(i.due)}`}</li>)}
+                        {r.items.map((i) => <li key={i.id}><strong>{i.title}</strong> · {i.done ? `${i.grade?.ok ? i.grade.display : `${i.pct ?? "—"} %`} · ${shortDate(i.at)}${i.sec ? ` · ${fmtDuration(i.sec)}` : ""}${i.leaves ? ` · ${i.leaves} salidas` : ""}` : i.late ? "Sin entregar" : `Pendiente · entrega ${shortDate(i.due)}`}</li>)}
                         {r.items.length === 0 && <li className="caption">No tiene asignaciones todavía.</li>}
                       </ul>
                     </td></tr>
@@ -104,7 +140,7 @@ export default function TeacherReports({ api, courses, assignments, guard }) {
             </tbody>
           </table>
         </div>
-        <span className="caption">Puntajes según la clave preliminar, no oficial. Las salidas son avisos de los exámenes monitoreados.</span>
+        <span className="caption">Puntajes según la clave preliminar, no oficial.{anyModel ? " La nota usa el modelo de calificación de cada asignación (ver «Calificación»); el cambio se mide en puntos de aciertos." : ""} Las salidas son avisos de los exámenes monitoreados.</span>
       </div>
     </>
   );

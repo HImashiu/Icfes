@@ -127,8 +127,26 @@ export function createApi(client) {
     async reportAttempts() {
       const cols = "profile_id, member_id, assignment_id, submitted_at, mode, score, duration_sec";
       const query = (c) => client.from("attempts").select(c).not("assignment_id", "is", null).not("submitted_at", "is", null);
-      const full = await query(`${cols}, proctor`);
-      return unwrap(full.error ? await query(cols) : full);
+      // answers and activity let the grading model apply partial credit and curves; older databases lack some columns.
+      for (const extra of [", answers, activity, proctor", ", answers, activity", ", answers", ""]) {
+        const r = await query(`${cols}${extra}`);
+        if (!r.error) return r.data;
+        if (!extra) unwrap(r);
+      }
+      return [];
+    },
+    // Grading models (migration 0016). Until it runs, nobody has one and everything is graded as a percent.
+    async gradingModels() {
+      const r = await client.from("grading_models").select("id, scope, scope_id, model");
+      return r.error ? [] : r.data;
+    },
+    async saveGradingModel({ schoolId, userId, scope, scopeId, model }) {
+      const r = await client.from("grading_models").upsert({ school_id: schoolId, scope, scope_id: scopeId, model, updated_by: userId }, { onConflict: "scope,scope_id" });
+      if (r.error && /grading_models/.test(r.error.message ?? "")) throw new Error("Falta ejecutar la migración 0016 (modelos de calificación) en Supabase.");
+      unwrap(r);
+    },
+    async clearGradingModel(scope, scopeId) {
+      unwrap(await client.from("grading_models").delete().eq("scope", scope).eq("scope_id", scopeId));
     },
     // Chart builder: every delivered attempt with answers and time per question (times and activity need migrations 0009+).
     async chartAttempts() {
