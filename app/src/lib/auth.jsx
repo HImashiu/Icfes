@@ -1,13 +1,16 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { backendConfigured, supabase } from "./supabase.js";
 import { createApi } from "./api.js";
+import { demoEnabled } from "../demo/mode.js";
 
 // status: demo (no backend configured), loading, signed-out, guest (anonymous, only for live games), needs-profile (signed in, first visit), ready.
 // Practice never requires an account; signing in only unlocks the school features.
 const AuthContext = createContext({ status: "demo", profile: null, api: null });
 export const useAuth = () => useContext(AuthContext);
 
-const api = supabase ? createApi(supabase) : null;
+const realApi = supabase ? createApi(supabase) : null;
+// Demo mode (?demo=1) swaps in an in-memory school; the real backend is never touched.
+let api = demoEnabled ? null : realApi;
 
 // Maps the database's error codes to something a person can act on.
 export function claimMessage(err) {
@@ -18,7 +21,7 @@ export function claimMessage(err) {
 }
 
 export function AuthProvider({ children }) {
-  const [state, setState] = useState({ status: backendConfigured ? "loading" : "demo", profile: null, user: null, error: null });
+  const [state, setState] = useState({ status: demoEnabled || backendConfigured ? "loading" : "demo", profile: null, user: null, error: null });
 
   const refresh = useCallback(async () => {
     if (!supabase) return;
@@ -35,6 +38,17 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    if (demoEnabled) {
+      let alive = true;
+      import("../demo/load.js")
+        .then((m) => m.loadDemo())
+        .then(({ client, profile }) => {
+          api = createApi(client);
+          if (alive) setState({ status: "ready", profile, user: { id: profile.id }, error: null });
+        })
+        .catch((e) => { if (alive) setState({ status: "signed-out", profile: null, user: null, error: e.message }); });
+      return () => { alive = false; };
+    }
     if (!supabase) return undefined;
     refresh();
     const { data } = supabase.auth.onAuthStateChange(() => { refresh(); });
@@ -65,6 +79,7 @@ export function AuthProvider({ children }) {
         setState((s) => ({ ...s, status: "ready", profile, error: null }));
       },
       signOut: async () => {
+        if (demoEnabled) { window.location.search = ""; return; }
         await supabase.auth.signOut();
         setState({ status: "signed-out", profile: null, user: null, error: null });
       },

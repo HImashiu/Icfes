@@ -18,20 +18,29 @@ export function studentSummaries(members, attempts) {
     const key = m.profile_id ?? m.id;
     if (seen.has(key)) continue;
     seen.add(key);
-    const list = [...new Set([...(m.profile_id ? byProfile.get(m.profile_id) ?? [] : []), ...(byProfile.get(m.id) ?? [])])].sort((x, y) => ts(x) - ts(y));
-    const pcts = list.map(pctOf).filter((p) => p != null);
-    const timed = list.filter((a) => a.mode !== "practice");
-    const lastTimed = timed[timed.length - 1];
+    const list = [...new Set([...(m.profile_id ? byProfile.get(m.profile_id) ?? [] : []), ...(byProfile.get(m.id) ?? [])])];
     out.push({
-      profileId: m.profile_id, email: m.email, name: m.full_name || m.email, courseId: m.course_id, joined: Boolean(m.profile_id) || list.length > 0,
-      attempts: list, count: list.length,
-      avg: round(mean(pcts)), last: pcts.length ? round(pcts[pcts.length - 1]) : null,
-      lastAt: list.length ? ts(list[list.length - 1]) : null,
-      band: lastTimed ? bandFor(lastTimed.score.perArea) : null,
-      areas: areaAverages(list),
+      profileId: m.profile_id, email: m.email, name: m.full_name || m.email, courseId: m.course_id,
+      ...summarize(list, Boolean(m.profile_id)),
     });
   }
   return out;
+}
+
+// The result figures of one student from their delivered, keyed attempts (any order).
+export function summarize(attempts, signedIn = false) {
+  const list = attempts.filter((a) => a.submitted_at && a.score?.keyed).sort((x, y) => ts(x) - ts(y));
+  const pcts = list.map(pctOf).filter((p) => p != null);
+  const timed = list.filter((a) => a.mode !== "practice");
+  const lastTimed = timed[timed.length - 1];
+  return {
+    joined: signedIn || list.length > 0,
+    attempts: list, count: list.length,
+    avg: round(mean(pcts)), last: pcts.length ? round(pcts[pcts.length - 1]) : null,
+    lastAt: list.length ? ts(list[list.length - 1]) : null,
+    band: lastTimed ? bandFor(lastTimed.score.perArea) : null,
+    areas: areaAverages(list),
+  };
 }
 
 export const ALERT_RULES = { dropPoints: 15, inactiveDays: 14, lowAvg: 35, minForTrend: 3 };

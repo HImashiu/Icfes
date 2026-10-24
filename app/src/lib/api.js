@@ -1,9 +1,17 @@
 // All reads and writes to the backend, in one place. `client` is a Supabase client (injected so tests can fake it).
 // Row-level security decides what each role can see; nothing here trusts the browser to filter.
+// A table that is not there yet (its migration has not run): Postgres 42P01 or PostgREST's schema cache miss.
+export const isMissingTable = (error) => error?.code === "42P01" || error?.code === "PGRST205" || /does not exist|schema cache/i.test(error?.message ?? "");
+
 export function createApi(client) {
   const unwrap = ({ data, error }) => {
     if (error) throw Object.assign(new Error(error.message), { code: error.code });
     return data;
+  };
+
+  const unwrapWs = (res) => {
+    if (res.error && isMissingTable(res.error)) throw Object.assign(new Error(res.error.message), { code: "missing" });
+    return unwrap(res);
   };
 
   return {
@@ -127,8 +135,45 @@ export function createApi(client) {
     async reportAttempts() {
       const cols = "profile_id, member_id, assignment_id, submitted_at, mode, score, duration_sec";
       const query = (c) => client.from("attempts").select(c).not("assignment_id", "is", null).not("submitted_at", "is", null);
-      const full = await query(`${cols}, proctor`);
-      return unwrap(full.error ? await query(cols) : full);
+      // answers and activity let the grading model apply partial credit and curves; older databases lack some columns.
+      for (const extra of [", answers, activity, proctor", ", answers, activity", ", answers", ""]) {
+        const r = await query(`${cols}${extra}`);
+        if (!r.error) return r.data;
+        if (!extra) unwrap(r);
+      }
+      return [];
+    },
+    // Grading models (migration 0016). Until it runs, nobody has one and everything is graded as a percent.
+    async gradingModels() {
+      const r = await client.from("grading_models").select("id, scope, scope_id, model");
+      return r.error ? [] : r.data;
+    },
+    async saveGradingModel({ schoolId, userId, scope, scopeId, model }) {
+      const r = await client.from("grading_models").upsert({ school_id: schoolId, scope, scope_id: scopeId, model, updated_by: userId }, { onConflict: "scope,scope_id" });
+      if (r.error && /grading_models/.test(r.error.message ?? "")) throw new Error("Falta ejecutar la migración 0016 (modelos de calificación) en Supabase.");
+      unwrap(r);
+    },
+    async clearGradingModel(scope, scopeId) {
+      unwrap(await client.from("grading_models").delete().eq("scope", scope).eq("scope_id", scopeId));
+    },
+    // Chart builder: every delivered attempt with answers and time per question (times and activity need migrations 0009+).
+    async chartAttempts() {
+      const cols = "profile_id, member_id, assignment_id, submitted_at, mode, answers";
+      const query = (c) => client.from("attempts").select(c).not("assignment_id", "is", null).not("submitted_at", "is", null).order("submitted_at", { ascending: false }).limit(6000);
+      const full = await query(`${cols}, times, activity`);
+      if (!full.error) return full.data;
+      const times = await query(`${cols}, times`);
+      return unwrap(times.error ? await query(cols) : times);
+    },
+    async savedCharts() {
+      const r = await client.from("saved_charts").select("id, name, spec, created_at").order("created_at", { ascending: false });
+      return r.error ? null : r.data; // null: migration 0015 has not run, the screen keeps charts in this browser
+    },
+    async saveChart({ schoolId, name, spec }) {
+      return unwrap(await client.from("saved_charts").insert({ school_id: schoolId, name, spec }).select("id, name, spec, created_at").single());
+    },
+    async deleteChart(id) {
+      unwrap(await client.from("saved_charts").delete().eq("id", id));
     },
     async listStaff() {
       return unwrap(await client.from("profiles").select("id, email, full_name, role, created_at").in("role", ["teacher", "school_admin"]).order("full_name"));
@@ -143,6 +188,15 @@ export function createApi(client) {
     },
     async paperSubmit(assignmentId, memberId, answers, score) {
       unwrap(await client.rpc("paper_submit", { p_assignment: assignmentId, p_member: memberId, p_answers: answers, p_score: score }));
+    },
+    // The seating plan of a paper assignment (migration 0013). The sheets are printed and scanned with it, so it is kept with the assignment.
+    async getSeating(assignmentId) {
+      const { data, error } = await client.from("paper_seating").select("plan").eq("assignment_id", assignmentId).maybeSingle();
+      if (error) throw Object.assign(new Error(error.message), { code: error.code });
+      return data?.plan ?? null;
+    },
+    async saveSeating(assignmentId, plan) {
+      unwrap(await client.from("paper_seating").upsert({ assignment_id: assignmentId, plan, updated_at: new Date().toISOString() }));
     },
     async createFamilyReport(profileId, payload) {
       return unwrap(await client.rpc("create_family_report", { p_profile: profileId, p_payload: payload }));
@@ -184,6 +238,30 @@ export function createApi(client) {
     },
     async deleteOverride(id) {
       unwrap(await client.from("question_overrides").delete().eq("id", id));
+    },
+
+    // Lessons and saved activity formats (migration 0017). A missing table reads as `null`, so the screen can say so.
+    async lessons() {
+      const r = await client.from("lessons").select("id, owner_id, title, exam_slug, items, settings, visibility, updated_at").order("updated_at", { ascending: false });
+      if (r.error && /lessons|schema cache|does not exist/i.test(r.error.message ?? "")) return null;
+      return unwrap(r);
+    },
+    async saveLesson(row, id = null) {
+      const q = client.from("lessons");
+      return unwrap(id ? await q.update(row).eq("id", id).select().single() : await q.insert(row).select().single());
+    },
+    async deleteLesson(id) {
+      unwrap(await client.from("lessons").delete().eq("id", id));
+    },
+    async activityFormats() {
+      const r = await client.from("activity_formats").select("id, owner_id, name, config, visibility").order("created_at", { ascending: false });
+      return r.error ? [] : r.data;
+    },
+    async saveActivityFormat(row) {
+      return unwrap(await client.from("activity_formats").insert(row).select().single());
+    },
+    async deleteActivityFormat(id) {
+      unwrap(await client.from("activity_formats").delete().eq("id", id));
     },
 
     // Exam monitoring (migration 0012). Failures are silent: monitoring never blocks a student.
@@ -240,6 +318,28 @@ export function createApi(client) {
     async myPlayerId() {
       const { data: auth } = await client.auth.getUser();
       return auth?.user?.id ?? null;
+    },
+
+    // Teacher workspace (migration 0014): statuses, follow-up flags, groups, notes and saved views. Until the
+    // migration runs these throw an error with code "missing" and the workspace keeps its data in this browser.
+    async wsList(table, filter = null) {
+      let q = client.from(table).select("*");
+      if (filter) for (const [k, v] of Object.entries(filter)) q = q.eq(k, v);
+      return unwrapWs(await q);
+    },
+    async wsUpsert(table, rows, onConflict) {
+      return unwrapWs(await client.from(table).upsert(rows, onConflict ? { onConflict } : undefined).select());
+    },
+    async wsInsert(table, row) {
+      return unwrapWs(await client.from(table).insert(row).select().single());
+    },
+    async wsUpdate(table, id, patch) {
+      return unwrapWs(await client.from(table).update(patch).eq("id", id).select().single());
+    },
+    async wsDelete(table, match) {
+      let q = client.from(table).delete();
+      for (const [k, v] of Object.entries(match)) q = Array.isArray(v) ? q.in(k, v) : q.eq(k, v);
+      unwrapWs(await q);
     },
 
     async myConsents() {

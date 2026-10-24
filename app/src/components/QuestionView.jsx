@@ -90,6 +90,7 @@ export default function QuestionView({
   textTarget = null,
   gapLine = false,
   paneGroupMin = TEXT_PANE_MIN,
+  hideOptions = false,
 }) {
   const { group } = question;
   const groupAnn = group ? `g:${group.id}:stimulus` : undefined;
@@ -226,7 +227,7 @@ export default function QuestionView({
           {annotations && <QuestionNotes qkey={question.key} annPrefix={`q:${question.key}:`} />}
         </article>
 
-        <ul className={chartOptions ? "options charts" : "options"} role="radiogroup" aria-label={`Opciones de la pregunta ${question.number}`}>
+        {!hideOptions && <ul className={chartOptions ? "options charts" : "options"} role="radiogroup" aria-label={`Opciones de la pregunta ${question.number}`}>
           {question.options.map((opt) => {
             const state = optionState({ letter: opt.letter, answer, correctLetter, graded });
             const figure = optionFigure(opt.letter);
@@ -264,7 +265,7 @@ export default function QuestionView({
               </li>
             );
           })}
-        </ul>
+        </ul>}
         {feedback}
         {report && !question.sourceLine && <ReportError question={question} examLabel={examLabel} />}
         {footer}

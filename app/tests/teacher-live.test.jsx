@@ -30,7 +30,9 @@ describe("TeacherLive", () => {
     const api = fakeApi();
     render(<TeacherLive auth={auth(api)} exams={[]} fetchExam={vi.fn()} onExit={() => {}} />);
     fireEvent.click(screen.getByRole("button", { name: "Espacios de clase" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Estudiantes" }));
+    await screen.findByText(/^11-A/);
+    // The nav has an "Estudiantes" section too: the course card's button is the last one.
+    fireEvent.click(screen.getAllByRole("button", { name: "Estudiantes" }).at(-1));
     fireEvent.change(await screen.findByPlaceholderText(/nombre,apellidos,correo/), { target: { value: "nombre,apellidos,correo\nA,B,a@c.co\nC,D,nope\nE,F,e@c.co" } });
     expect(await screen.findByText(/2 válidos, 1 con problema/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Agregar 2" }));
