@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { schoolSummary } from "../lib/analytics.js";
 import { areaColor } from "../lib/brand.js";
 import { hasGuardianAuth } from "../lib/consent.js";
-import { alerts as buildAlerts, CATEGORY_VERSION, cohortProjection, studentSummaries } from "../lib/students.js";
+import { CATEGORY_VERSION, cohortProjection, studentSummaries } from "../lib/students.js";
+import { alertLabel, buildRoster, weeklySummary } from "../lib/workspace.js";
+import { fmtDuration } from "../lib/studentRun.js";
 
 // Horizontal bars for a share (0-100) per row. Colour only carries the area; the number is always written.
 export function Bars({ rows, unit = " %" }) {
@@ -46,7 +48,7 @@ export function Kpi({ label, value, hint }) {
 }
 
 // Panel de resumen. La coordinación ve todo el colegio; un docente ve sus cursos (la base de datos ya filtra).
-export default function Dashboard({ api, profile, guard, onOpenCourse, onReinforce }) {
+export default function Dashboard({ api, profile, guard, ws, onOpenCourse, onReinforce, onOpenStudent, onOpenQueue }) {
   const [data, setData] = useState(null);
   const [guardian, setGuardian] = useState(true);
   useEffect(() => {
@@ -58,7 +60,10 @@ export default function Dashboard({ api, profile, guard, onOpenCourse, onReinfor
   }, [api, guard, profile.role]);
   const s = useMemo(() => (data ? schoolSummary(data) : null), [data]);
   const people = useMemo(() => (data ? studentSummaries(data.members, data.attempts) : []), [data]);
-  const warn = useMemo(() => buildAlerts(people), [people]);
+  // One entry per student (by email) with alerts, status and follow-up: the same data as the Estudiantes workspace.
+  const roster = useMemo(() => (data ? buildRoster({ members: data.members, assignments: data.assignments, attempts: data.attempts, ws: ws ?? {} }) : []), [data, ws]);
+  const warn = useMemo(() => roster.filter((e) => e.severity > 0).sort((a, b) => b.severity - a.severity || a.name.localeCompare(b.name, "es")), [roster]);
+  const week = useMemo(() => (data ? weeklySummary(roster, data.assignments) : null), [roster, data]);
   // The grade 11 cohort when courses say so; otherwise every course.
   const cohort = useMemo(() => {
     if (!data) return null;
@@ -132,24 +137,32 @@ export default function Dashboard({ api, profile, guard, onOpenCourse, onReinfor
           ) : <span className="caption">Aparece cuando los estudiantes entreguen un simulacro con tiempo.</span>}
         </div>
         <div className="card t-card">
-          <strong>Alertas de la semana</strong>
+          <div className="section-head"><strong>Alertas</strong>{onOpenStudent && warn.length > 0 && <span className="caption">Toca un nombre para ver su perfil</span>}</div>
           {warn.length === 0 ? <span className="caption">Nadie en riesgo por ahora.</span> : (
             <ul className="b-list">
-              {warn.slice(0, 8).map((a) => (
-                <li key={`${a.courseId}-${a.email}`} className="b-row" style={{ gridTemplateColumns: "1fr" }}>
-                  <div className="b-body">
-                    <strong>{a.name} <span className="muted">· {courseName(a.courseId)}</span></strong>
-                    <span className="b-text">{a.reason}{a.area ? ` Más bajo: ${a.area}.` : ""}</span>
-                    <span className="caption">{a.action}</span>
-                  </div>
-                </li>
-              ))}
+              {warn.slice(0, 8).map((e) => {
+                const a = e.alerts.find((x) => x.kind !== "up");
+                return (
+                  <li key={e.key} className="b-row" style={{ gridTemplateColumns: "1fr" }}>
+                    <div className="b-body">
+                      <strong>{onOpenStudent ? <button type="button" className="link ws-inline" onClick={() => onOpenStudent(e.email)}>{e.name}</button> : e.name} <span className="muted">· {e.courseIds.map(courseName).join(", ")}</span> <span className="ws-alert">{alertLabel(a.kind)}</span>{e.followUp && <span className="ws-follow">En seguimiento</span>}</strong>
+                      <span className="b-text">{a.reason}{a.area ? ` Más bajo: ${a.area}.` : ""}</span>
+                      <span className="caption">{a.action}</span>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
-          {warn.length > 8 && <span className="caption">Y {warn.length - 8} más.</span>}
-          {onReinforce && warn.some((a) => a.kind === "drop" || a.kind === "low") && <div className="report-actions no-print"><button type="button" className="secondary" onClick={onReinforce}>Preparar planes de refuerzo</button></div>}
+          {warn.length > 8 && <span className="caption">Y {warn.length - 8} más en Estudiantes (filtro «Necesitan atención»).</span>}
+          <div className="report-actions no-print">
+            {onOpenQueue && warn.length > 0 && <button type="button" className="secondary" onClick={onOpenQueue}>Ir a la cola de seguimiento</button>}
+            {onReinforce && warn.some((e) => e.alerts.some((a) => a.kind === "drop" || a.kind === "low")) && <button type="button" className="secondary" onClick={onReinforce}>Preparar planes de refuerzo</button>}
+          </div>
         </div>
       </div>
+
+      {week && <WeekCard week={week} courseName={courseName} onOpenStudent={onOpenStudent} onOpenQueue={onOpenQueue} />}
 
       <div className="card t-card">
         <strong>Cursos</strong>
@@ -179,4 +192,46 @@ export default function Dashboard({ api, profile, guard, onOpenCourse, onReinfor
 
 function BandHistogram({ bins }) {
   return <Histogram bins={bins} format={(b) => `${Math.round(b.from)}`} />;
+}
+
+const NameList = ({ list, onOpenStudent }) => list.slice(0, 6).map((e, i) => (
+  <span key={e.key}>{i > 0 && ", "}{onOpenStudent ? <button type="button" className="link ws-inline" onClick={() => onOpenStudent(e.email)}>{e.name}</button> : e.name}</span>
+));
+
+// Resumen semanal: lo que pasó de lunes a hoy frente a la semana pasada, y lo que vence esta semana.
+function WeekCard({ week, courseName, onOpenStudent, onOpenQueue }) {
+  const from = new Date(week.from).toLocaleDateString("es-CO", { day: "numeric", month: "long" });
+  const diff = week.deliveries - week.prevDeliveries;
+  return (
+    <div className="card t-card ws-week">
+      <div className="section-head"><strong>Resumen de la semana</strong><span className="caption">Desde el lunes {from}</span></div>
+      <div className="d-kpis">
+        <Kpi label="Entregas" value={String(week.deliveries)} hint={diff === 0 ? "igual que la semana pasada" : `${diff > 0 ? "+" : ""}${diff} frente a la semana pasada`} />
+        <Kpi label="Estudiantes activos" value={`${week.active}/${week.students}`} hint="entregaron algo esta semana" />
+        <Kpi label="Promedio" value={week.avgPct == null ? null : `${week.avgPct} %`} hint={week.avgPct == null ? "sin entregas aún" : week.prevAvgPct == null ? undefined : `semana pasada: ${week.prevAvgPct} %`} />
+        {week.secs > 0 && <Kpi label="Tiempo de práctica" value={fmtDuration(week.secs)} />}
+      </div>
+      {week.due.length > 0 && (
+        <>
+          <span className="label">Vencen esta semana</span>
+          <ul className="b-list">
+            {week.due.map((d) => (
+              <li key={d.id} className="ws-due-row">
+                <span><strong>{d.title}</strong> <span className="muted">· {courseName(d.courseId)} · {new Date(d.due).toLocaleDateString("es-CO", { weekday: "short", day: "numeric" })}</span></span>
+                <span className="d-bar-track"><span style={{ width: `${d.expected ? Math.max(2, (d.done / d.expected) * 100) : 0}%`, background: "var(--accent)" }} /></span>
+                <span className="d-bar-num">{d.done}/{d.expected}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      <ul className="ws-week-notes">
+        {week.quiet.length > 0 && <li><strong>{week.quiet.length}</strong> con trabajo asignado no han entregado nada esta semana{week.quiet.length <= 6 && <>: <NameList list={week.quiet} onOpenStudent={onOpenStudent} /></>}.</li>}
+        {week.improved.length > 0 && <li className="ws-up">Mejoraron: <NameList list={week.improved} onOpenStudent={onOpenStudent} />{week.improved.length > 6 ? ` y ${week.improved.length - 6} más` : ""}. ¡Cuéntaselo!</li>}
+        {week.worried.length > 0 && <li>Bajaron o tienen promedio bajo: <NameList list={week.worried} onOpenStudent={onOpenStudent} />{week.worried.length > 6 ? ` y ${week.worried.length - 6} más` : ""}.</li>}
+        {week.followUpsDue.length > 0 && <li><strong>{week.followUpsDue.length}</strong> seguimientos para esta semana. {onOpenQueue && <button type="button" className="link ws-inline" onClick={onOpenQueue}>Abrir la cola</button>}</li>}
+        {week.deliveries === 0 && week.due.length === 0 && <li className="caption">Semana tranquila: nada entregado ni por vencer todavía.</li>}
+      </ul>
+    </div>
+  );
 }
