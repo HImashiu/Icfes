@@ -174,6 +174,17 @@ export default function App() {
     }
   }, [exams, fetchExam]);
 
+  // Coming back from Google the page reloads on Inicio. A first-time account (no profile yet) goes straight to the
+  // "Casi listo" form; one that just signed in lands on the profile, so the sign-in is visibly done.
+  useEffect(() => {
+    if (auth.status === "needs-profile" && view !== "login") { setView("login"); return; }
+    if (auth.status === "ready") {
+      let pending = false;
+      try { pending = sessionStorage.getItem("icfes-login-pending") === "1"; sessionStorage.removeItem("icfes-login-pending"); } catch { /* blocked */ }
+      if (pending && view === "home") setView("profile");
+    }
+  }, [auth.status]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Open the first exam once the index is known, preferring one that has Inglés (the 1ra booklets have none).
   useEffect(() => {
     const open = exams?.filter((e) => e.status !== "proximamente") ?? [];

@@ -63,11 +63,13 @@ export function AuthProvider({ children }) {
     () => ({
       ...state,
       api,
-      signInWithGoogle: () =>
-        supabase.auth.signInWithOAuth({
+      signInWithGoogle: () => {
+        try { sessionStorage.setItem("icfes-login-pending", "1"); } catch { /* blocked */ }
+        return supabase.auth.signInWithOAuth({
           provider: "google",
           options: { redirectTo: window.location.origin + window.location.pathname, queryParams: { prompt: "select_account" } },
-        }),
+        });
+      },
       // A guest plays a live game with a nickname and keeps nothing: no profile, no school data.
       joinAsGuest: async () => {
         const { error } = await supabase.auth.signInAnonymously();
