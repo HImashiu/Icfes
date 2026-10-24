@@ -298,3 +298,43 @@ delete from school_consents;
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'ana@colegio.edu.co');
 do $$ begin perform create_family_report('00000000-0000-0000-0000-000000000010', '{}'); raise exception 'FAILED: report without guardian authorization';
   exception when others then if sqlerrm <> 'no_guardian_authorization' then raise; end if; end $$;
+
+-- 14. grading models: the coordination sets the school's, a course teacher sets a class space's or assignment's;
+--     everyone in the school reads; students and other schools cannot write or read
+reset role;
+update profiles set role = 'teacher' where id = '00000000-0000-0000-0000-00000000000a';
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'ana@colegio.edu.co');
+insert into grading_models (school_id, scope, scope_id, model, updated_by) values
+ ('11111111-1111-1111-1111-111111111111', 'course', '33333333-3333-3333-3333-333333333333', '{"kind":"scale"}', '00000000-0000-0000-0000-00000000000a'),
+ ('11111111-1111-1111-1111-111111111111', 'assignment', '44444444-4444-4444-4444-444444444444', '{"kind":"percent"}', '00000000-0000-0000-0000-00000000000a');
+do $$ begin
+  insert into grading_models (school_id, scope, scope_id, model, updated_by) values
+   ('11111111-1111-1111-1111-111111111111', 'school', '11111111-1111-1111-1111-111111111111', '{"kind":"icfes"}', '00000000-0000-0000-0000-00000000000a');
+  raise exception 'FAILED: a plain teacher set the school model';
+exception when insufficient_privilege then null; end $$;
+update grading_models set model = '{"kind":"formula"}', updated_by = '00000000-0000-0000-0000-00000000000a' where scope = 'course';
+select pg_temp.expect('teacher updates the class space model', (select model ->> 'kind' from grading_models where scope = 'course') = 'formula');
+reset role;
+update profiles set role = 'school_admin' where id = '00000000-0000-0000-0000-00000000000a';
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'ana@colegio.edu.co');
+insert into grading_models (school_id, scope, scope_id, model, updated_by) values
+ ('11111111-1111-1111-1111-111111111111', 'school', '11111111-1111-1111-1111-111111111111', '{"kind":"icfes"}', '00000000-0000-0000-0000-00000000000a');
+select pg_temp.expect('coordination sets the school model', (select count(*) from grading_models where scope = 'school') = 1);
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c', 'cami@colegio.edu.co');
+select pg_temp.expect('student reads the school models', (select count(*) from grading_models) = 3);
+do $$ begin
+  insert into grading_models (school_id, scope, scope_id, model, updated_by) values
+   ('11111111-1111-1111-1111-111111111111', 'course', '33333333-3333-3333-3333-333333333333', '{"kind":"percent"}', '00000000-0000-0000-0000-00000000000c');
+  raise exception 'FAILED: a student set a model';
+exception when insufficient_privilege or unique_violation then null; end $$;
+update grading_models set model = '{"kind":"percent"}' where scope = 'course';
+select pg_temp.expect('student cannot change a model', (select model ->> 'kind' from grading_models where scope = 'course') = 'formula');
+delete from grading_models where scope = 'school';
+select pg_temp.expect('student cannot delete a model', (select count(*) from grading_models) = 3);
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d', 'dora@otro.edu.co');
+select pg_temp.expect('another school reads none', (select count(*) from grading_models) = 0);
+do $$ begin
+  insert into grading_models (school_id, scope, scope_id, model, updated_by) values
+   ('22222222-2222-2222-2222-222222222222', 'course', '33333333-3333-3333-3333-333333333333', '{}', '00000000-0000-0000-0000-00000000000d');
+  raise exception 'FAILED: another school set a model for our course';
+exception when insufficient_privilege then null; end $$;

@@ -32,6 +32,7 @@ import { AnnotationProvider } from "./components/Annotations.jsx";
 import { GlossaryProvider } from "./components/Glossary.jsx";
 import { loadHistory } from "./lib/local.js";
 import { pendingMisses, repechajeKeys } from "./lib/repechaje.js";
+import { resolveModel, xpFactor } from "./lib/grading.js";
 import { attemptForAssignment, attemptRow, attemptsLeft, questionsForAttempt, revealAllowed } from "./lib/assignments.js";
 
 const base = import.meta.env.BASE_URL;
@@ -80,7 +81,7 @@ const storeScope = (a) => (a.assignmentId ? `asg-${a.assignmentId}` : a.repechaj
 export default function App() {
   const auth = useAuth();
   const signedIn = auth.status === "ready";
-  const [assigned, setAssigned] = useState({ assignments: [], attempts: [] });
+  const [assigned, setAssigned] = useState({ assignments: [], attempts: [], models: [] });
   const [exams, setExams] = useState(null);
   const [loadError, setLoadError] = useState(null);
   const [selected, setSelected] = useState(null); // { slug, exam, key, keyStatus, notes, figures }
@@ -214,8 +215,8 @@ export default function App() {
     try {
       // Roster rows a teacher typed with another spelling of the email are linked to this account (migration 0010).
       await auth.api.linkRoster();
-      const [assignments, attempts] = await Promise.all([auth.api.listAssignments(), auth.api.myAttempts()]);
-      setAssigned({ assignments, attempts });
+      const [assignments, attempts, models] = await Promise.all([auth.api.listAssignments(), auth.api.myAttempts(), auth.api.gradingModels().catch(() => [])]);
+      setAssigned({ assignments, attempts, models });
     } catch {
       setAssigned({ assignments: [], attempts: [] });
     }
@@ -241,7 +242,10 @@ export default function App() {
     }
     const base = attemptForAssignment(a, [], Date.now());
     const questions = questionsForAttempt(sel.exam, base);
-    setAttempt(attemptForAssignment(a, questions));
+    // The teacher's grading model may lower the XP of repeat attempts (power law); the attempt number is the next one.
+    const model = resolveModel(assigned.models, { assignmentId: a.id, courseId: a.course_id, schoolId: auth.profile?.school_id }).model;
+    const attemptNo = assigned.attempts.filter((x) => x.assignment_id === a.id && x.submitted_at).length + 1;
+    setAttempt({ ...attemptForAssignment(a, questions), attemptNo, xpFactor: xpFactor(model, attemptNo) });
     setView("test");
   };
 
@@ -414,6 +418,7 @@ export default function App() {
           onRetry={attempt.assignmentId ? retryAssigned : attempt.repechaje ? null : () => startAttempt(attempt.scope, attempt.mode, attempt.order)}
           onReviewTimes={(n) => { setReviewStart(n); setView("review"); }}
           onRepechaje={startRepechaje}
+          grading={assignedOf ? resolveModel(assigned.models, { assignmentId: assignedOf.id, courseId: assignedOf.course_id, schoolId: auth.profile?.school_id }).model : null}
         />
       )}
 

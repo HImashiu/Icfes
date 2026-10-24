@@ -139,9 +139,10 @@ const csvCell = (v) => {
   return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 // Opens in Excel and Google Sheets. The score is a percent against the PRELIMINARY key.
-export function resultsCsv(title, rows) {
-  const head = ["Estudiante", "Correo", "Estado", "Puntaje (%) clave preliminar", "Entregado"];
-  const lines = rows.map((r) => [r.name, r.email, r.done ? "Entregado" : r.joined ? "Pendiente" : "Sin ingresar", r.pct ?? "", r.at ?? ""].map(csvCell).join(","));
+// `grade` (optional): { label, of(row) } adds the result under the teacher's grading model next to the raw percent.
+export function resultsCsv(title, rows, grade = null) {
+  const head = ["Estudiante", "Correo", "Estado", "Puntaje (%) clave preliminar", ...(grade ? [grade.label] : []), "Entregado"];
+  const lines = rows.map((r) => [r.name, r.email, r.done ? "Entregado" : r.joined ? "Pendiente" : "Sin ingresar", r.pct ?? "", ...(grade ? [grade.of(r) ?? ""] : []), r.at ?? ""].map(csvCell).join(","));
   return `﻿${[`${csvCell(title)}`, head.join(","), ...lines].join("\n")}\n`;
 }
 

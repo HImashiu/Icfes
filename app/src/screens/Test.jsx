@@ -213,7 +213,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
     const hit = Boolean(correctLetter) && attempt.answers[q.key] === correctLetter;
     onChange((a) => {
       if (a.checked?.[q.key]) return a;
-      return { ...a, checked: { ...(a.checked ?? {}), [q.key]: true }, xp: (a.xp ?? 0) + (hit ? xpFor(q.section) : 0) };
+      return { ...a, checked: { ...(a.checked ?? {}), [q.key]: true }, xp: (a.xp ?? 0) + (hit ? xpFor(q.section, a.xpFactor ?? 1) : 0) };
     });
     setJustChecked(q.key);
     if (!correctLetter) return;
@@ -251,7 +251,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
           <Icon name={hasKey && right ? "check" : "x"} size={22} />
           <div>
             <strong>
-              {!hasKey ? "Clave pendiente" : right ? `¡Correcto! +${xpFor(qq.section)} XP` : `Casi. La respuesta es ${cl}`}
+              {!hasKey ? "Clave pendiente" : right ? `¡Correcto! +${xpFor(qq.section, attempt.xpFactor ?? 1)} XP` : `Casi. La respuesta es ${cl}`}
             </strong>
             <span>{hasKey ? "Clave preliminar, no oficial" : "Esta pregunta todavía no tiene clave."}</span>
           </div>
@@ -293,7 +293,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
       )}
       <div>
         <strong>{verdict === "neutral" ? "Clave pendiente" : right ? PRAISE[(current + run) % PRAISE.length] : `La respuesta es ${correctLetter}`}</strong>
-        <span>{verdict === "neutral" ? "Esta pregunta todavía no tiene clave." : right ? `+${xpFor(q.section)} XP · clave preliminar` : explained ? "Mira la explicación abajo · clave preliminar" : "Clave preliminar, no oficial"}</span>
+        <span>{verdict === "neutral" ? "Esta pregunta todavía no tiene clave." : right ? `+${xpFor(q.section, attempt.xpFactor ?? 1)} XP · clave preliminar` : explained ? "Mira la explicación abajo · clave preliminar" : "Clave preliminar, no oficial"}</span>
       </div>
       {cheer && <span className="verdict-run"><Icon name="flame" size={16} /> {cheer}</span>}
     </div>
