@@ -97,7 +97,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
     <section className="results">
       <div className="results-hero card" ref={heroRef}>
         <div className="hero-row">
-          <Mascot pose={pct === null ? "normal" : pct >= 50 ? "celebrating" : "sad"} size={84} idle={pct === null} />
+          <Mascot pose={pct === null ? "normal" : pct >= 50 ? "celebrating" : "thinking"} size={84} idle={pct === null} />
           <div className="hero-text">
             <h1>{!delivered ? "Intento sin entregar" : headline(pct, score.answered)}</h1>
             <span className="caption">{title}</span>
