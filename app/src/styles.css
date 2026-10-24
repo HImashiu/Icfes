@@ -2767,3 +2767,4 @@ body:has(.bottom-nav) .demo-banner { bottom: 84px; }
   .ws-table td, .ws-table th { padding-left: 6px; padding-right: 6px; }
 }
 @media (min-width: 768px) { .ws-table .ws-name { white-space: normal; max-width: 215px; } }
+@media (max-width: 767px) { .cb-callout { display: block; } .cb-callout svg { vertical-align: -3px; margin-right: 4px; } }
