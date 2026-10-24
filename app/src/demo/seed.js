@@ -267,6 +267,7 @@ export function buildDemo({ bundles, now = Date.now() }) {
       school_consents: [{ kind: "guardian_authorization", version: CONSENT_VERSION, granted_at: new Date(now - 60 * DAY).toISOString() }],
       student_statuses: statuses, student_flags: flags, student_groups: groups, student_group_members: groupMembers, student_notes: notes, saved_views: views,
       teacher_questions: [], question_overrides: [], annotations: [], live_sessions: [], live_players: [], live_answers: [],
+      group_directors: [{ id: "demo-gd-1", school_id: SCHOOL_ID, grade: "11", group_label: "A", profile_id: staff[1].id }],
     },
   };
 }

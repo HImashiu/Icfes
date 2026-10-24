@@ -68,7 +68,7 @@ function Sheets({ assignment, questions, roster, course, plan, onClose }) {
 }
 
 // Calificar hojas: la cámara en vivo o fotos subidas. Cada hoja se lee en el navegador, se muestra para corregir lo dudoso y se guarda con el resto de resultados.
-function Scan({ api, assignment, bundle, questions, roster, plan, guard, setNotice, onClose }) {
+function Scan({ api, assignment, bundle, questions, roster, plan, guard, setNotice, onSaved, onClose }) {
   const [items, setItems] = useState([]);
   const [busy, setBusy] = useState(false);
   const [camera, setCamera] = useState(false);
@@ -116,11 +116,15 @@ function Scan({ api, assignment, bundle, questions, roster, plan, guard, setNoti
   const save = () => {
     setBusy(true);
     guard(async () => {
+      const pcts = [];
       for (const it of ready) {
         const s = scoreOf(it);
         await api.paperSubmit(assignment.id, it.memberId, byKey(it.answers, questionsOf(it)), { keyed: s.keyed, correct: s.correct, answered: s.answered, total: s.total, perArea: s.perArea });
+        if (s.keyed && s.total) pcts.push((s.correct / s.total) * 100);
       }
-      setNotice(`Se guardaron ${ready.length} hojas de papel en "${assignment.title}". Ya cuentan en los informes.`);
+      // The teacher panel shows a receipt with every place the results went; elsewhere a notice says it.
+      if (onSaved) onSaved({ count: ready.length, average: pcts.length ? pcts.reduce((a, b) => a + b, 0) / pcts.length : null });
+      else setNotice(`Se guardaron ${ready.length} hojas de papel en "${assignment.title}". Ya cuentan en los informes.`);
       setItems((cur) => cur.filter((it) => !ready.includes(it)));
     }).finally(() => setBusy(false));
   };
@@ -283,10 +287,11 @@ function Seating({ assignment, roster, plan, savePlan, setMode, siblings, loadSi
 }
 
 // Sección “Papel”: simulacro impreso para colegios sin un dispositivo por estudiante.
-export default function Paper({ api, assignments, fetchExam, guard, setNotice }) {
+// Inside an activity page it works on that one assignment (fixedId) without its own header or picker.
+export default function Paper({ api, assignments, fetchExam, guard, setNotice, fixedId = null, embedded = false, initialMode = null, onSaved = null }) {
   const choices = assignments.filter((a) => !a.assignee_id);
-  const [id, setId] = useState(choices[0]?.id ?? "");
-  const [mode, setMode] = useState(null);
+  const [id, setId] = useState(fixedId ?? choices[0]?.id ?? "");
+  const [mode, setMode] = useState(initialMode);
   const [bundle, setBundle] = useState(null);
   const [roster, setRoster] = useState([]);
   const [course, setCourse] = useState("");
@@ -306,7 +311,7 @@ export default function Paper({ api, assignments, fetchExam, guard, setNotice })
       setSavedPlan(remote ?? loadLocalPlan(assignment.id));
     });
     setSavedPlan(null);
-    setMode(null);
+    setMode((m) => (m === initialMode ? m : null));
   }, [assignment?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const questions = useMemo(() => (bundle && assignment ? questionsForAttempt(bundle.exam, { scope: assignment.scope, keys: assignment.question_keys }) : []), [bundle, assignment]);
@@ -329,12 +334,12 @@ export default function Paper({ api, assignments, fetchExam, guard, setNotice })
 
   return (
     <>
-      <header className="t-head"><div><h1>Papel</h1><span className="caption">Simulacro impreso para salones sin un dispositivo por estudiante. Tres pasos: imprimir, resolver, fotografiar.</span></div></header>
+      {!embedded && <header className="t-head"><div><h1>Papel</h1><span className="caption">Simulacro impreso para salones sin un dispositivo por estudiante. Tres pasos: imprimir, resolver, fotografiar.</span></div></header>}
       {choices.length === 0 ? <div className="card paper-empty"><Icon name="book" size={28} /><p>Crea primero una asignación con las preguntas del simulacro y vuelve aquí.</p></div> : (
         <>
           <div className="card paper-pick">
-            <div className="field"><span className="label">Asignación</span>
-              <Picker label="Asignación" value={assignment?.id ?? ""} onChange={setId} options={choices.map((a) => ({ value: a.id, label: `${a.courses?.name} · ${a.title}` }))} /></div>
+            {!fixedId && <div className="field"><span className="label">Asignación</span>
+              <Picker label="Asignación" value={assignment?.id ?? ""} onChange={setId} options={choices.map((a) => ({ value: a.id, label: `${a.courses?.name} · ${a.title}` }))} /></div>}
             <div className="paper-stats" aria-live="polite">
               {!bundle ? <span className="chip">Cargando preguntas…</span> : (
                 <>
@@ -345,7 +350,7 @@ export default function Paper({ api, assignments, fetchExam, guard, setNotice })
               )}
             </div>
             {tooMany && <p className="notice error">Una hoja admite hasta {MAX_QUESTIONS} preguntas.</p>}
-            {bundle && noRoster && <p className="notice error">Este curso no tiene estudiantes en la lista. Agrégalos en “Cursos y estudiantes”.</p>}
+            {bundle && noRoster && <p className="notice error">Este curso no tiene estudiantes en la lista. Agrégalos en Estudiantes › Listas de clase.</p>}
           </div>
           <div className="paper-steps">
             {steps.map((st) => (
@@ -365,7 +370,7 @@ export default function Paper({ api, assignments, fetchExam, guard, setNotice })
       {mode === "booklet" && bundle && <Booklet bundle={bundle} questions={questions} title={assignment.title} course={course} plan={plan} onClose={() => setMode(null)} />}
       {mode === "sheets" && bundle && <Sheets assignment={assignment} questions={questions} roster={roster} course={course} plan={plan} onClose={() => setMode(null)} />}
       {mode === "chart" && bundle && plan && <SeatChartSheet plan={plan} names={Object.fromEntries(roster.map((m) => [m.id, m.full_name || m.email]))} title={assignment.title} course={course} onClose={() => setMode(null)} />}
-      {mode === "scan" && bundle && <Scan api={api} assignment={assignment} bundle={bundle} questions={questions} roster={roster} plan={plan} guard={guard} setNotice={setNotice} onClose={() => setMode(null)} />}
+      {mode === "scan" && bundle && <Scan api={api} assignment={assignment} bundle={bundle} questions={questions} roster={roster} plan={plan} guard={guard} setNotice={setNotice} onSaved={onSaved} onClose={() => setMode(null)} />}
     </>
   );
 }
