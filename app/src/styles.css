@@ -2432,7 +2432,7 @@ button.sp-row:hover { background: var(--surface-2); }
 .sh-allclear > button { grid-column: 1 / -1; justify-self: start; }
 .sh-teacher { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sh-subject-foot { display: flex; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
-.home.sh .sh-quick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 10px; }
+.home.sh .sh-quick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .sh-q { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; padding: 12px 14px; text-align: left; color: var(--text); cursor: pointer; }
 .sh-q > span { display: grid; gap: 1px; min-width: 0; }
 .sh-q:hover { border-color: var(--accent-ink); }
@@ -2557,7 +2557,7 @@ body:has(.bottom-nav) .demo-banner { bottom: 84px; }
   .sjp-hero { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 600px) {
-  .home.sh .sh-quick { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 8px; }
+  .home.sh .sh-quick { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .sh-q { grid-template-columns: minmax(0, 1fr); justify-items: start; padding: 10px; gap: 6px; }
   .sh-q .caption { font-size: 11px; }
   .sh-ring { width: 68px; height: 68px; }
@@ -2599,3 +2599,171 @@ body:has(.bottom-nav) .demo-banner { bottom: 84px; }
 .sj-course-stats b { font: 800 22px "Bricolage Grotesque", sans-serif; }
 .su-sessions .seg { white-space: nowrap; }
 @media (max-width: 600px) { .sj-course-stats { grid-template-columns: minmax(0, 1fr); } .sj-course-stats b { font-size: 18px; } }
+
+/* ---------- Teacher features, polish pass (2026-10-24) ---------- */
+/* Cards are one column that may shrink: a wide table inside scrolls in its own box instead of widening the page. */
+.t-card { grid-template-columns: minmax(0, 1fr); }
+.seg { white-space: nowrap; }
+.no-scrollbar, .cb-gallery .chips-row { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar, .cb-gallery .chips-row::-webkit-scrollbar { display: none; }
+
+/* Tables that turn into cards on a phone: every cell with data-l shows its label. */
+@media (max-width: 767px) {
+  .table-wrap:has(> .m-cards) { overflow: visible; }
+  .t-table.m-cards, .t-table.m-cards tbody { display: block; width: 100%; }
+  .t-table.m-cards thead { display: none; }
+  .t-table.m-cards tr { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 12px 2px; border-bottom: 1px solid var(--line); }
+  .t-table.m-cards td { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; font-size: 13px; min-height: 0; white-space: normal; }
+  .t-table.m-cards td[data-l]::before { content: attr(data-l); color: var(--text-2); font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+  .t-table.m-cards td.m-hide { display: none; }
+  .t-table.m-cards td.m-main { flex: 1 1 100%; font-weight: 700; }
+  .t-table.m-cards tr.selected { background: var(--accent-soft); border-radius: 12px; }
+  /* Estudiantes: checkbox and name share the first line, the rest wraps under the name. */
+  .ws-table.m-cards td:first-child { width: auto; order: 0; }
+  .ws-table.m-cards td:nth-child(2) { flex: 1 1 calc(100% - 46px); order: 1; }
+  .ws-table.m-cards td:nth-child(n+3) { order: 2; padding-left: 34px; }
+  .ws-table.m-cards td:nth-child(n+4) { padding-left: 0; }
+  .ws-table.m-cards td.ws-wrap { max-width: 100%; }
+}
+
+/* Estudiantes: on a phone the selects fold behind one "Filtros" button next to the search. */
+.ws-filter-toggle { display: none; }
+@media (max-width: 767px) {
+  .ws-main-filters { gap: 8px; }
+  .ws-main-filters .ws-search { flex: 1 1 0; min-width: 0; }
+  .ws-filter-toggle { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; min-height: 48px; padding: 0 14px; }
+  .ws-main-filters:not(.open) > .ui-select, .ws-main-filters:not(.open) > .link { display: none; }
+  .ws-main-filters.open > .ui-select { flex: 1 1 calc(50% - 4px); max-width: none; }
+}
+
+/* Reportes (chart builder): saved charts and examples on top, chart first, field zones beside it (PC) or folded under it (phone). */
+.cb-gallery { gap: 12px; }
+.cb-gallery-row { display: grid; gap: 8px; }
+.cb-saved li { border: 2px solid var(--line); border-radius: 999px; background: var(--surface); overflow: hidden; }
+.cb-saved li.on { border-color: var(--accent); background: var(--accent-soft); }
+.cb-saved-open { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; color: var(--text); font: inherit; font-weight: 700; font-size: 13px; padding: 8px 4px 8px 12px; min-height: 38px; cursor: pointer; }
+.cb-saved-x { display: inline-grid; place-items: center; width: 32px; height: 38px; border: 0; background: none; color: var(--text-2); cursor: pointer; }
+.cb-saved-x:hover { color: var(--bad); }
+.cb-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.cb-title strong { font-size: 17px; }
+.cb-tune { display: none; }
+.cb-result { position: sticky; top: 12px; }
+.cb-bar-row { grid-template-columns: 1fr 64px; }
+.cb-kpis .d-kpi { padding: 12px 14px; }
+.cb-kpis .d-kpi .display { font-size: 26px; }
+@media (min-width: 961px) { .cb-controls { order: -1; } }
+@media (max-width: 960px) {
+  .cb-result { position: static; }
+  .cb-tune { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; min-height: 40px; padding: 0 12px; font-size: 13px; }
+  .cb-controls:not(.open) { display: none; }
+  .cb-palette-wrap { display: none; }
+}
+@media (max-width: 767px) {
+  .cb-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .cb-kpis .d-kpi { padding: 8px 10px; border-radius: 14px; }
+  .cb-kpis .d-kpi .label { font-size: 9.5px; letter-spacing: 0.03em; line-height: 1.2; }
+  .cb-kpis .d-kpi .display { font-size: 18px; }
+  .cb-kpis .d-kpi .caption { display: none; }
+  .cb-gallery .chips-row { flex-wrap: nowrap; overflow-x: auto; margin: 0 -16px; padding: 0 16px; }
+  .cb-gallery .chips-row .chip { flex: 0 0 auto; }
+  .cb-saved { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .cb-saved li { flex: 0 0 auto; }
+  .cb-bar-head .segmented { width: 100%; }
+  .cb-bar-head .segmented .seg { flex: 1 1 0; padding: 0 6px; }
+  .cb-bar-head > .ui-select { width: 100%; }
+}
+
+/* Activity results: who-filter and "ver notas como" above the roster. */
+.ar-tools { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; justify-content: space-between; }
+.ar-viewas { display: grid; gap: 4px; min-width: 240px; }
+.t-table tr.ar-pending td { color: var(--text-2); }
+.ar-grade { font-weight: 800; font-variant-numeric: tabular-nums; }
+.ar-actions { white-space: nowrap; }
+.ar-actions .link + .link { margin-left: 12px; }
+@media (max-width: 767px) {
+  .ar-tools .segmented { width: 100%; }
+  .ar-tools .segmented .seg { flex: 1 1 0; padding: 0 4px; font-size: 12px; }
+  .ar-viewas { width: 100%; min-width: 0; }
+  .t-table.m-cards td.ar-actions { flex: 1 1 100%; }
+}
+
+/* Estudiantes on a phone: three quick filters per row, card rows aligned under the name. */
+@media (max-width: 767px) {
+  .ws-quick { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .ws-stat { padding: 8px 10px; min-height: 0; }
+  .ws-stat .display { font-size: 20px; }
+  .ws-stat span { font-size: 11.5px; line-height: 1.2; }
+  .ws-table.m-cards tr { position: relative; padding-left: 40px; }
+  .ws-table.m-cards td:first-child { position: absolute; left: 2px; top: 18px; }
+  .ws-table.m-cards td:nth-child(2) { flex: 1 1 100%; }
+  .ws-table.m-cards td:nth-child(n+3) { padding-left: 0; }
+  .ws-table.m-cards .ws-name .avatar { display: none; }
+}
+@media (min-width: 961px) { .cb-bar-head > .ui-select { width: auto; min-width: 190px; } }
+.cb-controls .segmented.small { display: flex; width: fit-content; }
+.cb-controls .cb-field { padding: 5px 9px; font-size: 12.5px; }
+
+/* Calificación: model cards, compact curve table, live preview beside the form on a wide screen. */
+.grading-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); gap: 16px; align-items: start; }
+.gs-preview { position: sticky; top: 12px; }
+.gs-preview .t-table td, .gs-preview .t-table th { padding: 8px 6px; }
+@media (max-width: 1100px) { .grading-layout { grid-template-columns: minmax(0, 1fr); } .gs-preview { position: static; } }
+.gs-kinds { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+.gs-kind { display: grid; gap: 4px; align-content: start; text-align: left; padding: 12px 14px; border-radius: 16px; border: 2px solid var(--line); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; box-shadow: 0 3px 0 var(--line); transition: border-color 0.15s, transform 0.1s; }
+.gs-kind strong { font-size: 14px; }
+.gs-kind span { font-size: 12px; line-height: 1.35; color: var(--text-2); }
+.gs-kind:hover { border-color: var(--accent); }
+.gs-kind:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--line); }
+.gs-kind.on { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 3px 0 var(--accent-shadow); }
+.gs-curves { display: grid; gap: 6px; }
+.gs-curve { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(70px, 1fr) minmax(70px, 1fr) minmax(64px, 0.8fr); gap: 8px; align-items: center; }
+.gs-curve.head span { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-2); }
+.gs-area { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; }
+.gs-curve .field.bare { display: block; }
+.gs-curve input { min-height: 40px; padding: 6px 10px; }
+.gs-at { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--text-2); }
+.gs-at.down { color: var(--bad); }
+.gs-at.up { color: var(--ok); }
+@media (max-width: 767px) {
+  .gs-kinds { grid-template-columns: 1fr 1fr; }
+  .gs-kind { padding: 10px 12px; }
+  .gs-kind span { display: none; }
+  .gs-kind.on span { display: block; }
+  .gs-curve { grid-template-columns: minmax(0, 1.3fr) 64px 64px 52px; gap: 6px; }
+  .gs-area { font-size: 13px; }
+}
+.grading .grade-grid { align-items: start; }
+.grading .grade-grid .field > .label { min-height: 16px; }
+.gs-kind-hint { display: none; }
+@media (max-width: 767px) {
+  .gs-kind span, .gs-kind.on span { display: none; }
+  .gs-kind { min-height: 52px; align-content: center; }
+  .gs-kind-hint { display: block; }
+  .grading .grade-grid { grid-template-columns: 1fr 1fr; }
+}
+.chip.seat-short { border-color: var(--bad); color: var(--bad); background: var(--bad-soft); }
+@media (max-width: 767px) { .seat-rooms input[type="text"] { flex: 1 1 100%; } }
+.ws-side-stack { display: grid; gap: 16px; align-content: start; }
+.tab-short { display: none; }
+@media (max-width: 767px) {
+  .tab-long { display: none; }
+  .tab-short { display: inline; }
+  .assign-form .b-auto { flex-wrap: wrap; }
+  .assign-form .b-auto > * { flex: 1 1 100%; }
+}
+.ui-select.ws-mini { min-width: 130px; }
+@media (max-width: 767px) {
+  .ws-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .ws-kpis .d-kpi { padding: 10px; border-radius: 14px; }
+  .ws-kpis .d-kpi .label { font-size: 9.5px; letter-spacing: 0.03em; }
+  .ws-kpis .d-kpi .display { font-size: 19px; }
+  .ws-kpis .d-kpi .caption { font-size: 11px; line-height: 1.25; }
+}
+/* Estudiantes on a laptop: the whole roster row fits without sideways scrolling. */
+@media (min-width: 768px) {
+  .ws-table .ws-name .caption { display: block; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ws-table td .badge.pending { display: table; margin-top: 3px; white-space: nowrap; }
+  .ws-table .ws-status { white-space: normal; }
+  .ws-table td, .ws-table th { padding-left: 6px; padding-right: 6px; }
+}
+@media (min-width: 768px) { .ws-table .ws-name { white-space: normal; max-width: 215px; } }

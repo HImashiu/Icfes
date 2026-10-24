@@ -16,6 +16,17 @@ describe("Select", () => {
     expect(screen.queryByRole("listbox")).toBeNull();
   });
 
+  it("reads options wrapped in a fragment (the chart builder's field lists)", () => {
+    const onChange = vi.fn();
+    const opts = (extra) => <>{extra}<option value="area">Área</option><option value="tema">Tema</option></>;
+    render(<Select aria-label="Filas" value="area" onChange={onChange}>{opts(<option value="">Ninguna</option>)}</Select>);
+    const box = screen.getByRole("combobox", { name: "Filas" });
+    expect(box.textContent).toContain("Área");
+    fireEvent.click(box);
+    fireEvent.click(screen.getByRole("option", { name: "Tema" }));
+    expect(onChange).toHaveBeenCalledWith("tema");
+  });
+
   it("works from the keyboard and skips disabled options", () => {
     const onChange = vi.fn();
     render(<Select aria-label="Cuadernillo" value="a" onChange={onChange}><option value="a">A</option><option value="b" disabled>B</option><option value="c">C</option></Select>);

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { areaAverages, bandFor, histogram, itemsCsv, itemStats, mean, round } from "../lib/analytics.js";
 import { assignmentState, progressRows, questionsForAttempt, resultsCsv } from "../lib/assignments.js";
 import { areaColor } from "../lib/brand.js";
-import { DEFAULT_MODEL, MODEL_KINDS, describeModel, formatValue, gradeMany, isAdjusted, itemFromRow, valueRange } from "../lib/grading.js";
+import { DEFAULT_MODEL, MODEL_KINDS, describeModel, formatValue, gradeMany, isAdjusted, itemFromRow, normalizeModel, valueRange } from "../lib/grading.js";
 import QuestionView from "../components/QuestionView.jsx";
 import AutopsyCard from "../components/AutopsyCard.jsx";
 import { Bars, Histogram, Kpi } from "./Dashboard.jsx";
@@ -11,7 +11,7 @@ import { sampleRunAttempt } from "../lib/studentRun.js";
 import { classTimes, fmtDuration } from "../lib/studentRun.js";
 import { familyPayload, reportUrl, whatsappLink } from "../lib/family.js";
 import ProctorPanel from "./ProctorPanel.jsx";
-import { confirmDialog } from "../components/Controls.jsx";
+import { Select, confirmDialog } from "../components/Controls.jsx";
 
 const shortDate = (iso) => new Date(iso).toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "short" });
 function download(name, text) {
@@ -22,7 +22,7 @@ function download(name, text) {
 }
 
 // Informe de una asignación: avance, distribución, áreas, análisis por pregunta y tabla de estudiantes.
-export default function AssignmentReport({ api, assignment, fetchExam, guard, reload, model = DEFAULT_MODEL, initialStudent = null }) {
+export default function AssignmentReport({ api, assignment, fetchExam, guard, reload, model: savedModel = DEFAULT_MODEL, initialStudent = null }) {
   const [data, setData] = useState(null);
   const [bundle, setBundle] = useState(null);
   const [allItems, setAllItems] = useState(false);
@@ -35,6 +35,10 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
     if (initialStudent && data) setTimeout(() => document.getElementById("student-run")?.scrollIntoView?.({ behavior: "smooth", block: "start" }), 80);
   }, [initialStudent, data]);
   const [sample, setSample] = useState(false);
+  const [who, setWho] = useState("all"); // all | done | pending
+  const [viewKind, setViewKind] = useState(""); // "" = the activity's own model; otherwise a model kind to look through
+  // "Ver como": the same answers through another model, without saving anything. The saved model keeps its options (scale, curves…).
+  const model = useMemo(() => (viewKind && viewKind !== savedModel.kind ? normalizeModel({ ...savedModel, kind: viewKind }) : savedModel), [viewKind, savedModel]);
 
   useEffect(() => {
     guard(async () => {
@@ -140,21 +144,35 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
         </>
       )}
 
+      {prog.done > 0 && (
+        <div className="ar-tools no-print">
+          <div className="segmented small" role="group" aria-label="Quién aparece">
+            {[["all", `Todos · ${rows.length}`], ["done", `Entregaron · ${prog.done}`], ["pending", `Faltan · ${rows.length - prog.done}`]].map(([id, l]) => (
+              <button key={id} type="button" className={who === id ? "seg active" : "seg"} aria-pressed={who === id} onClick={() => setWho(id)}>{l}</button>
+            ))}
+          </div>
+          <label className="ar-viewas"><span className="label">Ver notas como</span>
+            <Select aria-label="Ver notas como" value={viewKind || savedModel.kind} onChange={(v) => setViewKind(v === savedModel.kind ? "" : v)}
+              options={MODEL_KINDS.map((k) => ({ value: k.id, label: k.id === savedModel.kind ? `${k.label} (el de esta actividad)` : k.label }))} />
+          </label>
+        </div>
+      )}
+      {viewKind && <p className="caption no-print">Vista de comparación: así quedarían las notas con «{MODEL_KINDS.find((k) => k.id === viewKind)?.label}». No cambia nada guardado; para usarlo de verdad, cámbialo en la pestaña Calificación.</p>}
       <div className="table-wrap">
-        <table className="t-table">
+        <table className="t-table m-cards">
           <thead><tr><th>Estudiante</th><th>Estado</th><th>{model.kind === "percent" ? "Puntaje" : "Nota"}</th>{isAdjusted(model) && <th>Aciertos</th>}{timed && <th>Banda estimada</th>}<th>Entregado</th><th>Tiempo</th><th>Intentos</th><th className="no-print" /></tr></thead>
           <tbody>
-            {rows.map((r) => (
-              <tr key={r.id}>
-                <td>{r.done ? <button type="button" className="link" onClick={() => openStudent(r.id)}>{r.name}</button> : r.name}</td>
-                <td>{r.done ? (r.paper ? "Entregado (papel)" : "Entregado") : r.joined ? "Pendiente" : "Sin ingresar"}</td>
-                <td title={r.grade?.error ?? r.grade?.note ?? undefined}>{r.grade ? r.grade.display : "—"}{r.grade?.passed === false && <span className="badge pending"> no aprueba</span>}</td>
-                {isAdjusted(model) && <td>{r.pct == null ? "—" : `${r.pct} %`}</td>}
-                {timed && <td>{r.band?.global == null ? "—" : `${r.band.low}–${r.band.high}`}</td>}
-                <td>{r.at ? shortDate(r.at) : "—"}</td>
-                <td>{r.done && !r.paper ? fmtDuration(r.attempt?.duration_sec) : "—"}</td>
-                <td>{r.attempts.length || "—"}</td>
-                <td className="no-print">{r.done && <button type="button" className="link" onClick={() => openStudent(r.id)}>Ver detalle</button>}{r.done && <button type="button" className="link" onClick={() => family(r)}>Informe familiar</button>}</td>
+            {rows.filter((r) => who === "all" || (who === "done" ? r.done : !r.done)).sort((a, b) => Number(b.done) - Number(a.done)).map((r) => (
+              <tr key={r.id} className={r.done ? "" : "ar-pending"}>
+                <td className="m-main">{r.done ? <button type="button" className="link" onClick={() => openStudent(r.id)}>{r.name}</button> : r.name}</td>
+                <td>{r.done ? <span className="badge ok">{r.paper ? "Entregado (papel)" : "Entregado"}</span> : <span className="badge pending">{r.joined ? "Pendiente" : "Sin ingresar"}</span>}</td>
+                <td data-l={model.kind === "percent" ? "Puntaje" : "Nota"} className={r.grade ? "ar-grade" : "m-hide"} title={r.grade?.error ?? r.grade?.note ?? undefined}>{r.grade ? r.grade.display : "—"}{r.grade?.passed === false && <span className="badge pending"> no aprueba</span>}</td>
+                {isAdjusted(model) && <td data-l="Aciertos" className={r.pct == null ? "m-hide" : ""}>{r.pct == null ? "—" : `${r.pct} %`}</td>}
+                {timed && <td data-l="Banda" className={r.band?.global == null ? "m-hide" : ""}>{r.band?.global == null ? "—" : `${r.band.low}–${r.band.high}`}</td>}
+                <td data-l="Entregado" className={r.at ? "" : "m-hide"}>{r.at ? shortDate(r.at) : "—"}</td>
+                <td data-l="Tiempo" className={r.done && !r.paper ? "" : "m-hide"}>{r.done && !r.paper ? fmtDuration(r.attempt?.duration_sec) : "—"}</td>
+                <td data-l="Intentos" className={r.attempts.length ? "" : "m-hide"}>{r.attempts.length || "—"}</td>
+                <td className={r.done ? "no-print ar-actions" : "no-print m-hide"}>{r.done && <button type="button" className="link" onClick={() => openStudent(r.id)}>Ver detalle</button>}{r.done && <button type="button" className="link" onClick={() => family(r)}>Informe familiar</button>}</td>
               </tr>
             ))}
             {rows.length === 0 && <tr><td colSpan={9} className="caption">El curso no tiene estudiantes.</td></tr>}

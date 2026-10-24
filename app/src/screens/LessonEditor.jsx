@@ -18,7 +18,7 @@ const SECONDS = [30, 45, 60, 90, 120, 180, 300];
 
 // One lesson: its slides in order, how it is presented, and everything you can do with it:
 // project it, play it live, print it as a worksheet, a booklet or a key, or turn it into an assignment.
-export default function LessonEditor({ api, profile, row, courses, exams, fetchExam, guard, setNotice, reload, onBack, onSaved, onDeleted }) {
+export default function LessonEditor({ api, profile, row, courses, exams, fetchExam, guard, setNotice, reload, onBack, onSaved, onDeleted, autoPresent = false }) {
   const mine = row.owner_id === profile.id;
   const [lesson, setLesson] = useState(row);
   const [dirty, setDirty] = useState(false);
@@ -117,6 +117,9 @@ export default function LessonEditor({ api, profile, row, courses, exams, fetchE
   const questions = bundle ? lessonQuestions(lesson, bundle) : [];
   const courseName = courses.length === 1 ? courses[0].name : "";
   const ready = Boolean(bundle) && questions.length > 0;
+  // Opened with "Proyectar" from the list: start the projection as soon as the questions are loaded.
+  const [autoDone, setAutoDone] = useState(!autoPresent);
+  useEffect(() => { if (!autoDone && ready) { setAutoDone(true); setPresenting(0); } }, [autoDone, ready]);
 
   return (
     <>
@@ -133,15 +136,22 @@ export default function LessonEditor({ api, profile, row, courses, exams, fetchE
       </header>
 
       <div className="card t-card">
-        <div className="section-head"><strong>Qué hacer con esta clase</strong></div>
-        <div className="les-actions">
-          <button type="button" className={panel === "activity" ? "primary" : "secondary"} disabled={keys.length === 0} onClick={() => setPanel(panel === "activity" ? null : "activity")}>Convertir en actividad</button>
-          <button type="button" className={panel === "live" ? "primary" : "secondary"} disabled={keys.length === 0} onClick={() => setPanel(panel === "live" ? null : "live")}>Jugar en vivo</button>
-          <button type="button" className="secondary" disabled={!ready} onClick={() => setPrinting("worksheet")}>Hoja de trabajo</button>
-          <button type="button" className="secondary" disabled={!ready} onClick={() => setPrinting("booklet")}>Cuadernillo de examen</button>
-          <button type="button" className="secondary" disabled={!ready} onClick={() => setPrinting("key")}>Clave del docente</button>
-          <button type="button" className="link" onClick={duplicate}>Duplicar</button>
-          {mine && <button type="button" className="link" onClick={remove}>Borrar</button>}
+        <div className="section-head"><strong>Qué hacer con esta clase</strong>
+          <span className="les-minor"><button type="button" className="link" onClick={duplicate}>Duplicar</button>{mine && <button type="button" className="link" onClick={remove}>Borrar</button>}</span></div>
+        <div className="les-do">
+          {[
+            { id: "present", icon: "play", label: "Proyectar", note: "Revela respuesta y explicación paso a paso", on: false, disabled: !ready, run: () => setPresenting(0) },
+            { id: "activity", icon: "book", label: "Convertir en actividad", note: "Tarea, quiz, examen o práctica", on: panel === "activity", disabled: keys.length === 0, run: () => setPanel(panel === "activity" ? null : "activity") },
+            { id: "live", icon: "bolt", label: "Jugar en vivo", note: "Sala con código o QR, sin ranking", on: panel === "live", disabled: keys.length === 0, run: () => setPanel(panel === "live" ? null : "live") },
+            { id: "worksheet", icon: "pencil", label: "Hoja de trabajo", note: "Para imprimir y resolver en clase", disabled: !ready, run: () => setPrinting("worksheet") },
+            { id: "booklet", icon: "print", label: "Cuadernillo de examen", note: "Formato del examen, en papel", disabled: !ready, run: () => setPrinting("booklet") },
+            { id: "key", icon: "check", label: "Clave del docente", note: "Respuestas y explicaciones", disabled: !ready, run: () => setPrinting("key") },
+          ].map((a) => (
+            <button key={a.id} type="button" aria-label={a.label} title={a.note} className={a.on ? "les-do-tile on" : "les-do-tile"} disabled={a.disabled} aria-pressed={a.on === undefined ? undefined : a.on} onClick={a.run}>
+              <span className="les-do-ico" aria-hidden="true"><Icon name={a.icon} size={18} /></span>
+              <span><strong>{a.label}</strong><span className="caption">{a.note}</span></span>
+            </button>
+          ))}
         </div>
       </div>
 

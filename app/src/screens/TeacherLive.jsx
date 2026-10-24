@@ -176,8 +176,10 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
         )}
         {tabs.length > 1 && (
           <div className="seg-tabs tl-tabs" role="tablist" aria-label="Pestañas">
-            {tabs.map(([id, label]) => (
-              <button key={id} type="button" role="tab" aria-selected={r.tab === id} className={r.tab === id ? "on" : ""} onClick={() => go({ section: r.section, tab: id })}>{label}</button>
+            {tabs.map(([id, label, short]) => (
+              <button key={id} type="button" role="tab" aria-label={short ? label : undefined} aria-selected={r.tab === id} className={r.tab === id ? "on" : ""} onClick={() => go({ section: r.section, tab: id })}>
+                {short ? <><span className="tab-long">{label}</span><span className="tab-short" aria-hidden="true">{short}</span></> : label}
+              </button>
             ))}
           </div>
         )}

@@ -89,7 +89,7 @@ export default function ActivityPage({ api, profile, assignment, course, tab, go
       </div>
 
       {tab === "resultados" && (
-        <AssignmentReport key={`${assignment.id}-${version}`} api={api} model={model} assignment={assignment} fetchExam={fetchExam} guard={guard} reload={reload} initialStudent={focusMember} />
+        <AssignmentReport key={`${assignment.id}-${version}`} api={api} model={model.model} assignment={assignment} fetchExam={fetchExam} guard={guard} reload={reload} initialStudent={focusMember} />
       )}
       {tab === "papel" && (
         <Paper key={`${assignment.id}-${scanNow}`} api={api} assignments={[assignment]} fetchExam={fetchExam} guard={guard} setNotice={setNotice} fixedId={assignment.id} embedded initialMode={scanNow ? "scan" : null} onSaved={scanned} />

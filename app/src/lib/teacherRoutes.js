@@ -13,15 +13,15 @@ export const ADMIN_NAV = [
   { section: "colegio", tab: "ajustes", label: "Ajustes", icon: "user" },
 ];
 
-// Tabs of each section; the first is the default. HIDDEN tabs are reached from buttons, not from the tab strip.
+// Tabs of each section; the first is the default. An optional third entry is the short label used on a phone. HIDDEN tabs are reached from buttons, not from the tab strip.
 export const HIDDEN_TABS = new Set(["nueva"]);
 export const TABS = {
   hoy: [],
   actividades: [["lista", "Todas"], ["vivo", "Juego en vivo"], ["refuerzo", "Refuerzo"], ["nueva", "Nueva actividad"]],
   estudiantes: [["lista", "Estudiantes"], ["clases", "Listas de clase"]],
   resultados: [["resumen", "Resumen"], ["actividades", "Por actividad"], ["grafica", "Armar gráfica"]],
-  biblioteca: [["banco", "Banco de preguntas"], ["preguntas", "Mis preguntas"], ["clases", "Clases para proyectar"]],
-  colegio: [["docentes", "Docentes y clases"], ["calificacion", "Calificación"], ["ajustes", "Ajustes"]],
+  biblioteca: [["banco", "Banco de preguntas", "Banco"], ["preguntas", "Mis preguntas"], ["clases", "Clases para proyectar", "Proyectar"]],
+  colegio: [["docentes", "Docentes y clases", "Docentes"], ["calificacion", "Calificación"], ["ajustes", "Ajustes"]],
   actividad: [["resultados", "Resultados"], ["papel", "En papel"], ["calificacion", "Calificación"]],
 };
 const SECTIONS = new Set(Object.keys(TABS));

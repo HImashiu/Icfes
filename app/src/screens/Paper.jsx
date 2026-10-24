@@ -181,8 +181,9 @@ const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => ({ value: St
 
 // Plano del salón: filas × puestos, puestos vacíos, parejas que deben quedar separadas y mezclar con un toque.
 function Seating({ assignment, roster, plan, savePlan, setMode, siblings, loadSibling }) {
-  const [rows, setRows] = useState(plan?.rows ?? 5);
+  // A new room starts with enough seats for the whole class: six per row, as many rows as it takes.
   const [cols, setCols] = useState(plan?.cols ?? 6);
+  const [rows, setRows] = useState(plan?.rows ?? Math.min(12, Math.max(5, Math.ceil(roster.length / 6))));
   const [versions, setVersions] = useState(plan?.versions ?? MIN_VERSIONS);
   const [blocked, setBlocked] = useState(plan?.blocked ?? []);
   const [apart, setApart] = useState(plan?.apart ?? []);
@@ -249,7 +250,13 @@ function Seating({ assignment, roster, plan, savePlan, setMode, siblings, loadSi
         <div className="field"><span className="label">Filas</span><Select aria-label="Filas" value={String(rows)} onChange={(v) => setRows(Number(v))} options={range(1, 12)} /></div>
         <div className="field"><span className="label">Puestos por fila</span><Select aria-label="Puestos por fila" value={String(cols)} onChange={(v) => setCols(Number(v))} options={range(1, 12)} /></div>
         <div className="field"><span className="label">Versiones</span><Select aria-label="Versiones" value={String(versions)} onChange={(v) => setVersions(Number(v))} options={range(MIN_VERSIONS, MAX_VERSIONS)} /></div>
-        <span className="chip"><strong>{seatsLeft}</strong> puestos · <strong>{roster.length}</strong> estudiantes</span>
+        <span className={seatsLeft < roster.length ? "chip seat-short" : "chip"}><strong>{seatsLeft}</strong> puestos · <strong>{roster.length}</strong> estudiantes</span>
+        {seatsLeft < roster.length && (
+          <button type="button" className="secondary" onClick={() => {
+            const gaps = blocked.filter((s) => { const [r, c] = s.split(",").map(Number); return c < cols; }).length;
+            setRows(Math.min(12, Math.ceil((roster.length + gaps) / cols)));
+          }}>Faltan {roster.length - seatsLeft} puestos · agregar filas</button>
+        )}
       </div>
       <div className="seat-rooms">
         {rooms.length > 0 && <Picker label="Salones guardados" value="" onChange={useRoom} placeholder="Salones guardados…" options={rooms.map((r) => ({ value: r.name, label: `${r.name} (${r.rows}×${r.cols})` }))} />}

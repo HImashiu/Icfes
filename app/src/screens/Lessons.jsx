@@ -48,7 +48,7 @@ export default function Lessons({ api, profile, courses, assignments, exams, fet
     const row = rows?.find((r) => r.id === view.id) ?? view.row;
     return (
       <LessonEditor key={row.id} api={api} profile={profile} row={row} courses={courses} exams={exams} fetchExam={fetchExam} guard={guard}
-        setNotice={setNotice} reload={reload} onBack={() => { setView({ mode: "list" }); load(); }}
+        setNotice={setNotice} reload={reload} autoPresent={Boolean(view.present)} onBack={() => { setView({ mode: "list" }); load(); }}
         onSaved={() => load()} onDeleted={() => load()} />
     );
   }
@@ -84,15 +84,19 @@ export default function Lessons({ api, profile, courses, assignments, exams, fet
           const nq = questionKeys(r.items).length;
           const slides = (r.items ?? []).length;
           return (
-            <button key={r.id} type="button" className="les-card" onClick={() => setView({ mode: "open", id: r.id, row: r })}>
-              <strong>{r.title || "Clase sin título"}</strong>
+            <div key={r.id} className="les-card">
+              <button type="button" className="les-card-open" onClick={() => setView({ mode: "open", id: r.id, row: r })}><strong>{r.title || "Clase sin título"}</strong></button>
               <span className="caption">{nq} {nq === 1 ? "pregunta" : "preguntas"}{slides > nq ? ` · ${slides - nq} de texto` : ""} · {exams.find((e) => e.slug === r.exam_slug)?.title ?? r.exam_slug}</span>
               <span className="chips-row">
                 {r.owner_id !== profile.id && <span className="badge pending">De un colega</span>}
                 {r.owner_id === profile.id && r.visibility === "school" && <span className="badge">Compartida con el colegio</span>}
                 <span className="badge pending">Editada {shortDate(r.updated_at)}</span>
               </span>
-            </button>
+              <span className="les-card-actions">
+                <button type="button" className="primary" disabled={nq === 0} onClick={() => setView({ mode: "open", id: r.id, row: r, present: true })}><Icon name="play" size={16} />Proyectar</button>
+                <button type="button" className="secondary" onClick={() => setView({ mode: "open", id: r.id, row: r })}>Abrir</button>
+              </span>
+            </div>
           );
         })}
       </div>

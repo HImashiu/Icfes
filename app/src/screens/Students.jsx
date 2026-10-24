@@ -50,6 +50,7 @@ export default function Students({ api, profile, courses, assignments, guard, se
   const [tab, setTab] = useState("list");
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [moreFilters, setMoreFilters] = useState(false);
+  const [phoneFilters, setPhoneFilters] = useState(false); // on a phone the selects fold behind one button
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState(() => new Set());
   const [openKey, setOpenKey] = useState(null);
@@ -205,11 +206,14 @@ export default function Students({ api, profile, courses, assignments, guard, se
                 </form>
               )}
             </div>
-            <div className="ws-filter-row">
+            <div className={phoneFilters ? "ws-filter-row ws-main-filters open" : "ws-filter-row ws-main-filters"}>
               <label className="ws-search">
                 <Icon name="user" size={18} />
                 <input type="search" aria-label="Buscar estudiante" placeholder="Buscar por nombre, correo, espacio, grupo o estado" value={filters.q} onChange={(e) => setF({ q: e.target.value })} />
               </label>
+              <button type="button" className="secondary ws-filter-toggle" aria-expanded={phoneFilters} onClick={() => setPhoneFilters(!phoneFilters)}>
+                <Icon name="filter" size={16} />Filtros{activeFilterCount(filters) > 0 ? ` · ${activeFilterCount(filters)}` : ""}
+              </button>
               <Select aria-label="Espacio de clase" value={filters.course} onChange={(v) => setF({ course: v })}>
                 <option value="">Todos los espacios</option>
                 {courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -264,11 +268,11 @@ export default function Students({ api, profile, courses, assignments, guard, se
 
           <div className="card t-card">
             <div className="table-wrap">
-              <table className="t-table ws-table">
+              <table className="t-table ws-table m-cards">
                 <thead>
                   <tr>
                     <th><input type="checkbox" aria-label={allShownPicked ? "Quitar la selección" : `Seleccionar los ${shown.length} de la lista`} checked={allShownPicked} onChange={selectShown} /></th>
-                    <th>Estudiante</th><th>Espacios</th><th>Estado</th><th>Grupos</th><th>Entregas</th><th>{scoring.label}</th><th>Cambio</th><th>Última entrega</th><th>Alertas</th>
+                    <th>Estudiante</th><th>Espacios</th><th>Estado</th><th>Grupos</th><th>Entregas</th><th>{scoring.label}</th><th>Cambio</th><th>Última</th><th>Alertas</th>
                     {extraCols.map((c) => <th key={c.id}>{c.label}</th>)}
                   </tr>
                 </thead>
@@ -283,14 +287,14 @@ export default function Students({ api, profile, courses, assignments, guard, se
                         </button>
                         {e.followUp && <span className={e.followUp.due && e.followUp.due <= isoDay() ? "ws-follow hot" : "ws-follow"} title={e.followUp.reason}><Icon name="flag" size={12} /> {e.followUp.due ? shortDate(e.followUp.due) : "Seguimiento"}</span>}
                       </td>
-                      <td className="ws-wrap">{e.courseIds.map(courseName).join(", ")}</td>
-                      <td><StatusChip status={e.status} /></td>
-                      <td className="ws-wrap">{e.groups.length ? e.groups.map((g) => groupById.get(g)).filter(Boolean).map((g) => <span key={g.id} className="ws-group" style={{ "--gc": g.color }}>{g.name}</span>) : <span className="caption">—</span>}</td>
-                      <td>{e.done}/{e.assigned}{e.late > 0 && <span className="badge pending"> {e.late} sin entregar</span>}</td>
-                      <td>{scoring.format(e.avgPct)}</td>
-                      <td className={e.trend > 0 ? "ws-up" : e.trend < 0 ? "ws-down" : ""}>{fmtTrend(e.trend)}</td>
-                      <td>{shortDate(e.lastAt)}</td>
-                      <td><AlertChips alerts={e.alerts} /></td>
+                      <td className="ws-wrap" data-l="Espacios">{e.courseIds.map(courseName).join(", ")}</td>
+                      <td data-l="Estado" className={e.status ? "" : "m-hide"}><StatusChip status={e.status} /></td>
+                      <td className={e.groups.length ? "ws-wrap" : "ws-wrap m-hide"} data-l="Grupos">{e.groups.length ? e.groups.map((g) => groupById.get(g)).filter(Boolean).map((g) => <span key={g.id} className="ws-group" style={{ "--gc": g.color }}>{g.name}</span>) : <span className="caption">—</span>}</td>
+                      <td data-l="Entregas">{e.done}/{e.assigned}{e.late > 0 && <span className="badge pending"> {e.late} sin entregar</span>}</td>
+                      <td data-l={scoring.label} className="m-score">{scoring.format(e.avgPct)}</td>
+                      <td data-l="Cambio" className={e.trend > 0 ? "ws-up" : e.trend < 0 ? "ws-down" : e.trend == null ? "m-hide" : ""}>{fmtTrend(e.trend)}</td>
+                      <td data-l="Última entrega">{shortDate(e.lastAt)}</td>
+                      <td data-l="Alertas" className={e.alerts?.length ? "" : "m-hide"}><AlertChips alerts={e.alerts} /></td>
                       {extraCols.map((c) => <td key={c.id}>{c.value(e) ?? "—"}</td>)}
                     </tr>
                   ))}
@@ -498,14 +502,21 @@ function Statuses({ ws, store, roster, persist, say, onShow }) {
 function ProgressLine({ items }) {
   const pts = items.filter((i) => i.done && i.pct != null);
   if (pts.length < 2) return <p className="caption">Con dos entregas o más se dibuja su progreso.</p>;
-  const w = 320, h = 100, pad = 12;
+  const w = 320, h = 132, pad = 30, top = 18, bottom = 22;
   const x = (i) => pad + (i * (w - 2 * pad)) / (pts.length - 1);
-  const y = (p) => h - pad - (p / 100) * (h - 2 * pad);
+  const y = (p) => h - bottom - (p / 100) * (h - top - bottom);
+  const every = Math.max(1, Math.ceil(pts.length / 6)); // labels stay readable with many deliveries
   return (
     <svg className="progress-line" viewBox={`0 0 ${w} ${h}`} role="img" aria-label={`Resultados en el tiempo: ${pts.map((p) => `${p.title} ${p.pct} %`).join(", ")}`} width="100%">
       <line x1={pad} x2={w - pad} y1={y(50)} y2={y(50)} stroke="var(--line)" strokeDasharray="4 4" />
       <polyline fill="none" stroke="var(--accent)" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" points={pts.map((p, i) => `${x(i)},${y(p.pct)}`).join(" ")} />
       {pts.map((p, i) => <circle key={`${p.id}-${i}`} cx={x(i)} cy={y(p.pct)} r="4.5" fill="var(--accent)"><title>{`${p.title}: ${p.pct} % · ${shortDate(p.at)}`}</title></circle>)}
+      {pts.map((p, i) => ((i % every === 0 || i === pts.length - 1) ? (
+        <g key={`l-${p.id}-${i}`} fontSize="9.5" fill="var(--text-2)" textAnchor="middle">
+          <text x={x(i)} y={y(p.pct) - 9} fill="var(--text)" fontWeight="700">{p.pct}%</text>
+          <text x={x(i)} y={h - 6}>{new Date(p.at).toLocaleDateString("es-CO", { day: "numeric", month: "short" })}</text>
+        </g>
+      ) : null))}
     </svg>
   );
 }
@@ -629,7 +640,7 @@ export function StudentProfile({ api, userId, student: s, ws, store, guard, say,
         </section>
       )}
 
-      <div className="d-kpis">
+      <div className="d-kpis ws-kpis">
         <Kpi label="Entregas" value={`${s.done}/${s.assigned}`} hint={s.late ? `${s.late} sin entregar` : s.pending ? `${s.pending} abiertas` : "Al día"} />
         <Kpi label={scoring.label} value={scoring.format(s.avgPct)} hint="de aciertos en lo entregado" />
         <Kpi label="Cambio" value={fmtTrend(s.trend)} hint="últimas 3 frente a las anteriores" />
@@ -641,16 +652,17 @@ export function StudentProfile({ api, userId, student: s, ws, store, guard, say,
 
       <div className="d-two">
         <section className="card t-card"><strong>Progreso</strong><ProgressLine items={s.items} /><span className="caption">Cada punto es una entrega, en orden. La línea punteada marca 50 %.</span></section>
-        <section className="card t-card">
-          <strong>Por área</strong>
-          {s.areas.length ? <Bars rows={s.areas.map((a) => ({ label: a.name, value: a.pct, color: areaColor(a.name) }))} /> : <span className="caption">Aún sin entregas calificadas.</span>}
-        </section>
+        <div className="ws-side-stack">
+          <section className="card t-card">
+            <strong>Por área</strong>
+            {s.areas.length ? <Bars rows={s.areas.map((a) => ({ label: a.name, value: a.pct, color: areaColor(a.name) }))} /> : <span className="caption">Aún sin entregas calificadas.</span>}
+          </section>
+          <section className="card t-card">
+            <div className="section-head"><strong>Actividad por semana</strong><span className="caption">Últimas 8 semanas · {weeks.reduce((n, w) => n + w.minutes, 0)} min</span></div>
+            <WeeklyBars weeks={weeks} />
+          </section>
+        </div>
       </div>
-
-      <section className="card t-card">
-        <div className="section-head"><strong>Actividad por semana</strong><span className="caption">Últimas 8 semanas · {weeks.reduce((n, w) => n + w.minutes, 0)} min en total</span></div>
-        <WeeklyBars weeks={weeks} />
-      </section>
 
       <section className="card t-card">
         <div className="section-head">
