@@ -7,6 +7,8 @@ import { CONSENT_VERSION } from "../lib/consent.js";
 import { PRESETS } from "../lib/chartBuilder.js";
 import { BUILTIN_FORMATS } from "../lib/lesson.js";
 import { generatePlan } from "../lib/seating.js";
+import { SUGGESTED_STATUSES } from "../lib/workspaceStore.js";
+import { EMPTY_FILTERS } from "../lib/workspace.js";
 import { FIRST, LAST, TEACHERS, emailOf } from "./names.js";
 
 export const SCHOOL_ID = "demo-school";
@@ -194,6 +196,43 @@ export function buildDemo({ bundles, now = Date.now() }) {
     seating = [{ assignment_id: paper.id, plan, updated_at: new Date(now - 5 * 3600000).toISOString() }];
   }
 
+
+  // ----- teacher workspace (migration 0014): statuses, follow-up, groups, notes, saved views -----
+  const pctOf = new Map();
+  for (const a of attempts) {
+    const who = a.profile_id;
+    if (!who || !a.score?.total) continue;
+    const list = pctOf.get(who) ?? [];
+    list.push(a.score.correct / a.score.total);
+    pctOf.set(who, list);
+  }
+  const avgOf = (s) => { const l = pctOf.get(s.profileId); return l?.length ? l.reduce((x, y) => x + y, 0) / l.length : null; };
+  const stamp = (d) => new Date(now - d * DAY).toISOString();
+  const statuses = SUGGESTED_STATUSES.map((st, i) => ({ id: `demo-st-${i + 1}`, school_id: SCHOOL_ID, label: st.label, color: st.color, position: i }));
+  const statusId = (label) => statuses.find((x) => x.label === label).id;
+  const ranked = students.map((s) => ({ s, avg: avgOf(s) })).sort((a, b) => (a.avg ?? -1) - (b.avg ?? -1));
+  const flags = [];
+  ranked.slice(0, 14).forEach(({ s }, i) => flags.push({ id: `demo-fl-${s.n}`, school_id: SCHOOL_ID, email: s.email, status_id: statusId(i < 7 ? "Necesita apoyo" : "En observación"), follow_up: i < 9, follow_up_due: new Date(now + (i - 2) * DAY).toISOString().slice(0, 10), follow_up_reason: i % 2 ? "Hablar con acudiente" : "Revisar tareas pendientes", updated_at: stamp(i % 6) }));
+  ranked.slice(-10).forEach(({ s }) => flags.push({ id: `demo-fl-${s.n}`, school_id: SCHOOL_ID, email: s.email, status_id: statusId("Avanza muy bien"), follow_up: false, updated_at: stamp(3) }));
+  ranked.slice(14, 24).forEach(({ s }) => flags.push({ id: `demo-fl-${s.n}`, school_id: SCHOOL_ID, email: s.email, status_id: statusId("Con plan de refuerzo"), follow_up: false, updated_at: stamp(8) }));
+  const groups = [
+    { id: "demo-gr-1", school_id: SCHOOL_ID, name: "Refuerzo de matemáticas", color: "#FFB547", course_id: "demo-c1", created_by: "demo-t1", created_at: stamp(20) },
+    { id: "demo-gr-2", school_id: SCHOOL_ID, name: "Tutores entre pares", color: "#C8F04A", course_id: null, created_by: "demo-t0", created_at: stamp(15) },
+    { id: "demo-gr-3", school_id: SCHOOL_ID, name: "Taller de lectura", color: "#8AB4FF", course_id: "demo-c2", created_by: "demo-t2", created_at: stamp(12) },
+  ];
+  const lowOf = (cid, n) => ranked.filter((r) => r.s.courseId === cid).slice(0, n).map((r) => r.s.email);
+  const groupMembers = [
+    ...lowOf("demo-c1", 8).map((email) => ({ group_id: "demo-gr-1", email })),
+    ...ranked.slice(-6).map((r) => ({ group_id: "demo-gr-2", email: r.s.email })),
+    ...lowOf("demo-c2", 7).map((email) => ({ group_id: "demo-gr-3", email })),
+  ];
+  const noteTexts = ["Habló con la mamá: se compromete a revisar las tareas por la plataforma.", "Mejoró en gráficos, sigue flojo en probabilidad. Asignar refuerzo.", "Se distrae en los simulacros con tiempo; sentarlo adelante.", "Muy buena actitud, puede ayudar a sus compañeros."];
+  const notes = ranked.slice(0, 4).map(({ s }, i) => ({ id: `demo-no-${i + 1}`, school_id: SCHOOL_ID, email: s.email, body: noteTexts[i], author_id: "demo-t0", author_name: staff[0].full_name, created_at: stamp(2 + i * 3) }));
+  const views = [
+    { id: "demo-vw-1", profile_id: "demo-t0", name: "Necesitan apoyo", filters: { ...EMPTY_FILTERS, status: statusId("Necesita apoyo") }, created_at: stamp(5) },
+    { id: "demo-vw-2", profile_id: "demo-t0", name: "Seguimiento pendiente", filters: { ...EMPTY_FILTERS, followUp: "yes" }, created_at: stamp(4) },
+  ];
+
   // ----- settings, saved work -----
   const scale = { min: 1, max: 5, pass: 3, passPct: 60, decimals: 1 };
   const grading = [
@@ -226,6 +265,7 @@ export function buildDemo({ bundles, now = Date.now() }) {
       paper_seating: seating, proctor_events: proctorEvents,
       consents: [{ kind: "terms", version: CONSENT_VERSION, granted_at: new Date(now - 60 * DAY).toISOString() }],
       school_consents: [{ kind: "guardian_authorization", version: CONSENT_VERSION, granted_at: new Date(now - 60 * DAY).toISOString() }],
+      student_statuses: statuses, student_flags: flags, student_groups: groups, student_group_members: groupMembers, student_notes: notes, saved_views: views,
       teacher_questions: [], question_overrides: [], annotations: [], live_sessions: [], live_players: [], live_answers: [],
     },
   };
