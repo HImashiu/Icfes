@@ -186,6 +186,30 @@ export function createApi(client) {
       unwrap(await client.from("question_overrides").delete().eq("id", id));
     },
 
+    // Lessons and saved activity formats (migration 0017). A missing table reads as `null`, so the screen can say so.
+    async lessons() {
+      const r = await client.from("lessons").select("id, owner_id, title, exam_slug, items, settings, visibility, updated_at").order("updated_at", { ascending: false });
+      if (r.error && /lessons|schema cache|does not exist/i.test(r.error.message ?? "")) return null;
+      return unwrap(r);
+    },
+    async saveLesson(row, id = null) {
+      const q = client.from("lessons");
+      return unwrap(id ? await q.update(row).eq("id", id).select().single() : await q.insert(row).select().single());
+    },
+    async deleteLesson(id) {
+      unwrap(await client.from("lessons").delete().eq("id", id));
+    },
+    async activityFormats() {
+      const r = await client.from("activity_formats").select("id, owner_id, name, config, visibility").order("created_at", { ascending: false });
+      return r.error ? [] : r.data;
+    },
+    async saveActivityFormat(row) {
+      return unwrap(await client.from("activity_formats").insert(row).select().single());
+    },
+    async deleteActivityFormat(id) {
+      unwrap(await client.from("activity_formats").delete().eq("id", id));
+    },
+
     // Exam monitoring (migration 0012). Failures are silent: monitoring never blocks a student.
     async proctorSend(rows) {
       const r = await client.from("proctor_events").insert(rows);
