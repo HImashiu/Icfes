@@ -2,10 +2,12 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { backendConfigured, supabase } from "./supabase.js";
 import { createApi } from "./api.js";
 import { demoEnabled } from "../demo/mode.js";
+import { setDemoHistory } from "./local.js";
 
 // status: demo (no backend configured), loading, signed-out, guest (anonymous, only for live games), needs-profile (signed in, first visit), ready.
 // Practice never requires an account; signing in only unlocks the school features.
 const AuthContext = createContext({ status: "demo", profile: null, api: null });
+export { AuthContext };
 export const useAuth = () => useContext(AuthContext);
 
 const realApi = supabase ? createApi(supabase) : null;
@@ -42,9 +44,11 @@ export function AuthProvider({ children }) {
       let alive = true;
       import("../demo/load.js")
         .then((m) => m.loadDemo())
-        .then(({ client, profile }) => {
+        .then(({ client, profile, student }) => {
           api = createApi(client);
-          if (alive) setState({ status: "ready", profile, user: { id: profile.id }, error: null });
+          setDemoHistory(student.history);
+          const demoStudent = { profile: student.profile, api: createApi(student.client) };
+          if (alive) setState({ status: "ready", profile, user: { id: profile.id }, error: null, demoStudent });
         })
         .catch((e) => { if (alive) setState({ status: "signed-out", profile: null, user: null, error: e.message }); });
       return () => { alive = false; };

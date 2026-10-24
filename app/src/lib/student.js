@@ -1,7 +1,7 @@
 // The student's side of "by subject": each class they belong to (a subject with its teacher), and an analysis of
 // their own practice per ICFES area. Never compares a student with classmates.
-import { assignmentState, scorePct } from "./assignments.js";
-import { areaOf, contextColor, groupOf } from "./teaching.js";
+import { assignmentState, attemptsLeft, scorePct } from "./assignments.js";
+import { AREA_SUBJECT, areaOf, contextColor, groupOf } from "./teaching.js";
 
 const DAY = 864e5;
 const mean = (xs) => (xs.length ? Math.round(xs.reduce((a, b) => a + b, 0) / xs.length) : null);
@@ -15,24 +15,62 @@ export function classesFrom({ classes, assignments = [] }) {
   return [...seen.values()];
 }
 
-// One card per class: subject color, teacher, what is pending, the next due date and the student's own average.
+const GENERAL = "Simulacros Saber 11";
+
+// One card per SUBJECT the student has, each with its teacher(s), what is pending, the next due date and the
+// student's own average. A class with a subject (Matemáticas 11A) is a subject. A class without one ("11-A", or a
+// "Todas las áreas" prep class) is the student's course, not a subject: its tasks are filed under the area each task
+// covers, and its whole-exam simulacros under "Simulacros Saber 11".
 export function studentSubjects({ classes, assignments = [], attempts = [], now = Date.now() }) {
   const delivered = new Set(attempts.filter((t) => t.submitted_at).map((t) => t.assignment_id));
-  return classesFrom({ classes, assignments }).map((c) => {
+  const cards = new Map();
+  const card = (key, base) => {
+    if (!cards.has(key)) cards.set(key, { ...base, teachers: new Set(), groups: new Set(), courseIds: new Set(), items: [] });
+    return cards.get(key);
+  };
+  const byArea = new Map(); // area -> card key, so a course task joins the subject class of the same area
+  const list = classesFrom({ classes, assignments });
+  for (const c of list) {
     const area = areaOf(c);
-    const mine = assignments.filter((a) => a.course_id === c.id);
+    if (!area) continue;
+    const key = byArea.get(area) ?? c.id;
+    byArea.set(area, key);
+    const x = card(key, { id: key, name: c.subject || AREA_SUBJECT[area] || c.name, full: c.name, area, kind: "subject" });
+    x.courseIds.add(c.id);
+    (c.teachers ?? []).filter(Boolean).forEach((t) => x.teachers.add(t));
+    x.groups.add(groupOf(c).name);
+    x.items.push(...assignments.filter((a) => a.course_id === c.id));
+  }
+  for (const c of list) {
+    if (areaOf(c)) continue;
+    for (const a of assignments.filter((t) => t.course_id === c.id)) {
+      const area = a.scope && a.scope !== "all" && a.scope in AREA_SUBJECT ? a.scope : null;
+      const key = area ? byArea.get(area) ?? `area:${area}` : `general:${c.id}`;
+      if (area) byArea.set(area, key);
+      const x = card(key, area ? { id: key, name: AREA_SUBJECT[area], full: c.name, area, kind: "subject" } : { id: key, name: GENERAL, full: c.name, area: null, kind: "general" });
+      x.courseIds.add(c.id);
+      (c.teachers ?? []).filter(Boolean).forEach((t) => x.teachers.add(t));
+      x.groups.add(groupOf(c).name);
+      x.items.push(a);
+    }
+  }
+  return [...cards.values()].map((x) => {
+    const mine = x.items;
     const pending = mine.filter((a) => assignmentState(a, now) === "active" && !delivered.has(a.id))
       .sort((a, b) => new Date(a.due_at ?? 8.64e15) - new Date(b.due_at ?? 8.64e15));
     const scores = attempts.filter((t) => t.submitted_at && mine.some((a) => a.id === t.assignment_id))
       .sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at)).map(scorePct).filter((p) => p != null);
     return {
-      id: c.id,
-      name: c.subject || c.name,
-      full: c.name,
-      group: groupOf(c).name,
-      area,
-      color: contextColor(area ?? ""),
-      teacher: (c.teachers ?? []).filter(Boolean).join(", "),
+      id: x.id,
+      kind: x.kind,
+      name: x.name,
+      full: x.full,
+      group: [...x.groups].join(", "),
+      area: x.area,
+      color: x.area ? contextColor(x.area) : "var(--accent)",
+      teacher: [...x.teachers].join(", "),
+      courseIds: [...x.courseIds],
+      assignmentIds: mine.map((a) => a.id),
       pending: pending.length,
       next: pending[0] ?? null,
       done: mine.filter((a) => delivered.has(a.id)).length,
@@ -40,6 +78,31 @@ export function studentSubjects({ classes, assignments = [], attempts = [], now 
       avg: mean(scores),
       series: scores.slice(-6),
     };
+  }).sort((a, b) => (a.kind === "general") - (b.kind === "general") || AREA_ORDER.indexOf(a.area) - AREA_ORDER.indexOf(b.area));
+}
+
+const AREA_ORDER = Object.keys(AREA_SUBJECT);
+
+// The student's course(s), named as the school names them ("11A"), from every class they are in.
+export function studentCourses(classes = []) {
+  return [...new Set((classes ?? []).map((c) => groupOf(c).name))];
+}
+
+// Every task with what the student sees about it: state, attempts used, own score, and the subject it belongs to.
+export function studentTasks({ subjects, assignments = [], attempts = [], now = Date.now() }) {
+  const of = new Map();
+  for (const s of subjects) for (const id of s.assignmentIds) of.set(id, s);
+  return assignments.filter((a) => a.status !== "draft").map((a) => {
+    const mine = attempts.filter((t) => t.assignment_id === a.id && t.submitted_at).sort((x, y) => new Date(x.submitted_at) - new Date(y.submitted_at));
+    const state = assignmentState(a, now);
+    const status = mine.length ? "delivered" : state === "active" ? "pending" : state === "scheduled" ? "scheduled" : "missed";
+    const last = mine[mine.length - 1];
+    return { a, subject: of.get(a.id) ?? null, status, used: mine.length, pct: last ? scorePct(last) : null, deliveredAt: last?.submitted_at ?? null, left: attemptsLeft(a, mine.length), state };
+  }).sort((x, y) => {
+    const rank = { pending: 0, scheduled: 1, delivered: 2, missed: 3 };
+    if (rank[x.status] !== rank[y.status]) return rank[x.status] - rank[y.status];
+    const dx = new Date(x.a.due_at ?? 8.64e15); const dy = new Date(y.a.due_at ?? 8.64e15);
+    return x.status === "pending" || x.status === "scheduled" ? dx - dy : dy - dx;
   });
 }
 
@@ -96,9 +159,9 @@ export function practiceInsights(history = [], now = Date.now()) {
 // Calendar events for the student: each pending task on its due date, in its subject's color.
 export function studentEvents({ subjects, assignments = [], attempts = [], now = Date.now() }) {
   const delivered = new Set(attempts.filter((t) => t.submitted_at).map((t) => t.assignment_id));
-  const color = Object.fromEntries(subjects.map((s) => [s.id, s.color]));
-  const name = Object.fromEntries(subjects.map((s) => [s.id, s.name]));
+  const of = new Map();
+  for (const s of subjects) for (const id of s.assignmentIds ?? []) of.set(id, s);
   return assignments
     .filter((a) => a.due_at && !delivered.has(a.id) && assignmentState(a, now) !== "draft")
-    .map((a) => ({ id: a.id, at: a.due_at, color: color[a.course_id] ?? "var(--accent)", label: `${a.title}${name[a.course_id] ? ` · ${name[a.course_id]}` : ""}` }));
+    .map((a) => ({ id: a.id, at: a.due_at, color: of.get(a.id)?.color ?? "var(--accent)", label: `${a.title}${of.get(a.id) ? ` · ${of.get(a.id).name}` : ""}` }));
 }

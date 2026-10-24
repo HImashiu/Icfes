@@ -7,12 +7,11 @@ export const KEY_FORMAT = "icfes-key/1";
 // Shown on every question. The questions are a free resource; the platform is the product.
 export const SOURCE_LINE = "Fuente: ICFES, Saber 11";
 
-const ORDINAL = { 1: "Primera", 2: "Segunda" };
-// The booklet name students see: "S11-O 2da sesion" becomes "S11-O · Segunda sesión".
+// The booklet name students see: "S11-O 2da sesion" becomes "S11-O · Sesión 2". Both sessions are one cuadernillo.
 export function formatBooklet(title) {
   // Some transcriptions carry stray spaces ("S11- C     1ra Sesión"): collapse them first.
   const clean = title.replace(/\s+/g, " ").replace(/^(S11-)\s+/i, "$1").trim();
-  return clean.replace(/\s+(\d)(?:da|ra|a)?\s+sesi[oó]n\b/i, (m, n) => ` · ${ORDINAL[n] ?? n} sesión`);
+  return clean.replace(/\s+(\d)(?:da|ra|a)?\s+sesi[oó]n\b\.?(?:\s*\(session \d\))?/i, (m, n) => ` · Sesión ${n}`);
 }
 
 export class ExamFormatError extends Error {}

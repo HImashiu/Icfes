@@ -7,23 +7,22 @@ import { play, setSoundOn, soundOn } from "../lib/motion.js";
 import { fmtInt } from "../lib/brand.js";
 import { loadHistory } from "../lib/local.js";
 import { practiceInsights, studentSubjects } from "../lib/student.js";
-import { areaShort } from "../lib/teaching.js";
+import { DateField, Select } from "../components/Controls.jsx";
+import { DAILY_GOALS, TARGETS, daysUntil, loadGoal, saveGoal } from "../lib/goal.js";
 
-const MODE = { practice: "Práctica", timed: "Cronometrado" };
-const ago = (t) => {
-  const d = Math.floor((Date.now() - t) / 864e5);
-  return d <= 0 ? "hoy" : d === 1 ? "ayer" : `hace ${d} días`;
-};
 
-// Perfil: who you are, an analysis of your own practice by area and by subject (against your own past, never
-// against classmates), then settings: theme, sounds, account, error reports and the teacher view.
-export default function Profile({ theme, onTheme, onTeacher, onReports, onLogin, assigned, classes, onPracticeArea, onHistory }) {
+// Perfil: who you are, your goal (exam date, daily XP, target score), your subjects with their teachers, then
+// settings: theme, sounds, account, error reports and the teacher view. The analysis lives in Progreso.
+export default function Profile({ theme, onTheme, onTeacher, onReports, onLogin, assigned, classes, course, onGo }) {
   const auth = useAuth();
   const staff = auth.status === "ready" && auth.profile.role !== "student";
   const [sound, setSound] = useState(soundOn);
   const pickSound = (on) => { setSoundOn(on); setSound(on); if (on) play("correct"); };
   const ins = useMemo(() => practiceInsights(loadHistory()), []);
   const subjects = useMemo(() => (assigned ? studentSubjects({ classes, assignments: assigned.assignments, attempts: assigned.attempts }) : []), [assigned, classes]);
+  const [goal, setGoalState] = useState(loadGoal);
+  const setGoal = (patch) => { const next = { ...goal, ...patch }; setGoalState(next); saveGoal(next); };
+  const left = daysUntil(goal.examDate);
   const name = auth.status === "ready" ? auth.profile.full_name || auth.profile.email : SAMPLE_STUDENT.name;
 
   return (
@@ -36,7 +35,7 @@ export default function Profile({ theme, onTheme, onTeacher, onReports, onLogin,
             <div className="avatar big" aria-hidden="true">{name[0]}</div>
             <div className="profile-name">
               <strong>{name}</strong>
-              <span className="caption">{auth.status === "ready" ? auth.profile.email : `${SAMPLE_STUDENT.course} · datos de muestra`}</span>
+              <span className="caption">{auth.status === "ready" ? `${course ? `Curso ${course} · ` : ""}${auth.profile.email}` : `${SAMPLE_STUDENT.course} · datos de muestra`}</span>
             </div>
             <div className="sp-kpis">
               <span><b className="flame-text">{ins.streak}</b><span className="caption">días de racha</span></span>
@@ -46,52 +45,30 @@ export default function Profile({ theme, onTheme, onTeacher, onReports, onLogin,
             </div>
           </div>
 
-          {ins.sessions === 0 ? (
-            <div className="card sp-empty">
-              <Mascot size={72} pose="thinking" />
-              <div><strong>Tu análisis aparece con tu primer simulacro</strong><span className="caption">Verás tus aciertos por área, cómo vas cambiando y en qué te demoras más.</span></div>
+          <div className="card sp-card">
+            <div className="section-head"><span className="label">Mi meta</span><span className="caption">Solo la ves tú</span></div>
+            <div className="sp-goal">
+              <label><span className="caption">Fecha de mi Saber 11</span>
+                <DateField value={goal.examDate} onChange={(v) => setGoal({ examDate: v ?? "" })} min={new Date().toISOString().slice(0, 10)} aria-label="Fecha de mi Saber 11" />
+              </label>
+              <label><span className="caption">Meta diaria</span>
+                <Select value={String(goal.dailyXp)} onChange={(v) => setGoal({ dailyXp: Number(v) })} aria-label="Meta diaria de XP">
+                  {DAILY_GOALS.map((g) => <option key={g} value={String(g)}>{g} XP al día</option>)}
+                </Select>
+              </label>
+              <label><span className="caption">Puntaje que quiero</span>
+                <Select value={String(goal.target)} onChange={(v) => setGoal({ target: Number(v) })} aria-label="Puntaje meta">
+                  {TARGETS.map((g) => <option key={g} value={String(g)}>{g} de 500</option>)}
+                </Select>
+              </label>
             </div>
-          ) : (
-            <>
-              <div className="sp-insights">
-                {ins.weakest && (
-                  <button type="button" className="card sp-insight" style={{ "--c": ins.weakest.color }} onClick={() => onPracticeArea?.(ins.weakest.name)}>
-                    <span className="label">Para reforzar</span>
-                    <strong>{areaShort(ins.weakest.name)} · {ins.weakest.pct} %</strong>
-                    <span className="caption">{ins.weakest.answered} preguntas respondidas. Practícala hoy <Icon name="right" size={12} strokeWidth={3} /></span>
-                  </button>
-                )}
-                {ins.strongest && (
-                  <div className="card sp-insight" style={{ "--c": ins.strongest.color }}>
-                    <span className="label">Tu punto fuerte</span>
-                    <strong>{areaShort(ins.strongest.name)} · {ins.strongest.pct} %</strong>
-                    <span className="caption">{ins.strongest.trend > 0 ? `Subiste ${ins.strongest.trend} puntos` : "Mantén el ritmo"}</span>
-                  </div>
-                )}
-                <div className="card sp-insight" style={{ "--c": "var(--accent)" }}>
-                  <span className="label">Tu ritmo</span>
-                  <strong>{ins.secPerQuestion ? `${ins.secPerQuestion} s por pregunta` : "Sin tiempos aún"}</strong>
-                  <span className="caption">El día del examen hay unos 2 min por pregunta</span>
-                </div>
-              </div>
+            {left != null && left >= 0 && <span className="caption">{left === 0 ? "Hoy es tu examen. ¡Tú puedes!" : `Faltan ${left} ${left === 1 ? "día" : "días"}. Con ${goal.dailyXp} XP al día llegas con ${Math.round((left * goal.dailyXp) / 10)} preguntas más practicadas.`}</span>}
+          </div>
 
-              <div className="card sp-card">
-                <div className="section-head"><span className="label">Análisis por área</span><span className="caption">Frente a ti mismo</span></div>
-                <div className="sp-table" role="table" aria-label="Análisis por área">
-                  <div className="sp-row head" role="row"><span role="columnheader">Área</span><span role="columnheader">Aciertos</span><span role="columnheader">Cambio</span><span role="columnheader">Últimos</span><span role="columnheader">Practicaste</span></div>
-                  {[...ins.areas].reverse().map((a) => (
-                    <button key={a.name} type="button" className="sp-row" role="row" onClick={() => onPracticeArea?.(a.name)}>
-                      <span role="cell"><span className="dot" style={{ background: a.color }} /> {areaShort(a.name)}</span>
-                      <span role="cell" className="sp-pct"><span className="td-track"><span style={{ width: `${a.pct}%`, background: a.color }} /></span><b>{a.pct} %</b></span>
-                      <span role="cell" className={a.trend > 0 ? "sp-up" : a.trend < 0 ? "sp-down" : "caption"}>{a.trend == null ? "—" : `${a.trend > 0 ? "▲ +" : a.trend < 0 ? "▼ " : ""}${a.trend}`}</span>
-                      <span role="cell" className="td-spark sp-spark" aria-hidden="true">{a.series.map((v, i) => <span key={i} style={{ height: `${Math.max(8, v)}%`, background: a.color, opacity: i === a.series.length - 1 ? 1 : 0.45 }} />)}</span>
-                      <span role="cell" className="caption">{a.sessions} {a.sessions === 1 ? "vez" : "veces"} · {ago(a.last)}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
+          <div className="sp-links">
+            <button type="button" className="card quick-row" onClick={() => onGo?.("progress")}><Icon name="chart" /><span>Mi progreso y análisis por área</span><Icon name="right" /></button>
+            <button type="button" className="card quick-row" onClick={() => onGo?.("achievements")}><Icon name="trophy" /><span>Mis logros</span><Icon name="right" /></button>
+          </div>
 
           {subjects.length > 0 && (
             <div className="card sp-card">
@@ -107,17 +84,6 @@ export default function Profile({ theme, onTheme, onTeacher, onReports, onLogin,
             </div>
           )}
 
-          {ins.recent.length > 0 && (
-            <div className="card sp-card">
-              <div className="section-head"><span className="label">Últimos intentos</span><button type="button" className="link" onClick={onHistory}>Ver todos</button></div>
-              {ins.recent.map((r) => (
-                <div key={r.id} className="sp-recent">
-                  <span><strong>{r.title}</strong><span className="caption"> · {MODE[r.mode] ?? r.mode} · {ago(r.at)}</span></span>
-                  <b>{Math.round(r.percent)} %</b>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
         <div className="sp-col">

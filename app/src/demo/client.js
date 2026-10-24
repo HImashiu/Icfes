@@ -64,7 +64,8 @@ class Query {
 
 const OFF = "Esta función no está disponible en la demostración.";
 
-export function createDemoClient({ tables, profile }) {
+// `scope` stands in for row-level security on the student side: { table: (row) => visible }.
+export function createDemoClient({ tables, profile, scope = {}, extraRpc = {} }) {
   const db = { tables, seq: 0 };
   const rpc = {
     school_teacher_code: () => "DEMO-0000",
@@ -80,13 +81,18 @@ export function createDemoClient({ tables, profile }) {
     },
     create_family_report: () => "demostracion",
     revoke_family_report: () => null,
+    ...extraRpc,
   };
   return {
     auth: {
       getUser: async () => ({ data: { user: { id: profile.id } } }),
       getSession: async () => ({ data: { session: { user: { id: profile.id } } } }),
     },
-    from: (table) => new Query(db, table),
+    from: (table) => {
+      const q = new Query(db, table);
+      if (scope[table]) q.filters.push(scope[table]);
+      return q;
+    },
     rpc: async (name, args) => {
       const fn = rpc[name];
       if (!fn) return { data: null, error: { message: OFF } };

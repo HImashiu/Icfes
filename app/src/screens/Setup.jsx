@@ -8,6 +8,7 @@ import { Select } from "../components/Controls.jsx";
 import { loadOrder, moveArea, normalizeOrder, saveOrder } from "../lib/order.js";
 import { loadHistory } from "../lib/local.js";
 import { practiceInsights } from "../lib/student.js";
+import { SESSION_HINT, bookletCode, groupBooklets, sessionOf } from "../lib/booklets.js";
 
 // Nuevo simulacro: booklet, scope (whole exam or one area), mode, and a sticky start button.
 // 225 min reads as "3 h 45 min".
@@ -40,6 +41,10 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, 
   const scoped = questionsFor(exam, scope);
   const minutes = timedSeconds(scoped) / 60;
   const ins = practiceInsights(loadHistory());
+  const books = groupBooklets(exams ?? []);
+  const code = bookletCode(slug);
+  const session = sessionOf(slug);
+  const book = books.find((b) => b.code === code);
   const mine = Object.fromEntries(ins.areas.map((a) => [a.name, a]));
   const lastHere = ins.recent.find((h) => h.snapshot?.slug === slug && (h.snapshot?.scope ?? "all") === scope);
   const parts = scope === "all" ? exam.sections : exam.sections.filter((x) => x.name === scope);
@@ -58,17 +63,25 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, 
       <div className="su-col">
       <div className="booklet card">
         <span className="label">Cuadernillo</span>
-        {exams.length <= 1 && <strong>{exam.title}</strong>}
-        {exams.length > 1 && (
-          <Select className="booklet-select" value={slug} onChange={(v) => onPickExam(v)} aria-label="Cambiar cuadernillo">
-            {exams.map((e) => (
-              <option key={e.slug} value={e.slug} disabled={e.status === "proximamente"}>
-                {e.status === "proximamente" ? `${e.title} · Próximamente` : e.title}
-              </option>
-            ))}
-          </Select>
-        )}
-        <span className="caption">Fuente: ICFES, Saber 11 · {exam.questions.length} preguntas</span>
+        <div className="su-booklet">
+          {books.length > 1 ? (
+            <Select className="booklet-select" value={code} onChange={(v) => { const b = books.find((x) => x.code === v); const s2 = b?.sessions.find((x) => x.n === session && x.status !== "proximamente") ?? b?.sessions.find((x) => x.status !== "proximamente"); if (s2) onPickExam(s2.slug); }} aria-label="Cambiar cuadernillo">
+              {books.map((b) => <option key={b.code} value={b.code} disabled={!b.ready}>{b.ready ? `Cuadernillo ${b.code}` : `${b.code} · Próximamente`}</option>)}
+            </Select>
+          ) : <strong>Cuadernillo {code}</strong>}
+          {book && book.sessions.length > 1 && (
+            <div className="segmented su-sessions" role="radiogroup" aria-label="Sesión">
+              {book.sessions.map((x) => (
+                <button key={x.slug} type="button" role="radio" aria-checked={x.slug === slug} className={x.slug === slug ? "seg active" : "seg"} disabled={x.status === "proximamente"} onClick={() => onPickExam(x.slug)}>
+                  Sesión {x.n}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <span className="caption">
+          {book && book.sessions.length > 1 ? `El examen real se presenta en dos sesiones del mismo cuadernillo. Sesión ${session}: ${SESSION_HINT[session] ?? ""}.` : ""} Fuente: ICFES, Saber 11 · {exam.questions.length} preguntas
+        </span>
       </div>
 
       <div className="chips scope-chips" role="radiogroup" aria-label="Qué practicar">
@@ -91,7 +104,7 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, 
         ))}
       </div>
       {!exam.sections.some((s) => s.name === "Inglés") && (
-        <p className="footnote">Este cuadernillo es de la sesión 1 y no incluye Inglés. Inglés está en los cuadernillos de la sesión 2.</p>
+        <p className="footnote">La sesión 1 no incluye Inglés: Inglés está en la sesión 2 de este mismo cuadernillo.</p>
       )}
 
       {scope === "all" && shown.length > 1 && (

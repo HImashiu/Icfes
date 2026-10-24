@@ -20,9 +20,11 @@ describe("demo school", () => {
   const now = Date.parse("2026-10-24T12:00:00Z");
   const { tables, profile } = buildDemo({ bundles: new Map([["X_1", fakeBundle()]]), now });
 
-  it("has 3 class spaces and 120 students with unique names", () => {
-    const students = tables.course_members.filter((m) => m.role === "student");
-    expect(tables.courses).toHaveLength(3);
+  it("has 7 classes (11 A with one class per subject) and 120 students with unique names", () => {
+    const members = tables.course_members.filter((m) => m.role === "student");
+    const students = [...new Map(members.map((m) => [m.profile_id, m])).values()];
+    expect(tables.courses).toHaveLength(7);
+    expect(tables.courses.filter((c) => c.group_label === "A")).toHaveLength(5);
     expect(students).toHaveLength(120);
     expect(new Set(students.map((s) => s.full_name)).size).toBe(120);
     expect(students.every((s) => s.email.endsWith("@demo.invalid"))).toBe(true);
@@ -45,13 +47,13 @@ describe("demo school", () => {
   it("feeds the teacher API and the chart builder, and writes stay in memory", async () => {
     const api = createApi(createDemoClient({ tables: structuredClone(tables), profile }));
     const [courses, assignments, attempts, members] = await Promise.all([api.listCourses(), api.listAssignments(), api.chartAttempts(), api.allMembers()]);
-    expect(courses).toHaveLength(3);
+    expect(courses).toHaveLength(7);
     expect(assignments.length).toBeGreaterThanOrEqual(15);
     const bundle = fakeBundle();
     const facts = buildFacts({ attempts, assignments, members, courses, bundles: new Map([["X_1", bundle]]) });
     expect(facts.length).toBeGreaterThan(2000);
     const made = await api.createCourse({ schoolId: "demo-school", userId: profile.id, name: "Nuevo", grade: "10", subject: "Inglés", groupLabel: "A" });
-    expect((await api.listCourses())).toHaveLength(4);
+    expect((await api.listCourses())).toHaveLength(8);
     expect(made.id).toMatch(/^demo-/);
   });
 
@@ -59,5 +61,26 @@ describe("demo school", () => {
     const again = buildDemo({ bundles: new Map([["X_1", fakeBundle()]]), now });
     expect(again.tables.attempts.length).toBe(tables.attempts.length);
     expect(again.tables.course_members[5].full_name).toBe(tables.course_members[5].full_name);
+  });
+});
+
+describe("demo student", () => {
+  const now = Date.parse("2026-10-24T12:00:00Z");
+  const { tables, student } = buildDemo({ bundles: new Map([["X_1", fakeBundle()]]), now });
+
+  it("is one student of 11 A with practice history", () => {
+    expect(student.profile.role).toBe("student");
+    expect(tables.course_members.filter((m) => m.profile_id === student.profile.id).map((m) => m.course_id).sort()).toEqual(["demo-c1", "demo-c4", "demo-c5", "demo-c6", "demo-c7"]);
+    expect(student.history.length).toBeGreaterThan(5);
+    expect(student.history.every((h) => h.snapshot.slug === "X_1")).toBe(true);
+  });
+
+  it("delivered every closed task and has one pending task per subject", () => {
+    const mine = tables.attempts.filter((a) => a.profile_id === student.profile.id && a.submitted_at);
+    const groupA = tables.assignments.filter((a) => ["demo-c1", "demo-c4", "demo-c5", "demo-c6", "demo-c7"].includes(a.course_id));
+    const open = groupA.filter((a) => Date.parse(a.due_at) > now);
+    expect(open.length).toBeGreaterThan(0);
+    expect(mine.every((a) => !open.some((o) => o.id === a.assignment_id))).toBe(true);
+    expect(mine.length).toBe(groupA.length - open.length);
   });
 });

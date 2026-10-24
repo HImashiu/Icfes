@@ -2411,3 +2411,191 @@ button.sp-row:hover { background: var(--surface-2); }
 @media (min-width: 768px) { .setup:has(.su-grid) { max-width: none; } }
 @media (min-width: 1200px) { .setup:has(.su-grid) { max-width: 1180px; margin: 0 auto; } }
 @media (max-width: 900px) { .su-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* ===== Student side, round 2: home, materias, tareas, progreso, meta ===== */
+.subjects, .progress-screen { display: grid; gap: 14px; }
+@media (min-width: 768px) { .subjects, .progress-screen { max-width: none; } }
+@media (min-width: 1200px) { .subjects, .progress-screen { max-width: 1180px; margin: 0 auto; width: 100%; } }
+
+/* Home top row: next step + today's goal */
+.sh-top { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr); gap: 14px; }
+.sh-goal { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; }
+.sh-ring { width: 84px; height: 84px; }
+.sh-ring circle:last-of-type { transition: stroke-dasharray 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.sh-ring-text { font: 800 15px "Bricolage Grotesque", sans-serif; fill: var(--text); }
+.sh-goal-text { display: grid; gap: 4px; min-width: 0; }
+.sh-goal-text strong { font: 800 20px "Bricolage Grotesque", sans-serif; }
+.week-row.mini { gap: 4px; margin-top: 4px; }
+.week-row.mini .day { min-height: 26px; height: 26px; font-size: 11px; border-radius: 8px; }
+.sh-allclear { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center; }
+.sh-allclear > div { display: grid; gap: 2px; }
+.sh-allclear > button { grid-column: 1 / -1; justify-self: start; }
+.sh-teacher { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sh-subject-foot { display: flex; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
+.home.sh .sh-quick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 10px; }
+.sh-q { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; padding: 12px 14px; text-align: left; color: var(--text); cursor: pointer; }
+.sh-q > span { display: grid; gap: 1px; min-width: 0; }
+.sh-q:hover { border-color: var(--accent-ink); }
+.sh-q svg { color: var(--accent-ink); }
+.sh-mastery { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px 18px; }
+.sh-m { display: grid; gap: 5px; }
+.sh-m-head { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; }
+.sh-count { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; text-align: left; color: var(--text); cursor: pointer; background: linear-gradient(120deg, color-mix(in srgb, var(--flame) 14%, var(--surface)), var(--surface) 60%); }
+.sh-count > span:last-child { display: grid; gap: 2px; }
+.sh-count-n { min-width: 64px; height: 64px; padding: 0 10px; border-radius: 18px; display: grid; place-items: center; font: 800 28px "Bricolage Grotesque", sans-serif; background: var(--surface-2); color: var(--flame); }
+.sh-badges { display: flex; flex-wrap: wrap; gap: 8px; }
+.badge.got { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); font-weight: 700; font-size: 13px; }
+.sh-next-badge { display: grid; gap: 6px; }
+
+/* Task rows (Inicio, Tareas, a subject's page) */
+.task-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.sh-card > .task-row:first-of-type, .section-head + .task-row { border-top: 0; }
+.task-tile { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; color: var(--c); background: color-mix(in srgb, var(--c) 18%, var(--surface)); border: 1px solid color-mix(in srgb, var(--c) 40%, transparent); }
+.task-main { display: grid; gap: 2px; min-width: 0; }
+.task-main strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.task-main .caption { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.task-subject { color: var(--text); font-weight: 700; }
+.task-side { display: grid; justify-items: end; }
+.task-pill { padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--surface-2); color: var(--text-2); white-space: nowrap; }
+.task-pill.hot { background: color-mix(in srgb, var(--flame) 18%, var(--surface)); color: var(--flame); }
+.task-pill.bad { background: var(--bad-soft); color: var(--bad); }
+.task-pill.soft { background: var(--accent-soft); color: var(--accent-ink); }
+.task-score { display: grid; gap: 4px; justify-items: end; min-width: 72px; }
+.task-score b { font: 800 16px "Bricolage Grotesque", sans-serif; }
+.task-score .td-track { width: 72px; }
+.task-go { white-space: nowrap; }
+.is-missed .task-tile { filter: grayscale(0.7); opacity: 0.7; }
+button.small, .primary.small, .secondary.small { min-height: 34px; padding: 6px 12px; font-size: 14px; }
+
+/* Materias */
+.sj-course { margin-left: auto; padding: 4px 12px; border-radius: 999px; background: var(--surface-2); color: var(--text-2); font-weight: 700; font-size: 13px; }
+.sj-tabs { max-width: 520px; }
+.sj-tabs .seg { display: inline-flex; gap: 6px; justify-content: center; align-items: baseline; }
+.sj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.sj-card { position: relative; overflow: hidden; display: grid; gap: 12px; text-align: left; color: var(--text); cursor: pointer; padding-top: 22px; }
+.sj-card:hover { border-color: var(--c); transform: translateY(-1px); }
+.sj-band { position: absolute; inset: 0 0 auto; height: 6px; background: var(--c); }
+.sj-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.sj-head strong { font: 800 20px "Bricolage Grotesque", sans-serif; line-height: 1.15; }
+.sj-avg { display: grid; justify-items: end; }
+.sj-avg b { font: 800 22px "Bricolage Grotesque", sans-serif; color: var(--c); }
+.sj-teacher { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; }
+.sj-teacher > span:last-child { display: grid; min-width: 0; }
+.sj-teacher b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sj-avatar { width: 38px; height: 38px; border-radius: 999px; display: grid; place-items: center; font-weight: 800; font-size: 14px; color: var(--on-accent); background: var(--c, var(--accent)); }
+.sj-avatar.big { width: 52px; height: 52px; font-size: 18px; }
+.sj-spark { height: 34px; }
+.sj-spark > span { flex: 1; border-radius: 3px 3px 0 0; }
+.sj-foot { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 13px; }
+.sj-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.sj-summary > .card { display: grid; gap: 2px; text-align: center; padding: 12px; }
+.sj-summary b, .pg-kpis b { font: 800 24px "Bricolage Grotesque", sans-serif; }
+.sj-filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
+.sj-filters .chips { flex-wrap: wrap; }
+.sj-filters .select { min-width: 210px; }
+
+/* One subject's page */
+.sjp-hero { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(220px, auto) minmax(0, 1fr) auto; gap: 18px; align-items: center; padding-top: 22px; background: linear-gradient(120deg, color-mix(in srgb, var(--c) 16%, var(--surface)), var(--surface) 60%); }
+.sjp-band { position: absolute; inset: 0 0 auto; height: 6px; background: var(--c); }
+.sjp-who { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center; }
+.sjp-who > span:last-child { display: grid; }
+.sjp-who strong { font: 800 18px "Bricolage Grotesque", sans-serif; }
+.sjp-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.sjp-kpis > span { display: grid; gap: 2px; }
+.sjp-kpis b { font: 800 24px "Bricolage Grotesque", sans-serif; }
+.sjp-bars { display: flex; align-items: flex-end; gap: 6px; height: 120px; padding-top: 16px; }
+.sjp-bars > span { position: relative; flex: 1; max-width: 40px; border-radius: 6px 6px 0 0; background: var(--c); }
+.sjp-bars i { position: absolute; top: -17px; left: 50%; transform: translateX(-50%); font: 700 11px Figtree, sans-serif; font-style: normal; color: var(--text-2); }
+.sjp-area { display: grid; grid-template-columns: auto minmax(0, 1fr) 90px auto; gap: 10px; align-items: center; padding: 8px 0; border: 0; border-top: 1px solid var(--line); background: none; color: var(--text); text-align: left; cursor: pointer; width: 100%; }
+.sjp-area:first-of-type { border-top: 0; }
+.sjp-area-main { display: grid; }
+.sjp-area .td-spark { height: 26px; }
+.sjp-area .td-spark > span { flex: 1; border-radius: 2px 2px 0 0; }
+
+/* Progreso */
+.pg-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.pg-kpis > .card { display: grid; gap: 2px; padding: 12px; text-align: center; }
+.pg-line { width: 100%; height: 170px; display: block; }
+.pg-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--text-2); }
+.pg-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; height: 120px; align-items: end; }
+.pg-week > span { display: grid; grid-template-rows: 1fr auto; height: 100%; gap: 4px; justify-items: center; }
+.pg-week i { align-self: end; width: 100%; max-width: 28px; min-height: 3px; border-radius: 6px 6px 2px 2px; background: var(--accent); }
+.pg-week em { font-style: normal; font-size: 12px; color: var(--text-2); }
+.pg-badge-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; }
+.pg-badge-head > div { display: grid; gap: 2px; }
+.pg-badge-head strong { font: 800 20px "Bricolage Grotesque", sans-serif; }
+.pg-badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.pg-badge { display: grid; gap: 6px; justify-items: center; text-align: center; align-content: start; }
+.pg-medal { width: 64px; height: 64px; border-radius: 999px; display: grid; place-items: center; background: var(--surface-2); color: var(--text-2); border: 3px solid var(--line); }
+.pg-badge.got .pg-medal { background: var(--accent); color: var(--on-accent); border-color: var(--accent-shadow); box-shadow: 0 4px 0 var(--accent-shadow); animation: pop-in 0.4s cubic-bezier(0.3, 0.7, 0.4, 1.5) backwards; }
+.pg-badge:not(.got) strong { color: var(--text-2); }
+.pg-badge-prog { display: grid; gap: 4px; width: 100%; }
+.pg-badge-done { display: inline-flex; align-items: center; gap: 4px; color: var(--accent-ink); font-weight: 700; font-size: 13px; }
+.progress-screen .history { gap: 10px; }
+
+/* Perfil › Mi meta */
+.sp-goal { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.sp-goal label { display: grid; gap: 4px; }
+.sp-links { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* Nuevo simulacro › cuadernillo and session */
+.su-booklet { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.su-booklet .booklet-select { flex: 1 1 200px; }
+.su-sessions { width: auto; flex: 0 0 auto; }
+.su-sessions .seg { padding: 8px 16px; }
+
+/* Demo bar: switch between the student and the teacher side */
+.demo-banner .demo-side { pointer-events: auto; width: auto; padding: 2px; border-radius: 999px; background: rgba(0, 0, 0, 0.15); }
+.demo-banner .demo-side .seg { opacity: 1; color: #1a1500; padding: 3px 12px; font-size: 12px; border-radius: 999px; min-height: 0; }
+.demo-banner .demo-side .seg.active { background: #fff; }
+body:has(.bottom-nav) .demo-banner { bottom: 84px; }
+@media (min-width: 768px) { body:has(.bottom-nav) .demo-banner { bottom: 10px; } }
+@media (max-width: 720px) { .demo-banner .demo-banner-text { display: none; } }
+
+@media (max-width: 1000px) {
+  .sh-top { grid-template-columns: minmax(0, 1fr); }
+  .sjp-hero { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  .home.sh .sh-quick { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 8px; }
+  .sh-q { grid-template-columns: minmax(0, 1fr); justify-items: start; padding: 10px; gap: 6px; }
+  .sh-q .caption { font-size: 11px; }
+  .sh-ring { width: 68px; height: 68px; }
+  .sh-mastery { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px 12px; }
+  .task-row { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px 10px; }
+  .task-go { grid-column: 2 / -1; justify-self: start; }
+  .task-tile { width: 36px; height: 36px; border-radius: 11px; }
+  .sj-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+  .sj-card { gap: 8px; padding: 18px 12px 12px; }
+  .sj-head { flex-direction: column; gap: 2px; }
+  .sj-avg { justify-items: start; }
+  .sj-head strong { font-size: 17px; }
+  .sj-teacher { grid-template-columns: minmax(0, 1fr); }
+  .sj-teacher .sj-avatar { display: none; }
+  .sj-foot { flex-direction: column; gap: 2px; font-size: 12px; }
+  .sj-filters .select { min-width: 0; width: 100%; }
+  .pg-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pg-badges { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .sp-goal { grid-template-columns: minmax(0, 1fr); }
+  .sp-links { grid-template-columns: minmax(0, 1fr); }
+  .sjp-kpis b { font-size: 20px; }
+  .sjp-area { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .sjp-area .td-spark { display: none; }
+  .su-booklet .booklet-select { flex-basis: 100%; }
+  .su-sessions { width: 100%; }
+  .su-sessions .seg { flex: 1; }
+}
+/* Five items in the student bottom bar */
+@media (max-width: 767px) {
+  .bottom-nav { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .bottom-nav .nav-item { padding-left: 2px; padding-right: 2px; font-size: 11px; }
+}
+.sh-subject-top b, .sj-avg b, .task-score b { white-space: nowrap; }
+.sh-subject-top strong { min-width: 0; }
+.sj-course-card { background: linear-gradient(140deg, var(--accent-soft), var(--surface) 70%); padding-top: 16px; align-content: space-between; }
+.sj-course-card .sj-head svg { color: var(--accent-ink); }
+.sj-course-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.sj-course-stats > span { display: grid; gap: 2px; }
+.sj-course-stats b { font: 800 22px "Bricolage Grotesque", sans-serif; }
+.su-sessions .seg { white-space: nowrap; }
+@media (max-width: 600px) { .sj-course-stats { grid-template-columns: minmax(0, 1fr); } .sj-course-stats b { font-size: 18px; } }
