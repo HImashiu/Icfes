@@ -130,6 +130,25 @@ export function createApi(client) {
       const full = await query(`${cols}, proctor`);
       return unwrap(full.error ? await query(cols) : full);
     },
+    // Chart builder: every delivered attempt with answers and time per question (times and activity need migrations 0009+).
+    async chartAttempts() {
+      const cols = "profile_id, member_id, assignment_id, submitted_at, mode, answers";
+      const query = (c) => client.from("attempts").select(c).not("assignment_id", "is", null).not("submitted_at", "is", null).order("submitted_at", { ascending: false }).limit(6000);
+      const full = await query(`${cols}, times, activity`);
+      if (!full.error) return full.data;
+      const times = await query(`${cols}, times`);
+      return unwrap(times.error ? await query(cols) : times);
+    },
+    async savedCharts() {
+      const r = await client.from("saved_charts").select("id, name, spec, created_at").order("created_at", { ascending: false });
+      return r.error ? null : r.data; // null: migration 0015 has not run, the screen keeps charts in this browser
+    },
+    async saveChart({ schoolId, name, spec }) {
+      return unwrap(await client.from("saved_charts").insert({ school_id: schoolId, name, spec }).select("id, name, spec, created_at").single());
+    },
+    async deleteChart(id) {
+      unwrap(await client.from("saved_charts").delete().eq("id", id));
+    },
     async listStaff() {
       return unwrap(await client.from("profiles").select("id, email, full_name, role, created_at").in("role", ["teacher", "school_admin"]).order("full_name"));
     },
