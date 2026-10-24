@@ -31,6 +31,7 @@ import { CONSENT_VERSION, needsTerms } from "./lib/consent.js";
 import { AnnotationProvider } from "./components/Annotations.jsx";
 import { GlossaryProvider } from "./components/Glossary.jsx";
 import { loadHistory } from "./lib/local.js";
+import { demoEnabled } from "./demo/mode.js";
 import { pendingMisses, repechajeKeys } from "./lib/repechaje.js";
 import { resolveModel, xpFactor } from "./lib/grading.js";
 import { attemptForAssignment, attemptRow, attemptsLeft, questionsForAttempt, revealAllowed } from "./lib/assignments.js";
@@ -89,7 +90,7 @@ export default function App() {
   const [openError, setOpenError] = useState(null);
   // A student who scans a room's QR code lands on the join screen with the code filled in.
   const [joinCode] = useState(() => (typeof window !== "undefined" ? joinCodeFromHash(window.location.hash) : ""));
-  const [view, setView] = useState(() => (joinCode ? "liveJoin" : "home"));
+  const [view, setView] = useState(() => (joinCode ? "liveJoin" : demoEnabled ? "teacher" : "home"));
   const [reviewStart, setReviewStart] = useState(0);
   const [reviewNumber, setReviewNumber] = useState(null);
   // What the home card asked for (area, mode), so "Reto del día" or "Simulacro completo" open set up that way.
