@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { apartViolations, generatePlan, orderForVersion, planMatches, sameVersionNeighbours, versionCounts, versionOfMember } from "../src/lib/seating.js";
+import { swapSeats, reusePlan, apartViolations, generatePlan, orderForVersion, planMatches, sameVersionNeighbours, versionCounts, versionOfMember } from "../src/lib/seating.js";
 
 const ids = (n) => Array.from({ length: n }, (_, i) => `s${i}`);
 const q = (key, section, gid) => ({ key, section, group: gid ? { id: gid } : null });
@@ -49,5 +49,25 @@ describe("booklet versions", () => {
       expect(orderForVersion(qs, v, 7).map((x) => x.key)).toEqual(keys);
     }
     expect(new Set([1, 2, 3, 4, 5].map((v) => orderForVersion(qs, v, 7).map((x) => x.key).join()))).not.toHaveProperty("size", 1);
+  });
+});
+
+describe("moving students", () => {
+  it("swaps two students or moves one to an empty seat without breaking the version rule", () => {
+    const plan = generatePlan({ rows: 3, cols: 4, studentIds: ids(10), seed: 9 });
+    const [s1, s2] = Object.keys(plan.seats);
+    const swapped = swapSeats(plan, s1, s2);
+    expect(swapped.seats[s1]).toBe(plan.seats[s2]);
+    expect(swapped.seats[s2]).toBe(plan.seats[s1]);
+    const empty = Object.keys(plan.seatVersion).find((s) => !plan.seats[s]);
+    const moved = swapSeats(plan, s1, empty);
+    expect(moved.seats[s1]).toBeUndefined();
+    expect(moved.seats[empty]).toBe(plan.seats[s1]);
+    expect(sameVersionNeighbours(moved)).toEqual([]);
+    expect(swapSeats(plan, s1, "9,9")).toBe(plan);
+  });
+  it("reuses a plan with a fresh question order", () => {
+    const plan = generatePlan({ rows: 2, cols: 2, studentIds: ids(4), seed: 1, orderSeed: 5 });
+    expect(reusePlan(plan, 77)).toMatchObject({ seats: plan.seats, seatVersion: plan.seatVersion, orderSeed: 77 });
   });
 });

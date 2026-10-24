@@ -11,7 +11,7 @@ import { LETTERS, MAX_QUESTIONS, readSheetAnyRotation, sheetLayout } from "../li
 import { fileToGray } from "../lib/scan.js";
 import { FilePicker, Select } from "../components/Controls.jsx";
 import SeatingChart from "../components/SeatingChart.jsx";
-import { MAX_VERSIONS, MIN_VERSIONS, apartViolations, generatePlan, loadLocalPlan, orderForVersion, planMatches, sameVersionNeighbours, saveLocalPlan, seatOfMember, versionCounts, versionLabel, versionOfMember } from "../lib/seating.js";
+import { MAX_VERSIONS, MIN_VERSIONS, apartViolations, generatePlan, loadLocalPlan, orderForVersion, planMatches, sameVersionNeighbours, saveLocalPlan, seatOfMember, swapSeats, loadRooms, saveRoom, deleteRoom, reusePlan, versionCounts, versionLabel, versionOfMember } from "../lib/seating.js";
 
 // The roster order the sheets are printed with and read back with. Keep the list unchanged between printing and scanning.
 export const sheetRoster = (members) => members.filter((m) => m.role === "student").sort((a, b) => a.email.toLowerCase().localeCompare(b.email.toLowerCase()));
@@ -176,7 +176,7 @@ function Scan({ api, assignment, bundle, questions, roster, plan, guard, setNoti
 const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => ({ value: String(a + i), label: String(a + i) }));
 
 // Plano del salón: filas × puestos, puestos vacíos, parejas que deben quedar separadas y mezclar con un toque.
-function Seating({ assignment, roster, plan, savePlan, setMode }) {
+function Seating({ assignment, roster, plan, savePlan, setMode, siblings, loadSibling }) {
   const [rows, setRows] = useState(plan?.rows ?? 5);
   const [cols, setCols] = useState(plan?.cols ?? 6);
   const [versions, setVersions] = useState(plan?.versions ?? MIN_VERSIONS);
@@ -185,6 +185,10 @@ function Seating({ assignment, roster, plan, savePlan, setMode }) {
   const [a, setA] = useState("");
   const [b, setB] = useState("");
   const [error, setError] = useState("");
+  const [edit, setEdit] = useState("layout");
+  const [picked, setPicked] = useState(null);
+  const [rooms, setRooms] = useState(loadRooms);
+  const [roomName, setRoomName] = useState("");
   const names = useMemo(() => Object.fromEntries(roster.map((m) => [m.id, m.full_name || m.email])), [roster]);
   const seatsLeft = rows * cols - blocked.filter((s) => { const [r, c] = s.split(",").map(Number); return r < rows && c < cols; }).length;
   const stale = plan && !planMatches(plan, roster.map((m) => m.id));
@@ -199,6 +203,30 @@ function Seating({ assignment, roster, plan, savePlan, setMode }) {
     } catch (e) {
       setError(e.message);
     }
+  };
+  const pick = (id) => {
+    if (!(id in plan.seatVersion)) return;
+    if (picked == null) { if (plan.seats[id]) setPicked(id); return; }
+    savePlan(swapSeats(plan, picked, id));
+    setPicked(null);
+  };
+  const useRoom = (name) => {
+    const r = rooms.find((x) => x.name === name);
+    if (!r) return;
+    setRows(r.rows); setCols(r.cols); setBlocked(r.blocked);
+  };
+  const keepRoom = () => {
+    const name = roomName.trim();
+    if (!name) return;
+    setRooms(saveRoom({ name, rows, cols, blocked }));
+    setRoomName("");
+  };
+  const reuse = async (id) => {
+    const found = await loadSibling(id);
+    if (!found) { setError("Esa asignación todavía no tiene plano."); return; }
+    if (!planMatches(found, roster.map((m) => m.id))) { setError("Ese plano es de otra lista de estudiantes. Genera uno nuevo."); return; }
+    setError("");
+    savePlan(reusePlan(found));
   };
   const toggle = (id) => setBlocked((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
   const addPair = () => {
@@ -219,7 +247,21 @@ function Seating({ assignment, roster, plan, savePlan, setMode }) {
         <div className="field"><span className="label">Versiones</span><Select aria-label="Versiones" value={String(versions)} onChange={(v) => setVersions(Number(v))} options={range(MIN_VERSIONS, MAX_VERSIONS)} /></div>
         <span className="chip"><strong>{seatsLeft}</strong> puestos · <strong>{roster.length}</strong> estudiantes</span>
       </div>
-      <SeatingChart rows={rows} cols={cols} blocked={blocked} seatVersion={shown.seatVersion} seats={shown.seats} names={names} onToggle={toggle} />
+      <div className="seat-rooms">
+        {rooms.length > 0 && <Picker label="Salones guardados" value="" onChange={useRoom} placeholder="Salones guardados…" options={rooms.map((r) => ({ value: r.name, label: `${r.name} (${r.rows}×${r.cols})` }))} />}
+        {siblings.length > 0 && <Picker label="Usar el plano de otra asignación" value="" onChange={reuse} placeholder="Usar el plano de otra asignación…" options={siblings.map((a) => ({ value: a.id, label: a.title }))} />}
+        <input type="text" aria-label="Nombre del salón" placeholder="Nombre del salón (ej. Aula 201)" value={roomName} onChange={(e) => setRoomName(e.target.value)} />
+        <button type="button" className="secondary" disabled={!roomName.trim()} onClick={keepRoom}>Guardar salón</button>
+        {rooms.some((r) => r.name === roomName.trim()) && <button type="button" className="link" onClick={() => { setRooms(deleteRoom(roomName.trim())); setRoomName(""); }}>Borrar “{roomName.trim()}”</button>}
+      </div>
+      {live && (
+        <div className="seat-modes" role="group" aria-label="Qué hacer al tocar un puesto">
+          <button type="button" className={edit === "layout" ? "primary" : "secondary"} aria-pressed={edit === "layout"} onClick={() => { setEdit("layout"); setPicked(null); }}>Dejar puestos vacíos</button>
+          <button type="button" className={edit === "swap" ? "primary" : "secondary"} aria-pressed={edit === "swap"} onClick={() => setEdit("swap")}>Cambiar de puesto</button>
+        </div>
+      )}
+      {live && edit === "swap" && <p className="caption">{picked ? "Toca el puesto de destino (o el de otro estudiante para intercambiarlos)." : "Toca un estudiante y luego el puesto al que va. Al cambiar de puesto cambia de versión: reimprime su hoja."}</p>}
+      <SeatingChart rows={live && edit === "swap" ? plan.rows : rows} cols={live && edit === "swap" ? plan.cols : cols} blocked={live && edit === "swap" ? plan.blocked : blocked} seatVersion={shown.seatVersion} seats={shown.seats} names={names} onToggle={live && edit === "swap" ? pick : toggle} picked={live && edit === "swap" ? picked : null} />
       <div className="seat-apart">
         <span className="label">Mantener separados</span>
         <Picker label="Primer estudiante" value={a} onChange={setA} placeholder="Estudiante…" options={memberOptions} />
@@ -273,6 +315,7 @@ export default function Paper({ api, assignments, fetchExam, guard, setNotice })
     saveLocalPlan(assignment.id, next);
     Promise.resolve(api.saveSeating?.(assignment.id, next)).catch(() => {}); // without migration 0013 the plan stays in this browser
   };
+  const loadSibling = async (id) => (await api.getSeating?.(id).catch(() => null)) ?? loadLocalPlan(id);
   const plan = savedPlan && planMatches(savedPlan, roster.map((m) => m.id)) ? savedPlan : null;
   const tooMany = questions.length > MAX_QUESTIONS;
   const noRoster = roster.length === 0;
@@ -315,7 +358,7 @@ export default function Paper({ api, assignments, fetchExam, guard, setNotice })
               </section>
             ))}
           </div>
-          {bundle && !noRoster && <Seating key={`${assignment.id}-${roster.length}-${savedPlan?.seed ?? 0}`} assignment={assignment} roster={roster} plan={savedPlan} savePlan={savePlan} setMode={setMode} />}
+          {bundle && !noRoster && <Seating key={`${assignment.id}-${roster.length}-${savedPlan?.seed ?? 0}-${savedPlan?.orderSeed ?? 0}`} assignment={assignment} roster={roster} plan={savedPlan} savePlan={savePlan} setMode={setMode} siblings={choices.filter((a) => a.id !== assignment.id && a.course_id === assignment.course_id)} loadSibling={loadSibling} />}
           <p className="caption paper-note">La lista de estudiantes se ordena por correo. No agregues ni quites estudiantes entre imprimir y calificar: cada hoja lleva el código de su estudiante.</p>
         </>
       )}

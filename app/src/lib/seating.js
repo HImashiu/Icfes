@@ -142,3 +142,35 @@ export function loadLocalPlan(assignmentId) {
 export function saveLocalPlan(assignmentId, plan) {
   try { window.localStorage.setItem(KEY(assignmentId), JSON.stringify(plan)); } catch { /* the plan then lasts only for this visit */ }
 }
+
+// Moves the student at seat `from` to seat `to`; a student already there takes the first seat. Seat versions never change,
+// so the "no neighbour shares a version" rule holds after any move. Returns a new plan.
+export function swapSeats(plan, from, to) {
+  if (from === to || !(from in plan.seatVersion) || !(to in plan.seatVersion)) return plan;
+  const seats = { ...plan.seats };
+  const [a, b] = [seats[from], seats[to]];
+  delete seats[from];
+  delete seats[to];
+  if (b) seats[from] = b;
+  if (a) seats[to] = a;
+  return { ...plan, seats };
+}
+
+// Rooms are saved per browser (name + layout) so the same classroom is one tap away for every assignment.
+const ROOMS = "condor:seating-rooms";
+export function loadRooms() {
+  try { const r = JSON.parse(window.localStorage.getItem(ROOMS) ?? "[]"); return Array.isArray(r) ? r : []; } catch { return []; }
+}
+export function saveRoom(room) {
+  const rooms = [...loadRooms().filter((r) => r.name !== room.name), room];
+  try { window.localStorage.setItem(ROOMS, JSON.stringify(rooms)); } catch { /* the room is then used only now */ }
+  return rooms;
+}
+export function deleteRoom(name) {
+  const rooms = loadRooms().filter((r) => r.name !== name);
+  try { window.localStorage.setItem(ROOMS, JSON.stringify(rooms)); } catch { /* nothing to remove */ }
+  return rooms;
+}
+
+// A plan made for another assignment of the same course, reused here: same seats and versions, fresh question order.
+export const reusePlan = (plan, orderSeed = newSeed()) => ({ ...plan, orderSeed });

@@ -1868,3 +1868,11 @@ button.seat { cursor: pointer; }
 .seat-chart-page .seat span { font-size: 8pt; }
 .seat-chart-page .seat-legend { font-size: 9pt; margin-top: 8pt; }
 .pb-version { font-weight: 800; }
+.seat.is-picked { box-shadow: 0 0 0 3px var(--accent, #58cc02); transform: scale(1.04); }
+.seat { transition: transform 0.12s, box-shadow 0.12s; }
+.seat-modes { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0; }
+.seat-rooms { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+.seat-rooms input { min-width: 0; flex: 1 1 160px; }
+@media (prefers-reduced-motion: reduce) { .seat { transition: none; } }
+.seat-config .ui-select { min-width: 96px; }
+.seat-chart-page .seat { min-height: 26mm; }
