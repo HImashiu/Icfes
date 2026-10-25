@@ -8,6 +8,7 @@
 //   scale     { min, max, pass, passPct, decimals }   linear in two pieces, so passPct % earns the pass grade
 //   formula   { expr, unit, decimals }       teacher-defined, see formula.js
 //   denominator auto | total | answered
+//   final     { weights: { task, homework, exam }, missing: zero | skip, from, to }   how a class's final note is built
 // Every key here is preliminary, so every result is too. IRT is provisional: it is calibrated on the group's own answers.
 import { areaScale, bandFor, weight } from "./analytics.js";
 import { FormulaError, evalTree, parseFormula } from "./formula.js";
@@ -60,6 +61,20 @@ export function normalizeModel(raw) {
     scale: { min, max, pass: num(scale.pass, min, max, Math.min(max, 3)), passPct: num(scale.passPct, 1, 99, 60), decimals: Math.round(num(scale.decimals, 0, 3, 1)) },
     formula: { expr: String(m.formula?.expr ?? "pct / 20").slice(0, 400), unit: String(m.formula?.unit ?? "").slice(0, 12), decimals: Math.round(num(m.formula?.decimals, 0, 3, 1)) },
     denominator: ["total", "answered"].includes(m.denominator) ? m.denominator : "auto",
+    final: normalizeFinal(m.final),
+  };
+}
+
+const isoDate = (v) => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
+// The final note of a class: weight of each kind of activity, what missing work counts as, and the period it covers.
+export function normalizeFinal(raw) {
+  const f = raw && typeof raw === "object" ? raw : {};
+  const w = f.weights ?? {};
+  return {
+    weights: { task: num(w.task, 0, 100, 30), homework: num(w.homework, 0, 100, 30), exam: num(w.exam, 0, 100, 40) },
+    missing: f.missing === "skip" ? "skip" : "zero",
+    from: isoDate(f.from),
+    to: isoDate(f.to),
   };
 }
 export const DEFAULT_MODEL = normalizeModel({});

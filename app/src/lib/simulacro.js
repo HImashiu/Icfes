@@ -113,3 +113,8 @@ function sessionRows(attempts, assignments) {
   }
   return people;
 }
+
+// Teachers: every simulacro of one student (complete and in progress) with the trend of complete scores.
+export function scoreHistory(attempts = [], assignments = []) {
+  return scoreSummary([...sessionRows(attempts, assignments).values()].flat());
+}

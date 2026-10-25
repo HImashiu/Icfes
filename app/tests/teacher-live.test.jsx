@@ -121,7 +121,8 @@ describe("Dashboard and report", () => {
     goTo("#docente/actividades/lista");
     render(<TeacherLive auth={auth(api)} exams={[]} fetchExam={fetchExam} onExit={() => {}} />);
     fireEvent.click(await screen.findByText("Tarea mate"));
-    expect(await screen.findByText("Análisis por pregunta · las más falladas primero")).toBeTruthy();
+    expect(await screen.findByText("Lo que muestran los datos")).toBeTruthy();
+    fireEvent.click(await screen.findByRole("button", { name: "Tabla" }));
     expect(await screen.findByText("Revisar clave")).toBeTruthy();
   });
 });
