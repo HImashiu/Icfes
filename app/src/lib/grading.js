@@ -10,14 +10,15 @@
 //   denominator auto | total | answered
 //   final     { weights: { task, homework, exam }, missing: zero | skip, from, to }   how a class's final note is built
 // Every key here is preliminary, so every result is too. IRT is provisional: it is calibrated on the group's own answers.
-import { areaScale, bandFor, weight } from "./analytics.js";
+import { areaScale, bandFor } from "./analytics.js";
+import { ITEM_DEFAULTS, globalFrom, itemParams, scoreTest } from "./saber11.js";
 import { FormulaError, evalTree, parseFormula } from "./formula.js";
 
 export const MODEL_KINDS = [
   { id: "percent", label: "Porcentaje", hint: "Aciertos sobre el total, de 0 a 100." },
   { id: "scale", label: "Escala propia", hint: "Por ejemplo notas de 1,0 a 5,0 con nota mínima de aprobación y exigencia del 60 %." },
-  { id: "icfes", label: "Estimado ICFES (0–500)", hint: "Corrige el azar y pondera las áreas como el Saber 11. Curva provisional." },
-  { id: "irt", label: "Puntaje IRT (provisional)", hint: "Dificultad de cada pregunta calculada con las respuestas del grupo. Necesita varias entregas." },
+  { id: "icfes", label: "Estimado ICFES (0–500)", hint: "Como el Saber 11: teoría de respuesta al ítem, escala nacional real, pesos oficiales, niveles y percentiles. Parámetros de las preguntas estimados." },
+  { id: "irt", label: "Puntaje IRT con datos del grupo", hint: "Igual al estimado ICFES, pero la dificultad de cada pregunta sale de las respuestas del grupo. Necesita 15 entregas o más." },
   { id: "formula", label: "Fórmula del docente", hint: "Escribe tu propia fórmula con porcentaje, aciertos, tiempo, pistas y más." },
 ];
 
@@ -211,7 +212,10 @@ export function raschCalibrate(x) {
   return { keep, b, theta };
 }
 
-// Score every item (person) of a group on the 0-100 area scale (mean 50, SD 10 within the group) and the 0-500 global.
+// Score every item (person) of a group like the Saber 11: each question's difficulty is calibrated on the group's
+// answers (Rasch), placed on the national ability scale by keeping the booklet's mean difficulty at the default
+// (so a strong group is not pulled down to 50), then each person is scored by pattern (3PL, saber11.js) and mapped
+// to the national 0-100 scale. The 0-500 global uses the official weights.
 // Returns an array aligned with `items`, each { areas: {name: score|null}, global|null, fallback: bool }.
 export function irtScores(items, ctx) {
   const { questions, key } = ctx;
@@ -225,20 +229,23 @@ export function irtScores(items, ctx) {
     if (!fit) {
       for (const { i, it } of people) {
         const right = qs.filter((q) => it.answers?.[q.key] === key.get(q.key)).length;
-        out[i].areas[name] = areaScale(right, qs.length);
+        out[i].areas[name] = areaScale(right, qs.length, name);
         out[i].fallback = true;
       }
       continue;
     }
-    const mean = fit.theta.reduce((n, v) => n + v, 0) / fit.theta.length;
-    const sd = Math.sqrt(fit.theta.reduce((n, v) => n + (v - mean) ** 2, 0) / fit.theta.length) || 1;
-    people.forEach(({ i }, k) => { out[i].areas[name] = Math.round(clamp(50 + (10 * (fit.theta[k] - mean)) / sd, 0, 100)); });
+    // Rasch logits -> 3PL ability units (D·a), centred on the default difficulty. Items nobody or everybody got
+    // right carry no information about difficulty and keep the default.
+    const bOf = new Map(fit.keep.map((j, k) => [j, ITEM_DEFAULTS.b + fit.b[k] / (1.7 * ITEM_DEFAULTS.a)]));
+    people.forEach(({ i }, k) => {
+      const resp = qs.map((q, j) => ({ r: x[k][j], ...itemParams({ options: q.options?.length, b: bOf.get(j) }) }));
+      out[i].areas[name] = scoreTest({ name, items: resp, correct: x[k].reduce((n, v) => n + v, 0), total: qs.length }).scale;
+    });
   }
   for (const o of out) {
     const names = Object.keys(o.areas).filter((n) => o.areas[n] != null);
     if (names.length === 0) continue;
-    const w = names.reduce((n, a) => n + weight(a), 0);
-    o.global = Math.round((names.reduce((n, a) => n + weight(a) * o.areas[a], 0) / w) * 5);
+    o.global = globalFrom(names.map((n) => ({ name: n, scale: o.areas[n] })));
   }
   return out;
 }
@@ -268,14 +275,14 @@ export function gradeMany(items, rawModel, ctx = {}) {
         return { ...base, ok: true, value: Number(v.toFixed(m.scale.decimals)), display: fmt(v, m.scale.decimals), min: m.scale.min, max: m.scale.max, passed: v >= m.scale.pass };
       }
       case "icfes":
-        return { ...base, ok: band.global != null, value: band.global, display: band.global == null ? "—" : String(band.global), low: band.low, high: band.high, min: 0, max: 500, provisional: true, note: "Estimado con curva provisional y clave preliminar." };
+        return { ...base, ok: band.global != null, value: band.global, display: band.global == null ? "—" : String(band.global), low: band.low, high: band.high, min: 0, max: 500, provisional: true, note: "Calculado como el ICFES con dificultad de preguntas estimada y clave preliminar." };
       case "irt": {
         const r = irt?.[idx];
         if (!r || r.global == null) return { ...base, ok: band.global != null, value: band.global, display: band.global == null ? "—" : String(band.global), low: band.low, high: band.high, min: 0, max: 500, provisional: true, note: "Sin grupo suficiente para IRT: se muestra el estimado ICFES." };
         return {
           ...base, ok: true, value: r.global, display: String(r.global), min: 0, max: 500, provisional: true,
           areas: Object.entries(r.areas).map(([name, v]) => ({ name, pct: st.perArea.find((a) => a.name === name)?.pct == null ? null : Math.round(st.perArea.find((a) => a.name === name).pct), score: v })),
-          note: r.fallback ? "Algunas áreas no tienen grupo suficiente y usan el estimado ICFES." : `Calibrado con las respuestas de ${items.length} entregas del grupo (media 50, DE 10 por área). Provisional.`,
+          note: r.fallback ? "Algunas áreas no tienen grupo suficiente y usan el estimado ICFES." : `Dificultad de cada pregunta calibrada con ${items.length} entregas del grupo y escala nacional del ICFES. Provisional.`,
         };
       }
       case "formula": {

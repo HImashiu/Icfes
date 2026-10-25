@@ -142,9 +142,10 @@ export default function Dashboard({ api, profile, guard, ws, onOpenCourse, onRei
               <span className="caption">Aparece cuando los estudiantes entreguen un simulacro completo: Sesión 1 y Sesión 2 del mismo cuadernillo.</span>
             ) : (
               <>
-                <span className="caption">{s.bandCount} estudiantes con simulacro completo · promedio {s.bandMean} / 500</span>
+                <span className="caption">{s.bandCount} estudiantes con simulacro completo · promedio {s.bandMean} / 500{s.bandPercentile != null ? ` (percentil ${s.bandPercentile} del país)` : ""}</span>
                 <BandHistogram bins={s.bandHistogram} />
-                <span className="caption">Estimación con curva provisional: sirve para comparar, no es el puntaje oficial.</span>
+                {s.levels?.length > 0 && <LevelTable rows={s.levels} />}
+                <span className="caption">Calculado como el ICFES con dificultad de preguntas estimada: sirve para orientar, no es el puntaje oficial.</span>
               </>
             )}
           </div>
@@ -229,6 +230,25 @@ export default function Dashboard({ api, profile, guard, ws, onOpenCourse, onRei
         <span className="caption">“Entregas” es lo entregado sobre lo esperado (estudiantes × asignaciones).</span>
       </div>
     </>
+  );
+}
+
+// Share of students per nivel de desempeño (MCER for Inglés) and the average per test, like the ICFES school report.
+function LevelTable({ rows }) {
+  return (
+    <div className="s11-group">
+      <span className="label">Niveles de desempeño por prueba</span>
+      {rows.map((r) => (
+        <div key={r.name} className="s11-group-row" style={{ "--c": areaColor(r.name) }}>
+          <span className="s11-group-name">{r.name}<small> · promedio {r.mean}</small></span>
+          <span className="s11-group-bar">
+            {r.levels.map((l, i) => (
+              <span key={l.label} title={`${l.label}: ${l.n} (${l.pct} %)`} style={{ flexGrow: Math.max(l.pct, 0.0001), background: `color-mix(in srgb, var(--c) ${Math.round(30 + (70 * i) / Math.max(1, r.levels.length - 1))}%, var(--surface-2))` }}>{l.pct >= 12 ? `${l.label.replace("Nivel ", "N")} ${l.pct} %` : ""}</span>
+            ))}
+          </span>
+        </div>
+      ))}
+    </div>
   );
 }
 

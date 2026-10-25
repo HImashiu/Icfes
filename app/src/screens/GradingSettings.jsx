@@ -23,8 +23,8 @@ const EXAMPLE = { id: "ej", mode: "timed", minutes: 60, attemptNo: 1, perArea: A
 const PLAIN = {
   percent: { title: "Porcentaje de aciertos", what: "La nota es el porcentaje de preguntas correctas, sin convertir.", when: "Para ver el desempeño tal cual, en prácticas y tareas." },
   scale: { title: "Escala del colegio (ej. 1,0 a 5,0)", what: "Convierte el porcentaje a tu escala. Tú decides la exigencia: con ese porcentaje se saca la nota mínima para aprobar.", when: "Para las notas que van al boletín o a la planilla." },
-  icfes: { title: "Estimado Saber 11 (0 a 500)", what: "Simula el puntaje del ICFES: descuenta el azar y pondera las áreas como el examen real.", when: "En simulacros completos (Sesión 1 + 2), para orientar. Curva provisional, no es el puntaje oficial." },
-  irt: { title: "Puntaje por dificultad (IRT)", what: "Acertar preguntas que casi nadie acertó vale más. Compara a cada estudiante con su propio grupo.", when: "Con 15 entregas o más. Con menos, usa el estimado Saber 11." },
+  icfes: { title: "Estimado Saber 11 (0 a 500)", what: "Califica como el ICFES: teoría de respuesta al ítem por prueba (0–100), escala y percentiles nacionales reales, global ponderado (0–500), niveles de desempeño y MCER en Inglés.", when: "En simulacros completos (Sesión 1 + 2), para orientar. La dificultad de cada pregunta es estimada: no es el puntaje oficial." },
+  irt: { title: "Puntaje por dificultad (IRT)", what: "Igual al estimado Saber 11, pero la dificultad de cada pregunta sale de las respuestas de tu grupo: acertar las que casi nadie acertó vale más.", when: "Con 15 entregas o más del mismo cuadernillo. Con menos, usa el estimado Saber 11." },
   formula: { title: "Tu propia fórmula", what: "Escribe la regla como en una hoja de cálculo, por ejemplo restar por pistas o bonificar por tiempo.", when: "Para reglas especiales del área o del colegio." },
 };
 

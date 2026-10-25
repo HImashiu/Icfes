@@ -1,34 +1,22 @@
 // Pure statistics for teachers and the school: bands, area averages, histograms, item analysis. No network, no React.
 import { studentScores } from "./simulacro.js";
+import { SABER11_VERSION, globalPercentile, levelDistribution, scoreSaber11, scoreTest, weightOf } from "./saber11.js";
 
-// PLACEHOLDER curve until the ICFES national distributions are anchored (plan §5.1, phase 1).
-// Chance-corrected share right (4 options) mapped onto the 0-100 area scale. Versioned so stored scores can be recomputed.
-export const CURVE_VERSION = "placeholder-1";
-const CHANCE = 0.25;
-// ICFES weights: the four core areas count 3 and English counts 1 in the global score; areas we do not know count 3.
-const WEIGHTS = { "Inglés": 1 };
-export const weight = (name) => WEIGHTS[name] ?? 3;
+// The Saber 11 scoring (saber11.js): 3PL item response theory, the real national distribution for the 0-100 scale
+// and percentiles, official weights, levels and MCER. Versioned so stored scores can be recomputed.
+export const CURVE_VERSION = SABER11_VERSION;
+export const weight = weightOf;
 
-export function areaScale(correct, total) {
+// 0-100 for `correct` right out of `total` in one area (name picks the national scale of that test).
+export function areaScale(correct, total, name) {
   if (!total) return null;
-  const p = correct / total;
-  const adjusted = Math.max(0, (p - CHANCE) / (1 - CHANCE));
-  return Math.round(15 + 70 * adjusted);
+  return scoreTest({ name, correct, total }).scale;
 }
 
-// perArea: [{ name, correct, total }]. Returns { areas: [{name, pct, scale}], global (0-500) or null, low, high }.
-// Only full sets mean something; the band widens when few questions back it.
+// perArea: [{ name, correct, total, resp? }]. Returns { areas: [{name, pct, scale, low, high, level, percentile}],
+// global (0-500) or null, low, high, percentile }. Only a complete simulacro is the Saber 11 score (simulacro.js).
 export function bandFor(perArea) {
-  const areas = perArea
-    .filter((a) => a.total > 0)
-    .map((a) => ({ name: a.name, pct: Math.round((a.correct / a.total) * 100), scale: areaScale(a.correct, a.total), total: a.total }));
-  if (areas.length === 0) return { areas, global: null, low: null, high: null };
-  const w = areas.reduce((acc, a) => acc + weight(a.name), 0);
-  const avg = areas.reduce((acc, a) => acc + weight(a.name) * a.scale, 0) / w;
-  const global = Math.round(avg * 5);
-  const n = areas.reduce((acc, a) => acc + a.total, 0);
-  const margin = Math.round(Math.min(90, 20 + 900 / Math.sqrt(Math.max(n, 1))));
-  return { areas, global, low: Math.max(0, global - margin), high: Math.min(500, global + margin) };
+  return scoreSaber11(perArea);
 }
 
 export const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
@@ -147,7 +135,8 @@ export function schoolSummary({ courses, members, assignments, attempts }) {
     };
   });
   // The Saber 11 estimate needs a whole simulacro: each student's latest Sesión 1 + Sesión 2 of one cuadernillo.
-  const bands = [...studentScores({ attempts, assignments }).values()].map((r) => r?.global).filter((g) => g != null);
+  const sims = [...studentScores({ attempts, assignments }).values()].filter((r) => r?.global != null);
+  const bands = sims.map((r) => r.global);
   return {
     students: new Set(students.map((m) => m.email)).size,
     joined: new Set(students.filter((m) => m.profile_id).map((m) => m.profile_id)).size,
@@ -159,6 +148,8 @@ export function schoolSummary({ courses, members, assignments, attempts }) {
     bandHistogram: histogram(bands, 0, 500, 10),
     bandCount: bands.length,
     bandMean: round(mean(bands)),
+    bandPercentile: bands.length ? globalPercentile(round(mean(bands))) : null,
+    levels: levelDistribution(sims),
     perCourse,
   };
 }

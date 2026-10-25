@@ -89,10 +89,12 @@ export function parseKeyNotes(raw) {
   return map;
 }
 
+// perArea[].resp is the answer pattern the Saber 11 score needs (saber11.js): one [right 0|1, options] per keyed
+// question, blanks as wrong. Questions without a key are left out of it, like an item the ICFES does not score.
 export function scoreAttempt(questions, answers, key) {
   const areas = new Map();
   const add = (name, field) => {
-    if (!areas.has(name)) areas.set(name, { name, total: 0, answered: 0, correct: 0 });
+    if (!areas.has(name)) areas.set(name, { name, total: 0, answered: 0, correct: 0, resp: [] });
     areas.get(name)[field] += 1;
   };
   for (const q of questions) {
@@ -100,6 +102,7 @@ export function scoreAttempt(questions, answers, key) {
     const given = answers[q.key];
     if (given) add(q.section, "answered");
     if (key && given && key.get(q.key) === given) add(q.section, "correct");
+    if (key?.get(q.key)) areas.get(q.section).resp.push([given && key.get(q.key) === given ? 1 : 0, q.options?.length || 4]);
   }
   const perArea = [...areas.values()];
   const sum = (f) => perArea.reduce((acc, a) => acc + a[f], 0);

@@ -3027,3 +3027,33 @@ body.spl-open { overflow: hidden; }
 .d-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
 .d-col { display: grid; gap: 16px; min-width: 0; }
 @media (max-width: 860px) { .d-cols { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---- Saber 11 report by test (Saber11Report.jsx): like the ICFES individual report ---- */
+.score-level { font-size: 11px; font-weight: 800; color: var(--text-2); }
+.score-report-btn, .s11-how-btn { justify-self: start; }
+.s11 { display: grid; gap: 12px; min-width: 0; }
+.s11-global { display: grid; gap: 2px; }
+.s11-global .display { font-size: 34px; }
+.s11-global small { font-size: 15px; color: var(--text-2); margin-left: 3px; }
+.s11-tests { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; }
+.s11-test { display: grid; gap: 6px; padding: 10px 12px; border-radius: 14px; background: var(--surface-2); border-left: 4px solid var(--c); min-width: 0; }
+.s11-test-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.s11-name { font-weight: 800; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.s11-score { color: var(--text-2); font-weight: 700; white-space: nowrap; }
+.s11-score b { font: 800 24px/1 "Bricolage Grotesque", Figtree, sans-serif; color: var(--c); }
+.s11-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.s11-chip { font-size: 12px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--c); color: #111; white-space: nowrap; }
+.s11-chip.soft { background: var(--surface); color: var(--text-2); }
+.s11-levels { display: flex; gap: 3px; height: 6px; }
+.s11-levels > span { border-radius: 999px; background: var(--line); }
+.s11-levels > span.on { background: var(--c); }
+.s11-how { display: grid; gap: 6px; padding: 12px; border-radius: 14px; background: var(--surface-2); font-size: 14px; }
+.s11-how p { margin: 0; }
+.s11-how ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+@media (max-width: 720px) { .s11-tests { grid-template-columns: 1fr; } .score-level { font-size: 10px; } }
+.s11-group { display: grid; gap: 6px; margin-top: 6px; }
+.s11-group-row { display: grid; gap: 3px; }
+.s11-group-name { font-weight: 700; font-size: 13px; }
+.s11-group-name small { color: var(--text-2); font-weight: 600; }
+.s11-group-bar { display: flex; height: 20px; border-radius: 8px; overflow: hidden; gap: 2px; }
+.s11-group-bar > span { color: var(--text); font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; white-space: nowrap; overflow: hidden; min-width: 0; }

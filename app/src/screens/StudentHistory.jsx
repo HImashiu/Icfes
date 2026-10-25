@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { areaColor } from "../lib/brand.js";
 import { gradeMany, itemFromRow, resolveModel } from "../lib/grading.js";
 import { scoreHistory } from "../lib/simulacro.js";
+import Saber11Report from "../components/Saber11Report.jsx";
 import { profilePanels } from "../lib/workspaceSlots.js";
 import "./results.css";
 
@@ -85,7 +86,8 @@ export function StudentHistory({ student: s, api, assignments }) {
             ))}
             {sims.open && <div className="sth-sim open"><strong>…</strong><span className="caption">{sims.open.code}: falta la {sims.open.s1 ? "Sesión 2" : "Sesión 1"}</span></div>}
           </div>
-          <span className="caption">Curva provisional y clave preliminar: sirve para ver su avance, no es el puntaje oficial.</span>
+          {sims.latest && <Saber11Report sim={sims.latest} />}
+          <span className="caption">Calculado como el ICFES con parámetros de preguntas estimados y clave preliminar: sirve para ver su avance, no es el puntaje oficial.</span>
         </div>
       )}
 

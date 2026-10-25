@@ -2,6 +2,7 @@ import { isFullSession, nextSession, simulacros } from "../lib/simulacro.js";
 import { gradeAttempt, isAdjusted, itemFromAttempt } from "../lib/grading.js";
 import { useEffect, useMemo, useRef } from "react";
 import CountUp from "../components/CountUp.jsx";
+import Saber11Report from "../components/Saber11Report.jsx";
 import { confetti, play } from "../lib/motion.js";
 import Mascot from "../components/Mascot.jsx";
 import { loadHistory, recordAttempt } from "../lib/local.js";
@@ -65,7 +66,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
       correct: score.correct,
       outOf,
       percent: pct ?? 0,
-      perArea: score.perArea.map((a) => ({ name: a.name, correct: a.correct, answered: a.answered, total: a.total })),
+      perArea: score.perArea.map((a) => ({ name: a.name, correct: a.correct, answered: a.answered, total: a.total, resp: a.resp })),
       xp: xpEarned,
       missed: attempt.readOnly ? [] : missedKeys(questions, attempt.answers, answerKey, attempt.mode),
       // For the error notebook: where each miss was and what was chosen.
@@ -149,7 +150,8 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
             <div className="stat stat-score">
               <span className="label">Puntaje Saber 11 estimado</span>
               <strong className="display"><CountUp value={sim.global} format={(n) => String(Math.round(n))} delay={300} /><small className="muted"> /500</small></strong>
-              <span className="caption">Sesión 1 + Sesión 2 de {sim.code} · rango {sim.low}–{sim.high} · curva provisional, clave preliminar</span>
+              <span className="caption">Sesión 1 + Sesión 2 de {sim.code} · rango {sim.low}–{sim.high}{sim.percentile != null ? ` · percentil ${sim.percentile} del país` : ""} · estimado, clave preliminar</span>
+              <Saber11Report sim={sim} showGlobal={false} />
             </div>
           )}
           <div className="stat">
