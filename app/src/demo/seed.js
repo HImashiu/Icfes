@@ -104,6 +104,9 @@ export function buildDemo({ bundles, now = Date.now() }) {
     }
   });
 
+  // The math teacher of 11 A also reads its Ciencias naturales class (view only), to follow the shared data work.
+  members.push({ id: "demo-m-view-1", course_id: "demo-c5", profile_id: staff[1].id, email: staff[1].email, full_name: staff[1].full_name, role: "teacher", access: "view" });
+
   // ----- assignments and what students did -----
   const assignments = [];
   const attempts = [];
@@ -127,7 +130,7 @@ export function buildDemo({ bundles, now = Date.now() }) {
       const kind = KINDS[j];
       const exam = kind === "exam";
       const a = {
-        id: `demo-a-${ci + 1}-${j + 1}`, course_id: c.id, kind, title: c.titles[j], exam_slug: slug, scope: c.focus ?? "all", question_keys: keys,
+        id: `demo-a-${ci + 1}-${j + 1}`, course_id: c.id, created_by: staff[c.teacher].id, kind, title: c.titles[j], exam_slug: slug, scope: c.focus ?? "all", question_keys: keys,
         opens_at: new Date(opens).toISOString(), due_at: new Date(active ? now + (1 + (ci % 5)) * DAY + 5 * 3600000 : opens + 6 * DAY).toISOString(),
         time_limit_min: exam ? 45 : null, reveal_policy: exam ? "after_close" : "after_submit", max_attempts: exam ? 1 : null, assignee_id: null,
         status: "published", created_at: new Date(opens - DAY).toISOString(), allow_hints: !exam, instant_feedback: !exam,
@@ -300,7 +303,7 @@ export function buildDemo({ bundles, now = Date.now() }) {
     [[s1Slug, 13], [s2Slug, 12]].forEach(([slug, ago], k) => {
       const opens = now - ago * DAY;
       const a = {
-        id: `demo-a-3-s${k + 1}`, course_id: "demo-c3", kind: "exam", title: `Simulacro completo · Sesión ${k + 1}`, exam_slug: slug, scope: "all", question_keys: null,
+        id: `demo-a-3-s${k + 1}`, course_id: "demo-c3", created_by: staff[3].id, kind: "exam", title: `Simulacro completo · Sesión ${k + 1}`, exam_slug: slug, scope: "all", question_keys: null,
         opens_at: new Date(opens).toISOString(), due_at: new Date(opens + 2 * DAY).toISOString(), time_limit_min: 270, reveal_policy: "after_close", max_attempts: 1,
         assignee_id: null, status: "published", created_at: new Date(opens - DAY).toISOString(), allow_hints: false, instant_feedback: false,
         allow_definitions: false, definitions: [], proctor: true, courses: { name: courses[c3].name },
@@ -389,6 +392,24 @@ export function buildDemo({ bundles, now = Date.now() }) {
       student_statuses: statuses, student_flags: flags, student_groups: groups, student_group_members: groupMembers, student_notes: notes, saved_views: views,
       teacher_questions: [], question_overrides: [], annotations: [], live_sessions: [], live_players: [], live_answers: [],
       group_directors: [{ id: "demo-gd-1", school_id: SCHOOL_ID, grade: "11", group_label: "A", profile_id: staff[1].id }],
+      // Colegio (migration 0020): cursos (10 A and 10 B still without classes), a view-only seat, a subject grant,
+      // a pending invitation, settings and a few lines of the log.
+      schools: [{ id: SCHOOL_ID, name: "Colegio de demostración", domains: ["demo.invalid"], status: "active" }],
+      school_groups: [["11", "A"], ["11", "B"], ["11", "C"], ["10", "A"], ["10", "B"]].map(([grade, label], i) => ({ id: `demo-sg-${i + 1}`, school_id: SCHOOL_ID, grade, label, created_at: stamp(70) })),
+      subject_access: [{ id: "demo-sa-1", school_id: SCHOOL_ID, profile_id: staff[2].id, area: "Inglés", grade: null, access: "view", created_at: stamp(30) }],
+      school_settings: [{ school_id: SCHOOL_ID, settings: { grades: ["9", "10", "11"], year: 2026, teachers_create_classes: true, periods: [
+        { name: "Periodo 1", from: "2026-01-26", to: "2026-04-03" }, { name: "Periodo 2", from: "2026-04-13", to: "2026-06-19" },
+        { name: "Periodo 3", from: "2026-07-06", to: "2026-09-11" }, { name: "Periodo 4", from: "2026-09-14", to: "2026-11-27" }] }, updated_at: stamp(40) }],
+      staff_invites: [
+        ...staff.slice(1).map((p, i) => ({ id: `demo-si-${i + 1}`, school_id: SCHOOL_ID, email: p.email, full_name: p.full_name, role: "teacher", created_at: stamp(85), accepted_at: stamp(80) })),
+        { id: "demo-si-9", school_id: SCHOOL_ID, email: "laura.mejia@gmail.com", full_name: "Laura Mejía", role: "teacher", created_at: stamp(1), accepted_at: null },
+      ],
+      school_audit: [
+        { id: "demo-au-1", school_id: SCHOOL_ID, actor: staff[0].id, action: "group_create", detail: { groups: ["10A", "10B"] }, created_at: stamp(6) },
+        { id: "demo-au-2", school_id: SCHOOL_ID, actor: staff[0].id, action: "access", detail: { course: "demo-c5", profile: staff[1].id, email: staff[1].email, access: "view" }, created_at: stamp(5) },
+        { id: "demo-au-3", school_id: SCHOOL_ID, actor: staff[0].id, action: "grant", detail: { profile: staff[2].id, area: "Inglés", grade: null, access: "view" }, created_at: stamp(4) },
+        { id: "demo-au-4", school_id: SCHOOL_ID, actor: staff[0].id, action: "invite", detail: { email: "laura.mejia@gmail.com", role: "teacher" }, created_at: stamp(1) },
+      ],
     },
   };
 }

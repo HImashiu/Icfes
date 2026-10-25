@@ -8,7 +8,9 @@ export const NAV = [
   { section: "biblioteca", label: "Biblioteca", icon: "school" },
 ];
 export const ADMIN_NAV = [
-  { section: "colegio", tab: "docentes", label: "Docentes y clases", icon: "shield" },
+  { section: "colegio", tab: "cursos", label: "Cursos y materias", icon: "school" },
+  { section: "colegio", tab: "docentes", label: "Docentes", icon: "users" },
+  { section: "colegio", tab: "registro", label: "Quién hizo qué", icon: "shield" },
   { section: "colegio", tab: "calificacion", label: "Calificación", icon: "pencil" },
   { section: "colegio", tab: "ajustes", label: "Ajustes", icon: "user" },
 ];
@@ -21,7 +23,8 @@ export const TABS = {
   estudiantes: [["lista", "Estudiantes"], ["clases", "Listas de clase"]],
   resultados: [["resumen", "Resumen"], ["actividades", "Por actividad"], ["grafica", "Armar gráfica", "Gráficas"], ["calificacion", "Calificación", "Notas"]],
   biblioteca: [["banco", "Banco de preguntas", "Banco"], ["preguntas", "Mis preguntas"], ["clases", "Clases para proyectar", "Proyectar"]],
-  colegio: [["docentes", "Docentes y clases", "Docentes"], ["calificacion", "Calificación"], ["ajustes", "Ajustes"]],
+  colegio: [["cursos", "Cursos y materias", "Cursos"], ["docentes", "Docentes"], ["registro", "Quién hizo qué", "Registro"], ["calificacion", "Calificación", "Notas"], ["ajustes", "Ajustes"]],
+  cuenta: [],
   actividad: [["resultados", "Resultados"], ["papel", "En papel"], ["calificacion", "Calificación"]],
 };
 const SECTIONS = new Set(Object.keys(TABS));
@@ -71,7 +74,7 @@ export function normalize(route) {
 // The destination highlighted in the navigation for a route.
 export const navSection = (route) => (route.section === "actividad" ? "actividades" : route.section);
 
-const LABEL = Object.fromEntries([...NAV, { section: "colegio", label: "Colegio" }].map((n) => [n.section, n.label]));
+const LABEL = Object.fromEntries([...NAV, { section: "colegio", label: "Colegio" }, { section: "cuenta", label: "Mi cuenta" }].map((n) => [n.section, n.label]));
 const tabLabel = (section, tab) => TABS[section]?.find(([id]) => id === tab)?.[1] ?? "";
 
 // Breadcrumbs: section › (activity) › tab. Each crumb but the last carries the route it opens.

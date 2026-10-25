@@ -1,7 +1,8 @@
 // A stand-in for the Supabase client that keeps every table in memory. createApi() runs on top of it unchanged,
 // so the teacher screens read and write exactly as they do with a real backend, and nothing leaves the browser.
 // Only the calls the app makes are supported; anything else answers with an error the screens already handle.
-const PK = { paper_seating: "assignment_id", grading_models: "id" };
+const PK = { paper_seating: "assignment_id", grading_models: "id", school_settings: "school_id" };
+const SCHOOL_TABLES = new Set(["school_groups", "subject_access", "school_settings", "staff_invites", "school_audit"]);
 const clone = (v) => (v === undefined ? v : JSON.parse(JSON.stringify(v)));
 
 class Query {
@@ -43,6 +44,9 @@ class Query {
           return Object.assign(hit, row);
         }
         if (row.id == null && !(this.table in PK && PK[this.table] !== "id")) row.id = `demo-${this.table}-${++this.db.seq}`;
+        // Column defaults the database fills in (school_id = my_school(), actor = auth.uid(), access = 'edit').
+        if (this.db.schoolId && row.school_id == null && SCHOOL_TABLES.has(this.table)) row.school_id = this.db.schoolId;
+        if (this.table === "course_members" && row.role === "teacher" && !row.access) row.access = "edit";
         if (!row.created_at) row.created_at = new Date().toISOString();
         if (this.table === "assignments") row.courses = { name: this.db.tables.courses.find((c) => c.id === row.course_id)?.name ?? "" };
         rows.push(row);
@@ -66,7 +70,8 @@ const OFF = "Esta función no está disponible en la demostración.";
 
 // `scope` stands in for row-level security on the student side: { table: (row) => visible }.
 export function createDemoClient({ tables, profile, scope = {}, extraRpc = {} }) {
-  const db = { tables, seq: 0 };
+  const db = { tables, seq: 0, schoolId: profile.school_id ?? null };
+  const lower = (x) => String(x ?? "").trim().toLowerCase();
   const rpc = {
     school_teacher_code: () => "DEMO-0000",
     link_my_roster: () => null,
@@ -80,6 +85,22 @@ export function createDemoClient({ tables, profile, scope = {}, extraRpc = {} })
       return null;
     },
     create_family_report: () => "demostracion",
+    // Colegio (migration 0020), same rules as the SQL functions.
+    invite_staff: ({ p_rows }) => (p_rows ?? []).map((r) => {
+      const email = lower(r.email);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email === lower(profile.email)) return { email, status: "skipped" };
+      const role = r.role === "school_admin" ? "school_admin" : "teacher";
+      const person = tables.profiles.find((p) => lower(p.email) === email);
+      const list = (tables.staff_invites ??= []);
+      const hit = list.find((i) => i.email === email);
+      if (hit) Object.assign(hit, { role, full_name: r.name || hit.full_name });
+      else list.push({ id: `demo-staff_invites-${++db.seq}`, school_id: db.schoolId, email, full_name: r.name ?? "", role, created_at: new Date().toISOString(), accepted_at: person ? new Date().toISOString() : null });
+      (tables.school_audit ??= []).push({ id: `demo-school_audit-${++db.seq}`, school_id: db.schoolId, actor: profile.id, action: "invite", detail: { email, role }, created_at: new Date().toISOString() });
+      if (person) { person.role = role; return { email, status: "updated" }; }
+      return { email, status: "invited" };
+    }),
+    update_school_name: ({ p_name }) => { const sc = tables.schools?.[0]; if (sc) sc.name = String(p_name).trim(); return sc?.name ?? null; },
+    regenerate_teacher_code: () => `DEMO-${Math.floor(1000 + Math.random() * 9000)}`,
     revoke_family_report: () => null,
     ...extraRpc,
   };

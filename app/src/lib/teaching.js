@@ -47,26 +47,48 @@ export function groupOf(course) {
 const teachersOf = (courseId, members) => members.filter((m) => m.course_id === courseId && m.role === "teacher");
 const studentsOf = (courseId, members) => members.filter((m) => m.course_id === courseId && m.role === "student");
 
-// The classes this person works with. Row-level security already returns only the classes a teacher teaches or
-// (migration 0018) directs, so every class stays; a directed class the teacher does not teach is read only.
-export function myClasses({ courses, members = [], profile, directors = [] }) {
+// Does a subject grant (migration 0020) cover this class? area "*" is every area; no grade is every grade.
+export const grantCovers = (g, course) => (g.area === "*" || g.area === areaOf(course)) && (!g.grade || String(g.grade) === String(course?.grade ?? ""));
+
+// The label a class carries everywhere: subject first, then the curso ("Matemáticas · 11A"), so two classes of the
+// same curso never look alike.
+export function classLabel(course) {
+  if (!course) return "";
+  const g = groupOf(course);
+  if (!course.grade) return course.name ?? "";
+  const area = areaOf(course);
+  const subject = course.subject === "Todas las áreas" ? "Todas las áreas" : course.subject || (area ? areaShort(area) : null);
+  return subject ? `${subject} · ${g.name}` : course.name ?? g.name;
+}
+
+// The classes this person works with. Row-level security already returns only the classes a teacher may see, so
+// every class stays; readOnly marks the ones they only read: view-only roster rows and subject grants (migration
+// 0020) and groups they direct (migration 0018) without teaching them.
+export function myClasses({ courses, members = [], profile, directors = [], grants = [] }) {
   if (profile?.role === "school_admin") return courses.map((c) => ({ ...c, readOnly: false }));
   const me = (m) => (profile?.id && m.profile_id === profile.id) || (profile?.email && fold(m.email) === fold(profile.email));
+  const mine = grants.filter((g) => g.profile_id === profile?.id);
   const directed = new Set(directors.filter((d) => d.profile_id === profile?.id).map((d) => `${d.grade}|${String(d.group_label ?? "").toUpperCase()}`));
   return courses.map((c) => {
-    const teaches = c.created_by === profile?.id || teachersOf(c.id, members).some(me);
-    return { ...c, readOnly: !teaches && directed.has(groupOf(c).key) };
+    const rows = teachersOf(c.id, members).filter(me);
+    const edits = c.created_by === profile?.id || rows.some((m) => (m.access ?? "edit") === "edit") || mine.some((g) => g.access === "edit" && grantCovers(g, c));
+    const reads = rows.length > 0 || mine.some((g) => grantCovers(g, c)) || directed.has(groupOf(c).key);
+    return { ...c, readOnly: !edits && reads };
   });
 }
 
-// Subjects (by ICFES area) with their classes, for the context switcher.
-export function buildContexts({ courses, members = [], profile, directors = [] }) {
-  const mine = myClasses({ courses, members, profile, directors });
+// Subjects (by ICFES area) with their classes, and cursos (11A) with their subjects, for the context switcher.
+export function buildContexts({ courses, members = [], profile, directors = [], grants = [] }) {
+  const mine = myClasses({ courses, members, profile, directors, grants });
   const bySubject = new Map();
+  const byGroup = new Map();
   for (const c of mine) {
     const key = areaOf(c) ?? MIXED;
     if (!bySubject.has(key)) bySubject.set(key, []);
     bySubject.get(key).push(c);
+    const g = groupOf(c);
+    if (!byGroup.has(g.key)) byGroup.set(g.key, { ...g, classes: [] });
+    byGroup.get(g.key).classes.push(c);
   }
   const order = [...AREAS, MIXED];
   const subjects = [...bySubject]
@@ -76,21 +98,36 @@ export function buildContexts({ courses, members = [], profile, directors = [] }
       label: key,
       color: contextColor(key),
       classes: list
-        .map((c) => ({ id: c.id, name: groupOf(c).name, full: c.name, students: studentsOf(c.id, members).length, readOnly: c.readOnly }))
+        .map((c) => ({ id: c.id, name: groupOf(c).name, full: classLabel(c), students: studentsOf(c.id, members).length, readOnly: c.readOnly }))
         .sort((a, b) => a.name.localeCompare(b.name, "es", { numeric: true })),
     }));
-  return { admin: profile?.role === "school_admin", subjects, all: mine.map((c) => c.id) };
+  const groups = [...byGroup.values()]
+    .map((g) => ({
+      key: g.key,
+      name: g.name,
+      grade: g.grade,
+      classes: g.classes
+        .map((c) => { const area = areaOf(c) ?? MIXED; return { id: c.id, area, name: c.subject && c.subject !== area ? c.subject : areaShort(area === MIXED ? "Varias áreas" : area), color: contextColor(area), readOnly: c.readOnly }; })
+        .sort((a, b) => order.indexOf(a.area) - order.indexOf(b.area)),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, "es", { numeric: true }));
+  return { admin: profile?.role === "school_admin", subjects, groups, all: mine.map((c) => c.id), readOnly: mine.filter((c) => c.readOnly).map((c) => c.id) };
 }
 
-// The class ids a context covers. { subject: null } is everything this person sees.
+// The class ids a context covers. { subject: null } is everything this person sees; { group } is one curso.
 export function contextCourseIds(contexts, ctx) {
   if (ctx?.courseId) return [ctx.courseId];
+  if (ctx?.group) return contexts.groups?.find((g) => g.key === ctx.group)?.classes.map((c) => c.id) ?? [];
   if (!ctx?.subject) return contexts.all;
   return contexts.subjects.find((s) => s.key === ctx.subject)?.classes.map((c) => c.id) ?? [];
 }
 
 export function contextLabel(contexts, ctx) {
   const all = contexts.admin ? "Todo el colegio" : "Todas mis clases";
+  if (ctx?.group && !ctx.courseId) {
+    const g = contexts.groups?.find((x) => x.key === ctx.group);
+    return g ? `${g.name} · todas las materias` : all;
+  }
   if (!ctx?.subject) return all;
   const subject = contexts.subjects.find((s) => s.key === ctx.subject);
   if (!subject) return all;
@@ -102,6 +139,7 @@ export function contextLabel(contexts, ctx) {
 
 // A context that still exists after the classes change; otherwise everything.
 export function validContext(contexts, ctx) {
+  if (ctx?.group && !ctx.courseId) return contexts.groups?.some((g) => g.key === ctx.group) ? { subject: null, courseId: null, group: ctx.group } : { subject: null, courseId: null };
   if (!ctx?.subject) return { subject: null, courseId: null };
   const subject = contexts.subjects.find((s) => s.key === ctx.subject);
   if (!subject) return { subject: null, courseId: null };
@@ -112,18 +150,26 @@ export function validContext(contexts, ctx) {
 // Groups × areas for coordination: who teaches each subject in each group. A cell may hold several classes
 // (Física and Química both count as Naturales). staffRoles maps profile id to role, so the coordinator who
 // created a class is not listed as its teacher.
-export function classMatrix({ courses, members = [], staffRoles = {}, directors = [] }) {
+export function classMatrix({ courses, members = [], staffRoles = {}, directors = [], records = [] }) {
   const groups = new Map();
   const cells = new Map();
   let mixed = false;
+  for (const r of records) {
+    const label = String(r.label ?? "").toUpperCase();
+    const key = `${r.grade}|${label}`;
+    if (!groups.has(key)) groups.set(key, { key, name: `${r.grade}${label}`, grade: String(r.grade), label, students: new Set(), director: null, record: r });
+  }
   for (const c of courses) {
     const g = groupOf(c);
-    if (!groups.has(g.key)) groups.set(g.key, { ...g, students: new Set(), director: null });
+    if (!groups.has(g.key)) groups.set(g.key, { ...g, students: new Set(), director: null, record: null });
     for (const m of studentsOf(c.id, members)) groups.get(g.key).students.add(fold(m.email));
     const area = areaOf(c) ?? MIXED;
     if (area === MIXED) mixed = true;
-    const teachers = teachersOf(c.id, members).filter((m) => staffRoles[m.profile_id] !== "school_admin" || teachersOf(c.id, members).length === 1)
-      .map((m) => ({ name: m.full_name || m.email, email: m.email, profileId: m.profile_id }));
+    const all = teachersOf(c.id, members);
+    const editors = all.filter((m) => (m.access ?? "edit") === "edit");
+    const teachers = all.filter((m) => staffRoles[m.profile_id] !== "school_admin" || editors.length === 1 || (m.access ?? "edit") === "view")
+      .map((m) => ({ name: m.full_name || m.email, email: m.email, profileId: m.profile_id, memberId: m.id, access: m.access ?? "edit" }))
+      .sort((a, b) => (a.access === b.access ? 0 : a.access === "edit" ? -1 : 1));
     const key = `${g.key}::${area}`;
     cells.set(key, [...(cells.get(key) ?? []), { course: c, teachers }]);
   }
@@ -135,8 +181,10 @@ export function classMatrix({ courses, members = [], staffRoles = {}, directors 
     .map((g) => ({ ...g, students: g.students.size }))
     .sort((a, b) => a.name.localeCompare(b.name, "es", { numeric: true }));
   const areas = mixed ? [...AREAS, MIXED] : AREAS;
-  const missing = list.reduce((n, g) => n + areas.filter((a) => a !== MIXED && !cells.has(`${g.key}::${a}`)).length, 0);
-  return { groups: list, areas, cell: (groupKey, area) => cells.get(`${groupKey}::${area}`) ?? [], missing };
+  const hasEditor = (k) => (cells.get(k) ?? []).some((x) => x.teachers.some((t) => t.access === "edit"));
+  const missingIn = (g) => areas.filter((a) => a !== MIXED && !hasEditor(`${g.key}::${a}`)).length;
+  const missing = list.reduce((n, g) => n + missingIn(g), 0);
+  return { groups: list, areas, cell: (groupKey, area) => cells.get(`${groupKey}::${area}`) ?? [], missing, missingIn };
 }
 
 // The subject name a new class gets when coordination fills an empty cell of an area.
