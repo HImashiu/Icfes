@@ -18,8 +18,10 @@ INLINE
   for plain text such as P<sub>líquido</sub>, m<sup>2</sup>. Keep Unicode like CuSO₄ or H⁺ when the OCR already has it.
 - Words printed in capitals for emphasis (NO, NUNCA, EXCEPTO) stay in capitals, bold only if bold in print.
 MATH
-- Any formula, fraction, power, root, inequality or expression with variables: KaTeX between single dollars,
-  e.g. $\frac{0,4}{0,6}$, $x^{2}+1$, $\sqrt{3}$, $480.000\times0,8$. Words inside math go in \text{…}.
+- An expression that reads on one line with Unicode stays plain text: 3x² − 3x − 4, (x − 1)² = 0, 4.000 cm², 1s² 2s² 2p⁶.
+  Use the real minus sign − and Unicode powers there. Keep what the OCR already wrote that way.
+- KaTeX between single dollars only for what cannot be written on one line: fractions $\frac{0,4}{0,6}$, roots $\sqrt{3}$,
+  overlines $\overline{MN}$, sums, matrices, stacked limits. Words inside math go in \text{…}.
   Decimal commas stay commas. Money in a sentence ($200.000) is plain text, not math.
 - Never invent math that is not printed. Numbers alone stay plain text.
 CHEMISTRY
@@ -35,6 +37,8 @@ PICTURES
   are NOT typed. Report each one in "figures" by the numbers of its red regions; the app shows the crop. Remove OCR garbage that came
   from inside a picture (axis numbers, stray letters, labels read out of a drawing).
 - If an option (A, B, C, D) is only a picture, its text is "" and the picture is reported with that option's field.
+  Never type the labels or numbers printed inside that picture, and never put [[figura]] tokens in options.
+- Never move, swap or recompute numbers between options: each option keeps the values the scan shows next to its letter.
 ENGLISH (section Inglés)
 - Numbered blank in a shared text: [[hueco:97]] (97 = the question that asks for it); the worked example blank 0
   filled in: [[hueco:0|covers]]; a blank with no number in a stem: [[hueco]].

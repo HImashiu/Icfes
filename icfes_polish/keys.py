@@ -6,6 +6,8 @@ Rounds (each builds a request file for the laptop relay, or reads its answers):
   judge    a stronger model solves the disputed questions blind
   explain  explanation, distractors and hint written FOR the settled key (never against it)
   check    a different model reads only the explanation and the hint and says which option they lead to
+  audit    (existing enrichment) list hints written for another key or flagged incoherent; marks them settled on the key
+           file so explain + check rewrite only those
   finish   enrichment file (icfes-enrichment/2, same shape the app reads) + proposed key file + review list
 
 python -m icfes_polish.keys <round> --golden G.json --crops <icfes_crop dir> --key K.key.json --work <dir> [--deployment D]
@@ -296,8 +298,11 @@ def r_explain(c: Ctx) -> int:
             continue
         t, _ = question_text(q, c.groups)
         t += f"\nCLAVE: {s['final']}\n"
-        reqs.append({"id": f"explain:{n}", "deployment": c.a.deployment, "messages": chat(explain_sys(q.get("section")), t, images_for(q, c.bundles, c.crops)),
-                     "max_completion_tokens": 12000, "reasoning_effort": c.a.effort, "response_format": {"type": "json_object"}})
+        req = {"id": f"explain:{n}", "deployment": c.a.deployment, "messages": chat(explain_sys(q.get("section")), t, images_for(q, c.bundles, c.crops)),
+               "max_completion_tokens": 12000, "response_format": {"type": "json_object"}}
+        if c.a.effort:
+            req["reasoning_effort"] = c.a.effort
+        reqs.append(req)
     c.write("explain", reqs)
     return 0
 
@@ -402,7 +407,57 @@ def r_finish(c: Ctx) -> int:
     return 0
 
 
-ROUNDS = {"solve": r_solve, "settle": r_settle, "judge": r_judge, "explain": r_explain, "check": r_check, "finish": r_finish}
+def r_audit(c: Ctx) -> int:
+    old = json.load(open(c.a.enrichment, encoding="utf-8"))["questions"]
+    st, rows = {}, []
+    for n in c.qs:
+        r, key = old.get(str(n)) or {}, c.keyfile.get(str(n))
+        e = r.get("enrich") or {}
+        why = None
+        if not key:
+            continue
+        if not e.get("pista") and not e.get("explicacion_es"):
+            why = "no hint yet"
+        elif r.get("key") != key:
+            why = f"hint written for {r.get('key')}, key is now {key}"
+        elif e.get("clave_coherente") is False:
+            why = "writer flagged the explanation as not matching the key"
+        if why:
+            st[str(n)] = {"status": "settled", "final": key, "why": "key file (audit)", "votes": {}, "score": None}
+            rows.append({"number": n, "key": key, "reason": why})
+    json.dump(st, open(c.work / "settled.json", "w", encoding="utf-8"), indent=1)
+    json.dump(rows, open(c.work / "audit.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    print(f"audit: {len(rows)} of {len(c.qs)} questions need a new explanation and hint")
+    return 0
+
+
+def r_merge(c: Ctx) -> int:
+    """Put the rewritten (checked) rows of <work>/enrichment.json into the existing enrichment; unchecked ones are hidden there."""
+    old = json.load(open(c.a.enrichment, encoding="utf-8"))
+    new = json.load(open(c.work / "enrichment.json", encoding="utf-8"))["questions"]
+    audit = {str(r["number"]) for r in json.load(open(c.work / "audit.json", encoding="utf-8"))}
+    fixed = hidden = 0
+    for n in audit:
+        nr, orow = new.get(n), old["questions"].get(n, {})
+        if nr and nr.get("key_check") == "agree":
+            e = dict(orow.get("enrich") or {})
+            e.update({k: v for k, v in nr["enrich"].items() if k not in ("dificultad", "nivel_desempeno", "dificultad_bruta")})
+            orow.update({"key": nr["key"], "enrich": e, "key_check": "agree", "rewritten": "audit"})
+            fixed += 1
+        else:
+            e = orow.get("enrich") or {}
+            for k in ("explicacion_es", "distractores_porque", "pista"):
+                e.pop(k, None)
+            e["clave_coherente"] = False
+            orow.update({"key": c.keyfile.get(n), "enrich": e, "key_check": "hidden", "hidden_reason": (nr or {}).get("hidden_reason", "not rewritten")})
+            hidden += 1
+        old["questions"][n] = orow
+    json.dump(old, open(c.work / "enrichment.merged.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    print(f"merge: {fixed} rewritten and checked, {hidden} left without explanation/hint -> {c.work / 'enrichment.merged.json'}")
+    return 0
+
+
+ROUNDS = {"audit": r_audit, "merge": r_merge, "solve": r_solve, "settle": r_settle, "judge": r_judge, "explain": r_explain, "check": r_check, "finish": r_finish}
 
 
 def main(argv=None) -> int:
@@ -414,6 +469,7 @@ def main(argv=None) -> int:
     ap.add_argument("--work", required=True)
     ap.add_argument("--deployment", default="solve")
     ap.add_argument("--effort", default="medium")
+    ap.add_argument("--enrichment", help="existing enrichment file (audit, merge)")
     a = ap.parse_args(argv)
     return ROUNDS[a.round](Ctx(a))
 
