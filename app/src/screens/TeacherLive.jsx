@@ -15,6 +15,7 @@ import BankEditor from "./BankEditor.jsx";
 import ChartBuilder from "./ChartBuilder.jsx";
 import GradingSettings from "./GradingSettings.jsx";
 import Lessons from "./Lessons.jsx";
+import QuestionControl from "./QuestionControl.jsx";
 import Students from "./Students.jsx";
 import TeacherReports from "./TeacherReports.jsx";
 import Today from "./teacher/Today.jsx";
@@ -283,6 +284,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
 
           {r.section === "biblioteca" && r.tab === "banco" && <BankEditor api={baseApi} profile={profile} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
           {r.section === "biblioteca" && r.tab === "preguntas" && <QuestionBuilder api={baseApi} profile={profile} guard={guard} setNotice={setNotice} />}
+          {r.section === "biblioteca" && r.tab === "control" && <QuestionControl api={baseApi} profile={profile} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
           {r.section === "biblioteca" && r.tab === "clases" && <Lessons api={baseApi} profile={profile} courses={courses} assignments={assignments} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} reload={reload} />}
 
           {r.section === "colegio" && r.tab === "cursos" && (

@@ -294,6 +294,50 @@ export function createApi(client) {
       unwrap(await client.from("question_overrides").delete().eq("id", id));
     },
 
+    // Question control (migration 0021). Every use of every question in the school, whoever made it. null until the
+    // migration runs: the screens then rebuild the uses from what this teacher can read.
+    async questionUses() {
+      const r = await client.rpc("school_question_uses");
+      return r.error ? null : r.data;
+    },
+    async liveHistory() {
+      const r = await client.from("live_sessions").select("id, host_id, course_id, title, exam_slug, question_keys, current_index, state, created_at");
+      return r.error ? [] : r.data.map((s) => ({ ...s, question_keys: (s.question_keys ?? []).slice(0, Math.max(0, (s.current_index ?? -1) + 1)) })).filter((s) => s.question_keys.length);
+    },
+    // Holds: questions or whole booklets reserved for a simulacro and/or hidden from students' free practice.
+    async questionHolds() {
+      const r = await client.from("question_holds").select("id, exam_slug, qkey, reserve, hide_from_students, label, until, assignment_id, created_by, created_at");
+      if (r.error && isMissingTable(r.error)) return null;
+      return unwrap(r);
+    },
+    async saveHolds(rows) {
+      const r = await client.from("question_holds").upsert(rows, { onConflict: "school_id,exam_slug,qkey" }).select();
+      if (r.error && isMissingTable(r.error)) throw new Error("Falta ejecutar la migración 0021 (control de preguntas) en Supabase.");
+      return unwrap(r);
+    },
+    async deleteHolds(ids) {
+      if (!ids.length) return;
+      unwrap(await client.from("question_holds").delete().in("id", ids));
+    },
+    // What a student may not see in free practice. [] before the migration (nothing is hidden).
+    async hiddenQuestions() {
+      const r = await client.rpc("hidden_questions");
+      if (!r.error) return r.data ?? [];
+      const t = await client.from("question_holds").select("exam_slug, qkey, hide_from_students, until");
+      if (t.error) return [];
+      const now = Date.now();
+      return t.data.filter((h) => h.hide_from_students && (!h.until || new Date(h.until).getTime() >= now));
+    },
+    async questionRules() {
+      const r = await client.from("question_rules").select("rules").maybeSingle();
+      return r.error ? null : r.data?.rules ?? {};
+    },
+    async saveQuestionRules(schoolId, rules) {
+      const r = await client.from("question_rules").upsert({ school_id: schoolId, rules, updated_at: new Date().toISOString() }, { onConflict: "school_id" });
+      if (r.error && isMissingTable(r.error)) throw new Error("Falta ejecutar la migración 0021 (control de preguntas) en Supabase.");
+      unwrap(r);
+    },
+
     // Lessons and saved activity formats (migration 0017). A missing table reads as `null`, so the screen can say so.
     async lessons() {
       const r = await client.from("lessons").select("id, owner_id, title, exam_slug, items, settings, visibility, updated_at").order("updated_at", { ascending: false });

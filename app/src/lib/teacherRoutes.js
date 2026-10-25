@@ -22,7 +22,7 @@ export const TABS = {
   actividades: [["lista", "Todas"], ["tareas", "Tareas"], ["practicas", "Prácticas en clase", "Clase"], ["simulacros", "Simulacros", "Simul."], ["vivo", "Juego en vivo", "En vivo"], ["refuerzo", "Refuerzo"], ["nueva", "Nueva actividad"]],
   estudiantes: [["lista", "Estudiantes"], ["clases", "Listas de clase"]],
   resultados: [["resumen", "Resumen"], ["actividades", "Por actividad"], ["grafica", "Armar gráfica", "Gráficas"], ["calificacion", "Calificación", "Notas"]],
-  biblioteca: [["banco", "Banco de preguntas", "Banco"], ["preguntas", "Mis preguntas"], ["clases", "Clases para proyectar", "Proyectar"]],
+  biblioteca: [["banco", "Banco de preguntas", "Banco"], ["preguntas", "Mis preguntas", "Mías"], ["clases", "Clases para proyectar", "Proyectar"], ["control", "Control de preguntas", "Control"]],
   colegio: [["cursos", "Cursos y materias", "Cursos"], ["docentes", "Docentes"], ["registro", "Quién hizo qué", "Registro"], ["calificacion", "Calificación", "Notas"], ["ajustes", "Ajustes"]],
   cuenta: [],
   actividad: [["resultados", "Resultados"], ["papel", "En papel"], ["calificacion", "Calificación"]],
