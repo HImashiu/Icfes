@@ -66,14 +66,13 @@ for (const [golden, spec] of Object.entries(SPEC_ALIAS)) {
   if (!specFiles.has(golden) && specFiles.has(spec)) specFiles.set(golden, specFiles.get(spec));
 }
 
-// "S11-A 1ra" becomes "S11-A · Primera sesión", the same name the app shows (see formatBooklet in src/lib/exam.js).
-const ORDINAL = { 1: "Primera", 2: "Segunda" };
+// "S11-A 1ra" becomes "S11-A · Sesión 1", the same name the app shows (see formatBooklet in src/lib/exam.js).
 const booklet = (t) =>
   t
     .replace(/\s+/g, " ")
     .replace(/^(S11-)\s+/i, "$1")
-    .replace(/\s+(\d)(?:da|ra|a)?\s+sesi[oó]n\b/i, (m, n) => ` · ${ORDINAL[n] ?? n} sesión`)
-    .replace(/\s+(\d)(?:da|ra)$/i, (m, n) => ` · ${ORDINAL[n] ?? n} sesión`);
+    .replace(/\s+(\d)(?:da|ra|a)?\s+sesi[oó]n\b\.?(?:\s*\(session \d\))?/i, (m, n) => ` · Sesión ${n}`)
+    .replace(/\s+(\d)(?:da|ra)$/i, (m, n) => ` · Sesión ${n}`);
 // Cleans one exam's text for the app and decides which questions are shown.
 // A question is hidden when something it needs is missing (a passage, a picture, a figure
 // without a spec); a note standing in for a picture that is drawn is stripped instead.
@@ -435,7 +434,7 @@ for (const exam of exams.filter((e) => e.status === "ready" || e.questions > 0))
 // A slug such as S11-G_2da names its booklet when the spec file has no exam title.
 const slugBooklet = (slug) => {
   const m = slug.match(/^(S11-[A-Z0-9]+)_(1ra|2da)$/);
-  return m ? `${m[1]} · ${m[2] === "1ra" ? "Primera" : "Segunda"} sesión` : slug;
+  return m ? `${m[1]} · Sesión ${m[2] === "1ra" ? 1 : 2}` : slug;
 };
 
 // Specs without question text yet: listed as "Próximamente" so the catalog shows the whole plan.

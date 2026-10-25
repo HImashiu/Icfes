@@ -68,7 +68,7 @@ function Sheets({ assignment, questions, roster, course, plan, onClose }) {
 }
 
 // Calificar hojas: la cámara en vivo o fotos subidas. Cada hoja se lee en el navegador, se muestra para corregir lo dudoso y se guarda con el resto de resultados.
-function Scan({ api, assignment, bundle, questions, roster, plan, guard, setNotice, onClose }) {
+function Scan({ api, assignment, bundle, questions, roster, plan, guard, setNotice, onSaved, onClose }) {
   const [items, setItems] = useState([]);
   const [busy, setBusy] = useState(false);
   const [camera, setCamera] = useState(false);
@@ -116,11 +116,15 @@ function Scan({ api, assignment, bundle, questions, roster, plan, guard, setNoti
   const save = () => {
     setBusy(true);
     guard(async () => {
+      const pcts = [];
       for (const it of ready) {
         const s = scoreOf(it);
         await api.paperSubmit(assignment.id, it.memberId, byKey(it.answers, questionsOf(it)), { keyed: s.keyed, correct: s.correct, answered: s.answered, total: s.total, perArea: s.perArea });
+        if (s.keyed && s.total) pcts.push((s.correct / s.total) * 100);
       }
-      setNotice(`Se guardaron ${ready.length} hojas de papel en "${assignment.title}". Ya cuentan en los informes.`);
+      // The teacher panel shows a receipt with every place the results went; elsewhere a notice says it.
+      if (onSaved) onSaved({ count: ready.length, average: pcts.length ? pcts.reduce((a, b) => a + b, 0) / pcts.length : null });
+      else setNotice(`Se guardaron ${ready.length} hojas de papel en "${assignment.title}". Ya cuentan en los informes.`);
       setItems((cur) => cur.filter((it) => !ready.includes(it)));
     }).finally(() => setBusy(false));
   };
@@ -176,9 +180,10 @@ function Scan({ api, assignment, bundle, questions, roster, plan, guard, setNoti
 const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => ({ value: String(a + i), label: String(a + i) }));
 
 // Plano del salón: filas × puestos, puestos vacíos, parejas que deben quedar separadas y mezclar con un toque.
-function Seating({ assignment, roster, plan, savePlan, setMode, siblings, loadSibling }) {
-  const [rows, setRows] = useState(plan?.rows ?? 5);
+function Seating({ api, assignment, roster, plan, savePlan, setMode, siblings, loadSibling }) {
+  // A new room starts with enough seats for the whole class: six per row, as many rows as it takes.
   const [cols, setCols] = useState(plan?.cols ?? 6);
+  const [rows, setRows] = useState(plan?.rows ?? Math.min(12, Math.max(5, Math.ceil(roster.length / 6))));
   const [versions, setVersions] = useState(plan?.versions ?? MIN_VERSIONS);
   const [blocked, setBlocked] = useState(plan?.blocked ?? []);
   const [apart, setApart] = useState(plan?.apart ?? []);
@@ -188,7 +193,19 @@ function Seating({ assignment, roster, plan, savePlan, setMode, siblings, loadSi
   const [edit, setEdit] = useState("layout");
   const [picked, setPicked] = useState(null);
   const [rooms, setRooms] = useState(loadRooms);
+  const [shared, setShared] = useState(false); // rooms come from the school (migration 0019) instead of this browser
   const [roomName, setRoomName] = useState("");
+  useEffect(() => {
+    let alive = true;
+    Promise.resolve(api?.seatingRooms?.()).then((list) => {
+      if (!alive || !Array.isArray(list)) return;
+      // Rooms kept in this browser before the migration ran are offered too, and go up to the school when saved again.
+      const names = new Set(list.map((r) => r.name));
+      setRooms([...list, ...loadRooms().filter((r) => !names.has(r.name))]);
+      setShared(true);
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, [api]);
   const names = useMemo(() => Object.fromEntries(roster.map((m) => [m.id, m.full_name || m.email])), [roster]);
   const seatsLeft = rows * cols - blocked.filter((s) => { const [r, c] = s.split(",").map(Number); return r < rows && c < cols; }).length;
   const stale = plan && !planMatches(plan, roster.map((m) => m.id));
@@ -218,8 +235,16 @@ function Seating({ assignment, roster, plan, savePlan, setMode, siblings, loadSi
   const keepRoom = () => {
     const name = roomName.trim();
     if (!name) return;
-    setRooms(saveRoom({ name, rows, cols, blocked }));
+    const room = { name, rows, cols, blocked };
+    setRooms(shared ? [...rooms.filter((r) => r.name !== name), room].sort((x, y) => x.name.localeCompare(y.name, "es")) : saveRoom(room));
+    if (shared) api.saveSeatingRoom(room).catch(() => saveRoom(room));
     setRoomName("");
+  };
+  const forgetRoom = (name) => {
+    const left = deleteRoom(name);
+    if (!shared) { setRooms(left); return; }
+    setRooms(rooms.filter((r) => r.name !== name));
+    api.deleteSeatingRoom(name).catch(() => {});
   };
   const reuse = async (id) => {
     const found = await loadSibling(id);
@@ -245,14 +270,21 @@ function Seating({ assignment, roster, plan, savePlan, setMode, siblings, loadSi
         <div className="field"><span className="label">Filas</span><Select aria-label="Filas" value={String(rows)} onChange={(v) => setRows(Number(v))} options={range(1, 12)} /></div>
         <div className="field"><span className="label">Puestos por fila</span><Select aria-label="Puestos por fila" value={String(cols)} onChange={(v) => setCols(Number(v))} options={range(1, 12)} /></div>
         <div className="field"><span className="label">Versiones</span><Select aria-label="Versiones" value={String(versions)} onChange={(v) => setVersions(Number(v))} options={range(MIN_VERSIONS, MAX_VERSIONS)} /></div>
-        <span className="chip"><strong>{seatsLeft}</strong> puestos · <strong>{roster.length}</strong> estudiantes</span>
+        <span className={seatsLeft < roster.length ? "chip seat-short" : "chip"}><strong>{seatsLeft}</strong> puestos · <strong>{roster.length}</strong> estudiantes</span>
+        {seatsLeft < roster.length && (
+          <button type="button" className="secondary" onClick={() => {
+            const gaps = blocked.filter((s) => { const [r, c] = s.split(",").map(Number); return c < cols; }).length;
+            setRows(Math.min(12, Math.ceil((roster.length + gaps) / cols)));
+          }}>Faltan {roster.length - seatsLeft} puestos · agregar filas</button>
+        )}
       </div>
       <div className="seat-rooms">
         {rooms.length > 0 && <Picker label="Salones guardados" value="" onChange={useRoom} placeholder="Salones guardados…" options={rooms.map((r) => ({ value: r.name, label: `${r.name} (${r.rows}×${r.cols})` }))} />}
         {siblings.length > 0 && <Picker label="Usar el plano de otra asignación" value="" onChange={reuse} placeholder="Usar el plano de otra asignación…" options={siblings.map((a) => ({ value: a.id, label: a.title }))} />}
         <input type="text" aria-label="Nombre del salón" placeholder="Nombre del salón (ej. Aula 201)" value={roomName} onChange={(e) => setRoomName(e.target.value)} />
         <button type="button" className="secondary" disabled={!roomName.trim()} onClick={keepRoom}>Guardar salón</button>
-        {rooms.some((r) => r.name === roomName.trim()) && <button type="button" className="link" onClick={() => { setRooms(deleteRoom(roomName.trim())); setRoomName(""); }}>Borrar “{roomName.trim()}”</button>}
+        <span className="caption">{shared ? "Los salones guardados los ven todos los docentes del colegio." : "Los salones se guardan en este navegador."}</span>
+        {rooms.some((r) => r.name === roomName.trim()) && <button type="button" className="link" onClick={() => { forgetRoom(roomName.trim()); setRoomName(""); }}>Borrar “{roomName.trim()}”</button>}
       </div>
       {live && (
         <div className="seat-modes" role="group" aria-label="Qué hacer al tocar un puesto">
@@ -283,10 +315,11 @@ function Seating({ assignment, roster, plan, savePlan, setMode, siblings, loadSi
 }
 
 // Sección “Papel”: simulacro impreso para colegios sin un dispositivo por estudiante.
-export default function Paper({ api, assignments, fetchExam, guard, setNotice }) {
+// Inside an activity page it works on that one assignment (fixedId) without its own header or picker.
+export default function Paper({ api, assignments, fetchExam, guard, setNotice, fixedId = null, embedded = false, initialMode = null, onSaved = null }) {
   const choices = assignments.filter((a) => !a.assignee_id);
-  const [id, setId] = useState(choices[0]?.id ?? "");
-  const [mode, setMode] = useState(null);
+  const [id, setId] = useState(fixedId ?? choices[0]?.id ?? "");
+  const [mode, setMode] = useState(initialMode);
   const [bundle, setBundle] = useState(null);
   const [roster, setRoster] = useState([]);
   const [course, setCourse] = useState("");
@@ -306,7 +339,7 @@ export default function Paper({ api, assignments, fetchExam, guard, setNotice })
       setSavedPlan(remote ?? loadLocalPlan(assignment.id));
     });
     setSavedPlan(null);
-    setMode(null);
+    setMode((m) => (m === initialMode ? m : null));
   }, [assignment?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const questions = useMemo(() => (bundle && assignment ? questionsForAttempt(bundle.exam, { scope: assignment.scope, keys: assignment.question_keys }) : []), [bundle, assignment]);
@@ -329,12 +362,12 @@ export default function Paper({ api, assignments, fetchExam, guard, setNotice })
 
   return (
     <>
-      <header className="t-head"><div><h1>Papel</h1><span className="caption">Simulacro impreso para salones sin un dispositivo por estudiante. Tres pasos: imprimir, resolver, fotografiar.</span></div></header>
+      {!embedded && <header className="t-head"><div><h1>Papel</h1><span className="caption">Simulacro impreso para salones sin un dispositivo por estudiante. Tres pasos: imprimir, resolver, fotografiar.</span></div></header>}
       {choices.length === 0 ? <div className="card paper-empty"><Icon name="book" size={28} /><p>Crea primero una asignación con las preguntas del simulacro y vuelve aquí.</p></div> : (
         <>
           <div className="card paper-pick">
-            <div className="field"><span className="label">Asignación</span>
-              <Picker label="Asignación" value={assignment?.id ?? ""} onChange={setId} options={choices.map((a) => ({ value: a.id, label: `${a.courses?.name} · ${a.title}` }))} /></div>
+            {!fixedId && <div className="field"><span className="label">Asignación</span>
+              <Picker label="Asignación" value={assignment?.id ?? ""} onChange={setId} options={choices.map((a) => ({ value: a.id, label: `${a.courses?.name} · ${a.title}` }))} /></div>}
             <div className="paper-stats" aria-live="polite">
               {!bundle ? <span className="chip">Cargando preguntas…</span> : (
                 <>
@@ -345,7 +378,7 @@ export default function Paper({ api, assignments, fetchExam, guard, setNotice })
               )}
             </div>
             {tooMany && <p className="notice error">Una hoja admite hasta {MAX_QUESTIONS} preguntas.</p>}
-            {bundle && noRoster && <p className="notice error">Este curso no tiene estudiantes en la lista. Agrégalos en “Cursos y estudiantes”.</p>}
+            {bundle && noRoster && <p className="notice error">Este curso no tiene estudiantes en la lista. Agrégalos en Estudiantes › Listas de clase.</p>}
           </div>
           <div className="paper-steps">
             {steps.map((st) => (
@@ -358,14 +391,14 @@ export default function Paper({ api, assignments, fetchExam, guard, setNotice })
               </section>
             ))}
           </div>
-          {bundle && !noRoster && <Seating key={`${assignment.id}-${roster.length}-${savedPlan?.seed ?? 0}-${savedPlan?.orderSeed ?? 0}`} assignment={assignment} roster={roster} plan={savedPlan} savePlan={savePlan} setMode={setMode} siblings={choices.filter((a) => a.id !== assignment.id && a.course_id === assignment.course_id)} loadSibling={loadSibling} />}
+          {bundle && !noRoster && <Seating key={`${assignment.id}-${roster.length}-${savedPlan?.seed ?? 0}-${savedPlan?.orderSeed ?? 0}`} api={api} assignment={assignment} roster={roster} plan={savedPlan} savePlan={savePlan} setMode={setMode} siblings={choices.filter((a) => a.id !== assignment.id && a.course_id === assignment.course_id)} loadSibling={loadSibling} />}
           <p className="caption paper-note">La lista de estudiantes se ordena por correo. No agregues ni quites estudiantes entre imprimir y calificar: cada hoja lleva el código de su estudiante.</p>
         </>
       )}
       {mode === "booklet" && bundle && <Booklet bundle={bundle} questions={questions} title={assignment.title} course={course} plan={plan} onClose={() => setMode(null)} />}
       {mode === "sheets" && bundle && <Sheets assignment={assignment} questions={questions} roster={roster} course={course} plan={plan} onClose={() => setMode(null)} />}
       {mode === "chart" && bundle && plan && <SeatChartSheet plan={plan} names={Object.fromEntries(roster.map((m) => [m.id, m.full_name || m.email]))} title={assignment.title} course={course} onClose={() => setMode(null)} />}
-      {mode === "scan" && bundle && <Scan api={api} assignment={assignment} bundle={bundle} questions={questions} roster={roster} plan={plan} guard={guard} setNotice={setNotice} onClose={() => setMode(null)} />}
+      {mode === "scan" && bundle && <Scan api={api} assignment={assignment} bundle={bundle} questions={questions} roster={roster} plan={plan} guard={guard} setNotice={setNotice} onSaved={onSaved} onClose={() => setMode(null)} />}
     </>
   );
 }

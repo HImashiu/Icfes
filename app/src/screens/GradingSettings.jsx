@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Select, confirmDialog } from "../components/Controls.jsx";
 import { FORMULA_FUNCTIONS } from "../lib/formula.js";
+import { areaColor } from "../lib/brand.js";
 import { FORMULA_VARS, MODEL_KINDS, SOURCE_LABEL, describeModel, gradeMany, normalizeModel, resolveModel, xpFactor } from "../lib/grading.js";
 
 const AREAS = ["Lectura crítica", "Matemáticas", "Ciencias naturales", "Sociales y ciudadanas", "Inglés"];
@@ -12,11 +13,11 @@ const sampleItems = () => SAMPLE.map(([label, p], k) => ({
 }));
 
 // Text field for a number: accepts a comma or a dot, commits when what is typed is a number.
-function NumField({ label, value, onChange, hint, suffix }) {
+function NumField({ label, value, onChange, hint, suffix, bare = false }) {
   const [text, setText] = useState(String(value).replace(".", ","));
   useEffect(() => { if (Number(text.replace(",", ".")) !== Number(value)) setText(String(value).replace(".", ",")); }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <label className="field"><span className="label">{label}</span>
+    <label className={bare ? "field bare" : "field"}>{!bare && <span className="label">{label}</span>}
       <span className="grade-num"><input inputMode="decimal" value={text} aria-label={label} onChange={(e) => {
         setText(e.target.value);
         const n = Number(e.target.value.replace(",", "."));
@@ -35,9 +36,9 @@ export function targetsFor({ profile, courses, assignments }) {
 }
 
 // Calificación: how results become numbers, per school, class space or assignment.
-export default function GradingSettings({ api, profile, courses, assignments, models, reloadModels, guard, setNotice }) {
+export default function GradingSettings({ api, profile, courses, assignments, models, reloadModels, guard, setNotice, initialTarget = null, embedded = false }) {
   const targets = useMemo(() => targetsFor({ profile, courses, assignments }), [profile, courses, assignments]);
-  const [targetKey, setTargetKey] = useState(targets[0]?.key ?? "");
+  const [targetKey, setTargetKey] = useState(initialTarget ?? targets[0]?.key ?? "");
   const target = targets.find((t) => t.key === targetKey) ?? targets[0] ?? null;
   const own = target ? models.find((r) => r.scope === target.scope && r.scope_id === target.id) : null;
   // What applies above this level, shown when there is no model of its own.
@@ -78,15 +79,22 @@ export default function GradingSettings({ api, profile, courses, assignments, mo
 
   return (
     <>
-      <header className="t-head"><div><h1>Calificación</h1><span className="caption">Elige cómo se convierten los aciertos en la nota que ven tú y tus estudiantes. Se aplica por colegio, espacio de clase o asignación; gana el más específico.</span></div></header>
+      {!embedded && <header className="t-head"><div><h1>Calificación</h1><span className="caption">Elige cómo se convierten los aciertos en la nota que ven tú y tus estudiantes. Se aplica por colegio, espacio de clase o asignación; gana el más específico.</span></div></header>}
+      <div className="grading-layout">
       <div className="card t-card assign-form grading">
         <label className="field"><span className="label">Aplicar a</span>
           <Select value={target.key} onChange={setTargetKey} aria-label="Aplicar a">{targets.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}</Select>
           <span className="caption">{own ? `Tiene su propio modelo: ${describeModel(own.model)}.` : `Sin modelo propio: usa ${SOURCE_LABEL[inherited.source]} (${describeModel(inherited.model)}).`}</span></label>
 
-        <label className="field"><span className="label">Cómo se calcula la nota</span>
-          <Select value={draft.kind} onChange={(v) => set({ kind: v })} aria-label="Modelo">{MODEL_KINDS.map((k) => <option key={k.id} value={k.id}>{k.label}</option>)}</Select>
-          <span className="caption">{kind.hint}</span></label>
+        <div className="field"><span className="label">Cómo se calcula la nota</span>
+          <div className="gs-kinds" role="radiogroup" aria-label="Modelo">
+            {MODEL_KINDS.map((k) => (
+              <button key={k.id} type="button" role="radio" aria-checked={draft.kind === k.id} className={draft.kind === k.id ? "gs-kind on" : "gs-kind"} onClick={() => set({ kind: k.id })}>
+                <strong>{k.label}</strong><span>{k.hint}</span>
+              </button>
+            ))}
+          </div>
+          <span className="caption gs-kind-hint">{kind.hint}</span></div>
 
         {draft.kind === "irt" && <p className="notice">El puntaje IRT es provisional: se calibra con las respuestas de tu grupo (media 50 y desviación 10 por área) y las claves son preliminares. Con menos de 15 entregas en un área se usa el estimado ICFES. Sirve para comparar dentro del grupo, no para predecir el puntaje oficial.</p>}
         {draft.kind === "icfes" && <p className="notice">La curva es provisional hasta calibrarla con resultados reales del ICFES.</p>}
@@ -132,16 +140,21 @@ export default function GradingSettings({ api, profile, courses, assignments, mo
 
         <fieldset className="grade-box"><legend className="label">Curvas por área</legend>
           <span className="caption">Exigencia: 1 deja el porcentaje igual, más de 1 lo hace más estricto, menos de 1 más generoso. El ajuste suma o resta puntos al final.</span>
-          {AREAS.map((a) => {
-            const c = draft.curves[a] ?? { strict: 1, bonus: 0 };
-            return (
-              <div key={a} className="grade-grid curve-row">
-                <strong>{a}</strong>
-                <NumField label={`Exigencia · ${a}`} value={c.strict} onChange={(v) => setCurve(a, { strict: v })} />
-                <NumField label={`Ajuste (puntos) · ${a}`} value={c.bonus} onChange={(v) => setCurve(a, { bonus: v })} />
-              </div>
-            );
-          })}
+          <div className="gs-curves" role="table" aria-label="Curvas por área">
+            <div className="gs-curve head" role="row"><span role="columnheader">Área</span><span role="columnheader">Exigencia</span><span role="columnheader">Ajuste (puntos)</span><span role="columnheader">60 % queda en</span></div>
+            {AREAS.map((a) => {
+              const c = draft.curves[a] ?? { strict: 1, bonus: 0 };
+              const at60 = Math.max(0, Math.min(100, Math.round(100 * 0.6 ** c.strict + c.bonus)));
+              return (
+                <div key={a} className="gs-curve" role="row">
+                  <span role="cell" className="gs-area"><span className="dot" style={{ background: areaColor(a) }} />{a}</span>
+                  <span role="cell"><NumField bare label={`Exigencia · ${a}`} value={c.strict} onChange={(v) => setCurve(a, { strict: v })} /></span>
+                  <span role="cell"><NumField bare label={`Ajuste (puntos) · ${a}`} value={c.bonus} onChange={(v) => setCurve(a, { bonus: v })} /></span>
+                  <span role="cell" className={at60 < 60 ? "gs-at down" : at60 > 60 ? "gs-at up" : "gs-at"}>{at60} %</span>
+                </div>
+              );
+            })}
+          </div>
         </fieldset>
 
         <fieldset className="grade-box"><legend className="label">XP en intentos repetidos</legend>
@@ -152,11 +165,15 @@ export default function GradingSettings({ api, profile, courses, assignments, mo
           {draft.xp.decay > 0 && <span className="caption">Intento 1: 100 % · intento 2: {Math.round(xpFactor(draft, 2) * 100)} % · intento 3: {Math.round(xpFactor(draft, 3) * 100)} % · intento 5: {Math.round(xpFactor(draft, 5) * 100)} %. Aplica a las asignaciones con este modelo.</span>}
         </fieldset>
 
+      </div>
+      <aside className="card t-card gs-preview" aria-label="Vista previa">
+        <strong>Vista previa: así quedarían las notas</strong>
+        <span className="caption">{describeModel(draft)}</span>
         <div>
-          <span className="label">Vista previa con estudiantes inventados (mismo porcentaje en todas las áreas)</span>
+          <span className="label">Estudiantes inventados, mismo porcentaje en todas las áreas</span>
           <div className="table-wrap">
             <table className="t-table">
-              <thead><tr><th>Estudiante</th><th>Aciertos</th><th>Nota con este modelo</th></tr></thead>
+              <thead><tr><th>Estudiante</th><th>Aciertos</th><th>Nota</th></tr></thead>
               <tbody>
                 {SAMPLE.map(([label, p], i) => (
                   <tr key={label}><td>{label}</td><td>{Math.round(preview[i].rawPct ?? 0)} %</td><td><strong>{preview[i].display}</strong>{preview[i].low != null && <span className="caption"> ({preview[i].low}–{preview[i].high})</span>}{preview[i].passed != null && <span className={preview[i].passed ? "badge" : "badge pending"}> {preview[i].passed ? "aprueba" : "no aprueba"}</span>}</td></tr>
@@ -169,9 +186,10 @@ export default function GradingSettings({ api, profile, courses, assignments, mo
 
         <div className="report-actions">
           {own && <button type="button" className="secondary" onClick={clear}>Quitar este modelo</button>}
-          <button type="button" className="primary" disabled={busy || Boolean(formulaError) || (!dirty && Boolean(own))} onClick={save}>{busy ? "Guardando…" : "Guardar"}</button>
+          <button type="button" className="primary" disabled={busy || Boolean(formulaError) || (!dirty && Boolean(own))} onClick={save}>{busy ? "Guardando…" : dirty || !own ? "Guardar" : "Guardado"}</button>
         </div>
-        <span className="caption">Las notas usan la clave preliminar de cada simulacro, no la oficial. Cambiar el modelo no borra nada: los reportes se recalculan con las respuestas guardadas.</span>
+        <span className="caption">Las notas usan la clave preliminar de cada simulacro, no la oficial. Cambiar el modelo no borra nada: los reportes se recalculan con las respuestas guardadas. En cada actividad puedes comparar modelos con «Ver notas como».</span>
+      </aside>
       </div>
     </>
   );

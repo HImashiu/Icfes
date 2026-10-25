@@ -5,7 +5,7 @@
 // Select and DateField are drop-in: Select takes <option> children (or an `options` array) and calls
 // onChange with the chosen value as a string, like e.target.value; DateField uses "YYYY-MM-DD" strings like
 // <input type="date">. FilePicker hands its onChange the same event shape as <input type="file">.
-import { Children, isValidElement, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { Children, Fragment, isValidElement, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { createRoot } from "react-dom/client";
 import Icon from "./Icon.jsx";
@@ -70,7 +70,7 @@ function readOptions(options, children) {
   const out = [];
   Children.forEach(children, (c) => {
     if (!isValidElement(c)) return;
-    if (c.type === "optgroup") { out.push(...readOptions(null, c.props.children)); return; }
+    if (c.type === "optgroup" || c.type === Fragment) { out.push(...readOptions(null, c.props.children)); return; }
     const text = textOf(c.props.children);
     out.push({ value: String(c.props.value ?? text), label: c.props.children ?? text, disabled: Boolean(c.props.disabled) });
   });

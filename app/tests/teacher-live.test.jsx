@@ -3,7 +3,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import TeacherLive from "../src/screens/TeacherLive.jsx";
 import AssignedList from "../src/screens/AssignedList.jsx";
 
-afterEach(cleanup);
+afterEach(() => { cleanup(); window.location.hash = ""; });
+const goTo = (hash) => { window.location.hash = hash; };
 
 const future = new Date(Date.now() + 5 * 864e5).toISOString();
 const exam = (n) => ({ key: String(n), number: n, section: "Matemáticas" });
@@ -28,11 +29,10 @@ const auth = (api) => ({ api, profile: { id: "t1", school_id: "s1", role: "teach
 describe("TeacherLive", () => {
   it("imports a pasted roster and sends only the valid rows", async () => {
     const api = fakeApi();
+    goTo("#docente/estudiantes/clases");
     render(<TeacherLive auth={auth(api)} exams={[]} fetchExam={vi.fn()} onExit={() => {}} />);
-    fireEvent.click(screen.getByRole("button", { name: "Espacios de clase" }));
     await screen.findByText(/^11-A/);
-    // The nav has an "Estudiantes" section too: the course card's button is the last one.
-    fireEvent.click(screen.getAllByRole("button", { name: "Estudiantes" }).at(-1));
+    fireEvent.click(await screen.findByRole("button", { name: "Ver lista" }));
     fireEvent.change(await screen.findByPlaceholderText(/nombre,apellidos,correo/), { target: { value: "nombre,apellidos,correo\nA,B,a@c.co\nC,D,nope\nE,F,e@c.co" } });
     expect(await screen.findByText(/2 válidos, 1 con problema/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Agregar 2" }));
@@ -47,9 +47,8 @@ describe("TeacherLive", () => {
     return { exam: { title: "S11-A", questions: qs, sections: [{ name: "Matemáticas", questions: qs }] }, key: new Map(qs.map((q) => [q.key, "A"])), enrich: null, figures: null };
   };
   const openBuilder = async (api) => {
+    goTo("#docente/actividades/nueva");
     render(<TeacherLive auth={auth(api)} exams={[{ slug: "S11-A_1ra", title: "S11-A", status: "ready", sections: ["Matemáticas"] }]} fetchExam={vi.fn().mockResolvedValue(bundle())} onExit={() => {}} />);
-    fireEvent.click(screen.getByRole("button", { name: "Asignaciones" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Nueva asignación" }));
     await screen.findByLabelText("Elegir pregunta 1");
   };
 
@@ -102,6 +101,7 @@ describe("Dashboard and report", () => {
         { profile_id: "p2", client_id: "y", assignment_id: "a1", submitted_at: "2026-10-17T10:00:00Z", mode: "practice", score: correct(1) },
       ]),
     });
+    goTo("#docente/resultados/resumen");
     render(<TeacherLive auth={{ api, profile: { id: "t1", school_id: "s1", role: "school_admin", full_name: "Rec", email: "r@c.co" } }} exams={[]} fetchExam={vi.fn()} onExit={() => {}} />);
     expect(await screen.findByText("Resumen del colegio")).toBeTruthy();
     expect(await screen.findByText("50 %", { selector: "strong" })).toBeTruthy();
@@ -118,8 +118,8 @@ describe("Dashboard and report", () => {
       assignmentAttempts: vi.fn().mockResolvedValue(["p1", "p2", "p3", "p4", "p5"].map((p) => at(p, answers("A", "C")))),
     });
     const fetchExam = vi.fn().mockResolvedValue({ exam: { title: "S11-A", questions: qs, sections: [{ name: "Matemáticas", questions: qs }] }, key: new Map([["1", "A"], ["2", "B"]]) });
+    goTo("#docente/actividades/lista");
     render(<TeacherLive auth={auth(api)} exams={[]} fetchExam={fetchExam} onExit={() => {}} />);
-    fireEvent.click(screen.getByRole("button", { name: "Asignaciones" }));
     fireEvent.click(await screen.findByText("Tarea mate"));
     expect(await screen.findByText("Análisis por pregunta · las más falladas primero")).toBeTruthy();
     expect(await screen.findByText("Revisar clave")).toBeTruthy();

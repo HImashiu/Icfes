@@ -7,6 +7,7 @@ import { TEACHER_ENTRY } from "../lib/teacherExam.js";
 import { areaColor } from "../lib/brand.js";
 import { confirmDialog, DateField, Select } from "../components/Controls.jsx";
 import { cleanGlossary } from "../lib/glossary.js";
+import { MODEL_KINDS, describeModel, normalizeModel, resolveModel } from "../lib/grading.js";
 import {
   autoPick, bankItems, DIFFICULTY_LABEL, EMPTY_FILTER, facet, filterItems, moveKey, sortByBooklet, summarize, withGroupMates,
 } from "../lib/bank.js";
@@ -27,7 +28,8 @@ const KIND_HELP = {
 // Constructor de asignaciones: explora el banco, filtra, previsualiza, elige a mano o automático, ordena y asigna.
 // With `lesson` ({ onCreate, slug?, label }) it picks the questions of a teaching lesson instead of an assignment;
 // `slug` locks the booklet (adding questions to a lesson that already has some).
-export default function AssignBuilder({ api, courses, exams, fetchExam, guard, onCancel, onSaved, live = null, lesson = null }) {
+// `grading` ({ models, profile, onChange }) adds the grading model choice; without it the form is as before.
+export default function AssignBuilder({ api, courses, exams, fetchExam, guard, onCancel, onSaved, live = null, lesson = null, grading = null }) {
   const ready = [...exams.filter((e) => e.status !== "proximamente"), ...(api.teacherQuestions ? [TEACHER_ENTRY] : [])];
   const cache = useRef(new Map());
   const [slug, setSlug] = useState(lesson?.slug ?? ready[0]?.slug ?? "");
@@ -59,6 +61,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
   const [proctor, setProctor] = useState(false);
   const [seconds, setSeconds] = useState("60");
   const [liveCourse, setLiveCourse] = useState("");
+  const [gradeKind, setGradeKind] = useState(""); // "" = what the class space (or the school) already uses
 
   useEffect(() => {
     if (!slug) return undefined;
@@ -133,6 +136,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
       const kindLabel = KINDS.find((k) => k.id === kind).label;
       const auto = `${kindLabel} · ${areas.length === 1 ? areas[0] : "Varias áreas"} · ${picked.length} preguntas`;
       let last = null;
+      const created = [];
       for (const course_id of courseIds) {
         last = await api.createAssignment({
           course_id, created_by: me.id, kind, title: title.trim() || auto, exam_slug: slug, scope: "all", question_keys: picked,
@@ -148,6 +152,16 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
           // Sent only when switched on, so creating assignments keeps working before migration 0011 runs.
           ...(defsOn && cleanGlossary(defs).length ? { allow_definitions: true, definitions: cleanGlossary(defs) } : {}),
         });
+        created.push(last);
+      }
+      // A model chosen here belongs to each new assignment; it starts from the class's settings (scale, curves) with the chosen kind.
+      if (grading && gradeKind) {
+        for (const a of created) {
+          if (!a?.id) continue;
+          const base = resolveModel(grading.models, { courseId: a.course_id, schoolId: grading.profile.school_id }).model;
+          await api.saveGradingModel({ schoolId: grading.profile.school_id, userId: me.id, scope: "assignment", scopeId: a.id, model: normalizeModel({ ...base, kind: gradeKind }) });
+        }
+        await grading.onChange?.();
       }
       onSaved(last, courseIds.length);
     }).finally(() => setBusy(false));
@@ -314,6 +328,16 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
             <option value="end">Al final: responde todo y ve los resultados al terminar</option>
           </Select></label>
       )}
+      {grading && (() => {
+        const inherited = resolveModel(grading.models, { courseId: courseIds[0], schoolId: grading.profile.school_id });
+        return (
+          <label className="field"><span className="label">Calificación</span>
+            <Select aria-label="Calificación" value={gradeKind} onChange={setGradeKind}
+              options={[{ value: "", label: `Como la clase: ${MODEL_KINDS.find((k) => k.id === inherited.model.kind)?.label ?? "Porcentaje"}` }, ...MODEL_KINDS.map((k) => ({ value: k.id, label: k.label }))]} />
+            <span className="caption">{gradeKind ? `${MODEL_KINDS.find((k) => k.id === gradeKind).hint} Escala, curvas, crédito parcial y fórmula se ajustan después en la pestaña Calificación de la actividad.` : `Ahora: ${describeModel(inherited.model)}. Cámbialo para esta actividad o en Resultados › Calificación para toda la clase.`}</span>
+          </label>
+        );
+      })()}
       <label className="check-row"><input type="checkbox" checked={proctor} onChange={(e) => setProctor(e.target.checked)} />
         <span>Monitorear el examen <span className="caption">(avisarte cuando un estudiante sale de la pestaña; el estudiante lo ve)</span></span></label>
       {kind !== "exam" && (

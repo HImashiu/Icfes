@@ -1,4 +1,5 @@
 // Pure statistics for teachers and the school: bands, area averages, histograms, item analysis. No network, no React.
+import { studentScores } from "./simulacro.js";
 
 // PLACEHOLDER curve until the ICFES national distributions are anchored (plan §5.1, phase 1).
 // Chance-corrected share right (4 options) mapped onto the 0-100 area scale. Versioned so stored scores can be recomputed.
@@ -145,8 +146,8 @@ export function schoolSummary({ courses, members, assignments, attempts }) {
       areas: areaAverages(cBest),
     };
   });
-  const full = best.filter((a) => a.mode !== "practice");
-  const bands = full.map((a) => bandFor(a.score.perArea).global).filter((g) => g != null);
+  // The Saber 11 estimate needs a whole simulacro: each student's latest Sesión 1 + Sesión 2 of one cuadernillo.
+  const bands = [...studentScores({ attempts, assignments }).values()].map((r) => r?.global).filter((g) => g != null);
   return {
     students: new Set(students.map((m) => m.email)).size,
     joined: new Set(students.filter((m) => m.profile_id).map((m) => m.profile_id)).size,

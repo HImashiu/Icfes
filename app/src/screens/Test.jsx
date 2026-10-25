@@ -289,7 +289,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
       {verdict === "neutral" ? (
         <span className="verdict-ico" aria-hidden="true"><Icon name="flag" size={22} /></span>
       ) : (
-        <span className="verdict-owl" aria-hidden="true"><Mascot pose={right ? "happy" : "sad"} size={52} /></span>
+        <span className="verdict-owl" aria-hidden="true"><Mascot pose={right ? "happy" : "thinking"} size={52} /></span>
       )}
       <div>
         <strong>{verdict === "neutral" ? "Clave pendiente" : right ? PRAISE[(current + run) % PRAISE.length] : `La respuesta es ${correctLetter}`}</strong>

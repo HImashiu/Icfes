@@ -81,6 +81,10 @@ const ICONS = {
   expand: { d: "M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" },
   play: { fill: "M7 4.5v15l12-7.5z", d: "M7 4.5v15l12-7.5z", solid: true },
   plus: { d: "M12 5v14M5 12h14" },
+  bell: { fill: "M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z", d: "M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 21h4" },
+  grid: { d: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" },
+  filter: { d: "M4 6h16M7 12h10M10 18h4" },
+  sliders: { d: "M4 7h10M18 7h2M4 17h4M12 17h8M14 5v4M8 15v4" },
 };
 
 export default function Icon({ name, size = 18, strokeWidth = 2.4, className }) {

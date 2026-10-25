@@ -6,6 +6,9 @@ import { areaColor, fmtInt } from "../lib/brand.js";
 import { WEAKEST_AREA } from "../data/mock.js";
 import { Select } from "../components/Controls.jsx";
 import { loadOrder, moveArea, normalizeOrder, saveOrder } from "../lib/order.js";
+import { loadHistory } from "../lib/local.js";
+import { practiceInsights } from "../lib/student.js";
+import { SESSION_HINT, bookletCode, groupBooklets, sessionOf } from "../lib/booklets.js";
 
 // Nuevo simulacro: booklet, scope (whole exam or one area), mode, and a sticky start button.
 // 225 min reads as "3 h 45 min".
@@ -37,6 +40,14 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, 
   const move = (i, dir) => { const next = moveArea(shown, i, dir); setOrder(next); saveOrder(next); };
   const scoped = questionsFor(exam, scope);
   const minutes = timedSeconds(scoped) / 60;
+  const ins = practiceInsights(loadHistory());
+  const books = groupBooklets(exams ?? []);
+  const code = bookletCode(slug);
+  const session = sessionOf(slug);
+  const book = books.find((b) => b.code === code);
+  const mine = Object.fromEntries(ins.areas.map((a) => [a.name, a]));
+  const lastHere = ins.recent.find((h) => h.snapshot?.slug === slug && (h.snapshot?.scope ?? "all") === scope);
+  const parts = scope === "all" ? exam.sections : exam.sections.filter((x) => x.name === scope);
   const hint = `${mode === "timed" ? `Tiempo: ${formatClock(timedSeconds(scoped))} · ` : ""}+10 XP por acierto · +20 en ${WEAKEST_AREA}`;
 
   return (
@@ -48,19 +59,29 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, 
         <h1>Nuevo simulacro</h1>
       </header>
 
+      <div className="su-grid">
+      <div className="su-col">
       <div className="booklet card">
         <span className="label">Cuadernillo</span>
-        {exams.length <= 1 && <strong>{exam.title}</strong>}
-        {exams.length > 1 && (
-          <Select className="booklet-select" value={slug} onChange={(v) => onPickExam(v)} aria-label="Cambiar cuadernillo">
-            {exams.map((e) => (
-              <option key={e.slug} value={e.slug} disabled={e.status === "proximamente"}>
-                {e.status === "proximamente" ? `${e.title} · Próximamente` : e.title}
-              </option>
-            ))}
-          </Select>
-        )}
-        <span className="caption">Fuente: ICFES, Saber 11 · {exam.questions.length} preguntas</span>
+        <div className="su-booklet">
+          {books.length > 1 ? (
+            <Select className="booklet-select" value={code} onChange={(v) => { const b = books.find((x) => x.code === v); const s2 = b?.sessions.find((x) => x.n === session && x.status !== "proximamente") ?? b?.sessions.find((x) => x.status !== "proximamente"); if (s2) onPickExam(s2.slug); }} aria-label="Cambiar cuadernillo">
+              {books.map((b) => <option key={b.code} value={b.code} disabled={!b.ready}>{b.ready ? `Cuadernillo ${b.code}` : `${b.code} · Próximamente`}</option>)}
+            </Select>
+          ) : <strong>Cuadernillo {code}</strong>}
+          {book && book.sessions.length > 1 && (
+            <div className="segmented su-sessions" role="radiogroup" aria-label="Sesión">
+              {book.sessions.map((x) => (
+                <button key={x.slug} type="button" role="radio" aria-checked={x.slug === slug} className={x.slug === slug ? "seg active" : "seg"} disabled={x.status === "proximamente"} onClick={() => onPickExam(x.slug)}>
+                  Sesión {x.n}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <span className="caption">
+          {book && book.sessions.length > 1 ? `El examen real se presenta en dos sesiones del mismo cuadernillo. Sesión ${session}: ${SESSION_HINT[session] ?? ""}.` : ""} Fuente: ICFES, Saber 11 · {exam.questions.length} preguntas
+        </span>
       </div>
 
       <div className="chips scope-chips" role="radiogroup" aria-label="Qué practicar">
@@ -78,11 +99,12 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, 
           >
             <span className="dot" style={{ background: areaColor(s.name) }} />
             {s.name} <span className="muted">{fmtInt(s.questions.length)}</span>
+            {mine[s.name] && <span className="su-mine">{mine[s.name].pct} %</span>}
           </button>
         ))}
       </div>
       {!exam.sections.some((s) => s.name === "Inglés") && (
-        <p className="footnote">Este cuadernillo es de la sesión 1 y no incluye Inglés. Inglés está en los cuadernillos de la sesión 2.</p>
+        <p className="footnote">La sesión 1 no incluye Inglés: Inglés está en la sesión 2 de este mismo cuadernillo.</p>
       )}
 
       {scope === "all" && shown.length > 1 && (
@@ -100,24 +122,6 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, 
             ))}
           </ol>
           <span className="caption">Empieza por la que prefieras, por ejemplo Inglés y luego Lectura crítica.</span>
-        </div>
-      )}
-
-      {scope !== "all" && (
-        <div className="chips" role="radiogroup" aria-label="Área">
-          {exam.sections.map((s) => (
-            <button
-              key={s.name}
-              type="button"
-              role="radio"
-              aria-checked={scope === s.name}
-              className={scope === s.name ? "chip on" : "chip"}
-              onClick={() => setScope(s.name)}
-            >
-              <span className="dot" style={{ background: areaColor(s.name) }} />
-              {s.name} <span className="muted">{fmtInt(s.questions.length)}</span>
-            </button>
-          ))}
         </div>
       )}
 
@@ -145,9 +149,39 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, 
         </div>
       )}
 
-      <div className="tip card">
-        <Mascot size={56} />
-        <p>Practica unos minutos cada día para mantener tu racha.</p>
+      </div>
+      <aside className="su-col">
+        <div className="card su-summary">
+          <span className="label">Lo que vas a hacer</span>
+          <strong className="su-title">{scope === "all" ? "Examen completo" : scope}</strong>
+          <div className="su-facts">
+            <span><b>{fmtInt(scoped.length)}</b><span className="caption">preguntas</span></span>
+            <span><b>{formatDuration(minutes)}</b><span className="caption">{mode === "timed" ? "con tiempo" : "tiempo del examen"}</span></span>
+            <span><b>{mode === "timed" ? "Al final" : "Inmediata"}</b><span className="caption">corrección</span></span>
+          </div>
+          <div className="su-parts">
+            {parts.map((x) => {
+              const m = mine[x.name];
+              return (
+                <div key={x.name} className="su-part">
+                  <span><span className="dot" style={{ background: areaColor(x.name) }} /> {x.name}</span>
+                  <span className="td-track"><span style={{ width: `${m?.pct ?? 0}%`, background: areaColor(x.name) }} /></span>
+                  <span className="caption">{m ? `${m.pct} % tuyo` : "sin intentos"}</span>
+                </div>
+              );
+            })}
+          </div>
+          {lastHere && <span className="caption">La última vez aquí: {Math.round(lastHere.percent)} % · {new Date(lastHere.at).toLocaleDateString("es-CO", { day: "numeric", month: "short" })}</span>}
+          {pendingKeys.length > 0 && <span className="caption">{pendingKeys.length} {pendingKeys.length === 1 ? "pregunta fallada espera" : "preguntas falladas esperan"} repechaje.</span>}
+        </div>
+        <div className="tip card">
+          <Mascot size={56} pose={ins.weakest && scope === ins.weakest.name ? "happy" : "normal"} />
+          <p>{ins.weakest && scope !== ins.weakest.name ? `Tu área con menos aciertos es ${ins.weakest.name} (${ins.weakest.pct} %). Un rato ahí sube tu puntaje rápido.` : "Practica unos minutos cada día para mantener tu racha."}</p>
+        </div>
+        {ins.weakest && scope !== ins.weakest.name && exam.sections.some((x) => x.name === ins.weakest.name) && (
+          <button type="button" className="secondary" onClick={() => setScope(ins.weakest.name)}>Practicar {ins.weakest.name}</button>
+        )}
+      </aside>
       </div>
 
       <div className="sticky-cta">

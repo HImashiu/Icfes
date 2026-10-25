@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Icon from "../components/Icon.jsx";
 import Mascot from "../components/Mascot.jsx";
@@ -35,6 +35,8 @@ export default function Presenter({ lesson, bundle, onExit, start = 0 }) {
   const [, tick] = useState(0);
   const root = useRef(null);
   const stageEl = useRef(null);
+  const fitEl = useRef(null);
+  const [fit, setFit] = useState(() => store.get("fit", true));
   const hideBar = useRef(null);
 
   const slide = deck[pos.i];
@@ -43,6 +45,28 @@ export default function Presenter({ lesson, bundle, onExit, start = 0 }) {
 
   useEffect(() => { store.set("scale", scale); }, [scale]);
   useEffect(() => { store.set("theme", theme); }, [theme]);
+  useEffect(() => { store.set("fit", fit); }, [fit]);
+  // Fit to the screen: the chosen size shrinks (never grows) until the whole slide shows without scrolling, so a
+  // projector never hides the options under the toolbar. The explanation step may scroll: it is read, not compared.
+  const fitNow = useCallback(() => {
+    const el = fitEl.current;
+    const box = stageEl.current;
+    if (!el || !box) return;
+    el.style.zoom = String(scale);
+    const stageNow = slideStages(deck[pos.i])[pos.s];
+    if (!fit || stageNow === "explanation") return;
+    const cs = getComputedStyle(box);
+    const avail = box.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    const h = el.getBoundingClientRect().height;
+    if (h > avail && avail > 0) el.style.zoom = String(Math.max(0.55, +(scale * (avail / h) * 0.98).toFixed(3)));
+  }, [scale, fit, deck, pos]);
+  useLayoutEffect(() => { fitNow(); });
+  useEffect(() => {
+    window.addEventListener("resize", fitNow);
+    // Figures and fonts load after the first paint and change the height.
+    const late = setTimeout(fitNow, 400);
+    return () => { window.removeEventListener("resize", fitNow); clearTimeout(late); };
+  }, [fitNow]);
   // The timer belongs to a slide: moving on clears it.
   useEffect(() => { setTimer(null); }, [pos.i]);
   useEffect(() => {
@@ -163,7 +187,7 @@ export default function Presenter({ lesson, bundle, onExit, start = 0 }) {
 
   return createPortal(
     <div ref={root} className={`tp tp-${theme} ${bar ? "bar-on" : ""}`} role="dialog" aria-modal="true" aria-label={`Presentación: ${lesson.title}`} onMouseMove={wake} onTouchStart={wake}>
-      <div ref={stageEl} className="tp-stage" style={{ zoom: scale }}>{body}</div>
+      <div ref={stageEl} className="tp-stage"><div ref={fitEl} className="tp-fit">{body}</div></div>
 
       {timer && (
         <div className={timer.done ? "tp-timer done" : "tp-timer"} role="timer" aria-live="off">
@@ -179,6 +203,7 @@ export default function Presenter({ lesson, bundle, onExit, start = 0 }) {
         <button type="button" className={timer ? "tp-btn on" : "tp-btn"} onClick={startTimer} aria-label={timer ? "Quitar cronómetro" : `Cronómetro de ${settings.seconds} segundos`} aria-pressed={Boolean(timer)}><Icon name="clock" size={20} /></button>
         <button type="button" className="tp-btn" onClick={() => setScale((s) => Math.max(0.7, +(s - 0.1).toFixed(2)))} aria-label="Letra más pequeña">A−</button>
         <button type="button" className="tp-btn" onClick={() => setScale((s) => Math.min(2, +(s + 0.1).toFixed(2)))} aria-label="Letra más grande">A+</button>
+        <button type="button" className={fit ? "tp-btn on" : "tp-btn"} onClick={() => setFit(!fit)} aria-pressed={fit} aria-label="Ajustar a la pantalla" title="Ajustar a la pantalla"><Icon name="sliders" size={18} /><span className="tp-btn-text">Ajustar</span></button>
         <button type="button" className="tp-btn" onClick={() => setTheme(THEMES[(THEMES.findIndex(([id]) => id === theme) + 1) % THEMES.length][0])} aria-label={`Tema: ${THEMES.find(([id]) => id === theme)[1]}`}><Icon name="bulb" size={20} /></button>
         <button type="button" className="tp-btn" onClick={() => setBlank(true)} aria-label="Pantalla en blanco"><Icon name="close" size={20} /></button>
         <button type="button" className="tp-btn" onClick={fullscreen} aria-label="Pantalla completa"><Icon name="expand" size={20} /></button>

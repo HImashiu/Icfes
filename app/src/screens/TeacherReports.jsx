@@ -31,11 +31,14 @@ function Progress({ items }) {
 }
 
 // Reportes: actividad y progreso de cada estudiante por espacio de clase, con exportación a CSV.
+const LIMIT = 12;
+
 export default function TeacherReports({ api, profile, courses, assignments, models = [], fetchExam, guard, onOpenStudent }) {
   const [data, setData] = useState(null);
   const [space, setSpace] = useState("");
   const [filter, setFilter] = useState("all");
   const [open, setOpen] = useState(null);
+  const [all, setAll] = useState(false); // the summary shows the first rows; the full list lives in Estudiantes
 
   useEffect(() => {
     guard(async () => {
@@ -90,7 +93,7 @@ export default function TeacherReports({ api, profile, courses, assignments, mod
 
   return (
     <>
-      <header className="t-head"><div><h1>Reportes</h1><span className="caption">Actividad y progreso de cada estudiante. Cada uno se compara solo con su propio trabajo anterior.</span></div>
+      <header className="t-head"><div><h2>Actividad por estudiante</h2><span className="caption">Actividad y progreso de cada estudiante. Cada uno se compara solo con su propio trabajo anterior.</span></div>
         <button type="button" className="secondary" disabled={rows.length === 0} onClick={() => download(`Actividad${space ? ` ${nameOf(space)}` : ""}.csv`, activityCsv(shown, nameOf))}>Exportar CSV</button></header>
       <div className="card t-card">
         <div className="bank-filters">
@@ -110,19 +113,19 @@ export default function TeacherReports({ api, profile, courses, assignments, mod
           </div>
         )}
         <div className="table-wrap">
-          <table className="t-table">
+          <table className="t-table m-cards">
             <thead><tr><th>Estudiante</th><th>Entregas</th><th>{anyModel ? "Nota media" : "Promedio"}</th><th>Cambio</th><th>Tiempo total</th><th>Última entrega</th><th>Salidas</th><th /></tr></thead>
             <tbody>
-              {shown.map((r) => (
+              {shown.slice(0, all ? shown.length : LIMIT).map((r) => (
                 <Fragment key={r.id}>
                   <tr>
-                    <td>{r.name}{!r.joined && <span className="caption"> · sin ingresar</span>}</td>
-                    <td>{r.done}/{r.assigned}{r.late > 0 && <span className="badge pending"> {r.late} sin entregar</span>}</td>
-                    <td>{r.avgGrade != null && r.gradeModel ? formatValue(r.gradeModel, r.avgGrade) : r.avgPct == null ? "—" : `${r.avgPct} %`}</td>
-                    <td>{r.trend == null ? "—" : `${r.trend > 0 ? "+" : ""}${r.trend} pts`}</td>
-                    <td>{r.totalSec ? fmtDuration(r.totalSec) : "—"}</td>
-                    <td>{shortDate(r.lastAt)}</td>
-                    <td>{r.leaves || "—"}</td>
+                    <td className="m-main">{r.name}{!r.joined && <span className="caption"> · sin ingresar</span>}</td>
+                    <td data-l="Entregas">{r.done}/{r.assigned}{r.late > 0 && <span className="badge pending"> {r.late} sin entregar</span>}</td>
+                    <td data-l={anyModel ? "Nota media" : "Promedio"}>{r.avgGrade != null && r.gradeModel ? formatValue(r.gradeModel, r.avgGrade) : r.avgPct == null ? "—" : `${r.avgPct} %`}</td>
+                    <td data-l="Cambio" className={r.trend == null ? "m-hide" : ""}>{r.trend == null ? "—" : `${r.trend > 0 ? "+" : ""}${r.trend} pts`}</td>
+                    <td data-l="Tiempo" className={r.totalSec ? "" : "m-hide"}>{r.totalSec ? fmtDuration(r.totalSec) : "—"}</td>
+                    <td data-l="Última" className={r.lastAt ? "" : "m-hide"}>{shortDate(r.lastAt)}</td>
+                    <td data-l="Salidas" className={r.leaves ? "" : "m-hide"}>{r.leaves || "—"}</td>
                     <td>{onOpenStudent
                       ? <button type="button" className="link" onClick={() => onOpenStudent(r.email)}>Ver perfil</button>
                       : <button type="button" className="link" onClick={() => setOpen(open === r.id ? null : r.id)}>{open === r.id ? "Cerrar" : "Ver detalle"}</button>}</td>
@@ -142,6 +145,7 @@ export default function TeacherReports({ api, profile, courses, assignments, mod
             </tbody>
           </table>
         </div>
+        {shown.length > LIMIT && <div className="ws-pager"><span className="caption">Mostrando {all ? shown.length : LIMIT} de {shown.length}. La lista completa, con filtros y perfiles, está en Estudiantes.</span><button type="button" className="secondary" onClick={() => setAll(!all)}>{all ? "Mostrar menos" : `Mostrar los ${shown.length}`}</button></div>}
         <span className="caption">Puntajes según la clave preliminar, no oficial.{anyModel ? " La nota usa el modelo de calificación de cada asignación (ver «Calificación»); el cambio se mide en puntos de aciertos." : ""} Las salidas son avisos de los exámenes monitoreados.</span>
       </div>
     </>

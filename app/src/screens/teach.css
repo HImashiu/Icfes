@@ -99,3 +99,38 @@ body.teach-open { overflow: hidden; }
 
 /* In projection the context card scrolls with the page instead of sticking over the options. */
 .tp .q-context { position: static; }
+/* Fit wrapper: the projection zoom lives here so the stage can measure it. */
+.tp-fit { display: flex; flex-direction: column; flex: 1 0 auto; width: 100%; }
+.tp-fit > .tp-center, .tp-fit > .tp-text { margin: auto; }
+body.teach-open .demo-banner { display: none; }
+@media (max-width: 700px) { .tp-btn-text { display: none; } .tp-bar { flex-wrap: wrap; } }
+
+/* Lesson list cards with quick actions; lesson page actions as tiles. */
+.les-card { cursor: default; align-content: start; }
+.les-card-open { all: unset; cursor: pointer; font-size: 1.05rem; }
+.les-card-open:hover strong, .les-card-open:focus-visible strong { color: var(--accent-ink, var(--accent)); text-decoration: underline; }
+.les-card-actions { display: flex; gap: 8px; margin-top: 6px; }
+.les-card-actions button { min-height: 40px; padding: 0 14px; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; }
+.les-minor { display: inline-flex; gap: 14px; }
+.les-do { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+.les-do-tile {
+  display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center; text-align: left; padding: 10px 12px; border: 2px solid var(--line);
+  border-radius: 14px; background: var(--surface); color: var(--text); font: inherit; cursor: pointer; box-shadow: 0 3px 0 var(--line);
+}
+.les-do-tile > span:last-child { display: grid; gap: 2px; }
+.les-do-tile strong { font-size: 14px; }
+.les-do-tile:hover:not(:disabled) { border-color: var(--accent); }
+.les-do-tile:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--line); }
+.les-do-tile.on { border-color: var(--accent); background: var(--accent-soft); }
+.les-do-tile:disabled { opacity: 0.5; cursor: default; }
+.les-do-ico { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--accent-soft); color: var(--accent-ink, var(--text)); }
+.les-two .field input { width: 100%; }
+@media (max-width: 767px) { .les-do { grid-template-columns: 1fr 1fr; } .les-do-tile .caption { display: none; } .les-do-tile { padding: 8px 10px; } }
+.les-items, .les-item > * { min-width: 0; }
+.les-item { grid-template-columns: auto auto minmax(0, 1fr) auto; }
+@media (max-width: 860px) { .les-item { grid-template-columns: auto minmax(0, 1fr) auto; } }
+@media (max-width: 700px) {
+  .tp-bar { gap: 6px; padding: 8px 10px; }
+  .tp-btn { min-width: 40px; min-height: 40px; padding: 0 8px; }
+  .tp-main { min-height: 40px; padding: 0 14px; }
+}

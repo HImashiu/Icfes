@@ -61,7 +61,7 @@ export function buildRoster({ members, assignments, attempts, ws = {}, now = Dat
     const base = mergeRows(list);
     const profileIds = [...new Set(base.memberIds.map((id) => profileOf.get(id)).filter(Boolean))];
     const own = attempts.filter((a) => (a.profile_id && profileIds.includes(a.profile_id)) || (a.member_id && base.memberIds.includes(a.member_id)));
-    const summary = summarize(own, profileIds.length > 0);
+    const summary = summarize(own, profileIds.length > 0, assignments);
     const flag = ws.flags?.get(key) ?? null;
     const entry = {
       ...base, key, profileId: profileIds[0] ?? null, summary,

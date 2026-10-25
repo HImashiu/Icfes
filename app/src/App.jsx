@@ -1,10 +1,13 @@
-import { Component, useCallback, useEffect, useState } from "react";
+import { Component, useCallback, useEffect, useMemo, useState } from "react";
 import Home from "./screens/Home.jsx";
 import Setup from "./screens/Setup.jsx";
 import Test from "./screens/Test.jsx";
 import Results from "./screens/Results.jsx";
 import Review from "./screens/Review.jsx";
 import Profile from "./screens/Profile.jsx";
+import Subjects from "./screens/Subjects.jsx";
+import Progress from "./screens/Progress.jsx";
+import { classesFrom, studentCourses } from "./lib/student.js";
 import Teacher from "./screens/Teacher.jsx";
 import TeacherLive from "./screens/TeacherLive.jsx";
 import Login from "./screens/Login.jsx";
@@ -19,7 +22,8 @@ import { parseExam, parseKey, parseKeyNotes, questionsFor, timedSeconds } from "
 import { clearAttempt, loadAttempt, saveAttempt } from "./lib/storage.js";
 import { linkFigures, parseFigureSpecs, prepareExam } from "./lib/figures.js";
 import { applyTheme, currentTheme } from "./lib/theme.js";
-import { useAuth } from "./lib/auth.jsx";
+import { AuthContext, useAuth } from "./lib/auth.jsx";
+import DemoBanner from "./demo/DemoBanner.jsx";
 import Consent from "./screens/Consent.jsx";
 import FamilyReport from "./screens/FamilyReport.jsx";
 import { tokenFromHash } from "./lib/family.js";
@@ -80,9 +84,13 @@ function findResumable(slug, exam) {
 const storeScope = (a) => (a.assignmentId ? `asg-${a.assignmentId}` : a.repechaje ? "repechaje" : a.scope);
 
 export default function App() {
-  const auth = useAuth();
+  const rootAuth = useAuth();
+  // Demo mode: the student side is one invented student of 11 A; the teacher side is the school's coordinator.
+  const demoStudent = rootAuth.demoStudent;
+  const auth = useMemo(() => (demoStudent ? { ...rootAuth, profile: demoStudent.profile, user: { id: demoStudent.profile.id }, api: demoStudent.api } : rootAuth), [rootAuth, demoStudent]);
   const signedIn = auth.status === "ready";
   const [assigned, setAssigned] = useState({ assignments: [], attempts: [], models: [] });
+  const [myClasses, setMyClasses] = useState(null);
   const [exams, setExams] = useState(null);
   const [loadError, setLoadError] = useState(null);
   const [selected, setSelected] = useState(null); // { slug, exam, key, keyStatus, notes, figures }
@@ -90,11 +98,15 @@ export default function App() {
   const [openError, setOpenError] = useState(null);
   // A student who scans a room's QR code lands on the join screen with the code filled in.
   const [joinCode] = useState(() => (typeof window !== "undefined" ? joinCodeFromHash(window.location.hash) : ""));
-  const [view, setView] = useState(() => (joinCode ? "liveJoin" : demoEnabled ? "teacher" : "home"));
+  const [view, setView] = useState(() => (joinCode ? "liveJoin" : demoEnabled || (typeof window !== "undefined" && window.location.hash.startsWith("#docente")) ? "teacher" : "home"));
   const [reviewStart, setReviewStart] = useState(0);
   const [reviewNumber, setReviewNumber] = useState(null);
   // What the home card asked for (area, mode), so "Reto del día" or "Simulacro completo" open set up that way.
   const [preset, setPreset] = useState(null);
+  // Materias (tab "materias" or "tareas", or one subject open) and Progreso (resumen, logros, historial).
+  const [subjectTab, setSubjectTab] = useState("materias");
+  const [subjectId, setSubjectId] = useState(null);
+  const [progressTab, setProgressTab] = useState("resumen");
   const [attempt, setAttempt] = useState(null);
   const [theme, setTheme] = useState(() => currentTheme());
 
@@ -162,6 +174,17 @@ export default function App() {
     }
   }, [exams, fetchExam]);
 
+  // Coming back from Google the page reloads on Inicio. A first-time account (no profile yet) goes straight to the
+  // "Casi listo" form; one that just signed in lands on the profile, so the sign-in is visibly done.
+  useEffect(() => {
+    if (auth.status === "needs-profile" && view !== "login") { setView("login"); return; }
+    if (auth.status === "ready") {
+      let pending = false;
+      try { pending = sessionStorage.getItem("icfes-login-pending") === "1"; sessionStorage.removeItem("icfes-login-pending"); } catch { /* blocked */ }
+      if (pending && view === "home") setView("profile");
+    }
+  }, [auth.status]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Open the first exam once the index is known, preferring one that has Inglés (the 1ra booklets have none).
   useEffect(() => {
     const open = exams?.filter((e) => e.status !== "proximamente") ?? [];
@@ -218,6 +241,7 @@ export default function App() {
       await auth.api.linkRoster();
       const [assignments, attempts, models] = await Promise.all([auth.api.listAssignments(), auth.api.myAttempts(), auth.api.gradingModels().catch(() => [])]);
       setAssigned({ assignments, attempts, models });
+      auth.api.studentClasses?.().then(setMyClasses, () => setMyClasses(null));
     } catch {
       setAssigned({ assignments: [], attempts: [] });
     }
@@ -338,12 +362,33 @@ export default function App() {
   const scopeTitle = attempt && attempt.scope !== "all" ? attempt.scope : "Examen completo";
   const examTitle = selected ? `${selected.exam.title} · ${scopeTitle}` : "";
   // The sidebar stays on every screen except the test; results and review belong to Practicar, reports to Perfil.
-  const navView = { home: "home", setup: "setup", results: "setup", review: "setup", history: "history", profile: "profile", login: "profile", reports: "profile" }[view] ?? null;
+  const navView = { home: "home", subjects: "subjects", setup: "setup", results: "setup", review: "setup", history: "progress", progress: "progress", profile: "profile", login: "profile", reports: "profile" }[view] ?? null;
+  const course = studentCourses(classesFrom({ classes: myClasses, assignments: signedIn ? assigned.assignments : [] })).join(", ") || null;
+  // A simulacro is both sessions of one cuadernillo: open the session that is missing, whole booklet, with time.
+  const startSession = async (slug) => {
+    const next = await openExam(slug);
+    if (!next) return;
+    setPreset({ scope: "all", mode: "timed" });
+    setView("setup");
+  };
+  const studentName = signedIn ? (auth.profile.full_name || auth.profile.email).split(" ")[0] : null;
+  // Student navigation by name, including the shortcuts the home cards use.
+  const go = (to) => {
+    if (to === "tasks") { setSubjectTab("tareas"); setSubjectId(null); return setView("subjects"); }
+    if (to === "subjects") { setSubjectTab("materias"); setSubjectId(null); return setView("subjects"); }
+    if (to === "achievements") { setProgressTab("logros"); return setView("progress"); }
+    if (to === "progress" || to === "history") { setProgressTab(to === "history" ? "historial" : "resumen"); return setView("progress"); }
+    if (to === "setup") setPreset(null);
+    return setView(to);
+  };
+  const practiceArea = (area) => { setPreset({ scope: area, mode: "practice" }); setView("setup"); };
   const needsAttempt = view === "test" || view === "results" || view === "review";
   const resumable = selected && view === "home" ? findResumable(selected.slug, selected.exam) : null;
 
   return (
+    <AuthContext.Provider value={auth}>
     <ExamContext.Provider value={selected?.slug ?? null}>
+    {demoEnabled && <DemoBanner side={view === "teacher" ? "teacher" : "student"} onSide={(side) => setView(side === "teacher" ? "teacher" : "home")} />}
     <div className={view === "test" || view === "teacher" ? "app wide" : "app"}>
       <ScreenBoundary key={view} onHome={goHome}>
       {loadError && <p className="notice error">{loadError}</p>}
@@ -353,6 +398,8 @@ export default function App() {
       {view === "home" && (
         <Home
           exam={selected?.exam}
+          slug={selected?.slug}
+          classes={myClasses}
           resumable={resumable}
           onContinue={() => {
             const saved = loadAttempt(selected.slug, resumable.scope);
@@ -360,11 +407,15 @@ export default function App() {
           }}
           onPractice={() => { setPreset(null); setView("setup"); }}
           onSetup={(p) => { setPreset(p); setView("setup"); }}
-          onGo={setView}
+          onGo={go}
+          course={course}
+          exams={exams ?? []}
+          onStartSession={startSession}
+          onOpenSubject={(id) => { setSubjectId(id); setView("subjects"); }}
           signedOut={auth.status === "signed-out" || auth.status === "guest"}
           assigned={signedIn ? assigned : null}
           onStartAssigned={startAssigned}
-          realName={signedIn ? (auth.profile.full_name || auth.profile.email).split(" ")[0] : null}
+          realName={studentName}
           onLive={auth.status !== "demo" && auth.status !== "loading" ? () => setView("liveJoin") : null}
         />
       )}
@@ -418,6 +469,8 @@ export default function App() {
           lockedNote={attempt?.reveal === "after_close" ? "Tu docente mostrará las respuestas cuando cierre la asignación." : undefined}
           onRetry={attempt.assignmentId ? retryAssigned : attempt.repechaje ? null : () => startAttempt(attempt.scope, attempt.mode, attempt.order)}
           onReviewTimes={(n) => { setReviewStart(n); setView("review"); }}
+          exams={exams ?? []}
+          onStartSession={startSession}
           onRepechaje={startRepechaje}
           grading={assignedOf ? resolveModel(assigned.models, { assignmentId: assignedOf.id, courseId: assignedOf.course_id, schoolId: auth.profile?.school_id }).model : null}
         />
@@ -447,19 +500,26 @@ export default function App() {
       {view === "liveJoin" && <LiveJoin auth={auth} initialCode={joinCode} onBack={() => setView("home")} onJoined={(row, nickname) => { setLive({ row, nickname }); setView("livePlay"); }} />}
       {view === "livePlay" && live && <LivePlay api={auth.api} initial={live.row} nickname={live.nickname} fetchExam={fetchExam} onExit={() => { setLive(null); setView("home"); }} />}
 
-      {view === "profile" && <Profile theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} onReports={() => setView("reports")} onLogin={() => setView("login")} />}
+      {view === "profile" && <Profile theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} onReports={() => setView("reports")} onLogin={() => setView("login")}
+        assigned={signedIn ? assigned : null} classes={myClasses} course={course} onGo={go} />}
+      {view === "subjects" && <Subjects assigned={signedIn ? assigned : null} classes={myClasses} course={course} tab={subjectTab} subjectId={subjectId}
+        onTab={(t) => { setSubjectTab(t); setSubjectId(null); }} onOpenSubject={setSubjectId} onBack={() => setSubjectId(null)}
+        onStartAssigned={startAssigned} onPracticeArea={practiceArea} onLogin={() => setView("login")} />}
+      {view === "progress" && <Progress tab={progressTab} onTab={setProgressTab} assigned={signedIn ? assigned : null} classes={myClasses}
+        onPracticeArea={practiceArea} onNew={() => go("setup")} onOpen={openFromHistory} exams={exams ?? []} onStartSession={startSession} />}
       {view === "login" && <Login onBack={() => setView("profile")} />}
       {view === "history" && <History onBack={() => setView("home")} onNew={() => setView("setup")} onOpen={openFromHistory} />}
       {view === "reports" && <Reports onBack={() => setView("profile")} onPractice={() => setView("setup")} onOpen={openFromReport} />}
-      {view === "teacher" && (auth.status === "ready" && auth.profile.role !== "student"
-        ? <TeacherLive auth={auth} exams={exams} fetchExam={fetchExam} onExit={() => setView("profile")} />
+      {view === "teacher" && (rootAuth.status === "ready" && rootAuth.profile.role !== "student"
+        ? <AuthContext.Provider value={rootAuth}><TeacherLive auth={rootAuth} exams={exams} fetchExam={fetchExam} onExit={() => { if (window.location.hash.startsWith("#docente")) history.replaceState(null, "", window.location.pathname + window.location.search); setView("profile"); }} /></AuthContext.Provider>
         : <Teacher onExit={() => setView("profile")} />)}
 
       {needsAttempt && !attempt && <main className="frame"><p className="muted">Esta actividad ya no está abierta.</p><button type="button" className="primary" onClick={goHome}>Volver al inicio</button></main>}
       </ScreenBoundary>
 
-      {navView && <BottomNav active={navView} onGo={(v) => { if (v === "setup") setPreset(null); setView(v); }} />}
+      {navView && <BottomNav active={navView} onGo={go} name={studentName} course={course} />}
     </div>
     </ExamContext.Provider>
+    </AuthContext.Provider>
   );
 }

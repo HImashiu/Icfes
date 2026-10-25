@@ -34,8 +34,8 @@ const auth = (api) => ({ api, profile: { id: "t1", school_id: "s1", role: "teach
 
 async function openWorkspace() {
   const api = fakeApi();
+  window.location.hash = "#docente/estudiantes/lista";
   render(<TeacherLive auth={auth(api)} exams={[]} fetchExam={vi.fn()} onExit={() => {}} />);
-  fireEvent.click(screen.getAllByRole("button", { name: "Estudiantes" })[0]);
   await screen.findByRole("heading", { name: "Estudiantes" });
   return api;
 }
@@ -101,6 +101,7 @@ describe("Estudiantes workspace", () => {
 
   it("opens a student from the alerts in Resumen", async () => {
     const api = fakeApi();
+    window.location.hash = "#docente/resultados/resumen";
     render(<TeacherLive auth={auth(api)} exams={[]} fetchExam={vi.fn()} onExit={() => {}} />);
     expect(await screen.findByText("Resumen de la semana")).toBeTruthy();
     fireEvent.click((await screen.findAllByRole("button", { name: "Elena Mora" }))[0]);

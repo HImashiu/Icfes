@@ -3,9 +3,13 @@ import { Select, confirmDialog } from "../components/Controls.jsx";
 import Icon from "../components/Icon.jsx";
 import { CHARTS, DEFAULT_SPEC, DIM, DIMENSIONS, METRICS, PRESETS, RANGES, applyFilters, buildFacts, cleanSpec, describeSpec, pivot, pivotCsv, pivotMax, valuesOf } from "../lib/chartBuilder.js";
 import { Kpi } from "./Dashboard.jsx";
+import { areaColor } from "../lib/brand.js";
 
 const SERIES = ["#5ED3B4", "#FFB547", "#8AB4FF", "#F59EC4", "#C79BFF", "#FF8A7A", "#9FC4A0", "#E0D060"];
 const LOCAL_KEY = "condor.savedCharts";
+// Areas keep their app colour in every chart; any other field uses the series palette.
+const seriesColor = (dimId, value, i) => (dimId === "area" && value ? areaColor(value) : SERIES[i % SERIES.length]);
+const rowColor = (spec, r) => (spec.rows === "area" ? areaColor(r) : "var(--accent)");
 const fmtVal = (v, m) => (v == null ? "—" : `${Number.isInteger(v) ? v : String(v).replace(".", ",")}${m.unit}`);
 // Week and month labels read as dates; everything else is shown as it is.
 const label = (dimId, v) => {
@@ -28,6 +32,8 @@ function BarChart({ p, spec }) {
   const max = pivotMax(p);
   const cols = p.cols;
   return (
+    <>
+    {cols && <ul className="cb-legend">{cols.map((c, i) => <li key={c}><span className="dot" style={{ background: seriesColor(spec.cols, c, i) }} />{label(spec.cols, c)}</li>)}</ul>}
     <div className="cb-bars" role="img" aria-label={describeSpec(spec)}>
       {p.rows.map((r) => (
         <div key={r} className="cb-bar-group">
@@ -38,9 +44,8 @@ function BarChart({ p, spec }) {
               if (!cell) return null;
               return (
                 <div key={c} className="d-bar-row cb-bar-row" title={`${cell.n} respuestas`}>
-                  <span className="d-bar-track"><span style={{ width: `${cell.value == null ? 0 : Math.max(2, (cell.value / max) * 100)}%`, background: cols ? SERIES[i % SERIES.length] : "var(--accent)" }} /></span>
+                  <span className="d-bar-track"><span style={{ width: `${cell.value == null ? 0 : Math.max(2, (cell.value / max) * 100)}%`, background: cols ? seriesColor(spec.cols, c, i) : rowColor(spec, r) }} /></span>
                   <span className="d-bar-num">{fmtVal(cell.value, p.metric)}</span>
-                  {cols && <span className="caption cb-bar-series">{label(spec.cols, c)}</span>}
                 </div>
               );
             })}
@@ -48,6 +53,7 @@ function BarChart({ p, spec }) {
         </div>
       ))}
     </div>
+    </>
   );
 }
 
@@ -98,7 +104,7 @@ function LineChart({ p, spec }) {
         ))}
         {p.rows.map((row, i) => (i % step === 0 ? <text key={row} x={x(i)} y={h - 10} textAnchor="middle" fontSize="11" fill="var(--text-2)">{label(spec.rows, row)}</text> : null))}
         {cols.map((c, ci) => {
-          const color = p.cols ? SERIES[ci % SERIES.length] : "var(--accent)";
+          const color = p.cols ? seriesColor(spec.cols, c, ci) : "var(--accent)";
           const pts = p.rows.map((row, i) => ({ i, row, cell: p.cell(row, c) })).filter((q) => q.cell?.value != null);
           return (
             <g key={c}>
@@ -108,7 +114,7 @@ function LineChart({ p, spec }) {
           );
         })}
       </svg>
-      {p.cols && <ul className="cb-legend">{p.cols.map((c, i) => <li key={c}><span className="dot" style={{ background: SERIES[i % SERIES.length] }} />{label(spec.cols, c)}</li>)}</ul>}
+      {p.cols && <ul className="cb-legend">{p.cols.map((c, i) => <li key={c}><span className="dot" style={{ background: seriesColor(spec.cols, c, i) }} />{label(spec.cols, c)}</li>)}</ul>}
     </>
   );
 }
@@ -177,7 +183,7 @@ const dimOptions = (extra) => <>{extra}{DIMENSIONS.map((d) => <option key={d.id}
 
 /* ---------- Screen ---------- */
 
-export default function ChartBuilder({ api, profile, courses, assignments, fetchExam, guard }) {
+export default function ChartBuilder({ api, profile, courses, assignments, fetchExam, guard, ws = null }) {
   const [data, setData] = useState(null);
   const [facts, setFacts] = useState(null);
   const [progress, setProgress] = useState(null);
@@ -187,6 +193,7 @@ export default function ChartBuilder({ api, profile, courses, assignments, fetch
   const [local, setLocal] = useState(false);
   const [name, setName] = useState("");
   const [addFilter, setAddFilter] = useState("");
+  const [tune, setTune] = useState(false); // phone: the field zones fold under the chart
   const bundles = useRef(new Map());
 
   useEffect(() => {
@@ -217,10 +224,10 @@ export default function ChartBuilder({ api, profile, courses, assignments, fetch
       if (!live) return;
       setSkipped(miss);
       setProgress(null);
-      setFacts(buildFacts({ attempts: data.attempts, assignments, members: data.members, courses, bundles: bundles.current }));
+      setFacts(buildFacts({ attempts: data.attempts, assignments, members: data.members, courses, bundles: bundles.current, ws }));
     })();
     return () => { live = false; };
-  }, [data, assignments, courses, fetchExam]);
+  }, [data, assignments, courses, fetchExam, ws]);
 
   const patch = (p) => setSpec((s) => ({ ...s, ...p }));
   const setFilter = (id, vals) => setSpec((s) => ({ ...s, filters: { ...s.filters, [id]: vals } }));
@@ -266,7 +273,7 @@ export default function ChartBuilder({ api, profile, courses, assignments, fetch
 
       {facts && (
         <>
-          <div className="d-kpis">
+          <div className="d-kpis cb-kpis">
             <Kpi label="Respuestas en la gráfica" value={String(view.length)} hint={`de ${facts.length}`} />
             <Kpi label="Estudiantes" value={String(students)} />
             <Kpi label="% de aciertos" value={acc == null ? null : `${acc} %`} hint="Clave preliminar" />
@@ -274,15 +281,64 @@ export default function ChartBuilder({ api, profile, courses, assignments, fetch
           </div>
           {skipped > 0 && <p className="notice">No se pudieron cargar {skipped} cuadernillo(s); sus respuestas no aparecen en la gráfica.</p>}
 
-          <div className="card t-card cb-presets">
-            <span className="label">Ejemplos para empezar</span>
-            <div className="chips-row">{PRESETS.map((x) => <button key={x.name} type="button" className="chip" onClick={() => open(x.spec)}>{x.name}</button>)}</div>
+          <div className="card t-card cb-gallery">
+            {saved.length > 0 && (
+              <div className="cb-gallery-row">
+                <span className="label">Mis gráficas</span>
+                <ul className="cb-saved" aria-label="Gráficas guardadas">
+                  {saved.map((c) => (
+                    <li key={c.id} className={JSON.stringify(cleanSpec(c.spec)) === JSON.stringify(spec) ? "on" : ""}>
+                      <button type="button" className="cb-saved-open" onClick={() => open(c.spec)}><Icon name="chart" size={14} />{c.name}</button>
+                      <button type="button" className="cb-saved-x" onClick={() => remove(c)} aria-label={`Borrar ${c.name}`}><Icon name="close" size={14} /></button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <div className="cb-gallery-row">
+              <span className="label">Ejemplos</span>
+              <div className="chips-row">{PRESETS.map((x) => <button key={x.name} type="button" className={JSON.stringify(cleanSpec(x.spec)) === JSON.stringify(spec) ? "chip on" : "chip"} onClick={() => open(x.spec)}>{x.name}</button>)}</div>
+            </div>
+            {local && <span className="caption">Las gráficas se guardan en este navegador hasta que se ejecute la migración 0015.</span>}
           </div>
 
           <div className="cb-layout">
-            <div className="card t-card cb-controls">
-              <div>
-                <span className="label">Campos disponibles</span>
+            <div className="card t-card cb-result">
+              <div className="cb-bar-head">
+                <div className="segmented small" role="group" aria-label="Tipo de gráfica">
+                  {CHARTS.map((c) => <button key={c.id} type="button" className={spec.chart === c.id ? "seg active" : "seg"} onClick={() => patch({ chart: c.id })}>{c.label}</button>)}
+                </div>
+                {chartKind === "bar" && !DIM[spec.rows].alpha && !DIM[spec.rows].time && !DIM[spec.rows].order && (
+                  <Select value={spec.sort} onChange={(v) => patch({ sort: v })} aria-label="Orden">
+                    <option value="value-asc">Menor a mayor</option><option value="value-desc">Mayor a menor</option><option value="name">Por nombre</option>
+                  </Select>
+                )}
+              </div>
+              <div className="cb-title"><strong>{describeSpec(spec)[0].toUpperCase() + describeSpec(spec).slice(1)}</strong>
+              <button type="button" className="secondary cb-tune" aria-expanded={tune} aria-controls="cb-controls" onClick={() => setTune(!tune)}><Icon name="sliders" size={16} />{tune ? "Ocultar ajustes" : "Ajustar gráfica"}</button>
+              </div>
+              {noteHeat && <p className="notice">El mapa de calor necesita un campo en Columnas. Se muestra en barras.</p>}
+              {p.rows.length === 0 ? (
+                <p className="caption">No hay datos con estos filtros. Cuando tus estudiantes entreguen tareas aparecerán aquí; prueba quitar un filtro o ampliar el periodo.</p>
+              ) : (
+                <>
+                  {lowest && p.rows.length > 1 && <p className="cb-callout"><Icon name="bolt" size={16} /> El valor más bajo es <strong>{label(spec.rows, lowest.r)}</strong> ({fmtVal(lowest.v, p.metric)}).</p>}
+                  {chartKind === "bar" && <BarChart p={p} spec={spec} />}
+                  {chartKind === "heat" && <Heatmap p={p} spec={spec} />}
+                  {chartKind === "line" && <LineChart p={p} spec={spec} />}
+                  {chartKind === "table" && <DataTable p={p} spec={spec} />}
+                </>
+              )}
+              <span className="caption">Puntajes según la clave preliminar, no oficial. Pasa el cursor sobre una barra o punto para ver cuántas respuestas la respaldan.</span>
+
+              <div className="cb-save">
+                <input className="cb-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre para guardar esta gráfica" aria-label="Nombre de la gráfica" maxLength={80} onKeyDown={(e) => e.key === "Enter" && save()} />
+                <button type="button" className="secondary" disabled={!name.trim()} onClick={save}>Guardar</button>
+              </div>
+            </div>
+            <div className={tune ? "card t-card cb-controls open" : "card t-card cb-controls"} id="cb-controls">
+              <div className="cb-palette-wrap">
+                <span className="label">Campos · arrástralos a una zona</span>
                 <div className="cb-palette">
                   {DIMENSIONS.map((d) => <Field key={d.id} kind="dim" id={d.id} text={d.label} hint={d.hint} />)}
                 </div>
@@ -318,48 +374,6 @@ export default function ChartBuilder({ api, profile, courses, assignments, fetch
               </div>
             </div>
 
-            <div className="card t-card cb-result">
-              <div className="cb-bar-head">
-                <div className="segmented small" role="group" aria-label="Tipo de gráfica">
-                  {CHARTS.map((c) => <button key={c.id} type="button" className={spec.chart === c.id ? "seg active" : "seg"} onClick={() => patch({ chart: c.id })}>{c.label}</button>)}
-                </div>
-                {chartKind === "bar" && !DIM[spec.rows].alpha && !DIM[spec.rows].time && !DIM[spec.rows].order && (
-                  <Select value={spec.sort} onChange={(v) => patch({ sort: v })} aria-label="Orden">
-                    <option value="value-asc">Menor a mayor</option><option value="value-desc">Mayor a menor</option><option value="name">Por nombre</option>
-                  </Select>
-                )}
-              </div>
-              <strong>{describeSpec(spec)[0].toUpperCase() + describeSpec(spec).slice(1)}</strong>
-              {noteHeat && <p className="notice">El mapa de calor necesita un campo en Columnas. Se muestra en barras.</p>}
-              {p.rows.length === 0 ? (
-                <p className="caption">No hay datos con estos filtros. Cuando tus estudiantes entreguen tareas aparecerán aquí; prueba quitar un filtro o ampliar el periodo.</p>
-              ) : (
-                <>
-                  {lowest && p.rows.length > 1 && <p className="cb-callout"><Icon name="bolt" size={16} /> El valor más bajo es <strong>{label(spec.rows, lowest.r)}</strong> ({fmtVal(lowest.v, p.metric)}).</p>}
-                  {chartKind === "bar" && <BarChart p={p} spec={spec} />}
-                  {chartKind === "heat" && <Heatmap p={p} spec={spec} />}
-                  {chartKind === "line" && <LineChart p={p} spec={spec} />}
-                  {chartKind === "table" && <DataTable p={p} spec={spec} />}
-                </>
-              )}
-              <span className="caption">Puntajes según la clave preliminar, no oficial. Pasa el cursor sobre una barra o punto para ver cuántas respuestas la respaldan.</span>
-
-              <div className="cb-save">
-                <input className="cb-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre para guardar esta gráfica" aria-label="Nombre de la gráfica" maxLength={80} onKeyDown={(e) => e.key === "Enter" && save()} />
-                <button type="button" className="secondary" disabled={!name.trim()} onClick={save}>Guardar</button>
-              </div>
-              {saved.length > 0 && (
-                <ul className="cb-saved" aria-label="Gráficas guardadas">
-                  {saved.map((c) => (
-                    <li key={c.id}>
-                      <button type="button" className="chip" onClick={() => open(c.spec)}><Icon name="chart" size={14} />{c.name}</button>
-                      <button type="button" className="icon-btn" onClick={() => remove(c)} aria-label={`Borrar ${c.name}`}><Icon name="close" size={16} /></button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {local && <span className="caption">Las gráficas se guardan en este navegador hasta que se ejecute la migración 0015.</span>}
-            </div>
           </div>
         </>
       )}

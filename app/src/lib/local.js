@@ -1,8 +1,13 @@
 // Per-viewer records kept in this browser only: error reports and finished attempts.
 // There is no backend yet, so these are not shared and are lost if the browser data is cleared.
 // Every read and write can fail (private mode, blocked storage); callers keep working without them.
+import { demoEnabled } from "../demo/mode.js";
+
 const REPORTS_KEY = "condor:reports";
-const HISTORY_KEY = "condor:history";
+const HISTORY_KEY = demoEnabled ? "condor:demo:history" : "condor:history";
+// Demo mode: the invented student's practice, shown under whatever this browser adds during the demo.
+let demoHistory = [];
+export function setDemoHistory(list) { demoHistory = list ?? []; }
 
 function read(key) {
   try {
@@ -32,7 +37,9 @@ export function addReport({ slug, question, number, exam, note }) {
 }
 
 export function loadHistory() {
-  return read(HISTORY_KEY).sort((a, b) => b.at - a.at);
+  const own = read(HISTORY_KEY);
+  const ids = new Set(own.map((e) => e.id));
+  return [...own, ...demoHistory.filter((e) => !ids.has(e.id))].sort((a, b) => b.at - a.at);
 }
 
 // One record per attempt: recording the same attempt again replaces it.

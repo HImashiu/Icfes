@@ -9,16 +9,19 @@ const MODE = { practice: "Práctica", timed: "Cronometrado" };
 const areaShare = (a) => (a.answered ? (a.correct / a.answered) * 100 : 0);
 
 // Mis simulacros: finished attempts with their score and date, stored in this browser.
-export default function History({ onBack, onNew, onOpen }) {
+// `embedded` drops the screen header (Progreso › Historial shows it under its own tabs).
+export default function History({ onBack, onNew, onOpen, embedded = false }) {
   const rows = loadHistory();
   return (
     <section className="history">
-      <header className="screen-head">
-        <button type="button" className="icon-btn" onClick={onBack} aria-label="Volver">
-          <Icon name="left" />
-        </button>
-        <h1>Mis simulacros</h1>
-      </header>
+      {!embedded && (
+        <header className="screen-head">
+          <button type="button" className="icon-btn" onClick={onBack} aria-label="Volver">
+            <Icon name="left" />
+          </button>
+          <h1>Mis simulacros</h1>
+        </header>
+      )}
       {rows.length === 0 ? (
         <div className="card empty-state">
           <Mascot size={72} />

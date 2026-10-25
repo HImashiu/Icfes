@@ -10,6 +10,7 @@ import { generatePlan } from "../lib/seating.js";
 import { SUGGESTED_STATUSES } from "../lib/workspaceStore.js";
 import { EMPTY_FILTERS } from "../lib/workspace.js";
 import { FIRST, LAST, TEACHERS, emailOf } from "./names.js";
+import { bookletCode, sessionOf } from "../lib/booklets.js";
 
 export const SCHOOL_ID = "demo-school";
 const DAY = 864e5;
@@ -35,7 +36,14 @@ const COURSES = [
   { id: "demo-c1", subject: "Matemáticas", group: "A", focus: "Matemáticas", teacher: 1, edge: 0.15, titles: ["Tablas y gráficos", "Funciones y variación", "Simulacro de matemáticas", "Probabilidad y conteo", "Razonamiento con datos"] },
   { id: "demo-c2", subject: "Lectura crítica", group: "B", focus: "Lectura crítica", teacher: 2, edge: 0, titles: ["Textos argumentativos", "Inferir la intención del autor", "Simulacro de lectura", "Textos discontinuos", "Contrastar posiciones"] },
   { id: "demo-c3", subject: "Todas las áreas", group: "C", focus: null, teacher: 3, edge: -0.1, titles: ["Calentamiento Saber 11", "Mezcla de áreas", "Simulacro general", "Ciencias y sociales", "Repaso antes del simulacro"] },
+  // The rest of 11 A's subjects, each with its own teacher: the same 40 students see one class per subject.
+  { id: "demo-c4", subject: "Lectura crítica", group: "A", focus: "Lectura crítica", teacher: 2, titles: ["Idea principal y tesis", "Tipos de texto", "Simulacro de lectura", "Leer una infografía", "Argumentos y contraargumentos"] },
+  { id: "demo-c5", subject: "Ciencias naturales", group: "A", focus: "Ciencias naturales", teacher: 4, titles: ["Variables de un experimento", "Energía y cambios", "Simulacro de ciencias", "Ecosistemas", "Leer resultados de laboratorio"] },
+  { id: "demo-c6", subject: "Sociales y ciudadanas", group: "A", focus: "Sociales y ciudadanas", teacher: 3, titles: ["La Constitución del 91", "Mecanismos de participación", "Simulacro de sociales", "Conflictos y perspectivas", "Economía y territorio"] },
+  { id: "demo-c7", subject: "Inglés", group: "A", focus: "Inglés", teacher: 5, titles: ["Avisos y letreros", "Vocabulary in context", "Simulacro de inglés", "Short conversations", "Reading for details"] },
 ];
+// The student the demo shows on the student side: the first of 11 A.
+export const DEMO_STUDENT_N = 1;
 const DAYS_AGO = [55, 41, 27, 13, 2];
 const KINDS = ["task", "homework", "exam", "task", "homework"];
 
@@ -60,9 +68,18 @@ export function buildDemo({ bundles, now = Date.now() }) {
   const used = new Set();
   const emails = new Set();
   let n = 0;
+  const edgeOf = {};
   COURSES.forEach((c, ci) => {
     courses.push({ id: c.id, name: c.subject === "Todas las áreas" ? `Preparación Saber 11 ${c.group}` : `${c.subject} 11 ${c.group}`, grade: "11", year: 2026, subject: c.subject, group_label: c.group, school_id: SCHOOL_ID, created_by: staff[c.teacher].id, created_at: new Date(now - 70 * DAY).toISOString() });
     members.push({ id: `demo-m-t${ci}`, course_id: c.id, profile_id: staff[c.teacher].id, email: staff[c.teacher].email, full_name: staff[c.teacher].full_name, role: "teacher" });
+    // A group's students are made once, with its first class; its other classes reuse them.
+    if (c.group in edgeOf) {
+      for (const s of students.filter((x) => x.group === c.group)) {
+        members.push({ id: `${s.memberId}-${c.id}`, course_id: c.id, profile_id: s.profileId, email: s.email, full_name: s.name, role: "student" });
+      }
+      return;
+    }
+    edgeOf[c.group] = c.edge ?? 0;
     for (let k = 0; k < 40; k += 1) {
       let first; let last; let tries = 0;
       do { first = rand.pick(FIRST); last = `${rand.pick(LAST)} ${rand.pick(LAST)}`; tries += 1; } while (used.has(`${first} ${last}`) && tries < 50);
@@ -70,8 +87,8 @@ export function buildDemo({ bundles, now = Date.now() }) {
       n += 1;
       const roll = rand.next();
       const s = {
-        n, courseId: c.id, memberId: `demo-m-${n}`, profileId: `demo-p-${n}`, name: `${first} ${last}`, email: emailOf(first, last.split(" ")[0], emails.has(emailOf(first, last.split(" ")[0])) ? n : ""),
-        ability: rand.normal() * 0.8 + c.edge,
+        n, group: c.group, courseId: c.id, memberId: `demo-m-${n}`, profileId: `demo-p-${n}`, name: `${first} ${last}`, email: emailOf(first, last.split(" ")[0], emails.has(emailOf(first, last.split(" ")[0])) ? n : ""),
+        ability: rand.normal() * 0.8 + edgeOf[c.group],
         engagement: roll < 0.6 ? 0.94 : roll < 0.9 ? 0.78 : 0.45,
         speed: Math.exp(rand.normal() * 0.22),
         growth: 0.03 + rand.next() * 0.05,
@@ -80,6 +97,7 @@ export function buildDemo({ bundles, now = Date.now() }) {
         hintLover: rand.next() < 0.25,
         areaSkill: Object.fromEntries(Object.keys(AREA_SECONDS).map((a) => [a, rand.normal() * 0.45])),
       };
+      if (n === DEMO_STUDENT_N) Object.assign(s, { name: "Valentina Ospina Rojas", email: "valentina.ospina@demo.invalid", ability: 0.35, engagement: 1, dropout: false, slump: false, areaSkill: { ...s.areaSkill, Matemáticas: -0.35, Inglés: 0.4 } });
       emails.add(s.email);
       students.push(s);
       members.push({ id: s.memberId, course_id: c.id, profile_id: s.profileId, email: s.email, full_name: s.name, role: "student" });
@@ -93,7 +111,7 @@ export function buildDemo({ bundles, now = Date.now() }) {
   const lessonKeysByAssignment = new Map();
   let pe = 0;
   COURSES.forEach((c, ci) => {
-    const roster = students.filter((s) => s.courseId === c.id);
+    const roster = students.filter((s) => s.group === c.group);
     DAYS_AGO.forEach((ago, j) => {
       const poolOf = (sl) => (c.focus ? (itemsBySlug.get(sl) ?? []).filter((i) => i.section === c.focus) : itemsBySlug.get(sl) ?? []);
       const candidates = slugs.filter((sl) => poolOf(sl).length);
@@ -110,7 +128,7 @@ export function buildDemo({ bundles, now = Date.now() }) {
       const exam = kind === "exam";
       const a = {
         id: `demo-a-${ci + 1}-${j + 1}`, course_id: c.id, kind, title: c.titles[j], exam_slug: slug, scope: c.focus ?? "all", question_keys: keys,
-        opens_at: new Date(opens).toISOString(), due_at: new Date(active ? now + 3 * DAY : opens + 6 * DAY).toISOString(),
+        opens_at: new Date(opens).toISOString(), due_at: new Date(active ? now + (1 + (ci % 5)) * DAY + 5 * 3600000 : opens + 6 * DAY).toISOString(),
         time_limit_min: exam ? 45 : null, reveal_policy: exam ? "after_close" : "after_submit", max_attempts: exam ? 1 : null, assignee_id: null,
         status: "published", created_at: new Date(opens - DAY).toISOString(), allow_hints: !exam, instant_feedback: !exam,
         allow_definitions: false, definitions: [], proctor: exam, courses: { name: courses[ci].name },
@@ -121,8 +139,9 @@ export function buildDemo({ bundles, now = Date.now() }) {
       const qs = keys.map((k) => questionBy.get(slug).get(k)).filter(Boolean);
       const trend = j; // tasks later in the term are easier for a student who keeps working
       for (const s of roster) {
+        if (s.n === DEMO_STUDENT_N && active) continue;
         if (s.dropout && j >= 3) continue;
-        if (rand.next() > s.engagement * (active ? 0.6 : 1)) continue;
+        if (s.n !== DEMO_STUDENT_N && rand.next() > s.engagement * (active ? 0.6 : 1)) continue;
         const slumpShift = s.slump && j >= 3 ? -1.4 : 0;
         const answers = {};
         const times = {};
@@ -257,8 +276,110 @@ export function buildDemo({ bundles, now = Date.now() }) {
   }] : [];
   const formats = [{ id: "demo-f1", owner_id: "demo-t0", name: "Quiz de salida (10 min)", config: { ...BUILTIN_FORMATS[2].config, limit: "" }, visibility: "private", created_at: new Date(now - 9 * DAY).toISOString() }];
 
+  // ----- whole simulacros: Sesión 1 + Sesión 2 of one cuadernillo, the only thing that gives the 0-500 estimate -----
+  const s1Slug = slugs.find((sl) => sessionOf(sl) === 1);
+  const s2Slug = s1Slug && slugs.find((sl) => sessionOf(sl) === 2 && bookletCode(sl) === bookletCode(s1Slug));
+  const wholeSession = (s, slug, shift = 0) => {
+    const key = bundles.get(slug).key;
+    const qs = (itemsBySlug.get(slug) ?? []).map((it) => ({ q: questionBy.get(slug).get(it.key), diff: (it.dificultad ?? 3) - 3 })).filter((x) => x.q);
+    const answers = {};
+    const times = {};
+    for (const { q, diff } of qs) {
+      if (rand.next() > 0.98) continue; // left blank
+      const right = key.get(q.key);
+      const p = sigmoid(1.15 * (s.ability + shift + (s.areaSkill[q.section] ?? 0) - 0.5 * diff) + 0.15);
+      const wrong = (q.options ?? []).map((o) => o.letter).filter((l) => l !== right);
+      const ok = rand.next() < p;
+      answers[q.key] = ok ? right : rand.pick(wrong.length ? wrong : ["A"]);
+      times[q.key] = Math.max(6, Math.round((AREA_SECONDS[q.section] ?? 70) * Math.exp(rand.normal() * 0.3)));
+    }
+    return { qs: qs.map((x) => x.q), answers, times, sc: scoreAttempt(qs.map((x) => x.q), answers, key) };
+  };
+  if (s2Slug) {
+    const c3 = COURSES.findIndex((c) => c.id === "demo-c3");
+    [[s1Slug, 13], [s2Slug, 12]].forEach(([slug, ago], k) => {
+      const opens = now - ago * DAY;
+      const a = {
+        id: `demo-a-3-s${k + 1}`, course_id: "demo-c3", kind: "exam", title: `Simulacro completo · Sesión ${k + 1}`, exam_slug: slug, scope: "all", question_keys: null,
+        opens_at: new Date(opens).toISOString(), due_at: new Date(opens + 2 * DAY).toISOString(), time_limit_min: 270, reveal_policy: "after_close", max_attempts: 1,
+        assignee_id: null, status: "published", created_at: new Date(opens - DAY).toISOString(), allow_hints: false, instant_feedback: false,
+        allow_definitions: false, definitions: [], proctor: true, courses: { name: courses[c3].name },
+      };
+      assignments.push(a);
+      for (const s of students.filter((x) => x.group === "C")) {
+        if (s.dropout || rand.next() > s.engagement) continue;
+        const { answers, times, sc } = wholeSession(s, slug, s.growth * 5);
+        const submitted = opens + (3 + rand.next() * 20) * 3600000;
+        const started = submitted - 4.2 * 3600000;
+        attempts.push({
+          profile_id: s.profileId, member_id: null, client_id: `whole-${k + 1}-${s.n}`, assignment_id: a.id, exam_slug: slug, scope: "all", mode: "timed",
+          started_at: new Date(started).toISOString(), submitted_at: new Date(submitted).toISOString(), duration_sec: Math.round((submitted - started) / 1000),
+          answers, times, activity: { hints: {}, changes: {} }, proctor: { leaves: 0, awaySec: 0, pointerOuts: 0, idleSec: 0 },
+          score: { keyed: true, correct: sc.correct, answered: sc.answered, total: sc.total, perArea: sc.perArea }, key_status: "preliminary", device: s.n % 3 ? "phone" : "desktop",
+        });
+      }
+    });
+  }
+
+  // ----- the demo student's own practice, as this browser's history would hold it -----
+  const me = students.find((s) => s.n === DEMO_STUDENT_N);
+  const history = [];
+  const practiceAreas = ["Matemáticas", "Lectura crítica", "Ciencias naturales", "Matemáticas", "Sociales y ciudadanas", "Inglés"];
+  const sessionDays = [19, 17, 16, 14, 12, 11, 9, 7, 6, 5, 4, 3, 2, 1, 0];
+  sessionDays.forEach((ago, i) => {
+    const area = practiceAreas[i % practiceAreas.length];
+    const slug = slugs.find((sl) => (itemsBySlug.get(sl) ?? []).some((it) => it.section === area));
+    if (!slug) return;
+    const pool = (itemsBySlug.get(slug) ?? []).filter((it) => it.section === area);
+    const start = (i * 7) % Math.max(1, pool.length);
+    const picked = Array.from({ length: Math.min(12, pool.length) }, (_, k) => pool[(start + k) % pool.length]);
+    const qs = picked.map((it) => questionBy.get(slug).get(it.key)).filter(Boolean);
+    const key = bundles.get(slug).key;
+    const answers = {};
+    const times = {};
+    for (const q of qs) {
+      const right = key.get(q.key);
+      const p = sigmoid(1.15 * (me.ability + me.growth * i + (me.areaSkill[area] ?? 0)) + 0.2);
+      const wrong = (q.options ?? []).map((o) => o.letter).filter((l) => l !== right);
+      const ok = rand.next() < p;
+      answers[q.key] = ok ? right : rand.pick(wrong.length ? wrong : ["A"]);
+      times[q.key] = Math.round((AREA_SECONDS[area] ?? 70) * Math.exp(rand.normal() * 0.3) * (ok ? 0.9 : 1.2));
+    }
+    const sc = scoreAttempt(qs, answers, key);
+    const at = now - ago * DAY - (3 + (i % 4)) * 3600000;
+    history.push({
+      id: `demo-h-${i + 1}`, title: `${bundles.get(slug).exam.title} · ${area}`, mode: "practice", at, answered: sc.answered, total: sc.total, keyed: true,
+      correct: sc.correct, outOf: sc.answered, percent: sc.answered ? (sc.correct / sc.answered) * 100 : 0,
+      perArea: sc.perArea.map((a) => ({ name: a.name, correct: a.correct, answered: a.answered, total: a.total })),
+      xp: sc.correct * 10 + (area === "Matemáticas" ? sc.correct * 10 : 0),
+      missed: qs.filter((q) => answers[q.key] !== key.get(q.key)).map((q) => q.key),
+      right: qs.filter((q) => answers[q.key] === key.get(q.key)).map((q) => q.key),
+      snapshot: { slug, scope: area, mode: "practice", answers, flags: {}, times, startedAt: at - 15 * 60000, submittedAt: at, auto: false, xp: sc.correct * 10 },
+    });
+  });
+  // Her whole simulacros: two complete S11-A (Sesión 1 + Sesión 2, each a score), then a newer Sesión 1 waiting for its Sesión 2.
+  if (s2Slug) {
+    [[s1Slug, 20, -0.3], [s2Slug, 19, -0.3], [s1Slug, 10, 0], [s2Slug, 9, 0], [s1Slug, 2, 0.35]].forEach(([slug, ago, shift], k) => {
+      const { qs, answers, times, sc } = wholeSession(me, slug, shift);
+      const key = bundles.get(slug).key;
+      const at = now - ago * DAY - 4 * 3600000;
+      history.push({
+        id: `demo-hs-${k + 1}`, title: bundles.get(slug).exam.title, mode: "timed", at, answered: sc.answered, total: sc.total, keyed: true,
+        correct: sc.correct, outOf: sc.total, percent: sc.total ? (sc.correct / sc.total) * 100 : 0,
+        perArea: sc.perArea.map((a) => ({ name: a.name, correct: a.correct, answered: a.answered, total: a.total })),
+        xp: sc.correct * 10,
+        missed: qs.filter((q) => answers[q.key] !== key.get(q.key)).map((q) => q.key),
+        right: qs.filter((q) => answers[q.key] === key.get(q.key)).map((q) => q.key),
+        snapshot: { slug, scope: "all", mode: "timed", answers, flags: {}, times, startedAt: at - 4.5 * 3600000, submittedAt: at, auto: false, xp: sc.correct * 10 },
+      });
+    });
+    history.sort((x, y) => y.at - x.at);
+  }
+  const meProfile = { id: me.profileId, email: me.email, full_name: me.name, role: "student", school_id: SCHOOL_ID, created_at: new Date(now - 60 * DAY).toISOString() };
+
   return {
     profile: staff[0],
+    student: { profile: meProfile, history },
     tables: {
       profiles: [...staff, ...students.map((s) => ({ id: s.profileId, email: s.email, full_name: s.name, role: "student", school_id: SCHOOL_ID, created_at: new Date(now - 60 * DAY).toISOString() }))],
       courses, course_members: members, assignments, attempts, grading_models: grading, saved_charts: charts, lessons, activity_formats: formats,
@@ -267,6 +388,7 @@ export function buildDemo({ bundles, now = Date.now() }) {
       school_consents: [{ kind: "guardian_authorization", version: CONSENT_VERSION, granted_at: new Date(now - 60 * DAY).toISOString() }],
       student_statuses: statuses, student_flags: flags, student_groups: groups, student_group_members: groupMembers, student_notes: notes, saved_views: views,
       teacher_questions: [], question_overrides: [], annotations: [], live_sessions: [], live_players: [], live_answers: [],
+      group_directors: [{ id: "demo-gd-1", school_id: SCHOOL_ID, grade: "11", group_label: "A", profile_id: staff[1].id }],
     },
   };
 }

@@ -4,15 +4,17 @@ import { SAMPLE_STUDENT } from "../data/mock.js";
 
 const ITEMS = [
   { id: "home", label: "Inicio", icon: "home" },
-  { id: "setup", label: "Practicar", icon: "book" },
-  { id: "history", label: "Mis simulacros", short: "Simulacros", icon: "clock" },
+  { id: "subjects", label: "Materias", icon: "book" },
+  { id: "setup", label: "Practicar", icon: "pencil" },
+  { id: "progress", label: "Progreso", icon: "chart" },
   { id: "profile", label: "Perfil", icon: "user" },
 ];
 
 // Student navigation: bottom nav on phone, icon rail on tablet, labelled sidebar on desktop.
-// "Practicar" opens the setup screen; "Mis simulacros" lists finished attempts.
+// Materias holds each subject and every task; Practicar opens the setup screen; Progreso has the analysis, logros
+// and finished attempts.
 // The active item uses the accent ink color.
-export default function BottomNav({ active, onGo }) {
+export default function BottomNav({ active, onGo, name, course }) {
   return (
     <nav className="bottom-nav" aria-label="Navegación principal">
       <div className="nav-brand" aria-hidden="true">
@@ -41,10 +43,10 @@ export default function BottomNav({ active, onGo }) {
         </button>
       ))}
       <div className="nav-me" aria-label="Estudiante">
-        <span className="avatar" aria-hidden="true">E</span>
+        <span className="avatar" aria-hidden="true">{(name ?? "Estudiante")[0]}</span>
         <div>
-          <strong>Estudiante</strong>
-          <span className="caption">{SAMPLE_STUDENT.course} · datos de muestra</span>
+          <strong>{name ?? "Estudiante"}</strong>
+          <span className="caption">{name ? (course ? `Curso ${course}` : "Estudiante") : `${SAMPLE_STUDENT.course} · datos de muestra`}</span>
         </div>
       </div>
     </nav>

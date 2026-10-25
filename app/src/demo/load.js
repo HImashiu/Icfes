@@ -25,6 +25,23 @@ export async function loadDemo() {
     const figures = linkFigures(parsed, parseFigureSpecs(rawFigures), rawFigures);
     bundles.set(entry.slug, { exam: prepareExam(parsed, figures), key: parseKey(rawKey), enrich: rawEnrich?.questions ?? null });
   }
-  const { profile, tables } = buildDemo({ bundles });
-  return { client: createDemoClient({ tables, profile }), profile };
+  const { profile, tables, student } = buildDemo({ bundles });
+  return { client: createDemoClient({ tables, profile }), profile, student: { ...student, client: studentClient(tables, student.profile) } };
+}
+
+// The same school seen by one student: only their classes, their tasks and their own attempts.
+function studentClient(tables, me) {
+  const mine = () => new Set(tables.course_members.filter((m) => m.profile_id === me.id && m.role === "student").map((m) => m.course_id));
+  const scope = {
+    courses: (r) => mine().has(r.id),
+    course_members: (r) => r.profile_id === me.id,
+    assignments: (r) => mine().has(r.course_id) && r.status !== "draft",
+    attempts: (r) => r.profile_id === me.id,
+    annotations: (r) => !r.profile_id || r.profile_id === me.id,
+  };
+  const student_classes = () => tables.courses.filter((c) => mine().has(c.id)).map((c) => ({
+    id: c.id, name: c.name, subject: c.subject, grade: c.grade, group_label: c.group_label,
+    teachers: tables.course_members.filter((m) => m.course_id === c.id && m.role === "teacher").map((m) => m.full_name),
+  }));
+  return createDemoClient({ tables, profile: me, scope, extraRpc: { student_classes } });
 }

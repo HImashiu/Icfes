@@ -129,7 +129,7 @@ export function createApi(client) {
       return unwrap(await client.from("course_members").select("id, course_id, profile_id, email, full_name, role"));
     },
     async allAttempts() {
-      return unwrap(await client.from("attempts").select("profile_id, member_id, client_id, assignment_id, submitted_at, mode, score, exam_slug").not("assignment_id", "is", null));
+      return unwrap(await client.from("attempts").select("profile_id, member_id, client_id, assignment_id, submitted_at, mode, score, exam_slug, scope").not("assignment_id", "is", null));
     },
     // Everything the activity report needs per attempt: result, time and (with migration 0012) monitoring totals.
     async reportAttempts() {
@@ -178,6 +178,25 @@ export function createApi(client) {
     async listStaff() {
       return unwrap(await client.from("profiles").select("id, email, full_name, role, created_at").in("role", ["teacher", "school_admin"]).order("full_name"));
     },
+    // A student's classes with their teachers' names (migration 0018). null until it runs: the app falls back to course names.
+    async studentClasses() {
+      const r = await client.rpc("student_classes");
+      return r.error ? null : r.data;
+    },
+    // Group directors (migration 0018): one teacher per group who reads every subject of it. [] until it runs.
+    async groupDirectors() {
+      const r = await client.from("group_directors").select("id, grade, group_label, profile_id");
+      return r.error ? [] : r.data;
+    },
+    async setGroupDirector({ schoolId, grade, groupLabel, profileId }) {
+      if (!profileId) {
+        unwrap(await client.from("group_directors").delete().eq("school_id", schoolId).eq("grade", grade).eq("group_label", groupLabel));
+        return;
+      }
+      const r = await client.from("group_directors").upsert({ school_id: schoolId, grade, group_label: groupLabel, profile_id: profileId }, { onConflict: "school_id,grade,group_label" });
+      if (r.error && /group_directors/.test(r.error.message ?? "")) throw new Error("Falta ejecutar la migración 0018 (directores de grupo) en Supabase.");
+      unwrap(r);
+    },
     async setRole(profileId, role) {
       return unwrap(await client.rpc("set_profile_role", { p_profile: profileId, p_role: role }));
     },
@@ -197,6 +216,18 @@ export function createApi(client) {
     },
     async saveSeating(assignmentId, plan) {
       unwrap(await client.from("paper_seating").upsert({ assignment_id: assignmentId, plan, updated_at: new Date().toISOString() }));
+    },
+    // Saved classrooms, shared by the school's teachers (migration 0019). null when the table is not there yet.
+    async seatingRooms() {
+      const r = await client.from("seating_rooms").select("name, layout").order("name");
+      if (r.error && /seating_rooms|schema cache|does not exist/i.test(r.error.message ?? "")) return null;
+      return unwrap(r).map((row) => ({ ...row.layout, name: row.name }));
+    },
+    async saveSeatingRoom({ name, rows, cols, blocked }) {
+      unwrap(await client.from("seating_rooms").upsert({ name, layout: { rows, cols, blocked }, updated_at: new Date().toISOString() }, { onConflict: "school_id,name" }));
+    },
+    async deleteSeatingRoom(name) {
+      unwrap(await client.from("seating_rooms").delete().eq("name", name));
     },
     async createFamilyReport(profileId, payload) {
       return unwrap(await client.rpc("create_family_report", { p_profile: profileId, p_payload: payload }));
