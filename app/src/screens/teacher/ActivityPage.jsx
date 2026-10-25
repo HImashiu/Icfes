@@ -31,7 +31,7 @@ export function activitySteps({ assignment, students, attempts, paper, model, no
   ];
 }
 
-export default function ActivityPage({ api, profile, assignment, course, tab, go, models, reloadModels, fetchExam, guard, setNotice, reload, assignments, courses, onScanned, focusMember }) {
+export default function ActivityPage({ api, profile, assignment, course, tab, go, models, reloadModels, fetchExam, guard, setNotice, reload, assignments, courses, onScanned, focusMember, onOpenStudent }) {
   const [info, setInfo] = useState(null);
   const [scanNow, setScanNow] = useState(false);
   const [version, setVersion] = useState(0);
@@ -53,6 +53,12 @@ export default function ActivityPage({ api, profile, assignment, course, tab, go
   const area = areaOf(course ?? {});
   const tint = contextColor(area ?? "");
   const state = assignmentState(assignment);
+  // The same activity sent to other classes (created together: same title, booklet and questions).
+  const related = useMemo(() => {
+    const sig = (a) => `${a.title}|${a.exam_slug}|${[...(a.question_keys ?? [])].sort().join(",")}`;
+    return (assignments ?? []).filter((a) => a.id !== assignment.id && a.course_id !== assignment.course_id && sig(a) === sig(assignment))
+      .map((a) => ({ assignment: a, course: (courses ?? []).find((c) => c.id === a.course_id) ?? null }));
+  }, [assignments, courses, assignment]);
   const scanned = ({ count, average }) => { setScanNow(false); setVersion((v) => v + 1); onScanned({ assignment, course, count, average }); };
 
   return (
@@ -92,7 +98,8 @@ export default function ActivityPage({ api, profile, assignment, course, tab, go
       </div>
 
       {tab === "resultados" && (
-        <AssignmentReport key={`${assignment.id}-${version}`} api={api} model={model.model} assignment={assignment} fetchExam={fetchExam} guard={guard} reload={reload} initialStudent={focusMember} />
+        <AssignmentReport key={`${assignment.id}-${version}`} api={api} model={model.model} modelSource={model.source} assignment={assignment} course={course} related={related} fetchExam={fetchExam} guard={guard} reload={reload} initialStudent={focusMember}
+          onGrading={() => go({ section: "actividad", id: assignment.id, tab: "calificacion" })} onOpenStudent={onOpenStudent} />
       )}
       {tab === "papel" && <PaperGuide api={api} assignment={assignment} guard={guard} onChanged={reload} />}
       {tab === "papel" && (
@@ -100,8 +107,7 @@ export default function ActivityPage({ api, profile, assignment, course, tab, go
       )}
       {tab === "calificacion" && (
         <>
-          <p className="caption ap-note">Por defecto usa la calificación de la clase ({course?.name}). Elige otra solo si esta actividad lo necesita.</p>
-          <GradingSettings api={api} profile={profile} courses={courses.filter((c) => c.id === assignment.course_id)} assignments={[assignment]} models={models} reloadModels={reloadModels} guard={guard} setNotice={setNotice} initialTarget={`assignment:${assignment.id}`} embedded />
+          <GradingSettings api={api} profile={profile} courses={courses.filter((c) => c.id === assignment.course_id)} assignments={[assignment]} models={models} reloadModels={reloadModels} guard={guard} setNotice={setNotice} initialTarget={`assignment:${assignment.id}`} embedded fetchExam={fetchExam} />
         </>
       )}
       {!TABS.actividad.some(([id]) => id === tab) && null}

@@ -30,10 +30,11 @@ describe("grading settings screen", () => {
     const reloadModels = vi.fn().mockResolvedValue(undefined);
     const models = [{ id: "m", scope: "school", scope_id: "s1", model: { kind: "scale" } }];
     const { host, unmount } = await mount(<GradingSettings api={api} profile={{ ...profile, role: "teacher" }} courses={courses} assignments={assignments} models={models} reloadModels={reloadModels} guard={guard} />);
-    expect(host.textContent).toContain("Vista previa");
+    expect(host.textContent).toContain("Así cambiarían las notas");
     expect(host.textContent).toContain("Perfecto");
-    expect(host.textContent).toContain("5,0"); // the scale model of the school: a perfect student gets the top grade
-    const save = [...host.querySelectorAll("button")].find((b) => b.textContent === "Guardar");
+    expect(host.textContent).toContain("30 de 50 aciertos"); // every method card shows a worked example
+    expect(host.textContent).toContain("Escala propia"); // the chain says the school's scale applies until the class has its own
+    const save = [...host.querySelectorAll("button")].find((b) => b.textContent === "Guardar para la clase");
     expect(save.disabled).toBe(false);
     await act(async () => { save.click(); });
     expect(api.saveGradingModel).toHaveBeenCalledWith(expect.objectContaining({ schoolId: "s1", scope: "course", scopeId: "c1", model: expect.objectContaining({ kind: "scale" }) }));

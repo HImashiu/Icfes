@@ -84,6 +84,8 @@ export const PRESETS = [
 export function buildFacts({ attempts, assignments, members = [], courses = [], bundles, ws = null }) {
   const aById = new Map(assignments.map((a) => [a.id, a]));
   const cName = new Map(courses.map((c) => [c.id, c.name]));
+  // The class group ("11A"), as teaching.js names it; written here so this module keeps no import cycle.
+  const cGroup = new Map(courses.map((c) => [c.id, c.grade && c.group_label ? `${c.grade}${String(c.group_label).trim().toUpperCase()}` : c.name]));
   // Workspace groups are kept by email; a student in several groups shows them joined.
   const gName = new Map((ws?.groups ?? []).map((g) => [g.id, g.name]));
   const gByEmail = new Map();
@@ -118,7 +120,7 @@ export function buildFacts({ attempts, assignments, members = [], courses = [], 
     const person = whoOf(at);
     const base = {
       attemptId: `${person}|${at.assignment_id}|${at.submitted_at}`, studentId: person, student: who.get(person) ?? "Sin nombre", group: groupOf.get(person) ?? "Sin grupo",
-      space: a.courses?.name ?? cName.get(a.course_id) ?? "Sin espacio", assignment: a.title, kind: KIND_LABEL[a.kind] ?? "Tarea",
+      space: a.courses?.name ?? cName.get(a.course_id) ?? "Sin espacio", course: cGroup.get(a.course_id) ?? "", assignment: a.title, kind: KIND_LABEL[a.kind] ?? "Tarea",
       date: at.submitted_at, ts: when.getTime(), week: weekStart(when), month: iso(when).slice(0, 7), weekday: DOW[when.getDay()],
     };
     for (const [qk, given] of Object.entries(at.answers)) {

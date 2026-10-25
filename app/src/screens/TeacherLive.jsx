@@ -12,7 +12,9 @@ import { LiveSection } from "./LiveHost.jsx";
 import { FilePicker, confirmDialog } from "../components/Controls.jsx";
 import Icon from "../components/Icon.jsx";
 import BankEditor from "./BankEditor.jsx";
-import ChartBuilder from "./ChartBuilder.jsx";
+import Sheet from "./Sheet.jsx";
+import ResultsInsights from "./ResultsInsights.jsx";
+import "./StudentHistory.jsx"; // adds «Historial completo» to every student profile
 import GradingSettings from "./GradingSettings.jsx";
 import Lessons from "./Lessons.jsx";
 import QuestionControl from "./QuestionControl.jsx";
@@ -257,7 +259,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           {r.section === "actividad" && !activity && <p className="caption">{loaded ? "Esta actividad no existe o no tienes acceso a ella." : "Cargando…"}</p>}
           {r.section === "actividad" && activity && (
             <ActivityPage key={activity.id} api={baseApi} profile={profile} assignment={activity} course={activityCourse} tab={r.tab} go={go} models={models} reloadModels={reloadModels}
-              fetchExam={fetchExam} guard={guard} setNotice={setNotice} reload={reload} assignments={allAssignments} courses={allCourses} focusMember={focusMember}
+              fetchExam={fetchExam} guard={guard} setNotice={setNotice} reload={reload} assignments={allAssignments} courses={allCourses} focusMember={focusMember} onOpenStudent={openStudent}
               onScanned={(info) => { reload(); showReceipt(scanReceipt(info)); }} />
           )}
 
@@ -273,14 +275,15 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           {r.section === "resultados" && r.tab === "resumen" && (
             <>
               <Dashboard api={api} profile={profile} guard={guard} ws={ws} onOpenStudent={openStudent} onOpenQueue={() => openStudent("#queue")} onOpenCourse={() => go({ section: "estudiantes", tab: "clases" })} onReinforce={() => go({ section: "actividades", tab: "refuerzo" })} />
+              <ResultsInsights api={api} courses={courses} assignments={assignments} fetchExam={fetchExam} ws={ws} onOpenSheet={() => go({ section: "resultados", tab: "grafica" })} />
               <TeacherReports api={api} profile={profile} courses={courses} assignments={assignments} models={models} fetchExam={fetchExam} guard={guard} onOpenStudent={openStudent} />
             </>
           )}
           {r.section === "resultados" && r.tab === "actividades" && <ResultsByActivity api={api} courses={courses} assignments={assignments} go={go} contextName={contextName} />}
           {r.section === "resultados" && r.tab === "calificacion" && (
-            <GradingSettings api={baseApi} profile={profile} courses={courses} assignments={assignments} models={models} reloadModels={reloadModels} guard={guard} setNotice={setNotice} />
+            <GradingSettings api={baseApi} profile={profile} courses={courses} assignments={assignments} models={models} reloadModels={reloadModels} guard={guard} setNotice={setNotice} fetchExam={fetchExam} />
           )}
-          {r.section === "resultados" && r.tab === "grafica" && <ChartBuilder api={api} profile={profile} courses={courses} assignments={assignments} fetchExam={fetchExam} guard={guard} ws={ws} />}
+          {r.section === "resultados" && r.tab === "grafica" && <Sheet api={api} profile={profile} courses={courses} assignments={assignments} models={models} fetchExam={fetchExam} guard={guard} ws={ws} />}
 
           {r.section === "biblioteca" && r.tab === "banco" && <BankEditor api={baseApi} profile={profile} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
           {r.section === "biblioteca" && r.tab === "preguntas" && <QuestionBuilder api={baseApi} profile={profile} guard={guard} setNotice={setNotice} />}
@@ -302,7 +305,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           {r.section === "colegio" && r.tab === "registro" && (
             !colegio ? <p className="caption">Cargando…</p> : <AuditLog audit={colegio.audit} authorship={colegio.authorship} staff={colegio.staff} courses={allCourses} onOpenAssignment={(id) => go({ section: "actividad", id, tab: "resultados" })} />
           )}
-          {r.section === "colegio" && r.tab === "calificacion" && <GradingSettings api={baseApi} profile={profile} courses={allCourses} assignments={allAssignments} models={models} reloadModels={reloadModels} guard={guard} setNotice={setNotice} />}
+          {r.section === "colegio" && r.tab === "calificacion" && <GradingSettings api={baseApi} profile={profile} courses={allCourses} assignments={allAssignments} models={models} reloadModels={reloadModels} guard={guard} setNotice={setNotice} fetchExam={fetchExam} />}
           {r.section === "colegio" && r.tab === "ajustes" && <SchoolSettings api={baseApi} profile={profile} settings={settings} school={colegio?.school} guard={guard} setNotice={setNotice} reload={reloadAll} log={log} />}
           {r.section === "cuenta" && <MyAccount api={baseApi} profile={profile} courses={allCourses} members={members} grants={grants} guard={guard} setNotice={setNotice} onExit={onExit} />}
         </div>

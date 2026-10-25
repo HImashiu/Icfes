@@ -87,7 +87,7 @@ describe("Estudiantes workspace", () => {
     await openWorkspace();
     fireEvent.click(screen.getByText("Ana Pérez"));
     expect(await screen.findByRole("heading", { name: "Ana Pérez" })).toBeTruthy();
-    expect(screen.getByText("Simulacro 1")).toBeTruthy();
+    expect(screen.getAllByText("Simulacro 1").length).toBeGreaterThan(0);
     expect(screen.getByText("Lectura corta")).toBeTruthy();
     expect(screen.getByText("1 de 5")).toBeTruthy();
     fireEvent.change(screen.getByLabelText("Nueva nota"), { target: { value: "Va muy bien en matemáticas." } });
