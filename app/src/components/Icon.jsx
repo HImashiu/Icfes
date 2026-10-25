@@ -85,6 +85,11 @@ const ICONS = {
   grid: { d: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" },
   filter: { d: "M4 6h16M7 12h10M10 18h4" },
   sliders: { d: "M4 7h10M18 7h2M4 17h4M12 17h8M14 5v4M8 15v4" },
+  pause: { fill: "M4 5h16v14H4z", d: "M4 5h16v14H4zM10 9.5v5M14 9.5v5" },
+  pen: { fill: "M15.5 4.5l4 4L9 19H5v-4z", d: "M15.5 4.5l4 4L9 19H5v-4zM13 7l4 4" },
+  hand: { fill: "M8 12V6.5a1.5 1.5 0 0 1 3 0V11V4.5a1.5 1.5 0 0 1 3 0V11V6a1.5 1.5 0 0 1 3 0v8a6 6 0 0 1-6 6h-.5a5.5 5.5 0 0 1-4.7-2.6L3.6 13.6a1.5 1.5 0 0 1 2.4-1.8z", d: "M8 12V6.5a1.5 1.5 0 0 1 3 0V11V4.5a1.5 1.5 0 0 1 3 0V11V6a1.5 1.5 0 0 1 3 0v8a6 6 0 0 1-6 6h-.5a5.5 5.5 0 0 1-4.7-2.6L3.6 13.6a1.5 1.5 0 0 1 2.4-1.8L8 14" },
+  image: { fill: "M4 5h16v14H4z", d: "M4 5h16v14H4zM4 16l5-5 4 4 2-2 5 5M15.5 9.5h.01" },
+  stop: { fill: "M6 6h12v12H6z", d: "M6 6h12v12H6z" },
 };
 
 export default function Icon({ name, size = 18, strokeWidth = 2.4, className }) {

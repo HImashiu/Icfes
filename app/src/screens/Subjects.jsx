@@ -13,7 +13,7 @@ const FILTERS = [
   { id: "delivered", label: "Entregadas" },
   { id: "missed", label: "No entregadas" },
 ];
-const GROUP_TITLE = { pending: "Pendientes", scheduled: "Próximas", delivered: "Entregadas", missed: "Cerradas sin entregar" };
+const GROUP_TITLE = { pending: "Pendientes", paper: "En papel, en el salón", scheduled: "Próximas", delivered: "Entregadas", missed: "Cerradas sin entregar" };
 const initials = (name) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 
 // Materias: one card per subject (with its teacher) and every task of every subject, with filters. A subject opens
@@ -116,8 +116,8 @@ function CourseCard({ tasks, course, now, onTasks }) {
 function TaskList({ tasks, subjects, now, onStartAssigned }) {
   const [filter, setFilter] = useState("all");
   const [subject, setSubject] = useState("");
-  const shown = tasks.filter((t) => (filter === "all" || t.status === filter || (filter === "pending" && t.status === "scheduled")) && (!subject || t.subject?.id === subject));
-  const groups = ["pending", "scheduled", "delivered", "missed"].map((g) => [g, shown.filter((t) => t.status === g)]).filter(([, l]) => l.length);
+  const shown = tasks.filter((t) => (filter === "all" || t.status === filter || (filter === "pending" && (t.status === "scheduled" || t.status === "paper"))) && (!subject || t.subject?.id === subject));
+  const groups = ["pending", "paper", "scheduled", "delivered", "missed"].map((g) => [g, shown.filter((t) => t.status === g)]).filter(([, l]) => l.length);
   const done = tasks.filter((t) => t.status === "delivered");
   const avg = done.filter((t) => t.pct != null);
   return (
@@ -148,7 +148,7 @@ function TaskList({ tasks, subjects, now, onStartAssigned }) {
 }
 
 function SubjectPage({ subject: s, tasks, ins, now, onBack, onStartAssigned, onPracticeArea }) {
-  const pending = tasks.filter((t) => t.status === "pending" || t.status === "scheduled");
+  const pending = tasks.filter((t) => t.status === "pending" || t.status === "scheduled" || t.status === "paper");
   const done = tasks.filter((t) => t.status === "delivered" || t.status === "missed");
   const areas = s.area ? ins.areas.filter((a) => a.name === s.area) : [...ins.areas].reverse();
   const area = s.area ? areas[0] : null;

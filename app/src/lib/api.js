@@ -61,6 +61,9 @@ export function createApi(client) {
       // allow_hints and instant_feedback arrive with migrations 0007 and 0008; until they run, every assignment
       // offers hints and immediate feedback.
       // allow_definitions, definitions and proctor arrive with migrations 0011 and 0012.
+      // delivery (online or paper) arrives with migration 0023; until it runs, every assignment is online.
+      const withDelivery = await query(`${cols}, allow_hints, instant_feedback, allow_definitions, definitions, proctor, delivery`);
+      if (!withDelivery.error) return unwrap(withDelivery);
       const full = await query(`${cols}, allow_hints, instant_feedback, allow_definitions, definitions, proctor`);
       if (!full.error) return unwrap(full);
       if (!/allow_definitions|definitions|proctor/.test(full.error.message ?? "")) unwrap(full);
@@ -76,7 +79,19 @@ export function createApi(client) {
       try { await client.rpc("link_my_roster"); } catch { /* not installed yet */ }
     },
     async createAssignment(a) {
-      return unwrap(await client.from("assignments").insert(a).select().single());
+      const r = await client.from("assignments").insert(a).select().single();
+      // Without migration 0023 a paper activity is saved as an ordinary one; its page still offers printing.
+      if (r.error && "delivery" in a && /delivery/.test(r.error.message ?? "")) {
+        const { delivery, ...rest } = a;
+        return unwrap(await client.from("assignments").insert(rest).select().single());
+      }
+      return unwrap(r);
+    },
+    // Online or paper (migration 0023). Before it runs the change fails with a message that says so.
+    async setAssignmentDelivery(id, delivery) {
+      const r = await client.from("assignments").update({ delivery }).eq("id", id);
+      if (r.error && /delivery/.test(r.error.message ?? "")) throw new Error("Para guardar si una actividad es en papel hace falta correr la migración 0023 en Supabase.");
+      unwrap(r);
     },
     async setAssignmentStatus(id, status) {
       unwrap(await client.from("assignments").update({ status }).eq("id", id));
