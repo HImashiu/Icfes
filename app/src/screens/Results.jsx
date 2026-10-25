@@ -68,6 +68,11 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
       perArea: score.perArea.map((a) => ({ name: a.name, correct: a.correct, answered: a.answered, total: a.total })),
       xp: xpEarned,
       missed: attempt.readOnly ? [] : missedKeys(questions, attempt.answers, answerKey, attempt.mode),
+      // For the error notebook: where each miss was and what was chosen.
+      missedInfo: attempt.readOnly ? [] : missedKeys(questions, attempt.answers, answerKey, attempt.mode).map((k) => {
+        const q = questions.find((x) => x.key === k);
+        return { key: k, number: q?.number ?? null, area: q?.section ?? null, chosen: attempt.answers[k] ?? null };
+      }),
       right: attempt.readOnly ? [] : rightKeys(questions, attempt.answers, answerKey),
       // What "Abrir" needs to show this attempt again (its answers and flags, no key).
       snapshot: {

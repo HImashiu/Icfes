@@ -9,6 +9,7 @@ import { loadOrder, moveArea, normalizeOrder, saveOrder } from "../lib/order.js"
 import { loadHistory } from "../lib/local.js";
 import { practiceInsights } from "../lib/student.js";
 import { SESSION_HINT, bookletCode, groupBooklets, sessionOf } from "../lib/booklets.js";
+import "./study.css";
 
 // Nuevo simulacro: booklet, scope (whole exam or one area), mode, and a sticky start button.
 // 225 min reads as "3 h 45 min".
@@ -28,7 +29,7 @@ function initialScope(exam, preset) {
   return exam.sections[0]?.name ?? "all";
 }
 
-export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, preset, pendingKeys = [], onRepechaje }) {
+export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, preset, pendingKeys = [], onRepechaje, onCustom }) {
   const [scope, setScope] = useState(() => initialScope(exam, preset));
   const [mode, setMode] = useState(preset?.mode ?? "practice");
   // Switching booklets can drop the chosen area (1ra booklets have no Inglés): fall back to the whole booklet.
@@ -83,6 +84,14 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, 
           {book && book.sessions.length > 1 ? `El examen real se presenta en dos sesiones del mismo cuadernillo. Sesión ${session}: ${SESSION_HINT[session] ?? ""}.` : ""} Fuente: ICFES, Saber 11 · {exam.questions.length} preguntas
         </span>
       </div>
+
+      {onCustom && (
+        <button type="button" className="card su-custom" onClick={onCustom}>
+          <Icon name="pencil" />
+          <span><strong>Práctica a medida</strong><span className="caption">Elige competencias, dificultad, cuántas y solo las nuevas, las que fallaste o las que marcaste.</span></span>
+          <Icon name="right" />
+        </button>
+      )}
 
       <div className="chips scope-chips" role="radiogroup" aria-label="Qué practicar">
         <button type="button" role="radio" aria-checked={scope === "all"} className={scope === "all" ? "chip on" : "chip"} onClick={() => setScope("all")}>
