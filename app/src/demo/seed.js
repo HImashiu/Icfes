@@ -195,7 +195,7 @@ export function buildDemo({ bundles, now = Date.now() }) {
   const paperBase = assignedC3[2];
   let seating = [];
   if (paperBase && paperSlug) {
-    const paper = { ...paperBase, id: "demo-a-3-paper", title: "Simulacro en papel · sesión 1", opens_at: new Date(now - 2 * DAY).toISOString(), due_at: new Date(now - 1 * DAY).toISOString(), created_at: new Date(now - 6 * 3600000).toISOString(), proctor: false };
+    const paper = { ...paperBase, id: "demo-a-3-paper", title: "Simulacro en papel · sesión 1", opens_at: new Date(now - 2 * DAY).toISOString(), due_at: new Date(now - 1 * DAY).toISOString(), created_at: new Date(now - 6 * 3600000).toISOString(), proctor: false, delivery: "paper" };
     assignments.push(paper);
     const bundle = bundles.get(paper.exam_slug);
     const qs = paper.question_keys.map((k) => questionBy.get(paper.exam_slug).get(k)).filter(Boolean);
@@ -268,7 +268,8 @@ export function buildDemo({ bundles, now = Date.now() }) {
   const lessons = lessonSlug && lessonItems.length ? [{
     id: "demo-l1", owner_id: "demo-t0", title: "Repaso: leer tablas y gráficos", exam_slug: lessonSlug,
     items: [{ type: "text", title: "Qué vamos a hacer hoy", body: "- Leer una tabla antes de mirar las opciones\n- Justificar la respuesta con un dato" }, ...lessonItems.map((i) => ({ type: "q", key: i.key })), { type: "text", title: "Para llevar", body: "Subraya el dato que usaste. Si no lo encuentras, vuelve a leer la pregunta." }],
-    settings: { hideOptions: false, seconds: 60, titleSlide: true }, visibility: "school", updated_at: new Date(now - 3 * DAY).toISOString(),
+    settings: { hideOptions: false, seconds: 60, titleSlide: true, intro: { layout: "split", title: "Leer tablas y gráficos", subtitle: "Matemáticas · repaso para el simulacro", by: "Prof. Marcela Ríos", color: "#1F4E79", goals: "- Encontrar el dato antes de mirar las opciones\n- Justificar cada respuesta con la tabla" } },
+    visibility: "school", updated_at: new Date(now - 3 * DAY).toISOString(),
   }, {
     id: "demo-l2", owner_id: "demo-t2", title: "Argumentos en un texto", exam_slug: lessonSlug,
     items: (itemsBySlug.get(lessonSlug) ?? []).filter((i) => i.section === "Lectura crítica").slice(0, 4).map((i) => ({ type: "q", key: i.key })),
