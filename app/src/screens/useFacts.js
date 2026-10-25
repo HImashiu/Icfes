@@ -14,9 +14,15 @@ export function useFacts({ api, assignments, courses, fetchExam, ws = null, on =
       const slugs = [...new Set(mine.map((a) => a.exam_slug))];
       const keysOf = (slug) => [...new Set(mine.filter((a) => a.exam_slug === slug).flatMap((a) => a.question_keys ?? []))];
       const bundles = new Map();
-      for (const s of slugs) { try { bundles.set(s, await fetchExam(s, s === "teacher" ? keysOf(s) : null)); } catch { /* booklet missing: its answers are left out */ } }
+      // One retry: the Resumen loads several booklets at once and a busy connection can drop one.
+      const load = (s) => fetchExam(s, s === "teacher" ? keysOf(s) : null);
+      for (const s of slugs) {
+        try { bundles.set(s, await load(s)); } catch {
+          try { bundles.set(s, await load(s)); } catch { /* booklet missing: its answers are left out */ }
+        }
+      }
       if (alive) setFacts(buildFacts({ attempts, assignments: mine, members, courses, bundles, ws }));
-    })().catch(() => alive && setFacts([]));
+    })().catch((e) => { if (alive) setFacts([]); });
     return () => { alive = false; };
   }, [api, assignments, courses, fetchExam, ws, on]);
   return facts;

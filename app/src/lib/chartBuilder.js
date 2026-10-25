@@ -3,7 +3,6 @@
 // the table and the chart screen draws it. Pure functions: no network, no React.
 import { bankItems } from "./bank.js";
 import { whoOf } from "./assignments.js";
-import { groupOf } from "./teaching.js";
 
 const DAY = 86400000;
 const DOW = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
@@ -85,7 +84,8 @@ export const PRESETS = [
 export function buildFacts({ attempts, assignments, members = [], courses = [], bundles, ws = null }) {
   const aById = new Map(assignments.map((a) => [a.id, a]));
   const cName = new Map(courses.map((c) => [c.id, c.name]));
-  const cGroup = new Map(courses.map((c) => [c.id, groupOf(c).name]));
+  // The class group ("11A"), as teaching.js names it; written here so this module keeps no import cycle.
+  const cGroup = new Map(courses.map((c) => [c.id, c.grade && c.group_label ? `${c.grade}${String(c.group_label).trim().toUpperCase()}` : c.name]));
   // Workspace groups are kept by email; a student in several groups shows them joined.
   const gName = new Map((ws?.groups ?? []).map((g) => [g.id, g.name]));
   const gByEmail = new Map();

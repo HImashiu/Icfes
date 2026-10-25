@@ -13,6 +13,7 @@ import { FilePicker, confirmDialog } from "../components/Controls.jsx";
 import Icon from "../components/Icon.jsx";
 import BankEditor from "./BankEditor.jsx";
 import Sheet from "./Sheet.jsx";
+import ResultsInsights from "./ResultsInsights.jsx";
 import GradingSettings from "./GradingSettings.jsx";
 import Lessons from "./Lessons.jsx";
 import Students from "./Students.jsx";
@@ -223,6 +224,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           {r.section === "resultados" && r.tab === "resumen" && (
             <>
               <Dashboard api={api} profile={profile} guard={guard} ws={ws} onOpenStudent={openStudent} onOpenQueue={() => openStudent("#queue")} onOpenCourse={() => go({ section: "estudiantes", tab: "clases" })} onReinforce={() => go({ section: "actividades", tab: "refuerzo" })} />
+              <ResultsInsights api={api} courses={courses} assignments={assignments} fetchExam={fetchExam} ws={ws} onOpenSheet={() => go({ section: "resultados", tab: "grafica" })} />
               <TeacherReports api={api} profile={profile} courses={courses} assignments={assignments} models={models} fetchExam={fetchExam} guard={guard} onOpenStudent={openStudent} />
             </>
           )}

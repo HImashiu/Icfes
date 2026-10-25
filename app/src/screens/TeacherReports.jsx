@@ -5,6 +5,10 @@ import { fmtDuration } from "../lib/studentRun.js";
 import { Kpi } from "./Dashboard.jsx";
 import { questionsForAttempt } from "../lib/assignments.js";
 import { formatValue, gradeMany, isAdjusted, itemFromRow, resolveModel } from "../lib/grading.js";
+import { groupRows } from "../lib/resultsAnalysis.js";
+import { groupOf } from "../lib/teaching.js";
+import Icon from "../components/Icon.jsx";
+import "./results.css";
 
 const shortDate = (iso) => (iso ? new Date(iso).toLocaleDateString("es-CO", { day: "numeric", month: "short" }) : "—");
 const FILTERS = [["all", "Todos"], ["late", "Con tareas sin entregar"], ["inactive", "Sin entregar nada"], ["flags", "Con salidas en exámenes"]];
@@ -31,14 +35,13 @@ function Progress({ items }) {
 }
 
 // Reportes: actividad y progreso de cada estudiante por espacio de clase, con exportación a CSV.
-const LIMIT = 12;
 
 export default function TeacherReports({ api, profile, courses, assignments, models = [], fetchExam, guard, onOpenStudent }) {
   const [data, setData] = useState(null);
   const [space, setSpace] = useState("");
   const [filter, setFilter] = useState("all");
   const [open, setOpen] = useState(null);
-  const [all, setAll] = useState(false); // the summary shows the first rows; the full list lives in Estudiantes
+  const [openGroups, setOpenGroups] = useState(() => new Set());
 
   useEffect(() => {
     guard(async () => {
@@ -90,6 +93,12 @@ export default function TeacherReports({ api, profile, courses, assignments, mod
   const anyModel = graded.some((r) => r.gradeModel && (r.gradeModel.kind !== "percent" || isAdjusted(r.gradeModel)));
   const shown = graded.filter((r) => filter === "all" || (filter === "late" ? r.late > 0 : filter === "inactive" ? r.assigned > 0 && r.done === 0 : r.leaves > 0));
   const sum = summaryOf(rows);
+  // Grouped by course (11 A, 11 B…), each folded until the teacher opens it.
+  const groupName = (courseId) => { const c = courses.find((x) => x.id === courseId); return c ? groupOf(c).name : "Sin curso"; };
+  const groups = groupRows(shown, (r) => groupName(r.courseId)).map((g) => ({ ...g, late: g.rows.filter((r) => r.late > 0).length }));
+  const isOpen = (name) => groups.length === 1 || openGroups.has(name);
+  const toggle = (name) => setOpenGroups((s) => { const n = new Set(s); if (n.has(name)) n.delete(name); else n.add(name); return n; });
+  const allOpen = groups.every((g) => openGroups.has(g.name));
 
   return (
     <>
@@ -112,11 +121,18 @@ export default function TeacherReports({ api, profile, courses, assignments, mod
             {sum.leaves > 0 && <Kpi label="Salidas en exámenes" value={String(sum.leaves)} />}
           </div>
         )}
-        <div className="table-wrap">
+        {groups.map((g) => (
+        <div key={g.name} className="ar2-group">
+        <button type="button" className="ar2-group-head" aria-expanded={isOpen(g.name)} onClick={() => toggle(g.name)}>
+          <span className="chev"><Icon name="right" size={14} strokeWidth={3} /></span>
+          <strong>{g.name}</strong>
+          <span className="caption">{g.n} estudiantes{g.avg != null ? ` · promedio ${g.avg} %` : ""}{g.late ? ` · ${g.late} con tareas sin entregar` : ""}</span>
+        </button>
+        {isOpen(g.name) && <div className="table-wrap">
           <table className="t-table m-cards">
             <thead><tr><th>Estudiante</th><th>Entregas</th><th>{anyModel ? "Nota media" : "Promedio"}</th><th>Cambio</th><th>Tiempo total</th><th>Última entrega</th><th>Salidas</th><th /></tr></thead>
             <tbody>
-              {shown.slice(0, all ? shown.length : LIMIT).map((r) => (
+              {g.rows.map((r) => (
                 <Fragment key={r.id}>
                   <tr>
                     <td className="m-main">{r.name}{!r.joined && <span className="caption"> · sin ingresar</span>}</td>
@@ -141,11 +157,13 @@ export default function TeacherReports({ api, profile, courses, assignments, mod
                   )}
                 </Fragment>
               ))}
-              {data && shown.length === 0 && <tr><td colSpan={8} className="caption">No hay estudiantes con ese filtro.</td></tr>}
             </tbody>
           </table>
+        </div>}
         </div>
-        {shown.length > LIMIT && <div className="ws-pager"><span className="caption">Mostrando {all ? shown.length : LIMIT} de {shown.length}. La lista completa, con filtros y perfiles, está en Estudiantes.</span><button type="button" className="secondary" onClick={() => setAll(!all)}>{all ? "Mostrar menos" : `Mostrar los ${shown.length}`}</button></div>}
+        ))}
+        {data && shown.length === 0 && <p className="caption">No hay estudiantes con ese filtro.</p>}
+        {groups.length > 1 && <button type="button" className="link" onClick={() => setOpenGroups(allOpen ? new Set() : new Set(groups.map((g) => g.name)))}>{allOpen ? "Cerrar todos los cursos" : "Abrir todos los cursos"}</button>}
         <span className="caption">Puntajes según la clave preliminar, no oficial.{anyModel ? " La nota usa el modelo de calificación de cada asignación (ver «Calificación»); el cambio se mide en puntos de aciertos." : ""} Las salidas son avisos de los exámenes monitoreados.</span>
       </div>
     </>

@@ -33,7 +33,7 @@ export default function ResultsInsights({ api, courses, assignments, fetchExam, 
         <Kpi label="Respuestas analizadas" value={v.answers.toLocaleString("es-CO")} hint={`de ${v.students} estudiantes`} />
         <Kpi label="Acierto general" value={v.right == null ? null : `${v.right} %`} hint="clave preliminar" />
         <Kpi label="Preguntas difíciles" value={`${v.diff.hard}/${v.diff.total}`} hint="las acierta menos del 40 %" />
-        {v.time.rushedShare != null && <Kpi label="Respuestas apresuradas" value={`${v.time.rushedShare} %`} hint="en menos de 15 s" />}
+        {v.time.rushedShare != null && <Kpi label="Respuestas apresuradas" value={`${v.time.rushedShare.toLocaleString("es-CO")} %`} hint="en menos de 15 s" />}
       </div>
 
       {v.findings.length > 0 && (

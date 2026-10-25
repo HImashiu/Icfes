@@ -85,16 +85,16 @@ export function summaryFindings({ grid, weekly, topics, time, diff }) {
     const d = vals[vals.length - 1].x.pct - vals[0].x.pct;
     if (!gap || d > gap.d) gap = { d, area: c, lo: vals[0], hi: vals[vals.length - 1] };
   }
-  if (gap && gap.d >= 10) out.push({ tone: "mid", text: `En ${gap.area}, ${gap.lo.r} va ${Math.round(gap.d)} puntos por debajo de ${gap.hi.r} (${gap.lo.x.pct} % frente a ${gap.hi.x.pct} %).` });
+  if (gap && gap.d >= 10) out.push({ tone: "mid", text: `En ${gap.area}, ${gap.lo.r} va ${Math.round(gap.d)} puntos por debajo de ${gap.hi.r} (${Math.round(gap.lo.x.pct)} % frente a ${Math.round(gap.hi.x.pct)} %).` });
   for (const s of weekly.series) {
     const v = s.values.filter((x) => x != null);
     if (v.length >= 3) {
       const d = v[v.length - 1] - v[0];
-      if (Math.abs(d) >= 8) out.push({ tone: d > 0 ? "ok" : "bad", text: `${s.name} ${d > 0 ? "sube" : "baja"} ${Math.abs(Math.round(d))} puntos desde la primera semana con datos (${v[0]} % → ${v[v.length - 1]} %).` });
+      if (Math.abs(d) >= 8) out.push({ tone: d > 0 ? "ok" : "bad", text: `${s.name} ${d > 0 ? "sube" : "baja"} ${Math.abs(Math.round(d))} puntos desde la primera semana con datos (${Math.round(v[0])} % → ${Math.round(v[v.length - 1])} %).` });
     }
   }
-  if (topics[0]) out.push({ tone: "bad", text: `El tema más bajo es «${topics[0].name}» (${topics[0].pct} % en ${topics[0].n} respuestas). Buen candidato para un refuerzo.` });
-  if (time.rushedShare != null && time.rushedShare >= 10) out.push({ tone: "mid", text: `${time.rushedShare} % de las respuestas se dieron en menos de 15 segundos y ${time.rushedWrong} % de ellas fueron incorrectas: ${time.rushedStudents} estudiantes parecen responder al azar.` });
+  if (topics[0]) out.push({ tone: "bad", text: `El tema más bajo es «${topics[0].name}» (${Math.round(topics[0].pct)} % en ${topics[0].n} respuestas). Buen candidato para un refuerzo.` });
+  if (time.rushedShare != null && time.rushedShare >= 10) out.push({ tone: "mid", text: `${Math.round(time.rushedShare)} % de las respuestas se dieron en menos de 15 segundos y ${Math.round(time.rushedWrong)} % de ellas fueron incorrectas: ${time.rushedStudents} estudiantes parecen responder al azar.` });
   if (diff.total && diff.hard / diff.total >= 0.25) out.push({ tone: "mid", text: `${diff.hard} de ${diff.total} preguntas usadas las acierta menos del 40 %: el material puede estar por encima del nivel actual.` });
   return out.slice(0, 5);
 }

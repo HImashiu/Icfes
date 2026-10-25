@@ -218,3 +218,14 @@
 .hd > .t-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
 .hd > .t-head > div { flex: 1 1 320px; }
 .hd-bar-stack .d-bar-row { grid-template-columns: 1fr 64px; }
+
+/* ---------- Resumen insights ---------- */
+.ri { display: grid; gap: 12px; margin: 16px 0; }
+.ri-head { flex-wrap: wrap; gap: 8px; }
+.ri-head h2 { margin: 0; }
+.ri-heat td, .ri-heat th { text-align: center; }
+.ri-heat td:first-child, .ri-heat th:first-child { text-align: left; }
+.ri-heat td { font-variant-numeric: tabular-nums; font-weight: 700; border-radius: 6px; }
+.ri-hard { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ri-hard li { display: flex; gap: 10px; align-items: center; }
+.ri-pct { flex: none; min-width: 50px; text-align: center; padding: 3px 6px; border-radius: 8px; font-weight: 800; font-size: 0.85rem; }
