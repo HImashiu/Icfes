@@ -183,7 +183,7 @@ const dimOptions = (extra) => <>{extra}{DIMENSIONS.map((d) => <option key={d.id}
 
 /* ---------- Screen ---------- */
 
-export default function ChartBuilder({ api, profile, courses, assignments, fetchExam, guard }) {
+export default function ChartBuilder({ api, profile, courses, assignments, fetchExam, guard, ws = null }) {
   const [data, setData] = useState(null);
   const [facts, setFacts] = useState(null);
   const [progress, setProgress] = useState(null);
@@ -224,10 +224,10 @@ export default function ChartBuilder({ api, profile, courses, assignments, fetch
       if (!live) return;
       setSkipped(miss);
       setProgress(null);
-      setFacts(buildFacts({ attempts: data.attempts, assignments, members: data.members, courses, bundles: bundles.current }));
+      setFacts(buildFacts({ attempts: data.attempts, assignments, members: data.members, courses, bundles: bundles.current, ws }));
     })();
     return () => { live = false; };
-  }, [data, assignments, courses, fetchExam]);
+  }, [data, assignments, courses, fetchExam, ws]);
 
   const patch = (p) => setSpec((s) => ({ ...s, ...p }));
   const setFilter = (id, vals) => setSpec((s) => ({ ...s, filters: { ...s.filters, [id]: vals } }));

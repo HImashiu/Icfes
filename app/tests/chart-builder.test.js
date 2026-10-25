@@ -25,6 +25,12 @@ describe("chart builder facts", () => {
     expect(facts.find((f) => f.qkey === "4").qtype).toBe("Con figura o gráfico");
     expect(facts.find((f) => f.qkey === "2" && f.studentId === "p1")).toMatchObject({ result: "Error", timeBucket: "1 a 2 min" });
   });
+  it("puts each student's workspace groups on the facts", () => {
+    const ws = { groups: [{ id: "g1", name: "Refuerzo" }], groupMembers: [{ group_id: "g1", email: "A@x" }] };
+    const withGroups = buildFacts({ attempts, assignments, members, courses: [], bundles: new Map([["s", bundle]]), ws });
+    expect(valuesOf(withGroups, "group")).toEqual(["Refuerzo", "Sin grupo"]);
+    expect(withGroups.find((f) => f.studentId === "p1").group).toBe("Refuerzo");
+  });
   it("starts weeks on Monday", () => {
     expect(weekStart("2026-10-18T12:00:00Z")).toBe("2026-10-12");
     expect(weekStart("2026-10-19T12:00:00Z")).toBe("2026-10-19");

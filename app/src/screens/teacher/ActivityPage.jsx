@@ -76,8 +76,10 @@ export default function ActivityPage({ api, profile, assignment, course, tab, go
         {(steps ?? Array.from({ length: 5 }, (_, i) => ({ id: i, label: "…", value: "", note: "", status: "next" }))).map((s) => (
           <li key={s.id} className={`ap-step ${s.status}`}>
             <span className="ap-step-label">{s.status === "done" && <Icon name="check" size={13} strokeWidth={3.4} />}{s.label}</span>
-            <strong>{s.value}</strong>
-            <span className="caption">{s.note}</span>
+            {s.id === "calificar"
+              ? <button type="button" className="link ap-step-link" onClick={() => go({ section: "actividad", id: assignment.id, tab: "calificacion" })}><strong>{s.value}</strong></button>
+              : <strong>{s.value}</strong>}
+            <span className="caption">{s.id === "calificar" ? "Toca para cambiarla" : s.note}</span>
           </li>
         ))}
       </ol>

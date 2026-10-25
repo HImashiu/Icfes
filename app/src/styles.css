@@ -2809,3 +2809,4 @@ body:has(.bottom-nav) .demo-banner { bottom: 84px; }
   .score-steps .label, .score-steps .primary { grid-column: 1 / -1; }
 }
 .score-step { white-space: nowrap; }
+.ap-step-link { text-align: left; padding: 0; min-height: 0; font: inherit; color: inherit; }

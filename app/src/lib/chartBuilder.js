@@ -25,6 +25,7 @@ const questionType = (q) => (q?.figure || q?.figures?.length || q?.traced?.lengt
 export const DIMENSIONS = [
   { id: "space", label: "Espacio de clase", hint: "Materia, grado y grupo", get: (f) => f.space },
   { id: "student", label: "Estudiante", hint: "Siempre en orden alfabético", get: (f) => f.student, alpha: true },
+  { id: "group", label: "Grupo de estudiantes", hint: "Los grupos de Estudiantes › Grupos", get: (f) => f.group, alpha: true },
   { id: "assignment", label: "Asignación", get: (f) => f.assignment },
   { id: "kind", label: "Tipo de actividad", get: (f) => f.kind },
   { id: "area", label: "Área", get: (f) => f.area },
@@ -72,6 +73,7 @@ export const PRESETS = [
   { name: "Aciertos por tema", spec: { ...DEFAULT_SPEC, rows: "tema", minN: 5 } },
   { name: "Área por espacio de clase", spec: { ...DEFAULT_SPEC, rows: "area", cols: "space", chart: "heat", sort: "name" } },
   { name: "Tiempo semanal por espacio", spec: { ...DEFAULT_SPEC, rows: "week", cols: "space", metric: "totalMin", chart: "line", sort: "name" } },
+  { name: "Tiempo semanal por grupo", spec: { ...DEFAULT_SPEC, rows: "week", cols: "group", metric: "totalMin", chart: "line", sort: "name" } },
   { name: "Evolución de aciertos", spec: { ...DEFAULT_SPEC, rows: "week", metric: "acc", chart: "line", sort: "name" } },
   { name: "Dificultad y tiempo", spec: { ...DEFAULT_SPEC, rows: "difficulty", metric: "avgSec", sort: "name" } },
   { name: "Tipo de pregunta", spec: { ...DEFAULT_SPEC, rows: "qtype", cols: "area", chart: "heat", sort: "name" } },
@@ -79,14 +81,23 @@ export const PRESETS = [
 
 // One fact per answered question of every delivered attempt. bundles: Map exam slug -> { exam, key, enrich } (as fetchExam returns).
 // members: course_members rows, to put names on students. Attempts of unknown assignments are ignored.
-export function buildFacts({ attempts, assignments, members = [], courses = [], bundles }) {
+export function buildFacts({ attempts, assignments, members = [], courses = [], bundles, ws = null }) {
   const aById = new Map(assignments.map((a) => [a.id, a]));
   const cName = new Map(courses.map((c) => [c.id, c.name]));
+  // Workspace groups are kept by email; a student in several groups shows them joined.
+  const gName = new Map((ws?.groups ?? []).map((g) => [g.id, g.name]));
+  const gByEmail = new Map();
+  for (const gm of ws?.groupMembers ?? []) {
+    const key = String(gm.email ?? "").toLowerCase();
+    if (gName.has(gm.group_id)) gByEmail.set(key, [...(gByEmail.get(key) ?? []), gName.get(gm.group_id)]);
+  }
   const who = new Map();
+  const groupOf = new Map();
   for (const m of members) {
     const label = m.full_name || m.email || "Sin nombre";
-    if (m.profile_id) who.set(m.profile_id, label);
-    who.set(m.id, label);
+    const g = gByEmail.get(String(m.email ?? "").toLowerCase());
+    const group = g ? [...g].sort((a, b) => a.localeCompare(b, "es")).join(" / ") : "Sin grupo";
+    for (const id of [m.profile_id, m.id]) if (id) { who.set(id, label); groupOf.set(id, group); }
   }
   const itemsBySlug = new Map();
   const itemsFor = (slug) => {
@@ -106,7 +117,7 @@ export function buildFacts({ attempts, assignments, members = [], courses = [], 
     const when = new Date(at.submitted_at);
     const person = whoOf(at);
     const base = {
-      attemptId: `${person}|${at.assignment_id}|${at.submitted_at}`, studentId: person, student: who.get(person) ?? "Sin nombre",
+      attemptId: `${person}|${at.assignment_id}|${at.submitted_at}`, studentId: person, student: who.get(person) ?? "Sin nombre", group: groupOf.get(person) ?? "Sin grupo",
       space: a.courses?.name ?? cName.get(a.course_id) ?? "Sin espacio", assignment: a.title, kind: KIND_LABEL[a.kind] ?? "Tarea",
       date: at.submitted_at, ts: when.getTime(), week: weekStart(when), month: iso(when).slice(0, 7), weekday: DOW[when.getDay()],
     };

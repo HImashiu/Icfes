@@ -217,6 +217,18 @@ export function createApi(client) {
     async saveSeating(assignmentId, plan) {
       unwrap(await client.from("paper_seating").upsert({ assignment_id: assignmentId, plan, updated_at: new Date().toISOString() }));
     },
+    // Saved classrooms, shared by the school's teachers (migration 0019). null when the table is not there yet.
+    async seatingRooms() {
+      const r = await client.from("seating_rooms").select("name, layout").order("name");
+      if (r.error && /seating_rooms|schema cache|does not exist/i.test(r.error.message ?? "")) return null;
+      return unwrap(r).map((row) => ({ ...row.layout, name: row.name }));
+    },
+    async saveSeatingRoom({ name, rows, cols, blocked }) {
+      unwrap(await client.from("seating_rooms").upsert({ name, layout: { rows, cols, blocked }, updated_at: new Date().toISOString() }, { onConflict: "school_id,name" }));
+    },
+    async deleteSeatingRoom(name) {
+      unwrap(await client.from("seating_rooms").delete().eq("name", name));
+    },
     async createFamilyReport(profileId, payload) {
       return unwrap(await client.rpc("create_family_report", { p_profile: profileId, p_payload: payload }));
     },

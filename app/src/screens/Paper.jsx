@@ -180,7 +180,7 @@ function Scan({ api, assignment, bundle, questions, roster, plan, guard, setNoti
 const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => ({ value: String(a + i), label: String(a + i) }));
 
 // Plano del salón: filas × puestos, puestos vacíos, parejas que deben quedar separadas y mezclar con un toque.
-function Seating({ assignment, roster, plan, savePlan, setMode, siblings, loadSibling }) {
+function Seating({ api, assignment, roster, plan, savePlan, setMode, siblings, loadSibling }) {
   // A new room starts with enough seats for the whole class: six per row, as many rows as it takes.
   const [cols, setCols] = useState(plan?.cols ?? 6);
   const [rows, setRows] = useState(plan?.rows ?? Math.min(12, Math.max(5, Math.ceil(roster.length / 6))));
@@ -193,7 +193,19 @@ function Seating({ assignment, roster, plan, savePlan, setMode, siblings, loadSi
   const [edit, setEdit] = useState("layout");
   const [picked, setPicked] = useState(null);
   const [rooms, setRooms] = useState(loadRooms);
+  const [shared, setShared] = useState(false); // rooms come from the school (migration 0019) instead of this browser
   const [roomName, setRoomName] = useState("");
+  useEffect(() => {
+    let alive = true;
+    Promise.resolve(api?.seatingRooms?.()).then((list) => {
+      if (!alive || !Array.isArray(list)) return;
+      // Rooms kept in this browser before the migration ran are offered too, and go up to the school when saved again.
+      const names = new Set(list.map((r) => r.name));
+      setRooms([...list, ...loadRooms().filter((r) => !names.has(r.name))]);
+      setShared(true);
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, [api]);
   const names = useMemo(() => Object.fromEntries(roster.map((m) => [m.id, m.full_name || m.email])), [roster]);
   const seatsLeft = rows * cols - blocked.filter((s) => { const [r, c] = s.split(",").map(Number); return r < rows && c < cols; }).length;
   const stale = plan && !planMatches(plan, roster.map((m) => m.id));
@@ -223,8 +235,16 @@ function Seating({ assignment, roster, plan, savePlan, setMode, siblings, loadSi
   const keepRoom = () => {
     const name = roomName.trim();
     if (!name) return;
-    setRooms(saveRoom({ name, rows, cols, blocked }));
+    const room = { name, rows, cols, blocked };
+    setRooms(shared ? [...rooms.filter((r) => r.name !== name), room].sort((x, y) => x.name.localeCompare(y.name, "es")) : saveRoom(room));
+    if (shared) api.saveSeatingRoom(room).catch(() => saveRoom(room));
     setRoomName("");
+  };
+  const forgetRoom = (name) => {
+    const left = deleteRoom(name);
+    if (!shared) { setRooms(left); return; }
+    setRooms(rooms.filter((r) => r.name !== name));
+    api.deleteSeatingRoom(name).catch(() => {});
   };
   const reuse = async (id) => {
     const found = await loadSibling(id);
@@ -263,7 +283,8 @@ function Seating({ assignment, roster, plan, savePlan, setMode, siblings, loadSi
         {siblings.length > 0 && <Picker label="Usar el plano de otra asignación" value="" onChange={reuse} placeholder="Usar el plano de otra asignación…" options={siblings.map((a) => ({ value: a.id, label: a.title }))} />}
         <input type="text" aria-label="Nombre del salón" placeholder="Nombre del salón (ej. Aula 201)" value={roomName} onChange={(e) => setRoomName(e.target.value)} />
         <button type="button" className="secondary" disabled={!roomName.trim()} onClick={keepRoom}>Guardar salón</button>
-        {rooms.some((r) => r.name === roomName.trim()) && <button type="button" className="link" onClick={() => { setRooms(deleteRoom(roomName.trim())); setRoomName(""); }}>Borrar “{roomName.trim()}”</button>}
+        <span className="caption">{shared ? "Los salones guardados los ven todos los docentes del colegio." : "Los salones se guardan en este navegador."}</span>
+        {rooms.some((r) => r.name === roomName.trim()) && <button type="button" className="link" onClick={() => { forgetRoom(roomName.trim()); setRoomName(""); }}>Borrar “{roomName.trim()}”</button>}
       </div>
       {live && (
         <div className="seat-modes" role="group" aria-label="Qué hacer al tocar un puesto">
@@ -370,7 +391,7 @@ export default function Paper({ api, assignments, fetchExam, guard, setNotice, f
               </section>
             ))}
           </div>
-          {bundle && !noRoster && <Seating key={`${assignment.id}-${roster.length}-${savedPlan?.seed ?? 0}-${savedPlan?.orderSeed ?? 0}`} assignment={assignment} roster={roster} plan={savedPlan} savePlan={savePlan} setMode={setMode} siblings={choices.filter((a) => a.id !== assignment.id && a.course_id === assignment.course_id)} loadSibling={loadSibling} />}
+          {bundle && !noRoster && <Seating key={`${assignment.id}-${roster.length}-${savedPlan?.seed ?? 0}-${savedPlan?.orderSeed ?? 0}`} api={api} assignment={assignment} roster={roster} plan={savedPlan} savePlan={savePlan} setMode={setMode} siblings={choices.filter((a) => a.id !== assignment.id && a.course_id === assignment.course_id)} loadSibling={loadSibling} />}
           <p className="caption paper-note">La lista de estudiantes se ordena por correo. No agregues ni quites estudiantes entre imprimir y calificar: cada hoja lleva el código de su estudiante.</p>
         </>
       )}
