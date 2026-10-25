@@ -37,6 +37,8 @@ import { GlossaryProvider } from "./components/Glossary.jsx";
 import { loadHistory } from "./lib/local.js";
 import { demoEnabled } from "./demo/mode.js";
 import { pendingMisses, repechajeKeys } from "./lib/repechaje.js";
+import { hiddenFor, withoutHidden } from "./lib/questionUse.js";
+import { orderQuestions } from "./lib/order.js";
 import { resolveModel, xpFactor } from "./lib/grading.js";
 import { attemptForAssignment, attemptRow, attemptsLeft, questionsForAttempt, revealAllowed } from "./lib/assignments.js";
 
@@ -91,6 +93,8 @@ export default function App() {
   const signedIn = auth.status === "ready";
   const [assigned, setAssigned] = useState({ assignments: [], attempts: [], models: [] });
   const [myClasses, setMyClasses] = useState(null);
+  // Questions and booklets the school holds back from students' free practice (reserved for a simulacro, migration 0021).
+  const [hidden, setHidden] = useState(null);
   const [exams, setExams] = useState(null);
   const [loadError, setLoadError] = useState(null);
   const [selected, setSelected] = useState(null); // { slug, exam, key, keyStatus, notes, figures }
@@ -192,6 +196,13 @@ export default function App() {
     if (first && !selected && !opening && !openError && !tokenFromHash(window.location.hash)) openExam(first.slug);
   }, [exams, selected, opening, openError, openExam]);
 
+  // A booklet the school hid is not left open for free practice: the first visible one opens instead.
+  useEffect(() => {
+    if (!hidden || !selected || opening || attempt?.assignmentId || !hidden.slugs.has(selected.slug)) return;
+    const next = exams?.find((e) => e.status !== "proximamente" && !hidden.slugs.has(e.slug));
+    if (next) openExam(next.slug);
+  }, [hidden, selected, opening, attempt, exams, openExam]);
+
   // Keep an attempt in this browser so a reload does not lose answers.
   // Attempts opened from history or reports are read-only and are never written back.
   useEffect(() => {
@@ -213,11 +224,15 @@ export default function App() {
   };
 
   const startAttempt = (scope, mode, order) => {
-    const questions = questionsFor(selected.exam, scope);
+    const free = withoutHidden(selected.exam, hidden, selected.slug);
+    const questions = questionsFor(free, scope);
+    if (free.held && questions.length === 0) return setOpenError("Tu colegio reservó estas preguntas para un simulacro. Elige otro cuadernillo.");
     clearAttempt(selected.slug, scope);
     setAttempt({
       slug: selected.slug,
       scope,
+      // Held-back questions leave the set: the attempt then lists the ones it covers, in the chosen order.
+      ...(free.held ? { keys: orderQuestions(questions, scope === "all" ? order : null).map((q) => q.key) } : {}),
       mode,
       durationSec: mode === "timed" ? timedSeconds(questions) : null,
       startedAt: Date.now(),
@@ -241,6 +256,7 @@ export default function App() {
       await auth.api.linkRoster();
       const [assignments, attempts, models] = await Promise.all([auth.api.listAssignments(), auth.api.myAttempts(), auth.api.gradingModels().catch(() => [])]);
       setAssigned({ assignments, attempts, models });
+      if (auth.profile?.role === "student") auth.api.hiddenQuestions?.().then((rows) => setHidden(hiddenFor(rows ?? [])), () => setHidden(null));
       auth.api.studentClasses?.().then(setMyClasses, () => setMyClasses(null));
     } catch {
       setAssigned({ assignments: [], attempts: [] });
@@ -354,6 +370,9 @@ export default function App() {
   if (!selected) return <main className="frame"><p className="muted">{opening ? "Cargando cuadernillo…" : "Todavía no hay cuadernillos listos."}</p></main>;
 
   const questions = selected && attempt ? questionsForAttempt(selected.exam, attempt) : [];
+  // What a student may pick for free practice: booklets the school hid are not offered.
+  const studentExams = hidden ? (exams ?? []).filter((e) => !hidden.slugs.has(e.slug)) : exams ?? [];
+  const practiceExam = selected ? withoutHidden(selected.exam, hidden, selected.slug) : null;
   // Answers of an assigned attempt can be held back by the teacher (until the assignment closes, or for good).
   const assignedOf = attempt?.assignmentId ? assigned.assignments.find((a) => a.id === attempt.assignmentId) : null;
   const locked = Boolean(attempt?.assignmentId) && !revealAllowed(attempt.reveal, assignedOf);
@@ -409,7 +428,7 @@ export default function App() {
           onSetup={(p) => { setPreset(p); setView("setup"); }}
           onGo={go}
           course={course}
-          exams={exams ?? []}
+          exams={studentExams}
           onStartSession={startSession}
           onOpenSubject={(id) => { setSubjectId(id); setView("subjects"); }}
           signedOut={auth.status === "signed-out" || auth.status === "guest"}
@@ -422,9 +441,9 @@ export default function App() {
 
       {view === "setup" && selected && (
         <Setup
-          exam={selected.exam}
+          exam={practiceExam}
           slug={selected.slug}
-          exams={exams}
+          exams={studentExams}
           preset={preset}
           onPickExam={(slug) => openExam(slug)}
           onBack={() => setView("home")}
@@ -469,7 +488,7 @@ export default function App() {
           lockedNote={attempt?.reveal === "after_close" ? "Tu docente mostrará las respuestas cuando cierre la asignación." : undefined}
           onRetry={attempt.assignmentId ? retryAssigned : attempt.repechaje ? null : () => startAttempt(attempt.scope, attempt.mode, attempt.order)}
           onReviewTimes={(n) => { setReviewStart(n); setView("review"); }}
-          exams={exams ?? []}
+          exams={studentExams}
           onStartSession={startSession}
           onRepechaje={startRepechaje}
           grading={assignedOf ? resolveModel(assigned.models, { assignmentId: assignedOf.id, courseId: assignedOf.course_id, schoolId: auth.profile?.school_id }).model : null}
@@ -506,7 +525,7 @@ export default function App() {
         onTab={(t) => { setSubjectTab(t); setSubjectId(null); }} onOpenSubject={setSubjectId} onBack={() => setSubjectId(null)}
         onStartAssigned={startAssigned} onPracticeArea={practiceArea} onLogin={() => setView("login")} />}
       {view === "progress" && <Progress tab={progressTab} onTab={setProgressTab} assigned={signedIn ? assigned : null} classes={myClasses}
-        onPracticeArea={practiceArea} onNew={() => go("setup")} onOpen={openFromHistory} exams={exams ?? []} onStartSession={startSession} />}
+        onPracticeArea={practiceArea} onNew={() => go("setup")} onOpen={openFromHistory} exams={studentExams} onStartSession={startSession} />}
       {view === "login" && <Login onBack={() => setView("profile")} />}
       {view === "history" && <History onBack={() => setView("home")} onNew={() => setView("setup")} onOpen={openFromHistory} />}
       {view === "reports" && <Reports onBack={() => setView("profile")} onPractice={() => setView("setup")} onOpen={openFromReport} />}

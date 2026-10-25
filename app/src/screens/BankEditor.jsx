@@ -3,6 +3,9 @@ import { confirmDialog, Select } from "../components/Controls.jsx";
 import { areaColor } from "../lib/brand.js";
 import { draftFromBank, overrideRow } from "../lib/overrides.js";
 import Workspace from "./builder/Workspace.jsx";
+import { UseBadge, UseHistory } from "../components/QuestionUse.jsx";
+import { holdOf, useIndex } from "../lib/questionUse.js";
+import { loadQuestionControl } from "../lib/questionControl.js";
 import "./builder/builder.css";
 
 const plain = (h) => String(h ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -20,6 +23,10 @@ export default function BankEditor({ api, profile, exams, fetchExam, guard, setN
   const [area, setArea] = useState("");
   const [page, setPage] = useState(0);
   const [work, setWork] = useState(null);
+  // Where the school already used each question, and its holds (Biblioteca › Control).
+  const [qc, setQc] = useState(null);
+  const [usage, setUsage] = useState(null);
+  useEffect(() => { let on = true; loadQuestionControl(api).then((v) => on && setQc(v), () => {}); return () => { on = false; }; }, [api]);
 
   const load = useCallback(() => {
     if (!slug) return Promise.resolve();
@@ -32,6 +39,7 @@ export default function BankEditor({ api, profile, exams, fetchExam, guard, setN
   useEffect(() => { setBundle(null); setPage(0); load(); }, [load]);
 
   const byKey = useMemo(() => new Map(versions.map((v) => [v.qkey, v])), [versions]);
+  const index = useMemo(() => (qc && bundle ? useIndex(qc.uses, slug, bundle.exam) : new Map()), [qc, bundle, slug]);
   const areas = useMemo(() => [...new Set((bundle?.exam.questions ?? []).map((q) => q.section))], [bundle]);
   const shown = useMemo(() => {
     const t = text.trim().toLowerCase();
@@ -87,10 +95,23 @@ export default function BankEditor({ api, profile, exams, fetchExam, guard, setN
                 <div className="b-body">
                   <strong><span className="dot" style={{ background: areaColor(q.section) }} /> N.° {q.number} · {q.section}</strong>
                   <span className="b-text">{plain(q.stem_md || q.stimulus_md).slice(0, 160)}</span>
-                  {v && <span className="chips-row"><span className="badge pending">Versión de tu colegio</span></span>}
+                  {(() => {
+                    const hold = holdOf(qc?.holds ?? [], slug, q.key);
+                    const n = index.get(q.key)?.length ?? 0;
+                    if (!v && !n && !hold) return null;
+                    return (
+                      <span className="chips-row">
+                        {v && <span className="badge pending">Versión de tu colegio</span>}
+                        <UseBadge count={n} />
+                        {hold?.reserve && <span className="qu-badge warn">Reservada para simulacro</span>}
+                        {hold?.hide && !hold.reserve && <span className="qu-badge info">Oculta de la práctica</span>}
+                      </span>
+                    );
+                  })()}
                 </div>
                 <span>
                   <button type="button" className="link" onClick={() => setWork({ q, draft: draftFromBank(q, bundle.key.get(q.key), v) })}>Editar</button>
+                  {" "}<button type="button" className="link" onClick={() => setUsage(q)}>Uso</button>
                   {v && <>{" "}<button type="button" className="link" onClick={() => restore(q)}>Volver a la original</button></>}
                 </span>
               </li>
@@ -98,6 +119,15 @@ export default function BankEditor({ api, profile, exams, fetchExam, guard, setN
           })}
         </ul>
         {bundle && shown.length === 0 && <p className="caption">Ninguna pregunta coincide.</p>}
+        {usage && (
+          <div className="b-modal" role="dialog" aria-modal="true" aria-label={`Uso de la pregunta ${usage.number}`} onClick={(e) => e.target === e.currentTarget && setUsage(null)}>
+            <div className="b-modal-card">
+              <div className="section-head"><strong>Pregunta {usage.number} · {usage.section}</strong><button type="button" className="link" onClick={() => setUsage(null)}>Cerrar</button></div>
+              <UseHistory uses={index.get(usage.key) ?? []} hold={holdOf(qc?.holds ?? [], slug, usage.key)} schoolWide={qc?.schoolWide !== false} />
+              <p className="caption">Reserva u oculta preguntas en Biblioteca › Control de preguntas.</p>
+            </div>
+          </div>
+        )}
         {pages > 1 && (
           <div className="report-actions">
             <button type="button" className="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Anterior</button>
