@@ -2768,3 +2768,44 @@ body:has(.bottom-nav) .demo-banner { bottom: 84px; }
 }
 @media (min-width: 768px) { .ws-table .ws-name { white-space: normal; max-width: 215px; } }
 @media (max-width: 767px) { .cb-callout { display: block; } .cb-callout svg { vertical-align: -3px; margin-right: 4px; } }
+
+/* ---- Saber 11 score: whole simulacro (Sesión 1 + Sesión 2) ---- */
+.score-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px 20px; align-items: start; padding: 16px; border: 2px solid var(--accent); }
+.score-main { display: grid; gap: 12px; min-width: 0; }
+.score-head { display: grid; gap: 4px; }
+.score-big { font: 800 52px/1 "Bricolage Grotesque", Figtree, sans-serif; letter-spacing: -0.02em; color: var(--text); }
+.score-big small { font-size: 18px; font-weight: 700; color: var(--text-2); margin-left: 4px; }
+.score-big.muted { color: var(--text-2); }
+.score-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.score-tag { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--surface-2); color: var(--text-2); white-space: nowrap; }
+.score-tag.ok { background: var(--ok-soft); color: var(--ok); }
+.score-tag.bad { background: var(--bad-soft); color: var(--bad); }
+.score-areas { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.score-area { display: grid; gap: 3px; padding: 8px; border-radius: 12px; background: var(--surface-2); min-width: 0; }
+.score-area b { font: 800 22px/1 "Bricolage Grotesque", Figtree, sans-serif; color: var(--c); }
+.score-area .caption { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.score-bar { height: 5px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.score-bar > span { display: block; height: 100%; background: var(--c); border-radius: inherit; }
+.score-partial { color: var(--flame); }
+.score-steps { display: grid; gap: 8px; min-width: 200px; padding: 12px; border-radius: 14px; background: var(--surface-2); }
+.score-step { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--text-2); }
+.score-step.done { color: var(--ok); }
+.score-note { grid-column: 1 / -1; font-size: 12px; }
+.stat-score { grid-column: 1 / -1; border: 2px solid var(--accent); }
+.stat-score .display { font-size: 34px; }
+.stat-score .primary { justify-self: start; }
+.pg-sims { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+.pg-sims::-webkit-scrollbar { display: none; }
+.pg-sims > span { display: grid; gap: 2px; padding: 8px 12px; border-radius: 12px; background: var(--surface-2); white-space: nowrap; }
+.pg-sims b { font: 800 20px "Bricolage Grotesque", sans-serif; }
+@media (max-width: 720px) {
+  .score-card { grid-template-columns: 1fr; padding: 14px; gap: 12px; }
+  .score-big { font-size: 44px; }
+  .score-areas { gap: 6px; }
+  .score-area { padding: 6px 4px; text-align: center; }
+  .score-area b { font-size: 18px; }
+  .score-area .caption { font-size: 11px; }
+  .score-steps { min-width: 0; grid-template-columns: 1fr 1fr; }
+  .score-steps .label, .score-steps .primary { grid-column: 1 / -1; }
+}
+.score-step { white-space: nowrap; }

@@ -59,7 +59,7 @@ export default function Dashboard({ api, profile, guard, ws, onOpenCourse, onRei
     });
   }, [api, guard, profile.role]);
   const s = useMemo(() => (data ? schoolSummary(data) : null), [data]);
-  const people = useMemo(() => (data ? studentSummaries(data.members, data.attempts) : []), [data]);
+  const people = useMemo(() => (data ? studentSummaries(data.members, data.attempts, data.assignments) : []), [data]);
   // One entry per student (by email) with alerts, status and follow-up: the same data as the Estudiantes workspace.
   const roster = useMemo(() => (data ? buildRoster({ members: data.members, assignments: data.assignments, attempts: data.attempts, ws: ws ?? {} }) : []), [data, ws]);
   const warn = useMemo(() => roster.filter((e) => e.severity > 0).sort((a, b) => b.severity - a.severity || a.name.localeCompare(b.name, "es")), [roster]);
@@ -109,12 +109,12 @@ export default function Dashboard({ api, profile, guard, ws, onOpenCourse, onRei
           )}
         </div>
         <div className="card t-card">
-          <strong>Banda global estimada</strong>
+          <strong>Puntaje Saber 11 estimado</strong>
           {s.bandCount === 0 ? (
-            <span className="caption">Aparece cuando los estudiantes entreguen un simulacro con tiempo. Las prácticas y tareas no entran a la banda.</span>
+            <span className="caption">Aparece cuando los estudiantes entreguen un simulacro completo: Sesión 1 y Sesión 2 del mismo cuadernillo. Una sola sesión, las prácticas por área y las tareas no dan puntaje.</span>
           ) : (
             <>
-              <span className="caption">{s.bandCount} simulacros · promedio {s.bandMean} / 500</span>
+              <span className="caption">{s.bandCount} estudiantes con simulacro completo · promedio {s.bandMean} / 500</span>
               <BandHistogram bins={s.bandHistogram} />
               <span className="caption">Estimación con curva provisional: sirve para comparar, no es el puntaje oficial.</span>
             </>
@@ -129,7 +129,7 @@ export default function Dashboard({ api, profile, guard, ws, onOpenCourse, onRei
             <>
               <strong className="display">Categoría {cohort.category.id}</strong>
               <span className="caption">
-                Si la prueba real fuera hoy, con el último simulacro con tiempo de {cohort.n} {cohort.n === 1 ? "estudiante" : "estudiantes"} (promedio {cohort.mean} de 500).
+                Si la prueba real fuera hoy, con el último simulacro completo (Sesión 1 + Sesión 2) de {cohort.n} {cohort.n === 1 ? "estudiante" : "estudiantes"} (promedio {cohort.mean} de 500).
                 {cohort.category.next ? ` Faltan ${cohort.category.toNext} puntos para la categoría ${cohort.category.next}.` : " Ya está en la categoría más alta."}
               </span>
               <span className="caption">Umbrales de ejemplo ({CATEGORY_VERSION}), no los oficiales: el ICFES publica los reales cada año.</span>

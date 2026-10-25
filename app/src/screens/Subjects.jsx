@@ -4,7 +4,7 @@ import Mascot from "../components/Mascot.jsx";
 import TaskRow, { dueText } from "../components/TaskRow.jsx";
 import { Select } from "../components/Controls.jsx";
 import { loadHistory } from "../lib/local.js";
-import { practiceInsights, studentSubjects, studentTasks } from "../lib/student.js";
+import { practiceInsights, studentSubjects, studentTasks, teacherLabel } from "../lib/student.js";
 import { areaShort, contextColor } from "../lib/teaching.js";
 
 const FILTERS = [
@@ -80,11 +80,11 @@ function SubjectGrid({ subjects, tasks, course, ins, now, onOpenSubject, onTasks
             </span>
             <span className="sj-teacher">
               <span className="sj-avatar" aria-hidden="true">{s.teacher ? initials(s.teacher.split(",")[0]) : "?"}</span>
-              <span><span className="caption">Docente</span><b>{s.teacher || "Por asignar"}</b></span>
+              <span><span className="caption">{s.teacher ? "Docente" : s.noClass ? "Sin clase propia" : "Docente"}</span><b>{teacherLabel(s)}</b></span>
             </span>
             <span className="td-spark sj-spark" aria-hidden="true">{(s.series.length ? s.series : [0]).map((v, i) => <span key={i} style={{ height: `${Math.max(8, v)}%`, background: s.color, opacity: i === s.series.length - 1 ? 1 : 0.45 }} />)}</span>
             <span className="sj-foot">
-              {s.next ? <span className="sh-due">{s.pending} pendiente{s.pending === 1 ? "" : "s"} · {dueText(s.next.due_at, now).toLowerCase()}</span> : <span className="caption">Al día · {s.done}/{s.total} entregadas</span>}
+              {s.next ? <span className="sh-due">{s.pending} pendiente{s.pending === 1 ? "" : "s"} · {dueText(s.next.due_at, now).toLowerCase()}</span> : <span className="caption">{s.total ? `Al día · ${s.done}/${s.total} entregadas` : s.avg != null ? "Nota según tus simulacros" : "Sin tareas aún"}</span>}
               {mine && <span className="caption">Tu práctica: {mine.pct} %</span>}
             </span>
           </button>
@@ -164,7 +164,7 @@ function SubjectPage({ subject: s, tasks, ins, now, onBack, onStartAssigned, onP
         <span className="sjp-band" aria-hidden="true" />
         <div className="sjp-who">
           <span className="sj-avatar big" aria-hidden="true">{s.teacher ? initials(s.teacher.split(",")[0]) : "?"}</span>
-          <span><span className="caption">Docente · {s.group}</span><strong>{s.teacher || "Por asignar"}</strong></span>
+          <span><span className="caption">{s.teacher ? "Docente" : "Sin clase propia"}{s.group ? ` · ${s.group}` : ""}</span><strong>{teacherLabel(s)}</strong></span>
         </div>
         <div className="sjp-kpis">
           <span><b>{s.avg == null ? "—" : `${s.avg} %`}</b><span className="caption">promedio en tareas</span></span>

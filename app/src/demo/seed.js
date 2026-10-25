@@ -10,6 +10,7 @@ import { generatePlan } from "../lib/seating.js";
 import { SUGGESTED_STATUSES } from "../lib/workspaceStore.js";
 import { EMPTY_FILTERS } from "../lib/workspace.js";
 import { FIRST, LAST, TEACHERS, emailOf } from "./names.js";
+import { bookletCode, sessionOf } from "../lib/booklets.js";
 
 export const SCHOOL_ID = "demo-school";
 const DAY = 864e5;
@@ -275,6 +276,51 @@ export function buildDemo({ bundles, now = Date.now() }) {
   }] : [];
   const formats = [{ id: "demo-f1", owner_id: "demo-t0", name: "Quiz de salida (10 min)", config: { ...BUILTIN_FORMATS[2].config, limit: "" }, visibility: "private", created_at: new Date(now - 9 * DAY).toISOString() }];
 
+  // ----- whole simulacros: Sesión 1 + Sesión 2 of one cuadernillo, the only thing that gives the 0-500 estimate -----
+  const s1Slug = slugs.find((sl) => sessionOf(sl) === 1);
+  const s2Slug = s1Slug && slugs.find((sl) => sessionOf(sl) === 2 && bookletCode(sl) === bookletCode(s1Slug));
+  const wholeSession = (s, slug, shift = 0) => {
+    const key = bundles.get(slug).key;
+    const qs = (itemsBySlug.get(slug) ?? []).map((it) => ({ q: questionBy.get(slug).get(it.key), diff: (it.dificultad ?? 3) - 3 })).filter((x) => x.q);
+    const answers = {};
+    const times = {};
+    for (const { q, diff } of qs) {
+      if (rand.next() > 0.98) continue; // left blank
+      const right = key.get(q.key);
+      const p = sigmoid(1.15 * (s.ability + shift + (s.areaSkill[q.section] ?? 0) - 0.5 * diff) + 0.15);
+      const wrong = (q.options ?? []).map((o) => o.letter).filter((l) => l !== right);
+      const ok = rand.next() < p;
+      answers[q.key] = ok ? right : rand.pick(wrong.length ? wrong : ["A"]);
+      times[q.key] = Math.max(6, Math.round((AREA_SECONDS[q.section] ?? 70) * Math.exp(rand.normal() * 0.3)));
+    }
+    return { qs: qs.map((x) => x.q), answers, times, sc: scoreAttempt(qs.map((x) => x.q), answers, key) };
+  };
+  if (s2Slug) {
+    const c3 = COURSES.findIndex((c) => c.id === "demo-c3");
+    [[s1Slug, 13], [s2Slug, 12]].forEach(([slug, ago], k) => {
+      const opens = now - ago * DAY;
+      const a = {
+        id: `demo-a-3-s${k + 1}`, course_id: "demo-c3", kind: "exam", title: `Simulacro completo · Sesión ${k + 1}`, exam_slug: slug, scope: "all", question_keys: null,
+        opens_at: new Date(opens).toISOString(), due_at: new Date(opens + 2 * DAY).toISOString(), time_limit_min: 270, reveal_policy: "after_close", max_attempts: 1,
+        assignee_id: null, status: "published", created_at: new Date(opens - DAY).toISOString(), allow_hints: false, instant_feedback: false,
+        allow_definitions: false, definitions: [], proctor: true, courses: { name: courses[c3].name },
+      };
+      assignments.push(a);
+      for (const s of students.filter((x) => x.group === "C")) {
+        if (s.dropout || rand.next() > s.engagement) continue;
+        const { answers, times, sc } = wholeSession(s, slug, s.growth * 5);
+        const submitted = opens + (3 + rand.next() * 20) * 3600000;
+        const started = submitted - 4.2 * 3600000;
+        attempts.push({
+          profile_id: s.profileId, member_id: null, client_id: `whole-${k + 1}-${s.n}`, assignment_id: a.id, exam_slug: slug, scope: "all", mode: "timed",
+          started_at: new Date(started).toISOString(), submitted_at: new Date(submitted).toISOString(), duration_sec: Math.round((submitted - started) / 1000),
+          answers, times, activity: { hints: {}, changes: {} }, proctor: { leaves: 0, awaySec: 0, pointerOuts: 0, idleSec: 0 },
+          score: { keyed: true, correct: sc.correct, answered: sc.answered, total: sc.total, perArea: sc.perArea }, key_status: "preliminary", device: s.n % 3 ? "phone" : "desktop",
+        });
+      }
+    });
+  }
+
   // ----- the demo student's own practice, as this browser's history would hold it -----
   const me = students.find((s) => s.n === DEMO_STUDENT_N);
   const history = [];
@@ -311,6 +357,24 @@ export function buildDemo({ bundles, now = Date.now() }) {
       snapshot: { slug, scope: area, mode: "practice", answers, flags: {}, times, startedAt: at - 15 * 60000, submittedAt: at, auto: false, xp: sc.correct * 10 },
     });
   });
+  // Her whole simulacros: two complete S11-A (Sesión 1 + Sesión 2, each a score), then a newer Sesión 1 waiting for its Sesión 2.
+  if (s2Slug) {
+    [[s1Slug, 20, -0.3], [s2Slug, 19, -0.3], [s1Slug, 10, 0], [s2Slug, 9, 0], [s1Slug, 2, 0.35]].forEach(([slug, ago, shift], k) => {
+      const { qs, answers, times, sc } = wholeSession(me, slug, shift);
+      const key = bundles.get(slug).key;
+      const at = now - ago * DAY - 4 * 3600000;
+      history.push({
+        id: `demo-hs-${k + 1}`, title: bundles.get(slug).exam.title, mode: "timed", at, answered: sc.answered, total: sc.total, keyed: true,
+        correct: sc.correct, outOf: sc.total, percent: sc.total ? (sc.correct / sc.total) * 100 : 0,
+        perArea: sc.perArea.map((a) => ({ name: a.name, correct: a.correct, answered: a.answered, total: a.total })),
+        xp: sc.correct * 10,
+        missed: qs.filter((q) => answers[q.key] !== key.get(q.key)).map((q) => q.key),
+        right: qs.filter((q) => answers[q.key] === key.get(q.key)).map((q) => q.key),
+        snapshot: { slug, scope: "all", mode: "timed", answers, flags: {}, times, startedAt: at - 4.5 * 3600000, submittedAt: at, auto: false, xp: sc.correct * 10 },
+      });
+    });
+    history.sort((x, y) => y.at - x.at);
+  }
   const meProfile = { id: me.profileId, email: me.email, full_name: me.name, role: "student", school_id: SCHOOL_ID, created_at: new Date(now - 60 * DAY).toISOString() };
 
   return {

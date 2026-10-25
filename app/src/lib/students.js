@@ -1,13 +1,14 @@
 // Per-student views built from delivered attempts: summaries, early-warning alerts, reinforcement plans and the
 // projected school category. Pure functions; the thresholds and rules are visible constants so they can be tuned.
-import { areaAverages, bandFor, mean, round } from "./analytics.js";
+import { areaAverages, mean, round } from "./analytics.js";
+import { latestScore } from "./simulacro.js";
 
 const DAY = 864e5;
 const ts = (a) => new Date(a.submitted_at).getTime();
 const pctOf = (a) => (a.score?.total ? (a.score.correct / a.score.total) * 100 : null);
 
 // members: student course_members; attempts: delivered attempts with score (profile_id, submitted_at, mode).
-export function studentSummaries(members, attempts) {
+export function studentSummaries(members, attempts, assignments = []) {
   const byProfile = new Map();
   const who = (a) => a.profile_id ?? a.member_id;
   for (const a of attempts) if (a.submitted_at && a.score?.keyed) byProfile.set(who(a), [...(byProfile.get(who(a)) ?? []), a]);
@@ -21,24 +22,23 @@ export function studentSummaries(members, attempts) {
     const list = [...new Set([...(m.profile_id ? byProfile.get(m.profile_id) ?? [] : []), ...(byProfile.get(m.id) ?? [])])];
     out.push({
       profileId: m.profile_id, email: m.email, name: m.full_name || m.email, courseId: m.course_id,
-      ...summarize(list, Boolean(m.profile_id)),
+      ...summarize(list, Boolean(m.profile_id), assignments),
     });
   }
   return out;
 }
 
 // The result figures of one student from their delivered, keyed attempts (any order).
-export function summarize(attempts, signedIn = false) {
+export function summarize(attempts, signedIn = false, assignments = []) {
   const list = attempts.filter((a) => a.submitted_at && a.score?.keyed).sort((x, y) => ts(x) - ts(y));
   const pcts = list.map(pctOf).filter((p) => p != null);
-  const timed = list.filter((a) => a.mode !== "practice");
-  const lastTimed = timed[timed.length - 1];
   return {
     joined: signedIn || list.length > 0,
     attempts: list, count: list.length,
     avg: round(mean(pcts)), last: pcts.length ? round(pcts[pcts.length - 1]) : null,
     lastAt: list.length ? ts(list[list.length - 1]) : null,
-    band: lastTimed ? bandFor(lastTimed.score.perArea) : null,
+    // Estimated 0-500 only from a whole simulacro (Sesión 1 + Sesión 2), never from one session.
+    band: latestScore(list, assignments),
     areas: areaAverages(list),
   };
 }
@@ -127,7 +127,7 @@ export function schoolCategory(meanBand) {
   return { id: here.id, toNext: up ? Math.ceil(up.min - meanBand) : 0, next: up?.id ?? null };
 }
 
-// Latest full timed exam per student, then the mean band. `students` are summaries (their .band is the latest timed).
+// Latest complete simulacro per student, then the mean band. `students` are summaries (their .band is the latest timed).
 export function cohortProjection(summaries) {
   const bands = summaries.map((s) => s.band?.global).filter((g) => g != null);
   const m = round(mean(bands));

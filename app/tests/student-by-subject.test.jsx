@@ -14,7 +14,7 @@ describe("student subjects", () => {
   const attempts = [{ assignment_id: "a2", submitted_at: "2026-10-19T00:00:00Z", score: { correct: 8, total: 10, answered: 10, keyed: true } }];
 
   it("shows each subject with its teacher, pending work and the student's own average", () => {
-    const s = studentSubjects({ classes, assignments, attempts, now });
+    const s = studentSubjects({ classes, assignments, attempts, now }).filter((x) => !x.noClass);
     expect(s.map((x) => [x.name, x.teacher, x.pending, x.group])).toEqual([["Matemáticas", "Hernán Castaño", 1, "11A"], ["Inglés", "Eva Ruiz", 1, "11A"]]);
     expect(s[0].next.id).toBe("a1");
     expect(s[0].avg).toBe(80);
