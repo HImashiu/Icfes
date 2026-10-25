@@ -170,3 +170,13 @@
 .tl-menu strong { padding: 6px 10px 8px; font-size: 14px; }
 .tl-menu button { display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 10px; border: 0; border-radius: 10px; background: transparent; color: var(--text); font-weight: 600; text-align: left; }
 .tl-menu button:hover { background: var(--surface-2); }
+.cm2-incomplete { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.aj-grid > .card > h2 { margin: 0; font-size: 18px; line-height: 1.25; }
+.aj-grade:not(.on) { color: var(--text-2); border-style: dashed; background: transparent; }
+.aj-grade.on { color: var(--accent-ink); }
+.aj-warn { color: var(--flame); }
+.cg-badge.warn { background: color-mix(in srgb, var(--flame) 16%, transparent); color: var(--flame); }
+.aj-status { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
+.aj-status > span { display: grid; gap: 2px; }
+.aj-status.ok > svg { color: var(--ok); }
+.aj-draft { justify-self: start; white-space: normal; line-height: 1.3; padding: 4px 10px; height: auto; }

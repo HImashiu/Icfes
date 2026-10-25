@@ -5,7 +5,7 @@ import { FORMULA_FUNCTIONS } from "../lib/formula.js";
 import { areaColor } from "../lib/brand.js";
 import { progressRows, questionsForAttempt } from "../lib/assignments.js";
 import { FORMULA_VARS, MODEL_KINDS, describeModel, formatValue, gradeMany, itemFromRow, normalizeModel, resolveModel, xpFactor } from "../lib/grading.js";
-import { groupOf } from "../lib/teaching.js";
+import { classLabel, groupOf } from "../lib/teaching.js";
 import Gradebook from "./Gradebook.jsx";
 import "./results.css";
 
@@ -23,8 +23,8 @@ const EXAMPLE = { id: "ej", mode: "timed", minutes: 60, attemptNo: 1, perArea: A
 const PLAIN = {
   percent: { title: "Porcentaje de aciertos", what: "La nota es el porcentaje de preguntas correctas, sin convertir.", when: "Para ver el desempeño tal cual, en prácticas y tareas." },
   scale: { title: "Escala del colegio (ej. 1,0 a 5,0)", what: "Convierte el porcentaje a tu escala. Tú decides la exigencia: con ese porcentaje se saca la nota mínima para aprobar.", when: "Para las notas que van al boletín o a la planilla." },
-  icfes: { title: "Estimado Saber 11 (0 a 500)", what: "Simula el puntaje del ICFES: descuenta el azar y pondera las áreas como el examen real.", when: "En simulacros completos (Sesión 1 + 2), para orientar. Curva provisional, no es el puntaje oficial." },
-  irt: { title: "Puntaje por dificultad (IRT)", what: "Acertar preguntas que casi nadie acertó vale más. Compara a cada estudiante con su propio grupo.", when: "Con 15 entregas o más. Con menos, usa el estimado Saber 11." },
+  icfes: { title: "Estimado Saber 11 (0 a 500)", what: "Califica como el ICFES: teoría de respuesta al ítem por prueba (0–100), escala y percentiles nacionales reales, global ponderado (0–500), niveles de desempeño y MCER en Inglés.", when: "En simulacros completos (Sesión 1 + 2), para orientar. La dificultad de cada pregunta es estimada: no es el puntaje oficial." },
+  irt: { title: "Puntaje por dificultad (IRT)", what: "Igual al estimado Saber 11, pero la dificultad de cada pregunta sale de las respuestas de tu grupo: acertar las que casi nadie acertó vale más.", when: "Con 15 entregas o más del mismo cuadernillo. Con menos, usa el estimado Saber 11." },
   formula: { title: "Tu propia fórmula", what: "Escribe la regla como en una hoja de cálculo, por ejemplo restar por pistas o bonificar por tiempo.", when: "Para reglas especiales del área o del colegio." },
 };
 
@@ -46,7 +46,7 @@ function NumField({ label, value, onChange, hint, suffix, bare = false }) {
 export function targetsFor({ profile, courses, assignments }) {
   const out = [];
   if (profile.role === "school_admin") out.push({ key: `school:${profile.school_id}`, scope: "school", id: profile.school_id, label: "Todo el colegio" });
-  for (const c of courses) out.push({ key: `course:${c.id}`, scope: "course", id: c.id, courseId: c.id, label: `Espacio · ${c.name}`, name: c.name });
+  for (const c of courses) out.push({ key: `course:${c.id}`, scope: "course", id: c.id, courseId: c.id, label: `Clase · ${classLabel(c)}`, name: classLabel(c) });
   for (const a of assignments) out.push({ key: `assignment:${a.id}`, scope: "assignment", id: a.id, courseId: a.course_id, label: `Asignación · ${a.title} (${a.courses?.name ?? ""})`, name: a.title });
   return out;
 }
@@ -272,26 +272,26 @@ function GradingWizard({ api, profile, courses, assignments, models, reloadModel
   );
 }
 
-// Where the grading of this level comes from: activity → class → school, the nearest one wins.
+// Where the grading of this level comes from (activity → class → school, the nearest one wins), said in one sentence.
 function Chain({ target, models, profile, courses }) {
   const find = (scope, id) => (id ? models.find((r) => r.scope === scope && r.scope_id === id) : null);
   const course = courses.find((c) => c.id === target.courseId);
-  const links = [];
-  if (target.scope === "assignment") links.push({ label: "Esta actividad", row: find("assignment", target.id) });
-  if (target.scope !== "school") links.push({ label: course ? `Clase ${course.name}` : "Su clase", row: find("course", target.courseId) });
-  links.push({ label: "Colegio", row: find("school", profile.school_id) });
-  const winner = links.findIndex((l) => l.row);
+  const own = { assignment: find("assignment", target.id), course: find("course", target.courseId), school: find("school", profile.school_id) };
+  const name = (row) => describeModel(row.model).split(" · ")[0];
+  const self = target.scope === "assignment" ? "Esta actividad" : target.scope === "course" ? `${course ? classLabel(course) : "Esta clase"}` : "El colegio";
+  let text;
+  let mine = false;
+  if (own[target.scope]) { mine = true; text = <>{self} usa su propia calificación: <b>{name(own[target.scope])}</b>.</>; }
+  else {
+    const from = target.scope === "assignment" && own.course ? ["la de su clase", own.course] : target.scope !== "school" && own.school ? ["la del colegio", own.school] : null;
+    text = from
+      ? <>{self} no tiene calificación propia: usa {from[0]}, <b>{name(from[1])}</b>. Elige un método abajo solo si necesita otra.</>
+      : <>{self} no tiene calificación propia: usa la de siempre, <b>porcentaje de aciertos</b>. Elige un método abajo para cambiarla.</>;
+  }
   return (
-    <ol className="gw-chain" aria-label="De dónde sale la calificación">
-      {links.map((l, i) => (
-        <li key={l.label} className={i === winner ? "win" : winner >= 0 && i > winner ? "off" : ""}>
-          <span className="caption">{l.label}</span>
-          <strong>{l.row ? describeModel(l.row.model).split(" · ")[0] : "Sin definir"}</strong>
-          {i === winner && <span className="gw-tag">Se usa esta</span>}
-        </li>
-      ))}
-      {winner < 0 && <li className="win"><span className="caption">Por defecto</span><strong>Porcentaje</strong><span className="gw-tag">Se usa esta</span></li>}
-    </ol>
+    <p className={mine ? "gw-source own" : "gw-source"} aria-label="De dónde sale la calificación">
+      <Icon name={mine ? "check" : "bulb"} size={16} strokeWidth={2.6} /><span>{text}</span>
+    </p>
   );
 }
 

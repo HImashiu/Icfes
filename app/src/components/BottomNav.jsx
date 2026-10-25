@@ -14,7 +14,18 @@ const ITEMS = [
 // Materias holds each subject and every task; Practicar opens the setup screen; Progreso has the analysis, logros
 // and finished attempts.
 // The active item uses the accent ink color.
-export default function BottomNav({ active, onGo, name, course }) {
+// Under the name: a student's curso; a teacher or coordinator who opens the student app sees their role, not the
+// list of every class they teach.
+function meLine(name, course, role) {
+  if (!name) return `${SAMPLE_STUDENT.course} · datos de muestra`;
+  if (role === "school_admin") return "Coordinación · vista de estudiante";
+  if (role === "teacher") return "Docente · vista de estudiante";
+  if (!course) return "Estudiante";
+  const list = course.split(/,\s*/).sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
+  return list.length > 1 ? `Cursos ${list.join(", ")}` : `Curso ${list[0]}`;
+}
+
+export default function BottomNav({ active, onGo, name, course, role = null }) {
   return (
     <nav className="bottom-nav" aria-label="Navegación principal">
       <div className="nav-brand" aria-hidden="true">
@@ -46,7 +57,7 @@ export default function BottomNav({ active, onGo, name, course }) {
         <span className="avatar" aria-hidden="true">{(name ?? "Estudiante")[0]}</span>
         <div>
           <strong>{name ?? "Estudiante"}</strong>
-          <span className="caption">{name ? (course ? `Curso ${course}` : "Estudiante") : `${SAMPLE_STUDENT.course} · datos de muestra`}</span>
+          <span className="caption">{meLine(name, course, role)}</span>
         </div>
       </div>
     </nav>

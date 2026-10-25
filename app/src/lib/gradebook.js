@@ -29,7 +29,7 @@ export function computeGradebook({ members, assignments, attempts, models = [], 
   const columns = acts.map((a) => {
     const { model, source } = resolveModel(models, { assignmentId: a.id, courseId, schoolId });
     const b = bundles.get(a.id);
-    const ctx = b ? { questions: questionsForAttempt(b.exam, { scope: a.scope, keys: a.question_keys }), key: b.key } : {};
+    const ctx = b ? { questions: questionsForAttempt(b.exam, { scope: a.scope, keys: a.question_keys }), key: b.key, enrich: b.enrich } : {};
     const prog = progressRows(students, attempts.filter((t) => t.assignment_id === a.id));
     const graded = prog.rows.filter((r) => r.attempt);
     const out = gradeMany(graded.map((r) => itemFromRow(r.attempt)), model, ctx);

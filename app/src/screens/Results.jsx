@@ -2,6 +2,7 @@ import { isFullSession, nextSession, simulacros } from "../lib/simulacro.js";
 import { gradeAttempt, isAdjusted, itemFromAttempt } from "../lib/grading.js";
 import { useEffect, useMemo, useRef } from "react";
 import CountUp from "../components/CountUp.jsx";
+import Saber11Report from "../components/Saber11Report.jsx";
 import { confetti, play } from "../lib/motion.js";
 import Mascot from "../components/Mascot.jsx";
 import { loadHistory, recordAttempt } from "../lib/local.js";
@@ -31,6 +32,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
   // Practice is graded on what was answered, since stopping early is normal there.
   const outOf = attempt.mode === "timed" ? score.total : score.answered;
   const pct = score.keyed && outOf > 0 ? (score.correct / outOf) * 100 : null;
+  const delivered = Boolean(attempt.submittedAt);
   // This attempt as a history row, so a whole session pairs with the other session of its cuadernillo.
   const sim = useMemo(() => {
     if (!delivered || !score.keyed || attempt.assignmentId || attempt.repechaje || attempt.custom) return null;
@@ -42,7 +44,6 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
   const nextUp = sim && !sim.complete ? nextSession(sim, exams) : null;
   const wrong = score.keyed ? score.answered - score.correct : 0;
   const flagged = Object.keys(attempt.flags).length;
-  const delivered = Boolean(attempt.submittedAt);
   const xpEarned = attemptXp(questions, attempt, answerKey);
   // The teacher's grading model, only when it says something the percent does not.
   const grade = grading && delivered && score.keyed && isAdjusted(grading) ? gradeAttempt(itemFromAttempt(attempt, attempt.attemptNo ?? 1), grading, { questions, key: answerKey }) : null;
@@ -65,7 +66,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
       correct: score.correct,
       outOf,
       percent: pct ?? 0,
-      perArea: score.perArea.map((a) => ({ name: a.name, correct: a.correct, answered: a.answered, total: a.total })),
+      perArea: score.perArea.map((a) => ({ name: a.name, correct: a.correct, answered: a.answered, total: a.total, resp: a.resp })),
       xp: xpEarned,
       missed: attempt.readOnly ? [] : missedKeys(questions, attempt.answers, answerKey, attempt.mode),
       // For the error notebook: where each miss was and what was chosen.
@@ -149,7 +150,8 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
             <div className="stat stat-score">
               <span className="label">Puntaje Saber 11 estimado</span>
               <strong className="display"><CountUp value={sim.global} format={(n) => String(Math.round(n))} delay={300} /><small className="muted"> /500</small></strong>
-              <span className="caption">Sesión 1 + Sesión 2 de {sim.code} · rango {sim.low}–{sim.high} · curva provisional, clave preliminar</span>
+              <span className="caption">Sesión 1 + Sesión 2 de {sim.code} · rango {sim.low}–{sim.high}{sim.percentile != null ? ` · percentil ${sim.percentile} del país` : ""} · estimado, clave preliminar</span>
+              <Saber11Report sim={sim} showGlobal={false} />
             </div>
           )}
           <div className="stat">

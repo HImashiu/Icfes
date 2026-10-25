@@ -304,6 +304,28 @@ export function createApi(client) {
       const r = await client.from("live_sessions").select("id, host_id, course_id, title, exam_slug, question_keys, current_index, state, created_at");
       return r.error ? [] : r.data.map((s) => ({ ...s, question_keys: (s.question_keys ?? []).slice(0, Math.max(0, (s.current_index ?? -1) + 1)) })).filter((s) => s.question_keys.length);
     },
+    // Anuncios of subject classes (migration 0026). Row-level security keeps a student to their own classes.
+    // null when the migration has not run.
+    async listAnnouncements(courseIds = null) {
+      let q = client.from("class_announcements").select("id, course_id, author_id, author_name, title, body, pinned, expires_at, created_at");
+      if (courseIds) q = q.in("course_id", courseIds);
+      const r = await q.order("created_at", { ascending: false });
+      if (r.error && isMissingTable(r.error)) return null;
+      return unwrap(r);
+    },
+    async postAnnouncement({ courseIds, title, body = "", pinned = false, expiresAt = null, authorName = "" }) {
+      const { data: auth } = await client.auth.getUser();
+      const rows = courseIds.map((course_id) => ({ course_id, title, body, pinned, expires_at: expiresAt, author_id: auth?.user?.id, author_name: authorName }));
+      const r = await client.from("class_announcements").insert(rows).select();
+      if (r.error && isMissingTable(r.error)) throw new Error("Para publicar anuncios hace falta correr la migración 0026 en Supabase.");
+      return unwrap(r);
+    },
+    async updateAnnouncements(ids, patch) {
+      unwrap(await client.from("class_announcements").update(patch).in("id", ids));
+    },
+    async deleteAnnouncements(ids) {
+      unwrap(await client.from("class_announcements").delete().in("id", ids));
+    },
     // Holds: questions or whole booklets reserved for a simulacro and/or hidden from students' free practice.
     async questionHolds() {
       const r = await client.from("question_holds").select("id, exam_slug, qkey, reserve, hide_from_students, label, until, assignment_id, created_by, created_at");
@@ -381,6 +403,21 @@ export function createApi(client) {
     },
     async liveCreate({ title, exam, keys, seconds, course }) {
       return unwrap(await client.rpc("live_create", { p_title: title, p_exam: exam, p_keys: keys, p_seconds: seconds, p_course: course || null }));
+    },
+    // A game programmed for a date and time (migration 0025). `at` is an ISO date-time.
+    async liveSchedule({ title, exam, keys, seconds, course, at }) {
+      const r = await client.rpc("live_schedule", { p_title: title, p_exam: exam, p_keys: keys, p_seconds: seconds, p_course: course || null, p_at: at });
+      if (r.error && /function|schema cache|does not exist/i.test(r.error.message ?? "")) throw new Error("Para programar un juego hace falta correr la migración 0025 en Supabase.");
+      return unwrap(r);
+    },
+    // Opens a programmed room now (at null) or moves it to another time.
+    async liveReschedule(id, at = null) {
+      return unwrap(await client.rpc("live_reschedule", { p_session: id, p_at: at }));
+    },
+    // The open and programmed games of the student's classes. [] until migration 0025 runs.
+    async studentLiveGames() {
+      const r = await client.rpc("student_live_games");
+      return r.error ? [] : r.data ?? [];
     },
     async liveJoin(code, nickname) {
       return unwrap(await client.rpc("live_join", { p_code: code, p_nickname: nickname }));
@@ -485,6 +522,11 @@ export function createApi(client) {
       const r = await client.from("school_groups").upsert(rows.map((g) => ({ grade: g.grade, label: g.label })), { onConflict: "school_id,grade,label", ignoreDuplicates: true }).select("id, grade, label, created_at");
       if (r.error && isMissingTable(r.error)) throw new Error(MISSING_0020);
       return unwrap(r) ?? [];
+    },
+    // Migration 0025: the curso's five subject classes and its students in every one. null when it has not run.
+    async completeCurso(grade, label) {
+      const r = await client.rpc("complete_curso", { p_grade: String(grade), p_label: String(label) });
+      return r.error ? null : r.data ?? 0;
     },
     async deleteGroup(id) {
       unwrap(await client.from("school_groups").delete().eq("id", id));

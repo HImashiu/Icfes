@@ -7,6 +7,7 @@ import { TEACHER_ENTRY } from "../lib/teacherExam.js";
 import { areaColor } from "../lib/brand.js";
 import { confirmDialog, DateField, Select } from "../components/Controls.jsx";
 import { cleanGlossary } from "../lib/glossary.js";
+import { TIME_SLOTS, slotLabel, whenLabel } from "../lib/live.js";
 import { MODEL_KINDS, describeModel, normalizeModel, resolveModel } from "../lib/grading.js";
 import {
   autoPick, bankItems, DIFFICULTY_LABEL, EMPTY_FILTER, facet, filterItems, moveKey, sortByBooklet, summarize, withGroupMates,
@@ -16,6 +17,13 @@ import { holdRows, loadQuestionControl } from "../lib/questionControl.js";
 import { UseBadge, UseHistory } from "../components/QuestionUse.jsx";
 
 const isoDay = (d) => d.toISOString().slice(0, 10);
+const localDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+// The next quarter hour from now, at least 30 minutes away, as "HH:MM" (or the first slot of tomorrow).
+const nextSlot = (now = new Date()) => {
+  const t = new Date(now.getTime() + 30 * 60000);
+  const hhmm = `${String(t.getHours()).padStart(2, "0")}:${String(Math.ceil(t.getMinutes() / 15) * 15 % 60).padStart(2, "0")}`;
+  return TIME_SLOTS.find((x) => x >= hhmm) ?? TIME_SLOTS[16];
+};
 const PAGE = 40;
 const REVEAL = [
   ["after_submit", "Al entregar"],
@@ -75,6 +83,11 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
   const [proctor, setProctor] = useState(false);
   const [seconds, setSeconds] = useState("60");
   const [liveCourse, setLiveCourse] = useState("");
+  // A live game starts now (one click) or is programmed for a date and time its class sees on Inicio.
+  const [liveWhen, setLiveWhen] = useState("now");
+  const [liveDay, setLiveDay] = useState(() => { const t = nextSlot(); const d = new Date(); if (t < `${String(d.getHours()).padStart(2, "0")}:00`) d.setDate(d.getDate() + 1); return localDay(d); });
+  const [liveTime, setLiveTime] = useState(nextSlot);
+  const liveAt = liveWhen === "later" && liveDay && liveTime ? new Date(`${liveDay}T${liveTime}:00`) : null;
   const [gradeKind, setGradeKind] = useState(""); // "" = what the class space (or the school) already uses
   // Question control: what the school already used, the holds and the rules. fresh = list only questions these
   // students have not met (the default); reserve = a simulacro reserves its questions and hides them from practice.
@@ -156,6 +169,10 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
       if (due && due < isoDay(new Date())) return setMsg("La fecha de entrega debe ser hoy o después.");
       if (due && due < opens) return setMsg("La entrega no puede ser antes de la apertura.");
     }
+    if (live && liveWhen === "later") {
+      if (!liveCourse) return setMsg("Para programar el juego elige su curso: así sus estudiantes lo ven en Inicio.");
+      if (!liveAt || liveAt.getTime() < Date.now()) return setMsg("Elige una fecha y hora que todavía no hayan pasado.");
+    }
     if (pickedCheck.blocked.length) return setMsg(`${pickedCheck.blocked.length === 1 ? "Una pregunta no se puede usar" : `${pickedCheck.blocked.length} preguntas no se pueden usar`} en esta actividad (las reglas del colegio lo impiden). Quítalas con «Quitar las bloqueadas».`);
     return (pickedCheck.warned.length
       ? confirmDialog(`${pickedCheck.warned.length === 1 ? "Una pregunta ya la vieron" : `${pickedCheck.warned.length} preguntas ya las vieron`} estos estudiantes. ¿Usarlas otra vez?`, { confirmLabel: "Usar igual", cancelLabel: "Revisar" })
@@ -169,7 +186,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
     }
     if (live) {
       setBusy(true);
-      guard(() => live.onCreate({ keys: picked, slug, seconds: Number(seconds), title: title.trim() || `En vivo · ${picked.length} preguntas`, course: liveCourse }))
+      guard(() => live.onCreate({ keys: picked, slug, seconds: Number(seconds), title: title.trim() || `En vivo · ${picked.length} preguntas`, course: liveCourse, at: liveAt ? liveAt.toISOString() : null }))
         .finally(() => setBusy(false));
       return undefined;
     }
@@ -362,9 +379,24 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
               {[30, 45, 60, 90, 120, 180].map((n) => <option key={n} value={n}>{n} segundos</option>)}
             </Select>
             <span className="caption">Las preguntas ICFES con lectura necesitan 60 a 120 segundos.</span></label>
-          <label className="field"><span className="label">Curso (opcional)</span>
+          <fieldset className="field"><legend className="label">Cuándo</legend>
+            <div className="segmented small b-when" role="radiogroup" aria-label="Cuándo">
+              <button type="button" role="radio" aria-checked={liveWhen === "now"} className={liveWhen === "now" ? "seg active" : "seg"} onClick={() => setLiveWhen("now")}>Empezar ahora</button>
+              <button type="button" role="radio" aria-checked={liveWhen === "later"} className={liveWhen === "later" ? "seg active" : "seg"} onClick={() => setLiveWhen("later")}>Programar</button>
+            </div>
+            {liveWhen === "later" && (
+              <div className="b-when-at">
+                <DateField value={liveDay} onChange={(v) => setLiveDay(v ?? "")} min={localDay(new Date())} clearable={false} aria-label="Día del juego" />
+                <Select value={liveTime} onChange={(v) => setLiveTime(v)} aria-label="Hora del juego">
+                  {TIME_SLOTS.map((t) => <option key={t} value={t}>{slotLabel(t)}</option>)}
+                </Select>
+              </div>
+            )}
+            <span className="caption">{liveWhen === "now" ? "La sala se abre ya y proyectas el código." : liveAt ? `Sus estudiantes lo ven en Inicio y entran desde ${whenLabel(liveAt.toISOString())} (tú abres la sala en En vivo)` : "Elige el día y la hora."}</span>
+          </fieldset>
+          <label className="field"><span className="label">{liveWhen === "later" ? "Curso" : "Curso (opcional)"}</span>
             <Select value={liveCourse} onChange={(v) => setLiveCourse(v)}>
-              <option value="">Cualquiera con el código</option>
+              <option value="">{liveWhen === "later" ? "Elegir curso…" : "Cualquiera con el código"}</option>
               {courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </Select></label>
         </>
@@ -449,7 +481,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
       {msg && <p className="notice error" role="alert">{msg}</p>}
       <div className="report-actions">
         <button type="button" className="secondary" onClick={onCancel}>Cancelar</button>
-        <button type="submit" className="primary" disabled={busy}>{busy ? "Guardando…" : lesson ? lesson.label ?? "Guardar clase" : live ? "Crear sala" : paper ? (courseIds.length > 1 ? `Crear para ${courseIds.length} cursos e imprimir` : "Crear e imprimir") : courseIds.length > 1 ? `Asignar a ${courseIds.length} cursos` : "Asignar"}</button>
+        <button type="submit" className="primary" disabled={busy}>{busy ? "Guardando…" : lesson ? lesson.label ?? "Guardar clase" : live ? (liveWhen === "later" ? "Programar juego" : "Crear sala y empezar") : paper ? (courseIds.length > 1 ? `Crear para ${courseIds.length} cursos e imprimir` : "Crear e imprimir") : courseIds.length > 1 ? `Asignar a ${courseIds.length} cursos` : "Asignar"}</button>
       </div>
     </form>
   );

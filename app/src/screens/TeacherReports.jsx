@@ -6,7 +6,7 @@ import { Kpi } from "./Dashboard.jsx";
 import { questionsForAttempt } from "../lib/assignments.js";
 import { formatValue, gradeMany, isAdjusted, itemFromRow, resolveModel } from "../lib/grading.js";
 import { groupRows } from "../lib/resultsAnalysis.js";
-import { groupOf } from "../lib/teaching.js";
+import { classLabel, groupOf } from "../lib/teaching.js";
 import Icon from "../components/Icon.jsx";
 import "./results.css";
 
@@ -77,7 +77,7 @@ export default function TeacherReports({ api, profile, courses, assignments, mod
       const a = assignments.find((x) => x.id === id);
       const { model } = resolveModel(models, { assignmentId: id, courseId: a?.course_id, schoolId: profile?.school_id });
       const b = bundles[id];
-      const ctx = b ? { questions: questionsForAttempt(b.exam, { scope: a.scope, keys: a.question_keys }), key: b.key } : {};
+      const ctx = b ? { questions: questionsForAttempt(b.exam, { scope: a.scope, keys: a.question_keys }), key: b.key, enrich: b.enrich } : {};
       const out = gradeMany(list.map((i) => itemFromRow(i.attempt)), model, ctx);
       list.forEach((i, k) => grade.set(i, { ...out[k], model }));
     }
@@ -106,15 +106,15 @@ export default function TeacherReports({ api, profile, courses, assignments, mod
         <button type="button" className="secondary" disabled={rows.length === 0} onClick={() => download(`Actividad${space ? ` ${nameOf(space)}` : ""}.csv`, activityCsv(shown, nameOf))}>Exportar CSV</button></header>
       <div className="card t-card">
         <div className="bank-filters">
-          <label className="field"><span className="label">Espacio de clase</span>
-            <Select value={space} onChange={setSpace} aria-label="Espacio de clase"><option value="">Todos</option>{courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</Select></label>
+          <label className="field"><span className="label">Clase</span>
+            <Select value={space} onChange={setSpace} aria-label="Clase"><option value="">Todas</option>{courses.map((c) => <option key={c.id} value={c.id}>{classLabel(c)}</option>)}</Select></label>
           <label className="field"><span className="label">Mostrar</span>
             <Select value={filter} onChange={setFilter} aria-label="Filtro">{FILTERS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select></label>
         </div>
         {!data && <p className="caption">Cargando actividad…</p>}
         {data && (
           <div className="d-kpis">
-            <Kpi label="Estudiantes" value={String(sum.students)} />
+            <Kpi label="Estudiantes" value={String(new Set(rows.map((r) => r.email || r.id)).size)} hint={rows.length > new Set(rows.map((r) => r.email || r.id)).size ? "cada uno cuenta una vez, aunque esté en varias materias" : undefined} />
             <Kpi label="Entregas" value={sum.completion == null ? null : `${sum.completion} %`} hint={`${sum.done} de ${sum.assigned}`} />
             <Kpi label="Promedio" value={sum.avgPct == null ? null : `${sum.avgPct} %`} />
             <Kpi label="Sin entregar" value={String(sum.late)} hint={sum.inactive ? `${sum.inactive} no han entregado nada` : undefined} />

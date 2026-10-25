@@ -178,8 +178,32 @@ export const resultsCsv = (title, players, report = null) => {
 export function liveMessage(err) {
   const m = String(err?.message ?? "");
   if (m.includes("session_not_found")) return "No encontramos ese código. Revisa que el juego siga abierto.";
+  if (m.includes("not_open_yet")) return "Este juego todavía no abre. Entra a la hora que programó tu docente.";
+  if (m.includes("bad_time")) return "Elige una fecha y hora desde ahora y hasta dentro de cuatro meses.";
+  if (m.includes("migración 0025")) return m;
   if (m.includes("not_allowed")) return "No tienes permiso para hacer eso.";
   if (m.includes("paused")) return "El docente pausó la pregunta. Espera un momento.";
   if (/function|column|schema cache|does not exist/i.test(m)) return "Esta opción necesita la migración 0024 en Supabase.";
   return "No se pudo completar. Inténtalo de nuevo.";
 }
+
+// When a programmed game opens, said the way people say it: "hoy a las 10:30 a. m.", "mañana a las 7:00 a. m.",
+// "vie 31 oct, 9:15 a. m.". null for a game that is already open.
+export function whenLabel(iso, now = Date.now()) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  const time = d.toLocaleTimeString("es-CO", { hour: "numeric", minute: "2-digit" });
+  const day = (t) => { const x = new Date(t); x.setHours(0, 0, 0, 0); return x.getTime(); };
+  const diff = Math.round((day(d) - day(now)) / 864e5);
+  if (diff === 0) return `hoy a las ${time}`;
+  if (diff === 1) return `mañana a las ${time}`;
+  return `${d.toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "short" })}, ${time}`;
+}
+// A programmed game is open once its time has come (or when it has no time: started with a click).
+export const isOpenNow = (session, now = Date.now()) => !session?.scheduled_at || new Date(session.scheduled_at).getTime() <= now;
+// Times of day offered when programming a game: every 15 minutes from 6:00 to 21:45.
+export const TIME_SLOTS = Array.from({ length: 64 }, (_, i) => `${String(6 + Math.floor(i / 4)).padStart(2, "0")}:${String((i % 4) * 15).padStart(2, "0")}`);
+export const slotLabel = (hhmm) => {
+  const [h, m] = hhmm.split(":").map(Number);
+  return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${h < 12 ? "a. m." : "p. m."}`;
+};

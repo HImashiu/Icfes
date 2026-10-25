@@ -100,6 +100,7 @@ export default function App() {
   const signedIn = auth.status === "ready";
   const [assigned, setAssigned] = useState({ assignments: [], attempts: [], models: [] });
   const [myClasses, setMyClasses] = useState(null);
+  const [announcements, setAnnouncements] = useState([]);
   // Questions and booklets the school holds back from students' free practice (reserved for a simulacro, migration 0021).
   const [hidden, setHidden] = useState(null);
   const [exams, setExams] = useState(null);
@@ -281,6 +282,8 @@ export default function App() {
       setAssigned({ assignments, attempts, models });
       if (auth.profile?.role === "student") auth.api.hiddenQuestions?.().then((rows) => setHidden(hiddenFor(rows ?? [])), () => setHidden(null));
       auth.api.studentClasses?.().then(setMyClasses, () => setMyClasses(null));
+      // Anuncios of the student's classes (migration 0026); none before it runs.
+      auth.api.listAnnouncements?.().then((rows) => setAnnouncements(rows ?? []), () => setAnnouncements([]));
     } catch {
       setAssigned({ assignments: [], attempts: [] });
     }
@@ -290,6 +293,30 @@ export default function App() {
   // Terms acceptance: with an account, nothing opens until the current version is accepted.
   // null = still asking; a failed read does not lock anyone out (the check repeats on the next sign-in).
   const [live, setLive] = useState(null);
+  // Live games of the student's classes, open now or programmed (migration 0025). Checked again every 30 s on Inicio,
+  // so a programmed game turns into "Entrar" when its time comes.
+  const [liveGames, setLiveGames] = useState([]);
+  const [liveCode, setLiveCode] = useState("");
+  useEffect(() => {
+    if (!signedIn || view !== "home" || !auth.api?.studentLiveGames) return undefined;
+    let alive = true;
+    const load = () => auth.api.studentLiveGames().then((rows) => { if (alive) setLiveGames(rows ?? []); }, () => {});
+    load();
+    const t = setInterval(load, 30000);
+    return () => { alive = false; clearInterval(t); };
+  }, [signedIn, view, auth.api]);
+  const joinGame = async (g) => {
+    const nickname = (auth.profile?.full_name || auth.profile?.email || "Estudiante").split(" ")[0];
+    try {
+      const row = await auth.api.liveJoin(g.code, nickname);
+      setLive({ row, nickname });
+      setView("livePlay");
+    } catch {
+      // The join screen explains what went wrong and lets the student try again.
+      setLiveCode(g.code);
+      setView("liveJoin");
+    }
+  };
   const [consents, setConsents] = useState(null);
   useEffect(() => {
     if (!signedIn) return setConsents(null);
@@ -444,6 +471,7 @@ export default function App() {
           exam={selected?.exam}
           slug={selected?.slug}
           classes={myClasses}
+          announcements={signedIn ? announcements : []}
           resumable={resumable}
           onContinue={() => {
             const saved = loadAttempt(selected.slug, resumable.scope);
@@ -460,7 +488,9 @@ export default function App() {
           assigned={signedIn ? assigned : null}
           onStartAssigned={startAssigned}
           realName={studentName}
-          onLive={auth.status !== "demo" && auth.status !== "loading" ? () => setView("liveJoin") : null}
+          onLive={auth.status !== "demo" && auth.status !== "loading" ? () => { setLiveCode(""); setView("liveJoin"); } : null}
+          liveGames={liveGames}
+          onJoinGame={demoEnabled ? null : joinGame}
         />
       )}
 
@@ -547,13 +577,13 @@ export default function App() {
         </AnnotationProvider>
       )}
 
-      {view === "liveJoin" && <LiveJoin auth={auth} initialCode={joinCode} onBack={() => setView("home")} onJoined={(row, nickname) => { setLive({ row, nickname }); setView("livePlay"); }} />}
+      {view === "liveJoin" && <LiveJoin auth={auth} initialCode={liveCode || joinCode} onBack={() => setView("home")} onJoined={(row, nickname) => { setLive({ row, nickname }); setView("livePlay"); }} />}
       {view === "livePlay" && live && <LivePlay api={auth.api} initial={live.row} nickname={live.nickname} fetchExam={fetchExam} onExit={() => { setLive(null); setView("home"); }}
         onPracticeMissed={(slug, keys) => { setLive(null); startKeys(slug, keys, { label: "Las que fallé en vivo" }); }} />}
 
       {view === "profile" && <Profile theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} onReports={() => setView("reports")} onLogin={() => setView("login")}
         assigned={signedIn ? assigned : null} classes={myClasses} course={course} onGo={go} />}
-      {view === "subjects" && <Subjects assigned={signedIn ? assigned : null} classes={myClasses} course={course} tab={subjectTab} subjectId={subjectId}
+      {view === "subjects" && <Subjects announcements={signedIn ? announcements : []} assigned={signedIn ? assigned : null} classes={myClasses} course={course} tab={subjectTab} subjectId={subjectId}
         onTab={(t) => { setSubjectTab(t); setSubjectId(null); }} onOpenSubject={setSubjectId} onBack={() => setSubjectId(null)}
         onStartAssigned={startAssigned} onPracticeArea={practiceArea} onLogin={() => setView("login")} />}
       {view === "progress" && <Progress tab={progressTab} onTab={setProgressTab} assigned={signedIn ? assigned : null} classes={myClasses}
@@ -571,7 +601,7 @@ export default function App() {
       {needsAttempt && !attempt && <main className="frame"><p className="muted">Esta actividad ya no está abierta.</p><button type="button" className="primary" onClick={goHome}>Volver al inicio</button></main>}
       </ScreenBoundary>
 
-      {navView && <BottomNav active={navView} onGo={go} name={studentName} course={course} />}
+      {navView && <BottomNav active={navView} onGo={go} name={studentName} course={course} role={signedIn ? auth.profile?.role : null} />}
     </div>
     </ExamContext.Provider>
     </AuthContext.Provider>

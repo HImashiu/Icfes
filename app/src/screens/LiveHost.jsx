@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Icon from "../components/Icon.jsx";
 import QuestionView from "../components/QuestionView.jsx";
 import {
-  GOALS, LETTERS, MODES, classProgress, classShare, distribution, gameReport, isPaused, liveMessage, modeOf, reaskOf,
-  resultsCsv, scoreQuestion, secondsLeft,
+  GOALS, LETTERS, MODES, classProgress, classShare, distribution, gameReport, isOpenNow, isPaused, liveMessage, modeOf, reaskOf,
+  resultsCsv, scoreQuestion, secondsLeft, whenLabel,
 } from "../lib/live.js";
 import { usePoll } from "../lib/poll.js";
 import AutopsyCard from "../components/AutopsyCard.jsx";
@@ -496,6 +496,7 @@ export function LiveSection({ api, courses, exams, fetchExam, guard, AssignBuild
   const [active, setActive] = useState(null);
   const [report, setReport] = useState(null);
   const [tick, setTick] = useState(0);
+  const [notice, setNotice] = useState(null);
   useEffect(() => {
     guard(async () => setOpen(await api.myLiveSessions()));
     if (api.livePastSessions) api.livePastSessions().then(setPast, () => setPast([]));
@@ -514,6 +515,15 @@ export function LiveSection({ api, courses, exams, fetchExam, guard, AssignBuild
     setActive(room);
   });
 
+  // Programmed games wait for their time; the rest are open now.
+  const programmed = open.filter((s) => !isOpenNow(s)).sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
+  const openNow = open.filter((s) => isOpenNow(s));
+  const courseName = (s) => courses.find((c) => c.id === s.course_id)?.name ?? "";
+  // Opening a programmed room early opens it for its students too.
+  const openNow_ = (s) => guard(async () => {
+    const row = api.liveReschedule ? await api.liveReschedule(s.id, null) : s;
+    setActive(row ?? s);
+  });
   if (active) return <LiveHost api={api} initial={active} fetchExam={fetchExam} guard={guard} courses={courses} onReplay={replay} onExit={() => setActive(null)} />;
   if (report) return <LiveReport api={api} session={report} fetchExam={fetchExam} courses={courses} guard={guard} onReplay={replay} onExit={() => setReport(null)} />;
   if (creating) {
@@ -521,7 +531,15 @@ export function LiveSection({ api, courses, exams, fetchExam, guard, AssignBuild
       <>
         <header className="t-head"><div><h1>Nueva sala en vivo</h1><span className="caption">Elige las preguntas; el modo de juego se ajusta en la sala de espera.</span></div></header>
         <AssignBuilder api={api} courses={courses} exams={exams} fetchExam={fetchExam} guard={guard} onCancel={() => setCreating(false)}
-          live={{ onCreate: async ({ keys, slug, seconds, title, course }) => {
+          live={{ onCreate: async ({ keys, slug, seconds, title, course, at }) => {
+            if (at) {
+              const made = await api.liveSchedule({ title, exam: slug, keys, seconds, course, at });
+              setCreating(false);
+              const where = courses.find((c) => c.id === course)?.name;
+              setNotice(`«${made.title || title}» quedó programado para ${whenLabel(made.scheduled_at ?? at)}${where ? `: los estudiantes de ${where} lo ven en Inicio y entran desde esa hora` : ""}. Código ${made.code}.`);
+              setTick((n) => n + 1);
+              return;
+            }
             const created = await api.liveCreate({ title, exam: slug, keys, seconds, course });
             setCreating(false);
             setActive(created);
@@ -535,11 +553,31 @@ export function LiveSection({ api, courses, exams, fetchExam, guard, AssignBuild
         <div><h1>En vivo</h1><span className="caption">Juego en clase con preguntas ICFES: los estudiantes responden desde el celular. Tres modos, pausa, volver a preguntar después de discutir e informe al final.</span></div>
         <button type="button" className="primary" onClick={() => setCreating(true)}><Icon name="plus" size={18} />Nueva sala</button>
       </header>
-      {open.length > 0 && (
+      {notice && <p className="notice" role="status">{notice}</p>}
+      {programmed.length > 0 && (
+        <section className="lv-past" aria-label="Juegos programados">
+          <span className="label">Programados</span>
+          <ul className="lv-past-list">
+            {programmed.map((s) => (
+              <li key={s.id} className="card lv-past-row lv-sched-row">
+                <span className="lv-sched-when"><Icon name="clock" size={18} /></span>
+                <span className="lv-qmain"><b>{s.title || "En vivo"}</b>
+                  <span className="caption">{whenLabel(s.scheduled_at)} · {s.question_keys.length} preguntas{courseName(s) ? ` · ${courseName(s)}` : ""} · código {s.code}</span></span>
+                <span className="lv-controls">
+                  <button type="button" className="link" onClick={() => close(s)}>Cancelar</button>
+                  <button type="button" className="secondary" onClick={() => openNow_(s)}>Abrir ahora</button>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <span className="caption">Los estudiantes de su curso lo ven en Inicio y pueden entrar desde la hora programada. «Abrir ahora» abre la sala ya.</span>
+        </section>
+      )}
+      {openNow.length > 0 && (
         <section className="live-rooms" aria-label="Salas abiertas">
           <span className="label">Salas abiertas</span>
           <div className="room-grid">
-            {open.map((s) => (
+            {openNow.map((s) => (
               <div key={s.id} className="room-cell">
                 <button type="button" className="room-card" onClick={() => setActive(s)}>
                   <span className="room-live"><i aria-hidden="true" />{s.state === "lobby" ? "Esperando" : "En vivo"}</span>
@@ -557,7 +595,7 @@ export function LiveSection({ api, courses, exams, fetchExam, guard, AssignBuild
         <div className="card t-card empty-card">
           <span className="drop-ico"><Icon name="play" size={26} /></span>
           <strong>Todavía no hay salas abiertas</strong>
-          <span className="caption">Crea una, proyecta el código y empieza cuando los estudiantes hayan entrado.</span>
+          <span className="caption">Crea una y empieza ya, o prográmala para un día y una hora: su curso la ve en Inicio.</span>
         </div>
       )}
       {past.length > 0 && (

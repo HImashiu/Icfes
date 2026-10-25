@@ -1,11 +1,12 @@
 // What the teacher's home ("Hoy") shows: the numbers of the week, what needs attention, the week's agenda, each
 // class at a glance, results that just arrived and students who need support. Pure, so it is tested without a screen.
-import { AREAS, areaOf, groupOf } from "./teaching.js";
+import { AREAS, areaOf, classLabel, groupOf } from "./teaching.js";
 import { assignmentState, scorePct } from "./assignments.js";
 import { alertLabel, weekStart } from "./workspace.js";
 
 const DAY = 864e5;
 const avg = (xs) => (xs.length ? Math.round(xs.reduce((a, b) => a + b, 0) / xs.length) : null);
+const areaRank = (a) => (AREAS.indexOf(a) < 0 ? 99 : AREAS.indexOf(a));
 const WEEKDAYS = ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"];
 
 export function todayModel({ courses, assignments, attempts, roster, now = Date.now() }) {
@@ -13,7 +14,9 @@ export function todayModel({ courses, assignments, attempts, roster, now = Date.
   const live = assignments.filter((a) => courseIds.has(a.course_id) && a.status !== "draft");
   const byId = new Map(live.map((a) => [a.id, a]));
   const shown = attempts.filter((t) => t.submitted_at && byId.has(t.assignment_id));
-  const nameOf = (id) => groupOf(courses.find((c) => c.id === id) ?? {}).name;
+  const groupName = (id) => groupOf(courses.find((c) => c.id === id) ?? {}).name;
+  // Activities name their class with the subject ("Matemáticas · 11A"): a teacher often has several subjects per curso.
+  const nameOf = (id) => { const c = courses.find((x) => x.id === id); return c ? classLabel(c) : ""; };
   const items = roster.flatMap((e) => e.items.map((i) => ({ ...i, who: e }))).filter((i) => byId.has(i.id));
 
   // ---- the week's numbers
@@ -76,14 +79,25 @@ export function todayModel({ courses, assignments, attempts, roster, now = Date.
     const wk = weekItems.filter((i) => byId.get(i.id).course_id === c.id);
     const people = roster.filter((e) => e.courseIds.includes(c.id));
     return {
-      id: c.id, name: groupOf(c).name, full: c.name,
+      id: c.id, name: groupOf(c).name, full: c.name, groupKey: groupOf(c).key ?? groupOf(c).name,
+      subject: c.subject || areaOf(c) || "Todas las áreas", area: areaOf(c),
       students: people.length,
       deliveredPct: wk.length ? Math.round((wk.filter((i) => i.done).length / wk.length) * 100) : null,
       series, last: series.at(-1) ?? null,
       alerts: people.filter((e) => e.severity >= 2).length,
       active: own.filter((a) => assignmentState(a, now) === "active").length,
     };
-  }).sort((a, b) => a.name.localeCompare(b.name, "es", { numeric: true }));
+  }).sort((a, b) => a.name.localeCompare(b.name, "es", { numeric: true }) || areaRank(a.area) - areaRank(b.area));
+  // The same classes by curso (11A: its subjects), so a teacher of five subjects in 11A does not see five "11A" cards.
+  // Students and alerts of a curso count each person once.
+  const cursos = [];
+  for (const c of classes) {
+    let g = cursos.find((x) => x.name === c.name);
+    if (!g) { g = { name: c.name, classes: [], people: new Set(), alerted: new Set() }; cursos.push(g); }
+    g.classes.push(c);
+    for (const e of roster.filter((r) => r.courseIds.includes(c.id))) { g.people.add(e.key); if (e.severity >= 2) g.alerted.add(e.key); }
+  }
+  const cursoRows = cursos.map((g) => ({ name: g.name, classes: g.classes, students: g.people.size, alerts: g.alerted.size }));
 
   // ---- results that arrived in the last 3 days
   const fresh = live.map((a) => {
@@ -97,7 +111,7 @@ export function todayModel({ courses, assignments, attempts, roster, now = Date.
   const support = roster.filter((e) => e.severity >= 2)
     .sort((a, b) => b.severity - a.severity || a.name.localeCompare(b.name, "es"))
     .slice(0, 5)
-    .map((e) => ({ key: e.key, email: e.email, name: e.name, groups: e.courseIds.map(nameOf).filter(Boolean).join(", "), reason: e.alerts[0]?.reason ?? alertLabel(e.alerts[0]?.kind), kind: e.alerts[0]?.kind }));
+    .map((e) => ({ key: e.key, email: e.email, name: e.name, groups: [...new Set(e.courseIds.map(groupName).filter(Boolean))].join(", "), reason: e.alerts[0]?.reason ?? alertLabel(e.alerts[0]?.kind), kind: e.alerts[0]?.kind }));
 
   // ---- where it costs most: by area across the context, plus the activities with the lowest average
   const perArea = new Map(AREAS.map((a) => [a, { correct: 0, total: 0 }]));
@@ -118,5 +132,5 @@ export function todayModel({ courses, assignments, attempts, roster, now = Date.
     a.opens_at && Date.parse(a.opens_at) > Date.parse(a.created_at ?? 0) + DAY && { at: a.opens_at, kind: "opens", id: a.id, label: `Abre ${a.title} · ${nameOf(a.course_id)}`, area: areaOfCourse(a.course_id) },
   ].filter(Boolean));
 
-  return { kpis, attention, agenda, events, classes, fresh, support, areas, weakest, students: roster.length };
+  return { kpis, attention, agenda, events, classes, cursos: cursoRows, fresh, support, areas, weakest, students: roster.length };
 }

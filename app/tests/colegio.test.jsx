@@ -87,11 +87,15 @@ describe("colegio helpers", () => {
 });
 
 describe("Cursos y materias screen", () => {
-  const props = (over = {}) => ({
-    api: { createGroups: vi.fn().mockResolvedValue([]), createCourse: vi.fn().mockImplementation(async (c) => ({ id: `${c.subject}-${c.groupLabel}`, ...c })), listMembers: vi.fn().mockResolvedValue([]), removeMember: vi.fn(), setGroupDirector: vi.fn() },
+  const props = (over = {}) => {
+    const made = [];
+    return {
+    api: { createGroups: vi.fn().mockResolvedValue([]), createCourse: vi.fn().mockImplementation(async (c) => { const row = { id: `${c.subject}-${c.groupLabel}`, name: c.name, grade: c.grade, subject: c.subject, group_label: c.groupLabel }; made.push(row); return row; }),
+      listCourses: vi.fn().mockImplementation(async () => [...courses, ...made]), addStudents: vi.fn(), listMembers: vi.fn().mockResolvedValue([]), removeMember: vi.fn(), setGroupDirector: vi.fn() },
     profile: { id: "boss", school_id: "s1", role: "school_admin" }, courses, members, directors: [], records: [{ id: "g1", grade: "9", label: "A" }], grades: ["9", "10", "11"],
     staff: [{ id: "ana", email: "ana@c.co", full_name: "Ana", role: "teacher" }], guard: (fn) => fn(), setNotice: vi.fn(), reload: vi.fn(), onOpenClass: vi.fn(), log: vi.fn(), ...over,
-  });
+    };
+  };
 
   it("filters by grade (the old bug: changing the grade did nothing)", () => {
     render(<ClassMatrix {...props()} />);

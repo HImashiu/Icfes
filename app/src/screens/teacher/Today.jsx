@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Icon from "../../components/Icon.jsx";
 import Mascot from "../../components/Mascot.jsx";
+import { TeacherAnnouncements } from "../../components/Announcements.jsx";
 import MonthCalendar from "../../components/MonthCalendar.jsx";
 import { buildRoster } from "../../lib/workspace.js";
 import { todayModel } from "../../lib/today.js";
@@ -14,7 +15,7 @@ const ATTN_ICON = { closing: "clock", late: "flag", opens: "book", follow: "user
 const ATTN_TILE = { closing: "var(--flame)", late: "var(--bad)", opens: "var(--ctx)", follow: "var(--surface)", never: "var(--surface)" };
 
 // Hoy: the teacher's home. What needs attention first, then the week, each class and who needs support.
-export default function Today({ api, profile, courses, assignments, ws, receipts, subject, contextName, go, onOpenStudent, onOpenReceipt, onReinforce }) {
+export default function Today({ api, profile, courses, readOnlyIds = [], assignments, ws, receipts, subject, contextName, go, onOpenStudent, onOpenReceipt, onReinforce }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   useEffect(() => {
@@ -108,21 +109,38 @@ export default function Today({ api, profile, courses, assignments, ws, receipts
           </section>
 
           <section className="card td-card">
-            <div className="section-head"><h2>Mis clases</h2><span className="caption">Promedio de sus últimas actividades</span></div>
-            <div className="td-classes">
-              {m.classes.map((c) => (
-                <button key={c.id} type="button" className="td-class" onClick={() => go({ section: "resultados", tab: "resumen", courseId: c.id })} title={c.full}>
-                  <span className="td-class-top"><strong>{c.name}</strong><b>{c.last == null ? "—" : `${c.last} %`}</b></span>
-                  <span className="td-spark" aria-hidden="true">
-                    {(c.series.length ? c.series : [0]).map((v, i, arr) => <span key={i} style={{ height: `${Math.max(6, v)}%`, opacity: i === arr.length - 1 ? 1 : 0.4 }} />)}
-                  </span>
-                  <span className="td-class-foot caption">
-                    <span>{c.students} est.{c.deliveredPct != null ? ` · ${c.deliveredPct} % entregó` : ""}</span>
-                    <span className={c.alerts ? "warn" : "ok"}>{c.alerts ? `${c.alerts} con alertas` : "al día"}</span>
-                  </span>
-                </button>
+            <div className="section-head"><h2>Mis clases</h2><span className="caption">Por curso y materia · promedio de sus últimas actividades</span></div>
+            <div className="td-cursos">
+              {m.cursos.filter((g) => g.students || g.classes.some((c) => c.last != null || c.active)).map((g) => (
+                <div key={g.name} className="td-curso">
+                  <div className="td-curso-head">
+                    <strong>{g.name}</strong>
+                    <span className="caption">{g.students} est.{g.alerts ? <> · <span className="warn">{g.alerts} con alertas</span></> : " · al día"}</span>
+                  </div>
+                  {g.classes.map((c) => (
+                    <button key={c.id} type="button" className={c.last == null ? "td-subj idle" : "td-subj"} style={{ "--c": c.area ? areaColor(c.area) : "var(--ctx)" }} onClick={() => go({ section: "resultados", tab: "resumen", courseId: c.id })} title={c.full}>
+                      <span className="td-subj-dot" aria-hidden="true" />
+                      <span className="td-subj-name">{c.subject}</span>
+                      {c.last == null ? (
+                        <span className="caption td-subj-none">{c.active ? `${c.active} ${c.active === 1 ? "actividad abierta" : "actividades abiertas"}` : "Sin actividades aún"}</span>
+                      ) : (
+                        <>
+                          <span className="td-spark" aria-hidden="true">
+                            {c.series.map((v, i, arr) => <span key={i} style={{ height: `${Math.max(8, v)}%`, opacity: i === arr.length - 1 ? 1 : 0.4 }} />)}
+                          </span>
+                          <span className="caption td-subj-del">{c.deliveredPct != null ? `${c.deliveredPct} % entregó` : ""}</span>
+                          <b>{c.last} %</b>
+                        </>
+                      )}
+                    </button>
+                  ))}
+                </div>
               ))}
             </div>
+            {(() => {
+              const idle = m.cursos.filter((g) => !g.students && g.classes.every((c) => c.last == null && !c.active));
+              return idle.length ? <p className="caption td-idle">Sin estudiantes ni actividades aún: {idle.map((g) => `${g.name} (${g.classes.length} ${g.classes.length === 1 ? "materia" : "materias"})`).join(", ")}.</p> : null;
+            })()}
           </section>
 
           <section className="card td-card">
@@ -146,6 +164,7 @@ export default function Today({ api, profile, courses, assignments, ws, receipts
         </div>
 
         <div className="td-col side">
+          <TeacherAnnouncements api={api} profile={profile} classes={courses.filter((c) => !readOnlyIds?.includes(c.id))} />
           <section className="card td-card">
             <MonthCalendar events={m.events.map((e) => ({ at: e.at, label: e.label, color: e.kind === "opens" ? "var(--text-2)" : e.area ? areaColor(e.area) : tint, onClick: () => go({ section: "actividad", id: e.id }) }))} emptyText="No hay entregas este mes." />
           </section>

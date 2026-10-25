@@ -20,11 +20,20 @@ describe("demo school", () => {
   const now = Date.parse("2026-10-24T12:00:00Z");
   const { tables, profile } = buildDemo({ bundles: new Map([["X_1", fakeBundle()]]), now });
 
-  it("has 7 classes (11 A with one class per subject) and 120 students with unique names", () => {
+  it("has every curso with its five subjects (11 A, B, C with students; 10 A, B empty) and 120 students with unique names", () => {
     const members = tables.course_members.filter((m) => m.role === "student");
     const students = [...new Map(members.map((m) => [m.profile_id, m])).values()];
-    expect(tables.courses).toHaveLength(7);
-    expect(tables.courses.filter((c) => c.group_label === "A")).toHaveLength(5);
+    expect(tables.courses).toHaveLength(26);
+    for (const [grade, label] of [["11", "A"], ["11", "B"], ["11", "C"], ["10", "A"], ["10", "B"]]) {
+      const subjects = tables.courses.filter((c) => c.grade === grade && c.group_label === label && c.subject !== "Todas las áreas").map((c) => c.subject).sort();
+      expect(subjects).toEqual(["Ciencias naturales", "Inglés", "Lectura crítica", "Matemáticas", "Sociales y ciudadanas"]);
+    }
+    // Every student of a curso is in all five of its subjects.
+    for (const label of ["A", "B", "C"]) {
+      const ids = tables.courses.filter((c) => c.grade === "11" && c.group_label === label && c.subject !== "Todas las áreas").map((c) => c.id);
+      const counts = ids.map((id) => tables.course_members.filter((m) => m.course_id === id && m.role === "student").length);
+      expect(counts).toEqual([40, 40, 40, 40, 40]);
+    }
     expect(students).toHaveLength(120);
     expect(new Set(students.map((s) => s.full_name)).size).toBe(120);
     expect(students.every((s) => s.email.endsWith("@demo.invalid"))).toBe(true);
@@ -47,13 +56,17 @@ describe("demo school", () => {
   it("feeds the teacher API and the chart builder, and writes stay in memory", async () => {
     const api = createApi(createDemoClient({ tables: structuredClone(tables), profile }));
     const [courses, assignments, attempts, members] = await Promise.all([api.listCourses(), api.listAssignments(), api.chartAttempts(), api.allMembers()]);
-    expect(courses).toHaveLength(7);
+    expect(courses).toHaveLength(26);
     expect(assignments.length).toBeGreaterThanOrEqual(15);
     const bundle = fakeBundle();
     const facts = buildFacts({ attempts, assignments, members, courses, bundles: new Map([["X_1", bundle]]) });
     expect(facts.length).toBeGreaterThan(2000);
     const made = await api.createCourse({ schoolId: "demo-school", userId: profile.id, name: "Nuevo", grade: "10", subject: "Inglés", groupLabel: "A" });
-    expect((await api.listCourses())).toHaveLength(8);
+    expect((await api.listCourses())).toHaveLength(27);
+    // A whole new curso gets its other four subjects at once.
+    expect(await api.completeCurso("10", "A")).toBe(0);
+    expect(await api.completeCurso("9", "C")).toBe(5);
+    expect((await api.listCourses())).toHaveLength(32);
     expect(made.id).toMatch(/^demo-/);
   });
 

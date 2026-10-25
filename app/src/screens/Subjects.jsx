@@ -3,6 +3,8 @@ import Icon from "../components/Icon.jsx";
 import Mascot from "../components/Mascot.jsx";
 import TaskRow, { dueText } from "../components/TaskRow.jsx";
 import { Select } from "../components/Controls.jsx";
+import { StudentAnnouncements } from "../components/Announcements.jsx";
+import { activeAnnouncements } from "../lib/announcements.js";
 import { loadHistory } from "../lib/local.js";
 import { practiceInsights, studentSubjects, studentTasks, teacherLabel } from "../lib/student.js";
 import { areaShort, contextColor } from "../lib/teaching.js";
@@ -18,7 +20,7 @@ const initials = (name) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w)
 
 // Materias: one card per subject (with its teacher) and every task of every subject, with filters. A subject opens
 // its own page. `tab` is "materias" or "tareas"; `subjectId` opens one subject.
-export default function Subjects({ assigned, classes, course, tab, subjectId, onTab, onOpenSubject, onBack, onStartAssigned, onPracticeArea, onLogin }) {
+export default function Subjects({ announcements = [], assigned, classes, course, tab, subjectId, onTab, onOpenSubject, onBack, onStartAssigned, onPracticeArea, onLogin }) {
   const now = Date.now();
   const subjects = useMemo(() => (assigned ? studentSubjects({ classes, assignments: assigned.assignments, attempts: assigned.attempts, now }) : []), [assigned, classes]); // eslint-disable-line react-hooks/exhaustive-deps
   const tasks = useMemo(() => (assigned ? studentTasks({ subjects, assignments: assigned.assignments, attempts: assigned.attempts, now }) : []), [subjects, assigned]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -38,7 +40,7 @@ export default function Subjects({ assigned, classes, course, tab, subjectId, on
   }
 
   const subject = subjectId ? subjects.find((s) => s.id === subjectId) : null;
-  if (subject) return <SubjectPage subject={subject} tasks={tasks.filter((t) => t.subject?.id === subject.id)} ins={ins} now={now} onBack={onBack} onStartAssigned={onStartAssigned} onPracticeArea={onPracticeArea} />;
+  if (subject) return <SubjectPage announcements={activeAnnouncements(announcements, { courseIds: subject.courseIds })} subject={subject} tasks={tasks.filter((t) => t.subject?.id === subject.id)} ins={ins} now={now} onBack={onBack} onStartAssigned={onStartAssigned} onPracticeArea={onPracticeArea} />;
 
   return (
     <section className="subjects">
@@ -147,7 +149,7 @@ function TaskList({ tasks, subjects, now, onStartAssigned }) {
   );
 }
 
-function SubjectPage({ subject: s, tasks, ins, now, onBack, onStartAssigned, onPracticeArea }) {
+function SubjectPage({ announcements, subject: s, tasks, ins, now, onBack, onStartAssigned, onPracticeArea }) {
   const pending = tasks.filter((t) => t.status === "pending" || t.status === "scheduled" || t.status === "paper");
   const done = tasks.filter((t) => t.status === "delivered" || t.status === "missed");
   const areas = s.area ? ins.areas.filter((a) => a.name === s.area) : [...ins.areas].reverse();
@@ -176,6 +178,7 @@ function SubjectPage({ subject: s, tasks, ins, now, onBack, onStartAssigned, onP
 
       <div className="sh-grid">
         <div className="sh-col">
+          <StudentAnnouncements rows={announcements} title="Anuncios de la materia" />
           <div className="card sh-card">
             <div className="section-head"><span className="label">Por hacer</span><span className="caption">{pending.length}</span></div>
             {pending.length ? pending.map((t) => <TaskRow key={t.a.id} t={t} onStart={onStartAssigned} now={now} showSubject={false} />)

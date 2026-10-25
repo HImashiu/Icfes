@@ -1,14 +1,14 @@
 import { useState } from "react";
 import Mascot from "../components/Mascot.jsx";
 import { claimMessage, useAuth } from "../lib/auth.jsx";
-import { microsoftEnabled } from "../lib/supabase.js";
+import { authLanding, microsoftEnabled } from "../lib/supabase.js";
 
 // Ingreso con la cuenta del colegio. Practicar no exige cuenta: esta pantalla solo abre las funciones del colegio.
 export default function Login({ onBack }) {
   const auth = useAuth();
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
-  const [error, setError] = useState(auth.error ? claimMessage() : null);
+  const [error, setError] = useState(auth.error ? `No se pudo leer tu perfil: ${auth.error}` : null);
   const [busy, setBusy] = useState(false);
   const [teacher, setTeacher] = useState(false);
 
@@ -63,6 +63,8 @@ export default function Login({ onBack }) {
         <span className="caption">Con tu cuenta ves las tareas de tu curso y tu docente ve cómo vas. Practicar sigue siendo gratis y no necesita cuenta.</span>
         <button type="button" className="primary big" onClick={auth.signInWithGoogle}>Continuar con Google</button>
         {microsoftEnabled && <button type="button" className="secondary big" onClick={auth.signInWithMicrosoft}>Continuar con Microsoft</button>}
+        {authLanding?.error && <p className="notice error" role="alert">Google o Supabase devolvió un error: {authLanding.error}</p>}
+        {!authLanding?.error && auth.status === "signed-out" && authLanding?.arrived && <p className="notice error" role="alert">Volviste de Google pero la sesión no se guardó. Revisa que el navegador permita almacenamiento y las URL de redirección en Supabase.</p>}
         <span className="caption">Solo funcionan los correos de colegios registrados. Resultados con clave preliminar, no oficial.</span>
       </div>
       <button type="button" className="link" onClick={onBack}>Volver</button>

@@ -11,17 +11,20 @@ import { pendingMisses } from "../lib/repechaje.js";
 import { achievements } from "../lib/achievements.js";
 import { scoreSummary } from "../lib/simulacro.js";
 import ScoreCard from "../components/ScoreCard.jsx";
+import { StudentAnnouncements } from "../components/Announcements.jsx";
+import { activeAnnouncements } from "../lib/announcements.js";
 import { daysUntil, loadGoal, xpToday } from "../lib/goal.js";
 import { weekPlan } from "../lib/studyPlan.js";
 import { practiceInsights, studentEvents, studentSubjects, studentTasks, teacherLabel } from "../lib/student.js";
-import { areaShort } from "../lib/teaching.js";
+import { areaShort, classLabel, contextColor, areaOf } from "../lib/teaching.js";
+import { isOpenNow, whenLabel } from "../lib/live.js";
 
 const DAYS = ["L", "M", "X", "J", "V", "S", "D"];
 
 // Inicio: the next thing to do, today's goal, this week's tasks, each subject with its teacher, the countdown to the
 // exam, the month and the student's own progress. Progress is measured against the student's goal and past self,
 // never against classmates. Before the first practice the streak, XP and mastery are SAMPLE data (data/mock.js).
-export default function Home({ exam, slug, resumable, onContinue, onPractice, onSetup, xpSession, assigned, classes, course, onStartAssigned, onLive, realName, signedOut, onGo, onOpenSubject, exams = [], onStartSession }) {
+export default function Home({ exam, slug, resumable, onContinue, onPractice, onSetup, xpSession, assigned, classes, course, onStartAssigned, onLive, realName, signedOut, onGo, onOpenSubject, exams = [], onStartSession, liveGames = [], onJoinGame = null, announcements = [] }) {
   const now = Date.now();
   const todayIndex = (new Date().getDay() + 6) % 7;
   const history = useMemo(() => loadHistory(), []);
@@ -109,10 +112,13 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
         </div>
       </div>
 
+      {liveGames.length > 0 && <LiveGames games={liveGames} now={now} onJoin={onJoinGame} />}
+
       <ScoreCard summary={score} target={goal.target} exams={exams} onStartSession={onStartSession} />
 
       <div className="sh-grid">
         <div className="sh-col">
+          <StudentAnnouncements rows={activeAnnouncements(announcements)} limit={3} subjectOf={(id) => subjects.find((x) => x.courseIds.includes(id)) ?? null} />
           {assigned ? (
             <div className="card sh-card">
               <div className="section-head">
@@ -196,7 +202,10 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
           </button>
 
           <div className="card sh-card">
-            <MonthCalendar events={events.map((e) => ({ ...e, onClick: () => { const a = assigned?.assignments.find((x) => x.id === e.id); if (a) onStartAssigned(a); } }))}
+            <MonthCalendar events={[
+              ...events.map((e) => ({ ...e, onClick: () => { const a = assigned?.assignments.find((x) => x.id === e.id); if (a) onStartAssigned(a); } })),
+              ...liveGames.filter((g) => g.scheduled_at).map((g) => ({ id: g.id, at: g.scheduled_at, color: contextColor(areaOf({ subject: g.subject, name: g.course_name })), label: `Juego en vivo · ${g.title || "En vivo"}` })),
+            ]}
               emptyText={assigned ? "No tienes entregas este mes." : "Inicia sesión para ver las tareas de tu curso."} />
           </div>
 
@@ -231,5 +240,29 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
 
       {!real && <span className="caption sample-note">Racha, XP y dominio son datos de muestra hasta tu primer simulacro.</span>}
     </section>
+  );
+}
+
+// The live games of the student's classes: open ones to enter now, programmed ones with the time they open.
+function LiveGames({ games, now, onJoin }) {
+  return (
+    <div className="card sh-card sh-live-games" aria-label="Juegos en vivo">
+      <div className="section-head"><span className="label">Juegos en vivo</span><span className="caption">De tus docentes</span></div>
+      {games.map((g) => {
+        const open = isOpenNow(g, now);
+        return (
+          <div key={g.id} className={open ? "sh-game open" : "sh-game"} style={{ "--c": contextColor(areaOf({ subject: g.subject, name: g.course_name })) }}>
+            <span className="sh-game-ico" aria-hidden="true"><Icon name="bolt" size={18} /></span>
+            <span className="sh-game-main">
+              <strong>{g.title || "Juego en vivo"}</strong>
+              <span className="caption">{classLabel({ name: g.course_name, subject: g.subject, grade: g.grade, group_label: g.group_label })}{g.host_name ? ` · ${g.host_name}` : ""} · {g.questions} preguntas</span>
+            </span>
+            <span className="sh-game-when">{open ? <b className="sh-game-now">Abierto ahora</b> : <span className="caption">Abre {whenLabel(g.scheduled_at, now)}</span>}</span>
+            <button type="button" className={open ? "primary" : "secondary"} disabled={!open || !onJoin} onClick={() => onJoin?.(g)}>{open ? "Entrar" : "Aún no abre"}</button>
+          </div>
+        );
+      })}
+      {!onJoin && <span className="caption">En la demostración los juegos no se abren desde el celular del estudiante.</span>}
+    </div>
   );
 }

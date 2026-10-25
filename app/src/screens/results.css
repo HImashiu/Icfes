@@ -242,3 +242,9 @@
 .sth-sim strong { font-size: 1.25rem; }
 .sth-sim.open { border-style: dashed; }
 .sth-table td.sth-cell { text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.t-card.gw-step { grid-template-columns: 30px minmax(0, 1fr); }
+@media (max-width: 760px) { .t-card.gw-step { grid-template-columns: minmax(0, 1fr); } }
+.gw-source { display: flex; gap: 8px; align-items: flex-start; margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); font-size: 14px; }
+.gw-source > svg { flex: none; margin-top: 2px; color: var(--text-2); }
+.gw-source.own { background: var(--ok-soft); }
+.gw-source.own > svg { color: var(--ok); }
