@@ -1,10 +1,10 @@
-import { bandFor } from "../lib/analytics.js";
+import { isFullSession, nextSession, simulacros } from "../lib/simulacro.js";
 import { gradeAttempt, isAdjusted, itemFromAttempt } from "../lib/grading.js";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import CountUp from "../components/CountUp.jsx";
 import { confetti, play } from "../lib/motion.js";
 import Mascot from "../components/Mascot.jsx";
-import { recordAttempt } from "../lib/local.js";
+import { loadHistory, recordAttempt } from "../lib/local.js";
 import { scoreAttempt } from "../lib/exam.js";
 import { attemptXp } from "../lib/xp.js";
 import { WEAKEST_AREA } from "../data/mock.js";
@@ -24,14 +24,22 @@ function headline(pct, answered) {
 }
 const isPhone = typeof window !== "undefined" && !window.matchMedia?.("(min-width: 768px)").matches;
 
-export default function Results({ title, questions, attempt, answerKey, keyStatus, onReview, onReviewAt, onHome, onRetry, locked = false, lockedNote = null, onReviewTimes, onRepechaje, grading = null }) {
+export default function Results({ title, questions, attempt, answerKey, keyStatus, onReview, onReviewAt, onHome, onRetry, locked = false, lockedNote = null, onReviewTimes, onRepechaje, grading = null, exams = [], onStartSession }) {
   const score = scoreAttempt(questions, attempt.answers, answerKey);
   const preliminary = keyStatus !== "official";
   // A simulacro is graded like the real exam: blanks count as wrong, so the score is out of every question.
   // Practice is graded on what was answered, since stopping early is normal there.
   const outOf = attempt.mode === "timed" ? score.total : score.answered;
   const pct = score.keyed && outOf > 0 ? (score.correct / outOf) * 100 : null;
-  const band = bandFor(score.perArea);
+  // This attempt as a history row, so a whole session pairs with the other session of its cuadernillo.
+  const sim = useMemo(() => {
+    if (!delivered || !score.keyed || attempt.assignmentId || attempt.repechaje) return null;
+    const row = { id: String(attempt.startedAt), at: attempt.submittedAt, mode: attempt.mode, keyed: true, total: score.total, answered: score.answered, perArea: score.perArea, snapshot: { slug: attempt.slug, scope: attempt.scope } };
+    if (!isFullSession(row)) return null;
+    const all = simulacros([...loadHistory().filter((h) => h.id !== row.id), row]);
+    return all.filter((x) => x.s1?.id === row.id || x.s2?.id === row.id).pop() ?? null;
+  }, [delivered, attempt.startedAt]); // eslint-disable-line react-hooks/exhaustive-deps
+  const nextUp = sim && !sim.complete ? nextSession(sim, exams) : null;
   const wrong = score.keyed ? score.answered - score.correct : 0;
   const flagged = Object.keys(attempt.flags).length;
   const delivered = Boolean(attempt.submittedAt);
@@ -120,11 +128,19 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
               <span className="caption">{grade.passed === false ? "Todavía no alcanza la nota para aprobar · " : ""}{grade.provisional ? "provisional · " : ""}clave preliminar</span>
             </div>
           )}
-          {delivered && attempt.mode === "timed" && score.keyed && band.global != null && (
-            <div className="stat">
-              <span className="label">Banda estimada</span>
-              <strong className="display">{band.low}–{band.high}</strong>
-              <span className="caption">de 500 · estimado con curva provisional y clave preliminar</span>
+          {sim && !sim.complete && (
+            <div className="stat stat-score">
+              <span className="label">Puntaje Saber 11</span>
+              <strong className="display">Falta la Sesión {sim.s1 ? 2 : 1}</strong>
+              <span className="caption">El puntaje sale con el examen completo: Sesión 1 y Sesión 2 de {sim.code}.</span>
+              {nextUp && onStartSession && <button type="button" className="primary small" onClick={() => onStartSession(nextUp.slug)}>Hacer Sesión {nextUp.n}</button>}
+            </div>
+          )}
+          {sim?.complete && (
+            <div className="stat stat-score">
+              <span className="label">Puntaje Saber 11 estimado</span>
+              <strong className="display"><CountUp value={sim.global} format={(n) => String(Math.round(n))} delay={300} /><small className="muted"> /500</small></strong>
+              <span className="caption">Sesión 1 + Sesión 2 de {sim.code} · rango {sim.low}–{sim.high} · curva provisional, clave preliminar</span>
             </div>
           )}
           <div className="stat">

@@ -25,7 +25,7 @@ export function studentSubjects({ classes, assignments = [], attempts = [], now 
   const delivered = new Set(attempts.filter((t) => t.submitted_at).map((t) => t.assignment_id));
   const cards = new Map();
   const card = (key, base) => {
-    if (!cards.has(key)) cards.set(key, { ...base, teachers: new Set(), groups: new Set(), courseIds: new Set(), items: [] });
+    if (!cards.has(key)) cards.set(key, { ...base, teachers: new Set(), courseTeachers: new Set(), groups: new Set(), courseIds: new Set(), items: [] });
     return cards.get(key);
   };
   const byArea = new Map(); // area -> card key, so a course task joins the subject class of the same area
@@ -49,17 +49,37 @@ export function studentSubjects({ classes, assignments = [], attempts = [], now 
       if (area) byArea.set(area, key);
       const x = card(key, area ? { id: key, name: AREA_SUBJECT[area], full: c.name, area, kind: "subject" } : { id: key, name: GENERAL, full: c.name, area: null, kind: "general" });
       x.courseIds.add(c.id);
-      (c.teachers ?? []).filter(Boolean).forEach((t) => x.teachers.add(t));
+      // A course task in an area with no class of its own: its teacher is the course's teacher, not the subject's.
+      const subjectClass = area && !String(key).startsWith("area:");
+      if (area && !subjectClass) x.noClass = true;
+      (c.teachers ?? []).filter(Boolean).forEach((t) => (subjectClass || !area ? x.teachers : x.courseTeachers).add(t));
       x.groups.add(groupOf(c).name);
       x.items.push(a);
     }
   }
+  // Every ICFES area is a subject of the exam, even before the school names a class for it: its card shows the
+  // student's results in that area (also from whole-exam simulacros) and who teaches it, when the school says so.
+  const courseTeachers = [...new Set(list.filter((c) => !areaOf(c)).flatMap((c) => (c.teachers ?? []).filter(Boolean)))];
+  for (const area of AREA_ORDER) {
+    if (byArea.has(area)) continue;
+    const x = card(`area:${area}`, { id: `area:${area}`, name: AREA_SUBJECT[area], full: AREA_SUBJECT[area], area, kind: "subject" });
+    list.filter((c) => !areaOf(c)).forEach((c) => { x.courseIds.add(c.id); x.groups.add(groupOf(c).name); });
+    x.noClass = true;
+    courseTeachers.forEach((t) => x.courseTeachers.add(t));
+  }
+  const areaScores = (area) => attempts.filter((t) => t.submitted_at && t.score?.keyed)
+    .sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at))
+    .map((t) => (t.score.perArea ?? []).find((p) => p.name === area))
+    .filter((p) => p && (p.total || p.answered))
+    .map((p) => Math.round((p.correct / (p.total || p.answered)) * 100));
   return [...cards.values()].map((x) => {
     const mine = x.items;
     const pending = mine.filter((a) => assignmentState(a, now) === "active" && !delivered.has(a.id))
       .sort((a, b) => new Date(a.due_at ?? 8.64e15) - new Date(b.due_at ?? 8.64e15));
-    const scores = attempts.filter((t) => t.submitted_at && mine.some((a) => a.id === t.assignment_id))
+    const own = attempts.filter((t) => t.submitted_at && mine.some((a) => a.id === t.assignment_id))
       .sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at)).map(scorePct).filter((p) => p != null);
+    // Without tasks of its own, an area shows how the student did in it inside every delivered task.
+    const scores = own.length || !x.area ? own : areaScores(x.area);
     return {
       id: x.id,
       kind: x.kind,
@@ -69,6 +89,10 @@ export function studentSubjects({ classes, assignments = [], attempts = [], now 
       area: x.area,
       color: x.area ? contextColor(x.area) : "var(--accent)",
       teacher: [...x.teachers].join(", "),
+      // No class of this subject yet: the course's teacher(s), shown as such.
+      courseTeacher: [...x.courseTeachers].join(", "),
+      noClass: Boolean(x.noClass),
+      fromTasks: own.length > 0,
       courseIds: [...x.courseIds],
       assignmentIds: mine.map((a) => a.id),
       pending: pending.length,
@@ -164,4 +188,11 @@ export function studentEvents({ subjects, assignments = [], attempts = [], now =
   return assignments
     .filter((a) => a.due_at && !delivered.has(a.id) && assignmentState(a, now) !== "draft")
     .map((a) => ({ id: a.id, at: a.due_at, color: of.get(a.id)?.color ?? "var(--accent)", label: `${a.title}${of.get(a.id) ? ` · ${of.get(a.id).name}` : ""}` }));
+}
+
+// Who a subject card names: its teacher; for an area with no class yet, the course's teacher, said as such.
+export function teacherLabel(s) {
+  if (s.teacher) return s.teacher;
+  if (s.courseTeacher) return `Docente del curso: ${s.courseTeacher}`;
+  return s.kind === "general" ? "Tareas de tu curso" : "Tu colegio aún no asigna docente";
 }

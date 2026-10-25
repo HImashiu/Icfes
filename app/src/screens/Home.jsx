@@ -9,8 +9,10 @@ import { formatClock, questionsFor } from "../lib/exam.js";
 import { loadHistory } from "../lib/local.js";
 import { pendingMisses } from "../lib/repechaje.js";
 import { achievements } from "../lib/achievements.js";
+import { scoreSummary } from "../lib/simulacro.js";
+import ScoreCard from "../components/ScoreCard.jsx";
 import { daysUntil, loadGoal, xpToday } from "../lib/goal.js";
-import { practiceInsights, studentEvents, studentSubjects, studentTasks } from "../lib/student.js";
+import { practiceInsights, studentEvents, studentSubjects, studentTasks, teacherLabel } from "../lib/student.js";
 import { areaShort } from "../lib/teaching.js";
 
 const DAYS = ["L", "M", "X", "J", "V", "S", "D"];
@@ -18,12 +20,13 @@ const DAYS = ["L", "M", "X", "J", "V", "S", "D"];
 // Inicio: the next thing to do, today's goal, this week's tasks, each subject with its teacher, the countdown to the
 // exam, the month and the student's own progress. Progress is measured against the student's goal and past self,
 // never against classmates. Before the first practice the streak, XP and mastery are SAMPLE data (data/mock.js).
-export default function Home({ exam, slug, resumable, onContinue, onPractice, onSetup, xpSession, assigned, classes, course, onStartAssigned, onLive, realName, signedOut, onGo, onOpenSubject }) {
+export default function Home({ exam, slug, resumable, onContinue, onPractice, onSetup, xpSession, assigned, classes, course, onStartAssigned, onLive, realName, signedOut, onGo, onOpenSubject, exams = [], onStartSession }) {
   const now = Date.now();
   const todayIndex = (new Date().getDay() + 6) % 7;
   const history = useMemo(() => loadHistory(), []);
   const ins = useMemo(() => practiceInsights(history, now), [history]); // eslint-disable-line react-hooks/exhaustive-deps
   const goal = useMemo(() => loadGoal(), []);
+  const score = useMemo(() => scoreSummary(history), [history]);
   const real = ins.sessions > 0;
   const streak = real ? ins.streak : SAMPLE_STUDENT.streak;
   const xp = (real ? ins.xp : SAMPLE_STUDENT.xp) + (xpSession ?? 0);
@@ -104,6 +107,8 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
         </div>
       </div>
 
+      <ScoreCard summary={score} target={goal.target} exams={exams} onStartSession={onStartSession} />
+
       <div className="sh-grid">
         <div className="sh-col">
           {assigned ? (
@@ -134,10 +139,10 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
                 {subjects.map((s) => (
                   <button key={s.id} type="button" className="sh-subject" style={{ "--c": s.color }} onClick={() => onOpenSubject?.(s.id)}>
                     <span className="sh-subject-top"><strong>{s.name}</strong><b>{s.avg == null ? "—" : `${s.avg} %`}</b></span>
-                    <span className="caption sh-teacher">{s.teacher || "Docente por asignar"}</span>
+                    <span className="caption sh-teacher">{teacherLabel(s)}</span>
                     <span className="sh-subject-foot caption">
-                      {s.pending ? <span className="sh-due">{s.pending} pendiente{s.pending === 1 ? "" : "s"}</span> : <span>Al día</span>}
-                      <span>{s.done}/{s.total} entregadas</span>
+                      {s.pending ? <span className="sh-due">{s.pending} pendiente{s.pending === 1 ? "" : "s"}</span> : <span>{s.total ? "Al día" : "Sin tareas aún"}</span>}
+                      {s.total > 0 && <span>{s.done}/{s.total} entregadas</span>}
                     </span>
                   </button>
                 ))}

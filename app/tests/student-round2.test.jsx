@@ -23,10 +23,18 @@ describe("a course is not a subject", () => {
 
   it("files the course's tasks under the area they cover", () => {
     const s = studentSubjects({ classes, assignments, attempts, now });
-    expect(s.map((x) => x.name)).toEqual(["Matemáticas", "Inglés", "Simulacros Saber 11"]);
-    expect(s[0].assignmentIds.sort()).toEqual(["a3", "a4"]);
-    expect(s[0].teacher).toBe("Hernán Castaño, Marcela Ríos");
+    expect(s.map((x) => x.name)).toEqual(["Lectura crítica", "Matemáticas", "Sociales y ciudadanas", "Ciencias naturales", "Inglés", "Simulacros Saber 11"]);
+    const ing = s.find((x) => x.name === "Inglés");
+    expect([ing.noClass, ing.teacher, ing.courseTeacher]).toEqual([true, "", "Marcela Ríos"]);
+    expect(s[1].assignmentIds.sort()).toEqual(["a3", "a4"]);
+    expect(s[1].teacher).toBe("Hernán Castaño, Marcela Ríos");
     expect(s.some((x) => x.name === "11-A")).toBe(false);
+  });
+
+  it("scores an area from whole-exam tasks when it has none of its own", () => {
+    const att = [...attempts, { assignment_id: "a2", submitted_at: "2026-10-23T00:00:00Z", mode: "timed", score: { keyed: true, correct: 30, answered: 100, total: 100, perArea: [{ name: "Lectura crítica", correct: 21, answered: 30, total: 30 }] } }];
+    const s = studentSubjects({ classes, assignments, attempts: att, now });
+    expect(s.find((x) => x.name === "Lectura crítica").avg).toBe(70);
   });
 
   it("names the course apart", () => {

@@ -646,7 +646,7 @@ export function StudentProfile({ api, userId, student: s, ws, store, guard, say,
         <Kpi label="Cambio" value={fmtTrend(s.trend)} hint="últimas 3 frente a las anteriores" />
         <Kpi label="Tiempo total" value={s.totalSec ? fmtDuration(s.totalSec) : "—"} />
         <Kpi label="Última entrega" value={shortDate(s.lastAt)} />
-        {s.band?.global != null && <Kpi label="Banda estimada" value={`${s.band.global}/500`} hint={`${s.band.low}–${s.band.high}, curva provisional`} />}
+        {s.band?.global != null && <Kpi label="Puntaje Saber 11 estimado" value={`${s.band.global}/500`} hint={`Sesión 1 + Sesión 2 de ${s.band.code} · ${s.band.low}–${s.band.high}, curva provisional`} />}
         {s.leaves > 0 && <Kpi label="Salidas en exámenes" value={String(s.leaves)} />}
       </div>
 

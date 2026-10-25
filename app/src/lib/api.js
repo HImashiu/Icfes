@@ -129,7 +129,7 @@ export function createApi(client) {
       return unwrap(await client.from("course_members").select("id, course_id, profile_id, email, full_name, role"));
     },
     async allAttempts() {
-      return unwrap(await client.from("attempts").select("profile_id, member_id, client_id, assignment_id, submitted_at, mode, score, exam_slug").not("assignment_id", "is", null));
+      return unwrap(await client.from("attempts").select("profile_id, member_id, client_id, assignment_id, submitted_at, mode, score, exam_slug, scope").not("assignment_id", "is", null));
     },
     // Everything the activity report needs per attempt: result, time and (with migration 0012) monitoring totals.
     async reportAttempts() {

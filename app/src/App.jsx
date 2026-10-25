@@ -7,7 +7,7 @@ import Review from "./screens/Review.jsx";
 import Profile from "./screens/Profile.jsx";
 import Subjects from "./screens/Subjects.jsx";
 import Progress from "./screens/Progress.jsx";
-import { studentCourses } from "./lib/student.js";
+import { classesFrom, studentCourses } from "./lib/student.js";
 import Teacher from "./screens/Teacher.jsx";
 import TeacherLive from "./screens/TeacherLive.jsx";
 import Login from "./screens/Login.jsx";
@@ -363,7 +363,14 @@ export default function App() {
   const examTitle = selected ? `${selected.exam.title} · ${scopeTitle}` : "";
   // The sidebar stays on every screen except the test; results and review belong to Practicar, reports to Perfil.
   const navView = { home: "home", subjects: "subjects", setup: "setup", results: "setup", review: "setup", history: "progress", progress: "progress", profile: "profile", login: "profile", reports: "profile" }[view] ?? null;
-  const course = studentCourses(myClasses ?? []).join(", ") || null;
+  const course = studentCourses(classesFrom({ classes: myClasses, assignments: signedIn ? assigned.assignments : [] })).join(", ") || null;
+  // A simulacro is both sessions of one cuadernillo: open the session that is missing, whole booklet, with time.
+  const startSession = async (slug) => {
+    const next = await openExam(slug);
+    if (!next) return;
+    setPreset({ scope: "all", mode: "timed" });
+    setView("setup");
+  };
   const studentName = signedIn ? (auth.profile.full_name || auth.profile.email).split(" ")[0] : null;
   // Student navigation by name, including the shortcuts the home cards use.
   const go = (to) => {
@@ -402,6 +409,8 @@ export default function App() {
           onSetup={(p) => { setPreset(p); setView("setup"); }}
           onGo={go}
           course={course}
+          exams={exams ?? []}
+          onStartSession={startSession}
           onOpenSubject={(id) => { setSubjectId(id); setView("subjects"); }}
           signedOut={auth.status === "signed-out" || auth.status === "guest"}
           assigned={signedIn ? assigned : null}
@@ -460,6 +469,8 @@ export default function App() {
           lockedNote={attempt?.reveal === "after_close" ? "Tu docente mostrará las respuestas cuando cierre la asignación." : undefined}
           onRetry={attempt.assignmentId ? retryAssigned : attempt.repechaje ? null : () => startAttempt(attempt.scope, attempt.mode, attempt.order)}
           onReviewTimes={(n) => { setReviewStart(n); setView("review"); }}
+          exams={exams ?? []}
+          onStartSession={startSession}
           onRepechaje={startRepechaje}
           grading={assignedOf ? resolveModel(assigned.models, { assignmentId: assignedOf.id, courseId: assignedOf.course_id, schoolId: auth.profile?.school_id }).model : null}
         />
@@ -495,7 +506,7 @@ export default function App() {
         onTab={(t) => { setSubjectTab(t); setSubjectId(null); }} onOpenSubject={setSubjectId} onBack={() => setSubjectId(null)}
         onStartAssigned={startAssigned} onPracticeArea={practiceArea} onLogin={() => setView("login")} />}
       {view === "progress" && <Progress tab={progressTab} onTab={setProgressTab} assigned={signedIn ? assigned : null} classes={myClasses}
-        onPracticeArea={practiceArea} onNew={() => go("setup")} onOpen={openFromHistory} />}
+        onPracticeArea={practiceArea} onNew={() => go("setup")} onOpen={openFromHistory} exams={exams ?? []} onStartSession={startSession} />}
       {view === "login" && <Login onBack={() => setView("profile")} />}
       {view === "history" && <History onBack={() => setView("home")} onNew={() => setView("setup")} onOpen={openFromHistory} />}
       {view === "reports" && <Reports onBack={() => setView("profile")} onPractice={() => setView("setup")} onOpen={openFromReport} />}
