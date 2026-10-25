@@ -2,6 +2,7 @@ import Icon from "./Icon.jsx";
 import { KINDS, effectiveMax } from "../lib/assignments.js";
 
 const KIND_ICON = { task: "pencil", homework: "book", exam: "clock" };
+const iconOf = (a) => (a.delivery === "paper" ? "print" : KIND_ICON[a.kind] ?? "pencil");
 const kindLabel = (k) => KINDS.find((x) => x.id === k)?.label ?? "Tarea";
 const day = (iso) => new Date(iso).toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "short" });
 
@@ -24,13 +25,13 @@ export default function TaskRow({ t, onStart, now = Date.now(), showSubject = tr
   const color = subject?.color ?? "var(--accent)";
   const urgent = status === "pending" && a.due_at && new Date(a.due_at) - now < 2 * 864e5;
   const meta = [
-    kindLabel(a.kind),
+    a.delivery === "paper" ? `${kindLabel(a.kind)} en papel` : kindLabel(a.kind),
     a.question_keys ? `${a.question_keys.length} preguntas` : null,
     a.kind === "exam" && a.time_limit_min ? `${a.time_limit_min} min` : null,
   ].filter(Boolean).join(" · ");
   return (
     <div className={`task-row is-${status}`} style={{ "--c": color }}>
-      <span className="task-tile" aria-hidden="true"><Icon name={KIND_ICON[a.kind] ?? "pencil"} size={20} /></span>
+      <span className="task-tile" aria-hidden="true"><Icon name={iconOf(a)} size={20} /></span>
       <span className="task-main">
         <strong>{a.title}</strong>
         <span className="caption">
@@ -40,6 +41,7 @@ export default function TaskRow({ t, onStart, now = Date.now(), showSubject = tr
       <span className="task-side">
         {status === "pending" && <span className={urgent ? "task-pill hot" : "task-pill"}>{dueText(a.due_at, now)}</span>}
         {status === "scheduled" && <span className="task-pill soft">Abre {day(a.opens_at)}</span>}
+        {status === "paper" && <span className="task-pill soft">En papel, en el salón</span>}
         {status === "missed" && <span className="task-pill bad">No entregada</span>}
         {status === "delivered" && (
           <span className="task-score">

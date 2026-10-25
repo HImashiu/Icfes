@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Icon from "../components/Icon.jsx";
 import { Select } from "../components/Controls.jsx";
-import { DEFAULT_SETTINGS, questionItems, questionKeys } from "../lib/lesson.js";
+import { DEFAULT_SETTINGS, introOf, questionItems, questionKeys } from "../lib/lesson.js";
+import LessonCover from "../components/LessonCover.jsx";
 import AssignBuilder from "./AssignBuilder.jsx";
 import LessonEditor from "./LessonEditor.jsx";
 import "./teach.css";
@@ -57,7 +58,7 @@ export default function Lessons({ api, profile, courses, assignments, exams, fet
   return (
     <>
       <header className="t-head">
-        <div><h1>Clases</h1><span className="caption">Convierte el banco de preguntas en una presentación para el salón. Cada pregunta se revela paso a paso: pregunta, opciones, respuesta y explicación.</span></div>
+        <div><h1>Clases para proyectar</h1><span className="caption">Tu portada, tus diapositivas y las preguntas ICFES del banco. Cada pregunta se revela paso a paso; al proyectar tienes lápiz, conteo de manos, sorteo de quién responde y cronómetro.</span></div>
         <button type="button" className="primary" onClick={() => setView({ mode: "new" })}><Icon name="plus" size={18} />Nueva clase</button>
       </header>
       {rows === null && <p className="notice error">Las clases necesitan la migración 0017 en Supabase (supabase/migrations/0017_lessons_formats.sql). Córrela en el editor SQL y recarga.</p>}
@@ -85,6 +86,9 @@ export default function Lessons({ api, profile, courses, assignments, exams, fet
           const slides = (r.items ?? []).length;
           return (
             <div key={r.id} className="les-card">
+              <button type="button" className="les-card-cover" onClick={() => setView({ mode: "open", id: r.id, row: r })} aria-label={`Abrir ${r.title || "Clase sin título"}`}>
+                <LessonCover intro={introOf(r)} count={nq} preview />
+              </button>
               <button type="button" className="les-card-open" onClick={() => setView({ mode: "open", id: r.id, row: r })}><strong>{r.title || "Clase sin título"}</strong></button>
               <span className="caption">{nq} {nq === 1 ? "pregunta" : "preguntas"}{slides > nq ? ` · ${slides - nq} de texto` : ""} · {exams.find((e) => e.slug === r.exam_slug)?.title ?? r.exam_slug}</span>
               <span className="chips-row">

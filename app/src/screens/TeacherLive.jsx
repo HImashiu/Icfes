@@ -20,17 +20,17 @@ import TeacherReports from "./TeacherReports.jsx";
 import Today from "./teacher/Today.jsx";
 import ActivityPage from "./teacher/ActivityPage.jsx";
 import ClassMatrix from "./teacher/ClassMatrix.jsx";
+import { ActivityList, KIND_TABS, NewActivityMenu } from "./teacher/Activities.jsx";
 import ContextSwitcher from "../components/ContextSwitcher.jsx";
 import Receipt, { Novedades } from "../components/Receipt.jsx";
 import { createWorkspaceStore } from "../lib/workspaceStore.js";
 import { GRADES, SUBJECTS, gradeLabel, spaceName } from "../lib/spaces.js";
 import { Select } from "../components/Controls.jsx";
-import { ADMIN_NAV, HIDDEN_TABS, NAV, TABS, crumbs, navSection, normalize, parseRoute, routeHash } from "../lib/teacherRoutes.js";
+import { ADMIN_NAV, HIDDEN_TABS, NAV, PRESETS, TABS, crumbs, navSection, normalize, parseRoute, routeHash } from "../lib/teacherRoutes.js";
 import { areaOf, areaShort, buildContexts, contextColor, contextCourseIds, contextLabel, groupOf, scopeApi, validContext } from "../lib/teaching.js";
 import { assignmentReceipt, loadReceipts, markSeen, reinforcementReceipt, rosterReceipt, saveReceipt, scanReceipt } from "../lib/receipts.js";
 
 const shortDate = (iso) => new Date(iso).toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "short" });
-const KIND_ICON = { task: "bolt", homework: "book", exam: "clock" };
 const STATE_LABEL = { active: "Abierta", scheduled: "Programada", closed: "Cerrada", draft: "Borrador" };
 // Extra reads that older databases (or a missing migration) may refuse: they fall back to nothing.
 const soft = (fn) => Promise.resolve().then(fn).then((v) => v ?? []).catch(() => []);
@@ -55,6 +55,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
   const [notice, setNotice] = useState(null);
   const [focusStudent, setFocusStudent] = useState(null);
   const [focusMember, setFocusMember] = useState(null);
+  const [liveNew, setLiveNew] = useState(0); // bumped by "Nueva actividad › Juego en vivo" to open the room form
   const [receipts, setReceipts] = useState(() => loadReceipts(profile.id));
   const [shownReceipt, setShownReceipt] = useState(null);
   const [bell, setBell] = useState(false);
@@ -165,9 +166,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           <button type="button" className="tl-live" onClick={() => go({ section: "actividades", tab: "vivo" })} aria-label="Juego en vivo">
             <Icon name="bolt" size={15} /><span>Juego en vivo</span>
           </button>
-          <button type="button" className="primary tl-new" onClick={() => go({ section: "actividades", tab: "nueva" })} disabled={loaded && allCourses.length === 0} aria-label="Nueva actividad">
-            <Icon name="plus" size={17} strokeWidth={2.8} /><span>Nueva actividad</span>
-          </button>
+          <NewActivityMenu go={go} disabled={loaded && allCourses.length === 0} onLive={() => setLiveNew((n) => n + 1)} />
           <Novedades receipts={receipts} open={bell} onToggle={(v) => { setBell(v); if (v) setReceipts(markSeen(profile.id)); }} onOpen={openReceipt} />
         </header>
 
@@ -193,14 +192,15 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           )}
 
           {r.section === "actividades" && r.tab === "lista" && <ActivityList courses={courses} assignments={assignments} contextName={contextName} go={go} loaded={loaded} />}
+          {r.section === "actividades" && KIND_TABS[r.tab] && <ActivityList key={r.tab} kind={KIND_TABS[r.tab].kind} courses={courses} assignments={assignments} contextName={contextName} go={go} loaded={loaded} />}
           {r.section === "actividades" && r.tab === "nueva" && (
             courses.length === 0 ? <p className="caption">Primero necesitas una clase (Estudiantes › Listas de clase).</p> : (
-              <AssignBuilder api={baseApi} courses={courses.filter((c) => !contexts.subjects.some((s) => s.classes.some((k) => k.id === c.id && k.readOnly)))} exams={exams} fetchExam={fetchExam} guard={guard}
+              <AssignBuilder key={r.preset ?? "any"} preset={PRESETS[r.preset] ?? null} api={baseApi} courses={courses.filter((c) => !contexts.subjects.some((s) => s.classes.some((k) => k.id === c.id && k.readOnly)))} exams={exams} fetchExam={fetchExam} guard={guard}
                 onCancel={() => go({ section: "actividades" })} grading={{ models, profile, onChange: reloadModels }}
-                onSaved={async (a, n) => { await reload(); go({ section: "actividad", id: a.id }); showReceipt(assignmentReceipt({ assignment: a, classes: n })); }} />
+                onSaved={async (a, n) => { await reload(); go({ section: "actividad", id: a.id, tab: a.delivery === "paper" ? "papel" : "resultados" }); showReceipt(assignmentReceipt({ assignment: a, classes: n })); }} />
             )
           )}
-          {r.section === "actividades" && r.tab === "vivo" && <LiveSection api={baseApi} courses={courses} exams={exams} fetchExam={fetchExam} guard={guard} AssignBuilder={AssignBuilder} />}
+          {r.section === "actividades" && r.tab === "vivo" && <LiveSection key={liveNew} startCreating={liveNew > 0} api={baseApi} courses={courses} exams={exams} fetchExam={fetchExam} guard={guard} AssignBuilder={AssignBuilder} />}
           {r.section === "actividades" && r.tab === "refuerzo" && (
             <Reinforcement api={api} courses={courses} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} onSaved={(count) => { reload(); showReceipt(reinforcementReceipt({ count })); }} />
           )}
@@ -263,52 +263,6 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
 
       {shownReceipt && <Receipt receipt={shownReceipt} onGo={(to) => go(to)} onClose={() => setShownReceipt(null)} />}
     </div>
-  );
-}
-
-// Actividades › Todas: grouped by what needs doing, each card opens the activity page.
-function ActivityList({ courses, assignments, contextName, go, loaded }) {
-  const [tab, setTab] = useState("open");
-  const [space, setSpace] = useState("");
-  const list = assignments.filter((a) => !space || a.course_id === space);
-  const open = list.filter((a) => ["active", "scheduled"].includes(assignmentState(a)));
-  const closed = list.filter((a) => ["closed", "draft"].includes(assignmentState(a)));
-  const shown = tab === "open" ? open : closed;
-  const byCourse = Object.fromEntries(courses.map((c) => [c.id, c]));
-  return (
-    <section className="card t-card al">
-      <div className="section-head">
-        <div className="segmented small" role="tablist" aria-label="Estado">
-          {[["open", `Abiertas · ${open.length}`], ["closed", `Cerradas · ${closed.length}`]].map(([id, label]) => (
-            <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? "seg active" : "seg"} onClick={() => setTab(id)}>{label}</button>
-          ))}
-        </div>
-        {courses.length > 1 && <Select className="course-filter" aria-label="Clase" value={space} onChange={setSpace}><option value="">Todas las clases</option>{courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</Select>}
-      </div>
-      {loaded && shown.length === 0 && (
-        <p className="caption">{tab === "open" ? `No hay actividades abiertas en ${contextName}.` : "Todavía no hay actividades cerradas."} <button type="button" className="link" onClick={() => go({ section: "actividades", tab: "nueva" })}>Crear una</button></p>
-      )}
-      <div className="assign-cards">
-        {shown.map((a) => {
-          const state = assignmentState(a);
-          const c = byCourse[a.course_id];
-          const area = c ? areaOf(c) : null;
-          return (
-            <button key={a.id} type="button" className={`assign-card state-${state}`} onClick={() => go({ section: "actividad", id: a.id })}>
-              <span className="assign-icon" style={{ "--tile": area ? areaColor(area) : a.scope === "all" ? "var(--accent)" : areaColor(a.scope) }} aria-hidden="true">
-                <Icon name={KIND_ICON[a.kind] ?? "book"} size={22} strokeWidth={2.4} />
-              </span>
-              <span className="assign-body">
-                <strong>{a.title}</strong>
-                <span className="caption">{c ? `${area ? areaShort(area) : "Varias áreas"} · ${groupOf(c).name}` : a.courses?.name}{a.due_at ? ` · ${state === "closed" ? "cerró" : "cierra"} ${shortDate(a.due_at)}` : ""}</span>
-              </span>
-              <span className="assign-state">{STATE_LABEL[state]}</span>
-              <span className="assign-chevron" aria-hidden="true"><Icon name="right" size={18} strokeWidth={2.8} /></span>
-            </button>
-          );
-        })}
-      </div>
-    </section>
   );
 }
 

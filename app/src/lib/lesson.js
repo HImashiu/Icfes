@@ -4,24 +4,62 @@
 
 export const DEFAULT_SETTINGS = { hideOptions: false, seconds: 60, titleSlide: true };
 
+// The cover the teacher designs. Layouts: "classic" (centered), "split" (color panel + goals), "band" (title on a
+// color band), "image" (the teacher's picture behind the title), "minimal" (title only). No mascot: the cover is
+// the teacher's; Cóndor shows only in a small corner mark on the question slides.
+export const INTRO_LAYOUTS = [
+  ["classic", "Centrada"], ["split", "Con objetivos"], ["band", "Franja"], ["image", "Con imagen"], ["minimal", "Solo título"],
+];
+export const INTRO_COLORS = ["#1F4E79", "#0F766E", "#7C2D12", "#6D28D9", "#B91C1C", "#334155", "#C8F04A", "#F59E0B"];
+const HEX = /^#[0-9a-f]{6}$/i;
+const IMG = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/;
+const str = (v, max) => String(v ?? "").slice(0, max);
+export function cleanIntro(i) {
+  const layout = INTRO_LAYOUTS.some(([id]) => id === i?.layout) ? i.layout : "classic";
+  return {
+    layout,
+    title: str(i?.title, 140), subtitle: str(i?.subtitle, 200), by: str(i?.by, 120), goals: str(i?.goals, 600),
+    color: HEX.test(i?.color ?? "") ? i.color : INTRO_COLORS[0],
+    image: typeof i?.image === "string" && i.image.length < 700000 && IMG.test(i.image) ? i.image : "",
+    date: i?.date === true, count: i?.count !== false,
+  };
+}
+export function cleanOutro(o) {
+  return { title: str(o?.title, 140), body: str(o?.body, 600) };
+}
+
 export const cleanSettings = (s) => {
   const seconds = Number(s?.seconds);
-  return {
+  const out = {
     hideOptions: s?.hideOptions === true,
     seconds: Number.isFinite(seconds) && seconds >= 10 && seconds <= 600 ? Math.round(seconds) : DEFAULT_SETTINGS.seconds,
     titleSlide: s?.titleSlide !== false,
   };
+  // Optional parts are kept only when set, so older lessons read back exactly as they were saved.
+  if (s?.intro) out.intro = cleanIntro(s.intro);
+  if (s?.outro) out.outro = cleanOutro(s.outro);
+  if (s?.autoTimer === true) out.autoTimer = true;
+  if (s?.progress === false) out.progress = false;
+  if (typeof s?.courseId === "string" && s.courseId) out.courseId = s.courseId;
+  return out;
 };
 
-// Items as stored: { type: "q", key } or { type: "text", title, body }. Anything else is dropped.
+// Text slide kinds: plain text, an open question for the class to discuss, or an activity with a countdown.
+export const TEXT_KINDS = [["text", "Texto"], ["discuss", "Pregunta para discutir"], ["activity", "Actividad con tiempo"]];
+
+// Items as stored: { type: "q", key, note? } or { type: "text", title, body, kind?, image?, note? }. Anything else is dropped.
+// `note` is the teacher's own reminder, shown only when they open the notes during the projection.
 export function cleanItems(items) {
   const out = [];
   for (const it of Array.isArray(items) ? items : []) {
-    if (it?.type === "q" && (typeof it.key === "string" || typeof it.key === "number")) out.push({ type: "q", key: String(it.key) });
+    const note = String(it?.note ?? "").trim().slice(0, 600);
+    if (it?.type === "q" && (typeof it.key === "string" || typeof it.key === "number")) out.push({ type: "q", key: String(it.key), ...(note ? { note } : {}) });
     else if (it?.type === "text") {
       const title = String(it.title ?? "").trim();
       const body = String(it.body ?? "").trim();
-      if (title || body) out.push({ type: "text", title, body });
+      const image = typeof it.image === "string" && it.image.length < 700000 && IMG.test(it.image) ? it.image : "";
+      const kind = TEXT_KINDS.some(([k]) => k === it.kind) && it.kind !== "text" ? it.kind : null;
+      if (title || body || image) out.push({ type: "text", title, body, ...(kind ? { kind } : {}), ...(image ? { image } : {}), ...(note ? { note } : {}) });
     }
   }
   return out;
@@ -75,18 +113,25 @@ export function buildDeck(lesson, bundle) {
   const slides = [];
   const items = cleanItems(lesson.items);
   const keys = items.filter((i) => i.type === "q" && byKey.has(i.key));
-  if (settings.titleSlide) slides.push({ type: "title", title: lesson.title, count: keys.length });
+  if (settings.titleSlide) slides.push({ type: "title", title: lesson.title, count: keys.length, intro: introOf(lesson) });
   for (const it of items) {
-    if (it.type === "text") slides.push({ type: "text", title: it.title, body: it.body });
+    if (it.type === "text") slides.push({ type: "text", title: it.title, body: it.body, kind: it.kind ?? "text", image: it.image ?? "", note: it.note ?? "" });
     else if (byKey.has(it.key)) {
       const question = byKey.get(it.key);
       const letter = bundle.key?.get(it.key) ?? null;
       const stages = stagesFor({ hasKey: Boolean(letter), explainable: Boolean(explanationOf(bundle.enrich?.[String(question.number)])), hideOptions: settings.hideOptions });
-      slides.push({ type: "question", key: it.key, question, letter, stages });
+      slides.push({ type: "question", key: it.key, question, letter, stages, note: it.note ?? "" });
     }
   }
-  slides.push({ type: "end", title: lesson.title });
+  slides.push({ type: "end", title: lesson.title, outro: cleanOutro(settings.outro) });
   return slides;
+}
+
+// The cover as it shows: the teacher's design, or a plain centered one with the lesson's name.
+export function introOf(lesson) {
+  const s = cleanSettings(lesson?.settings);
+  const i = cleanIntro(s.intro ?? {});
+  return { ...i, title: i.title.trim() || lesson?.title || "Clase sin título" };
 }
 
 export const slideStages = (slide) => (slide?.type === "question" ? slide.stages : ["question"]);

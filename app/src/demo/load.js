@@ -3,6 +3,7 @@ import { parseExam, parseKey } from "../lib/exam.js";
 import { linkFigures, parseFigureSpecs, prepareExam } from "../lib/figures.js";
 import { buildDemo } from "./seed.js";
 import { createDemoClient } from "./client.js";
+import { liveRpc, liveScope } from "./live.js";
 
 const base = import.meta.env.BASE_URL;
 const getJson = async (path) => {
@@ -26,7 +27,8 @@ export async function loadDemo() {
     bundles.set(entry.slug, { exam: prepareExam(parsed, figures), key: parseKey(rawKey), enrich: rawEnrich?.questions ?? null });
   }
   const { profile, tables, student } = buildDemo({ bundles });
-  return { client: createDemoClient({ tables, profile }), profile, student: { ...student, client: studentClient(tables, student.profile) } };
+  const keyOf = (slug, key) => bundles.get(slug)?.key?.get(key) ?? null;
+  return { client: createDemoClient({ tables, profile, scope: liveScope, extraRpc: liveRpc({ tables, profile, keyOf }) }), profile, student: { ...student, client: studentClient(tables, student.profile) } };
 }
 
 // The same school seen by one student: only their classes, their tasks and their own attempts.
