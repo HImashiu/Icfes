@@ -6,7 +6,7 @@ export default function AiAnalysis({ row, correctLetter, meta, hint = true }) {
   const wrong = Object.entries(row.distractores ?? {}).filter(([letter]) => letter !== correctLetter);
   return (
     <div className="card ai-analysis">
-      <span className="label">Análisis con IA · preliminar</span>
+      <span className="label">{meta?.teacher ? "De tu docente" : "Análisis con IA · preliminar"}</span>
       <div className="chips-row">
         {row.competencia && <span className="badge">{row.competencia}</span>}
         {row.componente && <span className="badge">{row.componente}</span>}
@@ -14,7 +14,7 @@ export default function AiAnalysis({ row, correctLetter, meta, hint = true }) {
         {row.nivel_desempeno && <span className="badge">Nivel de desempeño {row.nivel_desempeno}</span>}
       </div>
       {row.afirmacion && <p className="caption">{row.afirmacion}</p>}
-      {row.hidden ? (
+      {row.hidden && meta?.teacher ? null : row.hidden ? (
         <p className="notice">Su explicación queda oculta: la clave de esta pregunta aún no está confirmada o no coincide con la IA.</p>
       ) : (
         <>

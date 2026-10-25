@@ -421,6 +421,17 @@ export default function Workspace({ api, profile, guard, initial, startAt = 0, o
               </div>
 
               <RichField {...field("expl")} key={`${d.uid}-e`} label="Explicación (opcional: la ven los estudiantes al revisar)" value={d.explanation} onChange={set("explanation")} />
+              <details className="qb-more" open={Boolean(d.hint?.trim() || (d.feedback ?? []).some((t) => t.trim()))}>
+                <summary>Pista y retroalimentación por opción</summary>
+                <label className="qb-field"><span className="label">Pista (la ve el estudiante antes de responder, si la actividad permite pistas)</span>
+                  <textarea className="qb-input" rows={2} maxLength={300} value={d.hint ?? ""} onChange={(e) => set("hint")(e.target.value)} placeholder="Ej.: fíjate en qué cambia entre la tabla 1 y la 2" /></label>
+                <span className="label">Por qué cada opción equivocada no es la correcta (la ve quien la eligió)</span>
+                {LETTERS.map((l, i) => (l === d.answer ? null : (
+                  <label key={l} className="qb-fb"><b>{l}</b>
+                    <input className="qb-input" maxLength={240} value={d.feedback?.[i] ?? ""} placeholder={`Qué confunde quien elige ${l}`}
+                      onChange={(e) => update((x) => ({ ...x, feedback: LETTERS.map((_, j) => (j === i ? e.target.value : x.feedback?.[j] ?? "")) }))} /></label>
+                )))}
+              </details>
               <p className="caption">Usa solo material propio o que tengas derecho a usar, sin datos de estudiantes. El documento se queda en este computador; solo se guardan la pregunta y sus recortes.</p>
               {problems.length > 0 && <div role="alert" className="notice error">{problems.map((m) => <div key={m}>{m}</div>)}</div>}
               <div className="report-actions">
@@ -439,6 +450,11 @@ export default function Workspace({ api, profile, guard, initial, startAt = 0, o
           </div>
           <QuestionView question={previewQ} answer={null} figures={null} report={false} examLabel="" graded={showKey} review={showKey && d.answer ? { correctLetter: d.answer } : undefined} />
           {showKey && d.explanation.trim() && <div className="card qb-explain"><span className="label">Explicación</span><RichText html={d.explanation} className="stimulus" /></div>}
+          {showKey && (d.feedback ?? []).some((t, i) => t.trim() && LETTERS[i] !== d.answer) && (
+            <div className="card qb-explain"><span className="label">Si eligen otra opción</span>
+              {LETTERS.map((l, i) => (d.feedback?.[i]?.trim() && l !== d.answer ? <p key={l}><b>{l}:</b> {d.feedback[i]}</p> : null))}</div>
+          )}
+          {!showKey && d.hint?.trim() && <div className="card qb-explain"><span className="label">Pista</span><p>{d.hint}</p></div>}
         </section>
       </div>
 
