@@ -12,25 +12,34 @@ import { LiveSection } from "./LiveHost.jsx";
 import { FilePicker, confirmDialog } from "../components/Controls.jsx";
 import Icon from "../components/Icon.jsx";
 import BankEditor from "./BankEditor.jsx";
-import ChartBuilder from "./ChartBuilder.jsx";
+import Sheet from "./Sheet.jsx";
+import ResultsInsights from "./ResultsInsights.jsx";
+import "./StudentHistory.jsx"; // adds «Historial completo» to every student profile
 import GradingSettings from "./GradingSettings.jsx";
 import Lessons from "./Lessons.jsx";
+import QuestionControl from "./QuestionControl.jsx";
 import Students from "./Students.jsx";
 import TeacherReports from "./TeacherReports.jsx";
 import Today from "./teacher/Today.jsx";
 import ActivityPage from "./teacher/ActivityPage.jsx";
 import ClassMatrix from "./teacher/ClassMatrix.jsx";
+import ClassLists from "./teacher/ClassLists.jsx";
+import StaffList from "./teacher/Staff.jsx";
+import AuditLog from "./teacher/AuditLog.jsx";
+import { MyAccount, SchoolSettings } from "./teacher/Settings.jsx";
+import "./teacher/colegio.css";
+import { ActivityList, KIND_TABS, NewActivityMenu } from "./teacher/Activities.jsx";
 import ContextSwitcher from "../components/ContextSwitcher.jsx";
 import Receipt, { Novedades } from "../components/Receipt.jsx";
 import { createWorkspaceStore } from "../lib/workspaceStore.js";
 import { GRADES, SUBJECTS, gradeLabel, spaceName } from "../lib/spaces.js";
 import { Select } from "../components/Controls.jsx";
-import { ADMIN_NAV, HIDDEN_TABS, NAV, TABS, crumbs, navSection, normalize, parseRoute, routeHash } from "../lib/teacherRoutes.js";
+import { ADMIN_NAV, HIDDEN_TABS, NAV, PRESETS, TABS, crumbs, navSection, normalize, parseRoute, routeHash } from "../lib/teacherRoutes.js";
+import { schoolGrades } from "../lib/colegio.js";
 import { areaOf, areaShort, buildContexts, contextColor, contextCourseIds, contextLabel, groupOf, scopeApi, validContext } from "../lib/teaching.js";
 import { assignmentReceipt, loadReceipts, markSeen, reinforcementReceipt, rosterReceipt, saveReceipt, scanReceipt } from "../lib/receipts.js";
 
 const shortDate = (iso) => new Date(iso).toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "short" });
-const KIND_ICON = { task: "bolt", homework: "book", exam: "clock" };
 const STATE_LABEL = { active: "Abierta", scheduled: "Programada", closed: "Cerrada", draft: "Borrador" };
 // Extra reads that older databases (or a missing migration) may refuse: they fall back to nothing.
 const soft = (fn) => Promise.resolve().then(fn).then((v) => v ?? []).catch(() => []);
@@ -49,12 +58,19 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
   const [allAssignments, setAllAssignments] = useState([]);
   const [members, setMembers] = useState([]);
   const [directors, setDirectors] = useState([]);
+  // Colegio (migration 0020): cursos, subject grants and school settings. null means the migration has not run.
+  const [groupRecords, setGroupRecords] = useState([]);
+  const [grants, setGrants] = useState([]);
+  const [settings, setSettings] = useState({});
+  const [colegio, setColegio] = useState(null); // staff, invites, audit, authorship, attempts: read when Colegio opens
+  const [menu, setMenu] = useState(false);
   const [models, setModels] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
   const [focusStudent, setFocusStudent] = useState(null);
   const [focusMember, setFocusMember] = useState(null);
+  const [liveNew, setLiveNew] = useState(0); // bumped by "Nueva actividad › Juego en vivo" to open the room form
   const [receipts, setReceipts] = useState(() => loadReceipts(profile.id));
   const [shownReceipt, setShownReceipt] = useState(null);
   const [bell, setBell] = useState(false);
@@ -70,8 +86,11 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
     try { return await fn(); } catch (e) { setError(e.message); return undefined; }
   }, []);
   const reload = useCallback(() => guard(async () => {
-    const [c, a, m, d] = await Promise.all([baseApi.listCourses(), baseApi.listAssignments(), soft(() => baseApi.allMembers()), soft(() => baseApi.groupDirectors())]);
-    setAllCourses(c); setAllAssignments(a); setMembers(m); setDirectors(d ?? []); setLoaded(true);
+    const optional = (fn) => Promise.resolve().then(fn).catch(() => null);
+    const [c, a, m, d, g, sa, st] = await Promise.all([baseApi.listCourses(), baseApi.listAssignments(), soft(() => baseApi.allMembers()), soft(() => baseApi.groupDirectors()),
+      optional(() => baseApi.schoolGroups?.()), optional(() => baseApi.subjectAccess?.()), optional(() => baseApi.schoolSettings?.())]);
+    setAllCourses(c); setAllAssignments(a); setMembers(m); setDirectors(d ?? []);
+    setGroupRecords(g ?? null); setGrants(sa ?? null); setSettings(st ?? null); setLoaded(true);
   }), [baseApi, guard]);
   const reloadModels = useCallback(() => guard(async () => { setModels(await baseApi.gradingModels()); }), [baseApi, guard]);
   useEffect(() => { reload(); reloadModels(); }, [reload, reloadModels]);
@@ -94,18 +113,37 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
   }, []);
 
   // Context: what subject and class everything shows.
-  const contexts = useMemo(() => buildContexts({ courses: allCourses, members, profile, directors }), [allCourses, members, profile, directors]);
+  const contexts = useMemo(() => buildContexts({ courses: allCourses, members, profile, directors, grants: grants ?? [] }), [allCourses, members, profile, directors, grants]);
   const context = validContext(contexts, ctx);
   const pickContext = (next) => { setCtx(next); try { localStorage.setItem(ctxKey(profile.id), JSON.stringify(next)); } catch { /* blocked */ } };
   const ids = contextCourseIds(contexts, context);
   const idsKey = ids.join(",");
-  const narrow = !(admin && !context.subject);
+  const narrow = !(admin && !context.subject && !context.group);
   const api = useMemo(() => (narrow ? scopeApi(baseApi, ids) : baseApi), [baseApi, narrow, idsKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const courses = useMemo(() => (narrow ? allCourses.filter((c) => ids.includes(c.id)) : allCourses), [allCourses, narrow, idsKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const assignments = useMemo(() => (narrow ? allAssignments.filter((a) => ids.includes(a.course_id)) : allAssignments), [allAssignments, narrow, idsKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const contextName = contextLabel(contexts, context);
   const tint = context.subject ? contextColor(context.subject) : "var(--accent)";
-  const viewKey = `${context.subject ?? "all"}|${context.courseId ?? ""}`;
+  const viewKey = `${context.subject ?? "all"}|${context.courseId ?? ""}|${context.group ?? ""}`;
+  const grades = schoolGrades(settings, groupRecords ?? [], allCourses);
+  // Writes one line to Colegio › Quién hizo qué (best effort: never blocks the action).
+  const log = useCallback((action, detail) => baseApi.logAction?.(profile.school_id, profile.id, action, detail), [baseApi, profile.school_id, profile.id]);
+  const loadColegio = useCallback(() => guard(async () => {
+    const optional = (fn) => Promise.resolve().then(fn).catch(() => null);
+    const [staff, invites, audit, authorship, attempts, school] = await Promise.all([baseApi.listStaff(), optional(() => baseApi.staffInvites()), optional(() => baseApi.auditLog()),
+      optional(() => baseApi.authorship()), soft(() => baseApi.allAttempts()), optional(() => baseApi.schoolInfo())]);
+    setColegio({ staff, invites, audit, authorship: authorship ?? {}, attempts, school });
+  }), [baseApi, guard]);
+  const colegioOpen = admin && (route.section === "colegio" || route.section === "cuenta");
+  useEffect(() => { if (colegioOpen) loadColegio(); }, [colegioOpen, loadColegio]);
+  const reloadAll = useCallback(async () => { await reload(); if (admin) await loadColegio(); }, [reload, loadColegio, admin]);
+  useEffect(() => {
+    if (!menu) return undefined;
+    const down = (e) => { if (!e.target.closest?.(".tl-menu-wrap")) setMenu(false); };
+    document.addEventListener("pointerdown", down);
+    return () => document.removeEventListener("pointerdown", down);
+  }, [menu]);
+  const openGroup = (key) => { pickContext({ subject: null, courseId: null, group: key }); go({ section: "hoy" }); };
 
   const showReceipt = (r) => { const { row, list } = saveReceipt(profile.id, r); setReceipts(list); setShownReceipt(row); };
   const openReceipt = (r) => { setReceipts(markSeen(profile.id)); setShownReceipt(r); setBell(false); };
@@ -139,10 +177,10 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
             );
           })}
         </nav>
-        <div className="card plan">
+        <button type="button" className={r.section === "cuenta" ? "card plan tl-me on" : "card plan tl-me"} onClick={() => go({ section: "cuenta" })} aria-label="Mi cuenta">
           <span className="label">{profile.full_name || profile.email}</span>
-          <span className="caption">{admin ? "Coordinación" : "Docente"} · clave de respuestas preliminar</span>
-        </div>
+          <span className="caption">{admin ? "Coordinación" : "Docente"} · Mi cuenta y permisos</span>
+        </button>
         <button type="button" className="link t-exit" onClick={onExit}>
           <span className="t-exit-long">Volver a la app de estudiante</span>
           <span className="t-exit-short" aria-hidden="true">‹ Estudiante</span>
@@ -151,7 +189,16 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
 
       <main className="t-main">
         <header className="tl-top">
-          <button type="button" className="icon-btn tl-exit" aria-label="Volver a la app de estudiante" onClick={onExit}><Logo size={26} /></button>
+          <span className="tl-menu-wrap">
+            <button type="button" className="icon-btn tl-exit" aria-label="Menú de la cuenta" aria-expanded={menu} onClick={() => setMenu(!menu)}><Logo size={26} /></button>
+            {menu && (
+              <span className="tl-menu" role="menu">
+                <strong>{profile.full_name || profile.email}</strong>
+                <button type="button" role="menuitem" onClick={() => { setMenu(false); go({ section: "cuenta" }); }}><Icon name="user" size={16} /> Mi cuenta y permisos</button>
+                <button type="button" role="menuitem" onClick={() => { setMenu(false); onExit(); }}><Icon name="left" size={16} /> App de estudiante</button>
+              </span>
+            )}
+          </span>
           <ContextSwitcher contexts={contexts} value={context} onChange={pickContext} />
           <nav className="tl-crumbs" aria-label="Estás en">
             {trail.map((c, i) => (
@@ -165,9 +212,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           <button type="button" className="tl-live" onClick={() => go({ section: "actividades", tab: "vivo" })} aria-label="Juego en vivo">
             <Icon name="bolt" size={15} /><span>Juego en vivo</span>
           </button>
-          <button type="button" className="primary tl-new" onClick={() => go({ section: "actividades", tab: "nueva" })} disabled={loaded && allCourses.length === 0} aria-label="Nueva actividad">
-            <Icon name="plus" size={17} strokeWidth={2.8} /><span>Nueva actividad</span>
-          </button>
+          <NewActivityMenu go={go} disabled={loaded && allCourses.length === 0} onLive={() => setLiveNew((n) => n + 1)} />
           <Novedades receipts={receipts} open={bell} onToggle={(v) => { setBell(v); if (v) setReceipts(markSeen(profile.id)); }} onOpen={openReceipt} />
         </header>
 
@@ -184,6 +229,11 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           </div>
         )}
         {error && <p className="notice error" role="alert">{error}</p>}
+        {(() => {
+          const id = r.section === "actividad" ? activity?.course_id : context.courseId;
+          return id && contexts.readOnly?.includes(id)
+            ? <p className="notice cg-ro">Solo ves esta clase: puedes revisar actividades, listas y resultados, pero no cambiarlos. Coordinación da permiso para editar.</p> : null;
+        })()}
         {notice && <p className="notice">{notice}</p>}
 
         <div className="tl-page" key={viewKey}>
@@ -193,14 +243,15 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           )}
 
           {r.section === "actividades" && r.tab === "lista" && <ActivityList courses={courses} assignments={assignments} contextName={contextName} go={go} loaded={loaded} />}
+          {r.section === "actividades" && KIND_TABS[r.tab] && <ActivityList key={r.tab} kind={KIND_TABS[r.tab].kind} courses={courses} assignments={assignments} contextName={contextName} go={go} loaded={loaded} />}
           {r.section === "actividades" && r.tab === "nueva" && (
             courses.length === 0 ? <p className="caption">Primero necesitas una clase (Estudiantes › Listas de clase).</p> : (
-              <AssignBuilder api={baseApi} courses={courses.filter((c) => !contexts.subjects.some((s) => s.classes.some((k) => k.id === c.id && k.readOnly)))} exams={exams} fetchExam={fetchExam} guard={guard}
+              <AssignBuilder key={r.preset ?? "any"} preset={PRESETS[r.preset] ?? null} api={baseApi} courses={courses.filter((c) => !contexts.subjects.some((s) => s.classes.some((k) => k.id === c.id && k.readOnly)))} exams={exams} fetchExam={fetchExam} guard={guard}
                 onCancel={() => go({ section: "actividades" })} grading={{ models, profile, onChange: reloadModels }}
-                onSaved={async (a, n) => { await reload(); go({ section: "actividad", id: a.id }); showReceipt(assignmentReceipt({ assignment: a, classes: n })); }} />
+                onSaved={async (a, n) => { await reload(); go({ section: "actividad", id: a.id, tab: a.delivery === "paper" ? "papel" : "resultados" }); showReceipt(assignmentReceipt({ assignment: a, classes: n })); }} />
             )
           )}
-          {r.section === "actividades" && r.tab === "vivo" && <LiveSection api={baseApi} courses={courses} exams={exams} fetchExam={fetchExam} guard={guard} AssignBuilder={AssignBuilder} />}
+          {r.section === "actividades" && r.tab === "vivo" && <LiveSection key={liveNew} startCreating={liveNew > 0} api={baseApi} courses={courses} exams={exams} fetchExam={fetchExam} guard={guard} AssignBuilder={AssignBuilder} />}
           {r.section === "actividades" && r.tab === "refuerzo" && (
             <Reinforcement api={api} courses={courses} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} onSaved={(count) => { reload(); showReceipt(reinforcementReceipt({ count })); }} />
           )}
@@ -208,7 +259,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           {r.section === "actividad" && !activity && <p className="caption">{loaded ? "Esta actividad no existe o no tienes acceso a ella." : "Cargando…"}</p>}
           {r.section === "actividad" && activity && (
             <ActivityPage key={activity.id} api={baseApi} profile={profile} assignment={activity} course={activityCourse} tab={r.tab} go={go} models={models} reloadModels={reloadModels}
-              fetchExam={fetchExam} guard={guard} setNotice={setNotice} reload={reload} assignments={allAssignments} courses={allCourses} focusMember={focusMember}
+              fetchExam={fetchExam} guard={guard} setNotice={setNotice} reload={reload} assignments={allAssignments} courses={allCourses} focusMember={focusMember} onOpenStudent={openStudent}
               onScanned={(info) => { reload(); showReceipt(scanReceipt(info)); }} />
           )}
 
@@ -217,34 +268,46 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
               focus={focusStudent} onFocusDone={() => setFocusStudent(null)} onOpenAssignment={openAssignment} onReinforce={() => go({ section: "actividades", tab: "refuerzo" })} />
           )}
           {r.section === "estudiantes" && r.tab === "clases" && (
-            <Courses api={baseApi} profile={profile} courses={courses} reload={reload} guard={guard} setNotice={setNotice} onImported={(course, count) => showReceipt(rosterReceipt({ course, count }))} />
+            <ClassLists api={baseApi} profile={profile} courses={courses} readOnlyIds={contexts.readOnly} settings={settings} reload={reload} guard={guard} setNotice={setNotice} log={log}
+              onImported={(course, count) => showReceipt(rosterReceipt({ course, count }))} />
           )}
 
           {r.section === "resultados" && r.tab === "resumen" && (
             <>
               <Dashboard api={api} profile={profile} guard={guard} ws={ws} onOpenStudent={openStudent} onOpenQueue={() => openStudent("#queue")} onOpenCourse={() => go({ section: "estudiantes", tab: "clases" })} onReinforce={() => go({ section: "actividades", tab: "refuerzo" })} />
+              <ResultsInsights api={api} courses={courses} assignments={assignments} fetchExam={fetchExam} ws={ws} onOpenSheet={() => go({ section: "resultados", tab: "grafica" })} />
               <TeacherReports api={api} profile={profile} courses={courses} assignments={assignments} models={models} fetchExam={fetchExam} guard={guard} onOpenStudent={openStudent} />
             </>
           )}
           {r.section === "resultados" && r.tab === "actividades" && <ResultsByActivity api={api} courses={courses} assignments={assignments} go={go} contextName={contextName} />}
           {r.section === "resultados" && r.tab === "calificacion" && (
-            <GradingSettings api={baseApi} profile={profile} courses={courses} assignments={assignments} models={models} reloadModels={reloadModels} guard={guard} setNotice={setNotice} />
+            <GradingSettings api={baseApi} profile={profile} courses={courses} assignments={assignments} models={models} reloadModels={reloadModels} guard={guard} setNotice={setNotice} fetchExam={fetchExam} />
           )}
-          {r.section === "resultados" && r.tab === "grafica" && <ChartBuilder api={api} profile={profile} courses={courses} assignments={assignments} fetchExam={fetchExam} guard={guard} ws={ws} />}
+          {r.section === "resultados" && r.tab === "grafica" && <Sheet api={api} profile={profile} courses={courses} assignments={assignments} models={models} fetchExam={fetchExam} guard={guard} ws={ws} />}
 
           {r.section === "biblioteca" && r.tab === "banco" && <BankEditor api={baseApi} profile={profile} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
           {r.section === "biblioteca" && r.tab === "preguntas" && <QuestionBuilder api={baseApi} profile={profile} guard={guard} setNotice={setNotice} />}
+          {r.section === "biblioteca" && r.tab === "control" && <QuestionControl api={baseApi} profile={profile} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
           {r.section === "biblioteca" && r.tab === "clases" && <Lessons api={baseApi} profile={profile} courses={courses} assignments={assignments} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} reload={reload} />}
 
-          {r.section === "colegio" && r.tab === "docentes" && (
-            <>
-              <ClassMatrix api={baseApi} profile={profile} courses={allCourses} members={members} directors={directors} guard={guard} setNotice={setNotice} reload={reload}
-                onOpenClass={(id) => { const c = allCourses.find((x) => x.id === id); pickContext({ subject: areaOf(c) ?? contexts.subjects.find((s) => s.classes.some((k) => k.id === id))?.key ?? null, courseId: id }); go({ section: "hoy" }); }} />
-              <Staff api={baseApi} profile={profile} guard={guard} setNotice={setNotice} />
-            </>
+          {r.section === "colegio" && r.tab === "cursos" && (
+            <ClassMatrix api={baseApi} profile={profile} courses={allCourses} members={members} directors={directors} records={groupRecords} grades={grades} staff={colegio?.staff ?? []}
+              guard={guard} setNotice={setNotice} reload={reloadAll} log={log} onOpenGroup={openGroup}
+              onOpenClass={(id) => { const c = allCourses.find((x) => x.id === id); pickContext({ subject: areaOf(c) ?? contexts.subjects.find((s) => s.classes.some((k) => k.id === id))?.key ?? null, courseId: id }); go({ section: "hoy" }); }} />
           )}
-          {r.section === "colegio" && r.tab === "calificacion" && <GradingSettings api={baseApi} profile={profile} courses={allCourses} assignments={allAssignments} models={models} reloadModels={reloadModels} guard={guard} setNotice={setNotice} />}
-          {r.section === "colegio" && r.tab === "ajustes" && <Settings api={baseApi} profile={profile} guard={guard} setNotice={setNotice} />}
+          {r.section === "colegio" && r.tab === "docentes" && (
+            !colegio ? <p className="caption">Cargando…</p> : (
+              <StaffList api={baseApi} profile={profile} staff={colegio.staff} invites={colegio.invites} courses={allCourses} members={members} grants={grants} authorship={colegio.authorship}
+                attempts={colegio.attempts} audit={colegio.audit} grades={grades} guard={guard} setNotice={setNotice} reload={reloadAll} log={log}
+                onOpenAssignment={(id) => go({ section: "actividad", id, tab: "resultados" })} />
+            )
+          )}
+          {r.section === "colegio" && r.tab === "registro" && (
+            !colegio ? <p className="caption">Cargando…</p> : <AuditLog audit={colegio.audit} authorship={colegio.authorship} staff={colegio.staff} courses={allCourses} onOpenAssignment={(id) => go({ section: "actividad", id, tab: "resultados" })} />
+          )}
+          {r.section === "colegio" && r.tab === "calificacion" && <GradingSettings api={baseApi} profile={profile} courses={allCourses} assignments={allAssignments} models={models} reloadModels={reloadModels} guard={guard} setNotice={setNotice} fetchExam={fetchExam} />}
+          {r.section === "colegio" && r.tab === "ajustes" && <SchoolSettings api={baseApi} profile={profile} settings={settings} school={colegio?.school} guard={guard} setNotice={setNotice} reload={reloadAll} log={log} />}
+          {r.section === "cuenta" && <MyAccount api={baseApi} profile={profile} courses={allCourses} members={members} grants={grants} guard={guard} setNotice={setNotice} onExit={onExit} />}
         </div>
       </main>
 
@@ -263,52 +326,6 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
 
       {shownReceipt && <Receipt receipt={shownReceipt} onGo={(to) => go(to)} onClose={() => setShownReceipt(null)} />}
     </div>
-  );
-}
-
-// Actividades › Todas: grouped by what needs doing, each card opens the activity page.
-function ActivityList({ courses, assignments, contextName, go, loaded }) {
-  const [tab, setTab] = useState("open");
-  const [space, setSpace] = useState("");
-  const list = assignments.filter((a) => !space || a.course_id === space);
-  const open = list.filter((a) => ["active", "scheduled"].includes(assignmentState(a)));
-  const closed = list.filter((a) => ["closed", "draft"].includes(assignmentState(a)));
-  const shown = tab === "open" ? open : closed;
-  const byCourse = Object.fromEntries(courses.map((c) => [c.id, c]));
-  return (
-    <section className="card t-card al">
-      <div className="section-head">
-        <div className="segmented small" role="tablist" aria-label="Estado">
-          {[["open", `Abiertas · ${open.length}`], ["closed", `Cerradas · ${closed.length}`]].map(([id, label]) => (
-            <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? "seg active" : "seg"} onClick={() => setTab(id)}>{label}</button>
-          ))}
-        </div>
-        {courses.length > 1 && <Select className="course-filter" aria-label="Clase" value={space} onChange={setSpace}><option value="">Todas las clases</option>{courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</Select>}
-      </div>
-      {loaded && shown.length === 0 && (
-        <p className="caption">{tab === "open" ? `No hay actividades abiertas en ${contextName}.` : "Todavía no hay actividades cerradas."} <button type="button" className="link" onClick={() => go({ section: "actividades", tab: "nueva" })}>Crear una</button></p>
-      )}
-      <div className="assign-cards">
-        {shown.map((a) => {
-          const state = assignmentState(a);
-          const c = byCourse[a.course_id];
-          const area = c ? areaOf(c) : null;
-          return (
-            <button key={a.id} type="button" className={`assign-card state-${state}`} onClick={() => go({ section: "actividad", id: a.id })}>
-              <span className="assign-icon" style={{ "--tile": area ? areaColor(area) : a.scope === "all" ? "var(--accent)" : areaColor(a.scope) }} aria-hidden="true">
-                <Icon name={KIND_ICON[a.kind] ?? "book"} size={22} strokeWidth={2.4} />
-              </span>
-              <span className="assign-body">
-                <strong>{a.title}</strong>
-                <span className="caption">{c ? `${area ? areaShort(area) : "Varias áreas"} · ${groupOf(c).name}` : a.courses?.name}{a.due_at ? ` · ${state === "closed" ? "cerró" : "cierra"} ${shortDate(a.due_at)}` : ""}</span>
-              </span>
-              <span className="assign-state">{STATE_LABEL[state]}</span>
-              <span className="assign-chevron" aria-hidden="true"><Icon name="right" size={18} strokeWidth={2.8} /></span>
-            </button>
-          );
-        })}
-      </div>
-    </section>
   );
 }
 
@@ -351,207 +368,5 @@ function ResultsByActivity({ api, courses, assignments, go, contextName }) {
         {!rows && <p className="caption">Cargando…</p>}
       </div>
     </section>
-  );
-}
-
-function Courses({ api, profile, courses, reload, guard, setNotice, focus, onImported }) {
-  const [subject, setSubject] = useState("Inglés");
-  const [grade, setGrade] = useState("9");
-  const [group, setGroup] = useState("A");
-  const [custom, setCustom] = useState(null);
-  const [open, setOpen] = useState(focus ?? null);
-  const name = custom ?? spaceName({ subject, grade, group });
-
-  const create = (e) => {
-    e.preventDefault();
-    if (!name.trim()) return;
-    guard(async () => {
-      const c = await api.createCourse({ schoolId: profile.school_id, userId: profile.id, name: name.trim(), grade, subject, groupLabel: group.trim() });
-      setCustom(null);
-      setNotice(`Clase ${c.name} creada. Ahora agrega a sus estudiantes.`);
-      await reload();
-      setOpen(c.id);
-    });
-  };
-
-  return (
-    <>
-      <p className="caption tl-lead">Una clase es un grupo con una materia (por ejemplo «Inglés 11A»). Las actividades y los resultados se organizan por clase.</p>
-      <form className="card t-card assign-form" onSubmit={create}>
-        <strong>Nueva clase</strong>
-        <label className="field"><span className="label">Materia</span>
-          <Select value={subject} onChange={(v) => { setSubject(v); setCustom(null); }} aria-label="Materia">{SUBJECTS.map((x) => <option key={x}>{x}</option>)}</Select></label>
-        <label className="field"><span className="label">Grado</span>
-          <Select value={grade} onChange={(v) => { setGrade(v); setCustom(null); }} aria-label="Grado">{GRADES.map((g) => <option key={g} value={g}>{gradeLabel(g)}</option>)}</Select></label>
-        <label className="field"><span className="label">Grupo (A, B, 01…)</span><input value={group} onChange={(e) => { setGroup(e.target.value); setCustom(null); }} /></label>
-        <label className="field"><span className="label">Nombre de la clase</span><input value={name} onChange={(e) => setCustom(e.target.value)} /></label>
-        <div className="report-actions"><button type="submit" className="primary" disabled={!name.trim()}>Crear clase</button></div>
-      </form>
-      {courses.length === 0 && <p className="caption">Todavía no tienes clases.</p>}
-      {courses.map((c) => (
-        <div key={c.id} className="card t-card">
-          <div className="section-head">
-            <strong>{c.name}{c.grade && !c.subject ? ` · Grado ${c.grade}` : ""}</strong>
-            <button type="button" className="secondary" onClick={() => setOpen(open === c.id ? null : c.id)}>{open === c.id ? "Cerrar" : "Ver lista"}</button>
-          </div>
-          {open === c.id && <Roster api={api} course={c} guard={guard} setNotice={setNotice} reload={reload} onImported={onImported} />}
-        </div>
-      ))}
-    </>
-  );
-}
-
-function Roster({ api, course, guard, setNotice, reload, onImported }) {
-  const [members, setMembers] = useState([]);
-  const [text, setText] = useState("");
-  const load = useCallback(() => guard(async () => setMembers(await api.listMembers(course.id))), [api, course.id, guard]);
-  useEffect(() => { load(); }, [load]);
-
-  const parsed = useMemo(() => (text.trim() ? parseRoster(text) : null), [text]);
-  const onFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (file) setText(await file.text());
-  };
-  const importRows = () =>
-    guard(async () => {
-      const n = await api.addStudents(course.id, parsed.rows);
-      setText("");
-      if (onImported) onImported(course, n);
-      else setNotice(`${n} estudiantes en ${course.name}. Entran cuando inicien sesión con su correo del colegio.`);
-      await load();
-      reload();
-    });
-  const remove = (id) => guard(async () => { await api.removeMember(id); await load(); });
-  const del = async () => {
-    if (!(await confirmDialog(`¿Borrar el curso ${course.name} con sus tareas y resultados?`, { confirmLabel: "Borrar curso", danger: true }))) return;
-    guard(async () => { await api.deleteCourse(course.id); await reload(); });
-  };
-
-  const students = members.filter((m) => m.role === "student");
-  const teachers = members.filter((m) => m.role === "teacher");
-  const [coEmail, setCoEmail] = useState("");
-  const addTeacher = (e) => {
-    e.preventDefault();
-    const email = coEmail.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
-    guard(async () => { await api.addStudents(course.id, [{ email, fullName: "" }], "teacher"); setCoEmail(""); setNotice(`${email} ahora es docente de ${course.name}.`); await load(); });
-  };
-  return (
-    <div style={{ display: "grid", gap: 12 }}>
-      <div>
-        <span className="label">Docentes del curso</span>
-        <p className="caption">{teachers.map((t) => t.full_name || t.email).join(" · ") || "—"}</p>
-        <form className="b-auto" onSubmit={addTeacher}>
-          <input type="email" aria-label="Correo del docente" placeholder="docente@colegio.edu.co" value={coEmail} onChange={(e) => setCoEmail(e.target.value)} />
-          <button type="submit" className="secondary" disabled={!coEmail.trim()}>Agregar docente</button>
-        </form>
-      </div>
-      <label className="field">
-        <span className="label">Pegar lista o subir CSV (nombre, apellidos, correo)</span>
-        <textarea rows={5} value={text} onChange={(e) => setText(e.target.value)} placeholder={"nombre,apellidos,correo\nAna,Pérez,ana@colegio.edu.co"} />
-      </label>
-      <FilePicker accept=".csv,.txt,text/csv" onChange={onFile} aria-label="Subir archivo CSV" label="Subir archivo CSV" hint="o arrástralo aquí" />
-      {parsed && (
-        <div>
-          <p className="caption">{parsed.rows.length} válidos{parsed.errors.length ? `, ${parsed.errors.length} con problema` : ""}.</p>
-          {parsed.errors.slice(0, 8).map((er) => <p key={er.line} className="notice error">Línea {er.line}: {er.message}</p>)}
-          <div className="report-actions">
-            <button type="button" className="secondary" onClick={() => setText("")}>Limpiar</button>
-            <button type="button" className="primary" disabled={parsed.rows.length === 0} onClick={importRows}>Agregar {parsed.rows.length}</button>
-          </div>
-        </div>
-      )}
-      <div className="table-wrap">
-        <table className="t-table">
-          <thead><tr><th>Estudiante</th><th>Correo</th><th>Estado</th><th /></tr></thead>
-          <tbody>
-            {students.map((m) => (
-              <tr key={m.id}>
-                <td>{m.full_name || "—"}</td><td>{m.email}</td>
-                <td>{m.profile_id ? "Ya ingresó" : "Invitado"}</td>
-                <td><button type="button" className="link" onClick={() => remove(m.id)} aria-label={`Quitar a ${m.email}`}>Quitar</button></td>
-              </tr>
-            ))}
-            {students.length === 0 && <tr><td colSpan={4} className="caption">Sin estudiantes todavía.</td></tr>}
-          </tbody>
-        </table>
-      </div>
-      <button type="button" className="link" onClick={del}>Borrar este curso</button>
-    </div>
-  );
-}
-
-function Staff({ api, profile, guard, setNotice }) {
-  const [staff, setStaff] = useState([]);
-  const load = useCallback(() => guard(async () => setStaff(await api.listStaff())), [api, guard]);
-  useEffect(() => { load(); }, [load]);
-  const change = async (p, role) => {
-    const verb = role === "school_admin" ? "coordinación" : role === "teacher" ? "docente" : "estudiante";
-    if (!(await confirmDialog(`¿Cambiar a ${p.full_name || p.email} a ${verb}?`, { confirmLabel: "Cambiar" }))) return;
-    guard(async () => { await api.setRole(p.id, role); setNotice(`${p.full_name || p.email} ahora es ${verb}.`); await load(); });
-  };
-  const LABEL = { teacher: "Docente", school_admin: "Coordinación" };
-  return (
-    <>
-      <div className="card t-card">
-        <div className="section-head"><h2>Roles</h2><span className="caption">Quién es docente y quién es coordinación.</span></div>
-        <div className="table-wrap">
-          <table className="t-table">
-            <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th /></tr></thead>
-            <tbody>
-              {staff.map((p) => (
-                <tr key={p.id}>
-                  <td>{p.full_name || "—"}</td><td>{p.email}</td><td>{LABEL[p.role] ?? p.role}</td>
-                  <td>{p.id !== profile.id && (
-                    <>
-                      {p.role === "teacher" && <button type="button" className="link" onClick={() => change(p, "school_admin")}>Hacer coordinación</button>}
-                      {p.role === "school_admin" && <button type="button" className="link" onClick={() => change(p, "teacher")}>Pasar a docente</button>}
-                      {" "}<button type="button" className="link" onClick={() => change(p, "student")}>Quitar permisos</button>
-                    </>
-                  )}</td>
-                </tr>
-              ))}
-              {staff.length === 0 && <tr><td colSpan={4} className="caption">Todavía no hay docentes.</td></tr>}
-            </tbody>
-          </table>
-        </div>
-        <span className="caption">Para sumar un docente nuevo: compártele el código de docente (en Ajustes). Lo escribe la primera vez que ingresa con su correo del colegio.</span>
-      </div>
-    </>
-  );
-}
-
-function Settings({ api, profile, guard, setNotice }) {
-  const [code, setCode] = useState(null);
-  const [school, setSchool] = useState(null);
-  const [ok, setOk] = useState(false);
-  useEffect(() => { guard(async () => { setCode(await api.teacherCode()); setSchool(await api.schoolConsents()); }); }, [api, guard]);
-  const recorded = hasGuardianAuth(school);
-  const record = () => guard(async () => {
-    await api.recordSchoolConsent(profile.school_id, profile.id, "guardian_authorization", CONSENT_VERSION);
-    setSchool(await api.schoolConsents());
-    setNotice("Quedó registrada la autorización de acudientes del colegio.");
-  });
-  return (
-    <>
-            <div className="card t-card">
-        <span className="label">Código de docente</span>
-        <strong className="display">{code ?? "…"}</strong>
-        <span className="caption">Cada docente lo escribe la primera vez que ingresa. No lo compartas con estudiantes.</span>
-      </div>
-      <div className="card t-card">
-        <span className="label">Autorización de acudientes</span>
-        {recorded ? (
-          <span className="caption">Registrada. Los estudiantes aceptan además los términos de uso al ingresar.</span>
-        ) : (
-          <>
-            <p className="caption">{GUARDIAN_TEXT}</p>
-            <label className="b-check"><input type="checkbox" checked={ok} onChange={(e) => setOk(e.target.checked)} /> Lo declaro en nombre del colegio</label>
-            <div className="report-actions"><button type="button" className="primary" disabled={!ok || school === null} onClick={record}>Registrar</button></div>
-          </>
-        )}
-        <span className="caption">Textos legales en borrador (versión {CONSENT_VERSION}): deben revisarse con un abogado antes de usar la plataforma con estudiantes reales.</span>
-      </div>
-    </>
   );
 }

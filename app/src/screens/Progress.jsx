@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import Icon from "../components/Icon.jsx";
 import Mascot from "../components/Mascot.jsx";
 import History from "./History.jsx";
+import { ErrorNotebook, StudyPlan } from "./StudyTools.jsx";
 import { fmtInt } from "../lib/brand.js";
 import { loadHistory } from "../lib/local.js";
 import { achievements } from "../lib/achievements.js";
@@ -15,11 +16,11 @@ const ago = (t) => {
   const d = Math.floor((Date.now() - t) / 864e5);
   return d <= 0 ? "hoy" : d === 1 ? "ayer" : `hace ${d} días`;
 };
-const TABS = [{ id: "resumen", label: "Resumen" }, { id: "logros", label: "Logros" }, { id: "historial", label: "Historial" }];
+const TABS = [{ id: "resumen", label: "Resumen" }, { id: "plan", label: "Plan" }, { id: "errores", label: "Errores" }, { id: "logros", label: "Logros" }, { id: "historial", label: "Historial" }];
 
 // Progreso: the student's own analysis (by area, over time, pace), their logros and every finished attempt.
 // Always against the student's own past, never against classmates.
-export default function Progress({ tab = "resumen", onTab, assigned, classes, onPracticeArea, onNew, onOpen, exams = [], onStartSession }) {
+export default function Progress({ tab = "resumen", onTab, assigned, classes, onPracticeArea, onNew, onOpen, exams = [], onStartSession, fetchExam, onPracticeKeys, onSimulacro, onMix, onGoal }) {
   const history = useMemo(() => loadHistory(), []);
   const ins = useMemo(() => practiceInsights(history), [history]);
   const tasks = useMemo(() => {
@@ -37,13 +38,15 @@ export default function Progress({ tab = "resumen", onTab, assigned, classes, on
       <div className="segmented sj-tabs" role="tablist" aria-label="Secciones de progreso">
         {TABS.map((t) => (
           <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className={tab === t.id ? "seg active" : "seg"} onClick={() => onTab(t.id)}>
-            {t.label}{t.id === "logros" && <span className="muted"> {badges.filter((b) => b.got).length}/{badges.length}</span>}
+            {t.label}
           </button>
         ))}
       </div>
       {tab === "logros" && <Badges badges={badges} />}
       {tab === "historial" && <History embedded onNew={onNew} onOpen={onOpen} />}
-      {tab !== "logros" && tab !== "historial" && (
+      {tab === "errores" && <ErrorNotebook fetchExam={fetchExam} onPracticeKeys={onPracticeKeys} />}
+      {tab === "plan" && <StudyPlan onPracticeArea={onPracticeArea} onSimulacro={onSimulacro} onMix={onMix} onErrors={() => onTab("errores")} onGoal={onGoal} />}
+      {tab === "resumen" && (
         <>
           <ScoreCard summary={score} target={goal.target} exams={exams} onStartSession={onStartSession} />
           {score.trend.length > 0 && <ScoreTrend summary={score} target={goal.target} />}

@@ -1,0 +1,50 @@
+/* Estudiante: práctica a medida, cuaderno de errores y plan de la semana. */
+.cp { display: grid; gap: 12px; }
+.cp-block { display: grid; gap: 8px; }
+.cp-two { grid-template-columns: 1fr; }
+@media (min-width: 800px) { .cp-two { grid-template-columns: 1fr 1fr; } }
+.cp-two > div { display: grid; gap: 8px; }
+.cp-diff { font-size: 7px; letter-spacing: 1px; color: var(--flame); margin-right: 4px; }
+.cp-sources { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+@media (min-width: 700px) { .cp-sources { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.cp-source { display: grid; gap: 2px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); text-align: left; cursor: pointer; font: inherit; }
+.cp-source b { font-size: 22px; font-family: "Bricolage Grotesque", system-ui, sans-serif; }
+.cp-source.on { border-color: var(--accent-ink); background: var(--accent-soft); }
+.cp-paces { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 560px) { .cp-paces { grid-template-columns: 1fr; } }
+
+.st-wrap { display: grid; gap: 12px; }
+.st-summary { display: grid; gap: 8px; }
+.st-big { font-size: 26px; font-family: "Bricolage Grotesque", system-ui, sans-serif; }
+.st-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.st-kpis > span { display: grid; }
+.st-kpis b { font-size: 26px; font-family: "Bricolage Grotesque", system-ui, sans-serif; }
+.bad-text { color: var(--bad); }
+.ok-text { color: var(--ok); }
+.st-causes { display: grid; gap: 4px; }
+.st-cause { display: grid; grid-template-columns: minmax(120px, 1.2fr) 1fr auto; gap: 10px; align-items: center; padding: 6px 8px; border-radius: 10px; border: 1px solid transparent; background: none; color: inherit; font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.st-cause .td-track > span { background: var(--flame); }
+.st-cause.on { border-color: var(--accent-ink); background: var(--accent-soft); }
+.st-tip { display: flex; gap: 8px; align-items: flex-start; margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--accent-soft); font-size: 14px; }
+.st-groups { display: grid; gap: 8px; }
+@media (min-width: 800px) { .st-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.st-group { display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left; cursor: pointer; color: inherit; font: inherit; }
+.st-group > span { display: grid; gap: 2px; }
+.st-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.st-list, .st-days { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.st-item { padding: 0; overflow: hidden; }
+.st-item.done { opacity: .75; }
+.st-head { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; width: 100%; padding: 12px 14px; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.st-main { display: grid; gap: 2px; min-width: 0; }
+.st-main .dot { margin-right: 6px; }
+.st-body { display: grid; gap: 10px; padding: 0 14px 14px; }
+.st-body textarea { width: 100%; resize: vertical; }
+.st-day { display: grid; grid-template-columns: 30px 1fr auto; gap: 10px; align-items: center; }
+.st-day.today { border-color: var(--accent-ink); }
+.st-day.done .st-check { color: var(--ok); }
+.st-day.missed { opacity: .8; }
+.st-check { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--line); font-weight: 800; }
+.st-day.done .st-check { border-color: var(--ok); }
+.st-day.today .st-check { border-color: var(--accent-ink); color: var(--accent-ink); }
+.su-custom { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; width: 100%; text-align: left; cursor: pointer; color: inherit; font: inherit; border-color: var(--accent-ink); }
+.su-custom > span { display: grid; gap: 2px; }

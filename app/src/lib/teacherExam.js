@@ -41,7 +41,14 @@ export function teacherExam(rows, order = null) {
   const sections = names.map((name) => ({ name, expected: null, questions: questions.filter((q) => q.section === name) }));
   const enrich = {};
   list.forEach((r, i) => {
-    enrich[String(i + 1)] = { competencia: r.competencia ?? null, tema: r.tema ?? null, dificultad: r.dificultad ?? null, explicacion: r.explanation ?? null, hidden: !r.explanation };
+    // The teacher's hint and the feedback for each wrong option travel like the bank's AI analysis (pista, distractores).
+    const j = r.question_json ?? {};
+    const feedback = Object.fromEntries(Object.entries(j.feedback ?? {}).filter(([, t]) => String(t ?? "").trim()));
+    enrich[String(i + 1)] = {
+      competencia: r.competencia ?? null, tema: r.tema ?? null, dificultad: r.dificultad ?? null, explicacion: r.explanation ?? null,
+      pista: j.hint?.trim() || null, distractores: Object.keys(feedback).length ? feedback : null,
+      hidden: !(r.explanation || j.hint?.trim() || Object.keys(feedback).length),
+    };
   });
   return {
     slug: TEACHER_SLUG,
@@ -50,7 +57,7 @@ export function teacherExam(rows, order = null) {
     keyStatus: "teacher",
     notes: null,
     enrich,
-    enrichMeta: { note: "Escrito por el docente", estimated: false },
+    enrichMeta: { note: "Escrito por el docente", estimated: false, teacher: true },
     figures: new Map(),
   };
 }
@@ -59,7 +66,7 @@ export function teacherExam(rows, order = null) {
 // holds an image per option (or null). Questions of one group share `groupId`, `groupText` and `groupFigures`.
 export const emptyDraft = (over = {}) => ({
   area: "Matemáticas", competencia: "", tema: "", dificultad: "", visibility: "private",
-  stimulus: "", stem: "", options: ["", "", "", ""], optionImages: [null, null, null, null], answer: "", explanation: "",
+  stimulus: "", stem: "", options: ["", "", "", ""], optionImages: [null, null, null, null], answer: "", explanation: "", hint: "", feedback: ["", "", "", ""],
   figures: [], groupId: null, groupText: "", groupFigures: [], source: null, ...over,
 });
 
@@ -71,7 +78,7 @@ export function draftFromRow(row) {
     visibility: row.visibility, stimulus: j.stimulus_md ?? "", stem: j.stem_md ?? "",
     options: LETTERS.map((l) => opt(l)?.text_md ?? ""),
     optionImages: LETTERS.map((l) => opt(l)?.traced?.url ?? null),
-    answer: row.answer, explanation: row.explanation ?? "",
+    answer: row.answer, explanation: row.explanation ?? "", hint: j.hint ?? "", feedback: LETTERS.map((l) => j.feedback?.[l] ?? ""),
     figures: (j.traced ?? []).map((t) => ({ id: t.figure_id, url: t.url })),
     groupId: j.group?.id ?? null, groupText: j.group?.stimulus_md ?? "", groupFigures: (j.group?.traced ?? []).map((t) => ({ id: t.figure_id, url: t.url })),
     source: j.source ?? null,
@@ -120,6 +127,8 @@ export function draftToRow(d, { schoolId, ownerId }) {
       traced: traced(d.figures ?? (d.image ? [{ id: "img1", url: d.image }] : [])),
       ...(d.groupId ? { group: { id: d.groupId, stimulus_md: groupText, traced: traced(d.groupFigures) } } : {}),
       ...(d.source ? { source: d.source } : {}),
+      ...(d.hint?.trim() ? { hint: d.hint.trim() } : {}),
+      ...((d.feedback ?? []).some((t) => t.trim()) ? { feedback: Object.fromEntries(LETTERS.map((l, i) => [l, (d.feedback[i] ?? "").trim()]).filter(([, t]) => t)) } : {}),
     },
     answer: d.answer,
     explanation: d.explanation.trim() || null,

@@ -12,6 +12,7 @@ import { achievements } from "../lib/achievements.js";
 import { scoreSummary } from "../lib/simulacro.js";
 import ScoreCard from "../components/ScoreCard.jsx";
 import { daysUntil, loadGoal, xpToday } from "../lib/goal.js";
+import { weekPlan } from "../lib/studyPlan.js";
 import { practiceInsights, studentEvents, studentSubjects, studentTasks, teacherLabel } from "../lib/student.js";
 import { areaShort } from "../lib/teaching.js";
 
@@ -42,6 +43,7 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
   const goalPct = Math.min(1, today / goal.dailyXp);
   const left = daysUntil(goal.examDate, now);
   const badges = useMemo(() => achievements({ history, tasks }), [history, tasks]);
+  const plan = useMemo(() => weekPlan({ goal, insights: ins, history, daysLeft: left, now }), [goal, ins, history, left]); // eslint-disable-line react-hooks/exhaustive-deps
   const got = badges.filter((b) => b.got);
   const nextBadge = badges.filter((b) => !b.got).sort((a, b) => b.have / b.need - a.have / a.need)[0];
 
@@ -151,9 +153,15 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
           )}
 
           <div className="sh-quick">
-            <button type="button" className="card sh-q" onClick={() => onSetup({ scope: "Matemáticas", mode: "practice" })} disabled={!exam}>
-              <Icon name="bolt" /><span><strong>Reto del día</strong><span className="caption">{exam ? `${questionsFor(exam, "Matemáticas").length} de Matemáticas` : "Matemáticas"}</span></span>
-            </button>
+            {plan.today && plan.today.kind !== "rest" && !plan.today.done ? (
+              <button type="button" className="card sh-q" disabled={!exam} onClick={() => (plan.today.kind === "area" ? onSetup({ scope: plan.today.area, mode: "practice" }) : plan.today.kind === "simulacro" ? onSetup({ scope: "all", mode: "timed" }) : onGo?.(plan.today.kind === "errors" ? "errors" : "plan"))}>
+                <Icon name="bolt" /><span><strong>Hoy en tu plan</strong><span className="caption">{plan.today.label}{plan.today.questions ? ` · ${plan.today.questions} preguntas` : ""}</span></span>
+              </button>
+            ) : (
+              <button type="button" className="card sh-q" onClick={() => onGo?.("plan")}>
+                <Icon name="bolt" /><span><strong>{plan.today?.done ? "Plan de hoy listo" : "Mi plan"}</strong><span className="caption">{plan.done} de {plan.due} días esta semana</span></span>
+              </button>
+            )}
             <button type="button" className="card sh-q" onClick={() => onSetup({ scope: "all", mode: "timed" })} disabled={!exam}>
               <Icon name="clock" /><span><strong>Simulacro</strong><span className="caption">Con tiempo, como el examen</span></span>
             </button>

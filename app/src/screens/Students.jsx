@@ -664,6 +664,13 @@ export function StudentProfile({ api, userId, student: s, ws, store, guard, say,
         </div>
       </div>
 
+      {panels.filter((p) => (p.order ?? 100) < 50).map((p) => (
+        <section key={p.id} className="card t-card">
+          {p.title && <strong>{p.title}</strong>}
+          <p.Component student={s} api={api} courses={courses} assignments={assignments} guard={guard} />
+        </section>
+      ))}
+
       <section className="card t-card">
         <div className="section-head">
           <strong>Asignaciones e historial</strong>
@@ -715,7 +722,7 @@ export function StudentProfile({ api, userId, student: s, ws, store, guard, say,
         )}
       </section>
 
-      {panels.map((p) => (
+      {panels.filter((p) => (p.order ?? 100) >= 50).map((p) => (
         <section key={p.id} className="card t-card">
           {p.title && <strong>{p.title}</strong>}
           <p.Component student={s} api={api} courses={courses} assignments={assignments} guard={guard} />

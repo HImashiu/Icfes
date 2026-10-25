@@ -8,7 +8,9 @@ export const NAV = [
   { section: "biblioteca", label: "Biblioteca", icon: "school" },
 ];
 export const ADMIN_NAV = [
-  { section: "colegio", tab: "docentes", label: "Docentes y clases", icon: "shield" },
+  { section: "colegio", tab: "cursos", label: "Cursos y materias", icon: "school" },
+  { section: "colegio", tab: "docentes", label: "Docentes", icon: "users" },
+  { section: "colegio", tab: "registro", label: "Quién hizo qué", icon: "shield" },
   { section: "colegio", tab: "calificacion", label: "Calificación", icon: "pencil" },
   { section: "colegio", tab: "ajustes", label: "Ajustes", icon: "user" },
 ];
@@ -17,14 +19,22 @@ export const ADMIN_NAV = [
 export const HIDDEN_TABS = new Set(["nueva"]);
 export const TABS = {
   hoy: [],
-  actividades: [["lista", "Todas"], ["vivo", "Juego en vivo"], ["refuerzo", "Refuerzo"], ["nueva", "Nueva actividad"]],
+  actividades: [["lista", "Todas"], ["tareas", "Tareas"], ["practicas", "Prácticas en clase", "Clase"], ["simulacros", "Simulacros", "Simul."], ["vivo", "Juego en vivo", "En vivo"], ["refuerzo", "Refuerzo"], ["nueva", "Nueva actividad"]],
   estudiantes: [["lista", "Estudiantes"], ["clases", "Listas de clase"]],
-  resultados: [["resumen", "Resumen"], ["actividades", "Por actividad"], ["grafica", "Armar gráfica", "Gráficas"], ["calificacion", "Calificación", "Notas"]],
-  biblioteca: [["banco", "Banco de preguntas", "Banco"], ["preguntas", "Mis preguntas"], ["clases", "Clases para proyectar", "Proyectar"]],
-  colegio: [["docentes", "Docentes y clases", "Docentes"], ["calificacion", "Calificación"], ["ajustes", "Ajustes"]],
+  resultados: [["resumen", "Resumen"], ["actividades", "Por actividad"], ["grafica", "Hoja de datos", "Datos"], ["calificacion", "Calificación", "Notas"]],
+  biblioteca: [["banco", "Banco de preguntas", "Banco"], ["preguntas", "Mis preguntas", "Mías"], ["clases", "Clases para proyectar", "Proyectar"], ["control", "Control de preguntas", "Control"]],
+  colegio: [["cursos", "Cursos y materias", "Cursos"], ["docentes", "Docentes"], ["registro", "Quién hizo qué", "Registro"], ["calificacion", "Calificación", "Notas"], ["ajustes", "Ajustes"]],
+  cuenta: [],
   actividad: [["resultados", "Resultados"], ["papel", "En papel"], ["calificacion", "Calificación"]],
 };
 const SECTIONS = new Set(Object.keys(TABS));
+// What "Nueva actividad" starts as: #docente/actividades/nueva/<preset>.
+export const PRESETS = {
+  tarea: { kind: "homework", delivery: "online", label: "Tarea", note: "Para resolver en casa antes de una fecha", icon: "book" },
+  practica: { kind: "task", delivery: "online", label: "Práctica en clase", note: "En el salón, con corrección inmediata", icon: "pencil" },
+  simulacro: { kind: "exam", delivery: "online", label: "Simulacro con tiempo", note: "En línea, con cronómetro y un intento", icon: "clock" },
+  papel: { kind: "exam", delivery: "paper", label: "Simulacro en papel", note: "Cuadernillo impreso y hoja de burbujas", icon: "print" },
+};
 const tabOk = (section, tab) => TABS[section].some(([id]) => id === tab);
 
 export function parseRoute(hash = "") {
@@ -37,6 +47,7 @@ export function parseRoute(hash = "") {
     return { section, id, tab: tabOk(section, parts[3]) ? parts[3] : TABS.actividad[0][0] };
   }
   const tab = tabOk(section, parts[2]) ? parts[2] : TABS[section][0]?.[0] ?? null;
+  if (section === "actividades" && tab === "nueva" && parts[3] in PRESETS) return { section, tab, id: null, preset: parts[3] };
   return { section, tab, id: null };
 }
 
@@ -45,6 +56,7 @@ export function routeHash(route) {
   const bits = ["docente", r.section];
   if (r.section === "actividad") bits.push(encodeURIComponent(r.id), r.tab);
   else if (r.tab) bits.push(r.tab);
+  if (r.preset) bits.push(r.preset);
   return `#${bits.join("/")}`;
 }
 
@@ -54,13 +66,15 @@ export function normalize(route) {
     if (!route.id) return { section: "actividades", tab: "lista", id: null };
     return { section, id: route.id, tab: tabOk(section, route.tab) ? route.tab : TABS.actividad[0][0] };
   }
-  return { section, tab: tabOk(section, route?.tab) ? route.tab : TABS[section][0]?.[0] ?? null, id: null };
+  const tab = tabOk(section, route?.tab) ? route.tab : TABS[section][0]?.[0] ?? null;
+  if (section === "actividades" && tab === "nueva" && route?.preset in PRESETS) return { section, tab, id: null, preset: route.preset };
+  return { section, tab, id: null };
 }
 
 // The destination highlighted in the navigation for a route.
 export const navSection = (route) => (route.section === "actividad" ? "actividades" : route.section);
 
-const LABEL = Object.fromEntries([...NAV, { section: "colegio", label: "Colegio" }].map((n) => [n.section, n.label]));
+const LABEL = Object.fromEntries([...NAV, { section: "colegio", label: "Colegio" }, { section: "cuenta", label: "Mi cuenta" }].map((n) => [n.section, n.label]));
 const tabLabel = (section, tab) => TABS[section]?.find(([id]) => id === tab)?.[1] ?? "";
 
 // Breadcrumbs: section › (activity) › tab. Each crumb but the last carries the route it opens.

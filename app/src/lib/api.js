@@ -3,7 +3,10 @@
 // A table that is not there yet (its migration has not run): Postgres 42P01 or PostgREST's schema cache miss.
 export const isMissingTable = (error) => error?.code === "42P01" || error?.code === "PGRST205" || /does not exist|schema cache/i.test(error?.message ?? "");
 
+const MISSING_0020 = "Falta ejecutar la migración 0020 (cursos, permisos e invitaciones) en Supabase.";
+
 export function createApi(client) {
+  let liveConfidentCol = true;
   const unwrap = ({ data, error }) => {
     if (error) throw Object.assign(new Error(error.message), { code: error.code });
     return data;
@@ -43,11 +46,14 @@ export function createApi(client) {
       unwrap(await client.from("courses").delete().eq("id", id));
     },
     async listMembers(courseId) {
-      return unwrap(await client.from("course_members").select("id, profile_id, email, full_name, role").eq("course_id", courseId).order("full_name"));
+      const query = (c) => client.from("course_members").select(c).eq("course_id", courseId).order("full_name");
+      const first = await query("id, profile_id, email, full_name, role, access");
+      return unwrap(first.error && /access/.test(first.error.message ?? "") ? await query("id, profile_id, email, full_name, role") : first);
     },
     // Existing emails are left alone, so importing the same file twice is harmless.
-    async addStudents(courseId, rows, role = "student") {
-      const payload = rows.map((r) => ({ course_id: courseId, email: r.email, full_name: r.fullName, role }));
+    // access ("edit" or "view", migration 0020) only for teachers; without it every teacher edits.
+    async addStudents(courseId, rows, role = "student", access = null) {
+      const payload = rows.map((r) => ({ course_id: courseId, email: r.email, full_name: r.fullName, role, ...(access && role === "teacher" ? { access } : {}) }));
       unwrap(await client.from("course_members").upsert(payload, { onConflict: "course_id,email", ignoreDuplicates: true }));
       return payload.length;
     },
@@ -61,6 +67,9 @@ export function createApi(client) {
       // allow_hints and instant_feedback arrive with migrations 0007 and 0008; until they run, every assignment
       // offers hints and immediate feedback.
       // allow_definitions, definitions and proctor arrive with migrations 0011 and 0012.
+      // delivery (online or paper) arrives with migration 0023; until it runs, every assignment is online.
+      const withDelivery = await query(`${cols}, allow_hints, instant_feedback, allow_definitions, definitions, proctor, delivery`);
+      if (!withDelivery.error) return unwrap(withDelivery);
       const full = await query(`${cols}, allow_hints, instant_feedback, allow_definitions, definitions, proctor`);
       if (!full.error) return unwrap(full);
       if (!/allow_definitions|definitions|proctor/.test(full.error.message ?? "")) unwrap(full);
@@ -76,7 +85,19 @@ export function createApi(client) {
       try { await client.rpc("link_my_roster"); } catch { /* not installed yet */ }
     },
     async createAssignment(a) {
-      return unwrap(await client.from("assignments").insert(a).select().single());
+      const r = await client.from("assignments").insert(a).select().single();
+      // Without migration 0023 a paper activity is saved as an ordinary one; its page still offers printing.
+      if (r.error && "delivery" in a && /delivery/.test(r.error.message ?? "")) {
+        const { delivery, ...rest } = a;
+        return unwrap(await client.from("assignments").insert(rest).select().single());
+      }
+      return unwrap(r);
+    },
+    // Online or paper (migration 0023). Before it runs the change fails with a message that says so.
+    async setAssignmentDelivery(id, delivery) {
+      const r = await client.from("assignments").update({ delivery }).eq("id", id);
+      if (r.error && /delivery/.test(r.error.message ?? "")) throw new Error("Para guardar si una actividad es en papel hace falta correr la migración 0023 en Supabase.");
+      unwrap(r);
     },
     async setAssignmentStatus(id, status) {
       unwrap(await client.from("assignments").update({ status }).eq("id", id));
@@ -126,7 +147,9 @@ export function createApi(client) {
 
     // School-wide reads for the coordinator (row-level security gives a teacher only their own courses).
     async allMembers() {
-      return unwrap(await client.from("course_members").select("id, course_id, profile_id, email, full_name, role"));
+      const query = (c) => client.from("course_members").select(c);
+      const first = await query("id, course_id, profile_id, email, full_name, role, access");
+      return unwrap(first.error && /access/.test(first.error.message ?? "") ? await query("id, course_id, profile_id, email, full_name, role") : first);
     },
     async allAttempts() {
       return unwrap(await client.from("attempts").select("profile_id, member_id, client_id, assignment_id, submitted_at, mode, score, exam_slug, scope").not("assignment_id", "is", null));
@@ -271,6 +294,50 @@ export function createApi(client) {
       unwrap(await client.from("question_overrides").delete().eq("id", id));
     },
 
+    // Question control (migration 0021). Every use of every question in the school, whoever made it. null until the
+    // migration runs: the screens then rebuild the uses from what this teacher can read.
+    async questionUses() {
+      const r = await client.rpc("school_question_uses");
+      return r.error ? null : r.data;
+    },
+    async liveHistory() {
+      const r = await client.from("live_sessions").select("id, host_id, course_id, title, exam_slug, question_keys, current_index, state, created_at");
+      return r.error ? [] : r.data.map((s) => ({ ...s, question_keys: (s.question_keys ?? []).slice(0, Math.max(0, (s.current_index ?? -1) + 1)) })).filter((s) => s.question_keys.length);
+    },
+    // Holds: questions or whole booklets reserved for a simulacro and/or hidden from students' free practice.
+    async questionHolds() {
+      const r = await client.from("question_holds").select("id, exam_slug, qkey, reserve, hide_from_students, label, until, assignment_id, created_by, created_at");
+      if (r.error && isMissingTable(r.error)) return null;
+      return unwrap(r);
+    },
+    async saveHolds(rows) {
+      const r = await client.from("question_holds").upsert(rows, { onConflict: "school_id,exam_slug,qkey" }).select();
+      if (r.error && isMissingTable(r.error)) throw new Error("Falta ejecutar la migración 0021 (control de preguntas) en Supabase.");
+      return unwrap(r);
+    },
+    async deleteHolds(ids) {
+      if (!ids.length) return;
+      unwrap(await client.from("question_holds").delete().in("id", ids));
+    },
+    // What a student may not see in free practice. [] before the migration (nothing is hidden).
+    async hiddenQuestions() {
+      const r = await client.rpc("hidden_questions");
+      if (!r.error) return r.data ?? [];
+      const t = await client.from("question_holds").select("exam_slug, qkey, hide_from_students, until");
+      if (t.error) return [];
+      const now = Date.now();
+      return t.data.filter((h) => h.hide_from_students && (!h.until || new Date(h.until).getTime() >= now));
+    },
+    async questionRules() {
+      const r = await client.from("question_rules").select("rules").maybeSingle();
+      return r.error ? null : r.data?.rules ?? {};
+    },
+    async saveQuestionRules(schoolId, rules) {
+      const r = await client.from("question_rules").upsert({ school_id: schoolId, rules, updated_at: new Date().toISOString() }, { onConflict: "school_id" });
+      if (r.error && isMissingTable(r.error)) throw new Error("Falta ejecutar la migración 0021 (control de preguntas) en Supabase.");
+      unwrap(r);
+    },
+
     // Lessons and saved activity formats (migration 0017). A missing table reads as `null`, so the screen can say so.
     async lessons() {
       const r = await client.from("lessons").select("id, owner_id, title, exam_slug, items, settings, visibility, updated_at").order("updated_at", { ascending: false });
@@ -308,6 +375,7 @@ export function createApi(client) {
     },
 
     // Live answering. The database clock decides when a question opens and closes.
+    // (liveConfidentCol: false once a read shows migration 0024 has not run, so polls stop asking for that column.)
     async liveNow() {
       return unwrap(await client.rpc("live_now"));
     },
@@ -333,18 +401,52 @@ export function createApi(client) {
       return unwrap(await client.from("live_players").select("player_id, nickname, profile_id, score, streak").eq("session_id", id));
     },
     async liveAnswers(id, index) {
+      if (liveConfidentCol) {
+        const r = await client.from("live_answers").select("player_id, question_index, option, answered_at, points, confident").eq("session_id", id).eq("question_index", index);
+        if (!r.error) return r.data;
+        liveConfidentCol = false;
+      }
       return unwrap(await client.from("live_answers").select("player_id, question_index, option, answered_at, points").eq("session_id", id).eq("question_index", index));
     },
     async liveMyAnswers(id) {
       const { data: auth } = await client.auth.getUser();
       return unwrap(await client.from("live_answers").select("question_index, option, points").eq("session_id", id).eq("player_id", auth.user.id));
     },
-    async liveAnswer(id, index, option) {
+    // `confident` (true = sure, false = unsure) is sent only when the room asks for it (migration 0024).
+    async liveAnswer(id, index, option, confident = null) {
       const { data: auth } = await client.auth.getUser();
-      unwrap(await client.from("live_answers").insert({ session_id: id, player_id: auth.user.id, question_index: index, option }));
+      unwrap(await client.from("live_answers").insert({ session_id: id, player_id: auth.user.id, question_index: index, option, ...(typeof confident === "boolean" ? { confident } : {}) }));
     },
     async myLiveSessions() {
       return unwrap(await client.from("live_sessions").select("*").neq("state", "ended").order("created_at", { ascending: false }).limit(10));
+    },
+    // A deeper game (migration 0024): settings, pause, added time, asking again, the class share for phones.
+    async liveConfigure(id, { mode, goal, confidence }) {
+      return unwrap(await client.rpc("live_configure", { p_session: id, p_mode: mode, p_goal: goal ?? null, p_confidence: Boolean(confidence) }));
+    },
+    async livePause(id, pause) {
+      return unwrap(await client.rpc("live_pause", { p_session: id, p_pause: pause }));
+    },
+    async liveAddTime(id, seconds = 15) {
+      return unwrap(await client.rpc("live_add_time", { p_session: id, p_seconds: seconds }));
+    },
+    async liveReask(id) {
+      return unwrap(await client.rpc("live_reask", { p_session: id }));
+    },
+    async liveShare(id, stats) {
+      return unwrap(await client.rpc("live_share", { p_session: id, p_stats: stats }));
+    },
+    // Past games and everything answered in one, for the report. `confident` exists after 0024; before, it is retried without.
+    async livePastSessions() {
+      return unwrap(await client.from("live_sessions").select("*").eq("state", "ended").order("created_at", { ascending: false }).limit(30));
+    },
+    async liveAllAnswers(id) {
+      if (liveConfidentCol) {
+        const r = await client.from("live_answers").select("player_id, question_index, option, answered_at, points, confident").eq("session_id", id);
+        if (!r.error) return r.data;
+        liveConfidentCol = false;
+      }
+      return unwrap(await client.from("live_answers").select("player_id, question_index, option, answered_at, points").eq("session_id", id));
     },
     async myPlayerId() {
       const { data: auth } = await client.auth.getUser();
@@ -371,6 +473,100 @@ export function createApi(client) {
       let q = client.from(table).delete();
       for (const [k, v] of Object.entries(match)) q = Array.isArray(v) ? q.in(k, v) : q.eq(k, v);
       unwrapWs(await q);
+    },
+
+    // ---- Colegio: cursos, permisos, invitaciones, ajustes y registro (migration 0020). Reads answer null when the
+    // migration has not run, so the screens can say so; writes explain which migration is missing.
+    async schoolGroups() {
+      const r = await client.from("school_groups").select("id, grade, label, created_at");
+      return r.error ? null : r.data;
+    },
+    async createGroups(rows) {
+      const r = await client.from("school_groups").upsert(rows.map((g) => ({ grade: g.grade, label: g.label })), { onConflict: "school_id,grade,label", ignoreDuplicates: true }).select("id, grade, label, created_at");
+      if (r.error && isMissingTable(r.error)) throw new Error(MISSING_0020);
+      return unwrap(r) ?? [];
+    },
+    async deleteGroup(id) {
+      unwrap(await client.from("school_groups").delete().eq("id", id));
+    },
+    async setMemberAccess(memberId, access) {
+      const r = await client.from("course_members").update({ access }).eq("id", memberId);
+      if (r.error && /access/.test(r.error.message ?? "")) throw new Error(MISSING_0020);
+      unwrap(r);
+    },
+    async subjectAccess() {
+      const r = await client.from("subject_access").select("id, profile_id, area, grade, access, created_at");
+      return r.error ? null : r.data;
+    },
+    async saveSubjectAccess({ profileId, area, grade, access }) {
+      const r = await client.from("subject_access").insert({ profile_id: profileId, area, grade: grade || null, access }).select("id, profile_id, area, grade, access, created_at").single();
+      if (r.error && isMissingTable(r.error)) throw new Error(MISSING_0020);
+      return unwrap(r);
+    },
+    async updateSubjectAccess(id, access) {
+      unwrap(await client.from("subject_access").update({ access }).eq("id", id));
+    },
+    async deleteSubjectAccess(id) {
+      unwrap(await client.from("subject_access").delete().eq("id", id));
+    },
+    async schoolInfo() {
+      const r = await client.from("schools").select("id, name, domains");
+      return r.error ? null : r.data?.[0] ?? null;
+    },
+    async schoolSettings() {
+      const r = await client.from("school_settings").select("settings, updated_at");
+      if (r.error) return null;
+      return r.data?.[0]?.settings ?? {};
+    },
+    async saveSchoolSettings(schoolId, settings) {
+      const r = await client.from("school_settings").upsert({ school_id: schoolId, settings, updated_at: new Date().toISOString() }, { onConflict: "school_id" });
+      if (r.error && isMissingTable(r.error)) throw new Error(MISSING_0020);
+      unwrap(r);
+    },
+    async updateSchoolName(name) {
+      const r = await client.rpc("update_school_name", { p_name: name });
+      if (r.error && /update_school_name|function/.test(r.error.message ?? "")) throw new Error(MISSING_0020);
+      return unwrap(r);
+    },
+    async regenerateTeacherCode() {
+      const r = await client.rpc("regenerate_teacher_code");
+      if (r.error && /regenerate_teacher_code|function/.test(r.error.message ?? "")) throw new Error(MISSING_0020);
+      return unwrap(r);
+    },
+    async updateMyName(profileId, fullName) {
+      unwrap(await client.from("profiles").update({ full_name: fullName }).eq("id", profileId));
+    },
+    async staffInvites() {
+      const r = await client.from("staff_invites").select("id, email, full_name, role, created_at, accepted_at").order("created_at", { ascending: false });
+      return r.error ? null : r.data;
+    },
+    // rows: [{ email, name, role }]. Answers [{ email, status: "invited" | "updated" | "skipped" }].
+    async inviteStaff(rows) {
+      const r = await client.rpc("invite_staff", { p_rows: rows });
+      if (r.error && /invite_staff|function/.test(r.error.message ?? "")) throw new Error(MISSING_0020);
+      return unwrap(r) ?? [];
+    },
+    async deleteInvite(id) {
+      unwrap(await client.from("staff_invites").delete().eq("id", id));
+    },
+    async auditLog(limit = 300) {
+      const r = await client.from("school_audit").select("id, actor, action, detail, created_at").order("created_at", { ascending: false }).limit(limit);
+      return r.error ? null : r.data;
+    },
+    // Best effort: a missing table or policy never blocks the action being logged.
+    async logAction(schoolId, actor, action, detail = {}) {
+      try { await client.from("school_audit").insert({ school_id: schoolId, actor, action, detail }); } catch { /* not installed */ }
+    },
+    // Who made what, for Colegio › Registro and the teacher stats: every activity, class and own question with its author.
+    async authorship() {
+      const soft = async (q) => { const r = await q; return r.error ? [] : r.data; };
+      const [assignments, courses, questions, lessons] = await Promise.all([
+        soft(client.from("assignments").select("id, course_id, created_by, created_at, kind, title, status").order("created_at", { ascending: false })),
+        soft(client.from("courses").select("id, name, created_by, created_at")),
+        soft(client.from("teacher_questions").select("id, owner_id, created_at, area")),
+        soft(client.from("lessons").select("id, owner_id, created_at, title")),
+      ]);
+      return { assignments, courses, questions, lessons };
     },
 
     async myConsents() {

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import QuestionView from "../components/QuestionView.jsx";
-import { liveMessage, secondsLeft } from "../lib/live.js";
+import { MODES, isPaused, liveMessage, modeOf, reaskOf, secondsLeft } from "../lib/live.js";
+import { explanationOf } from "../lib/lesson.js";
+import "./live.css";
 import { buzz, confetti, play } from "../lib/motion.js";
 import { usePoll } from "../lib/poll.js";
 
@@ -42,9 +44,10 @@ export function LiveJoin({ auth, initialCode = "", onJoined, onBack }) {
   );
 }
 
-// La pantalla del estudiante durante el juego: sala de espera, pregunta, resultado y resumen final.
-// Sin ranking: cada estudiante ve solo su propio progreso (aciertos, puntos, racha).
-export default function LivePlay({ api, initial, nickname, fetchExam, onExit }) {
+// La pantalla del estudiante durante el juego: sala de espera, pregunta (con «seguro / con dudas» si el docente lo
+// pide), pausa, resultado, cómo va la clase y, al final, la revisión de cada pregunta con «Practicar las que fallé».
+// Sin ranking: cada estudiante ve solo su propio progreso y el de la clase entera.
+export default function LivePlay({ api, initial, nickname, fetchExam, onExit, onPracticeMissed = null }) {
   const [session, setSession] = useState(initial);
   const [players, setPlayers] = useState([]);
   const [mine, setMine] = useState([]);
@@ -54,10 +57,12 @@ export default function LivePlay({ api, initial, nickname, fetchExam, onExit }) 
   const [calibrated, setCalibrated] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [error, setError] = useState(null);
+  const [pending, setPending] = useState(null); // letter chosen, waiting for "seguro / con dudas"
+  const [reviewAt, setReviewAt] = useState(null);
   const sent = useRef(new Set());
 
   useEffect(() => { api.myPlayerId().then(setMe); }, [api]);
-  useEffect(() => { fetchExam(initial.exam_slug, initial.question_keys).then(setBundle).catch((e) => setError(e.message)); }, [fetchExam, initial.exam_slug]);
+  useEffect(() => { fetchExam(initial.exam_slug, initial.question_keys).then(setBundle).catch((e) => setError(e.message)); }, [fetchExam, initial.exam_slug]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 500); return () => clearInterval(t); }, []);
   // Calibrate the countdown against the database clock, now and every half minute.
   usePoll(async () => {
@@ -73,17 +78,22 @@ export default function LivePlay({ api, initial, nickname, fetchExam, onExit }) 
     setMine(m);
   }, 1500, session.state !== "ended");
 
+  // Once the game ends, read this player's answers one last time for the review.
+  useEffect(() => { if (session.state === "ended") api.liveMyAnswers(initial.id).then(setMine, () => {}); }, [session.state]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const idx = session.current_index;
-  const q = useMemo(() => {
-    if (!bundle || idx < 0) return null;
-    const key = session.question_keys[idx];
-    return bundle.exam.questions.find((x) => x.key === key) ?? null;
-  }, [bundle, idx, session.question_keys]);
+  const mode = modeOf(session);
+  const together = mode === "class_goal";
+  const reask = reaskOf(session, idx) != null;
+  // A re-asked round may have shifted the keys, so the bundle is looked up by key each time.
+  const byKey = useMemo(() => new Map((bundle?.exam.questions ?? []).map((x) => [x.key, x])), [bundle]);
+  const q = bundle && idx >= 0 ? byKey.get(session.question_keys[idx]) ?? null : null;
   const myAnswer = mine.find((a) => a.question_index === idx) ?? null;
   const myPlayer = players.find((p) => p.player_id === me) ?? null;
   const hits = mine.filter((a) => a.points > 0).length;
   const resultRef = useRef(null);
   const cheered = useRef(-1);
+  useEffect(() => { setPending(null); }, [idx]);
   // A right answer gets the same cheer as practice, once per question.
   useEffect(() => {
     if (session.state !== "reveal" || cheered.current === idx) return;
@@ -94,37 +104,71 @@ export default function LivePlay({ api, initial, nickname, fetchExam, onExit }) 
     else { play("wrong"); buzz([30, 40, 30]); }
   }, [session.state, idx, mine, session.current_correct]);
   // Until the clock is calibrated the full time shows, so a phone with a wrong clock never closes a question early.
-  const left = calibrated ? secondsLeft(session, now, offset) : session.seconds_per_question;
+  const left = calibrated ? secondsLeft(session, now, offset) : session.seconds_per_question + (session.extra_seconds ?? 0);
+  const paused = isPaused(session);
 
-  const choose = async (letter) => {
-    if (myAnswer || sent.current.has(idx) || left <= 0) return;
+  const send = async (letter, confident = null) => {
+    if (myAnswer || sent.current.has(idx) || left <= 0 || paused) return;
     sent.current.add(idx);
-    setMine((cur) => [...cur, { question_index: idx, option: letter, points: 0 }]);
-    try { await api.liveAnswer(initial.id, idx, letter); } catch (e) { sent.current.delete(idx); setMine((cur) => cur.filter((a) => a.question_index !== idx)); setError(liveMessage(e)); }
+    setPending(null);
+    setMine((cur) => [...cur, { question_index: idx, option: letter, points: 0, confident }]);
+    try {
+      if (typeof confident === "boolean") await api.liveAnswer(initial.id, idx, letter, confident);
+      else await api.liveAnswer(initial.id, idx, letter);
+    } catch (e) { sent.current.delete(idx); setMine((cur) => cur.filter((a) => a.question_index !== idx)); setError(liveMessage(e)); }
   };
+  const choose = (letter) => (session.ask_confidence ? setPending(letter) : send(letter));
+  const stats = session.class_stats;
+
+  // After the game: what this student answered on each first-round question.
+  const review = useMemo(() => session.question_keys.map((key, i) => {
+    if (i > idx || reaskOf(session, i) != null) return null;
+    const a = mine.find((x) => x.question_index === i);
+    const correct = session.closed?.[String(i)] ?? (bundle?.key?.get(key) ? [bundle.key.get(key)] : []);
+    return { i, key, n: i + 1, option: a?.option ?? null, correct, right: a ? a.points > 0 || correct.includes(a.option) : false };
+  }).filter(Boolean), [session, mine, bundle, idx]);
+  const missed = review.filter((r) => !r.right).map((r) => r.key);
 
   return (
     <main className="frame live">
       <header className="live-bar">
         <strong>{nickname}</strong>
-        <span className="muted">{myPlayer ? `${myPlayer.score} pts · ${hits} ${hits === 1 ? "acierto" : "aciertos"}` : ""}</span>
+        <span className="muted">{together ? (stats?.overall != null ? `Clase: ${stats.overall} %${session.goal_pct ? ` de ${session.goal_pct} %` : ""}` : "Jugamos en equipo") : myPlayer ? `${myPlayer.score} pts · ${hits} ${hits === 1 ? "acierto" : "aciertos"}` : ""}</span>
         <button type="button" className="link" onClick={onExit}>Salir</button>
       </header>
       {error && <p className="notice error" role="alert">{error}</p>}
 
       {session.state === "lobby" && (
-        <div className="card live-wait"><h1>Estás dentro</h1><p>Espera a que el docente empiece. Hay {players.length} {players.length === 1 ? "jugador" : "jugadores"} en la sala.</p></div>
+        <div className="card live-wait"><h1>Estás dentro</h1>
+          <p>Espera a que el docente empiece. Hay {players.length} {players.length === 1 ? "jugador" : "jugadores"} en la sala.</p>
+          <p className="caption">{MODES.find((m) => m.id === mode).help}{session.ask_confidence ? " Después de elegir, dirás si estás seguro o con dudas." : ""}</p></div>
       )}
 
       {session.state === "question" && q && (
         <>
-          <div className={left <= 5 ? "live-timer urgent" : "live-timer"} aria-live="polite"><strong>{left}</strong> s · pregunta {idx + 1} de {session.question_keys.length}</div>
+          <div className={paused ? "live-timer paused" : left <= 5 ? "live-timer urgent" : "live-timer"} aria-live="polite">
+            {paused ? <strong>En pausa</strong> : <><strong>{left}</strong> s</>} · pregunta {idx + 1} de {session.question_keys.length}
+          </div>
+          {reask && <p className="lv-banner">Otra vez, después de discutir. Esta ronda no suma puntos: responde lo que ahora crees.</p>}
           {myAnswer ? (
-            <div className="card live-wait"><h2>Respuesta enviada: {myAnswer.option}</h2><p className="caption">Espera a que el docente cierre la pregunta.</p></div>
+            <div className="card live-wait"><h2>Respuesta enviada: {myAnswer.option}</h2>
+              {typeof myAnswer.confident === "boolean" && <p className="caption">{myAnswer.confident ? "Dijiste que estás seguro." : "Dijiste que tienes dudas."}</p>}
+              <p className="caption">Espera a que el docente cierre la pregunta.</p></div>
           ) : left <= 0 ? (
             <div className="card live-wait"><h2>Se acabó el tiempo</h2></div>
           ) : (
-            <QuestionView question={q} answer={null} onAnswer={choose} figures={bundle.figures} examLabel={bundle.exam.title} report={false} />
+            <>
+              <QuestionView question={q} answer={pending} onAnswer={paused ? undefined : choose} figures={bundle.figures} examLabel={bundle.exam.title} report={false} />
+              {pending && (
+                <div className="lv-sheet" role="group" aria-label="Qué tan seguro estás">
+                  <span>Elegiste <b>{pending}</b>. ¿Qué tan seguro estás?</span>
+                  <span className="lv-sheet-btns">
+                    <button type="button" className="primary" onClick={() => send(pending, true)}>Seguro</button>
+                    <button type="button" className="secondary" onClick={() => send(pending, false)}>Con dudas</button>
+                  </span>
+                </div>
+              )}
+            </>
           )}
         </>
       )}
@@ -132,22 +176,59 @@ export default function LivePlay({ api, initial, nickname, fetchExam, onExit }) 
       {session.state === "reveal" && q && (
         <>
           <div ref={resultRef} className={`card live-result ${myAnswer && session.current_correct.includes(myAnswer.option) ? "ok" : "bad"}`}>
-            <h1>{!myAnswer ? "Sin respuesta" : session.current_correct.includes(myAnswer.option) ? `¡Correcto! +${myAnswer.points}` : "Incorrecto"}</h1>
+            <h1>{!myAnswer ? "Sin respuesta" : session.current_correct.includes(myAnswer.option) ? (together || reask || !myAnswer.points ? "¡Correcto!" : `¡Correcto! +${myAnswer.points}`) : "Incorrecto"}</h1>
             <p>Respuesta: {session.current_correct.join(" o ") || "—"}{myAnswer ? ` · tú elegiste ${myAnswer.option}` : ""}</p>
-            {myPlayer && <p className="caption">Llevas {myPlayer.score} puntos y {hits} {hits === 1 ? "acierto" : "aciertos"}{myPlayer.streak > 1 ? ` · racha de ${myPlayer.streak}` : ""}</p>}
+            {stats?.pct != null && <p className="caption">La clase acertó el {stats.pct} % en esta pregunta{together && stats.overall != null ? ` · en total va en ${stats.overall} %${session.goal_pct ? ` (meta ${session.goal_pct} %)` : ""}` : ""}.</p>}
+            {!together && myPlayer && <p className="caption">Llevas {myPlayer.score} puntos y {hits} {hits === 1 ? "acierto" : "aciertos"}{myPlayer.streak > 1 ? ` · racha de ${myPlayer.streak}` : ""}</p>}
           </div>
           <QuestionView question={q} answer={myAnswer?.option} graded review={{ correctLetter: session.current_correct[0] ?? null }} figures={bundle.figures} examLabel={bundle.exam.title} report={false} />
         </>
       )}
 
-      {session.state === "ended" && (
-        <div className="card live-wait">
+      {session.state === "ended" && reviewAt == null && (
+        <div className="card live-wait lv-end">
           <h1>¡Terminaste!</h1>
-          <p>Acertaste {hits} de {session.question_keys.length} {session.question_keys.length === 1 ? "pregunta" : "preguntas"}.</p>
-          {myPlayer && <div className="live-me"><span className="pill"><b className="accent-text">{myPlayer.score}</b> puntos</span></div>}
-          <button type="button" className="primary" onClick={onExit}>Listo</button>
+          <p>Acertaste {review.filter((r) => r.right).length} de {review.length} {review.length === 1 ? "pregunta" : "preguntas"}.</p>
+          {together && stats?.overall != null && <p className="caption">La clase terminó en {stats.overall} %{session.goal_pct ? (stats.overall >= session.goal_pct ? `: ¡lograron la meta de ${session.goal_pct} %!` : ` (la meta era ${session.goal_pct} %)`) : ""}.</p>}
+          {!together && myPlayer && <div className="live-me"><span className="pill"><b className="accent-text">{myPlayer.score}</b> puntos</span></div>}
+          <ul className="lv-review" aria-label="Tus respuestas">
+            {review.map((r) => {
+              const question = byKey.get(r.key);
+              return (
+                <li key={r.i}>
+                  <button type="button" className={r.right ? "lv-rv ok" : "lv-rv bad"} onClick={() => setReviewAt(r.i)} disabled={!question}>
+                    <span className="lv-qn">{r.n}</span>
+                    <span className="lv-qmain"><b>{question ? question.section : `Pregunta ${r.n}`}</b><span className="caption">{r.option ? `Elegiste ${r.option}` : "Sin respuesta"} · correcta {r.correct.join(" o ") || "—"}</span></span>
+                    <span aria-hidden="true">{r.right ? "✓" : "✗"}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          <div className="report-actions">
+            {missed.length > 0 && onPracticeMissed && <button type="button" className="secondary" onClick={() => onPracticeMissed(session.exam_slug, missed)}>Practicar las {missed.length} que fallé</button>}
+            <button type="button" className="primary" onClick={onExit}>Listo</button>
+          </div>
         </div>
       )}
+      {session.state === "ended" && reviewAt != null && (() => {
+        const r = review.find((x) => x.i === reviewAt);
+        const question = r && byKey.get(r.key);
+        const why = question && explanationOf(bundle?.enrich?.[String(question.number)]);
+        return (
+          <>
+            <div className="lv-review-nav">
+              <button type="button" className="secondary" onClick={() => setReviewAt(null)}>Volver al resumen</button>
+              <span className="lv-controls">
+                <button type="button" className="secondary" disabled={!review.some((x) => x.i < reviewAt)} onClick={() => setReviewAt([...review].reverse().find((x) => x.i < reviewAt).i)} aria-label="Anterior">‹</button>
+                <button type="button" className="secondary" disabled={!review.some((x) => x.i > reviewAt)} onClick={() => setReviewAt(review.find((x) => x.i > reviewAt).i)} aria-label="Siguiente">›</button>
+              </span>
+            </div>
+            {question && <QuestionView question={question} answer={r.option} graded review={{ correctLetter: r.correct[0] ?? null }} figures={bundle.figures} examLabel={bundle.exam.title} report={false} />}
+            {why && <div className="card t-card"><strong>Por qué</strong><p>{why.text}</p></div>}
+          </>
+        );
+      })()}
     </main>
   );
 }

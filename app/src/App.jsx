@@ -30,6 +30,7 @@ import { tokenFromHash } from "./lib/family.js";
 import { applyOverrides } from "./lib/overrides.js";
 import { TEACHER_SLUG, teacherExam } from "./lib/teacherExam.js";
 import LivePlay, { LiveJoin } from "./screens/LivePlay.jsx";
+import CustomPractice from "./screens/CustomPractice.jsx";
 import { joinCodeFromHash } from "./lib/joinLink.js";
 import { CONSENT_VERSION, needsTerms } from "./lib/consent.js";
 import { AnnotationProvider } from "./components/Annotations.jsx";
@@ -37,6 +38,8 @@ import { GlossaryProvider } from "./components/Glossary.jsx";
 import { loadHistory } from "./lib/local.js";
 import { demoEnabled } from "./demo/mode.js";
 import { pendingMisses, repechajeKeys } from "./lib/repechaje.js";
+import { hiddenFor, withoutHidden } from "./lib/questionUse.js";
+import { orderQuestions } from "./lib/order.js";
 import { resolveModel, xpFactor } from "./lib/grading.js";
 import { attemptForAssignment, attemptRow, attemptsLeft, questionsForAttempt, revealAllowed } from "./lib/assignments.js";
 
@@ -81,7 +84,13 @@ function findResumable(slug, exam) {
 }
 
 // An assignment's attempt is saved apart from free practice on the same area.
-const storeScope = (a) => (a.assignmentId ? `asg-${a.assignmentId}` : a.repechaje ? "repechaje" : a.scope);
+// Ten questions spread over every area of the booklet, for the plan's "mixed areas" day.
+const mixedKeys = (exam, n = 10) => {
+  const per = Math.max(1, Math.ceil(n / Math.max(1, exam.sections.length)));
+  return exam.sections.flatMap((s) => [...s.questions].sort(() => Math.random() - 0.5).slice(0, per).map((q) => q.key)).slice(0, n);
+};
+
+const storeScope = (a) => (a.assignmentId ? `asg-${a.assignmentId}` : a.repechaje ? "repechaje" : a.custom ? "custom" : a.scope);
 
 export default function App() {
   const rootAuth = useAuth();
@@ -91,6 +100,8 @@ export default function App() {
   const signedIn = auth.status === "ready";
   const [assigned, setAssigned] = useState({ assignments: [], attempts: [], models: [] });
   const [myClasses, setMyClasses] = useState(null);
+  // Questions and booklets the school holds back from students' free practice (reserved for a simulacro, migration 0021).
+  const [hidden, setHidden] = useState(null);
   const [exams, setExams] = useState(null);
   const [loadError, setLoadError] = useState(null);
   const [selected, setSelected] = useState(null); // { slug, exam, key, keyStatus, notes, figures }
@@ -192,6 +203,13 @@ export default function App() {
     if (first && !selected && !opening && !openError && !tokenFromHash(window.location.hash)) openExam(first.slug);
   }, [exams, selected, opening, openError, openExam]);
 
+  // A booklet the school hid is not left open for free practice: the first visible one opens instead.
+  useEffect(() => {
+    if (!hidden || !selected || opening || attempt?.assignmentId || !hidden.slugs.has(selected.slug)) return;
+    const next = exams?.find((e) => e.status !== "proximamente" && !hidden.slugs.has(e.slug));
+    if (next) openExam(next.slug);
+  }, [hidden, selected, opening, attempt, exams, openExam]);
+
   // Keep an attempt in this browser so a reload does not lose answers.
   // Attempts opened from history or reports are read-only and are never written back.
   useEffect(() => {
@@ -212,12 +230,32 @@ export default function App() {
     setView("test");
   };
 
+  // A practice made of chosen questions: "Práctica a medida", the error notebook or the ones missed in a live game.
+  // `opts`: { label, mode, perQuestionSec }. Timed = the booklet's time for those questions, or a fixed time per question.
+  const startKeys = async (slug, keys, opts = {}) => {
+    const sel = selected?.slug === slug && slug !== TEACHER_SLUG ? selected : await openExam(slug, slug === TEACHER_SLUG ? keys : null);
+    if (!sel || keys.length === 0) return;
+    const mode = opts.mode === "timed" ? "timed" : "practice";
+    const qs = questionsForAttempt(sel.exam, { scope: "all", keys });
+    clearAttempt(slug, "custom");
+    setAttempt({
+      slug, scope: "all", keys, custom: { label: opts.label || "Práctica a medida" }, mode,
+      durationSec: mode === "timed" ? (opts.perQuestionSec ? opts.perQuestionSec * qs.length : timedSeconds(qs)) : null,
+      startedAt: Date.now(), answers: {}, flags: {}, checked: {}, xp: 0, current: 0, submittedAt: null, auto: false,
+    });
+    setView("test");
+  };
+
   const startAttempt = (scope, mode, order) => {
-    const questions = questionsFor(selected.exam, scope);
+    const free = withoutHidden(selected.exam, hidden, selected.slug);
+    const questions = questionsFor(free, scope);
+    if (free.held && questions.length === 0) return setOpenError("Tu colegio reservó estas preguntas para un simulacro. Elige otro cuadernillo.");
     clearAttempt(selected.slug, scope);
     setAttempt({
       slug: selected.slug,
       scope,
+      // Held-back questions leave the set: the attempt then lists the ones it covers, in the chosen order.
+      ...(free.held ? { keys: orderQuestions(questions, scope === "all" ? order : null).map((q) => q.key) } : {}),
       mode,
       durationSec: mode === "timed" ? timedSeconds(questions) : null,
       startedAt: Date.now(),
@@ -241,6 +279,7 @@ export default function App() {
       await auth.api.linkRoster();
       const [assignments, attempts, models] = await Promise.all([auth.api.listAssignments(), auth.api.myAttempts(), auth.api.gradingModels().catch(() => [])]);
       setAssigned({ assignments, attempts, models });
+      if (auth.profile?.role === "student") auth.api.hiddenQuestions?.().then((rows) => setHidden(hiddenFor(rows ?? [])), () => setHidden(null));
       auth.api.studentClasses?.().then(setMyClasses, () => setMyClasses(null));
     } catch {
       setAssigned({ assignments: [], attempts: [] });
@@ -258,6 +297,7 @@ export default function App() {
   }, [signedIn, auth.api]);
 
   const startAssigned = async (a) => {
+    if (a.delivery === "paper") return; // answered on the printed sheet, never in the app
     const sel = await openExam(a.exam_slug, a.question_keys);
     if (!sel) return;
     const saved = loadAttempt(a.exam_slug, `asg-${a.id}`);
@@ -354,15 +394,18 @@ export default function App() {
   if (!selected) return <main className="frame"><p className="muted">{opening ? "Cargando cuadernillo…" : "Todavía no hay cuadernillos listos."}</p></main>;
 
   const questions = selected && attempt ? questionsForAttempt(selected.exam, attempt) : [];
+  // What a student may pick for free practice: booklets the school hid are not offered.
+  const studentExams = hidden ? (exams ?? []).filter((e) => !hidden.slugs.has(e.slug)) : exams ?? [];
+  const practiceExam = selected ? withoutHidden(selected.exam, hidden, selected.slug) : null;
   // Answers of an assigned attempt can be held back by the teacher (until the assignment closes, or for good).
   const assignedOf = attempt?.assignmentId ? assigned.assignments.find((a) => a.id === attempt.assignmentId) : null;
   const locked = Boolean(attempt?.assignmentId) && !revealAllowed(attempt.reveal, assignedOf);
   const usedOf = attempt?.assignmentId ? assigned.attempts.filter((x) => x.assignment_id === attempt.assignmentId && x.submitted_at).length : 0;
   const retryAssigned = assignedOf && attemptsLeft(assignedOf, usedOf) > 0 ? () => startAssigned(assignedOf) : null;
-  const scopeTitle = attempt && attempt.scope !== "all" ? attempt.scope : "Examen completo";
+  const scopeTitle = attempt?.custom ? attempt.custom.label : attempt?.repechaje ? "Repechaje" : attempt && attempt.scope !== "all" ? attempt.scope : "Examen completo";
   const examTitle = selected ? `${selected.exam.title} · ${scopeTitle}` : "";
   // The sidebar stays on every screen except the test; results and review belong to Practicar, reports to Perfil.
-  const navView = { home: "home", subjects: "subjects", setup: "setup", results: "setup", review: "setup", history: "progress", progress: "progress", profile: "profile", login: "profile", reports: "profile" }[view] ?? null;
+  const navView = { home: "home", subjects: "subjects", setup: "setup", results: "setup", review: "setup", custom: "setup", history: "progress", progress: "progress", profile: "profile", login: "profile", reports: "profile" }[view] ?? null;
   const course = studentCourses(classesFrom({ classes: myClasses, assignments: signedIn ? assigned.assignments : [] })).join(", ") || null;
   // A simulacro is both sessions of one cuadernillo: open the session that is missing, whole booklet, with time.
   const startSession = async (slug) => {
@@ -377,6 +420,7 @@ export default function App() {
     if (to === "tasks") { setSubjectTab("tareas"); setSubjectId(null); return setView("subjects"); }
     if (to === "subjects") { setSubjectTab("materias"); setSubjectId(null); return setView("subjects"); }
     if (to === "achievements") { setProgressTab("logros"); return setView("progress"); }
+    if (to === "errors" || to === "plan") { setProgressTab(to === "errors" ? "errores" : "plan"); return setView("progress"); }
     if (to === "progress" || to === "history") { setProgressTab(to === "history" ? "historial" : "resumen"); return setView("progress"); }
     if (to === "setup") setPreset(null);
     return setView(to);
@@ -409,7 +453,7 @@ export default function App() {
           onSetup={(p) => { setPreset(p); setView("setup"); }}
           onGo={go}
           course={course}
-          exams={exams ?? []}
+          exams={studentExams}
           onStartSession={startSession}
           onOpenSubject={(id) => { setSubjectId(id); setView("subjects"); }}
           signedOut={auth.status === "signed-out" || auth.status === "guest"}
@@ -420,11 +464,17 @@ export default function App() {
         />
       )}
 
+      {view === "custom" && selected && (
+        <CustomPractice key={selected.slug} bundle={selected} slug={selected.slug} preset={preset} onBack={() => setView("setup")}
+          onStart={(keys, opts) => startKeys(selected.slug, keys, opts)} />
+      )}
+
       {view === "setup" && selected && (
         <Setup
-          exam={selected.exam}
+          onCustom={() => { setPreset(null); setView("custom"); }}
+          exam={practiceExam}
           slug={selected.slug}
-          exams={exams}
+          exams={studentExams}
           preset={preset}
           onPickExam={(slug) => openExam(slug)}
           onBack={() => setView("home")}
@@ -467,9 +517,9 @@ export default function App() {
           onHome={goHome}
           locked={locked}
           lockedNote={attempt?.reveal === "after_close" ? "Tu docente mostrará las respuestas cuando cierre la asignación." : undefined}
-          onRetry={attempt.assignmentId ? retryAssigned : attempt.repechaje ? null : () => startAttempt(attempt.scope, attempt.mode, attempt.order)}
+          onRetry={attempt.assignmentId ? retryAssigned : attempt.repechaje ? null : attempt.custom ? () => startKeys(attempt.slug, attempt.keys, { label: attempt.custom.label, mode: attempt.mode }) : () => startAttempt(attempt.scope, attempt.mode, attempt.order)}
           onReviewTimes={(n) => { setReviewStart(n); setView("review"); }}
-          exams={exams ?? []}
+          exams={studentExams}
           onStartSession={startSession}
           onRepechaje={startRepechaje}
           grading={assignedOf ? resolveModel(assigned.models, { assignmentId: assignedOf.id, courseId: assignedOf.course_id, schoolId: auth.profile?.school_id }).model : null}
@@ -498,7 +548,8 @@ export default function App() {
       )}
 
       {view === "liveJoin" && <LiveJoin auth={auth} initialCode={joinCode} onBack={() => setView("home")} onJoined={(row, nickname) => { setLive({ row, nickname }); setView("livePlay"); }} />}
-      {view === "livePlay" && live && <LivePlay api={auth.api} initial={live.row} nickname={live.nickname} fetchExam={fetchExam} onExit={() => { setLive(null); setView("home"); }} />}
+      {view === "livePlay" && live && <LivePlay api={auth.api} initial={live.row} nickname={live.nickname} fetchExam={fetchExam} onExit={() => { setLive(null); setView("home"); }}
+        onPracticeMissed={(slug, keys) => { setLive(null); startKeys(slug, keys, { label: "Las que fallé en vivo" }); }} />}
 
       {view === "profile" && <Profile theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} onReports={() => setView("reports")} onLogin={() => setView("login")}
         assigned={signedIn ? assigned : null} classes={myClasses} course={course} onGo={go} />}
@@ -506,7 +557,10 @@ export default function App() {
         onTab={(t) => { setSubjectTab(t); setSubjectId(null); }} onOpenSubject={setSubjectId} onBack={() => setSubjectId(null)}
         onStartAssigned={startAssigned} onPracticeArea={practiceArea} onLogin={() => setView("login")} />}
       {view === "progress" && <Progress tab={progressTab} onTab={setProgressTab} assigned={signedIn ? assigned : null} classes={myClasses}
-        onPracticeArea={practiceArea} onNew={() => go("setup")} onOpen={openFromHistory} exams={exams ?? []} onStartSession={startSession} />}
+        onPracticeArea={practiceArea} onNew={() => go("setup")} onOpen={openFromHistory} exams={studentExams} onStartSession={startSession}
+        fetchExam={fetchExam} onPracticeKeys={startKeys} onGoal={() => go("profile")}
+        onSimulacro={() => { setPreset({ scope: "all", mode: "timed" }); setView("setup"); }}
+        onMix={() => selected && startKeys(selected.slug, mixedKeys(selected.exam), { label: "Mezcla de áreas", mode: "timed", perQuestionSec: 120 })} />}
       {view === "login" && <Login onBack={() => setView("profile")} />}
       {view === "history" && <History onBack={() => setView("home")} onNew={() => setView("setup")} onOpen={openFromHistory} />}
       {view === "reports" && <Reports onBack={() => setView("profile")} onPractice={() => setView("setup")} onOpen={openFromReport} />}
