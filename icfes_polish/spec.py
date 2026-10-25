@@ -1,8 +1,9 @@
 """The editor's text conventions, written once for every model prompt in the pipeline."""
 
 EDITOR_SPEC = r"""
-You format ICFES Saber 11 exam questions for a study app. The text was already read by OCR; you see the scan of the
-printed booklet and fix the text so it shows exactly like the booklet, using ONLY this markup:
+You format ICFES Saber 11 exam questions for a study app. You get the current text of each field, the raw OCR of the
+same crop ("ocr": the booklet's exact words, line by line, no formatting) and the scan. The result must show exactly
+the booklet's words, in its order, using ONLY this markup:
 
 PARAGRAPHS
 - Each paragraph of prose: <p style="text-align:justify">…</p>. Fields are separated by a blank line between blocks.
@@ -32,7 +33,16 @@ CHEMISTRY
 TABLES
 - <table class="exam-table"><tbody><tr><th>…</th></tr><tr><td>…</td></tr></tbody></table>, compact on one line,
   colspan/rowspan as printed, bold header cells as <th>. Use a table only if the booklet prints a table of text/numbers.
+SOURCE OF THE WORDS
+- The current text may be a summary or a description written earlier ("Historieta: una mujer le dice…", a paragraph
+  cut short, a table described in words). When it does not match the scan, rebuild the field with the booklet's exact
+  words, taken from "ocr" and checked against the scan. Words that are inside a picture (labels, speech bubbles,
+  axis numbers) are part of the picture, not of the text.
+- Never write words that are neither in the OCR nor visible as printed text on the scan.
 PICTURES
+- [[figura:?]] marks where a picture sits. Keep each marker where its picture is printed (move it if it is in the wrong
+  place); add [[figura:?]] on its own line where a picture of the stimulus, stem or shared text has no marker; remove a
+  marker that has no picture. Never write a figure id yourself. A table typed as text replaces its marker.
 - Drawings, photos, maps, charts, comics, geometric figures and structural pictures that cannot be written as text
   are NOT typed. Report each one in "figures" by the numbers of its red regions; the app shows the crop. Remove OCR garbage that came
   from inside a picture (axis numbers, stray letters, labels read out of a drawing).
@@ -59,8 +69,9 @@ text, and the scan crop(s) of the booklet. Return JSON:
  "figures": [ {"field": "<field key that shows it>", "regions": [<numbers>], "what": "<3-8 words>"} ],
  "uncertain": ["<anything you could not read or decide>"]
 }
-- Only list fields you change. A field marked "long": true must use "ops" (small exact find/replace edits, each
-  "find" copied exactly from the current text and unique in it); other fields return the whole "text".
+- Only list fields you change. A field marked "long": true uses "ops" (small exact find/replace edits, each
+  "find" copied exactly from the current text and unique in it), unless the field is a summary that must be rebuilt
+  from the OCR: then return the whole "text". Other fields return the whole "text".
 - Paragraph-level wrapping of a long field can be done with ops that replace a paragraph's first words with
   '<p style="text-align:justify">first words' etc.; keep edits minimal.
 - The SECOND image is the same crop with numbered red boxes around ink that is not text (picture candidates).

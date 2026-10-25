@@ -15,7 +15,7 @@ from pathlib import Path
 from PIL import Image
 
 from .fields import fields
-from .format_stage import LONG, crop_for, units, write_split
+from .format_stage import LONG, crop_for, page_image, units, write_split
 from .images import jpeg_b64, remove_blue
 from .spec import EDITOR_SPEC
 
@@ -80,7 +80,11 @@ def render(a) -> int:
     spec = out / "_units.json"
     spec.write_text(json.dumps(us, ensure_ascii=False), encoding="utf-8")
     script = Path(__file__).with_name("render_units.mjs")
-    subprocess.run(["node", str(script), str(spec), a.renderer, str(out)], check=True)
+    import os
+    env = dict(os.environ)
+    if "NODE_PATH" not in env:  # the global playwright install
+        env["NODE_PATH"] = subprocess.run(["npm", "root", "-g"], capture_output=True, text=True).stdout.strip()
+    subprocess.run(["node", str(script), str(spec), a.renderer, str(out)], check=True, env=env)
     return 0
 
 
@@ -92,17 +96,27 @@ def build(a) -> int:
     only = set(a.only.split(",")) if a.only else None
     sysmsg = EDITOR_SPEC + "\n\n" + VERIFY_TASK
     lines = []
+    meta = json.load(open(a.meta, encoding="utf-8"))["units"] if a.meta else {}
+    pdf = None
+    if a.pdf:
+        import fitz
+        pdf = fitz.open(a.pdf)
+    qpages = {f"q{q['number']}": (q.get("source") or {}).get("pages") or [] for q in golden["questions"]}
     for u in units(golden):
         if only and u["id"] not in only:
             continue
         rp = Path(a.renders) / f"{u['id']}.png"
         img, _ = crop_for(u, bundles, crops)
+        if img is None and pdf is not None and qpages.get(u["id"]):
+            img = page_image(pdf, qpages[u["id"]][0])
         if img is None or not rp.exists():
             continue
         scan, _ = jpeg_b64(remove_blue(img))
         rend, _ = jpeg_b64(Image.open(rp))
         info = {"unit": u["id"], "section": u["section"], "long_fields": [k for k in u["keys"] if len(f[k]) > LONG],
                 "fields": {k: f[k] for k in u["keys"]}}
+        if (meta.get(u["id"]) or {}).get("ocr"):
+            info["ocr"] = meta[u["id"]]["ocr"][:8000]
         msgs = [{"role": "system", "content": sysmsg},
                 {"role": "user", "content": [{"type": "text", "text": json.dumps(info, ensure_ascii=False)},
                                              {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64," + scan, "detail": "high"}},
@@ -133,6 +147,8 @@ def main(argv=None) -> int:
     b.add_argument("--deployment", default="solve")
     b.add_argument("--effort", default="low")
     b.add_argument("--only")
+    b.add_argument("--meta", help="format build meta (unit OCR)")
+    b.add_argument("--pdf", help="exam PDF, for units without a crop")
     b.add_argument("--out", required=True)
     a = ap.parse_args(argv)
     return render(a) if a.cmd == "render" else build(a)

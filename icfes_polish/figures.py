@@ -10,13 +10,14 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 from pathlib import Path
 
 from PIL import Image
 
 from .images import clean_figure, png_bytes, trim_box
-from .regions import grow_over_labels, layout_words, option_cells, words_in_crop
+from .regions import grow_over_labels, layout_words, option_cells, shave_text_rows, words_in_crop
 
 Box = tuple[float, float, float, float]
 
@@ -87,6 +88,8 @@ def emit(a, pdf, out, code, session, page, fb, field, fig, how) -> dict:
     r = pdf[page - 1].rect
     clip = fitz.Rect(fb[0] * r.width, fb[1] * r.height, fb[2] * r.width, fb[3] * r.height)
     pix = pdf[page - 1].get_pixmap(dpi=300, clip=clip)
+    if pix.width < 2 or pix.height < 2:
+        return None
     img = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
     clean, level = clean_figure(img)
     tb = trim_box(clean)
@@ -135,8 +138,10 @@ def keep_pictures(entries: list, words: dict, sizes: dict, max_cover: float = 0.
 def build(a) -> int:
     import fitz
     rep = json.load(open(a.report, encoding="utf-8"))
-    meta = json.load(open(a.meta, encoding="utf-8"))["units"]
-    dpi = json.load(open(Path(a.crops) / "bundles.json", encoding="utf-8")).get("dpi", 250)
+    mfile = json.load(open(a.meta, encoding="utf-8"))
+    meta = mfile["units"]
+    # the crops the requests were built from (the crop folder may have been cut again at another resolution since)
+    dpi = a.dpi or mfile.get("dpi") or json.load(open(Path(a.crops) / "bundles.json", encoding="utf-8")).get("dpi", 250)
     pdf = fitz.open(a.pdf)
     sizes = {i + 1: (p.rect.width / 72, p.rect.height / 72) for i, p in enumerate(pdf)}
     layout = json.load(open(a.layout, encoding="utf-8")) if a.layout else None
@@ -171,7 +176,7 @@ def build(a) -> int:
                     rb = [m["regions"][r - 1] for r in regs]
                     cb = (min(b[0] for b in rb), min(b[1] for b in rb), max(b[2] for b in rb), max(b[3] for b in rb))
                     if cw:
-                        cb = grow_over_labels(cb, cw)
+                        cb = shave_text_rows(grow_over_labels(cb, cw), cb, cw)
                     how = f"regions {regs}"
                 elif isinstance(box, list) and len(box) == 4 and box[2] > box[0] and box[3] > box[1]:
                     W, H = crop_size(m)
@@ -194,10 +199,14 @@ def build(a) -> int:
                     else:
                         p = 0.004
                         fb = (max(0, fb[0] - p), max(0, fb[1] - p), min(1, fb[2] + p), min(1, fb[3] + p))
-                    entries.append(emit(a, pdf, out, code, session, page, fb, pfield, fig, how))
+                    e = emit(a, pdf, out, code, session, page, fb, pfield, fig, how)
+                    if e:
+                        entries.append(e)
                 continue
             field = fig.get("field") or ""
-            entries.append(emit(a, pdf, out, code, session, page, fb, field, fig, how))
+            e = emit(a, pdf, out, code, session, page, fb, field, fig, how)
+            if e:
+                entries.append(e)
     entries, dropped = keep_pictures(entries, layout_words(layout) if layout else {}, sizes)
     for d in dropped:
         (out / f"{d['figure_id']}.png").unlink(missing_ok=True)
@@ -248,6 +257,43 @@ def score(a) -> int:
     return 0
 
 
+def place(a) -> int:
+    """Put each crop's id where its picture sits: the field's [[figura:?]] markers in order, else the end of the field.
+    Option pictures need no marker (the manifest links them by option). Markers left without a crop are removed."""
+    from .fields import fields, set_field
+    g = json.load(open(a.golden, encoding="utf-8"))
+    f = fields(g)
+    figs = json.load(open(a.manifest, encoding="utf-8"))["figures"]
+    placed = appended = 0
+    for fig in figs:
+        if fig.get("option"):
+            continue
+        key = fig.get("field") or ""
+        if key not in f:
+            continue
+        owner = key.split(".")[0]
+        if "[[figura:?]]" not in f[key]:  # the model named the stem, the marker sits in the stimulus (or the reverse)
+            key = next((k for k in f if k.split(".")[0] == owner and "[[figura:?]]" in f[k] and len(k.split(".")[1]) > 1), key)
+        tok = f"[[figura:{fig['figure_id']}]]"
+        if "[[figura:?]]" in f[key]:
+            f[key] = f[key].replace("[[figura:?]]", tok, 1)
+            placed += 1
+        else:
+            f[key] = (f[key].rstrip() + "\n\n" + tok).strip()
+            appended += 1
+    left = 0
+    for k, v in f.items():
+        if "[[figura:?]]" in v:
+            left += v.count("[[figura:?]]")
+            v = re.sub(r"\n*\[\[figura:\?\]\]\n*", "\n\n", v).strip()
+        f[k] = v
+    for k, v in f.items():
+        set_field(g, k, v)
+    json.dump(g, open(a.out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    print(f"figures placed at their marker {placed}, added at the end of the field {appended}, markers without a crop removed {left}")
+    return 0
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -255,14 +301,19 @@ def main(argv=None) -> int:
     for k in ("exam", "report", "meta", "crops", "pdf", "out"):
         b.add_argument(f"--{k}", required=True)
     b.add_argument("--layout")
+    b.add_argument("--dpi", type=int, help="resolution of the crops the format requests were built from (older meta files)")
     b.add_argument("--golden", help="formatted golden; questions with empty options get their picture split per option")
     s = sub.add_parser("score")
     s.add_argument("--candidate", required=True)
     s.add_argument("--reference", required=True)
     s.add_argument("--pdf")
     s.add_argument("--json")
+    pl = sub.add_parser("place")
+    pl.add_argument("--golden", required=True)
+    pl.add_argument("--manifest", required=True)
+    pl.add_argument("--out", required=True)
     a = ap.parse_args(argv)
-    return build(a) if a.cmd == "build" else score(a)
+    return {"build": build, "score": score, "place": place}[a.cmd](a)
 
 
 if __name__ == "__main__":

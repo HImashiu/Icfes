@@ -21,7 +21,7 @@ from rapidfuzz import fuzz
 
 from .fields import canon, fields, plain, set_field
 from .images import remove_blue
-from .regions import layout_words, marked, propose, words_in_crop
+from .regions import layout_lines, layout_words, marked, propose, unit_ocr, words_in_crop
 from .spec import EDITOR_SPEC, FORMAT_TASK
 
 LONG = 700          # fields longer than this are edited with find/replace ops, never retyped
@@ -83,7 +83,8 @@ def layout_boxes_in_crop(segments, figs_inches, dpi):
 
 def pick_examples(before: dict, after: dict, limit_chars: int = 14000) -> list[dict]:
     """Units where the hand-finished version adds markup, chosen to cover every kind of markup once or twice."""
-    fb, fa = fields(before), fields(after)
+    fb = fields(before)
+    fa = {k: re.sub(r"\[\[figura:[^\]]+\]\]", "[[figura:?]]", v) for k, v in fields(after).items()}  # ids are filled in later
     want = ["fuente", "cita", "espacio", "mol", "math", "em", "sub", "hueco", "ejemplo", "table", "right", "center", "poema", "bold"]
     from .fields import markup_counts
     by_unit: dict[str, dict] = {}
@@ -120,10 +121,11 @@ def build(a) -> int:
     golden = json.load(open(a.golden, encoding="utf-8"))
     crops = Path(a.crops)
     bundles = json.load(open(crops / "bundles.json", encoding="utf-8"))
-    words = figs_layout = None
+    words = figs_layout = ocr_lines = None
     if a.layout:
         lay = json.load(open(a.layout, encoding="utf-8"))
         words = layout_words(lay)
+        ocr_lines = layout_lines(lay)
         from .figures import layout_figures
         figs_layout = layout_figures(lay, inches=True)
     pdf = None
@@ -160,9 +162,16 @@ def build(a) -> int:
                 wb = words_in_crop(b["segments"], words, bundles.get("dpi", 250))
                 boxes = propose(img, wb) + [bx for bx in layout_boxes_in_crop(b["segments"], figs_layout, bundles.get("dpi", 250))]
             mk64 = jpeg_b64(remove_blue(marked(img, boxes)))[0] if boxes else None
+            ocr = ""
+            if ocr_lines is not None:
+                if source == "crop":
+                    ocr = unit_ocr(b["segments"], ocr_lines, bundles.get("dpi", 250))
+                else:
+                    ocr = "\n".join(t for *_, t in sorted(ocr_lines.get(qpages[u["id"]][0], []), key=lambda x: (x[0] > 4.2, x[1], x[0])))  # left column, then right
             cur = {k: f[k] for k in u["keys"]}
             longk = [k for k in u["keys"] if len(f[k]) > LONG]
             info = {"unit": u["id"], "section": u["section"], "image": "crop of this unit" if source == "crop" else "the whole page; find the unit on it",
+                    "ocr": ocr[:8000],
                     "long_fields": longk, "fields": cur}
             if u["kind"] == "question" and u["group"]:
                 shared = " ".join(f.get(f"{u['group']}.{x}", "") for x in ("passage", "stim"))
@@ -181,11 +190,11 @@ def build(a) -> int:
             if a.effort:
                 req["reasoning_effort"] = a.effort
             lines.append(json.dumps(req, ensure_ascii=False))
-            meta[u["id"]] = {"source": source, "image_size": size, "regions": [list(map(int, x)) for x in boxes], "segments": (b or {}).get("segments"), "bundle": (b or {}).get("id"),
+            meta[u["id"]] = {"ocr": ocr, "source": source, "image_size": size, "regions": [list(map(int, x)) for x in boxes], "segments": (b or {}).get("segments"), "bundle": (b or {}).get("id"),
                              "page": qpages.get(u["id"], [None])[0] if source == "page" else None}
             n += 1
     write_split(a.out, lines)
-    Path(a.out).with_suffix(".meta.json").write_text(json.dumps({"examples": [e["unit"] for e in ex], "units": meta}, indent=1), encoding="utf-8")
+    Path(a.out).with_suffix(".meta.json").write_text(json.dumps({"examples": [e["unit"] for e in ex], "dpi": bundles.get("dpi", 250), "units": meta}, indent=1), encoding="utf-8")
     print(f"{n} requests -> {a.out}; few-shot units: {[e['unit'] for e in ex]}; system prompt {len(sysmsg)} chars")
     return 0
 
@@ -224,7 +233,42 @@ def apply_ops(text: str, ops: list[dict]) -> tuple[str, list[str]]:
     return text, errs
 
 
-def guard(old: str, new: str, shared: str = "") -> str | None:
+_SUP = str.maketrans("0123456789+-−=()n", "⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁻⁼⁽⁾ⁿ")
+_SUB = str.maketrans("0123456789+-−=()", "₀₁₂₃₄₅₆₇₈₉₊₋₋₌₍₎")
+
+
+def unicode_scripts(t: str) -> str:
+    """Short digit/sign super- and subscripts as Unicode (m², CuSO₄, 1s²), the way the editor's finished text has them."""
+    t = re.sub(r"<sup>([0-9+\-−=()n]{1,3})</sup>", lambda m: m.group(1).translate(_SUP), t)
+    return re.sub(r"<sub>([0-9+\-−=()]{1,3})</sub>", lambda m: m.group(1).translate(_SUB), t)
+
+
+def _words(t: str, minlen: int = 1) -> list[str]:
+    import unicodedata
+    t = re.sub(r"(\w)-\s*\n\s*(\w)", r"\1\2", t)  # a word split at a line end in the OCR
+    t = re.sub(r"\\[a-zA-Z]+", " ", plain(t))  # KaTeX commands are markup, not printed words
+    t = unicodedata.normalize("NFKD", t.lower())
+    t = "".join(ch for ch in t if not unicodedata.combining(ch))
+    return [w for w in re.findall(r"[a-z0-9]+", t) if len(w) >= minlen]
+
+
+def grounded(new: str, ocr: str, minlen: int = 1) -> float:
+    """Share of the words of `new` that the OCR of the scan also has (each OCR word used once)."""
+    from collections import Counter
+    if not ocr:
+        return 0.0
+    pool, ws = Counter(_words(ocr)), _words(new, minlen)
+    if not ws:
+        return 1.0
+    hit = 0
+    for w in ws:
+        if pool[w] > 0:
+            pool[w] -= 1
+            hit += 1
+    return hit / len(ws)
+
+
+def guard(old: str, new: str, shared: str = "", ocr: str = "") -> str | None:
     """Reject edits that change the words too much (a rewrite, a summary, or text from another question).
     Removing OCR garbage or adding words the OCR missed is fine: one text then mostly contains the other."""
     po, pn = plain(old), plain(new)
@@ -234,9 +278,13 @@ def guard(old: str, new: str, shared: str = "") -> str | None:
         # emptying a field is allowed only when it repeats the group's shared text (or was a placeholder)
         if shared and fuzz.partial_ratio(po[:400], plain(shared)) >= 85:
             return None
+        if ocr and grounded(old, ocr, minlen=5) < 0.6:
+            return None  # the old text was a description of a picture, not printed words
         return "emptied a field that is not a repeat of the shared text"
     if len(po) < 40:
         return None
+    if ocr and grounded(new, ocr) >= 0.95:
+        return None  # rebuilt from the scan's own words (the old text was a summary or misread)
     sim = fuzz.ratio(po, pn) / 100
     contained = fuzz.token_set_ratio(po, pn) / 100
     if sim < 0.8 and contained < 0.9:
@@ -247,7 +295,7 @@ def guard(old: str, new: str, shared: str = "") -> str | None:
 _TOK = re.compile(r"\w+|[^\w\s]", re.U)
 
 
-def word_changes(old: str, new: str) -> list[dict]:
+def word_changes(old: str, new: str, ocr: str = "") -> list[dict]:
     """Word-level differences between two versions of a field (markup ignored), each marked plausible or not.
     Plausible: an OCR misreading fixed (the two spellings look alike), stray symbols or one-letter junk removed,
     punctuation added. Anything else (a different word, an added "no") needs a second reading of the scan."""
@@ -264,6 +312,8 @@ def word_changes(old: str, new: str) -> list[dict]:
             ok = all(len(t) <= 1 or not t.isalpha() for t in a[i1:i2])
         else:  # insert
             ok = all(not t.isalnum() for t in b[j1:j2])
+        if not ok and ocr and op != "delete" and grounded(n, ocr) >= 0.9:
+            ok = True  # the added words are printed on the scan (OCR has them)
         out.append({"op": op, "old": o, "new": n, "plausible": bool(ok),
                     "context": " ".join(a[max(0, i1 - 6):i2 + 6])})
     return out
@@ -274,6 +324,7 @@ def apply(a) -> int:
     out = json.loads(json.dumps(golden))
     f = fields(golden)
     rep = {"units": {}, "usd": 0.0, "word_checks": []}
+    mu = json.load(open(a.meta, encoding="utf-8"))["units"] if getattr(a, "meta", None) else {}
     for line in (l for path in a.results for l in open(path, encoding="utf-8")):
         r = json.loads(line)
         uid = r["id"].split(":", 1)[1]
@@ -299,7 +350,7 @@ def apply(a) -> int:
                 new, errs = apply_ops(f[k], v["ops"])
                 ur["errors"] += [f"{k}: {e}" for e in errs]
             elif "text" in v and isinstance(v["text"], str):
-                if len(f[k]) > LONG:
+                if len(f[k]) > LONG and grounded(v["text"], (mu.get(uid) or {}).get("ocr", "")) < 0.95:
                     ur["rejected"].append(f"{k}: retyped a long field")
                     continue
                 new = v["text"]
@@ -307,15 +358,17 @@ def apply(a) -> int:
                 continue
             gid = next((q.get("group_id") for q in golden["questions"] if f"q{q['number']}" == k.split(".")[0]), None)
             shared = " ".join(f.get(f"{gid}.{x}", "") for x in ("passage", "stim")) if gid else ""
-            why = guard(f[k], new, shared)
+            ocr = (mu.get(uid) or {}).get("ocr", "")
+            why = guard(f[k], new, shared, ocr)
             if why:
                 ur["rejected"].append(f"{k}: {why}")
                 continue
+            new = unicode_scripts(new)
             new = re.sub(r"<p( [^>]*)?>\s*(<p\b[^>]*>)", r"\2", new)
             new = re.sub(r"(</p>)\s*</p>", r"\1", new)
             if new == f[k]:
                 continue
-            changes = [c for c in word_changes(f[k], new) if not c["plausible"]]
+            changes = [c for c in word_changes(f[k], new, ocr) if not c["plausible"]]
             if changes and plain(new):
                 rep["word_checks"].append({"unit": uid, "key": k, "new": new, "changes": changes})
                 ur["held"] = ur.get("held", []) + [k]
@@ -415,6 +468,7 @@ def main(argv=None) -> int:
     p.add_argument("--results", required=True, nargs="+")
     p.add_argument("--out", required=True)
     p.add_argument("--report")
+    p.add_argument("--meta", help="the build's .meta.json: unit OCR lets edits that use the scan's own words through")
     w = sub.add_parser("wordcheck-build")
     w.add_argument("--golden", required=True)
     w.add_argument("--crops", required=True)

@@ -203,3 +203,25 @@ def option_cells(box, word_boxes, regions, pad: int = 60):
     if len(cells) < 2:
         return {}, box
     return cells, rest
+
+
+def shave_text_rows(box, core, word_boxes, min_words: int = 5, min_cover: float = 0.5):
+    """Cut sentence lines that taking in labels pulled above or below the picture (outside its ink, `core`): a row of
+    many words spanning most of the width is the question's text, not a label."""
+    x0, y0, x1, y1 = box
+    inside = [w for w in word_boxes if w[0] >= x0 - 4 and w[2] <= x1 + 4 and w[1] >= y0 - 4 and w[3] <= y1 + 4]
+    rows: list[list] = []
+    for w in sorted(inside, key=lambda w: (w[1] + w[3]) / 2):
+        cy = (w[1] + w[3]) / 2
+        if rows and abs(cy - rows[-1][0]) < 0.6 * (w[3] - w[1]):
+            rows[-1][1].append(w)
+        else:
+            rows.append([cy, [w]])
+    def texty(r):
+        ws = r[1]
+        return len(ws) >= min_words and (max(w[2] for w in ws) - min(w[0] for w in ws)) >= min_cover * (x1 - x0)
+    while rows and rows[0][0] < core[1] and texty(rows[0]):
+        y0 = max(w[3] for w in rows.pop(0)[1]) + 2
+    while rows and rows[-1][0] > core[3] and texty(rows[-1]):
+        y1 = min(w[1] for w in rows.pop()[1]) - 2
+    return (x0, y0, x1, y1) if y1 - y0 > 20 else box
