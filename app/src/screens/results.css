@@ -95,3 +95,76 @@
 .ar2-qtools .chip { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .ar2-qtools .chip.on, .ar2-qtools .chip[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 .ar2-kpis .display { font-size: clamp(1.4rem, 2.4vw, 2rem); }
+
+/* ---------- Grading wizard ---------- */
+.gw { display: grid; gap: 12px; }
+.gw-pages { margin-bottom: 12px; max-width: 420px; }
+.gw-lead { margin: 0; }
+.gw-step { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; align-items: start; }
+.gw-n { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; background: var(--accent); color: var(--on-accent); }
+.gw-body { display: grid; gap: 10px; min-width: 0; }
+.gw-levels { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+.gw-level, .gw-kind { display: grid; gap: 4px; text-align: left; padding: 12px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+.gw-level.on, .gw-kind.on { border-color: var(--accent); background: var(--accent-soft); }
+.gw-kinds { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+.gw-kind > span:nth-child(2) { font-size: 0.92rem; line-height: 1.4; }
+.gw-kind-top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.gw-ex { font-weight: 800; font-size: 1.1rem; white-space: nowrap; color: var(--accent-ink); }
+.gw-chain { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: stretch; }
+.gw-chain li { display: grid; gap: 2px; padding: 8px 12px; border-radius: 12px; border: 1px dashed var(--line); min-width: 120px; position: relative; }
+.gw-chain li + li::before { content: "›"; position: absolute; left: -9px; top: 50%; transform: translateY(-50%); color: var(--text-2); }
+.gw-chain li.win { border-style: solid; border-color: var(--ok); background: var(--ok-soft); }
+.gw-chain li.off { opacity: 0.5; }
+.gw-tag { font-size: 0.72rem; font-weight: 800; color: var(--ok); text-transform: uppercase; letter-spacing: 0.04em; }
+.gw-more { display: flex; align-items: center; gap: 10px; width: 100%; padding: 0; border: 0; background: none; color: var(--text); cursor: pointer; text-align: left; flex-wrap: wrap; }
+.gw-more .caption { flex: 1; min-width: 160px; }
+.gw-ruler { position: relative; padding: 4px 18px 34px; }
+.gw-ruler-bar { display: flex; height: 12px; border-radius: 8px; overflow: hidden; }
+.gw-ruler-bar .no { background: var(--bad-soft); border: 1px solid var(--bad); border-radius: 8px 0 0 8px; }
+.gw-ruler-bar .yes { background: var(--ok-soft); border: 1px solid var(--ok); border-radius: 0 8px 8px 0; }
+.gw-ruler-mark { position: absolute; top: 18px; transform: translateX(0); display: grid; justify-items: center; font-size: 0.8rem; margin-left: 18px; translate: -50% 0; }
+.gw-ruler-mark.end { margin-left: -18px; }
+.gw-ruler-mark span { color: var(--text-2); font-size: 0.72rem; }
+.gw-preview .section-head { flex-wrap: wrap; gap: 8px; }
+.gw-all { display: inline-flex; gap: 6px; align-items: center; font-size: 0.88rem; color: var(--text-2); cursor: pointer; }
+.gw-sum { display: flex; flex-wrap: wrap; gap: 8px; }
+.gw-sum > div { display: grid; gap: 2px; padding: 10px 14px; border-radius: 12px; background: var(--surface-2); min-width: 140px; }
+.gw-sum strong { display: inline-flex; align-items: center; gap: 6px; font-size: 1.15rem; }
+.gw-sum .gw-small { font-size: 0.95rem; }
+.gw-table { max-height: 420px; overflow: auto; scrollbar-width: thin; }
+.gw-up { color: var(--ok); font-weight: 700; }
+.gw-down { color: var(--bad); font-weight: 700; }
+.gw-cur { background: var(--accent-soft); font-weight: 700; }
+.gw-save { position: sticky; bottom: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.25); }
+.gw-save .caption { flex: 1; min-width: 200px; }
+.gw-save-btns { display: inline-flex; gap: 8px; }
+@media (max-width: 760px) { .gw-save { bottom: 70px; } .gw-step { grid-template-columns: minmax(0, 1fr); } .gw-n { display: none; } }
+
+/* ---------- Gradebook ---------- */
+.gb { display: grid; gap: 12px; }
+.gb-top { gap: 10px; }
+.gb-pick { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; }
+.gb-pick .field { min-width: 220px; }
+.gb-model { display: grid; gap: 2px; }
+.gb-explain { margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); line-height: 1.45; }
+.gb-rule { display: grid; gap: 12px; }
+.gb-weights { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.gb-w-row { display: flex; gap: 10px; align-items: center; }
+.gb-w-row input[type="range"] { flex: 1; accent-color: var(--accent); }
+.gb-w-row b { min-width: 44px; text-align: right; }
+.gb-rule-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.gb-head { flex-wrap: wrap; gap: 6px; }
+.gb-wrap { max-height: 70vh; overflow: auto; scrollbar-width: thin; }
+.gb-table th, .gb-table td { white-space: nowrap; text-align: center; }
+.gb-table th { position: sticky; top: 0; background: var(--surface); z-index: 1; vertical-align: bottom; }
+.gb-table .gb-sticky { position: sticky; left: 0; text-align: left; background: var(--surface); z-index: 2; }
+.gb-table thead .gb-sticky { z-index: 3; }
+.gb-col { display: block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; text-transform: none; }
+.gb-table th .caption { display: block; font-weight: 500; text-transform: none; letter-spacing: 0; }
+.gb-miss { color: var(--text-2); }
+.gb-low { color: var(--bad); }
+.gb-final { background: var(--accent-soft); }
+.gw .grade-grid { align-items: start; }
+.gw-kinds { grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); }
+.gw-ruler-mark { white-space: nowrap; }
+.gb-rule-row .field { min-width: 170px; }

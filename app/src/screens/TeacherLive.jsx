@@ -228,7 +228,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           )}
           {r.section === "resultados" && r.tab === "actividades" && <ResultsByActivity api={api} courses={courses} assignments={assignments} go={go} contextName={contextName} />}
           {r.section === "resultados" && r.tab === "calificacion" && (
-            <GradingSettings api={baseApi} profile={profile} courses={courses} assignments={assignments} models={models} reloadModels={reloadModels} guard={guard} setNotice={setNotice} />
+            <GradingSettings api={baseApi} profile={profile} courses={courses} assignments={assignments} models={models} reloadModels={reloadModels} guard={guard} setNotice={setNotice} fetchExam={fetchExam} />
           )}
           {r.section === "resultados" && r.tab === "grafica" && <ChartBuilder api={api} profile={profile} courses={courses} assignments={assignments} fetchExam={fetchExam} guard={guard} ws={ws} />}
 
@@ -243,7 +243,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
               <Staff api={baseApi} profile={profile} guard={guard} setNotice={setNotice} />
             </>
           )}
-          {r.section === "colegio" && r.tab === "calificacion" && <GradingSettings api={baseApi} profile={profile} courses={allCourses} assignments={allAssignments} models={models} reloadModels={reloadModels} guard={guard} setNotice={setNotice} />}
+          {r.section === "colegio" && r.tab === "calificacion" && <GradingSettings api={baseApi} profile={profile} courses={allCourses} assignments={allAssignments} models={models} reloadModels={reloadModels} guard={guard} setNotice={setNotice} fetchExam={fetchExam} />}
           {r.section === "colegio" && r.tab === "ajustes" && <Settings api={baseApi} profile={profile} guard={guard} setNotice={setNotice} />}
         </div>
       </main>

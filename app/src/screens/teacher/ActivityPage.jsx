@@ -105,8 +105,7 @@ export default function ActivityPage({ api, profile, assignment, course, tab, go
       )}
       {tab === "calificacion" && (
         <>
-          <p className="caption ap-note">Por defecto usa la calificación de la clase ({course?.name}). Elige otra solo si esta actividad lo necesita.</p>
-          <GradingSettings api={api} profile={profile} courses={courses.filter((c) => c.id === assignment.course_id)} assignments={[assignment]} models={models} reloadModels={reloadModels} guard={guard} setNotice={setNotice} initialTarget={`assignment:${assignment.id}`} embedded />
+          <GradingSettings api={api} profile={profile} courses={courses.filter((c) => c.id === assignment.course_id)} assignments={[assignment]} models={models} reloadModels={reloadModels} guard={guard} setNotice={setNotice} initialTarget={`assignment:${assignment.id}`} embedded fetchExam={fetchExam} />
         </>
       )}
       {!TABS.actividad.some(([id]) => id === tab) && null}
