@@ -32,6 +32,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
   // Practice is graded on what was answered, since stopping early is normal there.
   const outOf = attempt.mode === "timed" ? score.total : score.answered;
   const pct = score.keyed && outOf > 0 ? (score.correct / outOf) * 100 : null;
+  const delivered = Boolean(attempt.submittedAt);
   // This attempt as a history row, so a whole session pairs with the other session of its cuadernillo.
   const sim = useMemo(() => {
     if (!delivered || !score.keyed || attempt.assignmentId || attempt.repechaje || attempt.custom) return null;
@@ -43,7 +44,6 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
   const nextUp = sim && !sim.complete ? nextSession(sim, exams) : null;
   const wrong = score.keyed ? score.answered - score.correct : 0;
   const flagged = Object.keys(attempt.flags).length;
-  const delivered = Boolean(attempt.submittedAt);
   const xpEarned = attemptXp(questions, attempt, answerKey);
   // The teacher's grading model, only when it says something the percent does not.
   const grade = grading && delivered && score.keyed && isAdjusted(grading) ? gradeAttempt(itemFromAttempt(attempt, attempt.attemptNo ?? 1), grading, { questions, key: answerKey }) : null;

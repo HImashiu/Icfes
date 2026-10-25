@@ -601,7 +601,7 @@ export default function App() {
       {needsAttempt && !attempt && <main className="frame"><p className="muted">Esta actividad ya no está abierta.</p><button type="button" className="primary" onClick={goHome}>Volver al inicio</button></main>}
       </ScreenBoundary>
 
-      {navView && <BottomNav active={navView} onGo={go} name={studentName} course={course} />}
+      {navView && <BottomNav active={navView} onGo={go} name={studentName} course={course} role={signedIn ? auth.profile?.role : null} />}
     </div>
     </ExamContext.Provider>
     </AuthContext.Provider>
