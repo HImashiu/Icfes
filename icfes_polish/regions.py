@@ -26,6 +26,34 @@ def layout_words(layout: dict, text: bool = False) -> dict[int, list]:
     return out
 
 
+def layout_lines(layout: dict) -> dict[int, list]:
+    """OCR lines per page: (x0, y0, x1, y1, text) in inches."""
+    out: dict[int, list] = {}
+    for ch in layout.get("chunks", [{"result": layout}]):
+        r = ch.get("result", ch)
+        r = r.get("analyzeResult", r)
+        off = ch.get("page_offset", 0)
+        for p in r.get("pages", []):
+            for ln in p.get("lines", []):
+                xs, ys = ln["polygon"][0::2], ln["polygon"][1::2]
+                out.setdefault(p["pageNumber"] + off, []).append((min(xs), min(ys), max(xs), max(ys), ln.get("content", "")))
+    return out
+
+
+def unit_ocr(segments: list[dict], lines: dict, dpi: int) -> str:
+    """The raw OCR text inside a unit's crop, segment by segment, top to bottom."""
+    out = []
+    for s in segments:
+        x0, y0, x1, y1 = s["box_px"]
+        sel = []
+        for lx0, ly0, lx1, ly1, t in lines.get(s["page"], []):
+            cx, cy = (lx0 + lx1) / 2 * dpi, (ly0 + ly1) / 2 * dpi
+            if x0 <= cx <= x1 and y0 <= cy <= y1:
+                sel.append((ly0, lx0, t))
+        out += [t for _, _, t in sorted(sel)]
+    return "\n".join(out)
+
+
 def words_in_crop(segments: list[dict], words: dict, dpi: int) -> list[tuple[int, int, int, int]]:
     """Word boxes moved into the crop image's pixel frame (segments stacked vertically)."""
     out = []

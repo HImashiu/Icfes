@@ -124,8 +124,18 @@ def question_text(q: dict, groups: dict, order: list[int] | None = None) -> tupl
     return t, shown
 
 
+PDF = None  # set from --pdf: whole pages stand in for questions the crop step could not anchor
+
+
 def images_for(q: dict, bundles: dict, crops: Path) -> list[str]:
     out = []
+    if PDF is not None and f"q{q['number']}" not in bundles["bundles"]:
+        for pg in (q.get("source") or {}).get("pages") or []:
+            pix = PDF[pg - 1].get_pixmap(dpi=150)
+            img = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
+            out.append(jpeg_b64(remove_blue(img), max_side=1800)[0])
+        if out:
+            return out
     for bid in (q.get("group_id"), f"q{q['number']}"):
         b = bundles["bundles"].get(bid) if bid else None
         if b:
@@ -147,7 +157,8 @@ class Ctx:
         self.a = a
         self.g = json.load(open(a.golden, encoding="utf-8"))
         self.groups = {x["id"]: x for x in self.g.get("groups", [])}
-        self.qs = {q["number"]: q for q in self.g["questions"]}
+        only = {int(x) for x in a.only.split(",")} if getattr(a, "only", None) else None
+        self.qs = {q["number"]: q for q in self.g["questions"] if only is None or q["number"] in only}
         self.crops = Path(a.crops) if a.crops else None
         self.bundles = json.load(open(self.crops / "bundles.json", encoding="utf-8")) if self.crops else {"bundles": {}}
         self.keyfile = json.load(open(a.key, encoding="utf-8"))["answers"] if a.key and Path(a.key).exists() else {}
@@ -186,8 +197,8 @@ def parse(r: dict | None) -> dict:
 
 
 def letter(x) -> str | None:
-    x = (x or "").strip().upper()[:1] if isinstance(x, str) else None
-    return x if x in LETTERS else None
+    x = (x or "").strip().upper()[:1] if isinstance(x, str) else ""
+    return x if x and x in LETTERS else None
 
 
 # ---------------- rounds ----------------
@@ -469,8 +480,14 @@ def main(argv=None) -> int:
     ap.add_argument("--work", required=True)
     ap.add_argument("--deployment", default="solve")
     ap.add_argument("--effort", default="medium")
+    ap.add_argument("--only", help="comma-separated question numbers (a test run)")
     ap.add_argument("--enrichment", help="existing enrichment file (audit, merge)")
+    ap.add_argument("--pdf", help="exam PDF: page images for questions without a crop")
     a = ap.parse_args(argv)
+    if a.pdf:
+        import fitz
+        global PDF
+        PDF = fitz.open(a.pdf)
     return ROUNDS[a.round](Ctx(a))
 
 

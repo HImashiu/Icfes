@@ -3,7 +3,8 @@
 python -m icfes_polish.preformat <in.golden.json> <out.golden.json>
 
 What it does (each rule is counted in the report):
-- markdown pictures and figure placeholders are taken out of the text (the figure stage links real crops);
+- markdown pictures and figure placeholders become a [[figura:?]] marker where the picture sits (the figure stage
+  puts the real crop id there);
 - raw <table> markup is compacted to <table class="exam-table"><tbody>…</tbody></table>;
 - a caption line alone ("Tabla", "Gráfica", "Figura 2") becomes <p style="text-align:right">**Tabla**</p>;
 - a source line ("Tomado de…", "Adaptado de…", "Fuente:…") becomes <p class="fuente">…</p>;
@@ -37,12 +38,11 @@ def compact_table(m: re.Match) -> str:
 
 
 def clean_text(t: str, c: Counter) -> str:
-    n0 = len(t)
-    t = MD_IMG.sub("", t)
-    if len(t) != n0:
-        c["pictures_removed"] += 1
-    t, k = PLACEHOLDER.subn("", t)
-    c["placeholders_removed"] += k
+    t, k = MD_IMG.subn("\n\n[[figura:?]]\n\n", t)
+    c["picture_markers"] += k
+    t, k = PLACEHOLDER.subn("\n\n[[figura:?]]\n\n", t)
+    c["picture_markers"] += k
+    t = re.sub(r"(\[\[figura:\?\]\]\s*){2,}", "[[figura:?]]\n\n", t)  # one picture, several OCR pieces
     t, k = re.subn(r"[☒☐]\s*", "", t)
     c["key_marks_removed"] += k
     t, k = re.subn(r"(?m)^[ \t]*[·•][ \t]*", "", t)
@@ -66,7 +66,7 @@ def format_blocks(t: str, kind: str, c: Counter) -> str:
         b = b.strip()
         if not b:
             continue
-        if BLOCK.match(b):
+        if BLOCK.match(b) or re.fullmatch(r"\[\[figura:[^\]]*\]\]", b):
             out.append(b)
             continue
         b = re.sub(r"\s*\n\s*", " ", b)
@@ -95,7 +95,10 @@ def preformat(golden: dict) -> tuple[dict, Counter]:
         kind = "opt" if len(kind) == 1 else kind
         if kind == "dir":
             continue
-        new = format_blocks(clean_text(text, c), kind, c)
+        t = clean_text(text, c)
+        if kind == "opt":  # a picture option is linked by the figure manifest, not by a marker in its text
+            t = t.replace("[[figura:?]]", "")
+        new = format_blocks(t, kind, c)
         if new != text:
             set_field(g, key, new)
             c["fields_changed"] += 1
