@@ -135,10 +135,11 @@ describe("new teacher shell", () => {
     expect(JSON.parse(window.localStorage.getItem("condor:ctx:boss"))).toEqual({ subject: "Inglés", courseId: null });
   });
 
-  it("shows coordination who teaches what", async () => {
-    window.location.hash = "#docente/colegio/docentes";
+  it("shows coordination who teaches what, by curso and subject", async () => {
+    window.location.hash = "#docente/colegio/cursos";
     render(<TeacherLive auth={auth(api())} exams={[]} fetchExam={vi.fn()} onExit={() => {}} />);
-    expect(await screen.findByText("Quién dicta qué")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Cursos y materias" })).toBeTruthy();
     expect(await screen.findByText("eva@c.co")).toBeTruthy();
+    expect(screen.getByText("11B")).toBeTruthy();
   });
 });
