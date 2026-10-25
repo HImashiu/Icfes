@@ -20,7 +20,7 @@ const initials = (name) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w)
 
 // Materias: one card per subject (with its teacher) and every task of every subject, with filters. A subject opens
 // its own page. `tab` is "materias" or "tareas"; `subjectId` opens one subject.
-export default function Subjects({ announcements = [], assigned, classes, course, tab, subjectId, onTab, onOpenSubject, onBack, onStartAssigned, onPracticeArea, onLogin }) {
+export default function Subjects({ announcements = [], assigned, classes, course, tab, subjectId, onTab, onOpenSubject, onBack, onStartAssigned, onOpenAssigned, onPracticeArea, onLogin }) {
   const now = Date.now();
   const subjects = useMemo(() => (assigned ? studentSubjects({ classes, assignments: assigned.assignments, attempts: assigned.attempts, now }) : []), [assigned, classes]); // eslint-disable-line react-hooks/exhaustive-deps
   const tasks = useMemo(() => (assigned ? studentTasks({ subjects, assignments: assigned.assignments, attempts: assigned.attempts, now }) : []), [subjects, assigned]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -40,7 +40,7 @@ export default function Subjects({ announcements = [], assigned, classes, course
   }
 
   const subject = subjectId ? subjects.find((s) => s.id === subjectId) : null;
-  if (subject) return <SubjectPage announcements={activeAnnouncements(announcements, { courseIds: subject.courseIds })} subject={subject} tasks={tasks.filter((t) => t.subject?.id === subject.id)} ins={ins} now={now} onBack={onBack} onStartAssigned={onStartAssigned} onPracticeArea={onPracticeArea} />;
+  if (subject) return <SubjectPage announcements={activeAnnouncements(announcements, { courseIds: subject.courseIds })} subject={subject} tasks={tasks.filter((t) => t.subject?.id === subject.id)} ins={ins} now={now} onBack={onBack} onStartAssigned={onStartAssigned} onOpenAssigned={onOpenAssigned} onPracticeArea={onPracticeArea} />;
 
   return (
     <section className="subjects">
@@ -53,7 +53,7 @@ export default function Subjects({ announcements = [], assigned, classes, course
         <button type="button" role="tab" aria-selected={tab === "tareas"} className={tab === "tareas" ? "seg active" : "seg"} onClick={() => onTab("tareas")}>Tareas <span className="muted">{tasks.filter((t) => t.status === "pending").length} pendientes</span></button>
       </div>
       {tab === "tareas"
-        ? <TaskList tasks={tasks} subjects={subjects} now={now} onStartAssigned={onStartAssigned} />
+        ? <TaskList tasks={tasks} subjects={subjects} now={now} onStartAssigned={onStartAssigned} onOpenAssigned={onOpenAssigned} />
         : <SubjectGrid subjects={subjects} tasks={tasks} course={course} ins={ins} now={now} onOpenSubject={onOpenSubject} onTasks={() => onTab("tareas")} />}
     </section>
   );
@@ -78,7 +78,7 @@ function SubjectGrid({ subjects, tasks, course, ins, now, onOpenSubject, onTasks
             <span className="sj-band" aria-hidden="true" />
             <span className="sj-head">
               <strong>{s.name}</strong>
-              <span className="sj-avg"><b>{s.avg == null ? "—" : `${s.avg} %`}</b><span className="caption">en tareas</span></span>
+              <span className="sj-avg"><b>{s.last == null ? "—" : `${s.last} %`}</b><span className="caption">última actividad</span></span>
             </span>
             <span className="sj-teacher">
               <span className="sj-avatar" aria-hidden="true">{s.teacher ? initials(s.teacher.split(",")[0]) : "?"}</span>
@@ -115,19 +115,19 @@ function CourseCard({ tasks, course, now, onTasks }) {
   );
 }
 
-function TaskList({ tasks, subjects, now, onStartAssigned }) {
+function TaskList({ tasks, subjects, now, onStartAssigned, onOpenAssigned }) {
   const [filter, setFilter] = useState("all");
   const [subject, setSubject] = useState("");
   const shown = tasks.filter((t) => (filter === "all" || t.status === filter || (filter === "pending" && (t.status === "scheduled" || t.status === "paper"))) && (!subject || t.subject?.id === subject));
   const groups = ["pending", "paper", "scheduled", "delivered", "missed"].map((g) => [g, shown.filter((t) => t.status === g)]).filter(([, l]) => l.length);
   const done = tasks.filter((t) => t.status === "delivered");
-  const avg = done.filter((t) => t.pct != null);
+  const lastScored = done.find((t) => t.pct != null);
   return (
     <>
       <div className="sj-summary">
         <span className="card"><b>{tasks.filter((t) => t.status === "pending").length}</b><span className="caption">pendientes</span></span>
         <span className="card"><b>{done.length}</b><span className="caption">entregadas</span></span>
-        <span className="card"><b>{avg.length ? `${Math.round(avg.reduce((a, t) => a + t.pct, 0) / avg.length)} %` : "—"}</b><span className="caption">tu promedio</span></span>
+        <span className="card"><b>{lastScored ? `${lastScored.pct} %` : "—"}</b><span className="caption">última entrega</span></span>
       </div>
       <div className="sj-filters">
         <div className="chips" role="radiogroup" aria-label="Filtrar tareas">
@@ -142,14 +142,14 @@ function TaskList({ tasks, subjects, now, onStartAssigned }) {
       {groups.map(([g, list]) => (
         <div key={g} className="card sh-card">
           <div className="section-head"><span className="label">{GROUP_TITLE[g]}</span><span className="caption">{list.length}</span></div>
-          {list.map((t) => <TaskRow key={t.a.id} t={t} onStart={onStartAssigned} now={now} />)}
+          {list.map((t) => <TaskRow key={t.a.id} t={t} onStart={onStartAssigned} onOpen={onOpenAssigned} now={now} />)}
         </div>
       ))}
     </>
   );
 }
 
-function SubjectPage({ announcements, subject: s, tasks, ins, now, onBack, onStartAssigned, onPracticeArea }) {
+function SubjectPage({ announcements, subject: s, tasks, ins, now, onBack, onStartAssigned, onOpenAssigned, onPracticeArea }) {
   const pending = tasks.filter((t) => t.status === "pending" || t.status === "scheduled" || t.status === "paper");
   const done = tasks.filter((t) => t.status === "delivered" || t.status === "missed");
   const areas = s.area ? ins.areas.filter((a) => a.name === s.area) : [...ins.areas].reverse();
@@ -169,7 +169,7 @@ function SubjectPage({ announcements, subject: s, tasks, ins, now, onBack, onSta
           <span><span className="caption">{s.teacher ? "Docente" : "Sin clase propia"}{s.group ? ` · ${s.group}` : ""}</span><strong>{teacherLabel(s)}</strong></span>
         </div>
         <div className="sjp-kpis">
-          <span><b>{s.avg == null ? "—" : `${s.avg} %`}</b><span className="caption">promedio en tareas</span></span>
+          <span><b>{s.last == null ? "—" : `${s.last} %`}</b><span className="caption">última actividad</span></span>
           <span><b>{s.done}/{s.total}</b><span className="caption">entregadas</span></span>
           <span><b>{area ? `${area.pct} %` : "—"}</b><span className="caption">{s.area ? "tu práctica" : "práctica"}</span></span>
         </div>
@@ -181,12 +181,12 @@ function SubjectPage({ announcements, subject: s, tasks, ins, now, onBack, onSta
           <StudentAnnouncements rows={announcements} title="Anuncios de la materia" />
           <div className="card sh-card">
             <div className="section-head"><span className="label">Por hacer</span><span className="caption">{pending.length}</span></div>
-            {pending.length ? pending.map((t) => <TaskRow key={t.a.id} t={t} onStart={onStartAssigned} now={now} showSubject={false} />)
+            {pending.length ? pending.map((t) => <TaskRow key={t.a.id} t={t} onStart={onStartAssigned} onOpen={onOpenAssigned} now={now} showSubject={false} />)
               : <span className="caption">Nada pendiente en {s.name}.</span>}
           </div>
           <div className="card sh-card">
             <div className="section-head"><span className="label">Entregadas y cerradas</span><span className="caption">{done.length}</span></div>
-            {done.length ? done.map((t) => <TaskRow key={t.a.id} t={t} onStart={onStartAssigned} now={now} showSubject={false} />)
+            {done.length ? done.map((t) => <TaskRow key={t.a.id} t={t} onStart={onStartAssigned} onOpen={onOpenAssigned} now={now} showSubject={false} />)
               : <span className="caption">Todavía no has entregado tareas de esta materia.</span>}
           </div>
         </div>

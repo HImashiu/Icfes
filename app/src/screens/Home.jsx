@@ -15,7 +15,7 @@ import { StudentAnnouncements } from "../components/Announcements.jsx";
 import { activeAnnouncements } from "../lib/announcements.js";
 import { daysUntil, loadGoal, xpToday } from "../lib/goal.js";
 import { weekPlan } from "../lib/studyPlan.js";
-import { practiceInsights, studentEvents, studentSubjects, studentTasks, teacherLabel } from "../lib/student.js";
+import { practiceInsights, studentEvents, studentSubjects, studentTasks, teacherLabel, MIN_AREA_ANSWERS } from "../lib/student.js";
 import { areaShort, classLabel, contextColor, areaOf } from "../lib/teaching.js";
 import { isOpenNow, whenLabel } from "../lib/live.js";
 
@@ -35,7 +35,8 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
   const streak = real ? ins.streak : SAMPLE_STUDENT.streak;
   const xp = (real ? ins.xp : SAMPLE_STUDENT.xp) + (xpSession ?? 0);
   const weekly = real ? ins.week : SAMPLE_STUDENT.weeklyXp;
-  const mastery = real ? ins.areas.map((a) => [a.name, a.pct]).reverse() : Object.entries(SAMPLE_STUDENT.mastery);
+  // Only areas with enough first tries behind them (student.js MIN_AREA_ANSWERS): repeats never raise it.
+  const mastery = real ? ins.areas.filter((a) => a.enough).map((a) => [a.name, a.pct]).reverse() : Object.entries(SAMPLE_STUDENT.mastery);
   const subjects = useMemo(() => (assigned ? studentSubjects({ classes, assignments: assigned.assignments, attempts: assigned.attempts, now }) : []), [assigned, classes]); // eslint-disable-line react-hooks/exhaustive-deps
   const tasks = useMemo(() => (assigned ? studentTasks({ subjects, assignments: assigned.assignments, attempts: assigned.attempts, now }) : []), [subjects, assigned]); // eslint-disable-line react-hooks/exhaustive-deps
   const events = useMemo(() => (assigned ? studentEvents({ subjects, assignments: assigned.assignments, attempts: assigned.attempts, now }) : []), [subjects, assigned]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -146,7 +147,7 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
               <div className="sh-subjects">
                 {subjects.map((s) => (
                   <button key={s.id} type="button" className="sh-subject" style={{ "--c": s.color }} onClick={() => onOpenSubject?.(s.id)}>
-                    <span className="sh-subject-top"><strong>{s.name}</strong><b>{s.avg == null ? "—" : `${s.avg} %`}</b></span>
+                    <span className="sh-subject-top"><strong>{s.name}</strong><b title="Resultado de tu última actividad">{s.last == null ? "—" : `${s.last} %`}</b></span>
                     <span className="caption sh-teacher">{teacherLabel(s)}</span>
                     <span className="sh-subject-foot caption">
                       {s.pending ? <span className="sh-due">{s.pending} pendiente{s.pending === 1 ? "" : "s"}</span> : <span>{s.total ? "Al día" : "Sin tareas aún"}</span>}
@@ -181,6 +182,8 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
               <span className="label">Dominio por área</span>
               {real ? <button type="button" className="link" onClick={() => onGo?.("progress")}>Ver análisis</button> : <span className="caption">Muestra</span>}
             </div>
+            {real && <span className="caption">Aciertos en primer intento: repetir preguntas no los sube.</span>}
+            {real && mastery.length === 0 && <span className="caption">Aparece cuando respondas al menos {MIN_AREA_ANSWERS} preguntas nuevas de un área.</span>}
             <div className="sh-mastery">
               {mastery.map(([name, value]) => (
                 <div key={name} className="sh-m">

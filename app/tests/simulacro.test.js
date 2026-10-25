@@ -29,15 +29,13 @@ describe("whole simulacro score", () => {
     expect(both.open).toBeNull();
   });
 
-  it("starts a new simulacro after a complete one, and a repeated session replaces the open one", () => {
+  it("counts first tries only: a session redone after seeing its questions makes no new score", () => {
     const list = simulacros([row("S11-A_1ra", 1, 8), row("S11-A_2da", 2, 8), row("S11-A_1ra", 3, 18), row("S11-A_1ra", 4, 16)]);
-    expect(list.length).toBe(2);
+    expect(list.length).toBe(1);
     expect(list[0].complete).toBe(true);
-    expect(list[1].complete).toBe(false);
-    expect(list[1].s1.at).toBe(4);
-    const s = scoreSummary([row("S11-A_1ra", 1, 8), row("S11-A_2da", 2, 8), row("S11-A_1ra", 3, 18)]);
+    const s = scoreSummary([row("S11-A_1ra", 1, 8), row("S11-A_2da", 2, 8), row("S11-A_1ra", 3, 18), row("S11-B_1ra", 5, 10)]);
     expect(s.latest.at).toBe(2);
-    expect(s.open.s1.at).toBe(3);
+    expect(s.open.code).toBe("S11-B");
   });
 
   it("suggests the missing session", () => {

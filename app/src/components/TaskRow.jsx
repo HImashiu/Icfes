@@ -20,7 +20,7 @@ export function dueText(iso, now = Date.now()) {
 
 // One task as the student sees it: subject color and kind, who assigned it, when it closes or how it went, and the
 // one thing to do next. t: a studentTasks() row.
-export default function TaskRow({ t, onStart, now = Date.now(), showSubject = true }) {
+export default function TaskRow({ t, onStart, onOpen, now = Date.now(), showSubject = true }) {
   const { a, subject, status, pct, used, left } = t;
   const color = subject?.color ?? "var(--accent)";
   const urgent = status === "pending" && a.due_at && new Date(a.due_at) - now < 2 * 864e5;
@@ -51,6 +51,9 @@ export default function TaskRow({ t, onStart, now = Date.now(), showSubject = tr
         )}
       </span>
       {status === "pending" && onStart && <button type="button" className="primary small task-go" onClick={() => onStart(a)}>Empezar</button>}
+      {status === "delivered" && onOpen && (
+        <button type="button" className="secondary small task-go" onClick={() => onOpen(a)}>Ver resultado</button>
+      )}
       {status === "delivered" && onStart && left > 0 && t.state === "active" && (
         <button type="button" className="secondary small task-go" onClick={() => onStart(a)}>{effectiveMax(a) ? `Otro intento (${used}/${effectiveMax(a)})` : "Repetir"}</button>
       )}

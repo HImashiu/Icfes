@@ -1,5 +1,6 @@
 // The student's side of "by subject": each class they belong to (a subject with its teacher), and an analysis of
 // their own practice per ICFES area. Never compares a student with classmates.
+import { firstTries } from "./firstTry.js";
 import { assignmentState, attemptsLeft, scorePct } from "./assignments.js";
 import { AREA_SUBJECT, areaOf, contextColor, groupOf } from "./teaching.js";
 
@@ -100,6 +101,8 @@ export function studentSubjects({ classes, assignments = [], attempts = [], now 
       done: mine.filter((a) => delivered.has(a.id)).length,
       total: mine.length,
       avg: mean(scores),
+      // What the student sees: the result of their latest activity, never an average across activities.
+      last: scores.length ? scores[scores.length - 1] : null,
       series: scores.slice(-6),
     };
   }).sort((a, b) => (a.kind === "general") - (b.kind === "general") || AREA_ORDER.indexOf(a.area) - AREA_ORDER.indexOf(b.area));
@@ -132,12 +135,17 @@ export function studentTasks({ subjects, assignments = [], attempts = [], now = 
 }
 
 // What the practice history says, per area and overall. history: loadHistory() rows, newest first.
+// The analysis by area uses first tries only (firstTry.js), so redoing questions never raises it, and an area's
+// share right is shown only once it rests on MIN_AREA_ANSWERS new questions (`enough`).
+export const MIN_AREA_ANSWERS = 40;
 export function practiceInsights(history = [], now = Date.now()) {
   const rows = [...history].filter((h) => h.keyed !== false).sort((a, b) => a.at - b.at);
+  const first = firstTries(rows);
   const areas = new Map();
   let seconds = 0;
   let timedQs = 0;
   for (const h of rows) {
+    if (first.get(h)?.first === false) continue;
     for (const a of h.perArea ?? []) {
       if (!a.answered) continue;
       const x = areas.get(a.name) ?? { name: a.name, answered: 0, correct: 0, sessions: 0, series: [], last: 0 };
@@ -151,8 +159,9 @@ export function practiceInsights(history = [], now = Date.now()) {
   const list = [...areas.values()].map((x) => {
     const half = Math.floor(x.series.length / 2);
     const trend = x.series.length >= 2 ? mean(x.series.slice(half)) - mean(x.series.slice(0, half || 1)) : null;
-    return { ...x, pct: Math.round((x.correct / x.answered) * 100), trend, series: x.series.slice(-8), color: contextColor(x.name) };
+    return { ...x, pct: Math.round((x.correct / x.answered) * 100), enough: x.answered >= MIN_AREA_ANSWERS, trend, series: x.series.slice(-8), color: contextColor(x.name) };
   }).sort((a, b) => a.pct - b.pct);
+  const ready = list.filter((x) => x.enough);
 
   // Streak: consecutive days with practice, ending today or yesterday.
   const days = new Set(rows.map((h) => dayStart(h.at)));
@@ -168,15 +177,17 @@ export function practiceInsights(history = [], now = Date.now()) {
   return {
     sessions: rows.length,
     answered,
-    pct: answered ? Math.round((correct / answered) * 100) : null,
+    // Overall share right on first tries, only with enough of them behind it.
+    pct: answered >= MIN_AREA_ANSWERS * 2 ? Math.round((correct / answered) * 100) : null,
+    repeats: rows.filter((h) => first.get(h)?.first === false).length,
     secPerQuestion: timedQs ? Math.round(seconds / timedQs) : null,
     xp: rows.reduce((a, h) => a + (h.xp ?? 0), 0),
     streak,
     practicedToday: days.has(dayStart(now)),
     week,
     areas: list,
-    weakest: list[0] ?? null,
-    strongest: list.length > 1 ? list[list.length - 1] : null,
+    weakest: ready[0] ?? null,
+    strongest: ready.length > 1 ? ready[ready.length - 1] : null,
     recent: [...rows].reverse().slice(0, 5),
   };
 }

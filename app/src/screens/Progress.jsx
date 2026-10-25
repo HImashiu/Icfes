@@ -9,7 +9,7 @@ import { achievements } from "../lib/achievements.js";
 import { scoreSummary } from "../lib/simulacro.js";
 import { loadGoal } from "../lib/goal.js";
 import ScoreCard from "../components/ScoreCard.jsx";
-import { practiceInsights, studentSubjects, studentTasks } from "../lib/student.js";
+import { MIN_AREA_ANSWERS, practiceInsights, studentSubjects, studentTasks } from "../lib/student.js";
 import { areaShort, contextColor } from "../lib/teaching.js";
 
 const ago = (t) => {
@@ -78,7 +78,7 @@ function Summary({ ins, history, onPracticeArea, onNew }) {
       <div className="sh-col">
         <div className="pg-kpis">
           <span className="card"><b>{fmtInt(ins.answered)}</b><span className="caption">preguntas</span></span>
-          <span className="card"><b>{ins.pct == null ? "—" : `${ins.pct} %`}</b><span className="caption">aciertos</span></span>
+          <span className="card" title="Solo preguntas nuevas para ti: repetir no lo sube"><b>{ins.pct == null ? "—" : `${ins.pct} %`}</b><span className="caption">{ins.pct == null ? "aciertos: faltan datos" : "aciertos en primer intento"}</span></span>
           <span className="card"><b className="flame-text">{ins.streak}</b><span className="caption">días de racha</span></span>
           <span className="card"><b>{ins.secPerQuestion ? `${ins.secPerQuestion} s` : "—"}</b><span className="caption">por pregunta</span></span>
         </div>
@@ -94,14 +94,16 @@ function Summary({ ins, history, onPracticeArea, onNew }) {
         </div>
 
         <div className="card sp-card">
-          <div className="section-head"><span className="label">Análisis por área</span><span className="caption">Toca un área para practicarla</span></div>
+          <div className="section-head"><span className="label">Análisis por área</span><span className="caption">Solo primer intento · toca un área para practicarla</span></div>
           <div className="sp-table" role="table" aria-label="Análisis por área">
             <div className="sp-row head" role="row"><span role="columnheader">Área</span><span role="columnheader">Aciertos</span><span role="columnheader">Cambio</span><span role="columnheader">Últimos</span><span role="columnheader">Practicaste</span></div>
             {[...ins.areas].reverse().map((a) => (
               <button key={a.name} type="button" className="sp-row" role="row" onClick={() => onPracticeArea(a.name)}>
                 <span role="cell"><span className="dot" style={{ background: a.color }} /> {areaShort(a.name)}</span>
-                <span role="cell" className="sp-pct"><span className="td-track"><span style={{ width: `${a.pct}%`, background: a.color }} /></span><b>{a.pct} %</b></span>
-                <span role="cell" className={a.trend > 0 ? "sp-up" : a.trend < 0 ? "sp-down" : "caption"}>{a.trend == null ? "—" : `${a.trend > 0 ? "▲ +" : a.trend < 0 ? "▼ " : ""}${a.trend}`}</span>
+                {a.enough
+                  ? <span role="cell" className="sp-pct"><span className="td-track"><span style={{ width: `${a.pct}%`, background: a.color }} /></span><b>{a.pct} %</b></span>
+                  : <span role="cell" className="caption">Faltan datos: {a.answered} de {MIN_AREA_ANSWERS} preguntas nuevas</span>}
+                <span role="cell" className={a.trend > 0 ? "sp-up" : a.trend < 0 ? "sp-down" : "caption"}>{a.trend == null || !a.enough ? "—" : `${a.trend > 0 ? "▲ +" : a.trend < 0 ? "▼ " : ""}${a.trend}`}</span>
                 <span role="cell" className="td-spark sp-spark" aria-hidden="true">{a.series.map((v, i) => <span key={i} style={{ height: `${Math.max(8, v)}%`, background: a.color, opacity: i === a.series.length - 1 ? 1 : 0.45 }} />)}</span>
                 <span role="cell" className="caption">{a.sessions} {a.sessions === 1 ? "vez" : "veces"} · {ago(a.last)}</span>
               </button>

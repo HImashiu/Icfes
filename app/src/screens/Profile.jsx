@@ -41,7 +41,7 @@ export default function Profile({ theme, onTheme, onTeacher, onReports, onLogin,
               <span><b className="flame-text">{ins.streak}</b><span className="caption">días de racha</span></span>
               <span><b className="accent-text">{fmtInt(ins.xp)}</b><span className="caption">XP</span></span>
               <span><b>{ins.sessions}</b><span className="caption">intentos</span></span>
-              <span><b>{ins.pct == null ? "—" : `${ins.pct} %`}</b><span className="caption">aciertos</span></span>
+              <span title="Solo preguntas nuevas para ti: repetir no lo sube"><b>{ins.pct == null ? "—" : `${ins.pct} %`}</b><span className="caption">{ins.pct == null ? "aciertos: faltan datos" : "aciertos en primer intento"}</span></span>
             </div>
           </div>
 
@@ -78,7 +78,7 @@ export default function Profile({ theme, onTheme, onTeacher, onReports, onLogin,
                   <span className="sp-bar" aria-hidden="true" />
                   <span className="sp-subject-main"><strong>{s.name}</strong><span className="caption">{s.teacher || "Docente de la clase"} · {s.group}</span></span>
                   <span className="caption">{s.done}/{s.total} entregadas</span>
-                  <b>{s.avg == null ? "—" : `${s.avg} %`}</b>
+                  <b title="Resultado de tu última actividad">{s.last == null ? "—" : `${s.last} %`}</b>
                 </div>
               ))}
             </div>

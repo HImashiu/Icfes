@@ -3,6 +3,7 @@
 // area scores only when both are done. One session alone is a partial result and is labelled so.
 // The curve is the PLACEHOLDER in analytics.js (plan §5.1) and every key is preliminary: always "estimado".
 import { bandFor } from "./analytics.js";
+import { firstTries } from "./firstTry.js";
 import { bookletCode, sessionOf } from "./booklets.js";
 
 // A history row that counts as a whole session: the whole booklet (not one area), and nearly all of it answered when
@@ -48,8 +49,10 @@ function result(code, s1, s2) {
 // Every simulacro in time order. A simulacro is a Sesión 1 and a Sesión 2 of one cuadernillo done one after the
 // other (either order). Repeating a session before the other is done replaces it; once both are done, the next
 // session of that cuadernillo starts a new simulacro, so an old session is never mixed with a new one.
+// Only first tries count (firstTry.js): a session redone after seeing its questions does not make a new score.
 export function simulacros(history = []) {
-  const rows = history.filter(isFullSession).sort((a, b) => a.at - b.at);
+  const first = firstTries(history);
+  const rows = history.filter((h) => isFullSession(h) && first.get(h)?.first !== false).sort((a, b) => a.at - b.at);
   const current = new Map(); // code -> index in out of the simulacro being filled
   const out = [];
   for (const r of rows) {
@@ -112,7 +115,7 @@ function sessionRows(attempts, assignments) {
     if (!a && (t.score.total ?? 0) < MIN_SESSION_QUESTIONS) continue;
     const who = t.profile_id ?? t.member_id;
     const list = people.get(who) ?? [];
-    list.push({ at: Date.parse(t.submitted_at), mode: "timed", keyed: true, total: t.score.total, answered: t.score.answered, perArea: t.score.perArea ?? [], snapshot: { slug, scope: "all" } });
+    list.push({ id: t.id ?? t.client_id ?? `${slug}|${t.submitted_at}`, at: Date.parse(t.submitted_at), mode: "timed", keyed: true, total: t.score.total, answered: t.score.answered, perArea: t.score.perArea ?? [], snapshot: { slug, scope: "all" } });
     people.set(who, list);
   }
   return people;

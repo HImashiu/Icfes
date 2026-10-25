@@ -41,7 +41,7 @@ import { pendingMisses, repechajeKeys } from "./lib/repechaje.js";
 import { hiddenFor, withoutHidden } from "./lib/questionUse.js";
 import { orderQuestions } from "./lib/order.js";
 import { resolveModel, xpFactor } from "./lib/grading.js";
-import { attemptForAssignment, attemptRow, attemptsLeft, questionsForAttempt, revealAllowed } from "./lib/assignments.js";
+import { attemptForAssignment, attemptRow, attemptsLeft, kindMode, questionsForAttempt, revealAllowed } from "./lib/assignments.js";
 
 const base = import.meta.env.BASE_URL;
 
@@ -341,6 +341,26 @@ export default function App() {
     setView("test");
   };
 
+  // A delivered assignment opens on its own results (latest attempt), read-only: the report, the review of every
+  // question and, if the teacher allows it, the right answers. Nothing is recorded again.
+  const openAssignedResult = async (a) => {
+    const rows = assigned.attempts.filter((x) => x.assignment_id === a.id && x.submitted_at)
+      .sort((x, y) => new Date(x.submitted_at) - new Date(y.submitted_at));
+    const r = rows[rows.length - 1];
+    if (!r) return;
+    const sel = await openExam(a.exam_slug ?? r.exam_slug, a.question_keys);
+    if (!sel) return;
+    const started = Date.parse(r.started_at ?? r.submitted_at);
+    setAttempt({
+      ...attemptForAssignment(a, [], started),
+      mode: r.mode ?? kindMode(a.kind), answers: r.answers ?? {}, times: r.times ?? {}, hintsUsed: r.activity?.hints ?? {},
+      changes: r.activity?.changes ?? {}, submittedAt: Date.parse(r.submitted_at), attemptNo: rows.length,
+      readOnly: true, synced: true, from: "assigned",
+    });
+    setReviewNumber(null);
+    setView("results");
+  };
+
   // A delivered attempt is saved to the backend once (a retry with the same id replaces it, never duplicates).
   useEffect(() => {
     if (!signedIn || !attempt || attempt.readOnly || !attempt.submittedAt || attempt.synced) return;
@@ -583,7 +603,7 @@ export default function App() {
 
       {view === "profile" && <Profile theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} onReports={() => setView("reports")} onLogin={() => setView("login")}
         assigned={signedIn ? assigned : null} classes={myClasses} course={course} onGo={go} />}
-      {view === "subjects" && <Subjects announcements={signedIn ? announcements : []} assigned={signedIn ? assigned : null} classes={myClasses} course={course} tab={subjectTab} subjectId={subjectId}
+      {view === "subjects" && <Subjects onOpenAssigned={openAssignedResult} announcements={signedIn ? announcements : []} assigned={signedIn ? assigned : null} classes={myClasses} course={course} tab={subjectTab} subjectId={subjectId}
         onTab={(t) => { setSubjectTab(t); setSubjectId(null); }} onOpenSubject={setSubjectId} onBack={() => setSubjectId(null)}
         onStartAssigned={startAssigned} onPracticeArea={practiceArea} onLogin={() => setView("login")} />}
       {view === "progress" && <Progress tab={progressTab} onTab={setProgressTab} assigned={signedIn ? assigned : null} classes={myClasses}
