@@ -30,6 +30,8 @@ MATH
 - KaTeX between single dollars only for what cannot be written on one line: fractions $\frac{0,4}{0,6}$, roots $\sqrt{3}$,
   overlines $\overline{MN}$, sums, matrices, stacked limits. Words inside math go in \text{…}.
   Decimal commas stay commas. Money in a sentence ($200.000) is plain text, not math.
+- Geometry: a segment name printed with a bar over its letters is $\overline{MN}$ every time it appears (the OCR
+  drops the bar, so look at the scan); point, triangle and angle names printed in italics are <em>MNP</em>.
 - Never invent math that is not printed. Numbers alone stay plain text.
 CHEMISTRY
 - Expanded structural formulas (atoms in a row with H, O drawn above and below) use \mol inside math:
