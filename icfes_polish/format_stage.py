@@ -246,6 +246,7 @@ def unicode_scripts(t: str) -> str:
 def _words(t: str, minlen: int = 1) -> list[str]:
     import unicodedata
     t = re.sub(r"(\w)-\s*\n\s*(\w)", r"\1\2", t)  # a word split at a line end in the OCR
+    t = re.sub(r"</?su[bp]>", "", t)  # 1s<sup>2</sup> is printed as one token, 1s2 in the OCR
     t = re.sub(r"\\[a-zA-Z]+", " ", plain(t))  # KaTeX commands are markup, not printed words
     t = unicodedata.normalize("NFKD", t.lower())
     t = "".join(ch for ch in t if not unicodedata.combining(ch))
@@ -260,10 +261,16 @@ def grounded(new: str, ocr: str, minlen: int = 1) -> float:
     pool, ws = Counter(_words(ocr)), _words(new, minlen)
     if not ws:
         return 1.0
+    # a symbol glued to a word is often misread as one character (∠MPR -> 2MPR, ΔT -> AT)
+    glued = {}
+    for p in pool:
+        if len(p) > 2 and p[0] in "2z1l7ia":
+            glued.setdefault(p[1:], p)
     hit = 0
     for w in ws:
-        if pool[w] > 0:
-            pool[w] -= 1
+        p = w if pool[w] > 0 else glued.get(w)
+        if p and pool[p] > 0:
+            pool[p] -= 1
             hit += 1
     return hit / len(ws)
 
@@ -310,6 +317,10 @@ def word_changes(old: str, new: str, ocr: str = "") -> list[dict]:
             ok = fuzz.ratio(o.lower(), n.lower()) >= 60 or (not re.search(r"[A-Za-zÁÉÍÓÚÑáéíóúñ]{2}", o) and not re.search(r"[A-Za-zÁÉÍÓÚÑáéíóúñ]{2}", n))
         elif op == "delete":
             ok = all(len(t) <= 1 or not t.isalpha() for t in a[i1:i2])
+            if not ok and ocr:
+                # words moved elsewhere (e.g. into a table) or never printed (a summary's words) may go
+                kept, printed = set(_words(new)), set(_words(ocr))
+                ok = all(w in kept or w not in printed for w in _words(o, 2))
         else:  # insert
             ok = all(not t.isalnum() for t in b[j1:j2])
         if not ok and ocr and op != "delete" and grounded(n, ocr) >= 0.9:
@@ -375,7 +386,10 @@ def apply(a) -> int:
                 continue
             set_field(out, k, new)
             ur["changed"].append(k)
-        ur["figures"] = ans.get("figures") or []
+        # a box over the whole crop is the text itself, not a picture
+        ur["figures"] = [g for g in ans.get("figures") or []
+                         if not (isinstance(g.get("box"), list) and len(g["box"]) == 4
+                                 and (g["box"][2] - g["box"][0]) * (g["box"][3] - g["box"][1]) >= 0.8e6)]
         ur["uncertain"] = ans.get("uncertain") or []
     json.dump(out, open(a.out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     if a.report:

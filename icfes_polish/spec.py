@@ -12,11 +12,17 @@ PARAGRAPHS
 - Source/credit line of a text or picture ("Tomado de…", "Adaptado de…", an author name under a poem):
   <p class="fuente">…</p>. A footnote mark like * before it is written &#42;.
 - A quotation set apart from the paragraph (indented block, usually in quotes): <div class="cita">"…"</div>.
+  A definition or statement the text introduces with "la siguiente definición/frase/afirmación:" and prints apart
+  is a cita too: <div class="cita">**Electrolito:** sustancia que…</div>.
 - A poem or verse: <div class="poema">line<br>line<br>…</div> (keep each printed line).
 - An empty vertical gap the booklet leaves between steps or blocks: <div class="espacio"></div> on its own line.
+  Look at the scan: a clearly larger white gap between two paragraphs (more than one blank line) is an espacio.
 INLINE
 - Bold: **word**. Italic: <em>word</em>. Underline: <u>word</u>. Subscript: <sub>…</sub>, superscript: <sup>…</sup>
-  for plain text such as P<sub>líquido</sub>, m<sup>2</sup>. Keep Unicode like CuSO₄ or H⁺ when the OCR already has it.
+  for words such as P<sub>líquido</sub>. Digits and signs go as Unicode: m², 1s² 2s² 2p⁶, CuSO₄, H⁺, Fe³⁺.
+- A label that starts a line and ends in a colon (Configuración I:, Electrolito:, Pregunta:, Situación 1:, Paso 2:)
+  is bold when the scan prints it heavier than the text after it: **Configuración I:** 1s² 2s² 2p⁶. Look closely;
+  the OCR never shows bold.
 - Words printed in capitals for emphasis (NO, NUNCA, EXCEPTO) stay in capitals, bold only if bold in print.
 MATH
 - An expression that reads on one line with Unicode stays plain text: 3x² − 3x − 4, (x − 1)² = 0, 4.000 cm², 1s² 2s² 2p⁶.
