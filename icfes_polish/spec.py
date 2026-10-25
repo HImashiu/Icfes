@@ -32,7 +32,7 @@ TABLES
   colspan/rowspan as printed, bold header cells as <th>. Use a table only if the booklet prints a table of text/numbers.
 PICTURES
 - Drawings, photos, maps, charts, comics, geometric figures and structural pictures that cannot be written as text
-  are NOT typed. Report each one in "figures" with its box; the app shows the crop. Remove OCR garbage that came
+  are NOT typed. Report each one in "figures" by the numbers of its red regions; the app shows the crop. Remove OCR garbage that came
   from inside a picture (axis numbers, stray letters, labels read out of a drawing).
 - If an option (A, B, C, D) is only a picture, its text is "" and the picture is reported with that option's field.
 ENGLISH (section Inglés)
@@ -52,16 +52,18 @@ TASK. You get one unit (a question, or the shared text of a group of questions) 
 text, and the scan crop(s) of the booklet. Return JSON:
 {
  "fields": { "<field key>": {"text": "<the whole corrected field>"}  |  {"ops": [{"find": "<exact current substring>", "replace": "<new>"}]} },
- "figures": [ {"field": "<field key that shows it>", "box": [x0, y0, x1, y1], "what": "<3-8 words>"} ],
+ "figures": [ {"field": "<field key that shows it>", "regions": [<numbers>], "what": "<3-8 words>"} ],
  "uncertain": ["<anything you could not read or decide>"]
 }
 - Only list fields you change. A field marked "long": true must use "ops" (small exact find/replace edits, each
   "find" copied exactly from the current text and unique in it); other fields return the whole "text".
 - Paragraph-level wrapping of a long field can be done with ops that replace a paragraph's first words with
   '<p style="text-align:justify">first words' etc.; keep edits minimal.
-- "box" is in the coordinates of the FIRST image, as thousandths of its width and height (0-1000), tight around
-  the picture including its own labels and title, excluding the question text, option letters and other pictures.
-  For a picture inside an option, use that option's field key. Do not report tables you typed as text.
+- The SECOND image is the same crop with numbered red boxes around ink that is not text (picture candidates).
+  A picture is often cut into several boxes: list every box number that is part of it (its drawing, axes, legend,
+  title and labels), and nothing else. Ignore boxes on text, rules or noise. One entry per picture; for a picture
+  inside an option use that option's field key. If a picture has no red box at all, give "box": [x0, y0, x1, y1]
+  instead, in thousandths (0-1000) of the first image. Do not report tables you typed as text.
 - Field keys: "q22.stim" (text before the question), "q22.stem" (the question itself), "q22.A".."q22.D" (options),
   "g26-28.passage" (shared text), "g26-28.dir" (directions line), "g26-28.stim" (shared lead-in).
 """.strip()

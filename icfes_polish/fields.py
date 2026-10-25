@@ -71,6 +71,7 @@ def canon(text: str, strict: bool = False) -> str:
     if not strict:
         t = blocks_as_paragraphs(t.replace('<p style="text-align:justify">', "<p>"))
     t = _FIG.sub("[[figura]]", t)
+    t = re.sub(r"<strong>(.*?)</strong>", r"**\1**", t, flags=re.S)
     t = t.replace("“", '"').replace("”", '"').replace("‘", "'").replace("’", "'")
     t = re.sub(r">\s+<", "><", t)
     t = re.sub(r"\s*(<(?:/?p|/?div|/?table|/?tr|/?td|/?th|/?tbody|/?thead|br)[^>]*>)\s*", r"\1", t)
