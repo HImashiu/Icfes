@@ -3,6 +3,9 @@ import { confirmDialog, Select } from "../components/Controls.jsx";
 import QuestionView from "../components/QuestionView.jsx";
 import RichText from "../components/RichText.jsx";
 import { questionStats } from "../lib/questionStats.js";
+import { loadQuestionControl } from "../lib/questionControl.js";
+import { useIndex } from "../lib/questionUse.js";
+import { UseBadge, UseHistory } from "../components/QuestionUse.jsx";
 import { Bars } from "./Dashboard.jsx";
 import { Dialog } from "./builder/ui.jsx";
 import { DIFFICULTY_LABEL } from "../lib/bank.js";
@@ -31,6 +34,7 @@ export default function QuestionBuilder({ api, profile, guard, setNotice }) {
   const [preview, setPreview] = useState(null);
   const [stats, setStats] = useState(new Map());
   const [resume, setResume] = useState(null);
+  const [uses, setUses] = useState({ index: new Map(), schoolWide: true });
   const load = () => guard(async () => setRows(await api.teacherQuestions()));
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!work) loadSession(profile.id).then((s) => setResume(s?.drafts?.length ? s : null)); }, [work, profile.id]);
@@ -40,13 +44,15 @@ export default function QuestionBuilder({ api, profile, guard, setNotice }) {
     const answer = new Map(rows.map((r) => [r.id, r.answer]));
     api.examAttempts(TEACHER_SLUG).then((all) => setStats(questionStats(all, (k) => answer.get(k) ?? null)), () => {});
   }, [api, rows]);
+  // Where each one was already used (activities, lessons, live games), from Control de preguntas.
+  useEffect(() => { loadQuestionControl(api).then((qc) => setUses({ index: useIndex(qc.uses, TEACHER_SLUG), schoolWide: qc.schoolWide }), () => {}); }, [api, rows]);
 
   const plain = (h) => String(h ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
   const hasImage = (r) => r.question_json?.traced?.length > 0 || r.question_json?.options?.some((o) => o.traced);
   const FLAGS = [
     ["shared", "Compartidas", (r) => r.visibility === "school"], ["image", "Con imagen", hasImage],
     ["noexpl", "Sin explicación", (r) => !r.explanation], ["suspect", "Revisar clave", (r) => Boolean(stats.get(r.id)?.suspect)],
-    ["unused", "Sin respuestas aún", (r) => !stats.get(r.id)],
+    ["unused", "Nunca usada", (r) => !stats.get(r.id) && !uses.index.get(r.id)?.length],
   ];
   const areaOf = (r) => r.area || "Otra";
   const text = filter.trim().toLowerCase();
@@ -168,6 +174,7 @@ export default function QuestionBuilder({ api, profile, guard, setNotice }) {
                     {hasImage(r) && <span className="badge pending">Con imagen</span>}
                     {(r.question_json?.hint || r.question_json?.feedback) && <span className="badge pending">Con pista o retroalimentación</span>}
                     {!own && <span className="badge pending">De otro docente</span>}
+                    <UseBadge count={uses.index.get(r.id)?.length ?? 0} />
                     {st && <span className="badge" title={Object.entries(st.dist).map(([l, n]) => `${l}: ${n}`).join(" · ")}>{st.answered} {st.answered === 1 ? "respuesta" : "respuestas"} · {st.pct} % acierta</span>}
                     {st?.suspect && <span className="badge bad">Muchos eligen {st.suspect}: revisa la clave</span>}
                   </span>
@@ -195,6 +202,7 @@ export default function QuestionBuilder({ api, profile, guard, setNotice }) {
                 <span className="caption">{pvStats.pct} % acierta: en la práctica resultó {pvStats.level}.{pvStats.suspect ? ` Más estudiantes eligen ${pvStats.suspect} que la respuesta marcada (${pv.answer}): revisa la clave o la redacción de ${pvStats.suspect}.` : ""}</span>
               </div>
             ) : <p className="caption">Nadie la ha respondido todavía.</p>}
+            {(uses.index.get(pv.id)?.length ?? 0) > 0 && <UseHistory uses={uses.index.get(pv.id)} schoolWide={uses.schoolWide} />}
           </div>
         </Dialog>
       )}
