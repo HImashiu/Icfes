@@ -47,7 +47,7 @@ export default function Staff({ api, profile, staff, invites, courses, members, 
                   {!s.areas.length && !s.viewOnly && <span className="caption">Sin clases asignadas</span>}
                 </span>
               </span>
-              <span className="st-num"><b>{s.classes}</b><span>clases</span></span>
+              <span className="st-num"><b>{s.classes}</b><span>{s.classes === 1 ? "clase" : "clases"}</span></span>
               <span className="st-num"><b>{s.students}</b><span>estudiantes</span></span>
               <span className="st-num"><b>{s.activities}</b><span>{s.recent ? `${s.recent} este mes` : "actividades"}</span></span>
               <span className="st-num"><b>{s.lastAt ? ago(s.lastAt) : "—"}</b><span>creó algo</span></span>
@@ -55,7 +55,7 @@ export default function Staff({ api, profile, staff, invites, courses, members, 
             </button>
           ))}
           {pending.map((i) => (
-            <div key={i.id} className="st-row" style={{ cursor: "default" }}>
+            <div key={i.id} className="st-row pending" style={{ cursor: "default" }}>
               <span className="st-who">
                 <strong>{i.full_name || i.email} <span className="cg-badge pending">Invitado</span>{i.role === "school_admin" && <span className="cg-badge edit">Coordinación</span>}</strong>
                 <span className="caption">{i.email} · entra con ese correo, sin código</span>
@@ -63,7 +63,7 @@ export default function Staff({ api, profile, staff, invites, courses, members, 
               <span className="st-num"><b>—</b><span>clases</span></span>
               <span className="st-num"><b>—</b><span>estudiantes</span></span>
               <span className="st-num"><b>—</b><span>actividades</span></span>
-              <span className="st-num"><button type="button" className="link" onClick={() => cancelInvite(i)}>Cancelar</button></span>
+              <span className="st-num st-cancel"><button type="button" className="link" onClick={() => cancelInvite(i)}>Cancelar</button></span>
               <span />
             </div>
           ))}

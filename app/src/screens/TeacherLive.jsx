@@ -226,6 +226,11 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           </div>
         )}
         {error && <p className="notice error" role="alert">{error}</p>}
+        {(() => {
+          const id = r.section === "actividad" ? activity?.course_id : context.courseId;
+          return id && contexts.readOnly?.includes(id)
+            ? <p className="notice cg-ro">Solo ves esta clase: puedes revisar actividades, listas y resultados, pero no cambiarlos. Coordinación da permiso para editar.</p> : null;
+        })()}
         {notice && <p className="notice">{notice}</p>}
 
         <div className="tl-page" key={viewKey}>
