@@ -61,16 +61,20 @@ def clean_figure(img: Image.Image, mode: str = "white", level: int | None = None
     return Image.fromarray(a), lv
 
 
-def trim(img: Image.Image, pad: int = 6) -> Image.Image:
-    """Cut away empty white margin around the ink."""
+def trim_box(img: Image.Image, pad: int = 6) -> tuple[int, int, int, int]:
+    """The box of the ink, without the empty white margin."""
     a = np.array(img.convert("RGBA"))
     ink = (a[..., :3].min(axis=2) < 250) & (a[..., 3] > 0)
     ys, xs = np.nonzero(ink)
     if not len(xs):
-        return img
-    x0, x1 = max(0, xs.min() - pad), min(a.shape[1], xs.max() + pad + 1)
-    y0, y1 = max(0, ys.min() - pad), min(a.shape[0], ys.max() + pad + 1)
-    return img.crop((x0, y0, x1, y1))
+        return 0, 0, img.width, img.height
+    return (int(max(0, xs.min() - pad)), int(max(0, ys.min() - pad)),
+            int(min(a.shape[1], xs.max() + pad + 1)), int(min(a.shape[0], ys.max() + pad + 1)))
+
+
+def trim(img: Image.Image, pad: int = 6) -> Image.Image:
+    """Cut away empty white margin around the ink."""
+    return img.crop(trim_box(img, pad))
 
 
 def jpeg_b64(img: Image.Image, max_side: int = 1600, quality: int = 85) -> tuple[str, tuple[int, int]]:

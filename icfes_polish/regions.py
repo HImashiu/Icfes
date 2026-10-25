@@ -2,6 +2,8 @@
 The model then names regions by number instead of guessing coordinates (models place boxes poorly)."""
 from __future__ import annotations
 
+import re
+
 import cv2
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
@@ -9,8 +11,8 @@ from PIL import Image, ImageDraw, ImageFont
 from .images import blue_mask
 
 
-def layout_words(layout: dict) -> dict[int, list[tuple[float, float, float, float]]]:
-    """Word boxes per page in inches, from the saved Azure layout result."""
+def layout_words(layout: dict, text: bool = False) -> dict[int, list]:
+    """Word boxes per page in inches, from the saved Azure layout result (with the word as a fifth item if text)."""
     out: dict[int, list] = {}
     for ch in layout.get("chunks", [{"result": layout}]):
         r = ch.get("result", ch)
@@ -19,7 +21,8 @@ def layout_words(layout: dict) -> dict[int, list[tuple[float, float, float, floa
         for p in r.get("pages", []):
             for w in p.get("words", []):
                 xs, ys = w["polygon"][0::2], w["polygon"][1::2]
-                out.setdefault(p["pageNumber"] + off, []).append((min(xs), min(ys), max(xs), max(ys)))
+                b = (min(xs), min(ys), max(xs), max(ys))
+                out.setdefault(p["pageNumber"] + off, []).append(b + (w.get("content", ""),) if text else b)
     return out
 
 
@@ -29,10 +32,10 @@ def words_in_crop(segments: list[dict], words: dict, dpi: int) -> list[tuple[int
     for s in segments:
         x0, y0, x1, y1 = s["box_px"]
         for w in words.get(s["page"], []):
-            wx0, wy0, wx1, wy1 = (v * dpi for v in w)
+            wx0, wy0, wx1, wy1 = (v * dpi for v in w[:4])
             if wx1 < x0 or wx0 > x1 or wy1 < y0 or wy0 > y1:
                 continue
-            out.append((int(wx0 - x0), int(wy0 - y0 + s["y_in_image"]), int(wx1 - x0), int(wy1 - y0 + s["y_in_image"])))
+            out.append((int(wx0 - x0), int(wy0 - y0 + s["y_in_image"]), int(wx1 - x0), int(wy1 - y0 + s["y_in_image"])) + tuple(w[4:]))
     return out
 
 
@@ -41,7 +44,7 @@ def propose(img: Image.Image, word_boxes: list, min_frac: float = 0.004) -> list
     h, w = a.shape[:2]
     gray = cv2.cvtColor(a, cv2.COLOR_RGB2GRAY)
     ink = (gray < 170) & ~blue_mask(a)
-    for x0, y0, x1, y1 in word_boxes:  # text is not a picture
+    for x0, y0, x1, y1, *_ in word_boxes:  # text is not a picture
         ink[max(0, y0 - 2):y1 + 2, max(0, x0 - 2):x1 + 2] = False
     k = 21
     m = cv2.morphologyEx(ink.astype("uint8") * 255, cv2.MORPH_CLOSE, np.ones((k, k), np.uint8))
@@ -97,7 +100,78 @@ def grow_over_labels(box, word_boxes, rounds: int = 2):
     """A picture keeps its own labels: take in words that touch or overlap the joined box."""
     x0, y0, x1, y1 = box
     for _ in range(rounds):
-        for wx0, wy0, wx1, wy1 in word_boxes:
+        for wx0, wy0, wx1, wy1, *_ in word_boxes:
             if wx0 <= x1 + 4 and wx1 >= x0 - 4 and wy0 <= y1 + 4 and wy1 >= y0 - 4:
                 x0, y0, x1, y1 = min(x0, wx0), min(y0, wy0), max(x1, wx1), max(y1, wy1)
     return x0, y0, x1, y1
+
+
+def _infer_letter(letters: dict, lh: float) -> dict:
+    order = "ABCD"
+    miss = next(L for L in order if L not in letters)
+    pts = {L: (b[0], b[1]) for L, b in letters.items()}
+    xs, ys = [p[0] for p in pts.values()], [p[1] for p in pts.values()]
+    w, h = letters[next(iter(letters))][2] - letters[next(iter(letters))][0], lh
+    if max(ys) - min(ys) < 2 * lh or max(xs) - min(xs) < 2 * lh:  # one row or one column
+        axis = 0 if max(ys) - min(ys) < 2 * lh else 1
+        i = order.index(miss)
+        known = sorted((order.index(L), p) for L, p in pts.items())
+        prev = [k for k in known if k[0] < i]
+        nxt = [k for k in known if k[0] > i]
+        if prev and nxt:
+            v = (prev[-1][1][axis] + nxt[0][1][axis]) / 2
+        elif prev:
+            v = prev[-1][1][axis] + (prev[-1][1][axis] - prev[-2][1][axis])
+        else:
+            v = nxt[0][1][axis] - (nxt[1][1][axis] - nxt[0][1][axis])
+        other = sum(p[1 - axis] for p in pts.values()) / 3
+        x, y = (v, other) if axis == 0 else (other, v)
+    else:  # 2 x 2: A B / C D
+        x = pts[{"A": "C", "B": "D", "C": "A", "D": "B"}[miss]][0]
+        y = pts[{"A": "B", "B": "A", "C": "D", "D": "C"}[miss]][1]
+    out = dict(letters)
+    out[miss] = (int(x), int(y), int(x + w), int(y + h))
+    return out
+
+
+_LETTER = re.compile(r"^\(?([A-D])[.)]?$")
+
+
+def option_cells(box, word_boxes, regions, pad: int = 60):
+    """Split a picture that holds picture options at the printed option letters (A. B. C. D.): each picture piece
+    (ink region) goes to the nearest letter at or above it. Returns ({letter: cell}, rest) where rest is the part
+    above the options (a table or drawing of the stem), or None."""
+    x0, y0, x1, y1 = box
+    letters = {}
+    for wx0, wy0, wx1, wy1, *t in word_boxes:
+        m = _LETTER.match((t[0] if t else "").strip())
+        if m and wx1 >= x0 - pad and wx0 <= x1 + pad and wy1 >= y0 - pad and wy0 <= y1 + pad:
+            letters.setdefault(m.group(1), (wx0, wy0, wx1, wy1))
+    if len(letters) < 2:
+        return {}, box
+    lh = max(b[3] - b[1] for b in letters.values())
+    if len(letters) == 3:  # the answer mark often hides one letter from OCR: put it where the layout says
+        letters = _infer_letter(letters, lh)
+    top = min(b[1] for b in letters.values()) - lh
+    cells, rest = {}, None
+    for r in regions:
+        if r[2] < x0 or r[0] > x1 or r[3] < y0 or r[1] > y1:
+            continue
+        inside = sum(r[0] <= (b[0] + b[2]) / 2 <= r[2] and r[1] <= (b[1] + b[3]) / 2 <= r[3] for b in letters.values())
+        if inside >= 2:
+            continue  # a box around several options (a layout figure box) says nothing about any one of them
+        if r[3] <= top + lh:
+            rest = r if rest is None else (min(rest[0], r[0]), min(rest[1], r[1]), max(rest[2], r[2]), max(rest[3], r[3]))
+            continue
+        best, bd = None, 1e18
+        for L, (lx0, ly0, lx1, ly1) in letters.items():
+            dx = max(0, r[0] - lx1, lx0 - r[2])
+            dy = max(0, r[1] - ly1, ly0 - r[3])
+            d = (dx * dx + dy * dy) ** 0.5 + (1e6 if r[3] < ly0 else 0)
+            if d < bd:
+                best, bd = L, d
+        c = cells.get(best)
+        cells[best] = r if c is None else (min(c[0], r[0]), min(c[1], r[1]), max(c[2], r[2]), max(c[3], r[3]))
+    if len(cells) < 2:
+        return {}, box
+    return cells, rest

@@ -15,8 +15,8 @@ from pathlib import Path
 
 from PIL import Image
 
-from .images import clean_figure, png_bytes, trim
-from .regions import grow_over_labels, layout_words, words_in_crop
+from .images import clean_figure, png_bytes, trim_box
+from .regions import grow_over_labels, layout_words, option_cells, words_in_crop
 
 Box = tuple[float, float, float, float]
 
@@ -79,6 +79,59 @@ def snap(page_box: Box, candidates: list[Box]) -> tuple[Box, str]:
     return (max(0, page_box[0] - p), max(0, page_box[1] - p), min(1, page_box[2] + p), min(1, page_box[3] + p)), "model box"
 
 
+def emit(a, pdf, out, code, session, page, fb, field, fig, how) -> dict:
+    import fitz
+    owner, _, short = field.partition(".")
+    n = int(owner[1:]) if owner.startswith("q") and owner[1:].isdigit() else None
+    option = short if len(short) == 1 else None
+    r = pdf[page - 1].rect
+    clip = fitz.Rect(fb[0] * r.width, fb[1] * r.height, fb[2] * r.width, fb[3] * r.height)
+    pix = pdf[page - 1].get_pixmap(dpi=300, clip=clip)
+    img = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
+    clean, level = clean_figure(img)
+    tb = trim_box(clean)
+    clean = clean.crop(tb)
+    fw, fh = fb[2] - fb[0], fb[3] - fb[1]
+    fb = (fb[0] + fw * tb[0] / pix.width, fb[1] + fh * tb[1] / pix.height, fb[0] + fw * tb[2] / pix.width, fb[1] + fh * tb[3] / pix.height)
+    h = hashlib.sha1(f"{a.exam}{page}{fb}".encode()).hexdigest()[:6]
+    fid = f"{code.lower()}{session[0]}-{owner}-" + (f"opt-{option.lower()}-" if option else "") + f"auto-{h}"
+    (out / f"{fid}.png").write_bytes(png_bytes(clean))
+    return {"question": n, "group": owner if owner.startswith("g") else None, "page": page, "kind": "image",
+            "figure_id": fid, "spec_id": fid, "method": "auto_crop", "svg": f"traced/{a.exam}/{fid}.png",
+            "box_page_fraction": [round(v, 4) for v in fb], "option": option, "field": field,
+            "what": fig.get("what"), "box_source": how, "paper_level": level, "pending_spec": False}
+
+
+def word_cover(f: dict, words: dict, sizes: dict) -> float:
+    """Share of the box covered by OCR words: pictures stay low (labels only), text boxes and typed tables run high."""
+    pw, ph = sizes[f["page"]]
+    b = f["box_page_fraction"]
+    X0, Y0, X1, Y1 = b[0] * pw, b[1] * ph, b[2] * pw, b[3] * ph
+    area = max(1e-6, (X1 - X0) * (Y1 - Y0))
+    s = sum(max(0, min(X1, w[2]) - max(X0, w[0])) * max(0, min(Y1, w[3]) - max(Y0, w[1])) for w in words.get(f["page"], []))
+    return s / area
+
+
+def keep_pictures(entries: list, words: dict, sizes: dict, max_cover: float = 0.34, min_area: float = 0.003):
+    keep, dropped = [], []
+    for f in entries:
+        b = f["box_page_fraction"]
+        why = None
+        if (b[2] - b[0]) * (b[3] - b[1]) < min_area:
+            why = "tiny"
+        elif words and word_cover(f, words, sizes) > max_cover:
+            why = "mostly text"
+        else:
+            dup = next((k for k in keep if k["page"] == f["page"] and iou(tuple(k["box_page_fraction"]), tuple(b)) > 0.8), None)
+            if dup:
+                why = f"same picture as {dup['figure_id']}"
+        if why:
+            dropped.append({**f, "dropped": why})
+        else:
+            keep.append(f)
+    return keep, dropped
+
+
 def build(a) -> int:
     import fitz
     rep = json.load(open(a.report, encoding="utf-8"))
@@ -88,7 +141,12 @@ def build(a) -> int:
     sizes = {i + 1: (p.rect.width / 72, p.rect.height / 72) for i, p in enumerate(pdf)}
     layout = json.load(open(a.layout, encoding="utf-8")) if a.layout else None
     lay = layout_figures(layout) if layout else {}
-    words = layout_words(layout) if layout else None
+    words = layout_words(layout, text=True) if layout else None
+    pic_opts = set()  # questions whose options are pictures (empty option text)
+    if a.golden:
+        for q in json.load(open(a.golden, encoding="utf-8"))["questions"]:
+            if sum(not (o.get("text_md") or "").strip() for o in q.get("options", [])) >= 2:
+                pic_opts.add(f"q{q['number']}")
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     code, session = a.exam[len("S11-"):].split("_")
@@ -108,43 +166,43 @@ def build(a) -> int:
             else:
                 if not m.get("segments"):
                     continue
+                cw = words_in_crop(m["segments"], words, dpi) if words is not None else []
                 if regs:
                     rb = [m["regions"][r - 1] for r in regs]
                     cb = (min(b[0] for b in rb), min(b[1] for b in rb), max(b[2] for b in rb), max(b[3] for b in rb))
-                    if words is not None:
-                        cb = grow_over_labels(cb, words_in_crop(m["segments"], words, dpi))
+                    if cw:
+                        cb = grow_over_labels(cb, cw)
                     how = f"regions {regs}"
                 elif isinstance(box, list) and len(box) == 4 and box[2] > box[0] and box[3] > box[1]:
-                    cw, ch = crop_size(m)
-                    cb = (box[0] * cw / 1000, box[1] * ch / 1000, box[2] * cw / 1000, box[3] * ch / 1000)
+                    W, H = crop_size(m)
+                    cb = (box[0] * W / 1000, box[1] * H / 1000, box[2] * W / 1000, box[3] * H / 1000)
                     how = "model box"
                 else:
                     continue
-                page, fb = crop_to_page(cb, m, sizes, dpi)
-                if how == "model box":
-                    fb, how = snap(fb, lay.get(page, []))
-                else:
-                    p = 0.004
-                    fb = (max(0, fb[0] - p), max(0, fb[1] - p), min(1, fb[2] + p), min(1, fb[3] + p))
+                field = fig.get("field") or ""
+                owner, _, short = field.partition(".")
+                pieces = [(cb, field)]
+                if cw and owner in pic_opts and len(short) != 1:
+                    cells, rest = option_cells(cb, cw, m.get("regions") or [])
+                    if cells:
+                        pieces = [(grow_over_labels(c, cw), f"{owner}.{L}") for L, c in sorted(cells.items())] + ([(rest, field)] if rest else [])
+                        how += " split at option letters"
+                for pcb, pfield in pieces:
+                    page, fb = crop_to_page(pcb, m, sizes, dpi)
+                    if how == "model box":
+                        fb, how = snap(fb, lay.get(page, []))
+                    else:
+                        p = 0.004
+                        fb = (max(0, fb[0] - p), max(0, fb[1] - p), min(1, fb[2] + p), min(1, fb[3] + p))
+                    entries.append(emit(a, pdf, out, code, session, page, fb, pfield, fig, how))
+                continue
             field = fig.get("field") or ""
-            owner, _, short = field.partition(".")
-            n = int(owner[1:]) if owner.startswith("q") and owner[1:].isdigit() else None
-            option = short if len(short) == 1 else None
-            r = pdf[page - 1].rect
-            clip = fitz.Rect(fb[0] * r.width, fb[1] * r.height, fb[2] * r.width, fb[3] * r.height)
-            pix = pdf[page - 1].get_pixmap(dpi=300, clip=clip)
-            img = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
-            clean, level = clean_figure(img)
-            clean = trim(clean)
-            h = hashlib.sha1(f"{a.exam}{page}{fb}".encode()).hexdigest()[:6]
-            fid = f"{code.lower()}{session[0]}-{owner}-" + (f"opt-{option.lower()}-" if option else "") + f"auto-{h}"
-            (out / f"{fid}.png").write_bytes(png_bytes(clean))
-            entries.append({"question": n, "group": owner if owner.startswith("g") else None, "page": page, "kind": "image",
-                            "figure_id": fid, "spec_id": fid, "method": "auto_crop", "svg": f"traced/{a.exam}/{fid}.png",
-                            "box_page_fraction": [round(v, 4) for v in fb], "option": option, "field": field,
-                            "what": fig.get("what"), "box_source": how, "paper_level": level, "pending_spec": False})
-    json.dump({"exam": a.exam, "figures": entries}, open(out / "manifest.candidate.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-    print(f"{len(entries)} figure crops -> {out}")
+            entries.append(emit(a, pdf, out, code, session, page, fb, field, fig, how))
+    entries, dropped = keep_pictures(entries, layout_words(layout) if layout else {}, sizes)
+    for d in dropped:
+        (out / f"{d['figure_id']}.png").unlink(missing_ok=True)
+    json.dump({"exam": a.exam, "figures": entries, "dropped": dropped}, open(out / "manifest.candidate.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    print(f"{len(entries)} figure crops -> {out} ({len(dropped)} dropped: text, tiny or duplicate)")
     return 0
 
 
@@ -197,6 +255,7 @@ def main(argv=None) -> int:
     for k in ("exam", "report", "meta", "crops", "pdf", "out"):
         b.add_argument(f"--{k}", required=True)
     b.add_argument("--layout")
+    b.add_argument("--golden", help="formatted golden; questions with empty options get their picture split per option")
     s = sub.add_parser("score")
     s.add_argument("--candidate", required=True)
     s.add_argument("--reference", required=True)
