@@ -5,6 +5,7 @@ import QuestionView from "../components/QuestionView.jsx";
 import { areaColor } from "../lib/brand.js";
 import { CAUSES, causeLabel, causeSummary, filterNotebook, loadNotes, notebook, practiceGroups, saveNote, EMPTY_FILTER } from "../lib/errors.js";
 import { explanationOf } from "../lib/lesson.js";
+import { plainText } from "../lib/render.js";
 import { loadHistory } from "../lib/local.js";
 import { bookletCode, sessionOf } from "../lib/booklets.js";
 import { daysUntil, loadGoal } from "../lib/goal.js";
@@ -15,6 +16,15 @@ import "./study.css";
 const ago = (t) => {
   const d = Math.floor((Date.now() - t) / 864e5);
   return d <= 0 ? "hoy" : d === 1 ? "ayer" : `hace ${d} días`;
+};
+const OTHER = "Otras preguntas";
+const AREA_ORDER = ["Lectura crítica", "Matemáticas", "Sociales y ciudadanas", "Ciencias naturales", "Inglés"];
+// The notebook by subject, in the order of the exam; inside each, the order the filters gave.
+const byArea = (list) => {
+  const m = new Map();
+  for (const e of list) { const k = e.area ?? OTHER; if (!m.has(k)) m.set(k, []); m.get(k).push(e); }
+  const rank = (k) => (AREA_ORDER.includes(k) ? AREA_ORDER.indexOf(k) : 99);
+  return [...m.entries()].sort((x, y) => rank(x[0]) - rank(y[0]));
 };
 const bookName = (slug) => `Cuadernillo ${bookletCode(slug)} · Sesión ${sessionOf(slug)}`;
 
@@ -51,30 +61,30 @@ export function ErrorNotebook({ fetchExam, onPracticeKeys }) {
     );
   }
   return (
-    <div className="st-wrap">
-      <div className="card st-summary">
-        <div className="st-kpis">
+    <div className="sy-wrap">
+      <div className="card sy-summary">
+        <div className="sy-kpis">
           <span><b className="bad-text">{sum.pending}</b><span className="caption">por recuperar</span></span>
           <span><b className="ok-text">{sum.recovered}</b><span className="caption">recuperadas</span></span>
           <span><b>{sum.untagged}</b><span className="caption">sin clasificar</span></span>
         </div>
         {sum.counts.length > 0 && (
-          <div className="st-causes" aria-label="Por qué fallas">
+          <div className="sy-causes" aria-label="Por qué fallas">
             {sum.counts.map((c) => (
-              <button key={c.id} type="button" className={f.cause === c.id ? "st-cause on" : "st-cause"} onClick={() => setF((x) => ({ ...x, cause: x.cause === c.id ? "" : c.id }))}>
+              <button key={c.id} type="button" className={f.cause === c.id ? "sy-cause on" : "sy-cause"} onClick={() => setF((x) => ({ ...x, cause: x.cause === c.id ? "" : c.id }))}>
                 <span>{c.label}</span><span className="td-track"><span style={{ width: `${(c.n / Math.max(1, sum.pending)) * 100}%` }} /></span><b>{c.n}</b>
               </button>
             ))}
           </div>
         )}
-        {sum.main ? <p className="st-tip"><Icon name="bolt" size={16} /><span><b>Tu error más común: {sum.main.label.toLowerCase()}.</b> {sum.main.tip}</span></p>
+        {sum.main ? <p className="sy-tip"><Icon name="bolt" size={16} /><span><b>Tu error más común: {sum.main.label.toLowerCase()}.</b> {sum.main.tip}</span></p>
           : <p className="caption">Abre cada error y marca por qué crees que lo fallaste: así el cuaderno te dice qué cambiar.</p>}
       </div>
 
       {groups.length > 0 && (
-        <div className="st-groups">
+        <div className="sy-groups">
           {groups.map((g) => (
-            <button key={g.slug} type="button" className="card st-group" onClick={() => onPracticeKeys?.(g.slug, g.keys.slice(0, 20), { label: "Errores por recuperar" })}>
+            <button key={g.slug} type="button" className="card sy-group" onClick={() => onPracticeKeys?.(g.slug, g.keys.slice(0, 20), { label: "Errores por recuperar" })}>
               <span><b>Recuperar {Math.min(20, g.keys.length)} {g.keys.length === 1 ? "error" : "errores"}</b><span className="caption">{bookName(g.slug)}{g.keys.length > 20 ? ` · las ${20} más falladas de ${g.keys.length}` : ""}</span></span>
               <Icon name="right" />
             </button>
@@ -82,7 +92,7 @@ export function ErrorNotebook({ fetchExam, onPracticeKeys }) {
         </div>
       )}
 
-      <div className="st-filters">
+      <div className="sy-filters">
         <div className="segmented small" role="radiogroup" aria-label="Estado">
           {[["pending", "Por recuperar"], ["recovered", "Recuperadas"], ["all", "Todas"]].map(([id, l]) => (
             <button key={id} type="button" role="radio" aria-checked={f.state === id} className={f.state === id ? "seg active" : "seg"} onClick={() => setF((x) => ({ ...x, state: id }))}>{l}</button>
@@ -96,47 +106,60 @@ export function ErrorNotebook({ fetchExam, onPracticeKeys }) {
         {f.cause && <button type="button" className="chip on" onClick={() => setF((x) => ({ ...x, cause: "" }))}>{causeLabel(f.cause)} ✕</button>}
       </div>
 
-      <ul className="st-list">
-        {shown.length === 0 && <li className="caption">Nada con estos filtros.</li>}
-        {shown.slice(0, limit).map((e) => {
-          const q = qOf(e);
-          const b = bundles[e.slug];
-          const right = b?.key?.get(e.key) ?? null;
-          const why = q && explanationOf(b?.enrich?.[String(q.number)]);
-          return (
-            <li key={e.id} className={e.recovered ? "card st-item done" : "card st-item"}>
-              <button type="button" className="st-head" aria-expanded={open === e.id} onClick={() => setOpen(open === e.id ? null : e.id)}>
-                <span className="dot" style={{ background: e.area ? areaColor(e.area) : "var(--line)" }} />
-                <span className="st-main">
-                  <b>{e.area ?? "Pregunta"} · pregunta {e.number ?? e.key}</b>
-                  <span className="caption">{e.chosen ? `Elegiste ${e.chosen}` : "En blanco"}{right ? ` · era ${right}` : ""} · {e.times > 1 ? `fallada ${e.times} veces · ` : ""}{e.recovered ? `recuperada ${ago(e.recoveredAt)}` : ago(e.lastAt)}</span>
-                </span>
-                {e.cause ? <span className="badge">{causeLabel(e.cause)}</span> : <span className="badge pending">¿Por qué?</span>}
-              </button>
-              {open === e.id && (
-                <div className="st-body">
-                  <span className="label">¿Por qué crees que la fallaste?</span>
-                  <div className="chips-row">
-                    {CAUSES.map((c) => <button key={c.id} type="button" aria-pressed={e.cause === c.id} className={e.cause === c.id ? "chip on" : "chip"} onClick={() => tag(e.id, { cause: e.cause === c.id ? "" : c.id })}>{c.label}</button>)}
-                  </div>
-                  <label className="field"><span className="label">Tu nota</span>
-                    <textarea rows={2} maxLength={400} defaultValue={e.note} placeholder="Ej.: confundí porcentaje con proporción" onBlur={(ev) => tag(e.id, { note: ev.target.value.trim() })} /></label>
-                  <div className="report-actions">
-                    {q && <button type="button" className="secondary" onClick={() => setShow(show === e.id ? null : e.id)}>{show === e.id ? "Ocultar la pregunta" : "Ver la pregunta"}</button>}
-                    <button type="button" className="primary" onClick={() => onPracticeKeys?.(e.slug, [e.key], { label: "Errores por recuperar" })}>Intentarla otra vez</button>
-                  </div>
-                  {show === e.id && q && (
-                    <>
-                      <QuestionView question={q} answer={e.chosen} graded review={{ correctLetter: right }} figures={b.figures} examLabel={b.exam.title} report={false} />
-                      {why && <div className="card t-card"><strong>Por qué</strong><p>{why.text}</p></div>}
-                    </>
+      <div className="eb-list">
+        {shown.length === 0 && <p className="caption">Nada con estos filtros.</p>}
+        {byArea(shown.slice(0, limit)).map(([area, list]) => (
+          <section key={area} className="card eb-area" style={{ "--c": area === OTHER ? "var(--line)" : areaColor(area) }}>
+            <div className="eb-area-head">
+              <span className="eb-dot" aria-hidden="true" />
+              <strong>{area}</strong>
+              <span className="caption">{list.filter((e) => !e.recovered).length} por recuperar{list.some((e) => e.recovered) ? ` · ${list.filter((e) => e.recovered).length} recuperadas` : ""}</span>
+            </div>
+            {list.map((e) => {
+              const q = qOf(e);
+              const b = bundles[e.slug];
+              const right = b?.key?.get(e.key) ?? null;
+              const why = q && explanationOf(b?.enrich?.[String(q.number)]);
+              const stem = q ? plainText(q.stem_md || q.stimulus_md || "").replace(/\[\[[^\]]*\]\]/g, " ").replace(/\*\*|__/g, "").replace(/\s+/g, " ").trim() : "";
+              return (
+                <div key={e.id} className={`eb-item${e.recovered ? " done" : ""}${open === e.id ? " open" : ""}`}>
+                  <button type="button" className="eb-row" aria-expanded={open === e.id} onClick={() => setOpen(open === e.id ? null : e.id)}>
+                    <span className={e.recovered ? "eb-state ok" : e.chosen ? "eb-state bad" : "eb-state blank"}>
+                      {e.recovered ? "Recuperada" : e.chosen ? <>Elegiste <b>{e.chosen}</b>{right ? <> · era <b>{right}</b></> : null}</> : <>En blanco{right ? <> · era <b>{right}</b></> : null}</>}
+                    </span>
+                    <span className="eb-text">
+                      <span className="eb-stem">{stem ? (stem.length > 140 ? `${stem.slice(0, 140)}…` : stem) : `Pregunta ${e.number ?? e.key}`}</span>
+                      <span className="caption">Pregunta {e.number ?? e.key} · {bookName(e.slug)} · {e.recovered ? `recuperada ${ago(e.recoveredAt)}` : ago(e.lastAt)}{e.times > 1 ? ` · fallada ${e.times} veces` : ""}</span>
+                    </span>
+                    <span className={e.cause ? "eb-cause" : "eb-cause none"}>{e.cause ? causeLabel(e.cause) : "¿Por qué?"}</span>
+                    <span className="eb-chev" aria-hidden="true"><Icon name="right" size={16} strokeWidth={3} /></span>
+                  </button>
+                  {open === e.id && (
+                    <div className="eb-body">
+                      <span className="label">¿Por qué crees que la fallaste?</span>
+                      <div className="chips-row">
+                        {CAUSES.map((c) => <button key={c.id} type="button" aria-pressed={e.cause === c.id} className={e.cause === c.id ? "chip on" : "chip"} onClick={() => tag(e.id, { cause: e.cause === c.id ? "" : c.id })}>{c.label}</button>)}
+                      </div>
+                      <label className="field"><span className="label">Tu nota</span>
+                        <textarea rows={2} maxLength={400} defaultValue={e.note} placeholder="Ej.: confundí porcentaje con proporción" onBlur={(ev) => tag(e.id, { note: ev.target.value.trim() })} /></label>
+                      <div className="report-actions">
+                        {q && <button type="button" className="secondary" onClick={() => setShow(show === e.id ? null : e.id)}>{show === e.id ? "Ocultar la pregunta" : "Ver la pregunta completa"}</button>}
+                        <button type="button" className="primary" onClick={() => onPracticeKeys?.(e.slug, [e.key], { label: "Errores por recuperar" })}>Intentarla otra vez</button>
+                      </div>
+                      {show === e.id && q && (
+                        <>
+                          <QuestionView question={q} answer={e.chosen} graded review={{ correctLetter: right }} figures={b.figures} examLabel={b.exam.title} report={false} />
+                          {why && <div className="card t-card"><strong>Por qué</strong><p>{why.text}</p></div>}
+                        </>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+              );
+            })}
+          </section>
+        ))}
+      </div>
       {shown.length > limit && <button type="button" className="secondary" onClick={() => setLimit((n) => n + 20)}>Ver {Math.min(20, shown.length - limit)} más de {shown.length - limit}</button>}
     </div>
   );
@@ -154,20 +177,20 @@ export function StudyPlan({ onPracticeArea, onSimulacro, onMix, onErrors, onGoal
   const act = (d) => (d.kind === "area" ? onPracticeArea?.(d.area) : d.kind === "simulacro" ? onSimulacro?.() : d.kind === "mix" ? onMix?.() : d.kind === "errors" ? onErrors?.() : null);
   const DAYN = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
   return (
-    <div className="st-wrap">
-      <div className="card st-summary">
+    <div className="sy-wrap">
+      <div className="card sy-summary">
         <span className="label">{plan.label}</span>
-        <strong className="st-big">{left == null ? "Sin fecha de examen" : left <= 0 ? "¡Es hoy!" : `Faltan ${left} días`}</strong>
+        <strong className="sy-big">{left == null ? "Sin fecha de examen" : left <= 0 ? "¡Es hoy!" : `Faltan ${left} días`}</strong>
         <span className="caption">{plan.help}</span>
         <div className="progress thin" aria-label={`${plan.done} de ${plan.due} días cumplidos`}><span style={{ width: `${plan.due ? (plan.done / plan.due) * 100 : 0}%` }} /></div>
         <span className="caption">{plan.due ? `Llevas ${plan.done} de ${plan.due} días cumplidos esta semana` : "La semana empieza hoy"} · unas {plan.perDay} preguntas al día según tu meta de XP.</span>
         {(left == null || !goal.examDate) && <button type="button" className="secondary" onClick={onGoal}>Poner la fecha de mi examen</button>}
       </div>
-      <ol className="st-days">
+      <ol className="sy-days">
         {plan.days.map((d, i) => (
-          <li key={d.date} className={`card st-day${d.today ? " today" : ""}${d.done && d.kind !== "rest" ? " done" : ""}${d.past && !d.done ? " missed" : ""}`}>
-            <span className="st-check" aria-hidden="true">{d.kind === "rest" ? "☾" : d.done ? "✓" : d.today ? "●" : ""}</span>
-            <span className="st-main">
+          <li key={d.date} className={`card sy-day${d.today ? " today" : ""}${d.done && d.kind !== "rest" ? " done" : ""}${d.past && !d.done ? " missed" : ""}`}>
+            <span className="sy-check" aria-hidden="true">{d.kind === "rest" ? "☾" : d.done ? "✓" : d.today ? "●" : ""}</span>
+            <span className="sy-main">
               <b>{DAYN[i]}{d.today ? " · hoy" : ""}</b>
               <span className="caption">{d.area && <span className="dot" style={{ background: areaColor(d.area) }} />}{d.label}{d.questions ? ` · ${d.questions} preguntas · ~${d.minutes} min` : d.kind === "simulacro" ? " · unas 4 h 30 min" : ""}</span>
             </span>
