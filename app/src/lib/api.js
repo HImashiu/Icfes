@@ -4,6 +4,7 @@
 export const isMissingTable = (error) => error?.code === "42P01" || error?.code === "PGRST205" || /does not exist|schema cache/i.test(error?.message ?? "");
 
 export function createApi(client) {
+  let liveConfidentCol = true;
   const unwrap = ({ data, error }) => {
     if (error) throw Object.assign(new Error(error.message), { code: error.code });
     return data;
@@ -308,6 +309,7 @@ export function createApi(client) {
     },
 
     // Live answering. The database clock decides when a question opens and closes.
+    // (liveConfidentCol: false once a read shows migration 0024 has not run, so polls stop asking for that column.)
     async liveNow() {
       return unwrap(await client.rpc("live_now"));
     },
@@ -333,18 +335,52 @@ export function createApi(client) {
       return unwrap(await client.from("live_players").select("player_id, nickname, profile_id, score, streak").eq("session_id", id));
     },
     async liveAnswers(id, index) {
+      if (liveConfidentCol) {
+        const r = await client.from("live_answers").select("player_id, question_index, option, answered_at, points, confident").eq("session_id", id).eq("question_index", index);
+        if (!r.error) return r.data;
+        liveConfidentCol = false;
+      }
       return unwrap(await client.from("live_answers").select("player_id, question_index, option, answered_at, points").eq("session_id", id).eq("question_index", index));
     },
     async liveMyAnswers(id) {
       const { data: auth } = await client.auth.getUser();
       return unwrap(await client.from("live_answers").select("question_index, option, points").eq("session_id", id).eq("player_id", auth.user.id));
     },
-    async liveAnswer(id, index, option) {
+    // `confident` (true = sure, false = unsure) is sent only when the room asks for it (migration 0024).
+    async liveAnswer(id, index, option, confident = null) {
       const { data: auth } = await client.auth.getUser();
-      unwrap(await client.from("live_answers").insert({ session_id: id, player_id: auth.user.id, question_index: index, option }));
+      unwrap(await client.from("live_answers").insert({ session_id: id, player_id: auth.user.id, question_index: index, option, ...(typeof confident === "boolean" ? { confident } : {}) }));
     },
     async myLiveSessions() {
       return unwrap(await client.from("live_sessions").select("*").neq("state", "ended").order("created_at", { ascending: false }).limit(10));
+    },
+    // A deeper game (migration 0024): settings, pause, added time, asking again, the class share for phones.
+    async liveConfigure(id, { mode, goal, confidence }) {
+      return unwrap(await client.rpc("live_configure", { p_session: id, p_mode: mode, p_goal: goal ?? null, p_confidence: Boolean(confidence) }));
+    },
+    async livePause(id, pause) {
+      return unwrap(await client.rpc("live_pause", { p_session: id, p_pause: pause }));
+    },
+    async liveAddTime(id, seconds = 15) {
+      return unwrap(await client.rpc("live_add_time", { p_session: id, p_seconds: seconds }));
+    },
+    async liveReask(id) {
+      return unwrap(await client.rpc("live_reask", { p_session: id }));
+    },
+    async liveShare(id, stats) {
+      return unwrap(await client.rpc("live_share", { p_session: id, p_stats: stats }));
+    },
+    // Past games and everything answered in one, for the report. `confident` exists after 0024; before, it is retried without.
+    async livePastSessions() {
+      return unwrap(await client.from("live_sessions").select("*").eq("state", "ended").order("created_at", { ascending: false }).limit(30));
+    },
+    async liveAllAnswers(id) {
+      if (liveConfidentCol) {
+        const r = await client.from("live_answers").select("player_id, question_index, option, answered_at, points, confident").eq("session_id", id);
+        if (!r.error) return r.data;
+        liveConfidentCol = false;
+      }
+      return unwrap(await client.from("live_answers").select("player_id, question_index, option, answered_at, points").eq("session_id", id));
     },
     async myPlayerId() {
       const { data: auth } = await client.auth.getUser();

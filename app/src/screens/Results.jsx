@@ -33,7 +33,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
   const pct = score.keyed && outOf > 0 ? (score.correct / outOf) * 100 : null;
   // This attempt as a history row, so a whole session pairs with the other session of its cuadernillo.
   const sim = useMemo(() => {
-    if (!delivered || !score.keyed || attempt.assignmentId || attempt.repechaje) return null;
+    if (!delivered || !score.keyed || attempt.assignmentId || attempt.repechaje || attempt.custom) return null;
     const row = { id: String(attempt.startedAt), at: attempt.submittedAt, mode: attempt.mode, keyed: true, total: score.total, answered: score.answered, perArea: score.perArea, snapshot: { slug: attempt.slug, scope: attempt.scope } };
     if (!isFullSession(row)) return null;
     const all = simulacros([...loadHistory().filter((h) => h.id !== row.id), row]);
@@ -77,6 +77,10 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
         answers: attempt.answers,
         flags: attempt.flags,
         times: attempt.times,
+        // A practice of chosen questions reopens with exactly those questions.
+        ...(attempt.keys ? { keys: attempt.keys } : {}),
+        ...(attempt.custom ? { custom: attempt.custom } : {}),
+        ...(attempt.repechaje ? { repechaje: true } : {}),
         startedAt: attempt.startedAt,
         submittedAt: attempt.submittedAt,
         auto: attempt.auto,

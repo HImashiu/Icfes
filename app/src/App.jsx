@@ -81,7 +81,7 @@ function findResumable(slug, exam) {
 }
 
 // An assignment's attempt is saved apart from free practice on the same area.
-const storeScope = (a) => (a.assignmentId ? `asg-${a.assignmentId}` : a.repechaje ? "repechaje" : a.scope);
+const storeScope = (a) => (a.assignmentId ? `asg-${a.assignmentId}` : a.repechaje ? "repechaje" : a.custom ? "custom" : a.scope);
 
 export default function App() {
   const rootAuth = useAuth();
@@ -207,6 +207,22 @@ export default function App() {
     clearAttempt(selected.slug, "repechaje");
     setAttempt({
       slug: selected.slug, scope: "all", keys: repechajeKeys(keys), repechaje: true, mode: "practice", durationSec: null,
+      startedAt: Date.now(), answers: {}, flags: {}, checked: {}, xp: 0, current: 0, submittedAt: null, auto: false,
+    });
+    setView("test");
+  };
+
+  // A practice made of chosen questions: "Práctica a medida", the error notebook or the ones missed in a live game.
+  // `opts`: { label, mode, perQuestionSec }. Timed = the booklet's time for those questions, or a fixed time per question.
+  const startKeys = async (slug, keys, opts = {}) => {
+    const sel = selected?.slug === slug && slug !== TEACHER_SLUG ? selected : await openExam(slug, slug === TEACHER_SLUG ? keys : null);
+    if (!sel || keys.length === 0) return;
+    const mode = opts.mode === "timed" ? "timed" : "practice";
+    const qs = questionsForAttempt(sel.exam, { scope: "all", keys });
+    clearAttempt(slug, "custom");
+    setAttempt({
+      slug, scope: "all", keys, custom: { label: opts.label || "Práctica a medida" }, mode,
+      durationSec: mode === "timed" ? (opts.perQuestionSec ? opts.perQuestionSec * qs.length : timedSeconds(qs)) : null,
       startedAt: Date.now(), answers: {}, flags: {}, checked: {}, xp: 0, current: 0, submittedAt: null, auto: false,
     });
     setView("test");
@@ -359,7 +375,7 @@ export default function App() {
   const locked = Boolean(attempt?.assignmentId) && !revealAllowed(attempt.reveal, assignedOf);
   const usedOf = attempt?.assignmentId ? assigned.attempts.filter((x) => x.assignment_id === attempt.assignmentId && x.submitted_at).length : 0;
   const retryAssigned = assignedOf && attemptsLeft(assignedOf, usedOf) > 0 ? () => startAssigned(assignedOf) : null;
-  const scopeTitle = attempt && attempt.scope !== "all" ? attempt.scope : "Examen completo";
+  const scopeTitle = attempt?.custom ? attempt.custom.label : attempt?.repechaje ? "Repechaje" : attempt && attempt.scope !== "all" ? attempt.scope : "Examen completo";
   const examTitle = selected ? `${selected.exam.title} · ${scopeTitle}` : "";
   // The sidebar stays on every screen except the test; results and review belong to Practicar, reports to Perfil.
   const navView = { home: "home", subjects: "subjects", setup: "setup", results: "setup", review: "setup", history: "progress", progress: "progress", profile: "profile", login: "profile", reports: "profile" }[view] ?? null;
@@ -467,7 +483,7 @@ export default function App() {
           onHome={goHome}
           locked={locked}
           lockedNote={attempt?.reveal === "after_close" ? "Tu docente mostrará las respuestas cuando cierre la asignación." : undefined}
-          onRetry={attempt.assignmentId ? retryAssigned : attempt.repechaje ? null : () => startAttempt(attempt.scope, attempt.mode, attempt.order)}
+          onRetry={attempt.assignmentId ? retryAssigned : attempt.repechaje ? null : attempt.custom ? () => startKeys(attempt.slug, attempt.keys, { label: attempt.custom.label, mode: attempt.mode }) : () => startAttempt(attempt.scope, attempt.mode, attempt.order)}
           onReviewTimes={(n) => { setReviewStart(n); setView("review"); }}
           exams={exams ?? []}
           onStartSession={startSession}
@@ -498,7 +514,8 @@ export default function App() {
       )}
 
       {view === "liveJoin" && <LiveJoin auth={auth} initialCode={joinCode} onBack={() => setView("home")} onJoined={(row, nickname) => { setLive({ row, nickname }); setView("livePlay"); }} />}
-      {view === "livePlay" && live && <LivePlay api={auth.api} initial={live.row} nickname={live.nickname} fetchExam={fetchExam} onExit={() => { setLive(null); setView("home"); }} />}
+      {view === "livePlay" && live && <LivePlay api={auth.api} initial={live.row} nickname={live.nickname} fetchExam={fetchExam} onExit={() => { setLive(null); setView("home"); }}
+        onPracticeMissed={(slug, keys) => { setLive(null); startKeys(slug, keys, { label: "Las que fallé en vivo" }); }} />}
 
       {view === "profile" && <Profile theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} onReports={() => setView("reports")} onLogin={() => setView("login")}
         assigned={signedIn ? assigned : null} classes={myClasses} course={course} onGo={go} />}
