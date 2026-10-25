@@ -125,7 +125,8 @@ describe("new teacher shell", () => {
     fireEvent.click(screen.getByRole("button", { name: "Juego en vivo" }));
     expect(window.location.hash).toBe("#docente/actividades/vivo");
     fireEvent.click(await screen.findByRole("button", { name: "Nueva actividad" }));
-    expect(window.location.hash).toBe("#docente/actividades/nueva");
+    fireEvent.click(await screen.findByRole("menuitem", { name: /^Tarea/ }));
+    expect(window.location.hash).toBe("#docente/actividades/nueva/tarea");
   });
 
   it("switches the subject and remembers it", async () => {

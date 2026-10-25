@@ -42,7 +42,7 @@ const exams = [{ slug: "S11-A_1ra", title: "S11-A", status: "ready", sections: [
 const openLesson = async (api) => {
   window.location.hash = "#docente/biblioteca/clases";
   render(<TeacherLive auth={auth(api)} exams={exams} fetchExam={vi.fn().mockResolvedValue(bundle())} onExit={() => {}} />);
-  fireEvent.click(await screen.findByText("Repaso de álgebra"));
+  fireEvent.click(await screen.findByRole("button", { name: "Repaso de álgebra" }));
   await screen.findByText(/1\. Enunciado 1/);
 };
 
@@ -63,7 +63,7 @@ describe("Presenter", () => {
     press(" ");
     expect(screen.getByText("Porque B es la única válida.")).toBeTruthy();
     press(" "); // next slide: the text slide
-    expect(screen.getByText("Pausa")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Pausa" })).toBeTruthy();
     expect(screen.getByText("respiren")).toBeTruthy();
   });
 
