@@ -123,7 +123,8 @@ describe("icfes and irt", () => {
     expect(out[19].value).toBeGreaterThan(out[2].value);
     expect(out[0].provisional).toBe(true);
     const few = gradeMany(group.slice(0, 3), { kind: "irt" }, { questions: qs, key: k });
-    expect(few[0].note).toMatch(/Algunas áreas|Sin grupo/);
+    expect(few[0].note).toMatch(/Con 15 o más entregas/);
+    expect(out[19].note).toMatch(/afinó con 20 entregas/);
   });
 });
 

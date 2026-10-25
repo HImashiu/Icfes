@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { schoolSummary } from "../lib/analytics.js";
 import { areaColor } from "../lib/brand.js";
 import { hasGuardianAuth } from "../lib/consent.js";
-import { CATEGORY_VERSION, cohortProjection, studentSummaries } from "../lib/students.js";
+import { cohortProjection, studentSummaries } from "../lib/students.js";
 import { alertLabel, buildRoster, weeklySummary } from "../lib/workspace.js";
 import { fmtDuration } from "../lib/studentRun.js";
 import Icon from "../components/Icon.jsx";
@@ -144,7 +144,7 @@ export default function Dashboard({ api, profile, guard, ws, onOpenCourse, onRei
               <>
                 <span className="caption">{s.bandCount} estudiantes con simulacro completo · promedio {s.bandMean} / 500</span>
                 <BandHistogram bins={s.bandHistogram} />
-                <span className="caption">Estimación con curva provisional: sirve para comparar, no es el puntaje oficial.</span>
+                <span className="caption">Calculado como el ICFES (3PL por prueba, global 3-3-3-3-1) con clave preliminar: orienta, no es el puntaje oficial.</span>
               </>
             )}
           </div>
@@ -184,12 +184,12 @@ export default function Dashboard({ api, profile, guard, ws, onOpenCourse, onRei
               <>
                 <strong className="display">Categoría {cohort.category.id}</strong>
                 <span className="caption">
-                  Si la prueba real fuera hoy, con el último simulacro completo (Sesión 1 + Sesión 2) de {cohort.n} {cohort.n === 1 ? "estudiante" : "estudiantes"} (promedio {cohort.mean} de 500).
-                  {cohort.category.next ? ` Faltan ${cohort.category.toNext} puntos para la categoría ${cohort.category.next}.` : " Ya está en la categoría más alta."}
+                  Índice {String(cohort.category.index).replace(".", ",")} con el método del ICFES (Res. 677/2021): por prueba, el 80 % más alto de {cohort.n} estudiantes con simulacro completo, ponderado 3-3-3-3-1. Promedio global {cohort.mean}/500.
+                  {cohort.category.next ? ` Para ${cohort.category.next}: unos ${cohort.category.toNext} ${cohort.category.toNext === 1 ? "punto" : "puntos"} más por prueba en promedio.` : " Ya está en la categoría más alta."}
                 </span>
-                <span className="caption">Umbrales de ejemplo ({CATEGORY_VERSION}), no los oficiales: el ICFES publica los reales cada año.</span>
+                <span className="caption">El ICFES usa los resultados de tres años; esto es una proyección con clave preliminar.</span>
               </>
-            ) : <span className="caption">Aparece cuando los estudiantes entreguen un simulacro con tiempo.</span>}
+            ) : <span className="caption">{cohort.n} de 9 estudiantes con simulacro completo: el ICFES clasifica con 9 o más.</span>}
           </div>
           )}
         </div>

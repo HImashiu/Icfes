@@ -304,6 +304,28 @@ export function createApi(client) {
       const r = await client.from("live_sessions").select("id, host_id, course_id, title, exam_slug, question_keys, current_index, state, created_at");
       return r.error ? [] : r.data.map((s) => ({ ...s, question_keys: (s.question_keys ?? []).slice(0, Math.max(0, (s.current_index ?? -1) + 1)) })).filter((s) => s.question_keys.length);
     },
+    // Anuncios of subject classes (migration 0026). Row-level security keeps a student to their own classes.
+    // null when the migration has not run.
+    async listAnnouncements(courseIds = null) {
+      let q = client.from("class_announcements").select("id, course_id, author_id, author_name, title, body, pinned, expires_at, created_at");
+      if (courseIds) q = q.in("course_id", courseIds);
+      const r = await q.order("created_at", { ascending: false });
+      if (r.error && isMissingTable(r.error)) return null;
+      return unwrap(r);
+    },
+    async postAnnouncement({ courseIds, title, body = "", pinned = false, expiresAt = null, authorName = "" }) {
+      const { data: auth } = await client.auth.getUser();
+      const rows = courseIds.map((course_id) => ({ course_id, title, body, pinned, expires_at: expiresAt, author_id: auth?.user?.id, author_name: authorName }));
+      const r = await client.from("class_announcements").insert(rows).select();
+      if (r.error && isMissingTable(r.error)) throw new Error("Para publicar anuncios hace falta correr la migración 0026 en Supabase.");
+      return unwrap(r);
+    },
+    async updateAnnouncements(ids, patch) {
+      unwrap(await client.from("class_announcements").update(patch).in("id", ids));
+    },
+    async deleteAnnouncements(ids) {
+      unwrap(await client.from("class_announcements").delete().in("id", ids));
+    },
     // Holds: questions or whole booklets reserved for a simulacro and/or hidden from students' free practice.
     async questionHolds() {
       const r = await client.from("question_holds").select("id, exam_slug, qkey, reserve, hide_from_students, label, until, assignment_id, created_by, created_at");

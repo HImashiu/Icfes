@@ -20,7 +20,7 @@ export function familyPayload({ studentName, attempts }) {
   const perArea = all.map((a) => {
     const c = done.reduce((acc, at) => acc + (at.score.perArea.find((x) => x.name === a.name)?.correct ?? 0), 0);
     const t = done.reduce((acc, at) => acc + (at.score.perArea.find((x) => x.name === a.name)?.total ?? 0), 0);
-    return { name: a.name, pct: a.pct, scale: areaScale(c, t) };
+    return { name: a.name, pct: a.pct, scale: areaScale(c, t, a.name) };
   });
   const weakest = perArea[0] ?? null;
   const strongest = perArea.length > 1 ? perArea[perArea.length - 1] : null;

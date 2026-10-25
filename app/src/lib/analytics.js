@@ -1,34 +1,40 @@
 // Pure statistics for teachers and the school: bands, area averages, histograms, item analysis. No network, no React.
 import { studentScores } from "./simulacro.js";
+import { globalPercentile, globalScore, levelOf, partialGlobal, percentileOf, scoreCounts, weightOf } from "./icfesScore.js";
 
-// PLACEHOLDER curve until the ICFES national distributions are anchored (plan §5.1, phase 1).
-// Chance-corrected share right (4 options) mapped onto the 0-100 area scale. Versioned so stored scores can be recomputed.
-export const CURVE_VERSION = "placeholder-1";
-const CHANCE = 0.25;
-// ICFES weights: the four core areas count 3 and English counts 1 in the global score; areas we do not know count 3.
-const WEIGHTS = { "Inglés": 1 };
-export const weight = (name) => WEIGHTS[name] ?? 3;
+// Saber 11 scores the ICFES way (icfesScore.js): 3PL ability on the national scale, 0-100 per prueba, official global
+// weights, levels and national percentiles. Versioned so stored scores can be recomputed.
+export const CURVE_VERSION = "icfes-3pl-1";
+export const weight = weightOf;
 
-export function areaScale(correct, total) {
-  if (!total) return null;
-  const p = correct / total;
-  const adjusted = Math.max(0, (p - CHANCE) / (1 - CHANCE));
-  return Math.round(15 + 70 * adjusted);
+// Fewer than 5 questions of an area: too little for the model, so a plain chance-corrected share is shown instead.
+function smallScale(correct, total) {
+  const adjusted = Math.max(0, (correct / total - 0.25) / 0.75);
+  return Math.round(20 + 80 * adjusted);
 }
 
-// perArea: [{ name, correct, total }]. Returns { areas: [{name, pct, scale}], global (0-500) or null, low, high }.
-// Only full sets mean something; the band widens when few questions back it.
+export function areaScale(correct, total, name = "") {
+  if (!total) return null;
+  return scoreCounts(name, correct, total)?.score ?? smallScale(correct, total);
+}
+
+// perArea: [{ name, correct, total }]. Returns { areas: [{name, pct, scale, low, high, level, percentile}],
+// global (0-500, the weights over the areas taken), low, high, complete (all four core pruebas), globalPercentile }.
 export function bandFor(perArea) {
   const areas = perArea
     .filter((a) => a.total > 0)
-    .map((a) => ({ name: a.name, pct: Math.round((a.correct / a.total) * 100), scale: areaScale(a.correct, a.total), total: a.total }));
-  if (areas.length === 0) return { areas, global: null, low: null, high: null };
-  const w = areas.reduce((acc, a) => acc + weight(a.name), 0);
-  const avg = areas.reduce((acc, a) => acc + weight(a.name) * a.scale, 0) / w;
-  const global = Math.round(avg * 5);
-  const n = areas.reduce((acc, a) => acc + a.total, 0);
-  const margin = Math.round(Math.min(90, 20 + 900 / Math.sqrt(Math.max(n, 1))));
-  return { areas, global, low: Math.max(0, global - margin), high: Math.min(500, global + margin) };
+    .map((a) => {
+      const r = scoreCounts(a.name, a.correct, a.total);
+      const scale = r?.score ?? smallScale(a.correct, a.total);
+      return { name: a.name, pct: Math.round((a.correct / a.total) * 100), scale, low: r?.low ?? Math.max(0, scale - 15), high: r?.high ?? Math.min(100, scale + 15), total: a.total, level: levelOf(a.name, scale), percentile: percentileOf(a.name, scale) };
+    });
+  if (areas.length === 0) return { areas, global: null, low: null, high: null, complete: false, globalPercentile: null };
+  const scores = Object.fromEntries(areas.map((a) => [a.name, a.scale]));
+  const full = globalScore(scores);
+  const global = full ?? partialGlobal(scores);
+  const w = areas.reduce((n, a) => n + weight(a.name), 0);
+  const margin = Math.max(5, Math.round((5 * Math.sqrt(areas.reduce((n, a) => n + (weight(a.name) * (a.high - a.low) / 2) ** 2, 0))) / w));
+  return { areas, global, low: Math.max(0, global - margin), high: Math.min(500, global + margin), complete: full != null, globalPercentile: full != null ? globalPercentile(full) : null };
 }
 
 export const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);

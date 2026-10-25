@@ -100,6 +100,7 @@ export default function App() {
   const signedIn = auth.status === "ready";
   const [assigned, setAssigned] = useState({ assignments: [], attempts: [], models: [] });
   const [myClasses, setMyClasses] = useState(null);
+  const [announcements, setAnnouncements] = useState([]);
   // Questions and booklets the school holds back from students' free practice (reserved for a simulacro, migration 0021).
   const [hidden, setHidden] = useState(null);
   const [exams, setExams] = useState(null);
@@ -281,6 +282,8 @@ export default function App() {
       setAssigned({ assignments, attempts, models });
       if (auth.profile?.role === "student") auth.api.hiddenQuestions?.().then((rows) => setHidden(hiddenFor(rows ?? [])), () => setHidden(null));
       auth.api.studentClasses?.().then(setMyClasses, () => setMyClasses(null));
+      // Anuncios of the student's classes (migration 0026); none before it runs.
+      auth.api.listAnnouncements?.().then((rows) => setAnnouncements(rows ?? []), () => setAnnouncements([]));
     } catch {
       setAssigned({ assignments: [], attempts: [] });
     }
@@ -468,6 +471,7 @@ export default function App() {
           exam={selected?.exam}
           slug={selected?.slug}
           classes={myClasses}
+          announcements={signedIn ? announcements : []}
           resumable={resumable}
           onContinue={() => {
             const saved = loadAttempt(selected.slug, resumable.scope);
@@ -579,7 +583,7 @@ export default function App() {
 
       {view === "profile" && <Profile theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} onReports={() => setView("reports")} onLogin={() => setView("login")}
         assigned={signedIn ? assigned : null} classes={myClasses} course={course} onGo={go} />}
-      {view === "subjects" && <Subjects assigned={signedIn ? assigned : null} classes={myClasses} course={course} tab={subjectTab} subjectId={subjectId}
+      {view === "subjects" && <Subjects announcements={signedIn ? announcements : []} assigned={signedIn ? assigned : null} classes={myClasses} course={course} tab={subjectTab} subjectId={subjectId}
         onTab={(t) => { setSubjectTab(t); setSubjectId(null); }} onOpenSubject={setSubjectId} onBack={() => setSubjectId(null)}
         onStartAssigned={startAssigned} onPracticeArea={practiceArea} onLogin={() => setView("login")} />}
       {view === "progress" && <Progress tab={progressTab} onTab={setProgressTab} assigned={signedIn ? assigned : null} classes={myClasses}

@@ -411,6 +411,14 @@ export function buildDemo({ bundles, now = Date.now() }) {
     created_at: new Date(now - DAY).toISOString(), mode: "classic", goal_pct: null, ask_confidence: false, extra_seconds: 0, paused_at: null,
     reasks: {}, closed: {}, class_stats: null, ended_at: null, scheduled_at: tomorrow.toISOString(),
   }] : [];
+  // Anuncios (migration 0026): what the subject teachers told 11 A this week.
+  const notice = (n, course_id, t, title, body, { ago, ...extra }) => ({ id: `demo-ann-${n}`, course_id, author_id: staff[t].id, author_name: staff[t].full_name, title, body, pinned: false, expires_at: null, created_at: new Date(now - ago * 3600000).toISOString(), updated_at: new Date(now - ago * 3600000).toISOString(), ...extra });
+  const announcements = [
+    notice(1, "demo-c1", 1, "Simulacro de matemáticas el viernes", "Traigan lápiz, borrador y calculadora básica. Dura 90 minutos y cuenta como nota del periodo.", { pinned: true, ago: 5 }),
+    notice(2, "demo-c4", 2, "Lectura para el lunes", "Lean el texto «La ciudad y los perros» (capítulo 1) antes de la clase. Hablaremos de la intención del autor.", { ago: 26 }),
+    notice(3, "demo-c7", 5, "Vocabulary quiz", "Next Wednesday: 20 words from units 3 and 4. Practice in Cóndor › Inglés.", { ago: 50 }),
+    notice(4, "demo-c5", 4, "Laboratorio aplazado", "La práctica de laboratorio pasa al jueves 2. Esta semana repasamos variables.", { ago: 70 }),
+  ];
   const meProfile = { id: me.profileId, email: me.email, full_name: me.name, role: "student", school_id: SCHOOL_ID, created_at: new Date(now - 60 * DAY).toISOString() };
 
   return {
@@ -423,7 +431,7 @@ export function buildDemo({ bundles, now = Date.now() }) {
       consents: [{ kind: "terms", version: CONSENT_VERSION, granted_at: new Date(now - 60 * DAY).toISOString() }],
       school_consents: [{ kind: "guardian_authorization", version: CONSENT_VERSION, granted_at: new Date(now - 60 * DAY).toISOString() }],
       student_statuses: statuses, student_flags: flags, student_groups: groups, student_group_members: groupMembers, student_notes: notes, saved_views: views,
-      teacher_questions: [], question_overrides: [], annotations: [], live_sessions: liveSessions, live_players: [], live_answers: [],
+      teacher_questions: [], question_overrides: [], annotations: [], live_sessions: liveSessions, live_players: [], live_answers: [], class_announcements: announcements,
       group_directors: [{ id: "demo-gd-1", school_id: SCHOOL_ID, grade: "11", group_label: "A", profile_id: staff[1].id }],
       // Colegio (migration 0020): cursos (10 A and 10 B still without classes), a view-only seat, a subject grant,
       // a pending invitation, settings and a few lines of the log.

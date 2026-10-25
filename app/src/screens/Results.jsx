@@ -1,3 +1,4 @@
+import IcfesAreas from "../components/IcfesAreas.jsx";
 import { isFullSession, nextSession, simulacros } from "../lib/simulacro.js";
 import { gradeAttempt, isAdjusted, itemFromAttempt } from "../lib/grading.js";
 import { useEffect, useMemo, useRef } from "react";
@@ -149,7 +150,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
             <div className="stat stat-score">
               <span className="label">Puntaje Saber 11 estimado</span>
               <strong className="display"><CountUp value={sim.global} format={(n) => String(Math.round(n))} delay={300} /><small className="muted"> /500</small></strong>
-              <span className="caption">Sesión 1 + Sesión 2 de {sim.code} · rango {sim.low}–{sim.high} · curva provisional, clave preliminar</span>
+              <span className="caption">Sesión 1 + Sesión 2 de {sim.code} · rango {sim.low}–{sim.high}{sim.globalPercentile != null ? ` · percentil nacional ${sim.globalPercentile}` : ""} · clave preliminar</span>
             </div>
           )}
           <div className="stat">
@@ -163,6 +164,8 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
           </div>
         </div>
       </div>
+
+      {sim?.complete && <IcfesAreas areas={sim.areas} />}
 
       <div className="card area-card">
         <span className="label">Por área</span>

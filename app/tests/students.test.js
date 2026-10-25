@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { alerts, cohortProjection, reinforcementSet, schoolCategory, studentSummaries } from "../src/lib/students.js";
+import { alerts, cohortProjection, reinforcementSet, studentSummaries } from "../src/lib/students.js";
 
 const NOW = new Date("2026-10-17T12:00:00Z").getTime();
 const day = (n) => new Date(NOW - n * 864e5).toISOString();
@@ -42,13 +42,17 @@ describe("reinforcement set", () => {
 });
 
 describe("school category", () => {
-  it("maps the mean band to a category and the distance to the next one", () => {
-    expect(schoolCategory(305)).toEqual({ id: "A", toNext: 25, next: "A+" });
-    expect(schoolCategory(350)).toEqual({ id: "A+", toNext: 0, next: null });
-    expect(schoolCategory(null)).toBeNull();
+  const band = (v) => ({ global: v * 5, areas: ["Lectura crítica", "Matemáticas", "Sociales y ciudadanas", "Ciencias naturales", "Inglés"].map((name) => ({ name, scale: v })) });
+  it("projects a cohort with ICFES's index from each student's latest complete simulacro", () => {
+    const strong = cohortProjection([...Array.from({ length: 12 }, () => ({ band: band(74) })), { band: null }]);
+    expect(strong.n).toBe(12);
+    expect(strong.mean).toBe(370);
+    expect(strong.category.id).toBe("A");
+    expect(strong.category.next).toBe("A+");
+    expect(strong.category.toNext).toBeGreaterThan(0);
+    expect(cohortProjection(Array.from({ length: 12 }, () => ({ band: band(82) }))).category).toMatchObject({ id: "A+", next: null, toNext: 0 });
   });
-  it("projects a cohort from the latest timed band of each student", () => {
-    const s = [{ band: { global: 300 } }, { band: { global: 260 } }, { band: null }];
-    expect(cohortProjection(s)).toEqual({ n: 2, mean: 280, category: { id: "B", toNext: 20, next: "A" } });
+  it("needs at least 9 students, like ICFES", () => {
+    expect(cohortProjection([{ band: band(80) }, { band: band(60) }])).toMatchObject({ n: 2, mean: 350, category: null, needs: 7 });
   });
 });

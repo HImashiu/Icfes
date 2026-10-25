@@ -11,6 +11,8 @@ import { pendingMisses } from "../lib/repechaje.js";
 import { achievements } from "../lib/achievements.js";
 import { scoreSummary } from "../lib/simulacro.js";
 import ScoreCard from "../components/ScoreCard.jsx";
+import { StudentAnnouncements } from "../components/Announcements.jsx";
+import { activeAnnouncements } from "../lib/announcements.js";
 import { daysUntil, loadGoal, xpToday } from "../lib/goal.js";
 import { weekPlan } from "../lib/studyPlan.js";
 import { practiceInsights, studentEvents, studentSubjects, studentTasks, teacherLabel } from "../lib/student.js";
@@ -22,7 +24,7 @@ const DAYS = ["L", "M", "X", "J", "V", "S", "D"];
 // Inicio: the next thing to do, today's goal, this week's tasks, each subject with its teacher, the countdown to the
 // exam, the month and the student's own progress. Progress is measured against the student's goal and past self,
 // never against classmates. Before the first practice the streak, XP and mastery are SAMPLE data (data/mock.js).
-export default function Home({ exam, slug, resumable, onContinue, onPractice, onSetup, xpSession, assigned, classes, course, onStartAssigned, onLive, realName, signedOut, onGo, onOpenSubject, exams = [], onStartSession, liveGames = [], onJoinGame = null }) {
+export default function Home({ exam, slug, resumable, onContinue, onPractice, onSetup, xpSession, assigned, classes, course, onStartAssigned, onLive, realName, signedOut, onGo, onOpenSubject, exams = [], onStartSession, liveGames = [], onJoinGame = null, announcements = [] }) {
   const now = Date.now();
   const todayIndex = (new Date().getDay() + 6) % 7;
   const history = useMemo(() => loadHistory(), []);
@@ -116,6 +118,7 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
 
       <div className="sh-grid">
         <div className="sh-col">
+          <StudentAnnouncements rows={activeAnnouncements(announcements)} limit={3} subjectOf={(id) => subjects.find((x) => x.courseIds.includes(id)) ?? null} />
           {assigned ? (
             <div className="card sh-card">
               <div className="section-head">

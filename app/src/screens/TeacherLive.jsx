@@ -238,7 +238,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
 
         <div className="tl-page" key={viewKey}>
           {r.section === "hoy" && (
-            <Today api={api} profile={profile} courses={courses} assignments={assignments} ws={ws} receipts={receipts} subject={context.subject} contextName={contextName}
+            <Today api={api} profile={profile} courses={courses} readOnlyIds={contexts.readOnly} assignments={assignments} ws={ws} receipts={receipts} subject={context.subject} contextName={contextName}
               go={go} onOpenStudent={openStudent} onOpenReceipt={openReceipt} onReinforce={() => go({ section: "actividades", tab: "refuerzo" })} />
           )}
 

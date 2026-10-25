@@ -10,14 +10,15 @@
 //   denominator auto | total | answered
 //   final     { weights: { task, homework, exam }, missing: zero | skip, from, to }   how a class's final note is built
 // Every key here is preliminary, so every result is too. IRT is provisional: it is calibrated on the group's own answers.
-import { areaScale, bandFor, weight } from "./analytics.js";
+import { areaScale, bandFor } from "./analytics.js";
+import { bFromDifficulty, globalScore, groupDifficulties, partialGlobal, scorePattern, weightOf } from "./icfesScore.js";
 import { FormulaError, evalTree, parseFormula } from "./formula.js";
 
 export const MODEL_KINDS = [
   { id: "percent", label: "Porcentaje", hint: "Aciertos sobre el total, de 0 a 100." },
   { id: "scale", label: "Escala propia", hint: "Por ejemplo notas de 1,0 a 5,0 con nota mínima de aprobación y exigencia del 60 %." },
-  { id: "icfes", label: "Estimado ICFES (0–500)", hint: "Corrige el azar y pondera las áreas como el Saber 11. Curva provisional." },
-  { id: "irt", label: "Puntaje IRT (provisional)", hint: "Dificultad de cada pregunta calculada con las respuestas del grupo. Necesita varias entregas." },
+  { id: "icfes", label: "Estimado ICFES (0–500)", hint: "Como el Saber 11: modelo 3PL por prueba en la escala nacional, global ponderado 3-3-3-3-1, niveles y percentiles." },
+  { id: "irt", label: "ICFES afinado con el grupo", hint: "El mismo modelo, y con 15 o más entregas las respuestas del grupo afinan la dificultad de cada pregunta." },
   { id: "formula", label: "Fórmula del docente", hint: "Escribe tu propia fórmula con porcentaje, aciertos, tiempo, pistas y más." },
 ];
 
@@ -167,6 +168,7 @@ export function toScale(pct, scale) {
   return clamp(v, min, max);
 }
 
+const pctOf = (st, name) => { const a = st.perArea.find((x) => x.name === name); return a?.pct == null ? null : Math.round(a.pct); };
 const fmt = (v, d) => Number(v).toLocaleString("es-CO", { minimumFractionDigits: d, maximumFractionDigits: d });
 
 // Estimate on the 0-500 scale from the (curved) share right in each area.
@@ -174,11 +176,12 @@ function icfesBand(stats) {
   return bandFor(stats.perArea.filter((a) => a.total > 0 && a.pct != null).map((a) => ({ name: a.name, total: a.total, correct: (a.pct / 100) * a.total })));
 }
 
-// ---------------------------------------------------------------- IRT (Rasch, joint maximum likelihood)
+// ---------------------------------------------------------------- IRT (3PL on the national scale)
 const logistic = (x) => 1 / (1 + Math.exp(-x));
 const MIN_PEOPLE = 15;
 const MIN_ITEMS = 5;
 
+// Rasch by joint maximum likelihood. Kept for item analysis; scores no longer come from it (see irtScores).
 // x: persons x items matrix of 0/1. Items everybody or nobody got right carry no information and are dropped.
 export function raschCalibrate(x) {
   const nP = x.length;
@@ -211,34 +214,38 @@ export function raschCalibrate(x) {
   return { keep, b, theta };
 }
 
-// Score every item (person) of a group on the 0-100 area scale (mean 50, SD 10 within the group) and the 0-500 global.
-// Returns an array aligned with `items`, each { areas: {name: score|null}, global|null, fallback: bool }.
-export function irtScores(items, ctx) {
+// Score every item (person) of a group like ICFES: per prueba, 3PL ability from the answer PATTERN, placed on the
+// national scale (0-100), then the 3/3/3/3/1 global. useGroup: the group's answers refine which items are harder
+// (groupDifficulties), never the scale itself, so a strong group keeps its high scores.
+// ctx: { questions, key, enrich?: the booklet's tags by number, difficulty?: Map(key -> 1-5) }. Returns per item { areas: {name: score}, global, fallback }.
+export function irtScores(items, ctx, { useGroup = true } = {}) {
   const { questions, key } = ctx;
   const byArea = new Map();
   for (const q of questions) if (key?.get(q.key)) byArea.set(q.section, [...(byArea.get(q.section) ?? []), q]);
-  const out = items.map(() => ({ areas: {}, global: null, fallback: false }));
+  const out = items.map(() => ({ areas: {}, ranges: {}, global: null, fallback: false, grouped: false }));
   for (const [name, qs] of byArea) {
-    const people = items.map((it, i) => ({ i, it })).filter(({ it }) => qs.some((q) => it.answers?.[q.key]));
-    const x = people.map(({ it }) => qs.map((q) => (it.answers?.[q.key] === key.get(q.key) ? 1 : 0)));
-    const fit = raschCalibrate(x);
-    if (!fit) {
-      for (const { i, it } of people) {
-        const right = qs.filter((q) => it.answers?.[q.key] === key.get(q.key)).length;
-        out[i].areas[name] = areaScale(right, qs.length);
-        out[i].fallback = true;
-      }
-      continue;
-    }
-    const mean = fit.theta.reduce((n, v) => n + v, 0) / fit.theta.length;
-    const sd = Math.sqrt(fit.theta.reduce((n, v) => n + (v - mean) ** 2, 0) / fit.theta.length) || 1;
-    people.forEach(({ i }, k) => { out[i].areas[name] = Math.round(clamp(50 + (10 * (fit.theta[k] - mean)) / sd, 0, 100)); });
+    const prior = qs.map((q) => bFromDifficulty(ctx.difficulty?.get(q.key) ?? ctx.enrich?.[String(q.number)]?.dificultad ?? q.dificultad));
+    const rows = items.map((it) => qs.map((q) => (it.answers?.[q.key] ? (it.answers[q.key] === key.get(q.key) ? 1 : 0) : null)));
+    const takers = rows.filter((r) => r.some((v) => v != null)).length;
+    const grouped = useGroup && takers >= MIN_PEOPLE;
+    // Blanks are wrong, like the real exam, once a person took the prueba at all.
+    const b = grouped ? groupDifficulties(rows, prior) : prior;
+    items.forEach((it, i) => {
+      if (!rows[i].some((v) => v != null)) return;
+      const r = scorePattern(name, qs.map((q, j) => ({ right: rows[i][j] === 1, b: b[j] })));
+      if (r) { out[i].areas[name] = r.score; out[i].ranges[name] = [r.low, r.high]; }
+      else { out[i].areas[name] = areaScale(rows[i].filter((v) => v === 1).length, qs.length, name); out[i].fallback = true; }
+      if (grouped) out[i].grouped = true;
+    });
   }
   for (const o of out) {
-    const names = Object.keys(o.areas).filter((n) => o.areas[n] != null);
-    if (names.length === 0) continue;
-    const w = names.reduce((n, a) => n + weight(a), 0);
-    o.global = Math.round((names.reduce((n, a) => n + weight(a) * o.areas[a], 0) / w) * 5);
+    const names = Object.keys(o.areas);
+    if (!names.length) continue;
+    o.global = globalScore(o.areas) ?? partialGlobal(o.areas);
+    const w = names.reduce((n, a) => n + weightOf(a), 0);
+    const margin = Math.max(5, Math.round((5 * Math.sqrt(names.reduce((n, a) => n + (weightOf(a) * ((o.ranges[a]?.[1] ?? o.areas[a] + 15) - (o.ranges[a]?.[0] ?? o.areas[a] - 15)) / 2) ** 2, 0))) / w));
+    o.low = Math.max(0, o.global - margin);
+    o.high = Math.min(500, o.global + margin);
   }
   return out;
 }
@@ -248,7 +255,7 @@ export function irtScores(items, ctx) {
 // Returns one result per item: { ok, value, display, kind, provisional, note, pct, rawPct, areas, low, high, stats, error }.
 export function gradeMany(items, rawModel, ctx = {}) {
   const m = normalizeModel(rawModel);
-  const irt = m.kind === "irt" && ctx.questions && ctx.key ? irtScores(items, ctx) : null;
+  const pattern = (m.kind === "irt" || m.kind === "icfes") && ctx.questions && ctx.key ? irtScores(items, ctx, { useGroup: m.kind === "irt" }) : null;
   let tree = null;
   let treeError = null;
   if (m.kind === "formula") {
@@ -268,15 +275,18 @@ export function gradeMany(items, rawModel, ctx = {}) {
         return { ...base, ok: true, value: Number(v.toFixed(m.scale.decimals)), display: fmt(v, m.scale.decimals), min: m.scale.min, max: m.scale.max, passed: v >= m.scale.pass };
       }
       case "icfes":
-        return { ...base, ok: band.global != null, value: band.global, display: band.global == null ? "—" : String(band.global), low: band.low, high: band.high, min: 0, max: 500, provisional: true, note: "Estimado con curva provisional y clave preliminar." };
       case "irt": {
-        const r = irt?.[idx];
-        if (!r || r.global == null) return { ...base, ok: band.global != null, value: band.global, display: band.global == null ? "—" : String(band.global), low: band.low, high: band.high, min: 0, max: 500, provisional: true, note: "Sin grupo suficiente para IRT: se muestra el estimado ICFES." };
-        return {
-          ...base, ok: true, value: r.global, display: String(r.global), min: 0, max: 500, provisional: true,
-          areas: Object.entries(r.areas).map(([name, v]) => ({ name, pct: st.perArea.find((a) => a.name === name)?.pct == null ? null : Math.round(st.perArea.find((a) => a.name === name).pct), score: v })),
-          note: r.fallback ? "Algunas áreas no tienen grupo suficiente y usan el estimado ICFES." : `Calibrado con las respuestas de ${items.length} entregas del grupo (media 50, DE 10 por área). Provisional.`,
-        };
+        const r = pattern?.[idx];
+        const fromPattern = r && r.global != null;
+        const value = fromPattern ? r.global : band.global;
+        const curved = Object.keys(m.curves).length > 0;
+        const areas = fromPattern
+          ? Object.entries(r.areas).map(([name, v]) => ({ name, pct: pctOf(st, name), score: v, range: r.ranges[name] }))
+          : band.areas.map((a) => ({ name: a.name, pct: pctOf(st, a.name), score: a.scale, range: [a.low, a.high] }));
+        const note = m.kind === "irt"
+          ? (r?.grouped ? `Patrón de respuestas (3PL) en la escala nacional; la dificultad de cada pregunta se afinó con ${items.length} entregas del grupo.` : "Patrón de respuestas (3PL) en la escala nacional. Con 15 o más entregas, el grupo afina la dificultad de cada pregunta.")
+          : `Patrón de respuestas (3PL) en la escala nacional del Saber 11${curved ? "; las curvas por área no cambian este puntaje" : ""}.`;
+        return { ...base, ok: value != null, value, display: value == null ? "—" : String(value), low: fromPattern ? r.low : band.low, high: fromPattern ? r.high : band.high, min: 0, max: 500, provisional: true, areas, note: `${note} Estimado con clave preliminar.` };
       }
       case "formula": {
         if (treeError) return { ...base, ok: false, value: null, display: "—", error: treeError };

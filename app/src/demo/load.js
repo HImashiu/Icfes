@@ -39,6 +39,7 @@ function studentClient(tables, me) {
     assignments: (r) => mine().has(r.course_id) && r.status !== "draft",
     attempts: (r) => r.profile_id === me.id,
     annotations: (r) => !r.profile_id || r.profile_id === me.id,
+    class_announcements: (r) => mine().has(r.course_id),
   };
   const student_classes = () => tables.courses.filter((c) => mine().has(c.id)).map((c) => ({
     id: c.id, name: c.name, subject: c.subject, grade: c.grade, group_label: c.group_label,

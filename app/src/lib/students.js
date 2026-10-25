@@ -2,6 +2,7 @@
 // projected school category. Pure functions; the thresholds and rules are visible constants so they can be tuned.
 import { areaAverages, mean, round } from "./analytics.js";
 import { latestScore } from "./simulacro.js";
+import { CATEGORY_CUTS, MIN_SCHOOL, schoolCategory as icfesCategory } from "./icfesScore.js";
 
 const DAY = 864e5;
 const ts = (a) => new Date(a.submitted_at).getTime();
@@ -110,26 +111,21 @@ export function reinforcementSet(items, key, attempts, { size = 15 } = {}) {
 }
 
 // ---------------------------------------------------------------- school category (projection)
-// PLACEHOLDER thresholds on the 0-500 global mean. ICFES publishes the real cut-offs each year: verify and replace.
-export const CATEGORY_VERSION = "ejemplo-2026";
-export const CATEGORIES = [
-  { id: "A+", min: 330 },
-  { id: "A", min: 300 },
-  { id: "B", min: 270 },
-  { id: "C", min: 240 },
-  { id: "D", min: 0 },
-];
-export function schoolCategory(meanBand) {
-  if (meanBand == null) return null;
-  const i = CATEGORIES.findIndex((c) => meanBand >= c.min);
-  const here = CATEGORIES[i];
-  const up = i > 0 ? CATEGORIES[i - 1] : null;
-  return { id: here.id, toNext: up ? Math.ceil(up.min - meanBand) : 0, next: up?.id ?? null };
-}
+// ICFES's own method (Res. 677/2021, icfesScore.js): an index per prueba from the top 80 % of the students, weighted
+// 3-3-3-3-1, cut at 0.77 / 0.72 / 0.67 / 0.62. ICFES uses three years of results; this uses each student's latest
+// complete simulacro.
+export const CATEGORY_VERSION = "Res. 677/2021";
+const NEXT = { D: "C", C: "B", B: "A", A: "A+" };
 
-// Latest complete simulacro per student, then the mean band. `students` are summaries (their .band is the latest timed).
+// Latest complete simulacro per student -> projected category. `summaries` are student summaries (.band = latest).
 export function cohortProjection(summaries) {
-  const bands = summaries.map((s) => s.band?.global).filter((g) => g != null);
-  const m = round(mean(bands));
-  return { n: bands.length, mean: m, category: schoolCategory(m) };
+  const done = summaries.map((s) => s.band).filter((b) => b?.global != null);
+  const m = round(mean(done.map((b) => b.global)));
+  const cat = icfesCategory(done.map((b) => Object.fromEntries((b.areas ?? []).map((a) => [a.name, a.scale]))));
+  if (!cat) return { n: done.length, mean: m, category: null, needs: Math.max(0, MIN_SCHOOL - done.length) };
+  const next = NEXT[cat.category] ?? null;
+  const cut = CATEGORY_CUTS.find((c) => c.label === next)?.min;
+  // The index moves about 0.01 per point of the average prueba score, so the gap reads as points per prueba.
+  const toNext = next ? Math.max(1, Math.ceil((cut - cat.index) * 100)) : 0;
+  return { n: done.length, mean: m, category: { id: cat.category, index: round(cat.index, 3), next, toNext }, perArea: cat.perArea };
 }

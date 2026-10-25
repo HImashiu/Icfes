@@ -37,6 +37,7 @@ function result(code, s1, s2) {
     global: s1 && s2 ? band.global : null,
     low: s1 && s2 ? band.low : null,
     high: s1 && s2 ? band.high : null,
+    globalPercentile: s1 && s2 ? band.globalPercentile : null,
     areas: band.areas, // 0-100 per area, from the sessions done so far
   };
 }

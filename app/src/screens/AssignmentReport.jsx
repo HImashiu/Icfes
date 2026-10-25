@@ -75,7 +75,7 @@ export default function AssignmentReport({ api, assignment, course = null, relat
     const delivered = data.attempts.filter((a) => a.submitted_at);
     const items = bundle ? itemStats(questions, bundle.key, delivered) : [];
     const timed = assignment.kind === "exam";
-    const ctx = bundle ? { questions, key: bundle.key } : {};
+    const ctx = bundle ? { questions, key: bundle.key, enrich: bundle.enrich } : {};
     const graded = prog.rows.filter((r) => r.attempt);
     // The group is graded together (IRT needs it); each student's best delivered attempt counts, like the percent column.
     const grades = gradeMany(graded.map((r) => itemFromRow(r.attempt, r.attempts.indexOf(r.attempt) + 1)), model, ctx);

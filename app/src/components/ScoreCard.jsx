@@ -23,7 +23,7 @@ export default function ScoreCard({ summary, target, exams = [], onStartSession,
           {latest ? (
             <>
               <span className="score-big"><CountUp value={latest.global} format={(n) => String(Math.round(n))} delay={200} /><small>/500</small></span>
-              <span className="caption">Rango probable {latest.low}–{latest.high} · Cuadernillo {latest.code} · {date(latest.at)}</span>
+              <span className="caption">Rango probable {latest.low}–{latest.high}{latest.globalPercentile != null ? ` · percentil nacional ${latest.globalPercentile}` : ""} · Cuadernillo {latest.code} · {date(latest.at)}</span>
               <span className="score-tags">
                 {target ? <span className={latest.global >= target ? "score-tag ok" : "score-tag"}>{latest.global >= target ? `Meta ${target} alcanzada` : `Faltan ${target - latest.global} para tu meta de ${target}`}</span> : null}
                 {prev != null && <span className={latest.global >= prev ? "score-tag ok" : "score-tag bad"}>{latest.global >= prev ? "▲" : "▼"} {Math.abs(latest.global - prev)} vs. el anterior</span>}
@@ -42,6 +42,7 @@ export default function ScoreCard({ summary, target, exams = [], onStartSession,
               <span key={a.name} className="score-area" style={{ "--c": areaColor(a.name) }}>
                 <b>{a.scale}</b><span className="caption">{areaShort(a.name)}</span>
                 <span className="score-bar"><span style={{ width: `${a.scale}%` }} /></span>
+                {a.level && <span className="score-level" title={`${a.level.label}: puntaje ${a.level.range}${a.percentile != null ? ` · percentil nacional ${a.percentile}` : ""}`}>{a.level.label.replace("Nivel ", "N")}{a.percentile != null && latest ? <small> · P{a.percentile}</small> : null}</span>}
               </span>
             ))}
           </div>
@@ -56,7 +57,7 @@ export default function ScoreCard({ summary, target, exams = [], onStartSession,
           {next && onStartSession && <button type="button" className="primary small" onClick={() => onStartSession(next.slug)}>Hacer Sesión {next.n} de {next.code}</button>}
         </div>
       )}
-      {!compact && <span className="caption score-note">Estimado con curva provisional y clave preliminar: orienta, no es el puntaje oficial del ICFES.</span>}
+      {!compact && <span className="caption score-note">Calculado como el ICFES (modelo 3PL por prueba, global 3-3-3-3-1, niveles oficiales; N = nivel, P = percentil frente al país) con clave preliminar: orienta, no es el puntaje oficial.</span>}
     </div>
   );
 }

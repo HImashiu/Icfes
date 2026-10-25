@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Select, confirmDialog } from "../components/Controls.jsx";
 import Icon from "../components/Icon.jsx";
 import { FORMULA_FUNCTIONS } from "../lib/formula.js";
+import { NATIONAL_SOURCE } from "../lib/icfesScore.js";
 import { areaColor } from "../lib/brand.js";
 import { progressRows, questionsForAttempt } from "../lib/assignments.js";
 import { FORMULA_VARS, MODEL_KINDS, describeModel, formatValue, gradeMany, itemFromRow, normalizeModel, resolveModel, xpFactor } from "../lib/grading.js";
@@ -23,8 +24,8 @@ const EXAMPLE = { id: "ej", mode: "timed", minutes: 60, attemptNo: 1, perArea: A
 const PLAIN = {
   percent: { title: "Porcentaje de aciertos", what: "La nota es el porcentaje de preguntas correctas, sin convertir.", when: "Para ver el desempeño tal cual, en prácticas y tareas." },
   scale: { title: "Escala del colegio (ej. 1,0 a 5,0)", what: "Convierte el porcentaje a tu escala. Tú decides la exigencia: con ese porcentaje se saca la nota mínima para aprobar.", when: "Para las notas que van al boletín o a la planilla." },
-  icfes: { title: "Estimado Saber 11 (0 a 500)", what: "Simula el puntaje del ICFES: descuenta el azar y pondera las áreas como el examen real.", when: "En simulacros completos (Sesión 1 + 2), para orientar. Curva provisional, no es el puntaje oficial." },
-  irt: { title: "Puntaje por dificultad (IRT)", what: "Acertar preguntas que casi nadie acertó vale más. Compara a cada estudiante con su propio grupo.", when: "Con 15 entregas o más. Con menos, usa el estimado Saber 11." },
+  icfes: { title: "Estimado Saber 11 (0 a 500)", what: "Califica como el ICFES: modelo de respuesta al ítem (3PL) por prueba, en la escala nacional de 0 a 100; global ponderado 3-3-3-3-1 sobre 500; nivel de desempeño y percentil nacional.", when: "En simulacros completos (Sesión 1 + 2). Clave preliminar: orienta, no es el puntaje oficial." },
+  irt: { title: "Saber 11 afinado con tu grupo", what: "El mismo cálculo del ICFES, y las respuestas del grupo afinan qué preguntas son más difíciles. El nivel del grupo no cambia la escala: un colegio fuerte conserva sus puntajes altos.", when: "Con 15 entregas o más por área. Con menos, usa la dificultad etiquetada de cada pregunta." },
   formula: { title: "Tu propia fórmula", what: "Escribe la regla como en una hoja de cálculo, por ejemplo restar por pistas o bonificar por tiempo.", when: "Para reglas especiales del área o del colegio." },
 };
 
@@ -203,7 +204,7 @@ function GradingWizard({ api, profile, courses, assignments, models, reloadModel
           </div>
         </section>
       )}
-      {draft.kind === "irt" && <p className="notice">El puntaje IRT es provisional: se calibra con las respuestas de tu grupo (media 50 y desviación 10 por área) y las claves son preliminares. Con menos de 15 entregas en un área se usa el estimado Saber 11. Sirve para comparar dentro del grupo, no para predecir el puntaje oficial.</p>}
+      {(draft.kind === "irt" || draft.kind === "icfes") && <p className="notice">Cómo califica el ICFES y qué hace Cóndor igual: cada prueba de 0 a 100 por patrón de respuestas (modelo 3PL: dificultad, discriminación y azar), las preguntas en blanco cuentan como incorrectas, global = (3·LC + 3·MA + 3·SC + 3·CN + 1·IN) ÷ 13 × 5, niveles de desempeño oficiales y percentil frente al país ({NATIONAL_SOURCE}). Lo que el ICFES no publica son los parámetros de sus preguntas: usamos la dificultad etiquetada{draft.kind === "irt" ? " y la que muestran las respuestas del grupo" : ""}. Las claves son preliminares.</p>}
       {draft.kind === "icfes" && <p className="notice">La curva es provisional hasta calibrarla con resultados reales del ICFES. El puntaje completo sale de Sesión 1 + Sesión 2.</p>}
 
       <section className="card t-card gw-step">

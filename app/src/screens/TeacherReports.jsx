@@ -77,7 +77,7 @@ export default function TeacherReports({ api, profile, courses, assignments, mod
       const a = assignments.find((x) => x.id === id);
       const { model } = resolveModel(models, { assignmentId: id, courseId: a?.course_id, schoolId: profile?.school_id });
       const b = bundles[id];
-      const ctx = b ? { questions: questionsForAttempt(b.exam, { scope: a.scope, keys: a.question_keys }), key: b.key } : {};
+      const ctx = b ? { questions: questionsForAttempt(b.exam, { scope: a.scope, keys: a.question_keys }), key: b.key, enrich: b.enrich } : {};
       const out = gradeMany(list.map((i) => itemFromRow(i.attempt)), model, ctx);
       list.forEach((i, k) => grade.set(i, { ...out[k], model }));
     }
