@@ -281,6 +281,7 @@ export default function App() {
   }, [signedIn, auth.api]);
 
   const startAssigned = async (a) => {
+    if (a.delivery === "paper") return; // answered on the printed sheet, never in the app
     const sel = await openExam(a.exam_slug, a.question_keys);
     if (!sel) return;
     const saved = loadAttempt(a.exam_slug, `asg-${a.id}`);

@@ -119,11 +119,12 @@ export function studentTasks({ subjects, assignments = [], attempts = [], now = 
   return assignments.filter((a) => a.status !== "draft").map((a) => {
     const mine = attempts.filter((t) => t.assignment_id === a.id && t.submitted_at).sort((x, y) => new Date(x.submitted_at) - new Date(y.submitted_at));
     const state = assignmentState(a, now);
-    const status = mine.length ? "delivered" : state === "active" ? "pending" : state === "scheduled" ? "scheduled" : "missed";
+    // A paper activity is answered on the printed sheet in the classroom: it never opens in the app.
+    const status = mine.length ? "delivered" : a.delivery === "paper" ? "paper" : state === "active" ? "pending" : state === "scheduled" ? "scheduled" : "missed";
     const last = mine[mine.length - 1];
     return { a, subject: of.get(a.id) ?? null, status, used: mine.length, pct: last ? scorePct(last) : null, deliveredAt: last?.submitted_at ?? null, left: attemptsLeft(a, mine.length), state };
   }).sort((x, y) => {
-    const rank = { pending: 0, scheduled: 1, delivered: 2, missed: 3 };
+    const rank = { pending: 0, paper: 1, scheduled: 1, delivered: 2, missed: 3 };
     if (rank[x.status] !== rank[y.status]) return rank[x.status] - rank[y.status];
     const dx = new Date(x.a.due_at ?? 8.64e15); const dy = new Date(y.a.due_at ?? 8.64e15);
     return x.status === "pending" || x.status === "scheduled" ? dx - dy : dy - dx;

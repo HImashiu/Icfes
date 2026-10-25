@@ -19,6 +19,14 @@ const REVEAL = [
   ["after_close", "Cuando cierre la asignación"],
   ["never", "No mostrar respuestas"],
 ];
+const DELIVERY = [
+  { id: "online", label: "En línea", note: "En el celular o el computador" },
+  { id: "paper", label: "En papel", note: "Cuadernillo impreso y hoja de burbujas" },
+];
+const PAPER_KIND_HELP = {
+  homework: "Taller impreso para resolver en clase o en casa; luego escaneas las hojas.",
+  exam: "Como el ICFES real: cuadernillo, hoja de respuestas y tiempo en el salón.",
+};
 const KIND_HELP = {
   task: "Práctica en clase, sin nota.",
   homework: "Para entregar en casa antes de la fecha.",
@@ -29,7 +37,8 @@ const KIND_HELP = {
 // With `lesson` ({ onCreate, slug?, label }) it picks the questions of a teaching lesson instead of an assignment;
 // `slug` locks the booklet (adding questions to a lesson that already has some).
 // `grading` ({ models, profile, onChange }) adds the grading model choice; without it the form is as before.
-export default function AssignBuilder({ api, courses, exams, fetchExam, guard, onCancel, onSaved, live = null, lesson = null, grading = null }) {
+// `preset` ({ kind, delivery }) starts the form as a given kind of activity (Tarea, Simulacro en papel…).
+export default function AssignBuilder({ api, courses, exams, fetchExam, guard, onCancel, onSaved, live = null, lesson = null, grading = null, preset = null }) {
   const ready = [...exams.filter((e) => e.status !== "proximamente"), ...(api.teacherQuestions ? [TEACHER_ENTRY] : [])];
   const cache = useRef(new Map());
   const [slug, setSlug] = useState(lesson?.slug ?? ready[0]?.slug ?? "");
@@ -47,13 +56,15 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
   const [busy, setBusy] = useState(false);
 
   const [courseIds, setCourseIds] = useState(courses.length === 1 ? [courses[0].id] : []);
-  const [kind, setKind] = useState("homework");
+  const [kind, setKind] = useState(preset?.kind ?? "homework");
+  const [delivery, setDelivery] = useState(preset?.delivery ?? "online");
+  const paper = delivery === "paper";
   const [title, setTitle] = useState("");
   const [opens, setOpens] = useState(isoDay(new Date()));
   const [due, setDue] = useState(isoDay(new Date(Date.now() + 7 * 864e5)));
   const [limit, setLimit] = useState("");
   const [attempts, setAttempts] = useState("");
-  const [reveal, setReveal] = useState("after_submit");
+  const [reveal, setReveal] = useState(preset?.delivery === "paper" ? "after_close" : "after_submit");
   const [hints, setHints] = useState(true);
   const [instant, setInstant] = useState(true);
   const [defsOn, setDefsOn] = useState(false);
@@ -133,7 +144,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
     guard(async () => {
       const me = await api.getProfile();
       const areas = [...new Set(picked.map((k) => byKey.get(k)?.section).filter(Boolean))];
-      const kindLabel = KINDS.find((k) => k.id === kind).label;
+      const kindLabel = paper ? (kind === "exam" ? "Simulacro en papel" : "Taller en papel") : KINDS.find((k) => k.id === kind).label;
       const auto = `${kindLabel} · ${areas.length === 1 ? areas[0] : "Varias áreas"} · ${picked.length} preguntas`;
       let last = null;
       const created = [];
@@ -145,6 +156,8 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
           time_limit_min: kind === "exam" && limit ? Number(limit) : null,
           max_attempts: attempts ? Number(attempts) : kind === "exam" ? 1 : null,
           reveal_policy: reveal, status: "active",
+          // Sent only for paper, so creating assignments keeps working before migration 0023 runs.
+          ...(paper ? { delivery: "paper", max_attempts: 1, proctor: false } : {}),
           // Sent only when switched off, so creating assignments keeps working before migration 0007 runs.
           ...(hints ? {} : { allow_hints: false }),
           ...(proctor ? { proctor: true } : {}),
@@ -304,24 +317,35 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
           <label key={c.id} className="b-check"><input type="checkbox" checked={courseIds.includes(c.id)} onChange={() => setCourseIds(courseIds.includes(c.id) ? courseIds.filter((x) => x !== c.id) : [...courseIds, c.id])} /> {c.name}{c.grade ? ` · Grado ${c.grade}` : ""}</label>
         ))}
       </fieldset>
+      <fieldset className="field b-delivery"><legend className="label">Cómo la resuelven</legend>
+        <div className="b-delivery-opts" role="radiogroup" aria-label="Cómo la resuelven">
+          {DELIVERY.map((d) => (
+            <button key={d.id} type="button" role="radio" aria-checked={delivery === d.id} className={delivery === d.id ? "b-delivery-opt on" : "b-delivery-opt"}
+              onClick={() => { setDelivery(d.id); if (d.id === "paper") { setReveal("after_close"); if (kind === "task") setKind("exam"); } }}>
+              <strong>{d.label}</strong><span className="caption">{d.note}</span>
+            </button>
+          ))}
+        </div>
+        <span className="caption">{paper ? "Imprimes el cuadernillo y una hoja de burbujas por estudiante, y escaneas las hojas con el celular. Los estudiantes no ven las preguntas en la app antes del examen." : "Siempre puedes imprimirla también: en la actividad, pestaña En papel."}</span>
+      </fieldset>
       <label className="field"><span className="label">Tipo</span>
-        <Select value={kind} onChange={(v) => setKind(v)}>{KINDS.map((k) => <option key={k.id} value={k.id}>{k.label}</option>)}</Select>
-        <span className="caption">{KIND_HELP[kind]}</span></label>
+        <Select value={kind} onChange={(v) => setKind(v)}>{KINDS.filter((k) => !paper || k.id !== "task").map((k) => <option key={k.id} value={k.id}>{k.label}</option>)}</Select>
+        <span className="caption">{paper ? PAPER_KIND_HELP[kind] : KIND_HELP[kind]}</span></label>
       <label className="field"><span className="label">Título (opcional)</span><input value={title} onChange={(e) => setTitle(e.target.value)} /></label>
       <label className="field"><span className="label">Abre</span><DateField value={opens} onChange={(v) => setOpens(v)} /></label>
       <label className="field"><span className="label">Fecha de entrega</span><DateField value={due} min={isoDay(new Date())} onChange={(v) => setDue(v)} /></label>
-      {kind === "exam" && (
+      {kind === "exam" && !paper && (
         <label className="field"><span className="label">Tiempo en minutos (vacío = el estándar)</span>
           <input inputMode="numeric" value={limit} onChange={(e) => setLimit(e.target.value.replace(/\D/g, ""))} placeholder={summary.total ? `≈ ${summary.minutes}` : ""} /></label>
       )}
-      <label className="field"><span className="label">Intentos permitidos</span>
+      {!paper && <label className="field"><span className="label">Intentos permitidos</span>
         <Select value={attempts} onChange={(v) => setAttempts(v)}>
           <option value="">{kind === "exam" ? "Uno (simulacro)" : "Sin límite"}</option>
           {[1, 2, 3, 5].map((n) => <option key={n} value={n}>{n}</option>)}
-        </Select></label>
+        </Select></label>}
       <label className="field"><span className="label">Mostrar respuestas y explicaciones</span>
         <Select value={reveal} onChange={(v) => setReveal(v)}>{REVEAL.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select></label>
-      {kind !== "exam" && (
+      {kind !== "exam" && !paper && (
         <label className="field"><span className="label">Corrección de cada pregunta</span>
           <Select value={instant ? "now" : "end"} onChange={(v) => setInstant(v === "now")}>
             <option value="now">Inmediata: ve si acertó al tocar “Comprobar”</option>
@@ -338,15 +362,15 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
           </label>
         );
       })()}
-      <label className="check-row"><input type="checkbox" checked={proctor} onChange={(e) => setProctor(e.target.checked)} />
-        <span>Monitorear el examen <span className="caption">(avisarte cuando un estudiante sale de la pestaña; el estudiante lo ve)</span></span></label>
-      {kind !== "exam" && (
+      {!paper && <label className="check-row"><input type="checkbox" checked={proctor} onChange={(e) => setProctor(e.target.checked)} />
+        <span>Monitorear el examen <span className="caption">(avisarte cuando un estudiante sale de la pestaña; el estudiante lo ve)</span></span></label>}
+      {kind !== "exam" && !paper && (
         <label className="check-row"><input type="checkbox" checked={hints} onChange={(e) => setHints(e.target.checked)} />
           <span>Permitir pistas antes de responder <span className="caption">(“Pista”, generada con IA)</span></span></label>
       )}
-      <label className="check-row"><input type="checkbox" checked={defsOn} onChange={(e) => setDefsOn(e.target.checked)} />
-        <span>Mostrar definiciones de palabras <span className="caption">(las escribes tú; salen al tocar la palabra en textos y opciones)</span></span></label>
-      {defsOn && (
+      {!paper && <label className="check-row"><input type="checkbox" checked={defsOn} onChange={(e) => setDefsOn(e.target.checked)} />
+        <span>Mostrar definiciones de palabras <span className="caption">(las escribes tú; salen al tocar la palabra en textos y opciones)</span></span></label>}
+      {defsOn && !paper && (
         <div className="glossary-edit">
           {defs.map((d, i) => (
             <div key={i} className="glossary-row">
@@ -363,7 +387,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
       {msg && <p className="notice error" role="alert">{msg}</p>}
       <div className="report-actions">
         <button type="button" className="secondary" onClick={onCancel}>Cancelar</button>
-        <button type="submit" className="primary" disabled={busy}>{busy ? "Guardando…" : lesson ? lesson.label ?? "Guardar clase" : live ? "Crear sala" : courseIds.length > 1 ? `Asignar a ${courseIds.length} cursos` : "Asignar"}</button>
+        <button type="submit" className="primary" disabled={busy}>{busy ? "Guardando…" : lesson ? lesson.label ?? "Guardar clase" : live ? "Crear sala" : paper ? (courseIds.length > 1 ? `Crear para ${courseIds.length} cursos e imprimir` : "Crear e imprimir") : courseIds.length > 1 ? `Asignar a ${courseIds.length} cursos` : "Asignar"}</button>
       </div>
     </form>
   );

@@ -8,7 +8,7 @@ import {
 import { usePoll } from "../lib/poll.js";
 import AutopsyCard from "../components/AutopsyCard.jsx";
 import LiveQr from "../components/LiveQr.jsx";
-import { DateField, Select } from "../components/Controls.jsx";
+import { DateField, Select, confirmDialog } from "../components/Controls.jsx";
 import { joinUrl } from "../lib/joinLink.js";
 import { Bars } from "./Dashboard.jsx";
 import "./live.css";
@@ -94,6 +94,14 @@ export default function LiveHost({ api, initial, fetchExam, guard, onExit, cours
     });
   };
   const end = () => act(async () => setSession(await api.liveEnd(initial.id)));
+  // Ends the game at any moment (in the lobby, mid-question): players see the end screen and the room leaves the list.
+  const finish = async () => {
+    const asked = session.state === "lobby"
+      ? "¿Cerrar la sala? Nadie más podrá entrar con este código."
+      : `¿Terminar el juego ahora? Se cierran las ${session.question_keys.length - idx - (session.state === "reveal" ? 1 : 0)} preguntas que faltan y ves el informe.`;
+    if (!(await confirmDialog(asked, { confirmLabel: session.state === "lobby" ? "Cerrar sala" : "Terminar juego", danger: true }))) return;
+    act(async () => setSession(await api.liveEnd(initial.id)));
+  };
   const pause = () => act(async () => setSession(await api.livePause(initial.id, !paused)));
   const addTime = () => act(async () => setSession(await api.liveAddTime(initial.id, 15)));
   const skip = () => act(async () => {
@@ -126,7 +134,10 @@ export default function LiveHost({ api, initial, fetchExam, guard, onExit, cours
       <header className="t-head">
         <div><h1>{session.title || "En vivo"}</h1>
           <span className="caption">{MODES.find((m) => m.id === mode).label} · puntajes y claves preliminares. Las respuestas de los jugadores no cuentan para la banda estimada.</span></div>
-        <button type="button" className="secondary" onClick={onExit}>Salir (la sala sigue abierta)</button>
+        <span className="live-head-actions">
+          <button type="button" className="secondary live-end" disabled={busy} onClick={finish}><Icon name="stop" size={16} />{session.state === "lobby" ? "Cerrar sala" : "Terminar juego"}</button>
+          <button type="button" className="link" onClick={onExit}>Salir sin cerrar</button>
+        </span>
       </header>
       {note && <p className="notice error" role="alert">{note}</p>}
 
@@ -478,16 +489,21 @@ function ReinforceDialog({ api, session, keys, courses, guard, onClose }) {
 
 // Sección “En vivo” del panel docente: salas abiertas, crear una nueva con el constructor de preguntas y los
 // juegos anteriores con su informe.
-export function LiveSection({ api, courses, exams, fetchExam, guard, AssignBuilder }) {
+export function LiveSection({ api, courses, exams, fetchExam, guard, AssignBuilder, startCreating = false }) {
   const [open, setOpen] = useState([]);
   const [past, setPast] = useState([]);
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useState(startCreating);
   const [active, setActive] = useState(null);
   const [report, setReport] = useState(null);
+  const [tick, setTick] = useState(0);
   useEffect(() => {
     guard(async () => setOpen(await api.myLiveSessions()));
     if (api.livePastSessions) api.livePastSessions().then(setPast, () => setPast([]));
-  }, [api, guard, active, report]);
+  }, [api, guard, active, report, tick]);
+  const close = async (s) => {
+    if (!(await confirmDialog(`¿Cerrar la sala «${s.title || "En vivo"}»? Nadie más podrá entrar con el código ${s.code}.`, { confirmLabel: "Cerrar sala", danger: true }))) return;
+    guard(async () => { await api.liveEnd(s.id); setTick((n) => n + 1); });
+  };
 
   // A rematch: a new room with the same (or only the missed) questions and the same settings.
   const replay = (s, keys) => guard(async () => {
@@ -524,12 +540,15 @@ export function LiveSection({ api, courses, exams, fetchExam, guard, AssignBuild
           <span className="label">Salas abiertas</span>
           <div className="room-grid">
             {open.map((s) => (
-              <button key={s.id} type="button" className="room-card" onClick={() => setActive(s)}>
-                <span className="room-live"><i aria-hidden="true" />En vivo</span>
-                <strong className="room-title">{s.title || "En vivo"}</strong>
-                <span className="room-code" aria-label={`Código ${s.code}`}>{String(s.code).replace(/(\d{3})(?=\d)/, "$1 ")}</span>
-                <span className="room-foot"><span><Icon name="book" size={16} />{s.question_keys.length} {s.question_keys.length === 1 ? "pregunta" : "preguntas"}</span><span className="room-go">Abrir <Icon name="arrow" size={16} /></span></span>
-              </button>
+              <div key={s.id} className="room-cell">
+                <button type="button" className="room-card" onClick={() => setActive(s)}>
+                  <span className="room-live"><i aria-hidden="true" />{s.state === "lobby" ? "Esperando" : "En vivo"}</span>
+                  <strong className="room-title">{s.title || "En vivo"}</strong>
+                  <span className="room-code" aria-label={`Código ${s.code}`}>{String(s.code).replace(/(\d{3})(?=\d)/, "$1 ")}</span>
+                  <span className="room-foot"><span><Icon name="book" size={16} />{s.question_keys.length} {s.question_keys.length === 1 ? "pregunta" : "preguntas"}</span><span className="room-go">Abrir <Icon name="arrow" size={16} /></span></span>
+                </button>
+                <button type="button" className="link room-close" onClick={() => close(s)} aria-label={`Cerrar la sala ${s.title || "En vivo"}`}><Icon name="stop" size={14} /> Cerrar sala</button>
+              </div>
             ))}
           </div>
         </section>

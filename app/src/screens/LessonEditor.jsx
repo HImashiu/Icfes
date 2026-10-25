@@ -2,10 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Icon from "../components/Icon.jsx";
 import PrintBooklet from "../components/PrintBooklet.jsx";
 import TeacherKey from "../components/TeacherKey.jsx";
-import { Select, confirmDialog } from "../components/Controls.jsx";
+import { FilePicker, Select, confirmDialog } from "../components/Controls.jsx";
+import LessonCover from "../components/LessonCover.jsx";
+import { imageToDataUrl } from "../lib/imageFile.js";
 import { areaColor } from "../lib/brand.js";
 import { moveKey } from "../lib/bank.js";
-import { appendKeys, cleanItems, cleanSettings, lessonQuestions, questionKeys } from "../lib/lesson.js";
+import { INTRO_COLORS, INTRO_LAYOUTS, TEXT_KINDS, appendKeys, cleanIntro, cleanItems, cleanOutro, cleanSettings, introOf, lessonQuestions, questionKeys } from "../lib/lesson.js";
 import ActivityPanel from "./ActivityPanel.jsx";
 import AssignBuilder from "./AssignBuilder.jsx";
 import LiveHost from "./LiveHost.jsx";
@@ -31,6 +33,9 @@ export default function LessonEditor({ api, profile, row, courses, exams, fetchE
   const [liveCourse, setLiveCourse] = useState("");
   const [room, setRoom] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(null); // index of the slide whose note is being written
+  const [names, setNames] = useState([]); // first names of the class chosen for "Sortear quién responde"
+  const [imgError, setImgError] = useState(null);
 
   const items = useMemo(() => cleanItems(lesson.items), [lesson.items]);
   const settings = cleanSettings(lesson.settings);
@@ -47,6 +52,27 @@ export default function LessonEditor({ api, profile, row, courses, exams, fetchE
 
   const reloadFormats = useCallback(() => guard(async () => setFormats(await api.activityFormats())), [api, guard]);
   useEffect(() => { reloadFormats(); }, [reloadFormats]);
+
+  // The class the name picker draws from: only first names, never scores.
+  useEffect(() => {
+    const id = settings.courseId;
+    if (!id || !api.listMembers) { setNames([]); return undefined; }
+    let alive = true;
+    api.listMembers(id).then((m) => {
+      if (alive) setNames(m.filter((x) => x.role === "student").map((x) => (x.full_name || x.email.split("@")[0]).split(/\s+/).slice(0, 2).join(" ")));
+    }).catch(() => alive && setNames([]));
+    return () => { alive = false; };
+  }, [api, settings.courseId]);
+  const intro = cleanIntro(settings.intro ?? {});
+  const outro = cleanOutro(settings.outro);
+  const setIntro = (patch) => setSetting({ intro: { ...intro, ...patch } });
+  const setOutro = (patch) => setSetting({ outro: { ...outro, ...patch } });
+  const pickImage = async (e, apply) => {
+    const file = e.target.files?.[0];
+    setImgError(null);
+    if (!file) return;
+    try { apply(await imageToDataUrl(file)); } catch (err) { setImgError(err.message); }
+  };
 
   const presentable = useMemo(() => ({ ...lesson, items, settings }), [lesson, items]); // eslint-disable-line react-hooks/exhaustive-deps
   const byKey = useMemo(() => new Map((bundle?.exam?.questions ?? []).map((q) => [q.key, q])), [bundle]);
@@ -191,13 +217,20 @@ export default function LessonEditor({ api, profile, row, courses, exams, fetchE
                       {q ? `${q.number}. ${plain(q.stem_md) || plain(q.stimulus_md) || q.section}` : `Pregunta ${it.key}`}
                     </button>
                   ) : mine ? (
-                    <span style={{ display: "grid", gap: 6 }}>
-                      <input aria-label={`Título de la diapositiva ${i + 1}`} placeholder="Título" value={it.title} onChange={(e) => patchSlide(i, { title: e.target.value })} />
-                      <textarea aria-label={`Texto de la diapositiva ${i + 1}`} rows={3} placeholder={"Texto. Empieza una línea con «- » para hacer una lista."} value={it.body} onChange={(e) => patchSlide(i, { body: e.target.value })} />
+                    <span className="les-slide-edit">
+                      <span className="les-slide-row">
+                        <Select aria-label={`Tipo de la diapositiva ${i + 1}`} value={it.kind ?? "text"} onChange={(v) => patchSlide(i, { kind: v === "text" ? undefined : v })} options={TEXT_KINDS.map(([v, l]) => ({ value: v, label: l }))} />
+                        {it.image
+                          ? <span className="les-img"><img src={it.image} alt="" /><button type="button" className="link" onClick={() => patchSlide(i, { image: undefined })}>Quitar imagen</button></span>
+                          : <FilePicker className="les-img-pick" accept="image/*" label="Imagen" hint="opcional" aria-label={`Imagen de la diapositiva ${i + 1}`} onChange={(e) => pickImage(e, (image) => patchSlide(i, { image }))} />}
+                      </span>
+                      <input aria-label={`Título de la diapositiva ${i + 1}`} placeholder={it.kind === "discuss" ? "La pregunta para discutir" : "Título"} value={it.title} onChange={(e) => patchSlide(i, { title: e.target.value })} />
+                      <textarea aria-label={`Texto de la diapositiva ${i + 1}`} rows={3} placeholder={it.kind === "activity" ? "Instrucciones. El cronómetro arranca solo al llegar a esta diapositiva." : "Texto. Empieza una línea con «- » para hacer una lista."} value={it.body} onChange={(e) => patchSlide(i, { body: e.target.value })} />
                     </span>
                   ) : <span className="les-text">{it.title || plain(it.body)}</span>}
                   {mine && (
                     <span className="b-move">
+                      <button type="button" className={it.note ? "b-btn on" : "b-btn"} aria-label={`Nota para ti en la diapositiva ${i + 1}`} aria-expanded={noteOpen === i} title="Nota para ti (solo la ves tú al presentar)" onClick={() => setNoteOpen(noteOpen === i ? null : i)}><Icon name="pencil" size={14} /></button>
                       <button type="button" className="b-btn" aria-label={`Subir diapositiva ${i + 1}`} disabled={i === 0} onClick={() => setItems(moveKey(items, i, -1))}>↑</button>
                       <button type="button" className="b-btn" aria-label={`Bajar diapositiva ${i + 1}`} disabled={i === items.length - 1} onClick={() => setItems(moveKey(items, i, 1))}>↓</button>
                       <button type="button" className="b-btn" aria-label={`Quitar diapositiva ${i + 1}`} onClick={() => setItems(items.filter((_, j) => j !== i))}>✕</button>
@@ -205,7 +238,11 @@ export default function LessonEditor({ api, profile, row, courses, exams, fetchE
                   )}
                 </li>
               );
-            })}
+            }).flatMap((li, i) => (noteOpen === i && mine ? [li, (
+              <li key={`note-${i}`} className="les-note">
+                <textarea autoFocus aria-label={`Nota de la diapositiva ${i + 1}`} rows={2} placeholder="Nota para ti: qué preguntar, qué recordar. La clase no la ve; al presentar, ábrela con N." value={items[i].note ?? ""} onChange={(e) => patchSlide(i, { note: e.target.value })} />
+              </li>
+            )] : [li]))}
             {items.length === 0 && <li className="caption" style={{ display: "block" }}>Esta clase aún no tiene diapositivas.</li>}
           </ol>
           {mine && (
@@ -218,25 +255,76 @@ export default function LessonEditor({ api, profile, row, courses, exams, fetchE
           )}
         </div>
 
-        <div className="card t-card assign-form">
-          <div className="section-head"><strong>Cómo se presenta</strong></div>
-          <label className="check-row"><input type="checkbox" disabled={!mine} checked={settings.hideOptions} onChange={(e) => setSetting({ hideOptions: e.target.checked })} />
-            <span>Mostrar las opciones en un paso aparte <span className="caption">(la clase primero piensa la pregunta)</span></span></label>
-          <label className="check-row"><input type="checkbox" disabled={!mine} checked={settings.titleSlide} onChange={(e) => setSetting({ titleSlide: e.target.checked })} />
-            <span>Empezar con una diapositiva de título</span></label>
-          <label className="field"><span className="label">Cronómetro y tiempo por pregunta en vivo</span>
-            <Select value={String(settings.seconds)} disabled={!mine} onChange={(v) => setSetting({ seconds: Number(v) })} aria-label="Segundos por pregunta">
-              {SECONDS.map((s) => <option key={s} value={String(s)}>{s} segundos</option>)}
-            </Select></label>
+        <div className="les-side">
+          <div className="card t-card assign-form les-cover-card">
+            <div className="section-head"><strong>Portada</strong>
+              <label className="check-row les-inline"><input type="checkbox" disabled={!mine} checked={settings.titleSlide} onChange={(e) => setSetting({ titleSlide: e.target.checked })} /><span>Empezar con portada</span></label></div>
+            <div className="les-cover-preview" aria-hidden="true"><LessonCover intro={introOf({ ...lesson, settings })} count={keys.length} preview /></div>
+            {mine && settings.titleSlide && (
+              <>
+                <div className="chips-row" role="radiogroup" aria-label="Diseño de la portada">
+                  {INTRO_LAYOUTS.map(([id, label]) => <button key={id} type="button" role="radio" aria-checked={intro.layout === id} className={intro.layout === id ? "chip on" : "chip"} onClick={() => setIntro({ layout: id })}>{label}</button>)}
+                </div>
+                <label className="field"><span className="label">Título</span><input value={intro.title} placeholder={lesson.title} onChange={(e) => setIntro({ title: e.target.value })} /></label>
+                <label className="field"><span className="label">Subtítulo</span><input value={intro.subtitle} placeholder="Por ejemplo: Matemáticas · repaso para el simulacro" onChange={(e) => setIntro({ subtitle: e.target.value })} /></label>
+                <label className="field"><span className="label">Docente o curso</span><input value={intro.by} placeholder={`Por ejemplo: Prof. ${profile.full_name || ""}`.trim()} onChange={(e) => setIntro({ by: e.target.value })} /></label>
+                {intro.layout !== "minimal" && (
+                  <label className="field"><span className="label">Objetivos de hoy (uno por línea)</span>
+                    <textarea rows={3} value={intro.goals} placeholder={"- Leer la tabla antes de mirar las opciones\n- Justificar con un dato"} onChange={(e) => setIntro({ goals: e.target.value })} /></label>
+                )}
+                <div className="field"><span className="label">Color</span>
+                  <div className="les-swatches" role="radiogroup" aria-label="Color de la portada">
+                    {INTRO_COLORS.map((c) => <button key={c} type="button" role="radio" aria-checked={intro.color === c} aria-label={`Color ${c}`} className={intro.color === c ? "les-swatch on" : "les-swatch"} style={{ background: c }} onClick={() => setIntro({ color: c })} />)}
+                  </div></div>
+                {intro.layout === "image" && (
+                  intro.image
+                    ? <span className="les-img"><img src={intro.image} alt="" /><button type="button" className="link" onClick={() => setIntro({ image: "" })}>Quitar imagen</button></span>
+                    : <FilePicker accept="image/*" label="Imagen de fondo" hint="una foto del colegio, del tema o de la clase" aria-label="Imagen de la portada" onChange={(e) => pickImage(e, (image) => setIntro({ image }))} />
+                )}
+                <label className="check-row"><input type="checkbox" checked={intro.date} onChange={(e) => setIntro({ date: e.target.checked })} /><span>Mostrar la fecha de hoy</span></label>
+                <label className="check-row"><input type="checkbox" checked={intro.count} onChange={(e) => setIntro({ count: e.target.checked })} /><span>Mostrar cuántas preguntas hay</span></label>
+              </>
+            )}
+            {imgError && <p className="notice error">{imgError}</p>}
+          </div>
+
           {mine && (
-            <label className="check-row"><input type="checkbox" checked={lesson.visibility === "school"} onChange={(e) => edit({ visibility: e.target.checked ? "school" : "private" })} />
-              <span>Compartir con los docentes de mi colegio <span className="caption">(pueden presentarla y duplicarla, no editarla)</span></span></label>
+            <div className="card t-card assign-form">
+              <div className="section-head"><strong>Cierre</strong><span className="caption">La última diapositiva</span></div>
+              <label className="field"><span className="label">Título</span><input value={outro.title} placeholder="Fin de la clase" onChange={(e) => setOutro({ title: e.target.value })} /></label>
+              <label className="field"><span className="label">Mensaje o tarea para la próxima clase</span>
+                <textarea rows={2} value={outro.body} placeholder={"- Repasa las preguntas 3 y 5\n- Trae la tabla de la página 12"} onChange={(e) => setOutro({ body: e.target.value })} /></label>
+            </div>
           )}
-          <p className="caption">Al presentar: → o espacio avanzan un paso (pregunta, opciones, respuesta, explicación), A muestra la respuesta, E la explicación, B deja la pantalla en blanco, T inicia el cronómetro, + y − cambian el tamaño, F pone pantalla completa. La respuesta sale de la clave preliminar y la explicación solo donde la clave está confirmada.</p>
+
+          <div className="card t-card assign-form">
+            <div className="section-head"><strong>Cómo se presenta</strong></div>
+            <label className="check-row"><input type="checkbox" disabled={!mine} checked={settings.hideOptions} onChange={(e) => setSetting({ hideOptions: e.target.checked })} />
+              <span>Mostrar las opciones en un paso aparte <span className="caption">(la clase primero piensa la pregunta)</span></span></label>
+            <label className="check-row"><input type="checkbox" disabled={!mine} checked={Boolean(settings.autoTimer)} onChange={(e) => setSetting({ autoTimer: e.target.checked || undefined })} />
+              <span>Cronómetro automático en cada pregunta</span></label>
+            <label className="check-row"><input type="checkbox" disabled={!mine} checked={settings.progress !== false} onChange={(e) => setSetting({ progress: e.target.checked ? undefined : false })} />
+              <span>Barra de avance arriba</span></label>
+            <label className="field"><span className="label">Cronómetro y tiempo por pregunta en vivo</span>
+              <Select value={String(settings.seconds)} disabled={!mine} onChange={(v) => setSetting({ seconds: Number(v) })} aria-label="Segundos por pregunta">
+                {SECONDS.map((sec) => <option key={sec} value={String(sec)}>{sec} segundos</option>)}
+              </Select></label>
+            {courses.length > 0 && (
+              <label className="field"><span className="label">Curso para «Sortear quién responde»</span>
+                <Select value={settings.courseId ?? ""} disabled={!mine} onChange={(v) => setSetting({ courseId: v || undefined })} aria-label="Curso para sortear"
+                  options={[{ value: "", label: "Ninguno" }, ...courses.map((c) => ({ value: c.id, label: c.name }))]} />
+                <span className="caption">{settings.courseId ? `${names.length} nombres. Solo se muestra el nombre de quien responde; nada de puntajes.` : "Al presentar, R saca un nombre al azar sin repetir."}</span></label>
+            )}
+            {mine && (
+              <label className="check-row"><input type="checkbox" checked={lesson.visibility === "school"} onChange={(e) => edit({ visibility: e.target.checked ? "school" : "private" })} />
+                <span>Compartir con los docentes de mi colegio <span className="caption">(pueden presentarla y duplicarla, no editarla)</span></span></label>
+            )}
+            <p className="caption">Al presentar tienes lápiz para marcar sobre la diapositiva (P), conteo de manos A–D (V), sorteo de quién responde (R), tus notas (N), todas las diapositivas (G) y pausa con pantalla negra (B). La respuesta sale de la clave preliminar y la explicación solo donde la clave está confirmada. ? muestra todos los atajos.</p>
+          </div>
         </div>
       </div>
 
-      {presenting != null && bundle && <Presenter lesson={presentable} bundle={bundle} start={presenting} onExit={() => setPresenting(null)} />}
+      {presenting != null && bundle && <Presenter lesson={presentable} bundle={bundle} start={presenting} names={names} onExit={() => setPresenting(null)} />}
       {printing === "worksheet" && (
         <Overlay title="Hoja de trabajo" hint={`${questions.length} preguntas · A4`} onClose={() => setPrinting(null)} page="14mm 14mm 16mm">
           <PrintBooklet variant="worksheet" questions={questions} figures={bundle.figures} examLabel={bundle.exam.title} title={lesson.title} course={courseName} />
