@@ -126,7 +126,7 @@ export default function TeacherReports({ api, profile, courses, assignments, mod
         <button type="button" className="ar2-group-head" aria-expanded={isOpen(g.name)} onClick={() => toggle(g.name)}>
           <span className="chev"><Icon name="right" size={14} strokeWidth={3} /></span>
           <strong>{g.name}</strong>
-          <span className="caption">{g.n} estudiantes{g.avg != null ? ` · promedio ${g.avg} %` : ""}{g.late ? ` · ${g.late} con tareas sin entregar` : ""}</span>
+          <span className="caption">{new Set(g.rows.map((r) => r.email || r.id)).size} estudiantes{g.rows.length > new Set(g.rows.map((r) => r.email || r.id)).size ? ` en ${new Set(g.rows.map((r) => r.courseId)).size} clases` : ""}{g.avg != null ? ` · promedio ${g.avg} %` : ""}{g.late ? ` · ${g.late} con tareas sin entregar` : ""}</span>
         </button>
         {isOpen(g.name) && <div className="table-wrap">
           <table className="t-table m-cards">
