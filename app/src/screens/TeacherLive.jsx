@@ -208,7 +208,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           {r.section === "actividad" && !activity && <p className="caption">{loaded ? "Esta actividad no existe o no tienes acceso a ella." : "Cargando…"}</p>}
           {r.section === "actividad" && activity && (
             <ActivityPage key={activity.id} api={baseApi} profile={profile} assignment={activity} course={activityCourse} tab={r.tab} go={go} models={models} reloadModels={reloadModels}
-              fetchExam={fetchExam} guard={guard} setNotice={setNotice} reload={reload} assignments={allAssignments} courses={allCourses} focusMember={focusMember}
+              fetchExam={fetchExam} guard={guard} setNotice={setNotice} reload={reload} assignments={allAssignments} courses={allCourses} focusMember={focusMember} onOpenStudent={openStudent}
               onScanned={(info) => { reload(); showReceipt(scanReceipt(info)); }} />
           )}
 
