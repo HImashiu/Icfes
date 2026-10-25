@@ -22,15 +22,15 @@ export default function ScoreCard({ summary, target, exams = [], onStartSession,
     <div className={compact ? "card score-card compact" : "card score-card"}>
       <div className="score-main">
         <div className="score-head">
-          <span className="label">Puntaje Saber 11 estimado</span>
+          <span className="label">{latest ? `Tu último simulacro completo · ${latest.code}` : "Puntaje Saber 11 por simulacro"}</span>
           {latest ? (
             <>
               <span className="score-big"><CountUp value={latest.global} format={(n) => String(Math.round(n))} delay={200} /><small>/500</small></span>
-              <span className="caption">Rango probable {latest.low}–{latest.high} · Cuadernillo {latest.code} · {date(latest.at)}</span>
+              <span className="caption">Solo de este simulacro: Sesión 1 ({date(latest.s1.at)}) + Sesión 2 ({date(latest.s2.at)}) de {latest.code}, primer intento · rango probable {latest.low}–{latest.high}</span>
               <span className="score-tags">
                 {latest.percentile != null && <span className="score-tag">Percentil {latest.percentile} del país</span>}
-                {target ? <span className={latest.global >= target ? "score-tag ok" : "score-tag"}>{latest.global >= target ? `Meta ${target} alcanzada` : `Faltan ${target - latest.global} para tu meta de ${target}`}</span> : null}
-                {prev != null && <span className={latest.global >= prev ? "score-tag ok" : "score-tag bad"}>{latest.global >= prev ? "▲" : "▼"} {Math.abs(latest.global - prev)} vs. el anterior</span>}
+                {target ? <span className={latest.global >= target ? "score-tag ok" : "score-tag"}>{latest.global >= target ? `Meta ${target} alcanzada en este simulacro` : `Faltan ${target - latest.global} para tu meta de ${target}`}</span> : null}
+                {prev != null && <span className={latest.global >= prev ? "score-tag ok" : "score-tag bad"}>{latest.global >= prev ? "▲" : "▼"} {Math.abs(latest.global - prev)} vs. tu simulacro anterior</span>}
               </span>
             </>
           ) : (

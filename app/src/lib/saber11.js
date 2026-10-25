@@ -246,3 +246,27 @@ export function levelDistribution(sims = []) {
     };
   }).filter((r) => r.n > 0);
 }
+
+// One activity's own ICFES-style estimate (never a mix of activities). Each test with at least MIN_ACTIVITY_ITEMS
+// keyed questions gets its 0-100 score, level and percentile; the global only when `withGlobal` (a whole session or
+// a whole simulacro). In practice only what was answered counts (stopping early is normal there); with time, blanks
+// are wrong like on exam day.
+export const MIN_ACTIVITY_ITEMS = 8;
+export function activityEstimate(questions = [], answers = {}, key, { mode = "practice", withGlobal = false } = {}) {
+  if (!key) return null;
+  const by = new Map();
+  for (const q of questions) {
+    const right = key.get(q.key);
+    if (!right) continue;
+    const given = answers?.[q.key];
+    if (mode === "practice" && !given) continue;
+    const a = by.get(q.section) ?? { name: q.section, correct: 0, total: 0, resp: [] };
+    const r = given === right ? 1 : 0;
+    a.correct += r; a.total += 1; a.resp.push([r, q.options?.length || 4]);
+    by.set(q.section, a);
+  }
+  const areas = [...by.values()].filter((a) => a.total >= MIN_ACTIVITY_ITEMS && testOf(a.name));
+  if (!areas.length) return { areas: [], global: null, few: [...by.values()].filter((a) => testOf(a.name)) };
+  const r = scoreSaber11(areas);
+  return withGlobal ? r : { ...r, global: null, low: null, high: null, percentile: null };
+}

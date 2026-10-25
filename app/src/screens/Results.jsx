@@ -3,6 +3,8 @@ import { gradeAttempt, isAdjusted, itemFromAttempt } from "../lib/grading.js";
 import { useEffect, useMemo, useRef } from "react";
 import CountUp from "../components/CountUp.jsx";
 import Saber11Report from "../components/Saber11Report.jsx";
+import { MIN_ACTIVITY_ITEMS, activityEstimate } from "../lib/saber11.js";
+import { REPEAT_SHARE, seenBefore } from "../lib/firstTry.js";
 import { confetti, play } from "../lib/motion.js";
 import Mascot from "../components/Mascot.jsx";
 import { loadHistory, recordAttempt } from "../lib/local.js";
@@ -36,12 +38,18 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
   // This attempt as a history row, so a whole session pairs with the other session of its cuadernillo.
   const sim = useMemo(() => {
     if (!delivered || !score.keyed || attempt.assignmentId || attempt.repechaje || attempt.custom) return null;
-    const row = { id: String(attempt.startedAt), at: attempt.submittedAt, mode: attempt.mode, keyed: true, total: score.total, answered: score.answered, perArea: score.perArea, snapshot: { slug: attempt.slug, scope: attempt.scope } };
+    const row = { id: String(attempt.startedAt), at: attempt.submittedAt, mode: attempt.mode, keyed: true, total: score.total, answered: score.answered, perArea: score.perArea, right: rightKeys(questions, attempt.answers, answerKey), missed: missedKeys(questions, attempt.answers, answerKey, attempt.mode), snapshot: { slug: attempt.slug, scope: attempt.scope } };
     if (!isFullSession(row)) return null;
     const all = simulacros([...loadHistory().filter((h) => h.id !== row.id), row]);
     return all.filter((x) => x.s1?.id === row.id || x.s2?.id === row.id).pop() ?? null;
   }, [delivered, attempt.startedAt]); // eslint-disable-line react-hooks/exhaustive-deps
   const nextUp = sim && !sim.complete ? nextSession(sim, exams) : null;
+  // This activity alone in the ICFES format (0-100 per test, level, percentile); a whole session also gets the global.
+  // A repeat (questions answered in an earlier attempt) still shows its result but counts nowhere else.
+  const fullSession = isFullSession({ mode: attempt.mode, keyed: score.keyed, total: score.total, answered: score.answered, snapshot: { slug: attempt.slug, scope: attempt.scope, keys: attempt.keys } });
+  const est = useMemo(() => (delivered && score.keyed && !locked ? activityEstimate(questions, attempt.answers, answerKey, { mode: attempt.mode, withGlobal: fullSession }) : null), [delivered, attempt.startedAt, locked]); // eslint-disable-line react-hooks/exhaustive-deps
+  const seen = useMemo(() => (delivered && score.keyed ? seenBefore(loadHistory(), attempt.slug, [...rightKeys(questions, attempt.answers, answerKey), ...missedKeys(questions, attempt.answers, answerKey, attempt.mode)], attempt.startedAt) : 0), [delivered, attempt.startedAt]); // eslint-disable-line react-hooks/exhaustive-deps
+  const repeat = seen > REPEAT_SHARE;
   const wrong = score.keyed ? score.answered - score.correct : 0;
   const flagged = Object.keys(attempt.flags).length;
   const xpEarned = attemptXp(questions, attempt, answerKey);
@@ -54,7 +62,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
 
   // Keep the finished attempt in "Mis simulacros" (once per attempt, stored in this browser).
   useEffect(() => {
-    if (!delivered) return;
+    if (!delivered || attempt.from === "assigned") return;
     recordAttempt({
       id: String(attempt.startedAt),
       title,
@@ -152,6 +160,29 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
               <strong className="display"><CountUp value={sim.global} format={(n) => String(Math.round(n))} delay={300} /><small className="muted"> /500</small></strong>
               <span className="caption">Sesión 1 + Sesión 2 de {sim.code} · rango {sim.low}–{sim.high}{sim.percentile != null ? ` · percentil ${sim.percentile} del país` : ""} · estimado, clave preliminar</span>
               <Saber11Report sim={sim} showGlobal={false} />
+            </div>
+          )}
+          {!sim?.complete && est?.areas?.length > 0 && (
+            <div className="stat stat-score">
+              <span className="label">{est.global != null ? `Puntaje global con esta sesión${sim ? ` (Sesión ${sim.s1 ? 1 : 2} de ${sim.code})` : ""}` : "Estimado ICFES de esta actividad"}</span>
+              {est.global != null && <strong className="display"><CountUp value={est.global} format={(n) => String(Math.round(n))} delay={300} /><small className="muted"> /500</small></strong>}
+              <span className="caption">
+                {est.global != null ? `Rango ${est.low}–${est.high}${est.percentile != null ? ` · percentil ${est.percentile} del país` : ""} · solo las pruebas de esta sesión; el puntaje completo sale con las dos sesiones. ` : ""}
+                Basado solo en esta actividad: {est.areas.map((a) => `${a.total} de ${a.name}`).join(", ")}{attempt.mode === "practice" ? " (las que respondiste)" : ""}. Estimado, clave preliminar.
+              </span>
+              <Saber11Report sim={est} showGlobal={false} />
+            </div>
+          )}
+          {!sim?.complete && est && !est.areas?.length && (
+            <div className="stat stat-score">
+              <span className="label">Estimado ICFES de esta actividad</span>
+              <span className="caption">Con menos de {MIN_ACTIVITY_ITEMS} preguntas por prueba no hay un puntaje ICFES confiable: mira tus aciertos y repasa los errores.</span>
+            </div>
+          )}
+          {repeat && (
+            <div className="stat stat-score">
+              <span className="label">Intento repetido</span>
+              <span className="caption">Ya habías respondido el {Math.round(seen * 100)} % de estas preguntas. Tu resultado se muestra, pero no cuenta para tus simulacros ni para tu análisis por área.</span>
             </div>
           )}
           <div className="stat">
