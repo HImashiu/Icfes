@@ -5,6 +5,8 @@ import { hasGuardianAuth } from "../lib/consent.js";
 import { CATEGORY_VERSION, cohortProjection, studentSummaries } from "../lib/students.js";
 import { alertLabel, buildRoster, weeklySummary } from "../lib/workspace.js";
 import { fmtDuration } from "../lib/studentRun.js";
+import Icon from "../components/Icon.jsx";
+import { areaOf, areaShort, groupOf } from "../lib/teaching.js";
 
 // Horizontal bars for a share (0-100) per row. Colour only carries the area; the number is always written.
 export function Bars({ rows, unit = " %" }) {
@@ -72,7 +74,31 @@ export default function Dashboard({ api, profile, guard, ws, onOpenCourse, onRei
     return { ...cohortProjection(pool), label: g11.size ? "grado 11" : "el colegio" };
   }, [data, people]);
   const courseName = (id) => data?.courses.find((c) => c.id === id)?.name ?? "";
+  // A student's curso(s) ("11C"), not the list of every class they are in.
+  const groupsOf = (ids) => [...new Set(ids.map((id) => data?.courses.find((c) => c.id === id)).filter(Boolean).map((c) => groupOf(c).name))].join(", ");
   const admin = profile.role === "school_admin";
+  // One row per curso (11 A), its subject classes as links. Its students are the same in every subject, so they count once.
+  const cursos = useMemo(() => {
+    const map = new Map();
+    for (const c of s?.perCourse ?? []) {
+      const course = data.courses.find((x) => x.id === c.id) ?? c;
+      const g = groupOf(course);
+      if (!map.has(g.key)) map.set(g.key, { key: g.key, name: g.name, classes: [], students: 0, joined: 0, assignments: 0, done: 0, expected: 0, sum: 0, n: 0, lowest: null });
+      const x = map.get(g.key);
+      const area = areaOf(course);
+      x.classes.push({ id: c.id, short: area ? areaShort(area) : course.subject === "Todas las áreas" ? "Simulacros" : course.name });
+      x.students = Math.max(x.students, c.students);
+      x.joined = Math.max(x.joined, c.joined);
+      x.assignments += c.assignments;
+      if (c.completion != null) { x.done += (c.completion / 100) * c.students * c.assignments; x.expected += c.students * c.assignments; }
+      if (c.avgPct != null) { x.sum += c.avgPct * Math.max(1, c.assignments); x.n += Math.max(1, c.assignments); }
+      const low = c.areas?.[0];
+      if (low && (!x.lowest || low.pct < x.lowest.pct)) x.lowest = low;
+    }
+    const list = [...map.values()].map((x) => ({ ...x, completion: x.expected ? Math.round((x.done / x.expected) * 100) : null, avgPct: x.n ? Math.round(x.sum / x.n) : null }))
+      .sort((a, b) => a.name.localeCompare(b.name, "es", { numeric: true }));
+    return { active: list.filter((x) => x.students > 0 || x.assignments > 0), empty: list.filter((x) => !x.students && !x.assignments) };
+  }, [s, data]);
 
   if (!s) return <p className="caption">Cargando resumen…</p>;
   if (data.courses.length === 0) {
@@ -98,7 +124,8 @@ export default function Dashboard({ api, profile, guard, ws, onOpenCourse, onRei
         <Kpi label="Promedio" value={s.avgPct == null ? null : `${s.avgPct} %`} hint="de aciertos en lo entregado" />
       </div>
 
-      <div className="d-two">
+      <div className="d-cols">
+        <div className="d-col">
         <div className="card t-card">
           <strong>Resultados por área</strong>
           {s.areas.length === 0 ? <span className="caption">Aún no hay entregas.</span> : (
@@ -108,82 +135,97 @@ export default function Dashboard({ api, profile, guard, ws, onOpenCourse, onRei
             </>
           )}
         </div>
-        <div className="card t-card">
-          <strong>Puntaje Saber 11 estimado</strong>
-          {s.bandCount === 0 ? (
-            <span className="caption">Aparece cuando los estudiantes entreguen un simulacro completo: Sesión 1 y Sesión 2 del mismo cuadernillo. Una sola sesión, las prácticas por área y las tareas no dan puntaje.</span>
-          ) : (
-            <>
-              <span className="caption">{s.bandCount} estudiantes con simulacro completo · promedio {s.bandMean} / 500</span>
-              <BandHistogram bins={s.bandHistogram} />
-              <span className="caption">Estimación con curva provisional: sirve para comparar, no es el puntaje oficial.</span>
-            </>
+          {!(s.bandCount === 0 && !cohort.category) && (
+          <div className="card t-card">
+            <strong>Puntaje Saber 11 estimado</strong>
+            {s.bandCount === 0 ? (
+              <span className="caption">Aparece cuando los estudiantes entreguen un simulacro completo: Sesión 1 y Sesión 2 del mismo cuadernillo.</span>
+            ) : (
+              <>
+                <span className="caption">{s.bandCount} estudiantes con simulacro completo · promedio {s.bandMean} / 500</span>
+                <BandHistogram bins={s.bandHistogram} />
+                <span className="caption">Estimación con curva provisional: sirve para comparar, no es el puntaje oficial.</span>
+              </>
+            )}
+          </div>
           )}
         </div>
-      </div>
-
-      <div className="d-two">
-        <div className="card t-card">
-          <strong>Categoría proyectada · {cohort.label}</strong>
-          {cohort.category ? (
+        <div className="d-col">
+        <div className="card t-card d-alerts">
+          <div className="section-head"><strong>Necesitan atención</strong><span className="caption">{warn.length ? `${warn.length} ${warn.length === 1 ? "estudiante" : "estudiantes"}` : "nadie por ahora"}</span></div>
+          {warn.length === 0 ? <span className="caption">Nadie bajó ni tiene promedio bajo. Buen momento para subir la exigencia.</span> : (
             <>
-              <strong className="display">Categoría {cohort.category.id}</strong>
-              <span className="caption">
-                Si la prueba real fuera hoy, con el último simulacro completo (Sesión 1 + Sesión 2) de {cohort.n} {cohort.n === 1 ? "estudiante" : "estudiantes"} (promedio {cohort.mean} de 500).
-                {cohort.category.next ? ` Faltan ${cohort.category.toNext} puntos para la categoría ${cohort.category.next}.` : " Ya está en la categoría más alta."}
-              </span>
-              <span className="caption">Umbrales de ejemplo ({CATEGORY_VERSION}), no los oficiales: el ICFES publica los reales cada año.</span>
+              <ul className="d-alert-list">
+                {warn.slice(0, 5).map((e) => {
+                  const a = e.alerts.find((x) => x.kind !== "up");
+                  return (
+                    <li key={e.key}>
+                      <span className="d-alert-who">
+                        {onOpenStudent ? <button type="button" className="link ws-inline" onClick={() => onOpenStudent(e.email)}>{e.name}</button> : <strong>{e.name}</strong>}
+                        <span className="caption">{groupsOf(e.courseIds)}{a.area ? ` · más bajo: ${areaShort(a.area)}` : ""}</span>
+                      </span>
+                      <span className="ws-alert" title={a.reason}>{alertLabel(a.kind)}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <span className="caption">Sugerencia: hablar con cada uno esta semana y asignarle un refuerzo en su área más baja.{warn.length > 5 ? ` Los otros ${warn.length - 5} están en Estudiantes › «Necesitan atención».` : ""}</span>
             </>
-          ) : <span className="caption">Aparece cuando los estudiantes entreguen un simulacro con tiempo.</span>}
-        </div>
-        <div className="card t-card">
-          <div className="section-head"><strong>Alertas</strong>{onOpenStudent && warn.length > 0 && <span className="caption">Toca un nombre para ver su perfil</span>}</div>
-          {warn.length === 0 ? <span className="caption">Nadie en riesgo por ahora.</span> : (
-            <ul className="b-list">
-              {warn.slice(0, 8).map((e) => {
-                const a = e.alerts.find((x) => x.kind !== "up");
-                return (
-                  <li key={e.key} className="b-row" style={{ gridTemplateColumns: "1fr" }}>
-                    <div className="b-body">
-                      <strong>{onOpenStudent ? <button type="button" className="link ws-inline" onClick={() => onOpenStudent(e.email)}>{e.name}</button> : e.name} <span className="muted">· {e.courseIds.map(courseName).join(", ")}</span> <span className="ws-alert">{alertLabel(a.kind)}</span>{e.followUp && <span className="ws-follow">En seguimiento</span>}</strong>
-                      <span className="b-text">{a.reason}{a.area ? ` Más bajo: ${a.area}.` : ""}</span>
-                      <span className="caption">{a.action}</span>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
           )}
-          {warn.length > 8 && <span className="caption">Y {warn.length - 8} más en Estudiantes (filtro «Necesitan atención»).</span>}
           <div className="report-actions no-print">
-            {onOpenQueue && warn.length > 0 && <button type="button" className="secondary" onClick={onOpenQueue}>Ir a la cola de seguimiento</button>}
-            {onReinforce && warn.some((e) => e.alerts.some((a) => a.kind === "drop" || a.kind === "low")) && <button type="button" className="secondary" onClick={onReinforce}>Preparar planes de refuerzo</button>}
+            {onOpenQueue && warn.length > 0 && <button type="button" className="secondary" onClick={onOpenQueue}>Cola de seguimiento</button>}
+            {onReinforce && warn.some((e) => e.alerts.some((x) => x.kind === "drop" || x.kind === "low")) && <button type="button" className="secondary" onClick={onReinforce}>Planes de refuerzo</button>}
           </div>
         </div>
+          {!(s.bandCount === 0 && !cohort.category) && (
+          <div className="card t-card">
+            <strong>Categoría proyectada · {cohort.label}</strong>
+            {cohort.category ? (
+              <>
+                <strong className="display">Categoría {cohort.category.id}</strong>
+                <span className="caption">
+                  Si la prueba real fuera hoy, con el último simulacro completo (Sesión 1 + Sesión 2) de {cohort.n} {cohort.n === 1 ? "estudiante" : "estudiantes"} (promedio {cohort.mean} de 500).
+                  {cohort.category.next ? ` Faltan ${cohort.category.toNext} puntos para la categoría ${cohort.category.next}.` : " Ya está en la categoría más alta."}
+                </span>
+                <span className="caption">Umbrales de ejemplo ({CATEGORY_VERSION}), no los oficiales: el ICFES publica los reales cada año.</span>
+              </>
+            ) : <span className="caption">Aparece cuando los estudiantes entreguen un simulacro con tiempo.</span>}
+          </div>
+          )}
+        </div>
       </div>
+      {s.bandCount === 0 && !cohort.category && (
+        <div className="card t-card d-pending">
+          <Icon name="clock" size={18} />
+          <span><strong>Puntaje Saber 11 estimado y categoría proyectada</strong>
+            <span className="caption">Aparecen cuando los estudiantes entreguen un simulacro completo: Sesión 1 y Sesión 2 del mismo cuadernillo, con tiempo. Las prácticas por área y las tareas no dan puntaje.</span></span>
+        </div>
+      )}
 
       {week && <WeekCard week={week} courseName={courseName} onOpenStudent={onOpenStudent} onOpenQueue={onOpenQueue} />}
 
       <div className="card t-card">
-        <strong>Cursos</strong>
+        <div className="section-head"><strong>Cursos</strong><span className="caption">Cada curso con sus materias; toca una materia para abrirla</span></div>
         <div className="table-wrap">
           <table className="t-table">
-            <thead><tr><th>Curso</th><th>Estudiantes</th><th>Ingresaron</th><th>Asignaciones</th><th>Entregas</th><th>Promedio</th><th>Más bajo</th></tr></thead>
+            <thead><tr><th>Curso</th><th>Estudiantes</th><th>Ingresaron</th><th>Actividades</th><th>Entregas</th><th>Promedio</th><th>Más bajo</th></tr></thead>
             <tbody>
-              {s.perCourse.map((c) => (
-                <tr key={c.id}>
-                  <td><button type="button" className="link" onClick={() => onOpenCourse?.(c.id)}>{c.name}{c.grade ? ` · ${c.grade}` : ""}</button></td>
-                  <td>{c.students}</td>
-                  <td>{c.students ? `${Math.round((c.joined / c.students) * 100)} %` : "—"}</td>
-                  <td>{c.assignments}</td>
-                  <td>{c.completion == null ? "—" : `${c.completion} %`}</td>
-                  <td>{c.avgPct == null ? "—" : `${c.avgPct} %`}</td>
-                  <td>{c.areas[0] ? `${c.areas[0].name} (${c.areas[0].pct} %)` : "—"}</td>
+              {cursos.active.map((g) => (
+                <tr key={g.key}>
+                  <td><strong>{g.name}</strong>
+                    <span className="d-subjects">{g.classes.map((c) => <button key={c.id} type="button" className="link" onClick={() => onOpenCourse?.(c.id)}>{c.short}</button>)}</span></td>
+                  <td>{g.students}</td>
+                  <td>{g.students ? `${Math.round((g.joined / g.students) * 100)} %` : "—"}</td>
+                  <td>{g.assignments}</td>
+                  <td>{g.completion == null ? "—" : `${g.completion} %`}</td>
+                  <td>{g.avgPct == null ? "—" : `${g.avgPct} %`}</td>
+                  <td>{g.lowest ? `${areaShort(g.lowest.name)} (${g.lowest.pct} %)` : "—"}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        {cursos.empty.length > 0 && <span className="caption">Sin estudiantes todavía: {cursos.empty.map((g) => g.name).join(", ")}. Importa su lista en Colegio › Cursos y materias.</span>}
         <span className="caption">“Entregas” es lo entregado sobre lo esperado (estudiantes × asignaciones).</span>
       </div>
     </>

@@ -35,10 +35,23 @@ export function areaOf(course) {
   return hit ? SUBJECT_AREA[hit] : null;
 }
 
-// The group a class belongs to: grade + group label ("11A"). Older spaces without them use their own name.
+// Grade and group read from the end of a class name: "Matemáticas 11 A", "11-A", "Curso Preparación Saber 11 C".
+// Mirrors public.name_grade_group() in migration 0025, which fills them in on classes made without them.
+export function gradeGroupFromName(name) {
+  const m = String(name ?? "").trim().match(/(?:^|[^\d])(\d{1,2})\s*[-°º]?\s*([A-Za-z]|\d{2})$/);
+  if (!m || Number(m[1]) < 1 || Number(m[1]) > 13) return null;
+  return { grade: String(Number(m[1])), label: m[2].toUpperCase() };
+}
+
+// The group a class belongs to: grade + group label ("11A"). Older spaces without them get them from their name
+// ("Matemáticas 11 A"), or else use their own name.
 export function groupOf(course) {
-  const grade = course?.grade ? String(course.grade) : "";
-  const label = String(course?.group_label ?? "").trim();
+  let grade = course?.grade ? String(course.grade) : "";
+  let label = String(course?.group_label ?? "").trim();
+  if (!label) {
+    const parsed = gradeGroupFromName(course?.name);
+    if (parsed && (!grade || grade === parsed.grade)) ({ grade, label } = parsed);
+  }
   if (grade && label) return { key: `${grade}|${label.toUpperCase()}`, name: `${grade}${label.toUpperCase()}`, grade, label: label.toUpperCase() };
   if (grade) return { key: `${grade}|`, name: `Grado ${gradeLabel(grade)}`, grade, label: "" };
   return { key: `name|${course?.name ?? course?.id}`, name: course?.name ?? "Sin grupo", grade: "", label: "" };
@@ -184,7 +197,9 @@ export function classMatrix({ courses, members = [], staffRoles = {}, directors 
   const hasEditor = (k) => (cells.get(k) ?? []).some((x) => x.teachers.some((t) => t.access === "edit"));
   const missingIn = (g) => areas.filter((a) => a !== MIXED && !hasEditor(`${g.key}::${a}`)).length;
   const missing = list.reduce((n, g) => n + missingIn(g), 0);
-  return { groups: list, areas, cell: (groupKey, area) => cells.get(`${groupKey}::${area}`) ?? [], missing, missingIn };
+  // Subjects with no class at all in a curso (every curso should have its five).
+  const missingClasses = (g) => AREAS.filter((a) => !(cells.get(`${g.key}::${a}`) ?? []).length).length;
+  return { groups: list, areas, cell: (groupKey, area) => cells.get(`${groupKey}::${area}`) ?? [], missing, missingIn, missingClasses };
 }
 
 // The subject name a new class gets when coordination fills an empty cell of an area.

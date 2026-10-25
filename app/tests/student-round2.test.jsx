@@ -37,8 +37,8 @@ describe("a course is not a subject", () => {
     expect(s.find((x) => x.name === "Lectura crítica").avg).toBe(70);
   });
 
-  it("names the course apart", () => {
-    expect(studentCourses(classes)).toEqual(["11-A", "11A"]);
+  it("names the course from the class name when the class has no grade or group (\"11-A\" is 11A)", () => {
+    expect(studentCourses(classes)).toEqual(["11A"]);
   });
 
   it("lists tasks pending first, then delivered with the student's score", () => {

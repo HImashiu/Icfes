@@ -290,6 +290,30 @@ export default function App() {
   // Terms acceptance: with an account, nothing opens until the current version is accepted.
   // null = still asking; a failed read does not lock anyone out (the check repeats on the next sign-in).
   const [live, setLive] = useState(null);
+  // Live games of the student's classes, open now or programmed (migration 0025). Checked again every 30 s on Inicio,
+  // so a programmed game turns into "Entrar" when its time comes.
+  const [liveGames, setLiveGames] = useState([]);
+  const [liveCode, setLiveCode] = useState("");
+  useEffect(() => {
+    if (!signedIn || view !== "home" || !auth.api?.studentLiveGames) return undefined;
+    let alive = true;
+    const load = () => auth.api.studentLiveGames().then((rows) => { if (alive) setLiveGames(rows ?? []); }, () => {});
+    load();
+    const t = setInterval(load, 30000);
+    return () => { alive = false; clearInterval(t); };
+  }, [signedIn, view, auth.api]);
+  const joinGame = async (g) => {
+    const nickname = (auth.profile?.full_name || auth.profile?.email || "Estudiante").split(" ")[0];
+    try {
+      const row = await auth.api.liveJoin(g.code, nickname);
+      setLive({ row, nickname });
+      setView("livePlay");
+    } catch {
+      // The join screen explains what went wrong and lets the student try again.
+      setLiveCode(g.code);
+      setView("liveJoin");
+    }
+  };
   const [consents, setConsents] = useState(null);
   useEffect(() => {
     if (!signedIn) return setConsents(null);
@@ -460,7 +484,9 @@ export default function App() {
           assigned={signedIn ? assigned : null}
           onStartAssigned={startAssigned}
           realName={studentName}
-          onLive={auth.status !== "demo" && auth.status !== "loading" ? () => setView("liveJoin") : null}
+          onLive={auth.status !== "demo" && auth.status !== "loading" ? () => { setLiveCode(""); setView("liveJoin"); } : null}
+          liveGames={liveGames}
+          onJoinGame={demoEnabled ? null : joinGame}
         />
       )}
 
@@ -547,7 +573,7 @@ export default function App() {
         </AnnotationProvider>
       )}
 
-      {view === "liveJoin" && <LiveJoin auth={auth} initialCode={joinCode} onBack={() => setView("home")} onJoined={(row, nickname) => { setLive({ row, nickname }); setView("livePlay"); }} />}
+      {view === "liveJoin" && <LiveJoin auth={auth} initialCode={liveCode || joinCode} onBack={() => setView("home")} onJoined={(row, nickname) => { setLive({ row, nickname }); setView("livePlay"); }} />}
       {view === "livePlay" && live && <LivePlay api={auth.api} initial={live.row} nickname={live.nickname} fetchExam={fetchExam} onExit={() => { setLive(null); setView("home"); }}
         onPracticeMissed={(slug, keys) => { setLive(null); startKeys(slug, keys, { label: "Las que fallé en vivo" }); }} />}
 

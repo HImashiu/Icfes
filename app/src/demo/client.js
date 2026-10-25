@@ -1,6 +1,8 @@
 // A stand-in for the Supabase client that keeps every table in memory. createApi() runs on top of it unchanged,
 // so the teacher screens read and write exactly as they do with a real backend, and nothing leaves the browser.
 // Only the calls the app makes are supported; anything else answers with an error the screens already handle.
+import { AREAS, AREA_SUBJECT, areaOf, groupOf } from "../lib/teaching.js";
+
 const PK = { paper_seating: "assignment_id", grading_models: "id", school_settings: "school_id" };
 const SCHOOL_TABLES = new Set(["school_groups", "subject_access", "school_settings", "staff_invites", "school_audit"]);
 const clone = (v) => (v === undefined ? v : JSON.parse(JSON.stringify(v)));
@@ -52,6 +54,7 @@ class Query {
         rows.push(row);
         return row;
       }).filter(Boolean);
+      if (out.length) this.db.afterInsert?.(this.table, out);
     }
     if (this.orderBy) {
       const [c, asc] = this.orderBy;
@@ -72,6 +75,46 @@ const OFF = "Esta función no está disponible en la demostración.";
 export function createDemoClient({ tables, profile, scope = {}, extraRpc = {} }) {
   const db = { tables, seq: 0, schoolId: profile.school_id ?? null };
   const lower = (x) => String(x ?? "").trim().toLowerCase();
+  // Migration 0025 in memory: a curso's subject classes share its students.
+  const cursoOf = (c) => groupOf(c);
+  const subjectSiblings = (c) => tables.courses.filter((x) => x.id !== c.id && areaOf(x) && cursoOf(x).key === cursoOf(c).key && cursoOf(c).label);
+  db.afterInsert = (table, rows) => {
+    if (table !== "course_members") return;
+    for (const r of rows.filter((x) => x.role === "student")) {
+      const c = tables.courses.find((x) => x.id === r.course_id);
+      if (!c) continue;
+      for (const sib of subjectSiblings(c)) {
+        if (tables.course_members.some((m) => m.course_id === sib.id && lower(m.email) === lower(r.email))) continue;
+        tables.course_members.push({ ...r, id: `demo-course_members-${++db.seq}`, course_id: sib.id });
+      }
+    }
+  };
+  const completeCurso = ({ p_grade, p_label }) => {
+    const grade = String(p_grade);
+    const label = String(p_label).trim().toUpperCase();
+    const key = `${grade}|${label}`;
+    if (!label) return 0;
+    const groups = (tables.school_groups ??= []);
+    if (!groups.some((g) => String(g.grade) === grade && g.label === label)) groups.push({ id: `demo-school_groups-${++db.seq}`, school_id: db.schoolId, grade, label, created_at: new Date().toISOString() });
+    let made = 0;
+    for (const area of AREAS) {
+      if (tables.courses.some((c) => cursoOf(c).key === key && areaOf(c) === area)) continue;
+      const subject = AREA_SUBJECT[area];
+      tables.courses.push({ id: `demo-courses-${++db.seq}`, school_id: db.schoolId, name: `${subject} ${grade} ${label}`, grade, year: new Date().getFullYear(), subject, group_label: label, created_by: profile.id, created_at: new Date().toISOString() });
+      made += 1;
+    }
+    const inCurso = tables.courses.filter((c) => cursoOf(c).key === key);
+    const ids = new Set(inCurso.map((c) => c.id));
+    const students = new Map();
+    for (const m of tables.course_members) if (ids.has(m.course_id) && m.role === "student" && !students.has(lower(m.email))) students.set(lower(m.email), m);
+    for (const c of inCurso.filter((x) => areaOf(x))) {
+      for (const [email, m] of students) {
+        if (tables.course_members.some((x) => x.course_id === c.id && lower(x.email) === email)) continue;
+        tables.course_members.push({ id: `demo-course_members-${++db.seq}`, course_id: c.id, profile_id: m.profile_id ?? null, email: m.email, full_name: m.full_name, role: "student" });
+      }
+    }
+    return made;
+  };
   const rpc = {
     school_teacher_code: () => "DEMO-0000",
     link_my_roster: () => null,
@@ -102,6 +145,7 @@ export function createDemoClient({ tables, profile, scope = {}, extraRpc = {} })
     update_school_name: ({ p_name }) => { const sc = tables.schools?.[0]; if (sc) sc.name = String(p_name).trim(); return sc?.name ?? null; },
     regenerate_teacher_code: () => `DEMO-${Math.floor(1000 + Math.random() * 9000)}`,
     revoke_family_report: () => null,
+    complete_curso: completeCurso,
     ...extraRpc,
   };
   return {

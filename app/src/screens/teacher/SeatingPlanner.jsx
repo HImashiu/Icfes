@@ -15,9 +15,9 @@ const STEPS = [["salon", "Salón"], ["reglas", "Versiones"], ["puestos", "Puesto
 export function SeatingCard({ plan, roster, onOpen, onPrint }) {
   const counts = plan ? versionCounts(plan) : null;
   return (
-    <section className="card sp-card">
+    <section className="card spl-card">
       <span className="pg-ico" aria-hidden="true"><Icon name="grid" size={22} /></span>
-      <span className="sp-card-text">
+      <span className="spl-card-text">
         <strong>Plano del salón <span className="caption">· opcional</span></strong>
         {plan ? (
           <span className="caption">{plan.rows} filas × {plan.cols} puestos · {roster.length} estudiantes · {counts.filter(Boolean).length} versiones ({counts.map((n, v) => (n ? `${versionLabel(v)} ${n}` : null)).filter(Boolean).join(", ")})</span>
@@ -25,7 +25,7 @@ export function SeatingCard({ plan, roster, onOpen, onPrint }) {
           <span className="caption">Reparte versiones del cuadernillo (las mismas preguntas en otro orden) para que nadie tenga al lado a alguien con su misma versión.</span>
         )}
       </span>
-      <span className="sp-card-actions">
+      <span className="spl-card-actions">
         {plan && <button type="button" className="secondary" onClick={onPrint}><Icon name="print" size={16} /> Imprimir plano</button>}
         <button type="button" className={plan ? "secondary" : "primary"} disabled={roster.length === 0} onClick={onOpen}>{plan ? "Editar plano" : "Armar plano"}</button>
       </span>
@@ -64,10 +64,10 @@ export function SeatingWizard({ api, roster, plan, savePlan, onClose, onPrint, s
     return () => { alive = false; };
   }, [api]);
   useEffect(() => {
-    document.body.classList.add("sp-open");
+    document.body.classList.add("spl-open");
     const esc = (e) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", esc);
-    return () => { document.body.classList.remove("sp-open"); window.removeEventListener("keydown", esc); };
+    return () => { document.body.classList.remove("spl-open"); window.removeEventListener("keydown", esc); };
   }, [onClose]);
 
   const names = useMemo(() => Object.fromEntries(roster.map((m) => [m.id, m.full_name || m.email])), [roster]);
@@ -131,8 +131,8 @@ export function SeatingWizard({ api, roster, plan, savePlan, onClose, onPrint, s
   const at = STEPS.findIndex(([id]) => id === step);
 
   const stepper = (label, value, set, min, max) => (
-    <div className="sp-stepper"><span className="label">{label}</span>
-      <span className="sp-stepper-ctl">
+    <div className="spl-stepper"><span className="label">{label}</span>
+      <span className="spl-stepper-ctl">
         <button type="button" className="b-btn" aria-label={`Menos ${label.toLowerCase()}`} disabled={value <= min} onClick={() => set(value - 1)}>−</button>
         <b aria-live="polite">{value}</b>
         <button type="button" className="b-btn" aria-label={`Más ${label.toLowerCase()}`} disabled={value >= max} onClick={() => set(value + 1)}>+</button>
@@ -140,11 +140,11 @@ export function SeatingWizard({ api, roster, plan, savePlan, onClose, onPrint, s
   );
 
   return createPortal(
-    <div className="sp" role="dialog" aria-modal="true" aria-label="Plano del salón">
-      <div className="sp-box">
-        <header className="sp-head">
+    <div className="spl" role="dialog" aria-modal="true" aria-label="Plano del salón">
+      <div className="spl-box">
+        <header className="spl-head">
           <strong>Plano del salón</strong>
-          <ol className="sp-steps" aria-label="Pasos">
+          <ol className="spl-steps" aria-label="Pasos">
             {STEPS.map(([id, label], i) => (
               <li key={id}><button type="button" className={step === id ? "on" : i < at ? "done" : ""} aria-current={step === id ? "step" : undefined} disabled={id === "puestos" && !live} onClick={() => setStep(id)}>
                 <b>{i < at ? <Icon name="check" size={12} strokeWidth={3.4} /> : i + 1}</b>{label}</button></li>
@@ -153,12 +153,12 @@ export function SeatingWizard({ api, roster, plan, savePlan, onClose, onPrint, s
           <button type="button" className="icon-btn" aria-label="Cerrar" onClick={onClose}><Icon name="close" size={20} /></button>
         </header>
 
-        <div className="sp-body">
+        <div className="spl-body">
           {step === "salon" && (
             <>
               <p className="caption">¿Cómo está el salón? Toca un puesto para quitarlo (pasillo, columna, silla dañada). El tablero está arriba.</p>
               {rooms.length > 0 && (
-                <div className="sp-rooms" role="group" aria-label="Salones guardados">
+                <div className="spl-rooms" role="group" aria-label="Salones guardados">
                   {rooms.map((r) => (
                     <span key={r.name} className={roomOn === r.name ? "chip on" : "chip"}>
                       <button type="button" className="link" onClick={() => useRoom(r)}>{r.name} <span className="muted">{r.rows}×{r.cols}</span></button>
@@ -167,14 +167,14 @@ export function SeatingWizard({ api, roster, plan, savePlan, onClose, onPrint, s
                   ))}
                 </div>
               )}
-              <div className="sp-config">
+              <div className="spl-config">
                 {stepper("Filas", rows, setRows, 1, 12)}
                 {stepper("Puestos por fila", cols, setCols, 1, 12)}
                 <span className={short ? "chip seat-short" : "chip"}><strong>{seatsLeft}</strong> puestos · <strong>{roster.length}</strong> estudiantes</span>
                 {short && <button type="button" className="secondary" onClick={() => setRows(Math.min(12, Math.ceil((roster.length + gaps.filter((s) => Number(s.split(",")[1]) < cols).length) / cols)))}>Faltan {roster.length - seatsLeft}: agregar filas</button>}
               </div>
               <SeatingChart rows={rows} cols={cols} blocked={blocked} names={names} onToggle={toggleGap} />
-              <div className="sp-save">
+              <div className="spl-save">
                 <input type="text" aria-label="Nombre del salón" placeholder="Nombre del salón (ej. Aula 201)" value={roomName} onChange={(e) => setRoomName(e.target.value)} />
                 <button type="button" className="secondary" disabled={!roomName.trim()} onClick={keepRoom}>{rooms.some((r) => r.name === roomName.trim()) ? "Actualizar salón" : "Guardar salón"}</button>
                 <span className="caption">{shared ? "Los salones guardados los ven todos los docentes del colegio." : "Los salones se guardan en este navegador."}</span>
@@ -213,19 +213,19 @@ export function SeatingWizard({ api, roster, plan, savePlan, onClose, onPrint, s
             <>
               {changed && <p className="notice">Cambiaste el salón o las reglas. <button type="button" className="link" onClick={() => deal(true)}>Repartir de nuevo</button> para aplicarlo.</p>}
               <p className="caption">{picked ? `Toca el puesto al que va ${names[live.seats[picked]] ?? ""} (si está ocupado, se intercambian).` : "Para mover a alguien, tócalo y luego toca su nuevo puesto. Al cambiar de puesto cambia de versión: reimprime su hoja."}</p>
-              <div className="sp-legend">{counts.map((n, v) => (n ? <span key={v} className={`sp-key v${v}`}><b>{versionLabel(v)}</b>{n} copias</span> : null))}</div>
+              <div className="spl-legend">{counts.map((n, v) => (n ? <span key={v} className={`spl-key v${v}`}><b>{versionLabel(v)}</b>{n} copias</span> : null))}</div>
               <SeatingChart rows={live.rows} cols={live.cols} blocked={live.blocked} seatVersion={live.seatVersion} seats={live.seats} names={names} onToggle={tapSeat} picked={picked} />
               {clash > 0 && <p className="notice error">{clash === 1 ? "Una pareja quedó" : `${clash} parejas quedaron`} cerca porque el salón no deja más opciones. Reparte de nuevo o agranda el salón.</p>}
-              {!sameVersionNeighbours(live).length && <p className="caption sp-ok"><Icon name="check" size={14} strokeWidth={3.4} /> Revisado: ningún puesto vecino comparte versión.</p>}
+              {!sameVersionNeighbours(live).length && <p className="caption spl-ok"><Icon name="check" size={14} strokeWidth={3.4} /> Revisado: ningún puesto vecino comparte versión.</p>}
               <p className="caption">Después imprime los cuadernillos y las hojas: cada hoja lleva la versión y el puesto del estudiante.</p>
             </>
           )}
           {error && <p className="notice error">{error}</p>}
         </div>
 
-        <footer className="sp-foot">
+        <footer className="spl-foot">
           {at > 0 ? <button type="button" className="secondary" onClick={() => setStep(STEPS[at - 1][0])}>Atrás</button> : <span />}
-          <span className="sp-foot-right">
+          <span className="spl-foot-right">
             {step === "salon" && <button type="button" className="primary" onClick={() => setStep("reglas")}>Siguiente: versiones</button>}
             {step === "reglas" && <button type="button" className="primary" disabled={short} onClick={() => (live && !changed ? setStep("puestos") : deal(true))}>{live && !changed ? "Siguiente: puestos" : "Repartir puestos"}</button>}
             {step === "puestos" && (

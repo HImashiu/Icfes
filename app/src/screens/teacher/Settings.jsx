@@ -9,6 +9,8 @@ import { areaOf, classLabel } from "../../lib/teaching.js";
 import "./colegio.css";
 
 const YEAR = new Date().getFullYear();
+// Domains anyone can sign up for: fine for a test school, never for a real one.
+const PUBLIC_MAIL = new Set(["gmail.com", "hotmail.com", "outlook.com", "yahoo.com", "live.com", "icloud.com"]);
 // Four terms is the usual Colombian calendar; the school edits names and dates.
 export const DEFAULT_PERIODS = [1, 2, 3, 4].map((n) => ({ name: `Periodo ${n}`, from: "", to: "" }));
 
@@ -54,6 +56,8 @@ export function SchoolSettings({ api, profile, settings, school, guard, setNotic
     setNotice("Quedó registrada la autorización de acudientes del colegio.");
   });
   const recorded = hasGuardianAuth(consents);
+  const grantedAt = (consents ?? []).find((c) => c.kind === "guardian_authorization" && c.version === CONSENT_VERSION)?.granted_at;
+  const when = grantedAt ? new Date(grantedAt).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" }) : null;
   const setPeriod = (i, patch) => setPeriods(periods.map((p, k) => (k === i ? { ...p, ...patch } : p)));
 
   return (
@@ -65,23 +69,33 @@ export function SchoolSettings({ api, profile, settings, school, guard, setNotic
           <label className="aj-field">
             <span>Nombre</span>
             <span className="aj-inline">
-              <input value={name} onChange={(e) => setName(e.target.value)} aria-label="Nombre del colegio" />
-              <button type="button" className="secondary" disabled={!name.trim() || name.trim() === school?.name} onClick={rename}>Guardar</button>
+              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Escribe el nombre del colegio" aria-label="Nombre del colegio" />
+              <button type="button" className={name.trim() && name.trim() !== school?.name ? "primary" : "secondary"} disabled={!name.trim() || name.trim() === school?.name} onClick={rename}>Guardar</button>
             </span>
+            {!school?.name && <span className="caption">Todavía sin nombre. Aparece en los reportes, los cuadernillos impresos y la invitación a docentes.</span>}
           </label>
           {school?.domains?.length > 0 && (
             <div className="aj-field">
-              <span>Correos del colegio</span>
-              <div className="cg-chips">{school.domains.map((d) => <span key={d} className="cg-badge">@{d}</span>)}</div>
-              <span className="caption">Quien entra con estos correos queda en el colegio. Docentes con otro correo (Gmail) entran por invitación.</span>
+              <span>Quién entra al colegio</span>
+              <div className="cg-chips">{school.domains.map((d) => <span key={d} className={PUBLIC_MAIL.has(d.toLowerCase()) ? "cg-badge warn" : "cg-badge edit"}>@{d}</span>)}</div>
+              {school.domains.some((d) => PUBLIC_MAIL.has(d.toLowerCase()))
+                ? <span className="caption aj-warn">@{school.domains.find((d) => PUBLIC_MAIL.has(d.toLowerCase()))} es un correo público: cualquier persona con esa cuenta que entre queda en este colegio como estudiante. Sirve para pruebas; el colegio real usa su propio dominio (por ejemplo @micolegio.edu.co).</span>
+                : <span className="caption">Todo el que entra con un correo {school.domains.map((d) => `@${d}`).join(" o ")} queda en este colegio como estudiante. Los docentes con otro correo entran por invitación (Docentes › Invitar).</span>}
             </div>
           )}
           <div className="aj-field">
             <span>Grados que tiene el colegio</span>
-            <div className="cg-chips">
-              {GRADES.map((g) => <button key={g} type="button" className={grades.includes(g) ? "cg-chip on" : "cg-chip"} aria-pressed={grades.includes(g)} disabled={missing} onClick={() => toggleGrade(g)}>{gradeLabel(g)}</button>)}
+            <div className="cg-chips" role="group" aria-label="Grados que tiene el colegio">
+              {GRADES.map((g) => {
+                const on = grades.includes(g);
+                return (
+                  <button key={g} type="button" className={on ? "cg-chip aj-grade on" : "cg-chip aj-grade"} aria-pressed={on} disabled={missing || (on && grades.length === 1)} onClick={() => toggleGrade(g)}>
+                    {on ? <Icon name="check" size={14} strokeWidth={3.2} /> : <Icon name="plus" size={14} strokeWidth={2.6} />}{gradeLabel(g)}
+                  </button>
+                );
+              })}
             </div>
-            <span className="caption">Solo estos aparecen al crear cursos y en los filtros.</span>
+            <span className="caption">Marcados: {grades.map(gradeLabel).join(", ")}. Solo estos se ofrecen al crear cursos y en los filtros. Toca un grado para agregarlo o quitarlo.</span>
           </div>
         </section>
 
@@ -132,17 +146,24 @@ export function SchoolSettings({ api, profile, settings, school, guard, setNotic
         </section>
 
         <section className="card t-card">
-          <h2>Acudientes</h2>
+          <h2>Autorización de acudientes</h2>
           {recorded ? (
-            <span className="caption">Autorización de acudientes registrada. Los estudiantes aceptan además los términos de uso al ingresar.</span>
+            <div className="aj-status ok">
+              <Icon name="check" size={18} strokeWidth={3} />
+              <span><strong>Registrada{when ? ` el ${when}` : ""}</strong><span className="caption">El colegio declaró que tiene la autorización de los acudientes para que sus estudiantes usen la plataforma. Además, cada estudiante acepta los términos de uso la primera vez que entra.</span></span>
+            </div>
           ) : (
             <>
+              <div className="aj-status">
+                <Icon name="flag" size={18} />
+                <span><strong>Falta registrarla</strong><span className="caption">Antes de que entren estudiantes, el colegio declara que los acudientes lo autorizaron.</span></span>
+              </div>
               <p className="cg-help">{GUARDIAN_TEXT}</p>
               <label className="b-check"><input type="checkbox" checked={ok} onChange={(e) => setOk(e.target.checked)} /> Lo declaro en nombre del colegio</label>
               <div className="report-actions"><button type="button" className="primary" disabled={!ok || consents === null} onClick={record}>Registrar</button></div>
             </>
           )}
-          <span className="caption">Textos legales en borrador (versión {CONSENT_VERSION}): deben revisarse con un abogado antes de usar la plataforma con estudiantes reales.</span>
+          <span className="cg-badge warn aj-draft">Texto legal en borrador ({CONSENT_VERSION}): revisarlo con un abogado antes de usarlo con estudiantes reales</span>
         </section>
       </div>
     </>

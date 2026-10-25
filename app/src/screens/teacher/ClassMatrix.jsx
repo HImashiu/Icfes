@@ -3,8 +3,8 @@ import Icon from "../../components/Icon.jsx";
 import { Select, confirmDialog } from "../../components/Controls.jsx";
 import { parseRoster } from "../../lib/roster.js";
 import { gradeLabel } from "../../lib/spaces.js";
-import { ACCESS_LABEL, parseLabels } from "../../lib/colegio.js";
-import { AREAS, AREA_SUBJECT, MIXED, areaShort, classMatrix, contextColor } from "../../lib/teaching.js";
+import { ACCESS_LABEL, completeCurso, parseLabels } from "../../lib/colegio.js";
+import { MIXED, areaOf, areaShort, classMatrix, contextColor, groupOf } from "../../lib/teaching.js";
 import Sheet from "./Sheet.jsx";
 import "./colegio.css";
 
@@ -28,23 +28,28 @@ export default function ClassMatrix({ api, profile, courses, members, directors,
   const countIn = (g) => m.groups.filter((x) => x.grade === g).length;
   const shown = m.groups.filter((g) => !grade || g.grade === grade);
   const missing = shown.reduce((n, g) => n + m.missingIn(g), 0);
+  const subjectsIn = (groupKey) => m.areas.filter((a) => a !== MIXED && m.cell(groupKey, a).length).length;
   const classesOf = useCallback((groupKey) => m.areas.flatMap((a) => m.cell(groupKey, a).map((x) => x.course)), [m]);
 
-  // Creates the class of a cell when it does not exist yet, with the students of a sibling class of the same curso.
+  // A cell without its class: the curso gets its missing subjects (and its students in them), then the cell's class.
   const ensureClass = async (group, area) => {
     const existing = m.cell(group.key, area)[0]?.course;
     if (existing) return existing;
-    const subject = AREA_SUBJECT[area] ?? area;
-    const course = await api.createCourse({ schoolId: profile.school_id, userId: profile.id, name: `${subject} ${group.grade} ${group.label}`.trim(), grade: group.grade, subject, groupLabel: group.label });
-    const own = (await api.listMembers(course.id)).find((x) => x.role === "teacher" && x.profile_id === profile.id);
-    if (own) await api.removeMember(own.id);
-    const sibling = classesOf(group.key)[0];
-    if (sibling) {
-      const list = (await api.listMembers(sibling.id)).filter((x) => x.role === "student").map((x) => ({ email: x.email, fullName: x.full_name ?? "" }));
-      if (list.length) await api.addStudents(course.id, list);
-    }
-    return course;
+    await completeCurso(api, { profile, grade: group.grade, label: group.label });
+    const made = (await api.listCourses()).find((c) => groupOf(c).key === group.key && areaOf(c) === area);
+    if (!made) throw new Error(`No se pudo crear ${areaShort(area)} ${group.name}.`);
+    return made;
   };
+
+  // Cursos missing subjects (made before every curso had its five): completed in one go.
+  const incomplete = shown.filter((g) => g.grade && g.label && m.missingClasses(g) > 0);
+  const completeAll = () => guard(async () => {
+    let made = 0;
+    for (const g of incomplete) made += await completeCurso(api, { profile, grade: g.grade, label: g.label });
+    await log("group_complete", { groups: incomplete.map((g) => g.name), made });
+    setNotice(`${made} ${made === 1 ? "materia creada" : "materias creadas"}. Cada curso tiene ya sus cinco materias, con sus estudiantes en todas.`);
+    await reload();
+  });
 
   const assign = ({ group, area, person, access }) => guard(async () => {
     const course = await ensureClass(group, area);
@@ -114,6 +119,12 @@ export default function ClassMatrix({ api, profile, courses, members, directors,
         <span className="cm2-legend"><span className="cg-badge edit">Edita</span> dicta la materia <span className="cg-badge view">Solo ve</span> lee sin cambiar nada</span>
       </div>
 
+      {incomplete.length > 0 && (
+        <div className="notice cm2-incomplete" role="status">
+          <span>{incomplete.length === 1 ? `${incomplete[0].name} no tiene todas sus materias.` : `${incomplete.length} cursos no tienen todas sus materias (${incomplete.map((g) => g.name).join(", ")}).`} Cada curso necesita las cinco del ICFES, con sus estudiantes en todas.</span>
+          <button type="button" className="primary" onClick={completeAll}>Completar materias</button>
+        </div>
+      )}
       {shown.length === 0 ? (
         <div className="cg-empty cm2-nogroup">
           {grade ? `Todavía no hay cursos de ${gradeLabel(grade)}.` : "Todavía no hay cursos."} <button type="button" className="link" onClick={() => setCreating(true)}>Crear {grade ? `cursos de ${gradeLabel(grade)}` : "el primero"}</button>
@@ -134,7 +145,7 @@ export default function ClassMatrix({ api, profile, courses, members, directors,
                 return (
                   <tr key={g.key}>
                     <th scope="row" className="cm2-group">
-                      <span><strong>{g.name}</strong><span className="caption">{g.students} est. · {n} {n === 1 ? "materia" : "materias"}</span></span>
+                      <span><strong>{g.name}</strong><span className="caption">{g.students} est. · {subjectsIn(g.key)} de 5 materias</span></span>
                       <span className="cm2-group-actions">
                         {n > 0 && onOpenGroup && <button type="button" className="link" onClick={() => onOpenGroup(g.key)}>Ver curso</button>}
                         <button type="button" className="link" onClick={() => setImporting(g)}>Importar lista</button>
@@ -188,11 +199,10 @@ export default function ClassMatrix({ api, profile, courses, members, directors,
   );
 }
 
-// Nuevo curso: a grade, one or more letters, and (by default) the five subjects created at once without a teacher.
+// Nuevo curso: a grade and one or more letters. Each curso is created with its five subjects (without a teacher yet).
 function NewGroups({ api, profile, grades, initialGrade, existing, guard, log, setNotice, reload, onDone }) {
   const [grade, setGrade] = useState(initialGrade);
   const [letters, setLetters] = useState("");
-  const [withSubjects, setWithSubjects] = useState(true);
   const [busy, setBusy] = useState(false);
   const labels = parseLabels(letters);
   const taken = new Set(existing.filter((g) => g.grade === grade).map((g) => g.label));
@@ -200,26 +210,16 @@ function NewGroups({ api, profile, grades, initialGrade, existing, guard, log, s
   const create = () => guard(async () => {
     setBusy(true);
     try {
-      const rows = fresh.map((label) => ({ grade, label }));
-      try { await api.createGroups(rows); } catch (e) { if (!withSubjects) throw e; }
-      if (withSubjects) {
-        for (const label of fresh) {
-          for (const area of AREAS) {
-            const subject = AREA_SUBJECT[area];
-            const c = await api.createCourse({ schoolId: profile.school_id, userId: profile.id, name: `${subject} ${grade} ${label}`, grade, subject, groupLabel: label });
-            const own = (await api.listMembers(c.id)).find((x) => x.role === "teacher" && x.profile_id === profile.id);
-            if (own) await api.removeMember(own.id);
-          }
-        }
-      }
+      await api.createGroups(fresh.map((label) => ({ grade, label }))).catch(() => null);
+      for (const label of fresh) await completeCurso(api, { profile, grade, label });
       await log("group_create", { groups: fresh.map((l) => `${grade}${l}`) });
-      setNotice(`${fresh.length === 1 ? "Curso" : "Cursos"} ${fresh.map((l) => `${grade}${l}`).join(", ")} ${fresh.length === 1 ? "creado" : "creados"}${withSubjects ? " con sus cinco materias. Ahora asigna los docentes." : ". Asigna sus materias tocando cada celda."}`);
+      setNotice(`${fresh.length === 1 ? "Curso" : "Cursos"} ${fresh.map((l) => `${grade}${l}`).join(", ")} ${fresh.length === 1 ? "creado" : "creados"} con sus cinco materias. Ahora asigna los docentes.`);
       await reload();
       onDone(grade);
     } finally { setBusy(false); }
   });
   return (
-    <Sheet title="Nuevo curso" sub="Un curso es un grupo de estudiantes, por ejemplo 11 A. Cada materia del curso es una clase." onClose={() => onDone(null)}
+    <Sheet title="Nuevo curso" sub="Un curso es un grupo de estudiantes, por ejemplo 11 A. Se crea con sus cinco materias del ICFES: Lectura crítica, Matemáticas, Sociales, Naturales e Inglés." onClose={() => onDone(null)}
       footer={<><button type="button" className="secondary" onClick={() => onDone(null)}>Cancelar</button><button type="button" className="primary" disabled={!fresh.length || busy} onClick={create}>{busy ? "Creando…" : `Crear ${fresh.length > 1 ? `${fresh.length} cursos` : "curso"}`}</button></>}>
       <div className="cg-block">
         <span className="label">Grado</span>
@@ -237,7 +237,6 @@ function NewGroups({ api, profile, grades, initialGrade, existing, guard, log, s
           {labels.map((l) => <span key={l} className={taken.has(l) ? "cg-badge" : "cg-badge edit"}>{grade}{l}{taken.has(l) ? " · ya existe" : ""}</span>)}
         </div>
       )}
-      <label className="b-check"><input type="checkbox" checked={withSubjects} onChange={(e) => setWithSubjects(e.target.checked)} /> Crear ya sus cinco materias (Lectura crítica, Matemáticas, Sociales, Naturales, Inglés)</label>
     </Sheet>
   );
 }

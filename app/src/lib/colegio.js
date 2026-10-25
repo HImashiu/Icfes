@@ -2,7 +2,7 @@
 // reached), the "who did what" feed, and the invitation list parser. Figures describe each teacher's own work and
 // are never ranked against each other.
 import { scorePct, whoOf } from "./assignments.js";
-import { AREAS, areaOf, areaShort, classLabel, grantCovers } from "./teaching.js";
+import { AREAS, AREA_SUBJECT, areaOf, areaShort, classLabel, grantCovers, groupOf } from "./teaching.js";
 import { gradeLabel } from "./spaces.js";
 
 const DAY = 864e5;
@@ -185,4 +185,36 @@ export function parseLabels(text) {
     } else if (part.length <= 8) out.push(part);
   }
   return [...new Set(out)];
+}
+
+// Every curso has the five ICFES subjects, each a class, with the curso's students in all of them. The database
+// keeps it so on its own from migration 0025 (complete_curso); before it runs, the app creates what is missing.
+// Returns how many classes were created.
+export async function completeCurso(api, { profile, grade, label }) {
+  const done = await api.completeCurso?.(grade, label);
+  if (done != null) return done;
+  const key = `${grade}|${String(label).toUpperCase()}`;
+  const inCurso = async () => (await api.listCourses()).filter((c) => groupOf(c).key === key);
+  let classes = await inCurso();
+  let made = 0;
+  for (const area of AREAS) {
+    if (classes.some((c) => areaOf(c) === area)) continue;
+    const subject = AREA_SUBJECT[area];
+    const c = await api.createCourse({ schoolId: profile.school_id, userId: profile.id, name: `${subject} ${grade} ${String(label).toUpperCase()}`, grade, subject, groupLabel: String(label).toUpperCase() });
+    // The class waits for its real teacher: the person who created it does not teach it.
+    const own = (await api.listMembers(c.id)).find((x) => x.role === "teacher" && x.profile_id === profile.id);
+    if (own) await api.removeMember(own.id);
+    made += 1;
+    classes = await inCurso();
+  }
+  const rosters = await Promise.all(classes.map(async (c) => ({ c, rows: (await api.listMembers(c.id)).filter((x) => x.role === "student") })));
+  const everyone = new Map();
+  for (const { rows } of rosters) for (const r of rows) if (!everyone.has(r.email.toLowerCase())) everyone.set(r.email.toLowerCase(), { email: r.email, fullName: r.full_name ?? "" });
+  for (const { c, rows } of rosters) {
+    if (!areaOf(c)) continue;
+    const have = new Set(rows.map((r) => r.email.toLowerCase()));
+    const missing = [...everyone.values()].filter((r) => !have.has(r.email.toLowerCase()));
+    if (missing.length) await api.addStudents(c.id, missing);
+  }
+  return made;
 }

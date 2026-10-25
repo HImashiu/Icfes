@@ -57,3 +57,4 @@ Example: `supabase/tests/rls.sh -h /tmp/pgt -p 5499 -U postgres`.
 - `0003_attempt_limits_roles_consent.sql`: attempts allowed per assignment, opening and closing enforced by the database, coordinator can change roles (`set_profile_role`), consent tables.
 - `0004_live_sessions.sql`: live answering rooms, players and answers. The app polls every 1-2 seconds, so Realtime does not need to be enabled.
   Guests join through anonymous sign-in: Authentication > Sign In / Providers > turn on "Allow anonymous sign-ins". Without it, only signed-in students can join a room.
+- `0025_complete_cursos_scheduled_live.sql`: every curso (11 A) gets its five ICFES subject classes with all its students in each, also for classes saved without grade or group ("Matemáticas 11 A", "11-A"); new classes and new students keep it that way. Live games can be programmed for a date and time (`live_schedule`, `student_live_games`). Checks: `tests/cursos_live_0025.sql`.

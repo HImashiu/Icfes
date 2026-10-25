@@ -4,7 +4,7 @@ import { FilePicker, Select, confirmDialog } from "../../components/Controls.jsx
 import { parseRoster } from "../../lib/roster.js";
 import { areaColor } from "../../lib/brand.js";
 import { GRADES, SUBJECTS, gradeLabel, spaceName } from "../../lib/spaces.js";
-import { ACCESS_LABEL } from "../../lib/colegio.js";
+import { ACCESS_LABEL, completeCurso } from "../../lib/colegio.js";
 import { areaOf, classLabel, groupOf } from "../../lib/teaching.js";
 import "./colegio.css";
 
@@ -68,8 +68,15 @@ function NewClass({ api, profile, guard, setNotice, reload, onCreated }) {
     e.preventDefault();
     if (!name.trim()) return;
     guard(async () => {
-      const c = await api.createCourse({ schoolId: profile.school_id, userId: profile.id, name: name.trim(), grade, subject, groupLabel: group.trim().toUpperCase() });
-      setNotice(`Clase ${classLabel(c)} creada. Ahora agrega a sus estudiantes.`);
+      const label = group.trim().toUpperCase();
+      const c = await api.createCourse({ schoolId: profile.school_id, userId: profile.id, name: name.trim(), grade, subject, groupLabel: label });
+      // Every curso has its five subjects: the database adds the missing ones (migration 0025); before it runs,
+      // coordination's app does.
+      if (label) {
+        if (profile.role === "school_admin") await completeCurso(api, { profile, grade, label }).catch(() => null);
+        else await api.completeCurso?.(grade, label);
+      }
+      setNotice(`Clase ${classLabel(c)} creada.${label ? ` El curso ${grade}${label} tiene sus cinco materias; las que no dictas quedan para que coordinación les asigne docente.` : ""} Ahora agrega a sus estudiantes: entran a todas las materias del curso.`);
       await reload();
       onCreated(c.id);
     });

@@ -1,4 +1,4 @@
-// Builds the invented school of the demo: 3 class spaces, 120 students and 8 weeks of work, from the exam bundles
+// Builds the invented school of the demo: 3 cursos of grade 11 with their five subjects each, 120 students and 8 weeks of work, from the exam bundles
 // the app already loaded. Everything is deterministic (same seed, same school) and kept in memory.
 // No exam text is stored here: answers refer to question keys of whatever booklets are loaded.
 import { bankItems } from "../lib/bank.js";
@@ -41,7 +41,19 @@ const COURSES = [
   { id: "demo-c5", subject: "Ciencias naturales", group: "A", focus: "Ciencias naturales", teacher: 4, titles: ["Variables de un experimento", "Energía y cambios", "Simulacro de ciencias", "Ecosistemas", "Leer resultados de laboratorio"] },
   { id: "demo-c6", subject: "Sociales y ciudadanas", group: "A", focus: "Sociales y ciudadanas", teacher: 3, titles: ["La Constitución del 91", "Mecanismos de participación", "Simulacro de sociales", "Conflictos y perspectivas", "Economía y territorio"] },
   { id: "demo-c7", subject: "Inglés", group: "A", focus: "Inglés", teacher: 5, titles: ["Avisos y letreros", "Vocabulary in context", "Simulacro de inglés", "Short conversations", "Reading for details"] },
+  // Every curso has the five ICFES subjects: 11 B and 11 C too.
+  { id: "demo-c8", subject: "Matemáticas", group: "B", focus: "Matemáticas", teacher: 1, titles: ["Porcentajes y proporciones", "Gráficas de funciones", "Simulacro de matemáticas", "Estadística descriptiva", "Geometría y medida"] },
+  { id: "demo-c9", subject: "Sociales y ciudadanas", group: "B", focus: "Sociales y ciudadanas", teacher: 3, titles: ["Ramas del poder público", "Derechos y deberes", "Simulacro de sociales", "Fuentes históricas", "Dilemas ciudadanos"] },
+  { id: "demo-c10", subject: "Ciencias naturales", group: "B", focus: "Ciencias naturales", teacher: 4, titles: ["Método científico", "Fuerzas y movimiento", "Simulacro de ciencias", "Reacciones químicas", "Genética básica"] },
+  { id: "demo-c11", subject: "Inglés", group: "B", focus: "Inglés", teacher: 5, titles: ["Signs and notices", "Grammar in context", "Simulacro de inglés", "Short texts", "Reading comprehension"] },
+  { id: "demo-c12", subject: "Lectura crítica", group: "C", focus: "Lectura crítica", teacher: 2, titles: ["Comprender un texto", "Textos continuos y discontinuos", "Simulacro de lectura", "Leer un poema", "Evaluar argumentos"] },
+  { id: "demo-c13", subject: "Matemáticas", group: "C", focus: "Matemáticas", teacher: 1, titles: ["Interpretar tablas", "Álgebra y variación", "Simulacro de matemáticas", "Conteo y azar", "Problemas de medida"] },
+  { id: "demo-c14", subject: "Sociales y ciudadanas", group: "C", focus: "Sociales y ciudadanas", teacher: 3, titles: ["Participación ciudadana", "Historia de Colombia", "Simulacro de sociales", "Geografía económica", "Puntos de vista"] },
+  { id: "demo-c15", subject: "Ciencias naturales", group: "C", focus: "Ciencias naturales", teacher: 4, titles: ["Experimentos y variables", "Materia y energía", "Simulacro de ciencias", "Seres vivos", "Interpretar datos"] },
+  { id: "demo-c16", subject: "Inglés", group: "C", focus: "Inglés", teacher: 5, titles: ["Notices and signs", "Words in context", "Simulacro de inglés", "Dialogues", "Reading for gist"] },
 ];
+// 10 A and 10 B: cursos with their five subjects ready and no teacher or students yet.
+const EMPTY_CURSOS = [["10", "A"], ["10", "B"]];
 // The student the demo shows on the student side: the first of 11 A.
 export const DEMO_STUDENT_N = 1;
 const DAYS_AGO = [55, 41, 27, 13, 2];
@@ -70,7 +82,7 @@ export function buildDemo({ bundles, now = Date.now() }) {
   let n = 0;
   const edgeOf = {};
   COURSES.forEach((c, ci) => {
-    courses.push({ id: c.id, name: c.subject === "Todas las áreas" ? `Preparación Saber 11 ${c.group}` : `${c.subject} 11 ${c.group}`, grade: "11", year: 2026, subject: c.subject, group_label: c.group, school_id: SCHOOL_ID, created_by: staff[c.teacher].id, created_at: new Date(now - 70 * DAY).toISOString() });
+    courses.push({ id: c.id, name: c.subject === "Todas las áreas" ? `Simulacros 11 ${c.group}` : `${c.subject} 11 ${c.group}`, grade: "11", year: 2026, subject: c.subject, group_label: c.group, school_id: SCHOOL_ID, created_by: staff[c.teacher].id, created_at: new Date(now - 70 * DAY).toISOString() });
     members.push({ id: `demo-m-t${ci}`, course_id: c.id, profile_id: staff[c.teacher].id, email: staff[c.teacher].email, full_name: staff[c.teacher].full_name, role: "teacher" });
     // A group's students are made once, with its first class; its other classes reuse them.
     if (c.group in edgeOf) {
@@ -103,6 +115,10 @@ export function buildDemo({ bundles, now = Date.now() }) {
       members.push({ id: s.memberId, course_id: c.id, profile_id: s.profileId, email: s.email, full_name: s.name, role: "student" });
     }
   });
+
+  EMPTY_CURSOS.forEach(([grade, label], gi) => Object.keys(AREA_SECONDS).forEach((area, ai) => {
+    courses.push({ id: `demo-e${gi + 1}-${ai + 1}`, name: `${area} ${grade} ${label}`, grade, year: 2026, subject: area, group_label: label, school_id: SCHOOL_ID, created_by: staff[0].id, created_at: new Date(now - 6 * DAY).toISOString() });
+  }));
 
   // The math teacher of 11 A also reads its Ciencias naturales class (view only), to follow the shared data work.
   members.push({ id: "demo-m-view-1", course_id: "demo-c5", profile_id: staff[1].id, email: staff[1].email, full_name: staff[1].full_name, role: "teacher", access: "view" });
@@ -386,6 +402,15 @@ export function buildDemo({ bundles, now = Date.now() }) {
     id: `demo-hold-${n + 1}`, school_id: SCHOOL_ID, exam_slug: slugs[0], qkey: i.key, reserve: true, hide_from_students: true,
     label: "Simulacro de noviembre", until: null, assignment_id: null, created_by: staff[0].id, created_at: new Date(now - 3 * DAY).toISOString(),
   }));
+  // A live game the math teacher programmed for tomorrow at 10:00 in Matemáticas 11 A: students see it on Inicio.
+  const tomorrow = new Date(now + DAY); tomorrow.setHours(10, 0, 0, 0);
+  const liveKeys = (itemsBySlug.get(slugs[0]) ?? []).filter((i) => i.section === "Matemáticas").slice(0, 8).map((i) => i.key);
+  const liveSessions = liveKeys.length ? [{
+    id: "demo-live-programado", code: "482913", host_id: staff[1].id, school_id: SCHOOL_ID, course_id: "demo-c1", title: "Repaso de funciones", exam_slug: slugs[0],
+    question_keys: liveKeys, seconds_per_question: 60, state: "lobby", current_index: -1, question_started_at: null, current_correct: [],
+    created_at: new Date(now - DAY).toISOString(), mode: "classic", goal_pct: null, ask_confidence: false, extra_seconds: 0, paused_at: null,
+    reasks: {}, closed: {}, class_stats: null, ended_at: null, scheduled_at: tomorrow.toISOString(),
+  }] : [];
   const meProfile = { id: me.profileId, email: me.email, full_name: me.name, role: "student", school_id: SCHOOL_ID, created_at: new Date(now - 60 * DAY).toISOString() };
 
   return {
@@ -398,7 +423,7 @@ export function buildDemo({ bundles, now = Date.now() }) {
       consents: [{ kind: "terms", version: CONSENT_VERSION, granted_at: new Date(now - 60 * DAY).toISOString() }],
       school_consents: [{ kind: "guardian_authorization", version: CONSENT_VERSION, granted_at: new Date(now - 60 * DAY).toISOString() }],
       student_statuses: statuses, student_flags: flags, student_groups: groups, student_group_members: groupMembers, student_notes: notes, saved_views: views,
-      teacher_questions: [], question_overrides: [], annotations: [], live_sessions: [], live_players: [], live_answers: [],
+      teacher_questions: [], question_overrides: [], annotations: [], live_sessions: liveSessions, live_players: [], live_answers: [],
       group_directors: [{ id: "demo-gd-1", school_id: SCHOOL_ID, grade: "11", group_label: "A", profile_id: staff[1].id }],
       // Colegio (migration 0020): cursos (10 A and 10 B still without classes), a view-only seat, a subject grant,
       // a pending invitation, settings and a few lines of the log.

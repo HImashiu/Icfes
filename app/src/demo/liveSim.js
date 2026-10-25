@@ -77,6 +77,29 @@ export function liveRpc(tables, profile, bundles) {
       join(row);
       return row;
     },
+    // Migration 0025: a game programmed for a date and time. The invented class joins once it opens.
+    live_schedule: ({ p_title, p_exam, p_keys, p_seconds, p_course, p_at }) => {
+      const at = new Date(p_at).getTime();
+      if (!Number.isFinite(at) || at < Date.now() - 5 * 60000) throw new Error("bad_time");
+      const row = {
+        id: `demo-live-${Date.now()}-${++seq}`, code: String(100000 + Math.floor(Math.random() * 900000)), host_id: profile.id, school_id: profile.school_id,
+        course_id: p_course ?? null, title: p_title ?? "", exam_slug: p_exam, question_keys: [...p_keys], seconds_per_question: p_seconds ?? 60,
+        state: "lobby", current_index: -1, question_started_at: null, current_correct: [], created_at: iso(),
+        mode: "classic", goal_pct: null, ask_confidence: false, extra_seconds: 0, paused_at: null, reasks: {}, closed: {}, class_stats: null, ended_at: null,
+        scheduled_at: at > Date.now() ? new Date(at).toISOString() : null,
+      };
+      tables.live_sessions.push(row);
+      if (!row.scheduled_at) join(row);
+      return row;
+    },
+    live_reschedule: ({ p_session, p_at }) => {
+      const s = find(p_session);
+      if (!s || s.state === "ended") throw new Error("not_allowed");
+      const at = p_at ? new Date(p_at).getTime() : null;
+      s.scheduled_at = at && at > Date.now() ? new Date(at).toISOString() : null;
+      if (!s.scheduled_at && !tables.live_players.some((p) => p.session_id === s.id)) join(s);
+      return s;
+    },
     live_configure: ({ p_session, p_mode, p_goal, p_confidence }) => {
       const s = find(p_session);
       if (!s) throw new Error("not_allowed");

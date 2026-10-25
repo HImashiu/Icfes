@@ -44,7 +44,18 @@ function studentClient(tables, me) {
     id: c.id, name: c.name, subject: c.subject, grade: c.grade, group_label: c.group_label,
     teachers: tables.course_members.filter((m) => m.course_id === c.id && m.role === "teacher").map((m) => m.full_name),
   }));
-  return createDemoClient({ tables, profile: me, scope, extraRpc: { student_classes, hidden_questions: () => hiddenQuestions(tables) } });
+  // Migration 0025: the open and programmed games of the student's classes.
+  const student_live_games = () => tables.live_sessions
+    .filter((x) => x.state !== "ended" && mine().has(x.course_id))
+    .map((x) => {
+      const c = tables.courses.find((k) => k.id === x.course_id);
+      const host = tables.profiles.find((p) => p.id === x.host_id);
+      return { id: x.id, code: x.code, title: x.title, scheduled_at: x.scheduled_at ?? null, state: x.state, course_id: x.course_id, course_name: c?.name ?? "",
+        subject: c?.subject ?? null, grade: c?.grade ?? null, group_label: c?.group_label ?? null, host_name: host?.full_name ?? "", questions: x.question_keys.length,
+        seconds_per_question: x.seconds_per_question, created_at: x.created_at };
+    })
+    .sort((a, b) => new Date(a.scheduled_at ?? a.created_at) - new Date(b.scheduled_at ?? b.created_at));
+  return createDemoClient({ tables, profile: me, scope, extraRpc: { student_classes, student_live_games, hidden_questions: () => hiddenQuestions(tables) } });
 }
 
 // Migration 0021's two functions, on the in-memory school: every use of every question, and what students may not see.

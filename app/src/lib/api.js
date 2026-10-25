@@ -382,6 +382,21 @@ export function createApi(client) {
     async liveCreate({ title, exam, keys, seconds, course }) {
       return unwrap(await client.rpc("live_create", { p_title: title, p_exam: exam, p_keys: keys, p_seconds: seconds, p_course: course || null }));
     },
+    // A game programmed for a date and time (migration 0025). `at` is an ISO date-time.
+    async liveSchedule({ title, exam, keys, seconds, course, at }) {
+      const r = await client.rpc("live_schedule", { p_title: title, p_exam: exam, p_keys: keys, p_seconds: seconds, p_course: course || null, p_at: at });
+      if (r.error && /function|schema cache|does not exist/i.test(r.error.message ?? "")) throw new Error("Para programar un juego hace falta correr la migración 0025 en Supabase.");
+      return unwrap(r);
+    },
+    // Opens a programmed room now (at null) or moves it to another time.
+    async liveReschedule(id, at = null) {
+      return unwrap(await client.rpc("live_reschedule", { p_session: id, p_at: at }));
+    },
+    // The open and programmed games of the student's classes. [] until migration 0025 runs.
+    async studentLiveGames() {
+      const r = await client.rpc("student_live_games");
+      return r.error ? [] : r.data ?? [];
+    },
     async liveJoin(code, nickname) {
       return unwrap(await client.rpc("live_join", { p_code: code, p_nickname: nickname }));
     },
@@ -485,6 +500,11 @@ export function createApi(client) {
       const r = await client.from("school_groups").upsert(rows.map((g) => ({ grade: g.grade, label: g.label })), { onConflict: "school_id,grade,label", ignoreDuplicates: true }).select("id, grade, label, created_at");
       if (r.error && isMissingTable(r.error)) throw new Error(MISSING_0020);
       return unwrap(r) ?? [];
+    },
+    // Migration 0025: the curso's five subject classes and its students in every one. null when it has not run.
+    async completeCurso(grade, label) {
+      const r = await client.rpc("complete_curso", { p_grade: String(grade), p_label: String(label) });
+      return r.error ? null : r.data ?? 0;
     },
     async deleteGroup(id) {
       unwrap(await client.from("school_groups").delete().eq("id", id));
