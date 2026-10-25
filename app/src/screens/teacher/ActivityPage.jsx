@@ -7,8 +7,9 @@ import { assignmentState, scorePct, whoOf } from "../../lib/assignments.js";
 import { MODEL_KINDS, resolveModel } from "../../lib/grading.js";
 import { areaOf, areaShort, contextColor, groupOf } from "../../lib/teaching.js";
 import { TABS } from "../../lib/teacherRoutes.js";
+import PaperGuide from "./PaperGuide.jsx";
 
-const KIND_LABEL = { task: "Tarea", homework: "Tarea", exam: "Examen" };
+const KIND_LABEL = { task: "Práctica en clase", homework: "Tarea", exam: "Simulacro" };
 const shortDate = (iso) => new Date(iso).toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "short" });
 
 // The steps of an activity, with what each one holds now: create, deliver, collect, grade, results.
@@ -47,7 +48,7 @@ export default function ActivityPage({ api, profile, assignment, course, tab, go
   }, [api, assignment.id, assignment.course_id, version]);
 
   const model = useMemo(() => resolveModel(models, { assignmentId: assignment.id, courseId: assignment.course_id, schoolId: profile.school_id }), [models, assignment.id, assignment.course_id, profile.school_id]);
-  const paper = Boolean(info?.seating) || (info?.attempts ?? []).some((t) => String(t.client_id ?? "").startsWith("paper-"));
+  const paper = assignment.delivery === "paper" || Boolean(info?.seating) || (info?.attempts ?? []).some((t) => String(t.client_id ?? "").startsWith("paper-"));
   const steps = info ? activitySteps({ assignment, students: info.students, attempts: info.attempts, paper, model: model.model }) : null;
   const area = areaOf(course ?? {});
   const tint = contextColor(area ?? "");
@@ -60,7 +61,7 @@ export default function ActivityPage({ api, profile, assignment, course, tab, go
         <div className="ap-title">
           <span className="ap-chips">
             <span className="chip ap-chip"><span className="ctx-dot" style={{ background: tint }} aria-hidden="true" />{area ? areaShort(area) : "Varias áreas"} · {groupOf(course ?? {}).name}</span>
-            <span className="chip">{KIND_LABEL[assignment.kind] ?? "Actividad"}</span>
+            <span className="chip">{KIND_LABEL[assignment.kind] ?? "Actividad"}{assignment.delivery === "paper" ? " en papel" : ""}</span>
             <span className={`chip state-${state}`}>{{ active: "Abierta", scheduled: "Programada", closed: "Cerrada", draft: "Borrador" }[state]}</span>
           </span>
           <h1>{assignment.title}</h1>
@@ -93,6 +94,7 @@ export default function ActivityPage({ api, profile, assignment, course, tab, go
       {tab === "resultados" && (
         <AssignmentReport key={`${assignment.id}-${version}`} api={api} model={model.model} assignment={assignment} fetchExam={fetchExam} guard={guard} reload={reload} initialStudent={focusMember} />
       )}
+      {tab === "papel" && <PaperGuide api={api} assignment={assignment} guard={guard} onChanged={reload} />}
       {tab === "papel" && (
         <Paper key={`${assignment.id}-${scanNow}`} api={api} assignments={[assignment]} fetchExam={fetchExam} guard={guard} setNotice={setNotice} fixedId={assignment.id} embedded initialMode={scanNow ? "scan" : null} onSaved={scanned} />
       )}
