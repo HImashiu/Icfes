@@ -342,7 +342,7 @@ export function LiveReport({ api, session, bundle: given = null, fetchExam = nul
         <>
           <div className="lv-tiles">
             <span className="lv-tile"><b>{report.people.length}</b>jugadores</span>
-            <span className="lv-tile"><b>{report.questions.filter((x) => x.reaskOf == null).length}</b>preguntas</span>
+            <span className="lv-tile"><b>{report.questions.filter((x) => x.reaskOf == null && !x.skipped).length}</b>preguntas{report.questions.some((x) => x.skipped) ? ` (${report.questions.filter((x) => x.skipped).length} saltadas)` : ""}</span>
             <span className="lv-tile"><b style={{ color: pctColor(report.classPct) }}>{report.classPct == null ? "—" : `${report.classPct} %`}</b>aciertos de la clase</span>
             <span className="lv-tile"><b>{report.participation == null ? "—" : `${report.participation} %`}</b>participación</span>
             {goal != null && <span className={report.classPct >= goal ? "lv-tile ok" : "lv-tile"}><b>{report.classPct >= goal ? "¡Lograda!" : "No esta vez"}</b>meta de {goal} %</span>}
@@ -360,7 +360,7 @@ export function LiveReport({ api, session, bundle: given = null, fetchExam = nul
 
           {tab === "preguntas" && (
             <ul className="lv-qlist">
-              {report.questions.map((x) => {
+              {report.questions.filter((x) => !x.skipped).map((x) => {
                 const question = qOf(x.key);
                 return (
                   <li key={x.index} className="card lv-qrow">
@@ -393,7 +393,7 @@ export function LiveReport({ api, session, bundle: given = null, fetchExam = nul
                   <li key={p.player_id} className="lv-person">
                     <span className="lv-pname"><b>{p.nickname}</b><span className="caption">{p.guest ? "Invitado · " : ""}{p.right} de {p.of}{p.of > p.answered ? ` · ${p.of - p.answered} sin responder` : ""}</span></span>
                     <span className="lv-cells" aria-label={`Respuestas de ${p.nickname}`}>
-                      {p.cells.map((c) => <i key={c.n} title={`Pregunta ${c.n}: ${c.option ?? "sin respuesta"}`} className={!c.option ? "none" : c.right ? "ok" : c.confident === true ? "bad sure" : "bad"}>{!c.option ? "·" : c.right ? "✓" : c.confident === true ? "!" : "✗"}</i>)}
+                      {p.cells.filter((c, i) => !report.questions[i].skipped).map((c) => <i key={c.n} title={`Pregunta ${c.n}: ${c.option ?? "sin respuesta"}`} className={!c.option ? "none" : c.right ? "ok" : c.confident === true ? "bad sure" : "bad"}>{!c.option ? "·" : c.right ? "✓" : c.confident === true ? "!" : "✗"}</i>)}
                     </span>
                   </li>
                 ))}

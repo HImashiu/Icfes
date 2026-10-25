@@ -78,6 +78,9 @@ export default function LivePlay({ api, initial, nickname, fetchExam, onExit, on
     setMine(m);
   }, 1500, session.state !== "ended");
 
+  // Once the game ends, read this player's answers one last time for the review.
+  useEffect(() => { if (session.state === "ended") api.liveMyAnswers(initial.id).then(setMine, () => {}); }, [session.state]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const idx = session.current_index;
   const mode = modeOf(session);
   const together = mode === "class_goal";
