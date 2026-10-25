@@ -375,6 +375,13 @@ export function buildDemo({ bundles, now = Date.now() }) {
     });
     history.sort((x, y) => y.at - x.at);
   }
+  // Question control: 8 questions no class has used yet, reserved by coordination for next month's simulacro and
+  // hidden from students' free practice (Biblioteca › Control de preguntas).
+  const listed = new Set(assignments.filter((a) => a.exam_slug === slugs[0]).flatMap((a) => a.question_keys ?? []));
+  const holds = (itemsBySlug.get(slugs[0]) ?? []).filter((i) => !listed.has(i.key)).slice(-8).map((i, n) => ({
+    id: `demo-hold-${n + 1}`, school_id: SCHOOL_ID, exam_slug: slugs[0], qkey: i.key, reserve: true, hide_from_students: true,
+    label: "Simulacro de noviembre", until: null, assignment_id: null, created_by: staff[0].id, created_at: new Date(now - 3 * DAY).toISOString(),
+  }));
   const meProfile = { id: me.profileId, email: me.email, full_name: me.name, role: "student", school_id: SCHOOL_ID, created_at: new Date(now - 60 * DAY).toISOString() };
 
   return {
@@ -389,6 +396,7 @@ export function buildDemo({ bundles, now = Date.now() }) {
       student_statuses: statuses, student_flags: flags, student_groups: groups, student_group_members: groupMembers, student_notes: notes, saved_views: views,
       teacher_questions: [], question_overrides: [], annotations: [], live_sessions: [], live_players: [], live_answers: [],
       group_directors: [{ id: "demo-gd-1", school_id: SCHOOL_ID, grade: "11", group_label: "A", profile_id: staff[1].id }],
+      question_holds: holds, question_rules: [],
     },
   };
 }
