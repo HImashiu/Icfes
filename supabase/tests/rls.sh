@@ -6,7 +6,7 @@ set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 P=(psql "$@" -v ON_ERROR_STOP=1 -q -At)
 "${P[@]}" -c "drop database if exists rlstest" -c "create database rlstest"
-P=(psql "$@" -d rlstest -v ON_ERROR_STOP=1 -q -At)
+P=(psql "$@" -d rlstest -v ON_ERROR_STOP=1 -q -At ${PSQLX:-})
 "${P[@]}" <<'SQL'
 do $$ begin create role anon nologin; exception when duplicate_object then null; end $$; do $$ begin create role authenticated nologin; exception when duplicate_object then null; end $$;
 create schema auth;
@@ -22,5 +22,6 @@ SQL
 "${P[@]}" -f "$here/../migrations/0004_live_sessions.sql"
 "${P[@]}" -f "$here/../migrations/0005_teacher_questions.sql"
 "${P[@]}" -f "$here/../migrations/0006_personal_assignments_paper_family.sql"
+"${P[@]}" -f "$here/../migrations/0016_grading_models.sql"
 "${P[@]}" -f "$here/rls_scenarios.sql"
 echo "rls: all checks passed"

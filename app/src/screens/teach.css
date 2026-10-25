@@ -1,0 +1,101 @@
+/* Teaching tools: the classroom projection (Presenter) and the lesson screens. Uses the app tokens. */
+
+/* ---- Projection ---- */
+.tp {
+  position: fixed; inset: 0; z-index: 90; display: grid; grid-template-rows: 1fr auto;
+  background: var(--bg); color: var(--text); font-family: Figtree, system-ui, sans-serif; overflow: hidden;
+}
+.tp-dark {
+  --bg: #0D110F; --surface: #161B18; --surface-2: #20271F; --line: #2D3630; --text: #F2F5EF; --text-2: #A7B1AA;
+  --accent-ink: #C8F04A; --on-accent: #0D110F; --accent-soft: rgba(200, 240, 74, 0.14); --flame: #FF9F43; --ok: #5FD48A;
+  --ok-soft: rgba(95, 212, 138, 0.14); --bad: #FF7F6E; --bad-soft: rgba(255, 127, 110, 0.14); color-scheme: dark;
+}
+.tp-light {
+  --bg: #F3F5EF; --surface: #FFFFFF; --surface-2: #E9EDE4; --line: #D8DED3; --text: #121612; --text-2: #545E57;
+  --accent-ink: #4A6600; --on-accent: #121612; --accent-soft: #EEF8CF; --flame: #C25A00; --ok: #1B7F45; --ok-soft: #DDF3E5;
+  --bad: #C2372B; --bad-soft: #FBE3E0; color-scheme: light;
+}
+.tp-contrast {
+  --bg: #000; --surface: #000; --surface-2: #111; --line: #fff; --text: #fff; --text-2: #f2f2f2; --accent: #FFE600;
+  --accent-ink: #FFE600; --on-accent: #000; --accent-soft: #222; --ok: #5CFF9D; --ok-soft: #062b14; --bad: #FF8A80; --bad-soft: #3a0a07;
+  color-scheme: dark;
+}
+.tp-stage { overflow: auto; padding: clamp(20px, 3vw, 56px); display: flex; flex-direction: column; min-height: 0; }
+.tp-question { width: min(100%, 1500px); margin: 0 auto; display: grid; gap: 16px; }
+.tp-question .q-split { gap: 20px; }
+.tp-center { margin: auto; display: grid; justify-items: center; gap: 18px; text-align: center; max-width: 1100px; }
+.tp-h1 { font-family: "Bricolage Grotesque", Figtree, sans-serif; font-size: clamp(2.4rem, 5.5vw, 5rem); line-height: 1.05; margin: 0; }
+.tp-sub { color: var(--text-2); font-size: clamp(1.1rem, 2vw, 1.8rem); margin: 0; }
+.tp-text { margin: auto; width: min(100%, 1200px); display: grid; gap: 18px; }
+.tp-h2 { font-family: "Bricolage Grotesque", Figtree, sans-serif; font-size: clamp(2rem, 4.2vw, 3.6rem); margin: 0; line-height: 1.1; }
+.tp-p, .tp-list { font-size: clamp(1.3rem, 2.6vw, 2.3rem); line-height: 1.4; margin: 0; }
+.tp-list { padding-left: 1.2em; display: grid; gap: 10px; }
+.tp-note { margin: 0; color: var(--text-2); font-size: 1rem; text-align: center; }
+
+.tp-bar {
+  display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--surface); border-top: 1px solid var(--line);
+  transition: opacity 0.25s, transform 0.25s;
+}
+.tp:not(.bar-on) .tp-bar { opacity: 0; transform: translateY(100%); pointer-events: none; }
+.tp:not(.bar-on) { cursor: none; }
+.tp-bar:focus-within { opacity: 1; transform: none; pointer-events: auto; }
+.tp-btn, .tp-main {
+  min-height: 44px; min-width: 44px; border: 2px solid var(--line); border-radius: 12px; background: var(--surface-2); color: var(--text);
+  font: 700 0.95rem Figtree, system-ui, sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px;
+}
+.tp-btn:disabled { opacity: 0.4; cursor: default; }
+.tp-btn.on { border-color: var(--accent); background: var(--accent-soft); }
+.tp-main { background: var(--accent); color: var(--on-accent); border-color: var(--accent); padding: 0 20px; font-size: 1.05rem; }
+.tp-btn.exit { margin-left: 4px; }
+.tp-count { font-weight: 700; color: var(--text-2); padding: 0 8px; }
+.tp-spacer { flex: 1; }
+.tp-brand { position: absolute; right: 18px; top: 12px; font: 800 0.9rem "Bricolage Grotesque", Figtree, sans-serif; color: var(--text-2); opacity: 0.6; }
+.tp-timer {
+  position: absolute; right: 24px; bottom: 92px; background: var(--surface); border: 3px solid var(--accent); border-radius: 18px; padding: 8px 22px;
+  font: 800 clamp(2rem, 4vw, 3.4rem) "Bricolage Grotesque", Figtree, sans-serif; font-variant-numeric: tabular-nums;
+}
+.tp-timer.done { border-color: var(--bad); color: var(--bad); font-size: clamp(1.4rem, 2.6vw, 2.2rem); }
+.tp-blank { position: absolute; inset: 0; border: 0; background: #000; cursor: pointer; }
+.tp-light .tp-blank { background: #fff; }
+body.teach-open { overflow: hidden; }
+@media (max-width: 720px) {
+  .tp-bar { flex-wrap: wrap; }
+  .tp-brand { display: none; }
+}
+
+/* ---- Lesson screens ---- */
+.les-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.les-card {
+  display: grid; gap: 6px; text-align: left; padding: 16px; border: 2px solid var(--line); border-radius: 16px; background: var(--surface);
+  color: var(--text); cursor: pointer; font: inherit;
+}
+.les-card:hover, .les-card:focus-visible { border-color: var(--accent); }
+.les-card strong { font-size: 1.05rem; }
+.les-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.les-item { display: grid; grid-template-columns: auto auto 1fr auto; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.les-item .les-n { font-weight: 800; color: var(--text-2); min-width: 1.6em; text-align: center; }
+.les-item .les-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.les-item.is-text { border-style: dashed; }
+.les-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.les-formats { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.les-format {
+  display: grid; gap: 4px; text-align: left; padding: 12px; border: 2px solid var(--line); border-radius: 14px; background: var(--surface);
+  color: var(--text); cursor: pointer; font: inherit;
+}
+.les-format[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.les-two { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
+@media (max-width: 860px) { .les-two { grid-template-columns: 1fr; } .les-item { grid-template-columns: auto 1fr auto; } .les-item > .assign-tile { display: none; } }
+
+/* ---- Print: worksheet header and teacher's key ---- */
+.pb-cover-ws { break-after: auto; page-break-after: auto; }
+.pb-instr-line { margin: 8pt 0 0; font-weight: 600; }
+.pk { width: min(100%, 190mm); background: #fff; color: #000; padding: 14mm; box-sizing: content-box; font-family: Newsreader, Georgia, serif; font-size: 11pt; line-height: 1.4; }
+.pk h1 { font-size: 18pt; margin: 0 0 4pt; }
+.pk table { width: 100%; border-collapse: collapse; margin-top: 10pt; }
+.pk th, .pk td { border: 1px solid #000; padding: 4pt 6pt; text-align: left; vertical-align: top; }
+.pk td.pk-letter { font-weight: 800; text-align: center; width: 2.4em; }
+.pk tr { break-inside: avoid; }
+.pk-note { font-size: 9.5pt; margin-top: 8pt; }
+
+/* In projection the context card scrolls with the page instead of sticking over the options. */
+.tp .q-context { position: static; }

@@ -1,0 +1,272 @@
+// Builds the invented school of the demo: 3 class spaces, 120 students and 8 weeks of work, from the exam bundles
+// the app already loaded. Everything is deterministic (same seed, same school) and kept in memory.
+// No exam text is stored here: answers refer to question keys of whatever booklets are loaded.
+import { bankItems } from "../lib/bank.js";
+import { scoreAttempt } from "../lib/exam.js";
+import { CONSENT_VERSION } from "../lib/consent.js";
+import { PRESETS } from "../lib/chartBuilder.js";
+import { BUILTIN_FORMATS } from "../lib/lesson.js";
+import { generatePlan } from "../lib/seating.js";
+import { SUGGESTED_STATUSES } from "../lib/workspaceStore.js";
+import { EMPTY_FILTERS } from "../lib/workspace.js";
+import { FIRST, LAST, TEACHERS, emailOf } from "./names.js";
+
+export const SCHOOL_ID = "demo-school";
+const DAY = 864e5;
+
+function rngFor(seed) {
+  let a = seed >>> 0;
+  const next = () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const normal = () => Math.sqrt(-2 * Math.log(next() || 1e-9)) * Math.cos(2 * Math.PI * next());
+  return { next, normal, pick: (list) => list[Math.floor(next() * list.length)] };
+}
+const sigmoid = (x) => 1 / (1 + Math.exp(-x));
+
+// Seconds a student typically needs per question, by area.
+const AREA_SECONDS = { "Lectura crítica": 85, Matemáticas: 100, "Sociales y ciudadanas": 65, "Ciencias naturales": 75, Inglés: 55 };
+
+const COURSES = [
+  { id: "demo-c1", subject: "Matemáticas", group: "A", focus: "Matemáticas", teacher: 1, edge: 0.15, titles: ["Tablas y gráficos", "Funciones y variación", "Simulacro de matemáticas", "Probabilidad y conteo", "Razonamiento con datos"] },
+  { id: "demo-c2", subject: "Lectura crítica", group: "B", focus: "Lectura crítica", teacher: 2, edge: 0, titles: ["Textos argumentativos", "Inferir la intención del autor", "Simulacro de lectura", "Textos discontinuos", "Contrastar posiciones"] },
+  { id: "demo-c3", subject: "Todas las áreas", group: "C", focus: null, teacher: 3, edge: -0.1, titles: ["Calentamiento Saber 11", "Mezcla de áreas", "Simulacro general", "Ciencias y sociales", "Repaso antes del simulacro"] },
+];
+const DAYS_AGO = [55, 41, 27, 13, 2];
+const KINDS = ["task", "homework", "exam", "task", "homework"];
+
+export function buildDemo({ bundles, now = Date.now() }) {
+  const rand = rngFor(20261024);
+  const slugs = [...bundles.keys()];
+  const itemsBySlug = new Map(slugs.map((s) => {
+    const b = bundles.get(s);
+    return [s, bankItems(b.exam, { enrich: b.enrich, key: b.key }).filter((i) => i.hasKey)];
+  }));
+  const questionBy = new Map(slugs.map((s) => [s, new Map(bundles.get(s).exam.questions.map((q) => [q.key, q]))]));
+
+  const staff = [
+    { id: "demo-t0", email: emailOf(...TEACHERS[0]), full_name: `${TEACHERS[0][0]} ${TEACHERS[0][1]}`, role: "school_admin", created_at: new Date(now - 90 * DAY).toISOString(), school_id: SCHOOL_ID },
+    ...TEACHERS.slice(1).map(([f, l], i) => ({ id: `demo-t${i + 1}`, email: emailOf(f, l), full_name: `${f} ${l}`, role: "teacher", created_at: new Date(now - 80 * DAY).toISOString(), school_id: SCHOOL_ID })),
+  ];
+
+  // ----- people -----
+  const courses = [];
+  const members = [];
+  const students = [];
+  const used = new Set();
+  const emails = new Set();
+  let n = 0;
+  COURSES.forEach((c, ci) => {
+    courses.push({ id: c.id, name: c.subject === "Todas las áreas" ? `Preparación Saber 11 ${c.group}` : `${c.subject} 11 ${c.group}`, grade: "11", year: 2026, subject: c.subject, group_label: c.group, school_id: SCHOOL_ID, created_by: staff[c.teacher].id, created_at: new Date(now - 70 * DAY).toISOString() });
+    members.push({ id: `demo-m-t${ci}`, course_id: c.id, profile_id: staff[c.teacher].id, email: staff[c.teacher].email, full_name: staff[c.teacher].full_name, role: "teacher" });
+    for (let k = 0; k < 40; k += 1) {
+      let first; let last; let tries = 0;
+      do { first = rand.pick(FIRST); last = `${rand.pick(LAST)} ${rand.pick(LAST)}`; tries += 1; } while (used.has(`${first} ${last}`) && tries < 50);
+      used.add(`${first} ${last}`);
+      n += 1;
+      const roll = rand.next();
+      const s = {
+        n, courseId: c.id, memberId: `demo-m-${n}`, profileId: `demo-p-${n}`, name: `${first} ${last}`, email: emailOf(first, last.split(" ")[0], emails.has(emailOf(first, last.split(" ")[0])) ? n : ""),
+        ability: rand.normal() * 0.8 + c.edge,
+        engagement: roll < 0.6 ? 0.94 : roll < 0.9 ? 0.78 : 0.45,
+        speed: Math.exp(rand.normal() * 0.22),
+        growth: 0.03 + rand.next() * 0.05,
+        dropout: rand.next() < 0.05, // stops delivering after week 5
+        slump: rand.next() < 0.06, // falls hard in the last two tasks
+        hintLover: rand.next() < 0.25,
+        areaSkill: Object.fromEntries(Object.keys(AREA_SECONDS).map((a) => [a, rand.normal() * 0.45])),
+      };
+      emails.add(s.email);
+      students.push(s);
+      members.push({ id: s.memberId, course_id: c.id, profile_id: s.profileId, email: s.email, full_name: s.name, role: "student" });
+    }
+  });
+
+  // ----- assignments and what students did -----
+  const assignments = [];
+  const attempts = [];
+  const proctorEvents = [];
+  const lessonKeysByAssignment = new Map();
+  let pe = 0;
+  COURSES.forEach((c, ci) => {
+    const roster = students.filter((s) => s.courseId === c.id);
+    DAYS_AGO.forEach((ago, j) => {
+      const poolOf = (sl) => (c.focus ? (itemsBySlug.get(sl) ?? []).filter((i) => i.section === c.focus) : itemsBySlug.get(sl) ?? []);
+      const candidates = slugs.filter((sl) => poolOf(sl).length);
+      if (!candidates.length) return;
+      const slug = candidates[(ci + j) % candidates.length];
+      const pool = poolOf(slug);
+      const count = KINDS[j] === "exam" ? 24 : 16;
+      const step = pool.length / Math.min(count, pool.length);
+      const picked = Array.from({ length: Math.min(count, pool.length) }, (_, i) => pool[Math.floor(i * step)]);
+      const keys = picked.map((i) => i.key);
+      const opens = now - (ago + ci) * DAY;
+      const active = j === DAYS_AGO.length - 1;
+      const kind = KINDS[j];
+      const exam = kind === "exam";
+      const a = {
+        id: `demo-a-${ci + 1}-${j + 1}`, course_id: c.id, kind, title: c.titles[j], exam_slug: slug, scope: c.focus ?? "all", question_keys: keys,
+        opens_at: new Date(opens).toISOString(), due_at: new Date(active ? now + 3 * DAY : opens + 6 * DAY).toISOString(),
+        time_limit_min: exam ? 45 : null, reveal_policy: exam ? "after_close" : "after_submit", max_attempts: exam ? 1 : null, assignee_id: null,
+        status: "published", created_at: new Date(opens - DAY).toISOString(), allow_hints: !exam, instant_feedback: !exam,
+        allow_definitions: false, definitions: [], proctor: exam, courses: { name: courses[ci].name },
+      };
+      assignments.push(a);
+      lessonKeysByAssignment.set(a.id, keys);
+      const bundle = bundles.get(slug);
+      const qs = keys.map((k) => questionBy.get(slug).get(k)).filter(Boolean);
+      const trend = j; // tasks later in the term are easier for a student who keeps working
+      for (const s of roster) {
+        if (s.dropout && j >= 3) continue;
+        if (rand.next() > s.engagement * (active ? 0.6 : 1)) continue;
+        const slumpShift = s.slump && j >= 3 ? -1.4 : 0;
+        const answers = {};
+        const times = {};
+        const hints = {};
+        const changes = {};
+        for (const q of qs) {
+          const item = picked.find((i) => i.key === q.key);
+          const diff = (item?.dificultad ?? 3) - 3;
+          const theta = s.ability + s.growth * 10 * (trend / 4) + (s.areaSkill[q.section] ?? 0) + slumpShift;
+          const p = sigmoid(1.15 * (theta - 0.5 * diff) + 0.15);
+          const right = bundle.key.get(q.key);
+          const roll = rand.next();
+          if (exam && roll > 0.97) continue; // left blank
+          const wrong = (q.options ?? []).map((o) => o.letter).filter((l) => l !== right);
+          const popular = wrong[(Number(q.number) || 0) % Math.max(1, wrong.length)];
+          const correct = rand.next() < p;
+          const letter = correct ? right : rand.next() < 0.5 ? popular : rand.pick(wrong.length ? wrong : ["A"]);
+          answers[q.key] = letter;
+          const base = AREA_SECONDS[q.section] ?? 70;
+          times[q.key] = Math.max(6, Math.round(base * (1 + 0.18 * diff) * s.speed * Math.exp(rand.normal() * 0.38) * (correct ? 0.9 : 1.15)));
+          if (!exam && rand.next() < (s.hintLover ? 0.3 : 0.07) * (correct ? 0.7 : 1.4)) hints[q.key] = 1 + (rand.next() < 0.2 ? 1 : 0);
+          if (rand.next() < 0.07) changes[q.key] = 1;
+        }
+        const total = Object.values(times).reduce((x, y) => x + y, 0);
+        const submitted = Math.min(now - 20 * 60000, opens + (2 + rand.next() * (active ? 70 : 140)) * 3600000);
+        const started = submitted - (total + 60 + rand.next() * 120) * 1000;
+        const sc = scoreAttempt(qs, answers, bundle.key);
+        const leaves = exam && rand.next() < 0.14 ? 1 + Math.floor(rand.next() * 3) : 0;
+        attempts.push({
+          profile_id: s.profileId, member_id: null, client_id: String(Math.round(started)), assignment_id: a.id, exam_slug: slug, scope: a.scope,
+          mode: exam ? "timed" : "practice", started_at: new Date(started).toISOString(), submitted_at: new Date(submitted).toISOString(),
+          duration_sec: Math.round((submitted - started) / 1000), answers, times, activity: { hints, changes },
+          proctor: exam ? { leaves, awaySec: leaves * 25, pointerOuts: leaves * 2, idleSec: 0 } : null,
+          score: { keyed: true, correct: sc.correct, answered: sc.answered, total: sc.total, perArea: sc.perArea }, key_status: "preliminary", device: s.n % 3 ? "phone" : "desktop",
+        });
+        for (let e = 0; e < leaves; e += 1) {
+          const at = started + (0.2 + 0.6 * rand.next()) * (submitted - started);
+          pe += 1;
+          proctorEvents.push({ id: `demo-pe-${pe}`, assignment_id: a.id, profile_id: s.profileId, client_id: String(Math.round(started)), kind: "leave", at: new Date(at).toISOString(), question_key: keys[Math.floor(rand.next() * keys.length)], secs: null });
+          pe += 1;
+          proctorEvents.push({ id: `demo-pe-${pe}`, assignment_id: a.id, profile_id: s.profileId, client_id: String(Math.round(started)), kind: "return", at: new Date(at + 25000).toISOString(), question_key: null, secs: 25 });
+        }
+      }
+    });
+  });
+
+  // A paper simulacro for the third space: the sheets were scanned, so results hang from the roster rows.
+  const paperSlug = slugs[0];
+  const paperRoster = members.filter((m) => m.course_id === "demo-c3" && m.role === "student");
+  const assignedC3 = assignments.filter((a) => a.course_id === "demo-c3");
+  const paperBase = assignedC3[2];
+  let seating = [];
+  if (paperBase && paperSlug) {
+    const paper = { ...paperBase, id: "demo-a-3-paper", title: "Simulacro en papel · sesión 1", opens_at: new Date(now - 2 * DAY).toISOString(), due_at: new Date(now - 1 * DAY).toISOString(), created_at: new Date(now - 6 * 3600000).toISOString(), proctor: false };
+    assignments.push(paper);
+    const bundle = bundles.get(paper.exam_slug);
+    const qs = paper.question_keys.map((k) => questionBy.get(paper.exam_slug).get(k)).filter(Boolean);
+    for (const s of students.filter((x) => x.courseId === "demo-c3")) {
+      if (rand.next() > 0.93) continue;
+      const answers = {};
+      for (const q of qs) {
+        const right = bundle.key.get(q.key);
+        if (rand.next() > 0.96) continue;
+        const wrong = (q.options ?? []).map((o) => o.letter).filter((l) => l !== right);
+        answers[q.key] = rand.next() < sigmoid(1.1 * (s.ability + 0.4) + 0.1) ? right : rand.pick(wrong.length ? wrong : ["A"]);
+      }
+      const sc = scoreAttempt(qs, answers, bundle.key);
+      attempts.push({ profile_id: s.profileId, member_id: s.memberId, client_id: `paper-${s.n}`, assignment_id: paper.id, exam_slug: paper.exam_slug, scope: paper.scope, mode: "timed", started_at: paper.opens_at, submitted_at: new Date(now - 1.8 * DAY).toISOString(), duration_sec: 45 * 60, answers, times: {}, activity: { hints: {}, changes: {} }, proctor: null, score: { keyed: true, correct: sc.correct, answered: sc.answered, total: sc.total, perArea: sc.perArea }, key_status: "preliminary", device: "paper" });
+    }
+    const plan = generatePlan({ rows: 7, cols: 7, blocked: ["0,3", "3,3", "6,3"], versions: 4, studentIds: paperRoster.map((m) => m.id), seed: 20261024, orderSeed: 7351 });
+    seating = [{ assignment_id: paper.id, plan, updated_at: new Date(now - 5 * 3600000).toISOString() }];
+  }
+
+
+  // ----- teacher workspace (migration 0014): statuses, follow-up, groups, notes, saved views -----
+  const pctOf = new Map();
+  for (const a of attempts) {
+    const who = a.profile_id;
+    if (!who || !a.score?.total) continue;
+    const list = pctOf.get(who) ?? [];
+    list.push(a.score.correct / a.score.total);
+    pctOf.set(who, list);
+  }
+  const avgOf = (s) => { const l = pctOf.get(s.profileId); return l?.length ? l.reduce((x, y) => x + y, 0) / l.length : null; };
+  const stamp = (d) => new Date(now - d * DAY).toISOString();
+  const statuses = SUGGESTED_STATUSES.map((st, i) => ({ id: `demo-st-${i + 1}`, school_id: SCHOOL_ID, label: st.label, color: st.color, position: i }));
+  const statusId = (label) => statuses.find((x) => x.label === label).id;
+  const ranked = students.map((s) => ({ s, avg: avgOf(s) })).sort((a, b) => (a.avg ?? -1) - (b.avg ?? -1));
+  const flags = [];
+  ranked.slice(0, 14).forEach(({ s }, i) => flags.push({ id: `demo-fl-${s.n}`, school_id: SCHOOL_ID, email: s.email, status_id: statusId(i < 7 ? "Necesita apoyo" : "En observación"), follow_up: i < 9, follow_up_due: new Date(now + (i - 2) * DAY).toISOString().slice(0, 10), follow_up_reason: i % 2 ? "Hablar con acudiente" : "Revisar tareas pendientes", updated_at: stamp(i % 6) }));
+  ranked.slice(-10).forEach(({ s }) => flags.push({ id: `demo-fl-${s.n}`, school_id: SCHOOL_ID, email: s.email, status_id: statusId("Avanza muy bien"), follow_up: false, updated_at: stamp(3) }));
+  ranked.slice(14, 24).forEach(({ s }) => flags.push({ id: `demo-fl-${s.n}`, school_id: SCHOOL_ID, email: s.email, status_id: statusId("Con plan de refuerzo"), follow_up: false, updated_at: stamp(8) }));
+  const groups = [
+    { id: "demo-gr-1", school_id: SCHOOL_ID, name: "Refuerzo de matemáticas", color: "#FFB547", course_id: "demo-c1", created_by: "demo-t1", created_at: stamp(20) },
+    { id: "demo-gr-2", school_id: SCHOOL_ID, name: "Tutores entre pares", color: "#C8F04A", course_id: null, created_by: "demo-t0", created_at: stamp(15) },
+    { id: "demo-gr-3", school_id: SCHOOL_ID, name: "Taller de lectura", color: "#8AB4FF", course_id: "demo-c2", created_by: "demo-t2", created_at: stamp(12) },
+  ];
+  const lowOf = (cid, n) => ranked.filter((r) => r.s.courseId === cid).slice(0, n).map((r) => r.s.email);
+  const groupMembers = [
+    ...lowOf("demo-c1", 8).map((email) => ({ group_id: "demo-gr-1", email })),
+    ...ranked.slice(-6).map((r) => ({ group_id: "demo-gr-2", email: r.s.email })),
+    ...lowOf("demo-c2", 7).map((email) => ({ group_id: "demo-gr-3", email })),
+  ];
+  const noteTexts = ["Habló con la mamá: se compromete a revisar las tareas por la plataforma.", "Mejoró en gráficos, sigue flojo en probabilidad. Asignar refuerzo.", "Se distrae en los simulacros con tiempo; sentarlo adelante.", "Muy buena actitud, puede ayudar a sus compañeros."];
+  const notes = ranked.slice(0, 4).map(({ s }, i) => ({ id: `demo-no-${i + 1}`, school_id: SCHOOL_ID, email: s.email, body: noteTexts[i], author_id: "demo-t0", author_name: staff[0].full_name, created_at: stamp(2 + i * 3) }));
+  const views = [
+    { id: "demo-vw-1", profile_id: "demo-t0", name: "Necesitan apoyo", filters: { ...EMPTY_FILTERS, status: statusId("Necesita apoyo") }, created_at: stamp(5) },
+    { id: "demo-vw-2", profile_id: "demo-t0", name: "Seguimiento pendiente", filters: { ...EMPTY_FILTERS, followUp: "yes" }, created_at: stamp(4) },
+  ];
+
+  // ----- settings, saved work -----
+  const scale = { min: 1, max: 5, pass: 3, passPct: 60, decimals: 1 };
+  const grading = [
+    { id: "demo-g1", scope: "school", scope_id: SCHOOL_ID, model: { kind: "scale", scale } },
+    { id: "demo-g2", scope: "course", scope_id: "demo-c1", model: { kind: "scale", scale, curves: { Matemáticas: { strict: 0.9, bonus: 4 } }, partial: { hintCredit: 0.5, wrongPenalty: 0 } } },
+    { id: "demo-g3", scope: "assignment", scope_id: "demo-a-3-3", model: { kind: "icfes" } },
+    { id: "demo-g4", scope: "assignment", scope_id: "demo-a-2-3", model: { kind: "irt" } },
+    { id: "demo-g5", scope: "assignment", scope_id: "demo-a-1-5", model: { kind: "formula", formula: { expr: "round(pct / 20 - hints * 0.05, 1)", unit: "", decimals: 1 } } },
+  ];
+  const charts = [PRESETS[0], PRESETS[2], PRESETS[3]].map((p, i) => ({ id: `demo-ch-${i + 1}`, name: p.name, spec: p.spec, created_at: new Date(now - (6 - i) * DAY).toISOString() }));
+
+  const lessonSlug = slugs[0];
+  const lessonItems = (itemsBySlug.get(lessonSlug) ?? []).filter((i) => i.section === "Matemáticas").slice(0, 6);
+  const lessons = lessonSlug && lessonItems.length ? [{
+    id: "demo-l1", owner_id: "demo-t0", title: "Repaso: leer tablas y gráficos", exam_slug: lessonSlug,
+    items: [{ type: "text", title: "Qué vamos a hacer hoy", body: "- Leer una tabla antes de mirar las opciones\n- Justificar la respuesta con un dato" }, ...lessonItems.map((i) => ({ type: "q", key: i.key })), { type: "text", title: "Para llevar", body: "Subraya el dato que usaste. Si no lo encuentras, vuelve a leer la pregunta." }],
+    settings: { hideOptions: false, seconds: 60, titleSlide: true }, visibility: "school", updated_at: new Date(now - 3 * DAY).toISOString(),
+  }, {
+    id: "demo-l2", owner_id: "demo-t2", title: "Argumentos en un texto", exam_slug: lessonSlug,
+    items: (itemsBySlug.get(lessonSlug) ?? []).filter((i) => i.section === "Lectura crítica").slice(0, 4).map((i) => ({ type: "q", key: i.key })),
+    settings: { hideOptions: false, seconds: 90, titleSlide: true }, visibility: "school", updated_at: new Date(now - 5 * DAY).toISOString(),
+  }] : [];
+  const formats = [{ id: "demo-f1", owner_id: "demo-t0", name: "Quiz de salida (10 min)", config: { ...BUILTIN_FORMATS[2].config, limit: "" }, visibility: "private", created_at: new Date(now - 9 * DAY).toISOString() }];
+
+  return {
+    profile: staff[0],
+    tables: {
+      profiles: [...staff, ...students.map((s) => ({ id: s.profileId, email: s.email, full_name: s.name, role: "student", school_id: SCHOOL_ID, created_at: new Date(now - 60 * DAY).toISOString() }))],
+      courses, course_members: members, assignments, attempts, grading_models: grading, saved_charts: charts, lessons, activity_formats: formats,
+      paper_seating: seating, proctor_events: proctorEvents,
+      consents: [{ kind: "terms", version: CONSENT_VERSION, granted_at: new Date(now - 60 * DAY).toISOString() }],
+      school_consents: [{ kind: "guardian_authorization", version: CONSENT_VERSION, granted_at: new Date(now - 60 * DAY).toISOString() }],
+      student_statuses: statuses, student_flags: flags, student_groups: groups, student_group_members: groupMembers, student_notes: notes, saved_views: views,
+      teacher_questions: [], question_overrides: [], annotations: [], live_sessions: [], live_players: [], live_answers: [],
+    },
+  };
+}

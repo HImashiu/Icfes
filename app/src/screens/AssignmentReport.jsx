@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { areaAverages, bandFor, histogram, itemsCsv, itemStats, mean, round } from "../lib/analytics.js";
 import { assignmentState, progressRows, questionsForAttempt, resultsCsv } from "../lib/assignments.js";
 import { areaColor } from "../lib/brand.js";
+import { DEFAULT_MODEL, MODEL_KINDS, describeModel, formatValue, gradeMany, isAdjusted, itemFromRow, valueRange } from "../lib/grading.js";
 import QuestionView from "../components/QuestionView.jsx";
 import AutopsyCard from "../components/AutopsyCard.jsx";
 import { Bars, Histogram, Kpi } from "./Dashboard.jsx";
@@ -21,14 +22,18 @@ function download(name, text) {
 }
 
 // Informe de una asignación: avance, distribución, áreas, análisis por pregunta y tabla de estudiantes.
-export default function AssignmentReport({ api, assignment, fetchExam, guard, reload }) {
+export default function AssignmentReport({ api, assignment, fetchExam, guard, reload, model = DEFAULT_MODEL, initialStudent = null }) {
   const [data, setData] = useState(null);
   const [bundle, setBundle] = useState(null);
   const [allItems, setAllItems] = useState(false);
   const [board, setBoard] = useState(null);
   const [share, setShare] = useState(null);
   const [familyMsg, setFamilyMsg] = useState(null);
-  const [student, setStudent] = useState(null);
+  const [student, setStudent] = useState(initialStudent);
+  // Opened from a student's profile: scroll to that student's answers once they load.
+  useEffect(() => {
+    if (initialStudent && data) setTimeout(() => document.getElementById("student-run")?.scrollIntoView?.({ behavior: "smooth", block: "start" }), 80);
+  }, [initialStudent, data]);
   const [sample, setSample] = useState(false);
 
   useEffect(() => {
@@ -46,20 +51,29 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
     const delivered = data.attempts.filter((a) => a.submitted_at);
     const items = bundle ? itemStats(questions, bundle.key, delivered) : [];
     const timed = assignment.kind === "exam";
+    const ctx = bundle ? { questions, key: bundle.key } : {};
+    const graded = prog.rows.filter((r) => r.attempt);
+    // The group is graded together (IRT needs it); each student's best delivered attempt counts, like the percent column.
+    const grades = gradeMany(graded.map((r) => itemFromRow(r.attempt, r.attempts.indexOf(r.attempt) + 1)), model, ctx);
+    const gradeOf = new Map(graded.map((r, i) => [r.id, grades[i]]));
     const rows = prog.rows.map((r) => ({
       ...r,
+      grade: gradeOf.get(r.id) ?? null,
       band: timed && r.attempt?.score?.keyed ? bandFor(r.attempt.score.perArea) : null,
       answers: r.attempt?.answers ?? {},
     }));
+    const values = rows.map((r) => r.grade?.value).filter((v) => v != null);
+    const range = valueRange(model) ?? (values.length ? [Math.min(...values), Math.max(...values) + 1e-9] : [0, 1]);
     const pcts = rows.map((r) => r.pct).filter((p) => p != null);
     return {
       prog, rows, questions, items, timed,
       avgTimes: classTimes(questions, delivered),
       avg: round(mean(pcts)),
-      hist: histogram(pcts, 0, 100, 5),
+      gradeAvg: values.length ? mean(values) : null,
+      hist: histogram(values, range[0], range[1], 5),
       areas: areaAverages(rows.map((r) => r.attempt).filter(Boolean).map((a) => ({ ...a, profile_id: a.profile_id }))),
     };
-  }, [data, bundle, assignment]);
+  }, [data, bundle, assignment, model]);
 
   if (!view) return <p className="caption">Cargando avance…</p>;
   const { prog, rows, items, timed } = view;
@@ -113,13 +127,13 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
       {prog.done > 0 && (
         <>
           <div className="d-kpis">
-            <Kpi label="Promedio" value={view.avg == null ? null : `${view.avg} %`} />
+            <Kpi label="Promedio" value={view.gradeAvg == null ? null : formatValue(model, view.gradeAvg)} hint={isAdjusted(model) && view.avg != null ? `${view.avg} % de aciertos` : undefined} />
             <Kpi label="Entregaron" value={`${prog.done}/${prog.total}`} />
             {sorted[0] && <Kpi label="Pregunta más difícil" value={`N.° ${sorted[0].number}`} hint={`${sorted[0].pct} % acertó`} />}
           </div>
           <div className="d-two">
             <div><span className="label">Distribución de resultados</span>
-              <Histogram bins={view.hist} format={(b) => `${b.from}–${b.to}`} /></div>
+              <Histogram bins={view.hist} format={(b) => `${formatValue(model, b.from)}–${formatValue(model, b.to)}`} /></div>
             <div><span className="label">Por área</span>
               <Bars rows={view.areas.map((a) => ({ label: a.name, value: a.pct, color: areaColor(a.name) }))} /></div>
           </div>
@@ -128,13 +142,14 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
 
       <div className="table-wrap">
         <table className="t-table">
-          <thead><tr><th>Estudiante</th><th>Estado</th><th>Puntaje</th>{timed && <th>Banda estimada</th>}<th>Entregado</th><th>Tiempo</th><th>Intentos</th><th className="no-print" /></tr></thead>
+          <thead><tr><th>Estudiante</th><th>Estado</th><th>{model.kind === "percent" ? "Puntaje" : "Nota"}</th>{isAdjusted(model) && <th>Aciertos</th>}{timed && <th>Banda estimada</th>}<th>Entregado</th><th>Tiempo</th><th>Intentos</th><th className="no-print" /></tr></thead>
           <tbody>
             {rows.map((r) => (
               <tr key={r.id}>
                 <td>{r.done ? <button type="button" className="link" onClick={() => openStudent(r.id)}>{r.name}</button> : r.name}</td>
                 <td>{r.done ? (r.paper ? "Entregado (papel)" : "Entregado") : r.joined ? "Pendiente" : "Sin ingresar"}</td>
-                <td>{r.pct == null ? "—" : `${r.pct} %`}</td>
+                <td title={r.grade?.error ?? r.grade?.note ?? undefined}>{r.grade ? r.grade.display : "—"}{r.grade?.passed === false && <span className="badge pending"> no aprueba</span>}</td>
+                {isAdjusted(model) && <td>{r.pct == null ? "—" : `${r.pct} %`}</td>}
                 {timed && <td>{r.band?.global == null ? "—" : `${r.band.low}–${r.band.high}`}</td>}
                 <td>{r.at ? shortDate(r.at) : "—"}</td>
                 <td>{r.done && !r.paper ? fmtDuration(r.attempt?.duration_sec) : "—"}</td>
@@ -142,7 +157,7 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
                 <td className="no-print">{r.done && <button type="button" className="link" onClick={() => openStudent(r.id)}>Ver detalle</button>}{r.done && <button type="button" className="link" onClick={() => family(r)}>Informe familiar</button>}</td>
               </tr>
             ))}
-            {rows.length === 0 && <tr><td colSpan={8} className="caption">El curso no tiene estudiantes.</td></tr>}
+            {rows.length === 0 && <tr><td colSpan={9} className="caption">El curso no tiene estudiantes.</td></tr>}
           </tbody>
         </table>
       </div>
@@ -174,6 +189,7 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
           <span className="caption">Quien tenga el enlace puede ver el informe, sin iniciar sesión. Envíalo solo a la familia.</span>
         </div>
       )}
+      {isAdjusted(model) && <span className="caption no-print">Modelo de calificación: {describeModel(model)}. Se puede cambiar en «Calificación».{rows.find((r) => r.grade?.provisional)?.grade.note ? ` ${rows.find((r) => r.grade?.provisional).grade.note}` : ""}</span>}
       {timed && <span className="caption">La banda (0–500) usa una curva provisional y la clave preliminar: es un estimado, no el puntaje oficial.</span>}
 
       {sorted.length > 0 && (
@@ -227,7 +243,7 @@ export default function AssignmentReport({ api, assignment, fetchExam, guard, re
 
       <span className="caption">Puntaje según la clave preliminar, no oficial.</span>
       <div className="report-actions no-print">
-        <button type="button" className="secondary" onClick={() => download(`${assignment.title}.csv`, resultsCsv(assignment.title, prog.rows))}>Exportar CSV</button>
+        <button type="button" className="secondary" onClick={() => download(`${assignment.title}.csv`, resultsCsv(assignment.title, rows, isAdjusted(model) ? { label: `Nota (${MODEL_KINDS.find((k) => k.id === model.kind).label})`, of: (r) => r.grade?.display } : null))}>Exportar CSV</button>
         <button type="button" className="secondary" disabled={!bundle || prog.done === 0} onClick={() => download(`${assignment.title} · por pregunta.csv`, itemsCsv(assignment.title, view.questions, bundle.key, rows.filter((r) => r.done)))}>CSV por pregunta</button>
         <button type="button" className="secondary" onClick={() => window.print()}>Imprimir o PDF</button>
         {sorted.length >= 3 && <button type="button" className="secondary" onClick={reinforce}>Crear refuerzo con las más falladas</button>}
