@@ -1,4 +1,3 @@
-import IcfesAreas from "../components/IcfesAreas.jsx";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DateField, Select, confirmDialog } from "../components/Controls.jsx";
 import Icon from "../components/Icon.jsx";
@@ -647,11 +646,9 @@ export function StudentProfile({ api, userId, student: s, ws, store, guard, say,
         <Kpi label="Cambio" value={fmtTrend(s.trend)} hint="últimas 3 frente a las anteriores" />
         <Kpi label="Tiempo total" value={s.totalSec ? fmtDuration(s.totalSec) : "—"} />
         <Kpi label="Última entrega" value={shortDate(s.lastAt)} />
-        {s.band?.global != null && <Kpi label="Puntaje Saber 11 estimado" value={`${s.band.global}/500`} hint={`Sesión 1 + Sesión 2 de ${s.band.code} · ${s.band.low}–${s.band.high}${s.band.globalPercentile != null ? ` · percentil nacional ${s.band.globalPercentile}` : ""}`} />}
+        {s.band?.global != null && <Kpi label="Puntaje Saber 11 estimado" value={`${s.band.global}/500`} hint={`Sesión 1 + Sesión 2 de ${s.band.code} · ${s.band.low}–${s.band.high}, estimado`} />}
         {s.leaves > 0 && <Kpi label="Salidas en exámenes" value={String(s.leaves)} />}
       </div>
-
-      {s.band?.areas?.length > 0 && <IcfesAreas areas={s.band.areas} title={`Último simulacro completo (${s.band.code}) como en el reporte del ICFES`} />}
 
       <div className="d-two">
         <section className="card t-card"><strong>Progreso</strong><ProgressLine items={s.items} /><span className="caption">Cada punto es una entrega, en orden. La línea punteada marca 50 %.</span></section>

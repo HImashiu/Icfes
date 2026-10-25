@@ -32,7 +32,7 @@ export function familyPayload({ studentName, attempts }) {
     weakest: weakest?.name ?? null,
     plan: perArea.slice(0, 2).map((a) => ({ area: a.name, tip: TIPS[a.name] ?? GENERIC_TIP })),
     attempts: done.length,
-    note: "Resultado orientativo: usa una clave de respuestas preliminar y una curva provisional. No es el puntaje oficial del ICFES.",
+    note: "Resultado orientativo: usa una clave de respuestas preliminar y una dificultad de preguntas estimada. No es el puntaje oficial del ICFES.",
   };
 }
 

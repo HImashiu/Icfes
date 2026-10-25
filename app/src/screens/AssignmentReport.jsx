@@ -337,7 +337,7 @@ export default function AssignmentReport({ api, assignment, course = null, relat
             ))}
             {rows.length === 0 && <p className="caption">El curso no tiene estudiantes.</p>}
             {isAdjusted(model) && <span className="caption no-print">Calificación: {describeModel(model)}.{rows.find((r) => r.grade?.provisional)?.grade.note ? ` ${rows.find((r) => r.grade?.provisional).grade.note}` : ""}</span>}
-            {timed && <span className="caption">La banda (0–500) usa una curva provisional y la clave preliminar: es un estimado, no el puntaje oficial.</span>}
+            {timed && <span className="caption">La banda (0–500) se calcula como el ICFES, con dificultad de preguntas estimada y clave preliminar: es un estimado, no el puntaje oficial.</span>}
           </>
         )}
       </section>

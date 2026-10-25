@@ -1,40 +1,22 @@
 // Pure statistics for teachers and the school: bands, area averages, histograms, item analysis. No network, no React.
 import { studentScores } from "./simulacro.js";
-import { globalPercentile, globalScore, levelOf, partialGlobal, percentileOf, scoreCounts, weightOf } from "./icfesScore.js";
+import { SABER11_VERSION, globalPercentile, levelDistribution, scoreSaber11, scoreTest, weightOf } from "./saber11.js";
 
-// Saber 11 scores the ICFES way (icfesScore.js): 3PL ability on the national scale, 0-100 per prueba, official global
-// weights, levels and national percentiles. Versioned so stored scores can be recomputed.
-export const CURVE_VERSION = "icfes-3pl-1";
+// The Saber 11 scoring (saber11.js): 3PL item response theory, the real national distribution for the 0-100 scale
+// and percentiles, official weights, levels and MCER. Versioned so stored scores can be recomputed.
+export const CURVE_VERSION = SABER11_VERSION;
 export const weight = weightOf;
 
-// Fewer than 5 questions of an area: too little for the model, so a plain chance-corrected share is shown instead.
-function smallScale(correct, total) {
-  const adjusted = Math.max(0, (correct / total - 0.25) / 0.75);
-  return Math.round(20 + 80 * adjusted);
-}
-
-export function areaScale(correct, total, name = "") {
+// 0-100 for `correct` right out of `total` in one area (name picks the national scale of that test).
+export function areaScale(correct, total, name) {
   if (!total) return null;
-  return scoreCounts(name, correct, total)?.score ?? smallScale(correct, total);
+  return scoreTest({ name, correct, total }).scale;
 }
 
-// perArea: [{ name, correct, total }]. Returns { areas: [{name, pct, scale, low, high, level, percentile}],
-// global (0-500, the weights over the areas taken), low, high, complete (all four core pruebas), globalPercentile }.
+// perArea: [{ name, correct, total, resp? }]. Returns { areas: [{name, pct, scale, low, high, level, percentile}],
+// global (0-500) or null, low, high, percentile }. Only a complete simulacro is the Saber 11 score (simulacro.js).
 export function bandFor(perArea) {
-  const areas = perArea
-    .filter((a) => a.total > 0)
-    .map((a) => {
-      const r = scoreCounts(a.name, a.correct, a.total);
-      const scale = r?.score ?? smallScale(a.correct, a.total);
-      return { name: a.name, pct: Math.round((a.correct / a.total) * 100), scale, low: r?.low ?? Math.max(0, scale - 15), high: r?.high ?? Math.min(100, scale + 15), total: a.total, level: levelOf(a.name, scale), percentile: percentileOf(a.name, scale) };
-    });
-  if (areas.length === 0) return { areas, global: null, low: null, high: null, complete: false, globalPercentile: null };
-  const scores = Object.fromEntries(areas.map((a) => [a.name, a.scale]));
-  const full = globalScore(scores);
-  const global = full ?? partialGlobal(scores);
-  const w = areas.reduce((n, a) => n + weight(a.name), 0);
-  const margin = Math.max(5, Math.round((5 * Math.sqrt(areas.reduce((n, a) => n + (weight(a.name) * (a.high - a.low) / 2) ** 2, 0))) / w));
-  return { areas, global, low: Math.max(0, global - margin), high: Math.min(500, global + margin), complete: full != null, globalPercentile: full != null ? globalPercentile(full) : null };
+  return scoreSaber11(perArea);
 }
 
 export const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
@@ -153,7 +135,8 @@ export function schoolSummary({ courses, members, assignments, attempts }) {
     };
   });
   // The Saber 11 estimate needs a whole simulacro: each student's latest Sesión 1 + Sesión 2 of one cuadernillo.
-  const bands = [...studentScores({ attempts, assignments }).values()].map((r) => r?.global).filter((g) => g != null);
+  const sims = [...studentScores({ attempts, assignments }).values()].filter((r) => r?.global != null);
+  const bands = sims.map((r) => r.global);
   return {
     students: new Set(students.map((m) => m.email)).size,
     joined: new Set(students.filter((m) => m.profile_id).map((m) => m.profile_id)).size,
@@ -165,6 +148,8 @@ export function schoolSummary({ courses, members, assignments, attempts }) {
     bandHistogram: histogram(bands, 0, 500, 10),
     bandCount: bands.length,
     bandMean: round(mean(bands)),
+    bandPercentile: bands.length ? globalPercentile(round(mean(bands))) : null,
+    levels: levelDistribution(sims),
     perCourse,
   };
 }

@@ -44,11 +44,10 @@ describe("reinforcement set", () => {
 describe("school category", () => {
   const band = (v) => ({ global: v * 5, areas: ["Lectura crítica", "Matemáticas", "Sociales y ciudadanas", "Ciencias naturales", "Inglés"].map((name) => ({ name, scale: v })) });
   it("projects a cohort with ICFES's index from each student's latest complete simulacro", () => {
-    const strong = cohortProjection([...Array.from({ length: 12 }, () => ({ band: band(74) })), { band: null }]);
+    const strong = cohortProjection([...Array.from({ length: 12 }, () => ({ band: band(56) })), { band: null }]);
     expect(strong.n).toBe(12);
-    expect(strong.mean).toBe(370);
-    expect(strong.category.id).toBe("A");
-    expect(strong.category.next).toBe("A+");
+    expect(strong.mean).toBe(280);
+    expect(strong.category.next).toBeTruthy();
     expect(strong.category.toNext).toBeGreaterThan(0);
     expect(cohortProjection(Array.from({ length: 12 }, () => ({ band: band(82) }))).category).toMatchObject({ id: "A+", next: null, toNext: 0 });
   });

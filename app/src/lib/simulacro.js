@@ -18,8 +18,11 @@ export function isFullSession(h) {
 const sum = (rows) => {
   const acc = new Map();
   for (const r of rows) for (const a of r.perArea ?? []) {
-    const x = acc.get(a.name) ?? { name: a.name, correct: 0, total: 0 };
-    x.correct += a.correct; x.total += a.total; acc.set(a.name, x);
+    // The pattern joins across sessions only when both sessions stored it; otherwise the counts are used.
+    const x = acc.get(a.name) ?? { name: a.name, correct: 0, total: 0, resp: [] };
+    x.correct += a.correct; x.total += a.total;
+    x.resp = x.resp && Array.isArray(a.resp) && a.resp.length ? [...x.resp, ...a.resp] : null;
+    acc.set(a.name, x);
   }
   return [...acc.values()];
 };
@@ -37,8 +40,8 @@ function result(code, s1, s2) {
     global: s1 && s2 ? band.global : null,
     low: s1 && s2 ? band.low : null,
     high: s1 && s2 ? band.high : null,
-    globalPercentile: s1 && s2 ? band.globalPercentile : null,
-    areas: band.areas, // 0-100 per area, from the sessions done so far
+    areas: band.areas, // 0-100 per area with level and percentile, from the sessions done so far
+    percentile: s1 && s2 ? band.percentile : null,
   };
 }
 
