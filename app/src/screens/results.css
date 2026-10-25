@@ -229,3 +229,16 @@
 .ri-hard { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .ri-hard li { display: flex; gap: 10px; align-items: center; }
 .ri-pct { flex: none; min-width: 50px; text-align: center; padding: 3px 6px; border-radius: 8px; font-weight: 800; font-size: 0.85rem; }
+
+/* ---------- Student history (profile panel) ---------- */
+.sth { display: grid; gap: 12px; }
+.sth-moves { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.sth-move { display: grid; gap: 2px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); border-left: 4px solid var(--a); }
+.sth-move strong { font-size: 1.3rem; }
+.sth-sims { display: grid; gap: 6px; }
+.sth-sim-row { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+.sth-sim-row::-webkit-scrollbar { display: none; }
+.sth-sim { flex: none; display: grid; gap: 1px; padding: 8px 14px; border-radius: 12px; border: 1px solid var(--line); min-width: 110px; }
+.sth-sim strong { font-size: 1.25rem; }
+.sth-sim.open { border-style: dashed; }
+.sth-table td.sth-cell { text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }

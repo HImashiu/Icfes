@@ -14,6 +14,7 @@ import Icon from "../components/Icon.jsx";
 import BankEditor from "./BankEditor.jsx";
 import Sheet from "./Sheet.jsx";
 import ResultsInsights from "./ResultsInsights.jsx";
+import "./StudentHistory.jsx"; // adds «Historial completo» to every student profile
 import GradingSettings from "./GradingSettings.jsx";
 import Lessons from "./Lessons.jsx";
 import Students from "./Students.jsx";
