@@ -192,6 +192,15 @@ def build(a) -> int:
                 pieces = [(cb, field)]
                 if cw and owner in pic_opts and (len(short) != 1 or letters_inside(cb, cw) >= 2):  # one box over several options is split too
                     cells, rest = option_cells(cb, cw, m.get("regions") or [])
+                    if fig.get("orig"):
+                        model = {}
+                        for f0 in fig["orig"]:
+                            rb0 = [m["regions"][r - 1] for r in f0["regions"] if isinstance(r, int) and 1 <= r <= len(m["regions"])]
+                            if rb0:
+                                b0 = (min(b[0] for b in rb0), min(b[1] for b in rb0), max(b[2] for b in rb0), max(b[3] for b in rb0))
+                                model[f0["field"].split(".")[1]] = shave_text_rows(grow_over_labels(b0, cw), b0, cw)
+                        if spread(model) <= spread(cells) or len(cells) < len(model):
+                            cells, rest, how = model, None, how + " (model's option picks)"
                     if cells:
                         pieces = [(c, f"{owner}.{L}") for L, c in sorted(cells.items())] + ([(rest, field if short != "opts" else f"{owner}.stem")] if rest else [])
                         how += " split at option letters"
@@ -222,6 +231,16 @@ def build(a) -> int:
     return 0
 
 
+def spread(cells: dict) -> float:
+    """How badly a set of option pictures hangs together: a set where one option takes its neighbours' pictures has
+    one box far larger than the rest, and two options sharing a picture overlap. Lower is better."""
+    if len(cells) < 2:
+        return 1e9
+    ar = [max(1.0, (c[2] - c[0]) * (c[3] - c[1])) for c in cells.values()]
+    ov = sum(iou(a, b) for i, a in enumerate(cells.values()) for b in list(cells.values())[i + 1:])
+    return max(ar) / min(ar) + 10 * ov + (4 - min(4, len(cells)))
+
+
 def pool_option_figures(figs: list[dict], pic_opts: set) -> list[dict]:
     """The model names a picture per option but often shifts them by one (A gets the row, B gets A's picture...).
     Its option pictures of one question are pooled and handed out again by where the printed letters are."""
@@ -237,7 +256,7 @@ def pool_option_figures(figs: list[dict], pic_opts: set) -> list[dict]:
             out.append(fs[0])
             continue
         regs = sorted({r for f in fs for r in f["regions"]})
-        out.append({"field": f"{owner}.opts", "regions": regs, "what": "; ".join(f.get("what") or "" for f in fs)})
+        out.append({"field": f"{owner}.opts", "regions": regs, "what": "; ".join(f.get("what") or "" for f in fs), "orig": fs})
     return out
 
 
