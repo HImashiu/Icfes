@@ -100,7 +100,7 @@ def emit(a, pdf, out, code, session, page, fb, field, fig, how) -> dict:
     fid = f"{code.lower()}{session[0]}-{owner}-" + (f"opt-{option.lower()}-" if option else "") + f"auto-{h}"
     (out / f"{fid}.png").write_bytes(png_bytes(clean))
     return {"question": n, "group": owner if owner.startswith("g") else None, "page": page, "kind": "image",
-            "figure_id": fid, "spec_id": fid, "method": "auto_crop", "svg": f"traced/{a.exam}/{fid}.png",
+            "figure_id": fid, "spec_id": fid, "method": "eyeballed_box", "auto": True, "svg": f"traced/{a.exam}/{fid}.png",
             "box_page_fraction": [round(v, 4) for v in fb], "option": option, "field": field,
             "what": fig.get("what"), "box_source": how, "paper_level": level, "pending_spec": False}
 
