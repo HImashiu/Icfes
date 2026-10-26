@@ -124,7 +124,8 @@ def keep_pictures(entries: list, words: dict, sizes: dict, max_cover: float = 0.
         why = None
         if (b[2] - b[0]) * (b[3] - b[1]) < min_area:
             why = "tiny"
-        elif words and word_cover(f, words, sizes) > (0.7 if f.get("option") else max_cover):
+        elif words and "below the question number" not in (f.get("box_source") or "") and \
+                word_cover(f, words, sizes) > (0.7 if f.get("option") else max_cover):  # a sign is text in a frame
             # option pictures carry labels ("Empuje (4 newtons)", axis names), so they read as text more often
             why = "mostly text"
         else:
@@ -171,6 +172,21 @@ def build(a) -> int:
                     continue
                 page, pb = m["page"], tuple(v / 1000 for v in box)
                 fb, how = snap(pb, lay.get(page, []))
+                band = number_band(uid, page, words, sizes) if words is not None else None
+                if band and how == "model box" and band[0] <= (fb[1] + fb[3]) / 2 <= band[1]:
+                    ib = band_ink(pdf, page, band, words, sizes)  # the model's box is loose: the ink of the band
+                    if ib:
+                        fb, how = ib, "ink below the question number"
+                elif band and not (band[0] <= (fb[1] + fb[3]) / 2 <= band[1]):
+                    # a whole page holds several questions and the model's boxes drift: take the layout picture
+                    # printed between this question's number and the next one
+                    inb = [c for c in lay.get(page, []) if band[0] <= (c[1] + c[3]) / 2 <= band[1] and c[2] > band[2]]
+                    if inb:
+                        fb, how = max(inb, key=lambda c: (c[2] - c[0]) * (c[3] - c[1])), "layout, below the question number"
+                    else:
+                        ib = band_ink(pdf, page, band, words, sizes)
+                        if ib:
+                            fb, how = ib, "ink below the question number"
             else:
                 if not m.get("segments"):
                     continue
@@ -191,7 +207,7 @@ def build(a) -> int:
                 owner, _, short = field.partition(".")
                 pieces = [(cb, field)]
                 if cw and owner in pic_opts and (len(short) != 1 or letters_inside(cb, cw) >= 2):  # one box over several options is split too
-                    cells, rest = option_cells(cb, cw, m.get("regions") or [])
+                    cells, rest = option_cells(cb, cw, m.get("regions") or [], img=crop_image(a, m))
                     if fig.get("orig"):
                         model = {}
                         for f0 in fig["orig"]:
@@ -204,6 +220,10 @@ def build(a) -> int:
                     if cells:
                         pieces = [(c, f"{owner}.{L}") for L, c in sorted(cells.items())] + ([(rest, field if short != "opts" else f"{owner}.stem")] if rest else [])
                         how += " split at option letters"
+                    elif fig.get("orig_boxes"):  # no letters to cut at: the model's own boxes, one per option
+                        W, H = crop_size(m)
+                        pieces = [((b[0] * W / 1000, b[1] * H / 1000, b[2] * W / 1000, b[3] * H / 1000), f0["field"])
+                                  for f0 in fig["orig_boxes"] for b in [f0["box"]]]
                 for pcb, pfield in pieces:
                     page, fb = crop_to_page(pcb, m, sizes, dpi)
                     if how == "model box":
@@ -231,6 +251,55 @@ def build(a) -> int:
     return 0
 
 
+def number_band(uid: str, page: int, words: dict, sizes: dict):
+    """(top, bottom, left) as page fractions of the space between a question's printed number and the next one in
+    the same column, or None when the number is not found."""
+    if not re.fullmatch(r"q\d+", uid) or page not in sizes:
+        return None
+    n = int(uid[1:])
+    W, H = sizes[page]
+    ws = words.get(page, [])
+    at = [w for w in ws if str(w[4]).strip() == f"{n}."]
+    if len(at) != 1:
+        return None
+    w = at[0]
+    nxt = [v for v in ws if str(v[4]).strip() == f"{n + 1}." and v[1] > w[1] and abs(v[0] - w[0]) < 0.5]
+    bottom = min(v[1] for v in nxt) / H if nxt else 1.0
+    return (w[1] / H, bottom, w[0] / W)
+
+
+def band_ink(pdf, page: int, band, words: dict, sizes: dict, dpi: int = 100):
+    """The ink in the left half of a question's band (the picture beside its number; the options sit to the right),
+    leaving out printed words that are not inside the picture's frame. Page fractions, or None."""
+    from .regions import ink_box
+    top, bottom, left = band
+    pg = pdf[page - 1]
+    pix = pg.get_pixmap(dpi=dpi)
+    img = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
+    W, H = sizes[page]
+    sx, sy = img.width / W, img.height / H
+    skip = [(w[0] * sx, w[1] * sy, w[2] * sx, w[3] * sy) for w in words.get(page, []) if re.fullmatch(r"\d{1,3}\.", str(w[4]).strip())]
+    cell = (left * img.width + 4, top * img.height + 6, 0.5 * img.width, bottom * img.height - 6)
+    b = ink_box(img, cell, skip)
+    if not b or (b[2] - b[0]) < 0.08 * img.width or (b[3] - b[1]) < 0.02 * img.height:
+        return None
+    p = 0.004
+    return (max(0, b[0] / img.width - p), max(0, b[1] / img.height - p), min(1, b[2] / img.width + p), min(1, b[3] / img.height + p))
+
+
+def crop_image(a, m: dict):
+    """The crop image a unit's request was built from, when it is still in the crop folder at the same size."""
+    f = m.get("bundle")
+    if not f:
+        return None
+    name = f"q{int(f[1:]):03d}.png" if f.startswith("q") and f[1:].isdigit() else f"{f}.png"
+    p = Path(a.crops) / name
+    if not p.exists():
+        return None
+    img = Image.open(p)
+    return img if list(img.size) == list(m.get("image_size") or img.size) else None
+
+
 def spread(cells: dict) -> float:
     """How badly a set of option pictures hangs together: a set where one option takes its neighbours' pictures has
     one box far larger than the rest, and two options sharing a picture overlap. Lower is better."""
@@ -247,7 +316,7 @@ def pool_option_figures(figs: list[dict], pic_opts: set) -> list[dict]:
     out, pooled = [], {}
     for f in figs:
         owner, _, short = (f.get("field") or "").partition(".")
-        if owner in pic_opts and len(short) == 1 and f.get("regions"):
+        if owner in pic_opts and len(short) == 1 and (f.get("regions") or isinstance(f.get("box"), list)):
             pooled.setdefault(owner, []).append(f)
         else:
             out.append(f)
@@ -255,8 +324,16 @@ def pool_option_figures(figs: list[dict], pic_opts: set) -> list[dict]:
         if len(fs) == 1:
             out.append(fs[0])
             continue
-        regs = sorted({r for f in fs for r in f["regions"]})
-        out.append({"field": f"{owner}.opts", "regions": regs, "what": "; ".join(f.get("what") or "" for f in fs), "orig": fs})
+        what = "; ".join(f.get("what") or "" for f in fs)
+        if all(f.get("regions") for f in fs):
+            regs = sorted({r for f in fs for r in f["regions"]})
+            out.append({"field": f"{owner}.opts", "regions": regs, "what": what, "orig": fs})
+        elif all(isinstance(f.get("box"), list) and len(f["box"]) == 4 for f in fs) and not any(f.get("regions") for f in fs):
+            bs = [f["box"] for f in fs]
+            out.append({"field": f"{owner}.opts", "box": [min(b[0] for b in bs), min(b[1] for b in bs), max(b[2] for b in bs),
+                                                          max(b[3] for b in bs)], "what": what, "orig_boxes": fs})
+        else:
+            out += fs
     return out
 
 

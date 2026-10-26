@@ -237,7 +237,59 @@ def anchor_letter(r, letters: dict, lh: float):
     return max(same, key=lambda L: same[L][0])
 
 
-def option_cells(box, word_boxes, regions, pad: int = 60):
+def ink_box(img, cell, skip=()):
+    """Tight box around the ink of img inside cell, leaving out the word boxes in skip (the option letters)."""
+    x0, y0, x1, y1 = (int(round(v)) for v in cell)
+    x0, y0, x1, y1 = max(0, x0), max(0, y0), min(img.width, x1), min(img.height, y1)
+    if x1 - x0 < 8 or y1 - y0 < 8:
+        return None
+    a = np.array(img.convert("RGB").crop((x0, y0, x1, y1)))
+    ink = (cv2.cvtColor(a, cv2.COLOR_RGB2GRAY) < 170) & ~blue_mask(a)
+    for b in skip:
+        ink[max(0, int(b[1]) - y0 - 3):max(0, int(b[3]) - y0 + 3), max(0, int(b[0]) - x0 - 3):max(0, int(b[2]) - x0 + 3)] = False
+    rows, cols = np.where(ink.sum(1) > 2)[0], np.where(ink.sum(0) > 2)[0]
+    if not len(rows) or not len(cols):
+        return None
+    return (x0 + cols[0], y0 + rows[0], x0 + cols[-1] + 1, y0 + rows[-1] + 1)
+
+
+def gap_partitions(img, letters: dict, box, lh: float) -> dict:
+    """Like option_partitions, but options side by side are split at the blank column of the scan nearest left of
+    the next letter, which holds both for letters printed left of their picture and for letters centred above it."""
+    parts = option_partitions(letters, box, lh)
+    a = np.array(img.convert("RGB"))
+    ink = (cv2.cvtColor(a, cv2.COLOR_RGB2GRAY) < 170) & ~blue_mask(a)
+    for b in letters.values():
+        ink[max(0, int(b[1]) - 3):int(b[3]) + 3, max(0, int(b[0]) - 3):int(b[2]) + 3] = False
+    rows: list[list] = []  # letters on one printed row, as option_partitions groups them
+    for L in sorted(parts, key=lambda L: letters[L][1]):
+        if rows and abs(letters[L][1] - letters[rows[-1][0]][1]) < 2 * lh:
+            rows[-1].append(L)
+        else:
+            rows.append([L])
+    out = {}
+    for Ls in rows:
+        top = int(max(min(parts[L][1] for L in Ls), min(letters[L][1] for L in Ls) - 0.6 * lh))
+        bottom = int(max(parts[L][3] for L in Ls))
+        Ls.sort(key=lambda L: letters[L][0])
+        band = ink[max(0, top):max(0, bottom), :].sum(0)
+        cuts = []
+        for prev, L in zip(Ls, Ls[1:]):
+            x = int(letters[L][0]) - 2
+            lo = int(letters[prev][2])
+            blank = max(6, 0.012 * (bottom - top))  # a rule line across the page still leaves the column nearly blank
+            need, run = max(8, int(0.5 * lh)), 0  # a real gap between pictures, not the space between two digits
+            while x > lo and run < need:
+                run = run + 1 if band[x] <= blank else 0
+                x -= 1
+            cuts.append(x + need // 2 if x > lo else int(parts[L][0]))
+        for i, L in enumerate(Ls):
+            p = parts[L]
+            out[L] = (cuts[i - 1] if i else p[0], max(p[1], letters[L][1] - 0.6 * lh), cuts[i] if i < len(cuts) else p[2], p[3])
+    return out
+
+
+def option_cells(box, word_boxes, regions, pad: int = 60, img=None):
     """Split a picture that holds picture options at the printed option letters (A. B. C. D.): each picture piece
     (ink region) goes to the nearest letter at or above it. Returns ({letter: cell}, rest) where rest is the part
     above the options (a table or drawing of the stem), or None."""
@@ -282,6 +334,14 @@ def option_cells(box, word_boxes, regions, pad: int = 60):
         # labels are taken in only while the box stays out of the other options' pictures
         grown[L] = c if any(_inter(g, c2) > 0.1 * max(1, (c2[2] - c2[0]) * (c2[3] - c2[1])) for L2, c2 in cells.items() if L2 != L) else g
     cells = grown
+    if len(cells) < 2 and img is not None and len(letters) >= 3:
+        # the ink regions ran together (charts in touching frames): cut the page area at the letters instead and keep
+        # the ink of each part
+        cells = {}
+        for L, part in gap_partitions(img, letters, box, lh).items():
+            ib = ink_box(img, clip(part, (x0, y0, x1, y1)), [letters[L]])
+            if ib:
+                cells[L] = ib
     if len(cells) < 2:
         return {}, box
     return cells, rest

@@ -334,10 +334,29 @@ def word_changes(old: str, new: str, ocr: str = "", kept_elsewhere: set | None =
     return out
 
 
-def picture_words(m: dict, figs: list[dict], lw: dict, dpi: int) -> set:
+def picture_words(m: dict, figs: list[dict], lw: dict, dpi: int, sizes: dict | None = None) -> set:
     """Normalized OCR words whose centre lies inside the candidate regions the model named as pictures."""
+    if m.get("source") == "page" and sizes and m.get("page") in sizes:
+        # a unit sent as its whole page (English notices): boxes are thousandths of the page
+        Wp, Hp = sizes[m["page"]]
+        out = set()
+        for g in figs:
+            b = g.get("box")
+            if not (isinstance(b, list) and len(b) == 4):
+                continue
+            for w in lw.get(m["page"], []):
+                cx, cy = (w[0] + w[2]) / 2 / Wp * 1000, (w[1] + w[3]) / 2 / Hp * 1000
+                if b[0] - 10 <= cx <= b[2] + 10 and b[1] - 10 <= cy <= b[3] + 10:
+                    out |= set(_words(str(w[4])))
+        return out
     regs = m.get("regions") or []
     boxes = [regs[r - 1] for g in figs for r in (g.get("regions") or []) if isinstance(r, int) and 1 <= r <= len(regs)]
+    # a picture the model boxed itself (no candidate region fitted it), in thousandths of the crop
+    segs = m.get("segments") or []
+    W = max((s["box_px"][2] - s["box_px"][0] for s in segs), default=0)
+    H = max((s["y_in_image"] + s["box_px"][3] - s["box_px"][1] for s in segs), default=0)
+    boxes += [[b[0] * W / 1000, b[1] * H / 1000, b[2] * W / 1000, b[3] * H / 1000] for g in figs
+              if not g.get("regions") and isinstance(b := g.get("box"), list) and len(b) == 4]
     if not boxes or not m.get("segments"):
         return set()
     from .regions import grow_over_labels
@@ -359,7 +378,10 @@ def apply(a) -> int:
     rep = {"units": {}, "usd": 0.0, "word_checks": []}
     mfile = json.load(open(a.meta, encoding="utf-8")) if getattr(a, "meta", None) else {}
     mu = mfile.get("units", {})
-    lw = layout_words(json.load(open(a.layout, encoding="utf-8")), text=True) if getattr(a, "layout", None) else None
+    lay = json.load(open(a.layout, encoding="utf-8")) if getattr(a, "layout", None) else None
+    lw = layout_words(lay, text=True) if lay else None
+    from .paragraphs import page_sizes
+    sizes = page_sizes(lay) if lay else {}
     for line in (l for path in a.results for l in open(path, encoding="utf-8")):
         r = json.loads(line)
         uid = r["id"].split(":", 1)[1]
@@ -380,7 +402,7 @@ def apply(a) -> int:
             if k2.split(".")[0] == uid:
                 v2 = (ans.get("fields") or {}).get(k2)
                 unit_new |= set(_words(v2["text"] if isinstance(v2, dict) and isinstance(v2.get("text"), str) else f[k2]))
-        pic_words = picture_words(mu.get(uid) or {}, ans.get("figures") or [], lw, mfile.get("dpi", 250)) if lw else set()
+        pic_words = picture_words(mu.get(uid) or {}, ans.get("figures") or [], lw, mfile.get("dpi", 250), sizes) if lw else set()
         for k, v in (ans.get("fields") or {}).items():
             if k not in f:
                 ur["errors"].append(f"unknown field {k}")
