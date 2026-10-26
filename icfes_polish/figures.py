@@ -84,6 +84,8 @@ def emit(a, pdf, out, code, session, page, fb, field, fig, how) -> dict:
     import fitz
     owner, _, short = field.partition(".")
     n = int(owner[1:]) if owner.startswith("q") and owner[1:].isdigit() else None
+    if owner.startswith("g") and owner[1:].split("-")[0].isdigit():
+        n = int(owner[1:].split("-")[0])  # the editor files group figures under the group's first question
     option = short if len(short) == 1 else None
     r = pdf[page - 1].rect
     clip = fitz.Rect(fb[0] * r.width, fb[1] * r.height, fb[2] * r.width, fb[3] * r.height)
@@ -209,8 +211,10 @@ def build(a) -> int:
             if e:
                 entries.append(e)
     entries, dropped = keep_pictures(entries, layout_words(layout) if layout else {}, sizes)
+    kept = {e["figure_id"] for e in entries}
     for d in dropped:
-        (out / f"{d['figure_id']}.png").unlink(missing_ok=True)
+        if d["figure_id"] not in kept:  # a dropped duplicate can share its id with the crop that stays
+            (out / f"{d['figure_id']}.png").unlink(missing_ok=True)
     json.dump({"exam": a.exam, "figures": entries, "dropped": dropped}, open(out / "manifest.candidate.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(f"{len(entries)} figure crops -> {out} ({len(dropped)} dropped: text, tiny or duplicate)")
     return 0
@@ -295,6 +299,74 @@ def place(a) -> int:
     return 0
 
 
+CHART_KINDS = {"bar", "line", "curve", "pie", "scatter", "histogram"}
+CHART_WORDS = re.compile(r"gr[aá]fic|barras|ejes|curva|histograma|diagrama circular|chart|graph|plot", re.I)
+TABLE_WORDS = re.compile(r"\s*(tabla|table)\b", re.I)  # a crop described as a table, not a picture inside one
+
+
+def tidy(a) -> int:
+    """One picture shown once. Old goldens come with native figure specs (charts, tables, draft drawings) and the
+    format pass adds inline tables and scan crops, so the same picture can show two or three times. Rules, in the
+    project's figure policy (charts and tables native, drawings traced from the scan):
+      - a native table spec goes when the text already holds that table inline (one spec per inline table);
+      - a scan crop of a chart goes when the question has a native chart spec, and a crop of a table when the text
+        holds the table inline;
+      - a draft drawing spec goes when the question keeps a scan crop (the crop is the booklet's own picture)."""
+    from .fields import fields, set_field
+    g = json.load(open(a.golden, encoding="utf-8"))
+    man = json.load(open(a.manifest, encoding="utf-8"))
+    specs = json.load(open(a.specs, encoding="utf-8")) if a.specs and Path(a.specs).exists() else {"figures": []}
+    f = fields(g)
+    by_q: dict[int, list] = {}
+    for sp in specs.get("figures", []):
+        q = (sp.get("location") or {}).get("question")
+        if str(q).isdigit():
+            by_q.setdefault(int(q), []).append(sp)
+    drop_specs, drop_crops, rep = set(), set(), []
+    for q in g["questions"]:
+        n = q["number"]
+        texts = [v for k, v in f.items() if k.split(".")[0] == f"q{n}" and len(k.split(".")[1]) > 1]
+        if q.get("group_id"):
+            texts += [v for k, v in f.items() if k.split(".")[0] == q["group_id"]]
+        inline = sum(t.count("<table") for t in texts)
+        sp = by_q.get(n, [])
+        crops = [c for c in man["figures"] if c.get("auto") and c.get("question") == n and not c.get("option")]
+        tables = [s for s in sp if s.get("kind") == "table"]
+        for s in tables[:inline]:
+            drop_specs.add(s["id"]); rep.append(f"q{n}: native table {s['id']} dropped, the table is in the text")
+        charts = [s for s in sp if s.get("kind") in CHART_KINDS]
+        for c in crops:
+            what = c.get("what") or ""
+            if charts and CHART_WORDS.search(what) or inline and TABLE_WORDS.match(what) and not CHART_WORDS.search(what):
+                drop_crops.add(c["figure_id"]); rep.append(f"q{n}: scan crop {c['figure_id']} ({what}) dropped, shown natively")
+        if any(c["figure_id"] not in drop_crops for c in crops):
+            for s in sp:
+                if s.get("kind") not in CHART_KINDS and s.get("kind") != "table":
+                    drop_specs.add(s["id"]); rep.append(f"q{n}: draft drawing {s['id']} dropped, the scan crop shows it")
+    for k, v in f.items():
+        nv = v
+        for cid in drop_crops:
+            nv = re.sub(r"\n*\[\[figura:" + re.escape(cid) + r"\]\]\n*", "\n\n", nv)
+        if nv != v:
+            set_field(g, k, nv.strip())
+    for q in g["questions"]:
+        fl = q.get("figure")
+        if isinstance(fl, list):
+            q["figure"] = [x for x in fl if x not in drop_specs] or None
+        elif isinstance(fl, str) and fl in drop_specs:
+            q["figure"] = None
+    man["figures"] = [c for c in man["figures"] if c["figure_id"] not in drop_crops]
+    specs["figures"] = [s for s in specs.get("figures", []) if s.get("id") not in drop_specs]
+    json.dump(g, open(a.out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    json.dump(man, open(a.manifest_out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    if a.specs_out:
+        json.dump(specs, open(a.specs_out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    if a.report:
+        json.dump(rep, open(a.report, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    print(f"tidy: {len(drop_specs)} native specs and {len(drop_crops)} scan crops dropped as duplicates")
+    return 0
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -313,8 +385,14 @@ def main(argv=None) -> int:
     pl.add_argument("--golden", required=True)
     pl.add_argument("--manifest", required=True)
     pl.add_argument("--out", required=True)
+    t = sub.add_parser("tidy")
+    for k in ("golden", "manifest", "out", "manifest-out"):
+        t.add_argument(f"--{k}", required=True)
+    t.add_argument("--specs")
+    t.add_argument("--specs-out")
+    t.add_argument("--report")
     a = ap.parse_args(argv)
-    return {"build": build, "score": score, "place": place}[a.cmd](a)
+    return {"build": build, "score": score, "place": place, "tidy": tidy}[a.cmd](a)
 
 
 if __name__ == "__main__":

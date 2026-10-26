@@ -209,7 +209,8 @@ def shave_text_rows(box, core, word_boxes, min_words: int = 5, min_cover: float 
     """Cut sentence lines that taking in labels pulled above or below the picture (outside its ink, `core`): a row of
     many words spanning most of the width is the question's text, not a label."""
     x0, y0, x1, y1 = box
-    inside = [w for w in word_boxes if w[0] >= x0 - 4 and w[2] <= x1 + 4 and w[1] >= y0 - 4 and w[3] <= y1 + 4]
+    # words cut by the top or bottom edge count too: a half-visible sentence line is still the question's text
+    inside = [w for w in word_boxes if w[0] >= x0 - 4 and w[2] <= x1 + 4 and w[3] > y0 and w[1] < y1]
     rows: list[list] = []
     for w in sorted(inside, key=lambda w: (w[1] + w[3]) / 2):
         cy = (w[1] + w[3]) / 2
@@ -220,8 +221,14 @@ def shave_text_rows(box, core, word_boxes, min_words: int = 5, min_cover: float 
     def texty(r):
         ws = r[1]
         return len(ws) >= min_words and (max(w[2] for w in ws) - min(w[0] for w in ws)) >= min_cover * (x1 - x0)
-    while rows and rows[0][0] < core[1] and texty(rows[0]):
+    def sentence_end(r):  # the short last line of a sentence cut above: starts at the left, ends in . or :
+        ws = sorted(r[1], key=lambda w: w[0])
+        return len(ws) <= 5 and ws[0][0] - x0 < 0.15 * (x1 - x0) and str(ws[-1][4] if len(ws[-1]) > 4 else "").endswith((".", ":"))
+    top_cut = False
+    while rows and (rows[0][0] < core[1] or rows[0][1][0][1] < y0 or top_cut) and (texty(rows[0]) or top_cut and sentence_end(rows[0])):
+        was_texty = texty(rows[0])
         y0 = max(w[3] for w in rows.pop(0)[1]) + 2
+        top_cut = was_texty
     while rows and rows[-1][0] > core[3] and texty(rows[-1]):
         y1 = min(w[1] for w in rows.pop()[1]) - 2
     return (x0, y0, x1, y1) if y1 - y0 > 20 else box
