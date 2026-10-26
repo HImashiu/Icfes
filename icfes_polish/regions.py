@@ -165,6 +165,49 @@ def _infer_letter(letters: dict, lh: float) -> dict:
 _LETTER = re.compile(r"^\(?([A-D])[.)]?$")
 
 
+def clip(b, c):
+    return (max(b[0], c[0]), max(b[1], c[1]), min(b[2], c[2]), min(b[3], c[3]))
+
+
+def option_partitions(letters: dict, box, lh: float) -> dict:
+    """The page area of each option: rows of letters top to bottom, and in a row each letter owns the space from just
+    before it to just before the next letter. A list gives one full-width cell per option, a 2x2 grid four cells."""
+    x0, y0, x1, y1 = box
+    rows: list[list] = []
+    for L, b in sorted(letters.items(), key=lambda kv: kv[1][1]):
+        if rows and abs(b[1] - rows[-1][0]) < 2 * lh:
+            rows[-1][1].append((L, b))
+        else:
+            rows.append([b[1], [(L, b)]])
+    out = {}
+    for i, (ry, items) in enumerate(rows):
+        top = ry - 0.6 * lh if i else min(y0, ry - 0.6 * lh)
+        bottom = rows[i + 1][0] - 0.6 * lh if i + 1 < len(rows) else max(y1, ry + lh)
+        items.sort(key=lambda it: it[1][0])
+        for j, (L, b) in enumerate(items):
+            left = b[0] - 0.5 * lh if j else min(x0, b[0] - 0.5 * lh)
+            right = items[j + 1][1][0] - 0.5 * lh if j + 1 < len(items) else max(x1, b[2])
+            out[L] = (left, top, right, bottom)
+    return out
+
+
+def _inter(a, b) -> float:
+    return max(0, min(a[2], b[2]) - max(a[0], b[0])) * max(0, min(a[3], b[3]) - max(a[1], b[1]))
+
+
+def anchor_letter(r, letters: dict, lh: float):
+    """The option a picture piece belongs to: the printed letter that comes last before it in reading order, that is
+    the nearest letter starting left of the piece's centre on the closest row at or above it. This holds both for
+    letters printed at the left of their picture and for letters centred above it."""
+    cx, cy = (r[0] + r[2]) / 2, (r[1] + r[3]) / 2
+    cand = {L: b for L, b in letters.items() if b[0] <= cx + lh and b[1] <= cy + lh}
+    if not cand:
+        return None
+    row = max(b[1] for b in cand.values())
+    same = {L: b for L, b in cand.items() if row - b[1] < 2 * lh}
+    return max(same, key=lambda L: same[L][0])
+
+
 def option_cells(box, word_boxes, regions, pad: int = 60):
     """Split a picture that holds picture options at the printed option letters (A. B. C. D.): each picture piece
     (ink region) goes to the nearest letter at or above it. Returns ({letter: cell}, rest) where rest is the part
@@ -181,7 +224,8 @@ def option_cells(box, word_boxes, regions, pad: int = 60):
     if len(letters) == 3:  # the answer mark often hides one letter from OCR: put it where the layout says
         letters = _infer_letter(letters, lh)
     top = min(b[1] for b in letters.values()) - lh
-    cells, rest = {}, None
+    parts = option_partitions(letters, box, lh)
+    cells, rest, owned = {}, None, []
     for r in regions:
         if r[2] < x0 or r[0] > x1 or r[3] < y0 or r[1] > y1:
             continue
@@ -191,15 +235,24 @@ def option_cells(box, word_boxes, regions, pad: int = 60):
         if r[3] <= top + lh:
             rest = r if rest is None else (min(rest[0], r[0]), min(rest[1], r[1]), max(rest[2], r[2]), max(rest[3], r[3]))
             continue
-        best, bd = None, 1e18
-        for L, (lx0, ly0, lx1, ly1) in letters.items():
-            dx = max(0, r[0] - lx1, lx0 - r[2])
-            dy = max(0, r[1] - ly1, ly0 - r[3])
-            d = (dx * dx + dy * dy) ** 0.5 + (1e6 if r[3] < ly0 else 0)
-            if d < bd:
-                best, bd = L, d
-        c = cells.get(best)
-        cells[best] = r if c is None else (min(c[0], r[0]), min(c[1], r[1]), max(c[2], r[2]), max(c[3], r[3]))
+        L = anchor_letter(r, letters, lh)
+        if L:
+            owned.append((r, L))
+    # a region that holds pieces owned by other options is a frame around several of them, not a picture of one
+    for r, L in owned:
+        area = max(1, (r[2] - r[0]) * (r[3] - r[1]))
+        holds = {L2 for r2, L2 in owned if r2 is not r and L2 != L and _inter(r, r2) > 0.6 * max(1, (r2[2] - r2[0]) * (r2[3] - r2[1]))}
+        if holds:
+            continue
+        c = cells.get(L)
+        cells[L] = r if c is None else (min(c[0], r[0]), min(c[1], r[1]), max(c[2], r[2]), max(c[3], r[3]))
+    plain = [w for w in word_boxes if not _LETTER.match(str(w[4] if len(w) > 4 else "").strip())]
+    grown = {}
+    for L, c in cells.items():
+        g = grow_over_labels(c, plain)
+        # labels are taken in only while the box stays out of the other options' pictures
+        grown[L] = c if any(_inter(g, c2) > 0.1 * max(1, (c2[2] - c2[0]) * (c2[3] - c2[1])) for L2, c2 in cells.items() if L2 != L) else g
+    cells = grown
     if len(cells) < 2:
         return {}, box
     return cells, rest

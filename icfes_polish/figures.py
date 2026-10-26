@@ -163,7 +163,7 @@ def build(a) -> int:
         m = meta.get(uid)
         if not m or "image_size" not in m:
             continue
-        for fig in ur.get("figures") or []:
+        for fig in pool_option_figures(ur.get("figures") or [], pic_opts):
             regs = [r for r in (fig.get("regions") or []) if isinstance(r, int) and 1 <= r <= len(m.get("regions") or [])]
             box = fig.get("box")
             if m.get("source") == "page":
@@ -190,10 +190,10 @@ def build(a) -> int:
                 field = fig.get("field") or ""
                 owner, _, short = field.partition(".")
                 pieces = [(cb, field)]
-                if cw and owner in pic_opts and len(short) != 1:
+                if cw and owner in pic_opts and (len(short) != 1 or letters_inside(cb, cw) >= 2):  # one box over several options is split too
                     cells, rest = option_cells(cb, cw, m.get("regions") or [])
                     if cells:
-                        pieces = [(grow_over_labels(c, cw), f"{owner}.{L}") for L, c in sorted(cells.items())] + ([(rest, field)] if rest else [])
+                        pieces = [(c, f"{owner}.{L}") for L, c in sorted(cells.items())] + ([(rest, field if short != "opts" else f"{owner}.stem")] if rest else [])
                         how += " split at option letters"
                 for pcb, pfield in pieces:
                     page, fb = crop_to_page(pcb, m, sizes, dpi)
@@ -211,6 +211,8 @@ def build(a) -> int:
             if e:
                 entries.append(e)
     entries, dropped = keep_pictures(entries, layout_words(layout) if layout else {}, sizes)
+    entries, twice = one_per_option(entries)
+    dropped += twice
     kept = {e["figure_id"] for e in entries}
     for d in dropped:
         if d["figure_id"] not in kept:  # a dropped duplicate can share its id with the crop that stays
@@ -218,6 +220,70 @@ def build(a) -> int:
     json.dump({"exam": a.exam, "figures": entries, "dropped": dropped}, open(out / "manifest.candidate.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(f"{len(entries)} figure crops -> {out} ({len(dropped)} dropped: text, tiny or duplicate)")
     return 0
+
+
+def pool_option_figures(figs: list[dict], pic_opts: set) -> list[dict]:
+    """The model names a picture per option but often shifts them by one (A gets the row, B gets A's picture...).
+    Its option pictures of one question are pooled and handed out again by where the printed letters are."""
+    out, pooled = [], {}
+    for f in figs:
+        owner, _, short = (f.get("field") or "").partition(".")
+        if owner in pic_opts and len(short) == 1 and f.get("regions"):
+            pooled.setdefault(owner, []).append(f)
+        else:
+            out.append(f)
+    for owner, fs in pooled.items():
+        if len(fs) == 1:
+            out.append(fs[0])
+            continue
+        regs = sorted({r for f in fs for r in f["regions"]})
+        out.append({"field": f"{owner}.opts", "regions": regs, "what": "; ".join(f.get("what") or "" for f in fs)})
+    return out
+
+
+def letters_inside(box, word_boxes) -> int:
+    from .regions import _LETTER
+    return sum(1 for w in word_boxes if _LETTER.match(str(w[4] if len(w) > 4 else "").strip())
+               and box[0] <= (w[0] + w[2]) / 2 <= box[2] and box[1] <= (w[1] + w[3]) / 2 <= box[3])
+
+
+def one_per_option(entries: list[dict]) -> tuple[list[dict], list[dict]]:
+    """An option shows one picture. When two crops land on the same option, keep the one cut at the option letters
+    (or the smaller one, when it sits inside the other); two different options with the same picture are both flagged."""
+    keep, drop = [], []
+    by = {}
+    for e in entries:
+        if e.get("option"):
+            by.setdefault((e["question"], e["option"]), []).append(e)
+    gone = set()
+    for (q, L), es in by.items():
+        if len(es) < 2:
+            continue
+        es.sort(key=lambda e: ("split" not in (e.get("box_source") or ""), _area(e["box_page_fraction"])))
+        for e in es[1:]:
+            gone.add(id(e)); drop.append(dict(e, dropped="second picture for the same option"))
+    for e in entries:
+        if id(e) not in gone:
+            keep.append(e)
+    opts = [e for e in keep if e.get("option")]
+    for i, a in enumerate(opts):
+        for b in opts[i + 1:]:
+            if a["question"] == b["question"] and iou(tuple(a["box_page_fraction"]), tuple(b["box_page_fraction"])) > 0.5:
+                for e in (a, b):
+                    e["review"] = "two options show the same picture"
+    byq = {}
+    for e in opts:
+        byq.setdefault(e["question"], []).append(e)
+    for es in byq.values():
+        ar = [_area(e["box_page_fraction"]) for e in es]
+        if len(es) < 3 or max(ar) > 2.5 * min(ar):
+            for e in es:
+                e.setdefault("review", "option pictures missing or of very different sizes: check each option has its own")
+    return keep, drop
+
+
+def _area(b) -> float:
+    return (b[2] - b[0]) * (b[3] - b[1])
 
 
 def ref_box(f: dict, sizes: dict | None = None) -> Box | None:
