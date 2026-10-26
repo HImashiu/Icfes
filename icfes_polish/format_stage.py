@@ -137,6 +137,9 @@ def build(a) -> int:
         from .preformat import preformat
         ex = pick_examples(preformat(json.load(open(a.examples_before, encoding="utf-8")))[0], json.load(open(a.examples_after, encoding="utf-8")))
     sysmsg = system_prompt(ex)
+    if getattr(a, "fresh", False):
+        from .spec import FRESH_TASK
+        sysmsg += "\n\n" + FRESH_TASK
     f = fields(golden)
     only = set(a.only.split(",")) if a.only else None
     qpages = {f"q{q['number']}": (q.get("source") or {}).get("pages") or [] for q in golden["questions"]}
@@ -302,7 +305,7 @@ def guard(old: str, new: str, shared: str = "", ocr: str = "") -> str | None:
 _TOK = re.compile(r"\w+|[^\w\s]", re.U)
 
 
-def word_changes(old: str, new: str, ocr: str = "") -> list[dict]:
+def word_changes(old: str, new: str, ocr: str = "", kept_elsewhere: set | None = None, in_pictures: set | None = None) -> list[dict]:
     """Word-level differences between two versions of a field (markup ignored), each marked plausible or not.
     Plausible: an OCR misreading fixed (the two spellings look alike), stray symbols or one-letter junk removed,
     punctuation added. Anything else (a different word, an added "no") needs a second reading of the scan."""
@@ -319,8 +322,9 @@ def word_changes(old: str, new: str, ocr: str = "") -> list[dict]:
             ok = all(len(t) <= 1 or not t.isalpha() for t in a[i1:i2])
             if not ok and ocr:
                 # words moved elsewhere (e.g. into a table) or never printed (a summary's words) may go
-                kept, printed = set(_words(new)), set(_words(ocr))
-                ok = all(w in kept or w not in printed for w in _words(o, 2))
+                kept, printed = set(_words(new)) | (kept_elsewhere or set()), set(_words(ocr))
+                pics = in_pictures or set()
+                ok = all(w in kept or w not in printed or w in pics for w in _words(o, 2))
         else:  # insert
             ok = all(not t.isalnum() for t in b[j1:j2])
         if not ok and ocr and op != "delete" and grounded(n, ocr) >= 0.9:
@@ -330,12 +334,32 @@ def word_changes(old: str, new: str, ocr: str = "") -> list[dict]:
     return out
 
 
+def picture_words(m: dict, figs: list[dict], lw: dict, dpi: int) -> set:
+    """Normalized OCR words whose centre lies inside the candidate regions the model named as pictures."""
+    regs = m.get("regions") or []
+    boxes = [regs[r - 1] for g in figs for r in (g.get("regions") or []) if isinstance(r, int) and 1 <= r <= len(regs)]
+    if not boxes or not m.get("segments"):
+        return set()
+    from .regions import grow_over_labels
+    out = set()
+    wb = words_in_crop(m["segments"], lw, dpi)
+    for b in boxes:
+        b = grow_over_labels(tuple(b), wb)
+        for w in wb:
+            cx, cy = (w[0] + w[2]) / 2, (w[1] + w[3]) / 2
+            if b[0] <= cx <= b[2] and b[1] <= cy <= b[3]:
+                out |= set(_words(str(w[4])))
+    return out
+
+
 def apply(a) -> int:
     golden = json.load(open(a.golden, encoding="utf-8"))
     out = json.loads(json.dumps(golden))
     f = fields(golden)
     rep = {"units": {}, "usd": 0.0, "word_checks": []}
-    mu = json.load(open(a.meta, encoding="utf-8"))["units"] if getattr(a, "meta", None) else {}
+    mfile = json.load(open(a.meta, encoding="utf-8")) if getattr(a, "meta", None) else {}
+    mu = mfile.get("units", {})
+    lw = layout_words(json.load(open(a.layout, encoding="utf-8")), text=True) if getattr(a, "layout", None) else None
     for line in (l for path in a.results for l in open(path, encoding="utf-8")):
         r = json.loads(line)
         uid = r["id"].split(":", 1)[1]
@@ -349,6 +373,14 @@ def apply(a) -> int:
         except json.JSONDecodeError as e:
             ur["errors"].append(f"bad json: {e}")
             continue
+        # words of the whole unit after the edit (text moved to another field is not lost), and the printed words that
+        # sit inside the pictures the model reported (labels typed as text before; removing them is right)
+        unit_new = set()
+        for k2 in f:
+            if k2.split(".")[0] == uid:
+                v2 = (ans.get("fields") or {}).get(k2)
+                unit_new |= set(_words(v2["text"] if isinstance(v2, dict) and isinstance(v2.get("text"), str) else f[k2]))
+        pic_words = picture_words(mu.get(uid) or {}, ans.get("figures") or [], lw, mfile.get("dpi", 250)) if lw else set()
         for k, v in (ans.get("fields") or {}).items():
             if k not in f:
                 ur["errors"].append(f"unknown field {k}")
@@ -371,6 +403,16 @@ def apply(a) -> int:
             shared = " ".join(f.get(f"{gid}.{x}", "") for x in ("passage", "stim")) if gid else ""
             ocr = (mu.get(uid) or {}).get("ocr", "")
             why = guard(f[k], new, shared, ocr)
+            if why and not plain(new).strip():
+                # emptied: fine when its words are still in another field of the unit (stim repeating the stem) or are
+                # the labels of a picture the unit keeps
+                others = set()
+                for k2 in f:
+                    if k2 != k and k2.split(".")[0] == uid:
+                        v2 = (ans.get("fields") or {}).get(k2)
+                        others |= set(_words(v2["text"] if isinstance(v2, dict) and isinstance(v2.get("text"), str) else f[k2]))
+                if all(w in others or w in pic_words for w in _words(f[k], 2)):
+                    why = None
             if why:
                 ur["rejected"].append(f"{k}: {why}")
                 continue
@@ -379,13 +421,19 @@ def apply(a) -> int:
             new = re.sub(r"(</p>)\s*</p>", r"\1", new)
             if new == f[k]:
                 continue
-            changes = [c for c in word_changes(f[k], new, ocr) if not c["plausible"]]
+            changes = [c for c in word_changes(f[k], new, ocr, unit_new, pic_words) if not c["plausible"]]
             if changes and plain(new):
                 rep["word_checks"].append({"unit": uid, "key": k, "new": new, "changes": changes})
                 ur["held"] = ur.get("held", []) + [k]
                 continue
             set_field(out, k, new)
             ur["changed"].append(k)
+        if ur["rejected"] and ur["changed"]:
+            # half an edit can duplicate text moved between fields (stim -> stem): keep the unit as it was
+            for k in ur["changed"]:
+                set_field(out, k, f[k])
+            ur["rejected"].append(f"other fields kept as they were too: {', '.join(ur['changed'])}")
+            ur["changed"] = []
         # a box over the whole crop is the text itself, not a picture
         ur["figures"] = [g for g in ans.get("figures") or []
                          if not (isinstance(g.get("box"), list) and len(g["box"]) == 4
@@ -475,6 +523,7 @@ def main(argv=None) -> int:
     b.add_argument("--examples-after")
     b.add_argument("--deployment", default="solve")
     b.add_argument("--effort", default="low")
+    b.add_argument("--fresh", action="store_true", help="rewrite every field from the scan and OCR instead of editing it")
     b.add_argument("--only")
     b.add_argument("--out", required=True)
     p = sub.add_parser("apply")
@@ -483,6 +532,7 @@ def main(argv=None) -> int:
     p.add_argument("--out", required=True)
     p.add_argument("--report")
     p.add_argument("--meta", help="the build's .meta.json: unit OCR lets edits that use the scan's own words through")
+    p.add_argument("--layout", help="saved Azure layout: text removed because it is inside a reported picture is allowed")
     w = sub.add_parser("wordcheck-build")
     w.add_argument("--golden", required=True)
     w.add_argument("--crops", required=True)

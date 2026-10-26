@@ -68,9 +68,9 @@ def bold_phrases(unit: dict, pages: Pages) -> list[str]:
             cx, cy = (w[0] + w[2]) / 2, (w[1] + w[3]) / 2
             if not (x0 <= cx <= x1 and y0 <= cy <= y1):
                 continue
-            if w[5] >= BOLD and not SKIP.match(w[4]):
+            if w[5] >= BOLD and (not SKIP.match(w[4]) or (run and re.match(r"^\d+\.?$", w[4]))):  # "Paso" "1."
                 run.append(w[4])
-                if w[4].endswith(":") and len(run) <= 5:
+                if (w[4].endswith(":") and len(run) <= 5) or (len(run) == 2 and re.match(r"^\w+ (\d+|[IVX]+)\.$", " ".join(run))):  # "Paso 1."
                     out.append(" ".join(run))
                     run = []
             else:
@@ -114,6 +114,19 @@ def bold(a) -> int:
                     set_field(golden, k, new)
                     rep.setdefault(uid, []).append({"field": k, "bold": ph})
                     break
+    # a series of numbered labels is printed alike: when some "Paso N." are bold, the paragraph-opening ones that the
+    # stroke measure missed are made bold too
+    for uid, items in rep.items():
+        for it in list(items):
+            m = re.match(r"^(\w+) (\d+|[IVX]+)\.$", it["bold"])
+            if not m:
+                continue
+            k = it["field"]
+            pat = re.compile(r"(^|<p[^>]*>|\n)(" + re.escape(m.group(1)) + r" (?:\d+|[IVX]+)\.)(?!\*\*)")
+            new = pat.sub(lambda x: x.group(1) + "**" + x.group(2) + "**", f[k])
+            if new != f[k]:
+                f[k] = new
+                set_field(golden, k, new)
     json.dump(golden, open(a.out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     if a.report:
         json.dump(rep, open(a.report, "w", encoding="utf-8"), ensure_ascii=False, indent=1)

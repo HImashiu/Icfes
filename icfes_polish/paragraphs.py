@@ -175,6 +175,17 @@ def drop_text_in_picture(text: str, fig: dict, page_paras: list, size: tuple[flo
     return text, gone
 
 
+def justify(text: str) -> str:
+    """Prose paragraphs the model left bare get the booklet's justified paragraph tag, like the hand-finished goldens."""
+    out = []
+    for b in re.split(r"\n\s*\n", text or ""):
+        t = b.strip()
+        if t and not t.startswith(("<", "[[", "|", "- ", "* ")) and len(plain_map(t)[0].strip()) > 80:
+            t = f'<p style="text-align:justify">{t}</p>'
+        out.append(t)
+    return "\n\n".join(x for x in out if x)
+
+
 def run(a) -> int:
     golden = json.load(open(a.golden, encoding="utf-8"))
     meta = json.load(open(a.meta, encoding="utf-8"))["units"]
@@ -195,7 +206,7 @@ def run(a) -> int:
                     unit_paras.setdefault(s["page"], []).append(p)
         keys = [k for k in f if k.split(".")[0] == uid and not k.endswith((".A", ".B", ".C", ".D", ".dir"))]
         for k in keys:
-            new = f[k]
+            new = justify(f[k])
             cuts = paragraph_starts(new, starts)
             for at in cuts:
                 new = split_at(new, at)

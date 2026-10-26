@@ -90,3 +90,17 @@ text, and the scan crop(s) of the booklet. Return JSON:
 - Field keys: "q22.stim" (text before the question), "q22.stem" (the question itself), "q22.A".."q22.D" (options),
   "g26-28.passage" (shared text), "g26-28.dir" (directions line), "g26-28.stim" (shared lead-in).
 """.strip()
+
+
+FRESH_TASK = r"""
+TRANSCRIBE, DO NOT EDIT. The current text of the fields may be an old summary or a flattened copy: do not keep it
+because it is there. Write every field again from the image, using the OCR for the exact words, and return each
+field in full as "text", even when nothing changes; only fields marked long keep "ops" (they are reading
+passages, fixed with small edits). The current text only tells you which field is which.
+- Every printed word inside the unit's text goes in, in printed order; nothing the booklet does not print goes in.
+- One <p style="text-align:justify"> per printed paragraph. Steps, numbered items and lines such as "Paso 1." that
+  start on their own printed line are their own paragraphs; a printed list stays a list.
+- Words that are part of a picture (labels, a boxed note drawn inside the figure, axis text) are NOT typed: they stay
+  in the picture. Typed tables stay as <table class="exam-table">.
+- Page chrome (PRUEBA S11-X, CONTINÚE ABAJO, booklet codes) and pencil handwriting are never text.
+""".strip()
