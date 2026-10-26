@@ -103,8 +103,11 @@ def paragraph_starts(text: str, starts: list[str]) -> list[int]:
         before = text[:at].rstrip()
         if not before or before.endswith((">", "\n")) or _in_table(text, at):
             continue  # already a paragraph start, or inside a table
-        if not re.search(r"[.:;?!)»”\"]\s*(\*\*|</strong>)?$", re.sub(r"<[^>]+>$", "", before)):
+        tail = re.sub(r"<[^>]+>$", "", before)
+        if not re.search(r"[.:;?!)»”\"]\s*(\*\*|</strong>)?$", tail):
             continue  # the previous printed paragraph must have ended a sentence
+        if re.search(r"(^|[\s>(])(\*\*)?(\d{1,2}|[a-zA-Z]|[IVX]{1,4})[.)](\*\*)?$", tail):
+            continue  # "1." or "a)" is a list number printed in front of this text, not the end of a paragraph
         found.add(at)
     return sorted(found, reverse=True)
 
