@@ -11,15 +11,37 @@ from PIL import Image, ImageDraw, ImageFont
 from .images import blue_mask
 
 
+# Print that is not part of any question: the booklet's code, the PRUEBA badge, "CONTINÚE ABAJO" and the like.
+CHROME = re.compile(r"^(\s*(PRUEBA(\s+S11-\w+)?|S11-[A-Z]\d*|CONT[IÍ]N[UÚ]E(\s+(ABAJO|ATR[AÁ]S|EN LA SIGUIENTE P[AÁ]GINA))?|S\dPS11\w*)\s*)+$", re.I)
+HAND_CONF = 0.7  # Azure's handwriting score from which a span counts as a student's pencil work
+
+
+def handwritten(r: dict) -> list[tuple[int, int]]:
+    """Character spans Azure marks as handwriting (students' pencil work on the scans)."""
+    return [(sp["offset"], sp["offset"] + sp["length"]) for st in r.get("styles", [])
+            if st.get("isHandwritten") and st.get("confidence", 1) >= HAND_CONF for sp in st.get("spans", [])]
+
+
+def _in_spans(sp: dict | None, spans: list) -> bool:
+    if not sp:
+        return False
+    o = sp.get("offset", -1)
+    return any(a <= o < b for a, b in spans)
+
+
 def layout_words(layout: dict, text: bool = False) -> dict[int, list]:
-    """Word boxes per page in inches, from the saved Azure layout result (with the word as a fifth item if text)."""
+    """Word boxes per page in inches, from the saved Azure layout result (with the word as a fifth item if text).
+    Handwritten words are left out."""
     out: dict[int, list] = {}
     for ch in layout.get("chunks", [{"result": layout}]):
         r = ch.get("result", ch)
         r = r.get("analyzeResult", r)
         off = ch.get("page_offset", 0)
+        hand = handwritten(r)
         for p in r.get("pages", []):
             for w in p.get("words", []):
+                if hand and _in_spans(w.get("span"), hand):
+                    continue
                 xs, ys = w["polygon"][0::2], w["polygon"][1::2]
                 b = (min(xs), min(ys), max(xs), max(ys))
                 out.setdefault(p["pageNumber"] + off, []).append(b + (w.get("content", ""),) if text else b)
@@ -27,14 +49,21 @@ def layout_words(layout: dict, text: bool = False) -> dict[int, list]:
 
 
 def layout_lines(layout: dict) -> dict[int, list]:
-    """OCR lines per page: (x0, y0, x1, y1, text) in inches."""
+    """OCR lines per page: (x0, y0, x1, y1, text) in inches. Handwritten lines and the booklet's page chrome
+    (PRUEBA S11-X, CONTINÚE ABAJO, the booklet code, page numbers) are left out."""
     out: dict[int, list] = {}
     for ch in layout.get("chunks", [{"result": layout}]):
         r = ch.get("result", ch)
         r = r.get("analyzeResult", r)
         off = ch.get("page_offset", 0)
+        hand = handwritten(r)
         for p in r.get("pages", []):
             for ln in p.get("lines", []):
+                spans = ln.get("spans") or []
+                if hand and spans and all(_in_spans(sp, hand) for sp in spans):
+                    continue
+                if CHROME.match(ln.get("content", "").strip()):
+                    continue
                 xs, ys = ln["polygon"][0::2], ln["polygon"][1::2]
                 out.setdefault(p["pageNumber"] + off, []).append((min(xs), min(ys), max(xs), max(ys), ln.get("content", "")))
     return out
