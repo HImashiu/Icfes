@@ -70,9 +70,15 @@ def check(golden: dict, meta: dict, layout: dict, manifest: dict | None) -> dict
         if not printed:
             continue
         typed = Counter(w for k, v in f.items() if k.split(".")[0] == uid for w in text_words(v))
-        if uid.startswith("q"):  # a question also shows its group's shared text, which has its own crop
-            pass
-        missing = printed - typed
+        shared = Counter()
+        # a question's crop often holds its group's shared text and the other questions of a cloze page, and a
+        # group's crop holds its questions: those words are typed in the other units
+        for g in golden.get("groups", []):
+            span = range(g.get("from", 0), g.get("to", -1) + 1)
+            if uid == g["id"] or (uid.startswith("q") and uid[1:].isdigit() and int(uid[1:]) in span):
+                ids = {g["id"]} | {f"q{n}" for n in span}
+                shared = Counter(w for k, v in f.items() if k.split(".")[0] in ids - {uid} for w in text_words(v))
+        missing = printed - typed - shared
         extra = typed - printed
         n = sum(printed.values())
         if sum(missing.values()) > max(3, 0.05 * n) or sum(extra.values()) > max(3, 0.05 * n):
