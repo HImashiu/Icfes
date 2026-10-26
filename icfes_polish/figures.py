@@ -122,7 +122,8 @@ def keep_pictures(entries: list, words: dict, sizes: dict, max_cover: float = 0.
         why = None
         if (b[2] - b[0]) * (b[3] - b[1]) < min_area:
             why = "tiny"
-        elif words and word_cover(f, words, sizes) > max_cover:
+        elif words and word_cover(f, words, sizes) > (0.7 if f.get("option") else max_cover):
+            # option pictures carry labels ("Empuje (4 newtons)", axis names), so they read as text more often
             why = "mostly text"
         else:
             dup = next((k for k in keep if k["page"] == f["page"] and iou(tuple(k["box_page_fraction"]), tuple(b)) > 0.8), None)
