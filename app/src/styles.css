@@ -334,6 +334,19 @@ select.booklet-pick {
   transition: transform 0.05s, box-shadow 0.05s;
 }
 .option:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 var(--line); }
+/* Matching (English Parte 2): the word list is drawn once beside the questions; each question is a row of letters. */
+.word-bank { display: grid; gap: 10px; }
+.word-bank-title { margin: 0; font: 800 14px "Bricolage Grotesque", sans-serif; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-2); }
+.word-bank ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.word-bank li { display: flex; align-items: center; gap: 10px; }
+.word-bank .letter-tile { width: 30px; height: 30px; font-size: 14px; flex: none; }
+.word-text p { margin: 0; font-weight: 600; }
+.match-letters { display: flex; flex-wrap: wrap; gap: 8px; }
+.match-letters .option { width: auto; min-height: 0; padding: 6px; border-radius: 12px; display: block; box-shadow: 0 2px 0 var(--line); }
+.match-letters .option .letter-tile { width: 38px; height: 38px; }
+.match-letters .option.selected { box-shadow: 0 2px 0 var(--accent-shadow); }
+.match-letters .option.correct { box-shadow: 0 2px 0 var(--ok); }
+.match-letters .option.incorrect { box-shadow: 0 2px 0 var(--bad); }
 .option:disabled { cursor: default; }
 .option .letter-tile { grid-row: 1 / span 2; align-self: start; }
 .option .option-text, .option .figure { grid-column: 2; min-width: 0; font-weight: 600; font-size: 16px; }
@@ -1482,6 +1495,9 @@ button.card:active:not(:disabled), .mode-card:active, .chip:active, .answer-cell
 .pb-options li { display: flex; gap: 6pt; align-items: baseline; }
 .pb-options li b { flex: none; width: 12pt; }
 .pb-grid { grid-template-columns: 1fr 1fr; gap: 6pt 14pt; }
+.pb-bank { list-style: none; margin: 4pt 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 2pt 14pt; }
+.pb-bank li { display: flex; gap: 6pt; align-items: baseline; }
+.pb-bank li b { flex: none; width: 12pt; }
 .pb-grid li { align-items: center; }
 .pb .figure, .pb .traced-figure, .pb-fig { max-width: 100%; margin: 4pt 0; background: #fff; }
 .pb img, .pb svg { max-width: 100%; height: auto; }

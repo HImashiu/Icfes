@@ -7,6 +7,8 @@ import ReportError from "./ReportError.jsx";
 import Zoomable from "./Zoomable.jsx";
 import { gapSentence } from "../lib/gaps.js";
 import { QuestionNotes, useAnnotations } from "./Annotations.jsx";
+import WordBank from "./WordBank.jsx";
+import { isMatching } from "../lib/matching.js";
 
 // Traced scans are inlined as data URIs by the sync; other paths sit under the app's base URL.
 const tracedSrc = (url) => (url.startsWith("data:") ? url : `${import.meta.env.BASE_URL}${url}`);
@@ -175,7 +177,9 @@ export default function QuestionView({
 
   // A traced figure (a scan trace from figures/traced) stands in for the native spec it replaces.
   const traced = (question.traced ?? []).filter((t) => !inText.has(t.figure_id) && !inText.has(t.spec_id));
-  const hasContext = Boolean(passage || ownInCard || stemFigures.length || traced.length);
+  // A matching question shows the group's word list once, in the context column, and only letters under its stem.
+  const matching = isMatching(question);
+  const hasContext = Boolean(passage || ownInCard || stemFigures.length || traced.length || matching);
 
   return (
     <div className={hasContext ? "q-split" : "q-split solo"}>
@@ -199,6 +203,7 @@ export default function QuestionView({
           {stemFigures.map((f) => (
             <FigureBlock key={f.id} figure={f} alt={f.id} />
           ))}
+          {matching && <WordBank options={question.options} />}
           {source}
         </section>
       )}
@@ -227,11 +232,13 @@ export default function QuestionView({
           {annotations && <QuestionNotes qkey={question.key} annPrefix={`q:${question.key}:`} />}
         </article>
 
-        {!hideOptions && <ul className={chartOptions ? "options charts" : "options"} role="radiogroup" aria-label={`Opciones de la pregunta ${question.number}`}>
+        {!hideOptions && <ul className={matching ? "options match-letters" : chartOptions ? "options charts" : "options"} role="radiogroup" aria-label={`Opciones de la pregunta ${question.number}`}>
           {question.options.map((opt) => {
             const state = optionState({ letter: opt.letter, answer, correctLetter, graded });
             const figure = optionFigure(opt.letter);
-            const inner = (
+            const inner = matching ? (
+              <span className="letter-tile">{opt.letter}</span>
+            ) : (
               <>
                 <span className="letter-tile">{opt.letter}</span>
                 {figure ? (

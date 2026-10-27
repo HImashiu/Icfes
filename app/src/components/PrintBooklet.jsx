@@ -3,6 +3,7 @@ import FigureBlock from "./FigureBlock.jsx";
 import { SOURCE_LINE } from "../lib/exam.js";
 import owlUrl from "../assets/owl.svg";
 import { APP_NAME } from "../lib/brand.js";
+import { isMatching } from "../lib/matching.js";
 
 const tracedSrc = (url) => (url.startsWith("data:") ? url : `${import.meta.env.BASE_URL}${url}`);
 const TOKEN_IDS = /\[\[figura:([^\]\s]+)\]\]/g;
@@ -51,6 +52,8 @@ export default function PrintBooklet({ questions, figures, examLabel, title, cou
     const traced = (question.traced ?? []).filter((t) => !inText.has(t.figure_id) && !inText.has(t.spec_id));
     const optionFigure = (letter) => (figures?.get(question.key) ?? []).find((f) => f.target === "option" && f.option === letter);
     const figureOptions = question.options.some((o) => optionFigure(o.letter) || o.traced);
+    // A matching group prints its word list once, under the shared text; its questions carry no word list.
+    const matching = isMatching(question);
 
     return (
       <div key={question.key} className="pb-unit">
@@ -61,6 +64,7 @@ export default function PrintBooklet({ questions, figures, examLabel, title, cou
             {group.directions && !hasDigits(group.directions) && <p className="pb-directions">{group.directions}</p>}
             <RichText html={group.stimulus_md} className="pb-text" resolve={resolveToken} />
             {groupFigures.map((f) => <FigureBlock key={f.id} figure={f} alt={f.id} />)}
+            {matching && <ol className="pb-bank" aria-label="Lista de palabras">{question.options.map((opt) => <li key={opt.letter}><b>{opt.letter}.</b> <RichText html={opt.text_md} className="pb-text pb-inline" /></li>)}</ol>}
           </section>
         )}
         <article className="pb-question">
@@ -68,7 +72,7 @@ export default function PrintBooklet({ questions, figures, examLabel, title, cou
           {traced.map((t) => <figure className="pb-fig" key={t.figure_id}><img src={tracedSrc(t.url)} alt="" /></figure>)}
           {stemFigures.map((f) => <FigureBlock key={f.id} figure={f} alt={f.id} />)}
           <div className="pb-stem"><b className="pb-num">{number}.</b> <RichText html={question.stem_md} className="pb-text pb-inline" resolve={resolveToken} /></div>
-          <ol className={figureOptions ? "pb-options pb-grid" : "pb-options"}>
+          {!matching && <ol className={figureOptions ? "pb-options pb-grid" : "pb-options"}>
             {question.options.map((opt) => {
               const figure = optionFigure(opt.letter);
               return (
@@ -80,7 +84,7 @@ export default function PrintBooklet({ questions, figures, examLabel, title, cou
                 </li>
               );
             })}
-          </ol>
+          </ol>}
         </article>
       </div>
     );
