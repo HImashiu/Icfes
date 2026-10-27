@@ -347,12 +347,14 @@ def option_cells(box, word_boxes, regions, pad: int = 60, img=None):
     return cells, rest
 
 
-def shave_text_rows(box, core, word_boxes, min_words: int = 5, min_cover: float = 0.5):
+def shave_text_rows(box, core, word_boxes, min_words: int = 5, min_cover: float = 0.5, typed: str = ""):
     """Cut sentence lines that taking in labels pulled above or below the picture (outside its ink, `core`): a row of
     many words spanning most of the width is the question's text, not a label."""
     x0, y0, x1, y1 = box
     # words cut by the top or bottom edge count too: a half-visible sentence line is still the question's text
-    inside = [w for w in word_boxes if w[0] >= x0 - 4 and w[2] <= x1 + 4 and w[3] > y0 and w[1] < y1]
+    # and so do words cut by the left or right edge (a sentence line running out of the box sideways)
+    inside = [w for w in word_boxes if w[3] > y0 and w[1] < y1 and min(w[2], x1) - max(w[0], x0) >= 0.5 * max(1, w[2] - w[0])
+              or (w[0] < x0 < w[2] or w[0] < x1 < w[2]) and w[3] > y0 and w[1] < y1]
     rows: list[list] = []
     for w in sorted(inside, key=lambda w: (w[1] + w[3]) / 2):
         cy = (w[1] + w[3]) / 2
@@ -369,8 +371,14 @@ def shave_text_rows(box, core, word_boxes, min_words: int = 5, min_cover: float 
     top_cut = False
     while rows and (rows[0][0] < core[1] or rows[0][1][0][1] < y0 or top_cut) and (texty(rows[0]) or top_cut and sentence_end(rows[0])):
         was_texty = texty(rows[0])
-        y0 = max(w[3] for w in rows.pop(0)[1]) + 2
+        ws = rows.pop(0)[1]
+        y0 = max(w[3] for w in ws) + 0.25 * max(w[3] - w[1] for w in ws)  # OCR boxes stop short of the descenders
         top_cut = was_texty
-    while rows and rows[-1][0] > core[3] and texty(rows[-1]):
-        y1 = min(w[1] for w in rows.pop()[1]) - 2
+    def typed_row(r):  # a sentence line that the unit's text already has: it is text even inside the core
+        ws = [re.sub(r"\W", "", str(w[4]).lower()) for w in r[1] if len(w) > 4]
+        ws = [w for w in ws if len(w) > 2]
+        return bool(typed) and len(ws) >= 4 and sum(w in typed for w in ws) >= 0.85 * len(ws)
+    while rows and (texty(rows[-1]) and rows[-1][0] > core[3] or typed_row(rows[-1])):
+        ws = rows.pop()[1]
+        y1 = min(w[1] for w in ws) - 0.2 * max(w[3] - w[1] for w in ws)
     return (x0, y0, x1, y1) if y1 - y0 > 20 else box

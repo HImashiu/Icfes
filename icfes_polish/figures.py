@@ -93,8 +93,10 @@ def emit(a, pdf, out, code, session, page, fb, field, fig, how) -> dict:
     if pix.width < 2 or pix.height < 2:
         return None
     img = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
+    if not option:
+        img = erase_captions(img, a, page, fb, owner)
     clean, level = clean_figure(img)
-    tb = trim_box(clean)
+    tb = drop_slivers(clean, trim_box(clean))
     clean = clean.crop(tb)
     fw, fh = fb[2] - fb[0], fb[3] - fb[1]
     fb = (fb[0] + fw * tb[0] / pix.width, fb[1] + fh * tb[1] / pix.height, fb[0] + fw * tb[2] / pix.width, fb[1] + fh * tb[3] / pix.height)
@@ -105,6 +107,63 @@ def emit(a, pdf, out, code, session, page, fb, field, fig, how) -> dict:
             "figure_id": fid, "spec_id": fid, "method": "eyeballed_box", "auto": True, "svg": f"traced/{a.exam}/{fid}.png",
             "box_page_fraction": [round(v, 4) for v in fb], "option": option, "field": field,
             "what": fig.get("what"), "box_source": how, "paper_level": level, "pending_spec": False}
+
+
+def drop_slivers(img, tb, max_frac: float = 0.06, gap: int = 6):
+    """A thin strip of ink cut off at the top or bottom edge (the descenders of a text line above the picture) is
+    left out of the box when blank rows separate it from the picture."""
+    import numpy as np
+    x0, y0, x1, y1 = tb
+    rows = (np.array(img.convert("L").crop(tb)) < 160).sum(1) > 0
+    h = len(rows)
+    if h < 40:
+        return tb
+    runs, i = [], 0
+    while i < h:
+        if rows[i]:
+            j = i
+            while j < h and rows[j]:
+                j += 1
+            runs.append([i, j])
+            i = j
+        else:
+            i += 1
+    if len(runs) < 2:
+        return tb
+    top, bot = 0, h
+    if runs[0][1] - runs[0][0] < max_frac * h and runs[1][0] - runs[0][1] >= gap:
+        top = runs[1][0] - 2
+    if runs[-1][1] - runs[-1][0] < max_frac * h and runs[-1][0] - runs[-2][1] >= gap and len(runs) > 2:
+        bot = runs[-2][1] + 2
+    return (x0, y0 + max(0, top), x1, y0 + min(h, bot))
+
+
+CAPTION = re.compile(r"^(Figura|Tabla|Gr[aá]fica|Gr[aá]fico|Diagrama|Esquema|Mapa|Imagen)$", re.I)
+
+
+def erase_captions(img, a, page, fb, owner):
+    """The booklet's caption ("Figura", "Tabla 2") printed inside the crop is typed under the picture as text, as in
+    the hand-finished goldens, so it is painted out of the picture instead of showing twice."""
+    words, sizes, typed = getattr(a, "_words", None), getattr(a, "_sizes", None), getattr(a, "_typed", {})
+    if not words or page not in sizes:
+        return img
+    W, H = sizes[page]
+    X0, Y0, X1, Y1 = fb[0] * W, fb[1] * H, fb[2] * W, fb[3] * H
+    ws = [w for w in words.get(page, []) if w[0] >= X0 - 0.02 and w[2] <= X1 + 0.02 and w[1] >= Y0 - 0.02 and w[3] <= Y1 + 0.02]
+    from PIL import ImageDraw
+    d = ImageDraw.Draw(img)
+    sx, sy = img.width / (X1 - X0), img.height / (Y1 - Y0)
+    for i, w in enumerate(ws):
+        if not CAPTION.match(str(w[4]).strip()):
+            continue
+        cap = [w] + [v for v in ws if v is not w and re.fullmatch(r"\d{1,2}\.?", str(v[4]).strip()) and abs(v[1] - w[1]) < 0.05
+                     and 0 < v[0] - w[2] < 0.15]
+        label = " ".join(str(v[4]).strip() for v in cap).rstrip(".")
+        if label.lower() not in typed.get(owner, ""):
+            continue  # not typed in the text: it stays in the picture
+        for v in cap:
+            d.rectangle([(v[0] - X0) * sx - 4, (v[1] - Y0) * sy - 4, (v[2] - X0) * sx + 4, (v[3] - Y0) * sy + 4], fill="white")
+    return img
 
 
 def word_cover(f: dict, words: dict, sizes: dict) -> float:
@@ -152,7 +211,11 @@ def build(a) -> int:
     lay = layout_figures(layout) if layout else {}
     words = layout_words(layout, text=True) if layout else None
     pic_opts = set()  # questions whose options are pictures (empty option text)
+    a._words, a._sizes, a._typed = words, sizes, {}
     if a.golden:
+        from .fields import fields as _fields
+        for k, v in _fields(json.load(open(a.golden, encoding="utf-8"))).items():
+            a._typed[k.split(".")[0]] = a._typed.get(k.split(".")[0], "") + " " + re.sub(r"<[^>]+>|\*\*", " ", v or "").lower()
         for q in json.load(open(a.golden, encoding="utf-8"))["questions"]:
             if sum(not (o.get("text_md") or "").strip() for o in q.get("options", [])) >= 2:
                 pic_opts.add(f"q{q['number']}")
@@ -195,7 +258,7 @@ def build(a) -> int:
                     rb = [m["regions"][r - 1] for r in regs]
                     cb = (min(b[0] for b in rb), min(b[1] for b in rb), max(b[2] for b in rb), max(b[3] for b in rb))
                     if cw:
-                        cb = shave_text_rows(grow_over_labels(cb, cw), cb, cw)
+                        cb = shave_text_rows(grow_over_labels(cb, cw), cb, cw, typed=re.sub(r"[^\w\s]", "", a._typed.get(uid, "")))
                     how = f"regions {regs}"
                 elif isinstance(box, list) and len(box) == 4 and box[2] > box[0] and box[3] > box[1]:
                     W, H = crop_size(m)

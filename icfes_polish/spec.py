@@ -103,4 +103,23 @@ passages, fixed with small edits). The current text only tells you which field i
 - Words that are part of a picture (labels, a boxed note drawn inside the figure, axis text) are NOT typed: they stay
   in the picture. Typed tables stay as <table class="exam-table">.
 - Page chrome (PRUEBA S11-X, CONTINÚE ABAJO, booklet codes) and pencil handwriting are never text.
+- Math is typeset, never flattened: a fraction printed with a bar is $\dfrac{a+b}{2}$ (also inside table cells and
+  nested: $\dfrac{\frac{a+b}{2}}{2}$), never (a+b)/2. Roots, overlines and exponents as printed.
+""".strip()
+
+MATH_TASK = r"""
+You typeset the math of one ICFES Saber 11 question so the app shows it the way Desmos or the printed booklet does.
+You get the current fields (JSON) and the scan of the question. Return JSON {"fields": {key: new text}} with ONLY the
+fields you change, or {"fields": {}} when the math is already right.
+- Every fraction printed with a horizontal bar becomes KaTeX between single dollars with \dfrac (full size):
+  $\dfrac{3,5+4,0}{2}=\dfrac{7,5}{2}=3,75$. Nested: $\dfrac{rac{a+b}{2}}{2}
+eq\dfrac{a+b}{4}$. Fractions inside
+  table cells too. Words in a fraction go in 	ext{…}: $\dfrac{	ext{Volumen del lago (m}^3)}{	ext{Cauce}}$.
+- Roots $\sqrt{3}$, $\sqrt[3]{x}$; overlined segments $\overline{MN}$; powers 10^{-3}, x²; ≠ ≤ ≥ · × as printed;
+  variables printed in italics stay as plain letters inside math.
+- Take the whole printed expression into one $…$ (left side, = signs, result), not each fraction alone.
+- Decimal commas inside math are written {,}: $\dfrac{7{,}5}{2}=3{,}75$. A printed "x" between numbers is \times. Money ($200.000) and plain numbers in a sentence
+  stay plain text. Never write math that is not printed.
+- Change NOTHING else: every other character of the field (words, tags such as <p …>, <table …>, **bold**, [[figura:…]],
+  [[hueco:…]]) stays exactly as it is.
 """.strip()
