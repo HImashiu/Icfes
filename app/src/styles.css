@@ -451,6 +451,15 @@ select.booklet-pick {
   background: var(--side); border-right: 1px solid var(--line); padding: 20px 16px;
   display: flex; flex-direction: column; gap: 6px;
 }
+/* Teacher on desktop/tablet: the sidebar stays put while the content scrolls. It is as tall as the window;
+   if its menu is taller, it scrolls inside itself with no visible scrollbar. */
+@media (min-width: 801px) {
+  .t-side {
+    position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .t-side::-webkit-scrollbar { display: none; }
+}
 .t-logo { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 20px; padding: 4px 8px 16px; color: var(--accent-ink); display: flex; align-items: center; gap: 8px; }
 .logo { display: block; flex: none; border-radius: 50%; }
 .t-nav {
