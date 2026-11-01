@@ -93,11 +93,11 @@ export function todayModel({ courses, assignments, attempts, roster, now = Date.
   const cursos = [];
   for (const c of classes) {
     let g = cursos.find((x) => x.name === c.name);
-    if (!g) { g = { name: c.name, classes: [], people: new Set(), alerted: new Set() }; cursos.push(g); }
+    if (!g) { g = { name: c.name, classes: [], people: new Set(), alerted: new Set(), out: new Set() }; cursos.push(g); }
     g.classes.push(c);
-    for (const e of roster.filter((r) => r.courseIds.includes(c.id))) { g.people.add(e.key); if (e.severity >= 2) g.alerted.add(e.key); }
+    for (const e of roster.filter((r) => r.courseIds.includes(c.id))) { g.people.add(e.key); if (e.severity >= 2) g.alerted.add(e.key); if (!e.joined) g.out.add(e.key); }
   }
-  const cursoRows = cursos.map((g) => ({ name: g.name, classes: g.classes, students: g.people.size, alerts: g.alerted.size }));
+  const cursoRows = cursos.map((g) => ({ name: g.name, classes: g.classes, students: g.people.size, alerts: g.alerted.size, notJoined: g.out.size }));
 
   // ---- results that arrived in the last 3 days
   const fresh = live.map((a) => {

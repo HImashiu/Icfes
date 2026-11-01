@@ -451,7 +451,7 @@ export function buildDemo({ bundles, now = Date.now() }) {
         { id: "demo-au-3", school_id: SCHOOL_ID, actor: staff[0].id, action: "grant", detail: { profile: staff[2].id, area: "Inglés", grade: null, access: "view" }, created_at: stamp(4) },
         { id: "demo-au-4", school_id: SCHOOL_ID, actor: staff[0].id, action: "invite", detail: { email: "laura.mejia@gmail.com", role: "teacher" }, created_at: stamp(1) },
       ],
-      question_holds: holds, question_rules: [],
+      question_holds: holds, question_rules: [], teacher_alert_states: [],
     },
   };
 }

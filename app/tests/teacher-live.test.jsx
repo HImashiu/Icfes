@@ -92,7 +92,7 @@ describe("Dashboard and report", () => {
   const correct = (n) => ({ perArea: [{ name: "Matemáticas", correct: n, answered: 4, total: 4 }], correct: n, answered: 4, total: 4, keyed: true });
   const stu = (id, email) => ({ id: `m-${id}`, course_id: "c1", profile_id: id, email, full_name: email, role: "student" });
 
-  it("shows school numbers: students, deliveries, average and the weakest area", async () => {
+  it("shows school numbers once, and leaves the day-to-day overview to Hoy", async () => {
     const api = fakeApi({
       allMembers: vi.fn().mockResolvedValue([stu("p1", "a@c.co"), stu("p2", "b@c.co"), { ...stu("t", "t@c.co"), role: "teacher" }]),
       listAssignments: vi.fn().mockResolvedValue([{ id: "a1", course_id: "c1", kind: "task", title: "T", status: "active", due_at: future, opens_at: "2026-01-01T00:00:00Z", courses: { name: "11-A" } }]),
@@ -104,8 +104,9 @@ describe("Dashboard and report", () => {
     goTo("#docente/resultados/resumen");
     render(<TeacherLive auth={{ api, profile: { id: "t1", school_id: "s1", role: "school_admin", full_name: "Rec", email: "r@c.co" } }} exams={[]} fetchExam={vi.fn()} onExit={() => {}} />);
     expect(await screen.findByText("Resumen del colegio")).toBeTruthy();
-    expect(await screen.findByText("50 %", { selector: "strong" })).toBeTruthy();
-    expect(screen.getAllByText(/Matemáticas/).length).toBeGreaterThan(0);
+    expect(await screen.findByText(/2 estudiantes · 1 actividades · 2 entregas · promedio 50 %/)).toBeTruthy();
+    // The day-to-day overview is in Hoy, not repeated here.
+    expect(screen.queryByText("Necesitan atención")).toBeNull();
   });
 
   it("lists the questions the class failed most, with a key warning when most chose another option", async () => {
