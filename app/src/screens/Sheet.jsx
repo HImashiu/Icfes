@@ -2,10 +2,10 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { createPortal } from "react-dom";
 import { Select } from "../components/Controls.jsx";
 import Icon from "../components/Icon.jsx";
-import { areaColor } from "../lib/brand.js";
 import { useFacts } from "./useFacts.js";
-import { AGGS, FILTER_OPS, answersTable, applyFilters, chartSeries, colLetter, deliveriesTable, distinctValues, filterActive, filterParts, filterText, formulaValues, fxSuggest, groupRows, namesToLetters, pivotTable, rangeStats, rangeText, scalePos, sortBy, studentsTable, tableText } from "../lib/sheet.js";
+import { AGGS, FILTER_OPS, answersTable, applyFilters, colLetter, deliveriesTable, distinctValues, filterActive, filterParts, filterText, formulaValues, fxSuggest, groupRows, namesToLetters, pivotTable, rangeStats, rangeText, scalePos, sortBy, studentsTable, tableText } from "../lib/sheet.js";
 import ChartBuilder from "./ChartBuilder.jsx";
+import SheetChart from "./SheetChart.jsx";
 import "./results.css";
 
 const DATASETS = [
@@ -23,9 +23,6 @@ const TEMPLATES = [
   { id: "tiempo", label: "Tiempo y acierto por dificultad", ds: "respuestas", pivot: { row: "Dificultad", col: null, value: "Segundos", how: "avg" }, chart: "bar" },
   { id: "pendientes", label: "Estudiantes con menos entregas", ds: "estudiantes", sort: ["% entregado", 1] },
 ];
-const SERIES = ["#5ED3B4", "#FFB547", "#8AB4FF", "#F59EC4", "#C79BFF", "#FF8A7A", "#9FC4A0", "#E0D060"];
-const AREA_NAMES = ["Lectura crítica", "Matemáticas", "Ciencias naturales", "Sociales y ciudadanas", "Inglés"];
-const colorOf = (name, i) => (AREA_NAMES.includes(name) ? areaColor(name) : SERIES[i % SERIES.length]);
 const ROW_H = 32;
 const OVERSCAN = 12;
 const RN_W = 44;
@@ -77,7 +74,9 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
   const [sel, setSel] = useState(null); // { r0, c0, r1, c1 } in visible rows and columns
   const [pivot, setPivot] = useState(null); // { row, col, value, how, minN }
   const [pivotOpen, setPivotOpen] = useState(false);
-  const [chart, setChart] = useState(null); // "bar" | "line"
+  const [chart, setChart] = useState(null); // shown or not (a chart type when a template opened it)
+  const [chartKey, setChartKey] = useState(0);
+  const [chartPreset, setChartPreset] = useState(null);
   const [fx, setFx] = useState({ name: "", expr: "", editing: null });
   const [fxError, setFxError] = useState(null);
   const [fxFocus, setFxFocus] = useState(false);
@@ -89,6 +88,34 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
   const [scrollTop, setScrollTop] = useState(0);
   const [viewH, setViewH] = useState(560);
   const wrapRef = useRef(null);
+  const rootRef = useRef(null);
+  // Pantalla completa: the sheet fills the screen (browser full screen where allowed, else the whole window). Esc exits.
+  const [full, setFull] = useState(false);
+  const toggleFull = async () => {
+    if (full) {
+      if (document.fullscreenElement) { try { await document.exitFullscreen(); } catch { /* already out */ } }
+      setFull(false);
+      return;
+    }
+    setFull(true);
+    const el = rootRef.current;
+    if (el?.requestFullscreen) { try { await el.requestFullscreen(); } catch { /* not allowed: the window-sized view stays */ } }
+  };
+  useEffect(() => {
+    const change = () => { if (!document.fullscreenElement) setFull(false); };
+    document.addEventListener("fullscreenchange", change);
+    return () => document.removeEventListener("fullscreenchange", change);
+  }, []);
+  useEffect(() => {
+    if (!full) return undefined;
+    const key = (e) => {
+      if (e.key !== "Escape" || document.querySelector(".hd-menu, .ui-pop")) return;
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      setFull(false);
+    };
+    document.addEventListener("keydown", key);
+    return () => document.removeEventListener("keydown", key);
+  }, [full]);
   const fxRef = useRef(null);
   const drag = useRef(null);
 
@@ -186,7 +213,7 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
     if (t.pivot || t.sort) groupOn(null);
     if (t.pivot) { setPivot({ minN: 1, ...t.pivot }); setPivotOpen(true); }
     if (t.sort) setSort(typeof t.sort[0] === "number" ? null : [t.sort]);
-    if (t.chart) setChart(t.chart);
+    if (t.chart) { setChart(t.chart); setChartPreset({ type: t.chart }); setChartKey((k) => k + 1); }
   };
 
   // ---- Selection -------------------------------------------------------------------------------------------------
@@ -353,8 +380,6 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
     );
   }
 
-  const chartCols = selCols.length ? selCols : shownCols.map((c) => c.id);
-  const series = chart ? chartSeries(groups ? groups.map((g) => ({ [groupBy]: g.key, ...g.avg })) : rows, groups ? [{ id: groupBy, name: groupBy, type: "text" }, ...shownCols.filter((c) => c.type === "num")] : shownCols, groups ? [groupBy, ...chartCols] : chartCols, 40) : null;
   const colOptions = (withFx?.columns ?? []).map((c) => ({ value: c.id, label: c.name }));
   const nFilters = Object.values(filters).filter(filterActive).length;
   const cellClass = (c, j, extra = "") => `${c.type === "num" ? "num" : ""} ${j < nFrozen ? "fz" : ""} ${j === nFrozen - 1 ? "fz-last" : ""} ${extra}`;
@@ -362,7 +387,7 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
   const visible = items.slice(first, last);
 
   return (
-    <div className="hd">
+    <div ref={rootRef} className={full ? "hd full" : "hd"}>
       <header className="t-head">
         <div><h1>Hoja de datos</h1><span className="caption">Todos los resultados como en Excel o Google Sheets. Arrastra para seleccionar celdas y ver su suma y promedio; usa el menú ▾ de cada columna para ordenar, filtrar, agrupar o fijarla.</span></div>
         <button type="button" className="link" onClick={() => setMode("guided")}>Gráficas guiadas</button>
@@ -384,6 +409,7 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
         <button type="button" className={colors ? "secondary on" : "secondary"} aria-pressed={colors} onClick={() => setColors(!colors)} title="Escala de color en Nota, % aciertos y áreas"><Icon name="sliders" size={16} /> Colores</button>
         <button type="button" className={pivot || pivotOpen ? "secondary on" : "secondary"} onClick={() => { setPivotOpen(!pivotOpen); if (!pivot && withFx) setPivot({ row: withFx.columns.find((c) => c.type === "text")?.id, col: null, value: withFx.columns.find((c) => c.type === "num")?.id, how: "avg", minN: 1 }); }}><Icon name="grid" size={16} /> Tabla dinámica</button>
         <button type="button" className={chart ? "secondary on" : "secondary"} onClick={() => setChart(chart ? null : "bar")}><Icon name="chart" size={16} /> Gráfica</button>
+        <button type="button" className={full ? "secondary on" : "secondary"} aria-pressed={full} onClick={toggleFull} title={full ? "Salir de pantalla completa (Esc)" : "Pantalla completa"}><Icon name="expand" size={16} /> {full ? "Salir" : "Pantalla completa"}</button>
         <button type="button" className="secondary" disabled={!rows.length} onClick={() => copyText(tableText(shownCols, rows), "all")}>{copied === "all" ? "Copiada" : "Copiar"}</button>
         <button type="button" className="secondary" disabled={!rows.length} onClick={() => download(`Cóndor · ${piv ? "tabla dinámica" : DATASETS.find((d) => d.id === ds).label}.csv`, tableText(shownCols, rows, ","))}>CSV</button>
       </div>
@@ -448,17 +474,9 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
         ))}</div>
       )}
 
-      {chart && series && (
-        <div className="card t-card hd-chart">
-          <div className="section-head">
-            <strong>{series.series.length ? series.series.map((s) => s.name).join(", ") : "Elige columnas con números"}{series.labelName ? ` por ${series.labelName}` : ""}</strong>
-            <div className="segmented small" role="group" aria-label="Tipo de gráfica">
-              {[["bar", "Barras"], ["line", "Líneas"]].map(([id, l]) => <button key={id} type="button" className={chart === id ? "seg active" : "seg"} aria-pressed={chart === id} onClick={() => setChart(id)}>{l}</button>)}
-            </div>
-          </div>
-          {series.series.length ? <MiniChart data={series} kind={chart} /> : <p className="caption">Selecciona una columna de texto (las etiquetas) y una o más de números tocando sus encabezados. Con Shift eliges varias seguidas.</p>}
-          {series.cut && <span className="caption">Se grafican las primeras 40 filas, en el orden de la tabla. Filtra, ordena o agrupa para elegir cuáles.</span>}
-        </div>
+      {chart && view && (
+        <SheetChart key={`${ds}-${chartKey}`} rows={piv ? rows : sorted} columns={allCols} selected={piv ? [] : selCols} pivot={!!piv}
+          preset={chartPreset} storeKey={`condor.sheet.chart.${ds}`} onClose={() => setChart(null)} />
       )}
 
       <div className="hd-status" aria-live="polite">
@@ -623,7 +641,7 @@ function Anchored({ rect, onClose, className = "", children, label }) {
   }, [onClose]);
   return createPortal(
     <div ref={ref} role="dialog" aria-label={label} className={`ui-pop hd-menu ${className}`} style={pos ?? { top: rect.bottom + 4, left: rect.left, visibility: "hidden" }}>{children}</div>,
-    document.body,
+    document.fullscreenElement || document.body,
   );
 }
 
@@ -719,53 +737,6 @@ function ColumnsButton({ open, setOpen, columns, hidden, setHidden }) {
           </ul>
         </Anchored>
       )}
-    </>
-  );
-}
-
-// Bars or lines for the chosen series. Labels stay readable: long ones are cut, numbers are always written on bars.
-function MiniChart({ data, kind }) {
-  const all = data.series.flatMap((s) => s.values).filter((v) => v != null);
-  const max = Math.max(1, ...all);
-  const min = Math.min(0, ...all);
-  if (kind === "line") {
-    const w = 640, h = 240, l = 40, b = 46, t = 12;
-    const n = data.labels.length;
-    const x = (i) => l + (n <= 1 ? 0 : (i * (w - l - 12)) / (n - 1));
-    const y = (v) => t + (1 - (v - min) / (max - min || 1)) * (h - t - b);
-    const every = Math.max(1, Math.ceil(n / 8));
-    return (
-      <>
-        <ul className="cb-legend">{data.series.map((s, i) => <li key={s.name}><span className="dot" style={{ background: colorOf(s.name, i) }} />{s.name}</li>)}</ul>
-        <svg viewBox={`0 0 ${w} ${h}`} width="100%" role="img" aria-label="Gráfica de líneas" className="hd-svg">
-          {[0, 0.5, 1].map((f) => { const v = min + f * (max - min); return <g key={f}><line x1={l} x2={w - 8} y1={y(v)} y2={y(v)} stroke="var(--line)" strokeDasharray="3 4" /><text x={l - 6} y={y(v) + 4} textAnchor="end" fontSize="10" fill="var(--text-2)">{fmt(Math.round(v))}</text></g>; })}
-          {data.series.map((s, si) => {
-            const pts = s.values.map((v, i) => (v == null ? null : [x(i), y(v)])).filter(Boolean);
-            return <g key={s.name}><polyline fill="none" stroke={colorOf(s.name, si)} strokeWidth="2.5" strokeLinejoin="round" points={pts.map((p) => p.join(",")).join(" ")} />{pts.map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r="3" fill={colorOf(s.name, si)} />)}</g>;
-          })}
-          {data.labels.map((lb, i) => (i % every === 0 || i === n - 1 ? <text key={i} x={x(i)} y={h - b + 16} textAnchor="middle" fontSize="10" fill="var(--text-2)">{lb.length > 12 ? `${lb.slice(0, 11)}…` : lb}</text> : null))}
-        </svg>
-      </>
-    );
-  }
-  return (
-    <>
-      {data.series.length > 1 && <ul className="cb-legend">{data.series.map((s, i) => <li key={s.name}><span className="dot" style={{ background: colorOf(s.name, i) }} />{s.name}</li>)}</ul>}
-      <div className="hd-bars">
-        {data.labels.map((lb, i) => (
-          <div key={i} className="hd-bar-group">
-            <span className="hd-bar-label" title={lb}>{lb}</span>
-            <div className="hd-bar-stack">
-              {data.series.map((s, si) => (
-                <div key={s.name} className="d-bar-row">
-                  <span className="d-bar-track"><span style={{ width: `${s.values[i] == null ? 0 : Math.max(1.5, ((s.values[i] - Math.min(0, min)) / (max - Math.min(0, min) || 1)) * 100)}%`, background: data.series.length > 1 ? colorOf(s.name, si) : AREA_NAMES.includes(lb) ? areaColor(lb) : "var(--accent)" }} /></span>
-                  <span className="d-bar-num">{s.values[i] == null ? "—" : fmt(s.values[i])}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
     </>
   );
 }
