@@ -3120,3 +3120,25 @@ body.spl-open { overflow: hidden; }
 .an-until { display: flex; align-items: center; gap: 8px; }
 .chip.ghost { background: transparent; border-style: dashed; }
 .td-idle { margin: 8px 2px 0; }
+
+/* Teacher sidebar folds into an icon rail (toggle next to the logo; remembered on the device). */
+.t-side-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding-bottom: 12px; }
+.t-side-top .t-logo { padding: 4px 8px 0; min-width: 0; }
+.t-rail-btn { flex: none; display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 10px; background: transparent; color: var(--text-2); cursor: pointer; }
+.t-rail-btn:hover { background: var(--surface-2); color: var(--text); }
+.t-exit-rail { display: none; }
+.teacher.tl { transition: grid-template-columns 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@media (min-width: 801px) {
+  .teacher.tl.rail { grid-template-columns: 72px minmax(0, 1fr); }
+  .tl.rail .t-side { padding: 16px 10px; align-items: center; }
+  .tl.rail .t-side-top { flex-direction: column; padding-bottom: 8px; }
+  .tl.rail .t-logo { padding: 0; }
+  .tl.rail .t-logo span, .tl.rail .t-nav span, .tl.rail .t-group, .tl.rail .tl-me, .tl.rail .t-exit-long, .tl.rail .t-exit-short { display: none; }
+  .tl.rail .t-side nav { width: 100%; }
+  .tl.rail .t-group + .t-nav { margin-top: 12px; }
+  .tl.rail .t-nav { justify-content: center; padding: 0; width: 100%; }
+  .tl.rail .t-exit { margin-top: auto; }
+  .tl.rail .t-exit-rail { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; }
+  .tl.rail .t-exit-rail:hover { background: var(--surface-2); }
+}
+@media (max-width: 800px) { .t-rail-btn { display: none; } }

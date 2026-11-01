@@ -358,3 +358,4 @@
 .hd-group-btn .caption { font-weight: 600; }
 .hd-grid .hd-group.main td, .hd-grid .hd-group.main td.fz { background: var(--surface); font-size: 0.85rem; }
 .hd-bar .secondary { min-height: 40px; font-size: 0.9rem; }
+@media (min-width: 641px) { .hd-ds { flex: 0 0 auto; max-width: none; grid-auto-columns: auto; } .hd-ds > button { padding: 0 14px; } }
