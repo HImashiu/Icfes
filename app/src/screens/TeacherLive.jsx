@@ -19,7 +19,6 @@ import GradingSettings from "./GradingSettings.jsx";
 import Lessons from "./Lessons.jsx";
 import QuestionControl from "./QuestionControl.jsx";
 import Students from "./Students.jsx";
-import TeacherReports from "./TeacherReports.jsx";
 import Today from "./teacher/Today.jsx";
 import ActivityPage from "./teacher/ActivityPage.jsx";
 import ClassMatrix from "./teacher/ClassMatrix.jsx";
@@ -32,6 +31,8 @@ import { ActivityList, KIND_TABS, NewActivityMenu } from "./teacher/Activities.j
 import ContextSwitcher from "../components/ContextSwitcher.jsx";
 import Receipt, { Novedades } from "../components/Receipt.jsx";
 import { createWorkspaceStore } from "../lib/workspaceStore.js";
+import { createAlertStore } from "../lib/alertStore.js";
+import { DEFAULT_SETTINGS, questionItems } from "../lib/lesson.js";
 import { GRADES, SUBJECTS, gradeLabel, spaceName } from "../lib/spaces.js";
 import { Select } from "../components/Controls.jsx";
 import { ADMIN_NAV, HIDDEN_TABS, NAV, PRESETS, TABS, crumbs, navSection, normalize, parseRoute, routeHash } from "../lib/teacherRoutes.js";
@@ -81,6 +82,12 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
     [baseApi, profile.school_id, profile.id, profile.full_name, profile.email],
   );
 
+  // What the teacher did with each progress alert on Hoy (migration 0027; this browser until it runs).
+  const alertStore = useMemo(() => createAlertStore({ api: baseApi, userId: profile.id }), [baseApi, profile.id]);
+  // Questions handed from Biblioteca › Banco (or an alert) to Nueva actividad, and a class to open in Clases.
+  const [seed, setSeed] = useState(null);
+  const [lessonOpen, setLessonOpen] = useState(null);
+
   const guard = useCallback(async (fn) => {
     setError(null);
     try { return await fn(); } catch (e) { setError(e.message); return undefined; }
@@ -102,6 +109,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
     const hash = routeHash(r);
     if (typeof location !== "undefined" && location.hash !== hash) history.pushState(null, "", hash);
     setRoute(r); setNotice(null); setBell(false); setShownReceipt(null);
+    if (!(r.section === "actividades" && r.tab === "nueva")) setSeed(null);
     if (typeof window !== "undefined" && window.scrollTo) try { window.scrollTo(0, 0); } catch { /* jsdom */ }
   }, []);
   useEffect(() => {
@@ -148,6 +156,24 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
   const showReceipt = (r) => { const { row, list } = saveReceipt(profile.id, r); setReceipts(list); setShownReceipt(row); };
   const openReceipt = (r) => { setReceipts(markSeen(profile.id)); setShownReceipt(r); setBell(false); };
   const openStudent = (email) => { setFocusStudent(email); go({ section: "estudiantes", tab: "lista" }); };
+  const openStudents = (filters) => { setFocusStudent({ filters }); go({ section: "estudiantes", tab: "lista" }); };
+  // Bank questions into a class for projecting (slides), or into any kind of activity (Nueva actividad, already chosen).
+  const convert = async ({ target, slug, keys, title }) => {
+    if (!keys?.length || !slug) return;
+    if (target === "clase" || target === "proyectar") {
+      const row = await guard(() => baseApi.saveLesson({
+        school_id: profile.school_id, owner_id: profile.id, title: title || "Clase sin título", exam_slug: slug,
+        items: questionItems(keys), settings: DEFAULT_SETTINGS, visibility: "private",
+      }));
+      if (!row) return;
+      setLessonOpen({ id: row.id, row, present: target === "proyectar" });
+      go({ section: "biblioteca", tab: "clases" });
+      return;
+    }
+    if (!(target in PRESETS)) return;
+    go({ section: "actividades", tab: "nueva", preset: target });
+    setSeed({ slug, keys, title, at: Date.now() });
+  };
   const openAssignment = (id, memberId) => { setFocusMember(memberId ?? null); go({ section: "actividad", id, tab: "resultados" }); };
 
   // The sidebar folds down to an icon rail and back; the choice is remembered on this device.
@@ -247,15 +273,15 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
 
         <div className="tl-page" key={viewKey}>
           {r.section === "hoy" && (
-            <Today api={api} profile={profile} courses={courses} readOnlyIds={contexts.readOnly} assignments={assignments} ws={ws} receipts={receipts} subject={context.subject} contextName={contextName}
-              go={go} onOpenStudent={openStudent} onOpenReceipt={openReceipt} onReinforce={() => go({ section: "actividades", tab: "refuerzo" })} />
+            <Today api={api} profile={profile} courses={courses} readOnlyIds={contexts.readOnly} assignments={assignments} ws={ws} store={store} alertStore={alertStore} receipts={receipts} subject={context.subject} contextName={contextName}
+              go={go} onOpenStudent={openStudent} onOpenStudents={openStudents} onOpenReceipt={openReceipt} onReinforce={() => go({ section: "actividades", tab: "refuerzo" })} onConvert={convert} />
           )}
 
           {r.section === "actividades" && r.tab === "lista" && <ActivityList courses={courses} assignments={assignments} contextName={contextName} go={go} loaded={loaded} />}
           {r.section === "actividades" && KIND_TABS[r.tab] && <ActivityList key={r.tab} kind={KIND_TABS[r.tab].kind} courses={courses} assignments={assignments} contextName={contextName} go={go} loaded={loaded} />}
           {r.section === "actividades" && r.tab === "nueva" && (
             courses.length === 0 ? <p className="caption">Primero necesitas una clase (Estudiantes › Listas de clase).</p> : (
-              <AssignBuilder key={r.preset ?? "any"} preset={PRESETS[r.preset] ?? null} api={baseApi} courses={courses.filter((c) => !contexts.subjects.some((s) => s.classes.some((k) => k.id === c.id && k.readOnly)))} exams={exams} fetchExam={fetchExam} guard={guard}
+              <AssignBuilder key={`${r.preset ?? "any"}-${seed?.at ?? 0}`} preset={PRESETS[r.preset] ?? null} seed={seed} onConvert={convert} api={baseApi} courses={courses.filter((c) => !contexts.subjects.some((s) => s.classes.some((k) => k.id === c.id && k.readOnly)))} exams={exams} fetchExam={fetchExam} guard={guard}
                 onCancel={() => go({ section: "actividades" })} grading={{ models, profile, onChange: reloadModels }}
                 onSaved={async (a, n) => { await reload(); go({ section: "actividad", id: a.id, tab: a.delivery === "paper" ? "papel" : "resultados" }); showReceipt(assignmentReceipt({ assignment: a, classes: n })); }} />
             )
@@ -283,9 +309,9 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
 
           {r.section === "resultados" && r.tab === "resumen" && (
             <>
-              <Dashboard api={api} profile={profile} guard={guard} ws={ws} onOpenStudent={openStudent} onOpenQueue={() => openStudent("#queue")} onOpenCourse={() => go({ section: "estudiantes", tab: "clases" })} onReinforce={() => go({ section: "actividades", tab: "refuerzo" })} />
+              <Dashboard api={api} profile={profile} guard={guard} />
               <ResultsInsights api={api} courses={courses} assignments={assignments} fetchExam={fetchExam} ws={ws} onOpenSheet={() => go({ section: "resultados", tab: "grafica" })} />
-              <TeacherReports api={api} profile={profile} courses={courses} assignments={assignments} models={models} fetchExam={fetchExam} guard={guard} onOpenStudent={openStudent} />
+              <p className="caption rs-more">Alertas, la semana y cada clase están en <button type="button" className="link" onClick={() => go({ section: "hoy" })}>Hoy</button>; cada estudiante con todo su trabajo, en <button type="button" className="link" onClick={() => go({ section: "estudiantes", tab: "lista" })}>Estudiantes</button>; la nota por estudiante y actividad, en la <button type="button" className="link" onClick={() => go({ section: "resultados", tab: "grafica" })}>Hoja de datos</button>.</p>
             </>
           )}
           {r.section === "resultados" && r.tab === "actividades" && <ResultsByActivity api={api} courses={courses} assignments={assignments} go={go} contextName={contextName} />}
@@ -294,10 +320,10 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           )}
           {r.section === "resultados" && r.tab === "grafica" && <Sheet api={api} profile={profile} courses={courses} assignments={assignments} models={models} fetchExam={fetchExam} guard={guard} ws={ws} />}
 
-          {r.section === "biblioteca" && r.tab === "banco" && <BankEditor api={baseApi} profile={profile} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
+          {r.section === "biblioteca" && r.tab === "banco" && <BankEditor api={baseApi} profile={profile} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} onConvert={convert} />}
           {r.section === "biblioteca" && r.tab === "preguntas" && <QuestionBuilder api={baseApi} profile={profile} guard={guard} setNotice={setNotice} />}
           {r.section === "biblioteca" && r.tab === "control" && <QuestionControl api={baseApi} profile={profile} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
-          {r.section === "biblioteca" && r.tab === "clases" && <Lessons api={baseApi} profile={profile} courses={courses} assignments={assignments} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} reload={reload} />}
+          {r.section === "biblioteca" && r.tab === "clases" && <Lessons api={baseApi} profile={profile} courses={courses} assignments={assignments} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} reload={reload} open={lessonOpen} onOpened={() => setLessonOpen(null)} />}
 
           {r.section === "colegio" && r.tab === "cursos" && (
             <ClassMatrix api={baseApi} profile={profile} courses={allCourses} members={members} directors={directors} records={groupRecords} grades={grades} staff={colegio?.staff ?? []}

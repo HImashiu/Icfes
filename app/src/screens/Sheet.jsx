@@ -22,6 +22,8 @@ const TEMPLATES = [
   { id: "tema", label: "Temas más difíciles", ds: "respuestas", pivot: { row: "Tema", col: null, value: "Acierto", how: "pct1", minN: 8 }, sort: [1, 1], chart: "bar" },
   { id: "tiempo", label: "Tiempo y acierto por dificultad", ds: "respuestas", pivot: { row: "Dificultad", col: null, value: "Segundos", how: "avg" }, chart: "bar" },
   { id: "pendientes", label: "Estudiantes con menos entregas", ds: "estudiantes", sort: ["% entregado", 1] },
+  // Each scale in its own column, so a 4,2 (1–5) is never averaged with a 70 (0–100).
+  { id: "nota-estudiante", label: "Nota media por estudiante", ds: "entregas", pivot: { row: "Estudiante", col: "Escala", value: "Nota", how: "avg" } },
 ];
 const SERIES = ["#5ED3B4", "#FFB547", "#8AB4FF", "#F59EC4", "#C79BFF", "#FF8A7A", "#9FC4A0", "#E0D060"];
 const AREA_NAMES = ["Lectura crítica", "Matemáticas", "Ciencias naturales", "Sociales y ciudadanas", "Inglés"];

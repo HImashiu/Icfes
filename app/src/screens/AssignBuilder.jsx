@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import QuestionView from "../components/QuestionView.jsx";
+import QuestionsPrint from "../components/QuestionsPrint.jsx";
+import Icon from "../components/Icon.jsx";
 import AiAnalysis from "../components/AiAnalysis.jsx";
 import { weakCompetencias } from "../lib/analytics.js";
 import { KINDS } from "../lib/assignments.js";
@@ -49,18 +51,21 @@ const KIND_HELP = {
 // `slug` locks the booklet (adding questions to a lesson that already has some).
 // `grading` ({ models, profile, onChange }) adds the grading model choice; without it the form is as before.
 // `preset` ({ kind, delivery }) starts the form as a given kind of activity (Tarea, Simulacro en papel…).
-export default function AssignBuilder({ api, courses, exams, fetchExam, guard, onCancel, onSaved, live = null, lesson = null, grading = null, preset = null }) {
+// `seed` ({ slug, keys, title }) opens it with questions already chosen (from Biblioteca › Banco or an alert); `onConvert`
+// turns the chosen questions into a class for projecting instead.
+export default function AssignBuilder({ api, courses, exams, fetchExam, guard, onCancel, onSaved, live = null, lesson = null, grading = null, preset = null, seed = null, onConvert = null }) {
   const ready = [...exams.filter((e) => e.status !== "proximamente"), ...(api.teacherQuestions ? [TEACHER_ENTRY] : [])];
   const cache = useRef(new Map());
-  const [slug, setSlug] = useState(lesson?.slug ?? ready[0]?.slug ?? "");
+  const [slug, setSlug] = useState(lesson?.slug ?? seed?.slug ?? ready[0]?.slug ?? "");
   const [bundle, setBundle] = useState(null);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState(EMPTY_FILTER);
-  const [picked, setPicked] = useState([]);
+  const [picked, setPicked] = useState(() => seed?.keys ?? []);
+  const [printing, setPrinting] = useState(false);
   const [mates, setMates] = useState(true);
   const [limitShown, setLimitShown] = useState(PAGE);
   const [preview, setPreview] = useState(null);
-  const [panel, setPanel] = useState("bank");
+  const [panel, setPanel] = useState(seed?.keys?.length ? "mine" : "bank");
   const [autoCount, setAutoCount] = useState("10");
   const [weak, setWeak] = useState(null);
   const [msg, setMsg] = useState(null);
@@ -70,17 +75,17 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
   const [kind, setKind] = useState(preset?.kind ?? "homework");
   const [delivery, setDelivery] = useState(preset?.delivery ?? "online");
   const paper = delivery === "paper";
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState(seed?.title ?? "");
   const [opens, setOpens] = useState(isoDay(new Date()));
   const [due, setDue] = useState(isoDay(new Date(Date.now() + 7 * 864e5)));
   const [limit, setLimit] = useState("");
-  const [attempts, setAttempts] = useState("");
-  const [reveal, setReveal] = useState(preset?.delivery === "paper" ? "after_close" : "after_submit");
-  const [hints, setHints] = useState(true);
-  const [instant, setInstant] = useState(true);
+  const [attempts, setAttempts] = useState(preset?.config?.attempts ? String(preset.config.attempts) : "");
+  const [reveal, setReveal] = useState(preset?.config?.reveal ?? (preset?.delivery === "paper" ? "after_close" : "after_submit"));
+  const [hints, setHints] = useState(preset?.config?.hints ?? true);
+  const [instant, setInstant] = useState(preset?.config?.instant ?? true);
   const [defsOn, setDefsOn] = useState(false);
   const [defs, setDefs] = useState([{ term: "", def: "" }]);
-  const [proctor, setProctor] = useState(false);
+  const [proctor, setProctor] = useState(preset?.config?.proctor ?? false);
   const [seconds, setSeconds] = useState("60");
   const [liveCourse, setLiveCourse] = useState("");
   // A live game starts now (one click) or is programmed for a date and time its class sees on Inicio.
@@ -478,6 +483,13 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
       )}
         </>
       )}
+      {!lesson && !live && picked.length > 0 && bundle && (
+        <div className="b-convert">
+          <span className="caption">Las mismas preguntas también como</span>
+          {onConvert && <button type="button" className="secondary small" onClick={() => onConvert({ target: "clase", slug, keys: picked, title: title.trim() })}><Icon name="play" size={14} /> Diapositivas</button>}
+          <button type="button" className="secondary small" onClick={() => setPrinting(true)}><Icon name="print" size={14} /> Hoja de trabajo</button>
+        </div>
+      )}
       {msg && <p className="notice error" role="alert">{msg}</p>}
       <div className="report-actions">
         <button type="button" className="secondary" onClick={onCancel}>Cancelar</button>
@@ -494,6 +506,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
         <button type="button" role="tab" aria-selected={panel === "mine"} className={panel === "mine" ? "seg active" : "seg"} onClick={() => setPanel("mine")}>{lesson ? "Tu clase" : "Tu asignación"} ({picked.length})</button>
       </div>
       <div className={`b-grid show-${panel}`}>{bank}{mine}</div>
+      {printing && bundle && <QuestionsPrint bundle={bundle} keys={picked} title={title.trim()} onClose={() => setPrinting(false)} />}
       {open && bundle && (
         <div className="b-modal" role="dialog" aria-modal="true" aria-label={`Pregunta ${open.number}`}>
           <div className="b-modal-card">

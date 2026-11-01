@@ -99,12 +99,13 @@ describe("Estudiantes workspace", () => {
     expect(await screen.findByText("Va muy bien en matemáticas.")).toBeTruthy();
   });
 
-  it("opens a student from the alerts in Resumen", async () => {
+  it("opens a student from the alerts in Hoy, next to the weekly summary", async () => {
     const api = fakeApi();
-    window.location.hash = "#docente/resultados/resumen";
+    window.location.hash = "#docente/hoy";
     render(<TeacherLive auth={auth(api)} exams={[]} fetchExam={vi.fn()} onExit={() => {}} />);
     expect(await screen.findByText("Resumen de la semana")).toBeTruthy();
-    fireEvent.click((await screen.findAllByRole("button", { name: "Elena Mora" }))[0]);
+    expect(screen.getByText("Alertas y pendientes")).toBeTruthy();
+    fireEvent.click((await screen.findAllByRole("button", { name: /^Elena Mora/ }))[0]);
     expect(await screen.findByRole("heading", { name: "Elena Mora" })).toBeTruthy();
   });
 });

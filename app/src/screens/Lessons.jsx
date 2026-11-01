@@ -11,9 +11,11 @@ const shortDate = (iso) => new Date(iso).toLocaleDateString("es-CO", { day: "num
 
 // Sección “Clases”: presentaciones con las preguntas del banco. Cada clase se proyecta, se juega en vivo,
 // se imprime o se convierte en una actividad para los estudiantes.
-export default function Lessons({ api, profile, courses, assignments, exams, fetchExam, guard, setNotice, reload }) {
+// `open` ({ id, row, present }) opens a class right away: one just made from the bank or an alert.
+export default function Lessons({ api, profile, courses, assignments, exams, fetchExam, guard, setNotice, reload, open = null, onOpened }) {
   const [rows, setRows] = useState(undefined); // undefined = loading, null = table missing
-  const [view, setView] = useState({ mode: "list" });
+  const [view, setView] = useState(() => (open ? { mode: "open", id: open.id, row: open.row, present: open.present } : { mode: "list" }));
+  useEffect(() => { if (open) onOpened?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [from, setFrom] = useState("");
 
   const load = useCallback(() => guard(async () => setRows(await api.lessons())), [api, guard]);

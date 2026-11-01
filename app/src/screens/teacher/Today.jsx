@@ -3,7 +3,10 @@ import Icon from "../../components/Icon.jsx";
 import Mascot from "../../components/Mascot.jsx";
 import { TeacherAnnouncements } from "../../components/Announcements.jsx";
 import MonthCalendar from "../../components/MonthCalendar.jsx";
-import { buildRoster } from "../../lib/workspace.js";
+import { buildRoster, weeklySummary } from "../../lib/workspace.js";
+import { groupAlerts, progressAlerts, visibleAlerts } from "../../lib/progressAlerts.js";
+import WeekSummary from "../../components/WeekSummary.jsx";
+import AlertInbox from "./AlertInbox.jsx";
 import { todayModel } from "../../lib/today.js";
 import { areaColor } from "../../lib/brand.js";
 import { areaShort, contextColor } from "../../lib/teaching.js";
@@ -11,11 +14,9 @@ import { areaShort, contextColor } from "../../lib/teaching.js";
 const greeting = (now = new Date()) => (now.getHours() < 12 ? "Buenos días" : now.getHours() < 19 ? "Buenas tardes" : "Buenas noches");
 const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 const firstName = (p) => String(p.full_name || p.email || "").split(/[\s@]/)[0];
-const ATTN_ICON = { closing: "clock", late: "flag", opens: "book", follow: "user", never: "users" };
-const ATTN_TILE = { closing: "var(--flame)", late: "var(--bad)", opens: "var(--ctx)", follow: "var(--surface)", never: "var(--surface)" };
 
 // Hoy: the teacher's home. What needs attention first, then the week, each class and who needs support.
-export default function Today({ api, profile, courses, readOnlyIds = [], assignments, ws, receipts, subject, contextName, go, onOpenStudent, onOpenReceipt, onReinforce }) {
+export default function Today({ api, profile, courses, readOnlyIds = [], assignments, ws, store, alertStore, receipts, subject, contextName, go, onOpenStudent, onOpenStudents, onOpenReceipt, onReinforce, onConvert }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   useEffect(() => {
@@ -30,6 +31,19 @@ export default function Today({ api, profile, courses, readOnlyIds = [], assignm
   }, [api]);
   const roster = useMemo(() => (data ? buildRoster({ members: data.members, assignments, attempts: data.attempts, ws: ws ?? {} }) : []), [data, assignments, ws]);
   const m = useMemo(() => (data ? todayModel({ courses, assignments, attempts: data.attempts, roster }) : null), [data, courses, assignments, roster]);
+  // Progress alerts (classes, activities, students) and what the teacher already did with them.
+  const [states, setStates] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    if (!alertStore) { setStates(new Map()); return undefined; }
+    alertStore.load().then((s) => alive && setStates(new Map(s)), () => alive && setStates(new Map()));
+    return () => { alive = false; };
+  }, [alertStore]);
+  const alerts = useMemo(() => (data ? progressAlerts({ roster, courses, assignments, attempts: data.attempts }) : []), [data, roster, courses, assignments]);
+  const shownAlerts = useMemo(() => (states ? visibleAlerts(alerts, states) : []), [alerts, states]);
+  const week = useMemo(() => (data ? weeklySummary(roster, assignments) : null), [data, roster, assignments]);
+  const courseName = (id) => courses.find((c) => c.id === id)?.name ?? "";
+  const answer = async (list, state, opts) => { if (!alertStore) return; try { setStates(new Map(await alertStore.set(list, state, opts))); } catch { /* keeps the alert on screen */ } };
   const tint = subject ? contextColor(subject) : "var(--accent)";
   const now = new Date();
 
@@ -59,7 +73,7 @@ export default function Today({ api, profile, courses, readOnlyIds = [], assignm
         <div className="td-hello">
           <span className="caption">{cap(now.toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" }))} · {contextName}</span>
           <h1>{greeting(now)}, {firstName(profile)}</h1>
-          <p>{m.attention.length ? `${m.attention.length} ${m.attention.length === 1 ? "cosa pide" : "cosas piden"} tu atención` : "Nada urgente hoy"}{k.active ? ` · ${k.active} ${k.active === 1 ? "actividad abierta" : "actividades abiertas"}` : ""}{m.fresh.length ? ` · ${m.fresh.length} con resultados nuevos` : ""}.</p>
+          <p>{(() => { const n = m.attention.length + groupAlerts(shownAlerts).filter((a) => a.severity >= 3).length; return n ? `${n} ${n === 1 ? "cosa pide" : "cosas piden"} tu atención` : "Nada urgente hoy"; })()}{k.active ? ` · ${k.active} ${k.active === 1 ? "actividad abierta" : "actividades abiertas"}` : ""}{m.fresh.length ? ` · ${m.fresh.length} con resultados nuevos` : ""}.</p>
         </div>
         <div className="td-actions">
           <button type="button" className="primary" onClick={() => go({ section: "actividades", tab: "nueva" })}><Icon name="plus" size={18} strokeWidth={2.8} /> Nueva actividad</button>
@@ -86,7 +100,7 @@ export default function Today({ api, profile, courses, readOnlyIds = [], assignm
           <span className="td-kpi-row"><strong>{k.active}</strong>{k.scheduled > 0 && <span className="td-pill">{k.scheduled} programadas</span>}</span>
           <span className="caption">en {courses.length} {courses.length === 1 ? "clase" : "clases"} · {m.students} estudiantes</span>
         </button>
-        <button type="button" className="td-kpi card" onClick={() => go({ section: "estudiantes", tab: "lista" })}>
+        <button type="button" className="td-kpi card" onClick={() => (onOpenStudents ? onOpenStudents({ alert: "any" }) : go({ section: "estudiantes", tab: "lista" }))}>
           <span className="label">Necesitan apoyo</span>
           <span className="td-kpi-row"><strong>{k.followUps}</strong>{k.followUps > 0 && <span className="td-pill warn">revisar</span>}</span>
           <span className="caption">alertas fuertes o en seguimiento</span>
@@ -95,18 +109,12 @@ export default function Today({ api, profile, courses, readOnlyIds = [], assignm
 
       <div className="td-grid">
         <div className="td-col">
-          <section className="card td-card">
-            <div className="section-head"><h2>Pide tu atención</h2><span className="caption">{m.attention.length || "Nada"}</span></div>
-            {m.attention.length === 0 && <p className="caption">Todo al día en {contextName}. Buen momento para preparar la próxima actividad.</p>}
-            {m.attention.slice(0, 6).map((a, i) => (
-              <div key={`${a.kind}-${i}`} className="td-task">
-                <span className="td-tile" style={{ background: ATTN_TILE[a.kind], color: ATTN_TILE[a.kind] === "var(--surface)" ? "var(--text)" : "#0D110F" }} aria-hidden="true"><Icon name={ATTN_ICON[a.kind]} size={20} /></span>
-                <span className="td-task-text"><strong>{a.title}</strong><span className="caption">{a.detail}</span></span>
-                {a.tag && <span className={a.warn ? "td-pill warn" : "td-pill"}>{a.tag}</span>}
-                <button type="button" className="secondary small" onClick={() => go(a.route)}>{a.action}</button>
-              </div>
-            ))}
-          </section>
+          <AlertInbox attention={m.attention} alerts={shownAlerts} hidden={alerts.length - shownAlerts.length} contextName={contextName} go={go}
+            onOpenStudent={onOpenStudent} onOpenStudents={onOpenStudents} onConvert={onConvert} onAnswer={answer}
+            onFollowUp={store ? (a) => store.setFlags([a.email], { follow_up: true, follow_up_due: new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10), follow_up_reason: a.detail.slice(0, 300) }) : null}
+            onRestore={alertStore ? () => answer([...(states ?? new Map()).entries()].filter(([, st]) => st.state !== "seen").map(([id, st]) => ({ id, sig: st.sig })), "seen") : null} />
+
+          {week && <WeekSummary week={week} courseName={courseName} compact onOpenStudent={onOpenStudent} onOpenQueue={() => onOpenStudent("#queue")} />}
 
           <section className="card td-card">
             <div className="section-head"><h2>Mis clases</h2><span className="caption">Por curso y materia · promedio de sus últimas actividades</span></div>
@@ -115,7 +123,7 @@ export default function Today({ api, profile, courses, readOnlyIds = [], assignm
                 <div key={g.name} className="td-curso">
                   <div className="td-curso-head">
                     <strong>{g.name}</strong>
-                    <span className="caption">{g.students} est.{g.alerts ? <> · <span className="warn">{g.alerts} con alertas</span></> : " · al día"}</span>
+                    <span className="caption">{g.students} est.{g.notJoined ? ` · ${g.notJoined} sin ingresar` : ""}{g.alerts ? <> · <span className="warn">{g.alerts} con alertas</span></> : " · al día"}</span>
                   </div>
                   {g.classes.map((c) => (
                     <button key={c.id} type="button" className={c.last == null ? "td-subj idle" : "td-subj"} style={{ "--c": c.area ? areaColor(c.area) : "var(--ctx)" }} onClick={() => go({ section: "resultados", tab: "resumen", courseId: c.id })} title={c.full}>
@@ -181,17 +189,6 @@ export default function Today({ api, profile, courses, readOnlyIds = [], assignm
             ))}
           </section>
 
-          <section className="card td-card">
-            <div className="section-head"><h2>Necesitan apoyo</h2><span className="caption">Cada uno frente a sí mismo</span></div>
-            {m.support.length === 0 && <p className="caption">Sin alertas fuertes. 🎉</p>}
-            {m.support.map((s) => (
-              <button key={s.key} type="button" className="td-person" onClick={() => onOpenStudent(s.email)}>
-                <span className="td-avatar" aria-hidden="true">{s.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("")}</span>
-                <span className="td-task-text"><strong>{s.name} <span className="caption">· {s.groups}</span></strong><span className="caption">{s.reason}</span></span>
-              </button>
-            ))}
-            {m.support.length > 0 && <button type="button" className="secondary" onClick={onReinforce}>Crear refuerzo</button>}
-          </section>
         </div>
       </div>
     </div>

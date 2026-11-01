@@ -111,6 +111,7 @@ const EXTRA = [
   { id: "vivo", label: "Juego en vivo", note: "Preguntas proyectadas, responden desde el celular", icon: "bolt", to: { section: "actividades", tab: "vivo" } },
   { id: "refuerzo", label: "Refuerzo", note: "Práctica personal según lo que falló cada estudiante", icon: "flag", to: { section: "actividades", tab: "refuerzo" } },
   { id: "proyectar", label: "Clase para proyectar", note: "Diapositivas con tu portada y preguntas ICFES", icon: "play", to: { section: "biblioteca", tab: "clases" } },
+  { id: "banco", label: "Desde el banco de preguntas", note: "Elige preguntas y conviértelas en diapositivas, hoja de trabajo, quiz o examen", icon: "grid", to: { section: "biblioteca", tab: "banco" } },
 ];
 export function NewActivityMenu({ go, disabled, onLive }) {
   const [open, setOpen] = useState(false);
