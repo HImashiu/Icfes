@@ -12,7 +12,7 @@ import Icon from "./Icon.jsx";
 
 /* ---------- Popover: a floating panel under (or above) its anchor, closed by outside clicks ---------- */
 
-function usePopover(anchorRef, open, onClose) {
+export function usePopover(anchorRef, open, onClose) {
   const panelRef = useRef(null);
   const [pos, setPos] = useState(null);
 
