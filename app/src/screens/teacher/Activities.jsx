@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Icon from "../../components/Icon.jsx";
 import { Select } from "../../components/Controls.jsx";
 import { assignmentState } from "../../lib/assignments.js";
@@ -114,37 +115,89 @@ const EXTRA = [
 ];
 export function NewActivityMenu({ go, disabled, onLive }) {
   const [open, setOpen] = useState(false);
+  const [box, setBox] = useState(null); // desktop: where the dropdown sits; phone: null (bottom sheet)
+  const [drag, setDrag] = useState(0); // phone: how far the sheet is pulled down
   const root = useRef(null);
+  const menu = useRef(null);
+  const phone = () => typeof window !== "undefined" && window.matchMedia?.("(max-width: 767px)").matches;
+  // Desktop: aligned to the button's right edge, kept inside the window, scrolls when taller than the space below.
+  const place = () => {
+    if (phone()) { setBox(null); return; }
+    const r = root.current?.getBoundingClientRect();
+    if (!r) return;
+    const w = Math.min(360, window.innerWidth - 24);
+    const left = Math.max(12, Math.min(r.right - w, window.innerWidth - w - 12));
+    const top = r.bottom + 8;
+    setBox({ left, top, width: w, maxHeight: Math.max(200, window.innerHeight - top - 12) });
+  };
+  useLayoutEffect(() => { if (open) place(); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!open) return undefined;
-    const away = (e) => { if (root.current && !root.current.contains(e.target)) setOpen(false); };
+    const away = (e) => { if (!root.current?.contains(e.target) && !menu.current?.contains(e.target)) setOpen(false); };
     const esc = (e) => { if (e.key === "Escape") setOpen(false); };
+    const re = () => place();
     document.addEventListener("pointerdown", away);
     document.addEventListener("keydown", esc);
-    return () => { document.removeEventListener("pointerdown", away); document.removeEventListener("keydown", esc); };
-  }, [open]);
+    window.addEventListener("resize", re);
+    window.addEventListener("scroll", re, true);
+    const body = document.body.style.overflow;
+    if (phone()) document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("pointerdown", away); document.removeEventListener("keydown", esc);
+      window.removeEventListener("resize", re); window.removeEventListener("scroll", re, true);
+      document.body.style.overflow = body;
+    };
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!open) setDrag(0); }, [open]);
   const pick = (to) => { setOpen(false); if (to.tab === "vivo") onLive?.(); go(to); };
+  // Phone: pull the sheet down from its handle (or from the list when it is scrolled to the top) to close it.
+  const startDrag = (e) => {
+    if (box || (e.target.closest(".na-list") && menu.current?.querySelector(".na-list")?.scrollTop > 0)) return;
+    const y0 = e.clientY;
+    let dy = 0;
+    const move = (ev) => { dy = Math.max(0, ev.clientY - y0); setDrag(dy); };
+    const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); window.removeEventListener("pointercancel", up); if (dy > 90) setOpen(false); else setDrag(0); };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+  };
+  const items = (
+    <>
+      {Object.entries(PRESETS).map(([id, p]) => (
+        <button key={id} type="button" role="menuitem" className="na-item" onClick={() => pick({ section: "actividades", tab: "nueva", preset: id })}>
+          <span className="na-ico" aria-hidden="true"><Icon name={p.icon} size={18} /></span>
+          <span><strong>{p.label}</strong><span className="caption">{p.note}</span></span>
+        </button>
+      ))}
+      <span className="na-sep" aria-hidden="true" />
+      {EXTRA.map((x) => (
+        <button key={x.id} type="button" role="menuitem" className="na-item" onClick={() => pick(x.to)}>
+          <span className="na-ico" aria-hidden="true"><Icon name={x.icon} size={18} /></span>
+          <span><strong>{x.label}</strong><span className="caption">{x.note}</span></span>
+        </button>
+      ))}
+    </>
+  );
   return (
     <span className="na-wrap" ref={root}>
       <button type="button" className="primary tl-new" onClick={() => setOpen(!open)} disabled={disabled} aria-label="Nueva actividad" aria-haspopup="menu" aria-expanded={open}>
         <Icon name="plus" size={17} strokeWidth={2.8} /><span>Nueva actividad</span>
       </button>
-      {open && (
-        <div className="na-menu" role="menu" aria-label="Qué quieres crear">
-          {Object.entries(PRESETS).map(([id, p]) => (
-            <button key={id} type="button" role="menuitem" className="na-item" onClick={() => pick({ section: "actividades", tab: "nueva", preset: id })}>
-              <span className="na-ico" aria-hidden="true"><Icon name={p.icon} size={18} /></span>
-              <span><strong>{p.label}</strong><span className="caption">{p.note}</span></span>
-            </button>
-          ))}
-          <span className="na-sep" aria-hidden="true" />
-          {EXTRA.map((x) => (
-            <button key={x.id} type="button" role="menuitem" className="na-item" onClick={() => pick(x.to)}>
-              <span className="na-ico" aria-hidden="true"><Icon name={x.icon} size={18} /></span>
-              <span><strong>{x.label}</strong><span className="caption">{x.note}</span></span>
-            </button>
-          ))}
-        </div>
+      {open && createPortal(
+        box ? (
+          <div ref={menu} className="na-menu" role="menu" aria-label="Qué quieres crear" style={box}>{items}</div>
+        ) : (
+          <div className="na-sheet-wrap">
+            <div className="na-backdrop" onClick={() => setOpen(false)} style={{ opacity: Math.max(0, 1 - drag / 300) }} />
+            <div ref={menu} className="na-sheet" role="menu" aria-label="Qué quieres crear" onPointerDown={startDrag}
+              style={drag ? { transform: `translateY(${drag}px)`, transition: "none" } : undefined}>
+              <div className="na-grab" aria-hidden="true" />
+              <div className="na-sheet-head"><strong>Nueva actividad</strong><button type="button" className="icon-btn" aria-label="Cerrar" onClick={() => setOpen(false)}><Icon name="x" size={18} /></button></div>
+              <div className="na-list">{items}</div>
+            </div>
+          </div>
+        ),
+        document.body,
       )}
     </span>
   );
