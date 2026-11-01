@@ -2,14 +2,24 @@
 // config { type, x, y: [cols], series, agg, bins, sort, limit }. Pure functions: no DOM, no React.
 
 export const CHART_TYPES = [
-  { id: "bar", label: "Barras" },
+  { id: "bar", label: "Columnas" },
   { id: "stacked", label: "Apiladas" },
-  { id: "hbar", label: "Horizontales" },
+  { id: "stacked100", label: "Apiladas 100 %" },
+  { id: "hbar", label: "Barras" },
   { id: "line", label: "Líneas" },
+  { id: "area", label: "Área" },
+  { id: "combo", label: "Combinada" },
+  { id: "pie", label: "Circular" },
   { id: "scatter", label: "Dispersión" },
   { id: "hist", label: "Histograma" },
   { id: "box", label: "Caja" },
 ];
+// Types drawn from categories of x (one value per category and series).
+export const CATEGORY_TYPES = ["bar", "stacked", "stacked100", "hbar", "line", "area", "combo", "pie"];
+// One value column only.
+export const ONE_Y_TYPES = ["scatter", "hist", "box", "pie"];
+// Look and feel, the "Personalizar" tab. Every chart starts from these.
+export const STYLE_DEFAULTS = { legend: "top", labels: "auto", yMin: null, yMax: null, ref: null, refLabel: "", avgLine: false, trend: "auto", smooth: false, points: true, donut: true, colors: {}, gridlines: true };
 export const CHART_AGGS = [
   { id: "avg", label: "Promedio" }, { id: "sum", label: "Suma" }, { id: "count", label: "Recuento" },
   { id: "median", label: "Mediana" }, { id: "min", label: "Mínimo" }, { id: "max", label: "Máximo" },
@@ -42,7 +52,7 @@ export function defaultConfig(columns, selected = [], prev = {}) {
   const text = (sel.find((c) => c.type !== "num") ?? columns.find((c) => c.type !== "num" && !["Estudiante", "Correo", "Actividad", "Fecha"].includes(c.id)) ?? columns.find((c) => c.type !== "num"))?.id ?? null;
   const ys = (sel.filter((c) => c.type === "num").length ? sel.filter((c) => c.type === "num") : columns.filter((c) => c.type === "num" && c.scale).slice(0, 1)).map((c) => c.id);
   const y = ys.length ? ys : columns.filter((c) => c.type === "num").slice(0, 1).map((c) => c.id);
-  return { type: prev.type ?? "bar", x: text, y, series: null, agg: prev.agg ?? "avg", bins: 10, sort: "label", limit: 30, title: "", xTitle: "", yTitle: "" };
+  return { ...STYLE_DEFAULTS, type: prev.type ?? "bar", x: text, y, series: null, agg: prev.agg ?? "avg", bins: 10, sort: "label", limit: 30, title: "", xTitle: "", yTitle: "" };
 }
 
 // Category charts (bar, stacked, hbar, line): one value per category of x and per y column (or per value of the
@@ -154,7 +164,46 @@ export function chartData(rows, cfg) {
   if (cfg.type === "scatter") return cfg.x ? scatterData(rows, cfg) : null;
   if (cfg.type === "hist") return histData(rows, cfg);
   if (cfg.type === "box") return boxData(rows, cfg);
-  return cfg.x ? categoryData(rows, cfg) : null;
+  if (cfg.type === "pie") return cfg.x ? pieData(categoryData(rows, { ...cfg, series: null, y: cfg.y.slice(0, 1) })) : null;
+  const d = cfg.x ? categoryData(rows, cfg) : null;
+  return d && cfg.type === "stacked100" ? toShares(d) : d;
+}
+
+// 100 % stacked: each category's values as shares of its total.
+export function toShares(d) {
+  const totals = d.labels.map((_, i) => d.series.reduce((a, s) => a + Math.abs(s.values[i] ?? 0), 0));
+  return { ...d, raw: d.series, series: d.series.map((s) => ({ ...s, values: s.values.map((v, i) => (v == null || !totals[i] ? null : r2((Math.abs(v) / totals[i]) * 100))) })), share: true };
+}
+
+// Pie: slices from the first series, biggest first, small ones folded into "Otros" past 9 slices.
+function pieData(d) {
+  const vals = d.labels.map((l, i) => ({ label: l, value: d.series[0]?.values[i] ?? null, n: d.n[i] })).filter((x) => x.value != null && x.value > 0);
+  vals.sort((a, b) => b.value - a.value);
+  let slices = vals;
+  if (vals.length > 10) {
+    const rest = vals.slice(9);
+    slices = [...vals.slice(0, 9), { label: "Otros", value: r2(rest.reduce((a, x) => a + x.value, 0)), n: rest.reduce((a, x) => a + x.n, 0), others: rest.length }];
+  }
+  const total = slices.reduce((a, x) => a + x.value, 0);
+  return { kind: "pie", slices: slices.map((x) => ({ ...x, share: total ? r2((x.value / total) * 100) : 0 })), total: r2(total), name: d.series[0]?.name ?? "" };
+}
+
+// Least squares line through (i, value) of one series: the trend of a line or bar chart.
+export function seriesTrend(values) {
+  const pts = values.map((v, i) => [i, v]).filter(([, v]) => typeof v === "number" && Number.isFinite(v));
+  if (pts.length < 3) return null;
+  const n = pts.length, sx = pts.reduce((a, p) => a + p[0], 0), sy = pts.reduce((a, p) => a + p[1], 0);
+  const sxx = pts.reduce((a, p) => a + p[0] * p[0], 0), sxy = pts.reduce((a, p) => a + p[0] * p[1], 0);
+  const d = n * sxx - sx * sx;
+  if (!d) return null;
+  const m = (n * sxy - sx * sy) / d;
+  return { m, b: (sy - m * sx) / n };
+}
+
+// Mean of every plotted value of the first series (for the average line).
+export function seriesMean(values) {
+  const xs = nums(values);
+  return xs.length ? r2(xs.reduce((a, b) => a + b, 0) / xs.length) : null;
 }
 
 // "Nice" axis ticks between lo and hi.
@@ -179,5 +228,7 @@ export function autoTitle(cfg, aggLabel) {
   if (cfg.type === "hist") return `Distribución de ${y}${cfg.series ? ` por ${cfg.series}` : ""}`;
   if (cfg.type === "box") return `${y}${cfg.x ? ` por ${cfg.x}` : ""}`;
   if (cfg.type === "scatter") return `${y} frente a ${cfg.x}`;
+  if (cfg.type === "pie") return `${aggLabel} de ${cfg.y[0]} por ${cfg.x}`;
+  if (cfg.type === "stacked100") return `Reparto de ${y}${cfg.x ? ` por ${cfg.x}` : ""}${cfg.series ? ` y ${cfg.series}` : ""}`;
   return `${aggLabel} de ${y}${cfg.x ? ` por ${cfg.x}` : ""}${cfg.series ? ` y ${cfg.series}` : ""}`;
 }

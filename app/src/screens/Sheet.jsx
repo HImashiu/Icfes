@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { Select } from "../components/Controls.jsx";
 import Icon from "../components/Icon.jsx";
 import { useFacts } from "./useFacts.js";
-import { AGGS, FILTER_OPS, answersTable, applyFilters, colLetter, deliveriesTable, distinctValues, filterActive, filterParts, filterText, formulaValues, fxSuggest, groupRows, namesToLetters, pivotTable, rangeStats, rangeText, scalePos, sortBy, studentsTable, tableText } from "../lib/sheet.js";
+import { AGGS, FILTER_OPS, applyFilters, colLetter, datasetTable, withFormulas, distinctValues, filterActive, filterParts, filterText, formulaValues, fxSuggest, groupRows, namesToLetters, pivotTable, rangeStats, rangeText, scalePos, sortBy, tableText } from "../lib/sheet.js";
 import ChartBuilder from "./ChartBuilder.jsx";
 import SheetChart from "./SheetChart.jsx";
+import Anchored from "../components/Anchored.jsx";
+import { AddToBoard } from "./Dashboards.jsx";
 import "./results.css";
 
 const DATASETS = [
@@ -26,6 +27,7 @@ const TEMPLATES = [
 const ROW_H = 32;
 const OVERSCAN = 12;
 const RN_W = 44;
+const PANEL_W = 460; // starting width of the chart panel beside the grid
 const STORE = "condor.sheet.v2";
 const readStore = () => { try { return JSON.parse(localStorage.getItem(STORE) ?? "null") ?? {}; } catch { return {}; } };
 const writeStore = (v) => { try { localStorage.setItem(STORE, JSON.stringify(v)); } catch { /* storage blocked */ } };
@@ -54,7 +56,7 @@ function download(name, text) {
 // Resultados › Hoja de datos: the results as a real spreadsheet. Frozen header and first column, columns that resize,
 // sort, filter (operators or a list of values), group and hide; cells selected with the mouse or the keyboard show
 // their sum, average and count; a color scale on shares and notas; formulas with suggestions as you type.
-export default function Sheet({ api, profile, courses, assignments, models = [], fetchExam, guard, ws = null }) {
+export default function Sheet({ api, profile, courses, assignments, models = [], fetchExam, guard, ws = null, onOpenBoard = null }) {
   const saved = useRef(readStore()).current;
   const [mode, setMode] = useState("sheet"); // sheet | guided (the earlier chart builder)
   const [ds, setDs] = useState(saved.ds ?? "entregas");
@@ -77,6 +79,11 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
   const [chart, setChart] = useState(null); // shown or not (a chart type when a template opened it)
   const [chartKey, setChartKey] = useState(0);
   const [chartPreset, setChartPreset] = useState(null);
+  // Several charts per table, like several charts on one sheet; each keeps its own recipe in this browser.
+  const [chartIds, setChartIds] = useState(() => { try { const v = JSON.parse(localStorage.getItem("condor.sheet.charts") ?? "{}"); return v && typeof v === "object" ? v : {}; } catch { return {}; } });
+  const [chartPick, setChartPick] = useState({});
+  const [chartW, setChartW] = useState(() => { try { const v = Number(localStorage.getItem("condor.sheet.chartW")); return v >= 320 ? v : PANEL_W; } catch { return PANEL_W; } });
+  const [narrowView, setNarrowView] = useState("chart");
   const [fx, setFx] = useState({ name: "", expr: "", editing: null });
   const [fxError, setFxError] = useState(null);
   const [fxFocus, setFxFocus] = useState(false);
@@ -85,6 +92,7 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
   const [menu, setMenu] = useState(null); // { col, rect }
   const [colsOpen, setColsOpen] = useState(false);
   const [copied, setCopied] = useState(null);
+  const [addMenu, setAddMenu] = useState(null); // { tile, rect }: "Al tablero"
   const [scrollTop, setScrollTop] = useState(0);
   const [viewH, setViewH] = useState(560);
   const wrapRef = useRef(null);
@@ -137,27 +145,10 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
   const facts = useFacts({ api, assignments, courses, fetchExam, ws, on: factsOn });
   const factsBusy = factsOn && !facts;
 
-  const table = useMemo(() => {
-    if (ds === "respuestas") return facts ? answersTable(facts, courses) : null;
-    if (!base) return null;
-    const args = { members: base.members, attempts: base.attempts, assignments, courses, models, schoolId: profile?.school_id };
-    return ds === "estudiantes" ? studentsTable(args) : deliveriesTable(args);
-  }, [ds, base, facts, assignments, courses, models, profile]);
+  const table = useMemo(() => datasetTable(ds, { base, facts, assignments, courses, models, schoolId: profile?.school_id }), [ds, base, facts, assignments, courses, models, profile]);
 
   // Formula columns are computed on the table, in order, so a later one can use an earlier one.
-  const withFx = useMemo(() => {
-    if (!table) return null;
-    let columns = table.columns;
-    let rows = table.rows;
-    for (const f of formulas[ds] ?? []) {
-      const r = formulaValues(f.expr, rows, columns);
-      if (r.error) continue;
-      rows = rows.map((row, i) => ({ ...row, [f.name]: r.values[i] }));
-      const dec = Math.min(2, Math.max(0, ...r.values.map((v) => (v == null || Number.isInteger(v) ? 0 : String(Math.round(v * 100) / 100).split(".")[1]?.length ?? 0))));
-      columns = [...columns, { id: f.name, name: f.name, type: "num", formula: f.expr, decimals: dec }];
-    }
-    return { columns, rows };
-  }, [table, formulas, ds]);
+  const withFx = useMemo(() => withFormulas(table, formulas[ds] ?? []), [table, formulas, ds]);
 
   const filtered = useMemo(() => (withFx ? applyFilters(withFx.rows, filters) : []), [withFx, filters]);
   const piv = useMemo(() => (pivot && withFx && withFx.columns.some((c) => c.id === pivot.row) ? pivotTable(filtered, pivot) : null), [pivot, filtered, withFx]);
@@ -204,6 +195,43 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
   const first = Math.max(0, Math.floor((scrollTop - headH) / ROW_H) - OVERSCAN);
   const last = Math.min(items.length, Math.ceil((scrollTop + viewH) / ROW_H) + OVERSCAN);
 
+  // Charts of this table: tabs "Gráfica 1, 2…" in the panel.
+  const ids = chartIds[ds]?.length ? chartIds[ds] : ["1"];
+  const chartId = ids.includes(chartPick[ds]) ? chartPick[ds] : ids[0];
+  const saveIds = (next) => { setChartIds(next); try { localStorage.setItem("condor.sheet.charts", JSON.stringify(next)); } catch { /* storage blocked */ } };
+  const addChart = () => {
+    const id = String(Math.max(...ids.map(Number).filter(Number.isFinite), 1) + 1);
+    saveIds({ ...chartIds, [ds]: [...ids, id] });
+    setChartPick({ ...chartPick, [ds]: id });
+    setChartPreset(null);
+  };
+  const removeChart = (id) => {
+    const rest = ids.filter((x) => x !== id);
+    try { localStorage.removeItem(id === "1" ? `condor.sheet.chart.${ds}` : `condor.sheet.chart.${ds}.${id}`); } catch { /* storage blocked */ }
+    saveIds({ ...chartIds, [ds]: rest.length ? rest : ["1"] });
+    if (chartId === id) setChartPick({ ...chartPick, [ds]: rest[0] ?? "1" });
+  };
+  const chartTabsEl = (
+    <div className="sc-ctabs" role="tablist" aria-label="Gráficas de esta tabla">
+      {ids.map((id, i) => (
+        <span key={id} className={`sc-ctab ${id === chartId ? "on" : ""}`}>
+          <button type="button" role="tab" aria-selected={id === chartId} onClick={() => { setChartPick({ ...chartPick, [ds]: id }); setChartPreset(null); }}>Gráfica {i + 1}</button>
+          {ids.length > 1 && <button type="button" className="ws-x" aria-label={`Quitar la gráfica ${i + 1}`} onClick={() => removeChart(id)}><Icon name="x" size={11} /></button>}
+        </span>
+      ))}
+      {ids.length < 8 && <button type="button" className="icon-btn sc-ctab-add" onClick={addChart} aria-label="Otra gráfica" title="Otra gráfica"><Icon name="plus" size={14} /></button>}
+    </div>
+  );
+  const startPanelResize = (e) => {
+    e.preventDefault();
+    const x0 = e.clientX, w0 = chartW;
+    const max = Math.max(360, (rootRef.current?.clientWidth ?? 1200) - 320);
+    let w = w0;
+    const move = (ev) => { w = Math.max(320, Math.min(max, w0 + (x0 - ev.clientX))); setChartW(w); };
+    const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); try { localStorage.setItem("condor.sheet.chartW", String(Math.round(w))); } catch { /* storage blocked */ } };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
   const resetView = (id = ds) => { setFilters({}); setSort(null); setSel(null); groupOn(defaultGroup(id), true); setPivot(null); setChart(null); setFxError(null); setMenu(null); };
   const switchDs = (id) => { setDs(id); resetView(id); };
   const applyTemplate = (id) => {
@@ -213,7 +241,7 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
     if (t.pivot || t.sort) groupOn(null);
     if (t.pivot) { setPivot({ minN: 1, ...t.pivot }); setPivotOpen(true); }
     if (t.sort) setSort(typeof t.sort[0] === "number" ? null : [t.sort]);
-    if (t.chart) { setChart(t.chart); setChartPreset({ type: t.chart }); setChartKey((k) => k + 1); }
+    if (t.chart) { setChart(t.chart); setChartPreset({ type: t.chart }); setChartKey((k) => k + 1); setNarrowView("chart"); }
   };
 
   // ---- Selection -------------------------------------------------------------------------------------------------
@@ -408,7 +436,7 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
         {!piv && <ColumnsButton open={colsOpen} setOpen={setColsOpen} columns={allCols} hidden={hidden} setHidden={(h) => setPref({ hidden: h })} />}
         <button type="button" className={colors ? "secondary on" : "secondary"} aria-pressed={colors} onClick={() => setColors(!colors)} title="Escala de color en Nota, % aciertos y áreas"><Icon name="sliders" size={16} /> Colores</button>
         <button type="button" className={pivot || pivotOpen ? "secondary on" : "secondary"} onClick={() => { setPivotOpen(!pivotOpen); if (!pivot && withFx) setPivot({ row: withFx.columns.find((c) => c.type === "text")?.id, col: null, value: withFx.columns.find((c) => c.type === "num")?.id, how: "avg", minN: 1 }); }}><Icon name="grid" size={16} /> Tabla dinámica</button>
-        <button type="button" className={chart ? "secondary on" : "secondary"} onClick={() => setChart(chart ? null : "bar")}><Icon name="chart" size={16} /> Gráfica</button>
+        <button type="button" className={chart ? "secondary on" : "secondary"} onClick={() => { setChart(chart ? null : "bar"); setNarrowView("chart"); }}><Icon name="chart" size={16} /> Gráfica</button>
         <button type="button" className={full ? "secondary on" : "secondary"} aria-pressed={full} onClick={toggleFull} title={full ? "Salir de pantalla completa (Esc)" : "Pantalla completa"}><Icon name="expand" size={16} /> {full ? "Salir" : "Pantalla completa"}</button>
         <button type="button" className="secondary" disabled={!rows.length} onClick={() => copyText(tableText(shownCols, rows), "all")}>{copied === "all" ? "Copiada" : "Copiar"}</button>
         <button type="button" className="secondary" disabled={!rows.length} onClick={() => download(`Cóndor · ${piv ? "tabla dinámica" : DATASETS.find((d) => d.id === ds).label}.csv`, tableText(shownCols, rows, ","))}>CSV</button>
@@ -424,7 +452,10 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
           </div>
           <div className="hd-pivot-foot">
             <span className="caption">«% de unos» sirve con la columna Acierto (1 = correcta): da el porcentaje de aciertos. Los filtros de la hoja se aplican antes.</span>
-            <button type="button" className="link" onClick={() => { setPivot(null); setPivotOpen(false); }}>Quitar tabla dinámica</button>
+            <span className="hd-menu-row">
+              <button type="button" className="secondary" onClick={(e) => setAddMenu({ rect: e.currentTarget.getBoundingClientRect(), tile: { kind: "pivot", ds, formulas: formulas[ds] ?? [], filters, pivot, w: 2, h: 2 } })}><Icon name="plus" size={14} /> Al tablero</button>
+              <button type="button" className="link" onClick={() => { setPivot(null); setPivotOpen(false); }}>Quitar tabla dinámica</button>
+            </span>
           </div>
         </div>
       )}
@@ -474,11 +505,6 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
         ))}</div>
       )}
 
-      {chart && view && (
-        <SheetChart key={`${ds}-${chartKey}`} rows={piv ? rows : sorted} columns={allCols} selected={piv ? [] : selCols} pivot={!!piv}
-          preset={chartPreset} storeKey={`condor.sheet.chart.${ds}`} onClose={() => setChart(null)} />
-      )}
-
       <div className="hd-status" aria-live="polite">
         <span>{!view ? (ds === "respuestas" && factsBusy ? "Cargando respuestas y cuadernillos…" : "Cargando…") : piv ? `${rows.length.toLocaleString("es-CO")} filas en la tabla dinámica` : groups && groupBy === "Estudiante" ? `${groups.length.toLocaleString("es-CO")} estudiantes · ${filtered.length.toLocaleString("es-CO")} entregas${filtered.length < withFx.rows.length ? ` de ${withFx.rows.length.toLocaleString("es-CO")}` : ""}` : `${filtered.length.toLocaleString("es-CO")} de ${withFx.rows.length.toLocaleString("es-CO")} filas`}</span>
         {groups && groupBy !== "Estudiante" && <span className="chip on hd-pill">Agrupado por {groupBy} · {groups.length}<button type="button" className="ws-x" aria-label="Quitar grupos" onClick={() => groupOn(null)}><Icon name="x" size={12} /></button></span>}
@@ -489,6 +515,13 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
         {hidden.length > 0 && !piv && <button type="button" className="link" onClick={() => setPref({ hidden: [] })}>Mostrar {hidden.length} {hidden.length === 1 ? "oculta" : "ocultas"}</button>}
       </div>
 
+      <div className={chart && view ? `hd-split ${narrowView === "chart" ? "show-chart" : "show-grid"}` : "hd-body"} style={chart && view ? { "--scw": `${chartW}px` } : undefined}>
+      {chart && view && (
+        <div className="seg-tabs hd-split-tabs" role="tablist" aria-label="Ver">
+          <button type="button" role="tab" aria-selected={narrowView === "grid"} className={narrowView === "grid" ? "on" : ""} onClick={() => setNarrowView("grid")}>Hoja</button>
+          <button type="button" role="tab" aria-selected={narrowView === "chart"} className={narrowView === "chart" ? "on" : ""} onClick={() => setNarrowView("chart")}>Gráfica</button>
+        </div>
+      )}
       {view && (
         <div ref={wrapRef} className="hd-wrap" role="grid" aria-label="Hoja de datos" aria-rowcount={rows.length} aria-colcount={shownCols.length} tabIndex={0}
           onKeyDown={onKey} onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}>
@@ -584,6 +617,16 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
           </table>
         </div>
       )}
+      {chart && view && (
+        <>
+          <div className="hd-split-bar" role="separator" aria-orientation="vertical" aria-label="Ancho del panel de la gráfica" title="Arrastra para cambiar el ancho" onPointerDown={startPanelResize} onDoubleClick={() => setChartW(PANEL_W)} />
+          <SheetChart key={`${ds}-${chartId}-${chartKey}`} rows={piv ? rows : sorted} columns={allCols} selected={piv ? [] : selCols} pivot={!!piv}
+            preset={chartPreset} storeKey={chartId === "1" ? `condor.sheet.chart.${ds}` : `condor.sheet.chart.${ds}.${chartId}`} onClose={() => setChart(null)}
+            tabs={chartTabsEl}
+            onSave={(cfg, rect) => setAddMenu({ rect, tile: { kind: "chart", ds, formulas: formulas[ds] ?? [], filters, chart: cfg, pivot: piv ? pivot : null, w: 2, h: 2 } })} />
+        </>
+      )}
+      </div>
 
       <div className="hd-foot">
         {stats && stats.cells > 1 ? (
@@ -593,12 +636,16 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
             Recuento <b>{stats.count.toLocaleString("es-CO")}</b>
             <button type="button" className="link" onClick={() => copyText(rangeText(rows, shownCols, selN, wholeCols), "sel")}>{copied === "sel" ? "Copiado" : "Copiar selección"}</button>
             {!piv && <button type="button" className="link" onClick={() => hideCols(selCols)}>Ocultar {selCols.length === 1 ? "columna" : "columnas"}</button>}
+            {!piv && selCols.length === 1 && (
+              <button type="button" className="link" onClick={(e) => { const c = allCols.find((x) => x.id === selCols[0]); setAddMenu({ rect: e.currentTarget.getBoundingClientRect(), tile: { kind: "kpi", ds, formulas: formulas[ds] ?? [], filters, kpi: { col: c.id, agg: c.type === "num" ? "avg" : "distinct" }, w: 1, h: 1 } }); }}>Indicador al tablero</button>
+            )}
           </span>
         ) : (
           <span className="caption">Arrastra o usa Shift + flechas para seleccionar · Ctrl+C copia · Doble clic en el borde de un encabezado ajusta el ancho · Puntajes con la clave preliminar.</span>
         )}
       </div>
 
+      {addMenu && <AddToBoard api={api} profile={profile} tile={addMenu.tile} rect={addMenu.rect} onClose={() => setAddMenu(null)} onOpenBoard={onOpenBoard} />}
       {menu && !piv && (() => {
         const c = allCols.find((x) => x.id === menu.col);
         if (!c) return null;
@@ -615,33 +662,6 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
         );
       })()}
     </div>
-  );
-}
-
-// A small panel anchored to a rectangle, closed by a tap outside or Escape.
-function Anchored({ rect, onClose, className = "", children, label }) {
-  const ref = useRef(null);
-  const [pos, setPos] = useState(null);
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const w = el.offsetWidth, h = el.offsetHeight;
-    const left = Math.max(8, Math.min(rect.left, window.innerWidth - w - 8));
-    const below = window.innerHeight - rect.bottom - 8;
-    const want = below < h && rect.top > below ? rect.top - h - 4 : rect.bottom + 4;
-    const top = Math.max(8, Math.min(want, window.innerHeight - h - 8));
-    setPos({ top, left });
-  }, [rect]);
-  useEffect(() => {
-    const down = (e) => { if (!ref.current?.contains(e.target)) onClose(); };
-    const key = (e) => { if (e.key === "Escape") onClose(); };
-    const t = setTimeout(() => document.addEventListener("pointerdown", down), 0);
-    document.addEventListener("keydown", key);
-    return () => { clearTimeout(t); document.removeEventListener("pointerdown", down); document.removeEventListener("keydown", key); };
-  }, [onClose]);
-  return createPortal(
-    <div ref={ref} role="dialog" aria-label={label} className={`ui-pop hd-menu ${className}`} style={pos ?? { top: rect.bottom + 4, left: rect.left, visibility: "hidden" }}>{children}</div>,
-    document.fullscreenElement || document.body,
   );
 }
 

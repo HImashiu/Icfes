@@ -13,6 +13,7 @@ import { FilePicker, confirmDialog } from "../components/Controls.jsx";
 import Icon from "../components/Icon.jsx";
 import BankEditor from "./BankEditor.jsx";
 import Sheet from "./Sheet.jsx";
+import Dashboards from "./Dashboards.jsx";
 import ResultsInsights from "./ResultsInsights.jsx";
 import "./StudentHistory.jsx"; // adds «Historial completo» to every student profile
 import GradingSettings from "./GradingSettings.jsx";
@@ -292,7 +293,8 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           {r.section === "resultados" && r.tab === "calificacion" && (
             <GradingSettings api={baseApi} profile={profile} courses={courses} assignments={assignments} models={models} reloadModels={reloadModels} guard={guard} setNotice={setNotice} fetchExam={fetchExam} />
           )}
-          {r.section === "resultados" && r.tab === "grafica" && <Sheet api={api} profile={profile} courses={courses} assignments={assignments} models={models} fetchExam={fetchExam} guard={guard} ws={ws} />}
+          {r.section === "resultados" && r.tab === "grafica" && <Sheet api={api} profile={profile} courses={courses} assignments={assignments} models={models} fetchExam={fetchExam} guard={guard} ws={ws} onOpenBoard={() => go({ section: "resultados", tab: "tableros" })} />}
+          {r.section === "resultados" && r.tab === "tableros" && <Dashboards api={api} profile={profile} courses={courses} assignments={assignments} models={models} fetchExam={fetchExam} guard={guard} ws={ws} onOpenSheet={() => go({ section: "resultados", tab: "grafica" })} />}
 
           {r.section === "biblioteca" && r.tab === "banco" && <BankEditor api={baseApi} profile={profile} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
           {r.section === "biblioteca" && r.tab === "preguntas" && <QuestionBuilder api={baseApi} profile={profile} guard={guard} setNotice={setNotice} />}

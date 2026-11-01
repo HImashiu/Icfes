@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aggregate, autoTitle, chartData, defaultConfig, niceTicks } from "../src/lib/sheetChart.js";
+import { STYLE_DEFAULTS, aggregate, autoTitle, chartData, defaultConfig, niceTicks, seriesMean, seriesTrend } from "../src/lib/sheetChart.js";
 
 const rows = [
   { Curso: "11A", Tipo: "Tarea", Pct: 80, Nota: 4 },
@@ -35,5 +35,37 @@ describe("gráficas de la hoja", () => {
   it("makes readable ticks and titles", () => {
     expect(niceTicks(0, 87)).toEqual([0, 20, 40, 60, 80, 100]);
     expect(autoTitle(cfg({}), "Promedio")).toBe("Promedio de Pct por Curso");
+  });
+});
+
+describe("más gráficas: circular, 100 %, tendencia y promedio", () => {
+  it("draws a pie from the first value, biggest slice first, shares adding to 100", () => {
+    const p = chartData(rows, cfg({ type: "pie", agg: "sum" }));
+    expect(p.kind).toBe("pie");
+    expect(p.slices.map((s) => s.label)).toEqual(["11B", "11A"]);
+    expect(p.slices.reduce((a, s) => a + s.share, 0)).toBeCloseTo(100, 5);
+    expect(p.total).toBe(280);
+  });
+  it("folds small slices into Otros past nine", () => {
+    const many = Array.from({ length: 14 }, (_, i) => ({ Curso: `C${i}`, Pct: 100 - i }));
+    const p = chartData(many, cfg({ type: "pie", agg: "sum", limit: 30 }));
+    expect(p.slices).toHaveLength(10);
+    expect(p.slices[9]).toMatchObject({ label: "Otros", others: 5 });
+  });
+  it("turns stacked values into shares of each category for 100 %", () => {
+    const d = chartData(rows, cfg({ type: "stacked100", series: "Tipo", agg: "sum" }));
+    expect(d.share).toBe(true);
+    const i = d.labels.indexOf("11A");
+    expect(d.series.map((s) => s.values[i])).toEqual([33.33, 66.67]);
+    expect(d.raw[1].values[i]).toBe(80);
+  });
+  it("fits a trend through a series and averages it", () => {
+    expect(seriesTrend([1, 2, 3, 4])).toMatchObject({ m: 1, b: 1 });
+    expect(seriesTrend([5, null])).toBeNull();
+    expect(seriesMean([10, null, 20])).toBe(15);
+  });
+  it("starts every chart with the default look", () => {
+    expect(defaultConfig(cols)).toMatchObject(STYLE_DEFAULTS);
+    expect(autoTitle(cfg({ type: "pie", agg: "count" }), "Recuento")).toBe("Recuento de Pct por Curso");
   });
 });

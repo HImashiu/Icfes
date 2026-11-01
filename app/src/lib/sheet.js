@@ -483,3 +483,24 @@ export function tableText(columns, rows, sep = "\t") {
   };
   return [columns.map((c) => cell(c.name)).join(sep), ...rows.map((r) => columns.map((c) => cell(r[c.id])).join(sep))].join("\n");
 }
+
+// The table of a dataset ("entregas" | "estudiantes" | "respuestas"), the same one the sheet shows.
+export function datasetTable(ds, { base, facts, assignments, courses, models, schoolId }) {
+  if (ds === "respuestas") return facts ? answersTable(facts, courses) : null;
+  if (!base) return null;
+  const args = { members: base.members, attempts: base.attempts, assignments, courses, models, schoolId };
+  return ds === "estudiantes" ? studentsTable(args) : deliveriesTable(args);
+}
+// Formula columns added in order (a later one may use an earlier one); a formula that fails is left out.
+export function withFormulas(table, formulas = []) {
+  if (!table) return null;
+  let { columns, rows } = table;
+  for (const f of formulas) {
+    if (columns.some((c) => c.id === f.name)) continue;
+    const r = formulaValues(f.expr, rows, columns);
+    if (r.error) continue;
+    rows = rows.map((row, i) => ({ ...row, [f.name]: r.values[i] }));
+    columns = [...columns, { id: f.name, name: f.name, type: "num", formula: f.expr, decimals: decimalsOf(r.values) }];
+  }
+  return { columns, rows };
+}
