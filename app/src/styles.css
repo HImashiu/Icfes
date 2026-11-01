@@ -3142,3 +3142,8 @@ body.spl-open { overflow: hidden; }
   .tl.rail .t-exit-rail:hover { background: var(--surface-2); }
 }
 @media (max-width: 800px) { .t-rail-btn { display: none; } }
+
+/* Long words and URLs in a question (e.g. "Recuperado de: http://…") wrap instead of pushing the passage sideways. */
+.stimulus, .stem, .option-text, .stimulus p, .stem p, .option-text p, .stimulus li, .stem li, .option-text li { overflow-wrap: anywhere; word-break: normal; }
+.stimulus table, .stem table, .option-text table { overflow-wrap: normal; }
+.stimulus a { overflow-wrap: anywhere; word-break: break-all; }
