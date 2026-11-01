@@ -18,12 +18,30 @@ def remove_blue(img: Image.Image) -> Image.Image:
     """The scans carry the answer as a blue dot; a model solving the question must not see it."""
     a = np.array(img.convert("RGB"))
     m = blue_mask(a)
+    ink = a.min(axis=2) < 170
+    if m.any() and m.sum() > 0.25 * max(1, int(ink.sum())):
+        # Blue-printed booklet (S11-G 1ra): the print itself is blue, so removing all blue would erase the
+        # figure/text. Only remove round, filled, dot-sized blobs (the answer marks).
+        return Image.fromarray(remove_dots(a, m))
     if m.any():
         # grow the mask a little so the dot's anti-aliased rim goes too
         from PIL import ImageFilter
         mm = Image.fromarray((m * 255).astype("uint8")).filter(ImageFilter.MaxFilter(5))
         a[np.array(mm) > 0] = 255
     return Image.fromarray(a)
+
+
+def remove_dots(a: np.ndarray, m: np.ndarray, dpi: int = 200) -> np.ndarray:
+    """White out blue blobs shaped like a pencil/pen answer dot: round, filled, about 0.07-0.3 inch across."""
+    import cv2
+    a = a.copy()
+    n, lab, stats, _ = cv2.connectedComponentsWithStats(m.astype("uint8"), 8)
+    lo, hi = 0.07 * dpi, 0.3 * dpi
+    for i in range(1, n):
+        x, y, w, h, area = stats[i]
+        if lo <= w <= hi and lo <= h <= hi and 0.7 <= w / h <= 1.4 and area / (w * h) > 0.6:
+            a[max(0, y - 3):y + h + 3, max(0, x - 3):x + w + 3][lab[max(0, y - 3):y + h + 3, max(0, x - 3):x + w + 3] >= 0] = 255
+    return a
 
 
 def paper_level(gray: np.ndarray) -> int:
