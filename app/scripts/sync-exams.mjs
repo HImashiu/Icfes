@@ -113,7 +113,7 @@ function loadTraced(slug) {
   if (!existsSync(manifest)) return traced;
   for (const e of JSON.parse(readFileSync(manifest, "utf8")).figures ?? []) {
     // "azure" traces come from Azure regions; "eyeballed_box" traces come from a box drawn by eye on the scan.
-    if (!["azure", "eyeballed_box"].includes(e.method) || !e.svg) continue;
+    if (!["azure", "eyeballed_box", "manual_box"].includes(e.method) || !e.svg) continue;
     const from = join(root, "figures", e.svg);
     if (!existsSync(from)) continue;
     // Inlined as a data URI so each exam is one JSON file (a published page takes a limited number of files).
