@@ -67,8 +67,13 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
   const [colors, setColors] = useState(saved.colors ?? true);
   const [filters, setFilters] = useState({});
   const [sort, setSort] = useState(null); // [[col, dir], …]
-  const [groupBy, setGroupBy] = useState(null);
-  const [collapsed, setCollapsed] = useState([]);
+  // Entregas opens with one row per student: each student's deliveries fold under their name.
+  const defaultGroup = (id) => (id === "entregas" ? "Estudiante" : null);
+  const [groupBy, setGroupBy] = useState(() => defaultGroup(saved.ds ?? "entregas"));
+  const [fold, setFold] = useState({ all: true, keys: [] }); // closed = all XOR keys has it
+  const isClosed = (k) => fold.all !== fold.keys.includes(String(k));
+  const toggleGroup = (k) => setFold((f) => ({ ...f, keys: f.keys.includes(String(k)) ? f.keys.filter((x) => x !== String(k)) : [...f.keys, String(k)] }));
+  const groupOn = (col, closed = false) => { setGroupBy(col); setFold({ all: closed, keys: [] }); };
   const [sel, setSel] = useState(null); // { r0, c0, r1, c1 } in visible rows and columns
   const [pivot, setPivot] = useState(null); // { row, col, value, how, minN }
   const [pivotOpen, setPivotOpen] = useState(false);
@@ -145,13 +150,13 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
     const rs = [];
     for (const g of groups) {
       it.push({ g });
-      if (collapsed.includes(String(g.key))) continue;
+      if (isClosed(g.key)) continue;
       for (const r of g.rows) { it.push({ r, i: rs.length }); rs.push(r); }
     }
     return { items: it, rows: rs };
-  }, [groups, sorted, collapsed]);
+  }, [groups, sorted, fold]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const widthOf = useCallback((c) => pref.widths?.[c.id] ?? autoWidth(c, view?.rows ?? []), [pref.widths, view]);
+  const widthOf = useCallback((c) => pref.widths?.[c.id] ?? autoWidth(c, view?.rows ?? []) + (c.id === groupBy ? 96 : 0), [pref.widths, view, groupBy]);
   const widths = shownCols.map(widthOf);
   const nFrozen = piv ? 1 : Math.min(frozen, shownCols.length);
   const lefts = [];
@@ -172,12 +177,13 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
   const first = Math.max(0, Math.floor((scrollTop - headH) / ROW_H) - OVERSCAN);
   const last = Math.min(items.length, Math.ceil((scrollTop + viewH) / ROW_H) + OVERSCAN);
 
-  const resetView = () => { setFilters({}); setSort(null); setSel(null); setGroupBy(null); setCollapsed([]); setPivot(null); setChart(null); setFxError(null); setMenu(null); };
-  const switchDs = (id) => { setDs(id); resetView(); };
+  const resetView = (id = ds) => { setFilters({}); setSort(null); setSel(null); groupOn(defaultGroup(id), true); setPivot(null); setChart(null); setFxError(null); setMenu(null); };
+  const switchDs = (id) => { setDs(id); resetView(id); };
   const applyTemplate = (id) => {
     const t = TEMPLATES.find((x) => x.id === id);
     if (!t) return;
     switchDs(t.ds);
+    if (t.pivot || t.sort) groupOn(null);
     if (t.pivot) { setPivot({ minN: 1, ...t.pivot }); setPivotOpen(true); }
     if (t.sort) setSort(typeof t.sort[0] === "number" ? null : [t.sort]);
     if (t.chart) setChart(t.chart);
@@ -366,6 +372,12 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
         <div className="seg-tabs hd-ds" role="tablist" aria-label="Tabla">
           {DATASETS.map((d) => <button key={d.id} type="button" role="tab" title={d.hint} aria-selected={ds === d.id} className={ds === d.id ? "on" : ""} onClick={() => switchDs(d.id)}>{d.label}</button>)}
         </div>
+        {ds === "entregas" && !piv && (
+          <div className="seg-tabs hd-view" role="group" aria-label="Vista">
+            <button type="button" aria-pressed={groupBy === "Estudiante"} className={groupBy === "Estudiante" ? "on" : ""} onClick={() => groupOn("Estudiante", true)}>Por estudiante</button>
+            <button type="button" aria-pressed={!groupBy} className={!groupBy ? "on" : ""} onClick={() => groupOn(null)}>Todas las entregas</button>
+          </div>
+        )}
         <Select aria-label="Plantillas" placeholder="Plantillas" value="" onChange={applyTemplate} options={TEMPLATES.map((t) => ({ value: t.id, label: t.label }))} className="hd-tpl" />
         <span className="hd-spacer" />
         {!piv && <ColumnsButton open={colsOpen} setOpen={setColsOpen} columns={allCols} hidden={hidden} setHidden={(h) => setPref({ hidden: h })} />}
@@ -450,9 +462,10 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
       )}
 
       <div className="hd-status" aria-live="polite">
-        <span>{!view ? (ds === "respuestas" && factsBusy ? "Cargando respuestas y cuadernillos…" : "Cargando…") : piv ? `${rows.length.toLocaleString("es-CO")} filas en la tabla dinámica` : `${filtered.length.toLocaleString("es-CO")} de ${withFx.rows.length.toLocaleString("es-CO")} filas`}</span>
-        {groups && <span className="chip on hd-pill">Agrupado por {groupBy} · {groups.length}<button type="button" className="ws-x" aria-label="Quitar grupos" onClick={() => { setGroupBy(null); setCollapsed([]); }}><Icon name="x" size={12} /></button></span>}
-        {groups && <button type="button" className="link" onClick={() => setCollapsed(collapsed.length ? [] : groups.map((g) => String(g.key)))}>{collapsed.length ? "Abrir todos" : "Cerrar todos"}</button>}
+        <span>{!view ? (ds === "respuestas" && factsBusy ? "Cargando respuestas y cuadernillos…" : "Cargando…") : piv ? `${rows.length.toLocaleString("es-CO")} filas en la tabla dinámica` : groups && groupBy === "Estudiante" ? `${groups.length.toLocaleString("es-CO")} estudiantes · ${filtered.length.toLocaleString("es-CO")} entregas${filtered.length < withFx.rows.length ? ` de ${withFx.rows.length.toLocaleString("es-CO")}` : ""}` : `${filtered.length.toLocaleString("es-CO")} de ${withFx.rows.length.toLocaleString("es-CO")} filas`}</span>
+        {groups && groupBy !== "Estudiante" && <span className="chip on hd-pill">Agrupado por {groupBy} · {groups.length}<button type="button" className="ws-x" aria-label="Quitar grupos" onClick={() => groupOn(null)}><Icon name="x" size={12} /></button></span>}
+        {groups && groupBy === "Estudiante" && <span className="caption">Cada fila es un estudiante con sus promedios; ábrela para ver sus entregas.</span>}
+        {groups && <button type="button" className="link" onClick={() => setFold({ all: !groups.every((g) => isClosed(g.key)) ? true : false, keys: [] })}>{groups.every((g) => isClosed(g.key)) ? "Abrir todos" : "Cerrar todos"}</button>}
         {nFilters > 0 && <span className="chip on hd-pill">{nFilters === 1 ? "1 filtro" : `${nFilters} filtros`}<button type="button" className="ws-x" aria-label="Quitar filtros" onClick={() => setFilters({})}><Icon name="x" size={12} /></button></span>}
         {sort?.length > 0 && <span className="chip hd-pill">Orden: {sort.map(([k, d]) => `${k} ${d > 0 ? "↑" : "↓"}`).join(", ")}<button type="button" className="ws-x" aria-label="Quitar orden" onClick={() => setSort(null)}><Icon name="x" size={12} /></button></span>}
         {hidden.length > 0 && !piv && <button type="button" className="link" onClick={() => setPref({ hidden: [] })}>Mostrar {hidden.length} {hidden.length === 1 ? "oculta" : "ocultas"}</button>}
@@ -510,17 +523,19 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
               {first > 0 && <tr aria-hidden="true" style={{ height: first * ROW_H }}><td colSpan={shownCols.length + 1} className="hd-pad" /></tr>}
               {visible.map((it) => {
                 if (it.g) {
-                  const closed = collapsed.includes(String(it.g.key));
+                  const closed = isClosed(it.g.key);
                   return (
-                    <tr key={`g-${it.g.key}`} className="hd-group">
+                    <tr key={`g-${it.g.key}`} className={`hd-group ${groupBy === "Estudiante" ? "main" : ""}`}>
                       <td className="hd-rn" />
                       {shownCols.map((c, j) => (
-                        <td key={c.id} className={cellClass(c, j)} style={stick(j)}>
+                        <td key={c.id} className={cellClass(c, j)} style={colors && c.type === "num" && heat(scalePos(c, it.g.rows[0], it.g.avg[c.id])) ? { ...stick(j), background: heat(scalePos(c, it.g.rows[0], it.g.avg[c.id])) } : stick(j)}>
                           {j === 0 ? (
-                            <button type="button" className="hd-group-btn" aria-expanded={!closed} onClick={() => setCollapsed((x) => (closed ? x.filter((k) => k !== String(it.g.key)) : [...x, String(it.g.key)]))}>
-                              <Icon name="right" size={12} strokeWidth={3} className={closed ? "" : "open"} /> {fmt(it.g.key)} <span className="caption">({it.g.n})</span>
+                            <button type="button" className="hd-group-btn" aria-expanded={!closed} onClick={() => toggleGroup(it.g.key)}>
+                              <Icon name="right" size={12} strokeWidth={3} className={closed ? "" : "open"} /> <span className="hd-h-text">{fmt(it.g.key)}</span> <span className="caption">{groupBy === "Estudiante" ? `${it.g.n} ${it.g.n === 1 ? "entrega" : "entregas"}` : `(${it.g.n})`}</span>
                             </button>
-                          ) : c.id === groupBy ? fmt(it.g.key) : c.type === "num" && it.g.avg[c.id] != null ? <span title="Promedio del grupo"><span className="hd-avg">prom.</span> {fmt(it.g.avg[c.id], Math.max(1, c.decimals ?? 0))}</span> : ""}
+                          ) : c.id === groupBy ? fmt(it.g.key)
+                            : c.type !== "num" ? (typeof it.g.same?.[c.id] === "number" ? "" : fmt(it.g.same?.[c.id]))
+                            : c.type === "num" && it.g.avg[c.id] != null ? <span title="Promedio">{fmt(it.g.avg[c.id], Math.max(1, c.decimals ?? 0))}</span> : ""}
                         </td>
                       ))}
                     </tr>
@@ -538,7 +553,7 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
                       return (
                         <td key={c.id} className={cellClass(c, j, `${isSel ? "sel" : ""} ${isActive ? "act" : ""}`)} style={bg ? { ...stick(j), background: bg } : stick(j)}
                           onPointerDown={(e) => cellDown(i, j, e)} onPointerEnter={() => cellEnter(i, j)} title={typeof v === "string" && v.length > 24 ? v : undefined}>
-                          {fmt(v, c.decimals)}
+                          {groups && c.id === groupBy ? <span className="hd-child" aria-label={String(v ?? "")} /> : fmt(v, c.decimals)}
                         </td>
                       );
                     })}
@@ -574,7 +589,7 @@ export default function Sheet({ api, profile, courses, assignments, models = [],
           <ColumnMenu col={c} rect={menu.rect} rows={withFx.rows} filter={filters[c.id]} onClose={() => setMenu(null)}
             onSort={(d) => { sortCol(c.id, d); setMenu(null); }}
             onFilter={(f) => setFilter(c.id, f)}
-            grouped={groupBy === c.id} onGroup={() => { setGroupBy(groupBy === c.id ? null : c.id); setCollapsed([]); setMenu(null); }}
+            grouped={groupBy === c.id} onGroup={() => { groupOn(groupBy === c.id ? null : c.id); setMenu(null); }}
             frozenHere={j >= 0 && j === nFrozen - 1} onFreeze={() => { setPref({ frozen: j === nFrozen - 1 ? 0 : j + 1 }); setMenu(null); }}
             onHide={() => hideCols([c.id])} onFit={() => { fitWidth(c); setMenu(null); }}
             formula={c.formula ? (formulas[ds] ?? []).find((f) => f.name === c.id) : null}

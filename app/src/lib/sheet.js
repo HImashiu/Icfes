@@ -351,13 +351,20 @@ export function groupRows(rows, col, columns) {
     map.get(k).push(r);
   }
   const nums = columns.filter((c) => c.type === "num");
+  const texts = columns.filter((c) => c.type !== "num" && c.id !== col);
   return [...map].map(([key, list]) => {
     const avg = {};
     for (const c of nums) {
       const xs = list.map((r) => r[c.id]).filter((v) => typeof v === "number" && Number.isFinite(v));
       avg[c.id] = xs.length ? Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 100) / 100 : null;
     }
-    return { key, rows: list, n: list.length, avg };
+    // Text columns: the value when the whole group shares it (a student's Curso), else how many different ones.
+    const same = {};
+    for (const c of texts) {
+      const vs = new Set(list.map((r) => r[c.id]).filter((v) => v != null && v !== ""));
+      same[c.id] = vs.size === 1 ? [...vs][0] : vs.size > 1 ? vs.size : null;
+    }
+    return { key, rows: list, n: list.length, avg, same };
   });
 }
 
