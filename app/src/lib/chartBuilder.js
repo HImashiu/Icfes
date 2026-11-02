@@ -119,7 +119,7 @@ export function buildFacts({ attempts, assignments, members = [], courses = [], 
     const when = new Date(at.submitted_at);
     const person = whoOf(at);
     const base = {
-      attemptId: `${person}|${at.assignment_id}|${at.submitted_at}`, studentId: person, student: who.get(person) ?? "Sin nombre", group: groupOf.get(person) ?? "Sin grupo",
+      attemptId: `${person}|${at.assignment_id}|${at.submitted_at}`, studentId: person, courseId: a.course_id, kindId: a.kind, student: who.get(person) ?? "Sin nombre", group: groupOf.get(person) ?? "Sin grupo",
       space: a.courses?.name ?? cName.get(a.course_id) ?? "Sin espacio", course: cGroup.get(a.course_id) ?? "", assignment: a.title, kind: KIND_LABEL[a.kind] ?? "Tarea",
       date: at.submitted_at, ts: when.getTime(), week: weekStart(when), month: iso(when).slice(0, 7), weekday: DOW[when.getDay()],
     };

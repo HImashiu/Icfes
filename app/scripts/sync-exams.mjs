@@ -95,7 +95,7 @@ const DROPPED = { "S11-L_1ra": [104] };
 // Read from the shared quality list; a missing file hides nothing extra.
 const INVALID_FIGURES_PATH = "/mnt/project-files/icfes/quality/invalid-figures.json";
 // Questions whose picture still needs a manual crop: hidden until the owner crops it by hand (manual_crop_needed).
-const MANUAL_HOLD = { "S11-G1_1ra": [105], "S11-I_1ra": [104], "S11-J_2da": [70] };
+const MANUAL_HOLD = {}; // G1 1ra 105, I 1ra 104 and J 2da 70 now have their crops (2026-11-02).
 const invalidFigureQuestions = new Map();
 if (existsSync(INVALID_FIGURES_PATH)) {
   for (const row of JSON.parse(readFileSync(INVALID_FIGURES_PATH, "utf8")).invalid ?? []) {
@@ -113,7 +113,7 @@ function loadTraced(slug) {
   if (!existsSync(manifest)) return traced;
   for (const e of JSON.parse(readFileSync(manifest, "utf8")).figures ?? []) {
     // "azure" traces come from Azure regions; "eyeballed_box" traces come from a box drawn by eye on the scan.
-    if (!["azure", "eyeballed_box"].includes(e.method) || !e.svg) continue;
+    if (!["azure", "eyeballed_box", "manual_box"].includes(e.method) || !e.svg) continue;
     const from = join(root, "figures", e.svg);
     if (!existsSync(from)) continue;
     // Inlined as a data URI so each exam is one JSON file (a published page takes a limited number of files).

@@ -12,7 +12,7 @@ import Icon from "./Icon.jsx";
 
 /* ---------- Popover: a floating panel under (or above) its anchor, closed by outside clicks ---------- */
 
-function usePopover(anchorRef, open, onClose) {
+export function usePopover(anchorRef, open, onClose) {
   const panelRef = useRef(null);
   const [pos, setPos] = useState(null);
 
@@ -161,7 +161,7 @@ export function Select({ value, onChange, options, children, placeholder = "Eleg
             ))}
           </ul>
         </div>,
-        document.body,
+        document.fullscreenElement || document.body,
       )}
     </>
   );
@@ -271,7 +271,7 @@ export function DateField({ value, onChange, min, max, placeholder = "Elegir fec
             {clearable && value ? <button type="button" className="ui-text-btn" onClick={() => pick("")}>Borrar</button> : null}
           </div>
         </div>,
-        document.body,
+        document.fullscreenElement || document.body,
       )}
     </>
   );
@@ -341,7 +341,7 @@ export function confirmDialog(message, { confirmLabel = "Aceptar", cancelLabel =
   return new Promise((resolve) => {
     const back = document.activeElement;
     const host = document.createElement("div");
-    document.body.appendChild(host);
+    (document.fullscreenElement || document.body).appendChild(host);
     const root = createRoot(host);
     const done = (ok) => {
       root.unmount();

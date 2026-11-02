@@ -2874,7 +2874,7 @@ body:has(.bottom-nav) .demo-banner { bottom: 84px; }
 
 .na-wrap { position: relative; display: inline-flex; }
 .na-menu {
-  position: absolute; right: 0; top: calc(100% + 8px); z-index: 60; width: min(340px, calc(100vw - 24px)); padding: 6px; display: grid; gap: 2px;
+  position: fixed; z-index: 600; padding: 6px; display: grid; gap: 2px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; box-sizing: border-box;
   background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
 }
 .na-item { display: grid; grid-template-columns: 36px 1fr; gap: 10px; align-items: center; text-align: left; padding: 8px 10px; border: 0; border-radius: 12px; background: transparent; color: var(--text); font: inherit; cursor: pointer; }
@@ -2883,6 +2883,18 @@ body:has(.bottom-nav) .demo-banner { bottom: 84px; }
 .na-item:hover, .na-item:focus-visible { background: var(--surface-2); }
 .na-ico { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--accent-soft); color: var(--accent-ink, var(--text)); }
 .na-sep { height: 1px; background: var(--line); margin: 4px 6px; }
+/* Phone: the menu is a bottom sheet over everything (tab bar included), with a backdrop; pull down or tap outside to close. */
+.na-sheet-wrap { position: fixed; inset: 0; z-index: 700; }
+.na-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); animation: na-fade 0.18s ease-out; }
+.na-sheet { position: absolute; left: 0; right: 0; bottom: 0; max-height: 86vh; max-height: 86dvh; display: flex; flex-direction: column; background: var(--surface); border-radius: 22px 22px 0 0; box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.3); padding: 6px 8px calc(10px + env(safe-area-inset-bottom)); box-sizing: border-box; animation: na-up 0.22s cubic-bezier(0.2, 0.9, 0.3, 1); transition: transform 0.18s ease-out; touch-action: pan-y; }
+.na-grab { width: 44px; height: 5px; border-radius: 3px; background: var(--line); margin: 4px auto 6px; flex: none; }
+.na-sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 0 8px 6px; flex: none; }
+.na-sheet-head strong { font-size: 17px; }
+.na-list { overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 2px; min-height: 0; scrollbar-width: none; }
+.na-sheet .na-item { padding: 10px; }
+@keyframes na-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes na-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .na-sheet, .na-backdrop { animation: none; } }
 
 /* ---- Online or paper (AssignBuilder) and the paper guide (teacher/PaperGuide.jsx) ---- */
 .b-delivery { border: 0; padding: 0; margin: 0; }
@@ -3120,3 +3132,30 @@ body.spl-open { overflow: hidden; }
 .an-until { display: flex; align-items: center; gap: 8px; }
 .chip.ghost { background: transparent; border-style: dashed; }
 .td-idle { margin: 8px 2px 0; }
+
+/* Teacher sidebar folds into an icon rail (toggle next to the logo; remembered on the device). */
+.t-side-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding-bottom: 12px; }
+.t-side-top .t-logo { padding: 4px 8px 0; min-width: 0; }
+.t-rail-btn { flex: none; display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 10px; background: transparent; color: var(--text-2); cursor: pointer; }
+.t-rail-btn:hover { background: var(--surface-2); color: var(--text); }
+.t-exit-rail { display: none; }
+.teacher.tl { transition: grid-template-columns 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@media (min-width: 801px) {
+  .teacher.tl.rail { grid-template-columns: 72px minmax(0, 1fr); }
+  .tl.rail .t-side { padding: 16px 10px; align-items: center; }
+  .tl.rail .t-side-top { flex-direction: column; padding-bottom: 8px; }
+  .tl.rail .t-logo { padding: 0; }
+  .tl.rail .t-logo span, .tl.rail .t-nav span, .tl.rail .t-group, .tl.rail .tl-me, .tl.rail .t-exit-long, .tl.rail .t-exit-short { display: none; }
+  .tl.rail .t-side nav { width: 100%; }
+  .tl.rail .t-group + .t-nav { margin-top: 12px; }
+  .tl.rail .t-nav { justify-content: center; padding: 0; width: 100%; }
+  .tl.rail .t-exit { margin-top: auto; }
+  .tl.rail .t-exit-rail { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; }
+  .tl.rail .t-exit-rail:hover { background: var(--surface-2); }
+}
+@media (max-width: 800px) { .t-rail-btn { display: none; } }
+
+/* Long words and URLs in a question (e.g. "Recuperado de: http://…") wrap instead of pushing the passage sideways. */
+.stimulus, .stem, .option-text, .stimulus p, .stem p, .option-text p, .stimulus li, .stem li, .option-text li { overflow-wrap: anywhere; word-break: normal; }
+.stimulus table, .stem table, .option-text table { overflow-wrap: normal; }
+.stimulus a { overflow-wrap: anywhere; word-break: break-all; }
