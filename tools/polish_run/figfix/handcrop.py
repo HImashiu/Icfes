@@ -35,7 +35,7 @@ for slug,es in by.items():
         c.save(f'/home/claude/work/crop2/handout/{slug}-q{n}{tag}.png'); print(slug,n,opt,'->',fid,c.size)
         if not APPLY: continue
         open(f'{R}/figures/traced/{slug}/{fid}.png','wb').write(b.getvalue())
-        man['figures'].append({"question":n,"group":q.get('group_id'),"page":pg,"kind":"image","figure_id":fid,"spec_id":sids[0] if sids else None,"method":"manual_box","auto":False,"svg":f"traced/{slug}/{fid}.png","box_page_fraction":[round(box[0]*72/pw,4),round(box[1]*72/ph,4),round(box[2]*72/pw,4),round(box[3]*72/ph,4)],"option":opt,"field":f"q{n}.opt.{opt}" if opt else f"q{n}.stem","what":"scan crop replacing redrawn "+','.join(sids),"box_source":"hand box 2026-11-02","pending_spec":False})
+        man['figures'].append({"question":n,"group":q.get('group_id'),"page":pg,"kind":"image","figure_id":fid,"spec_id":sids[0] if sids else None,"method":"eyeballed_box","auto":False,"svg":f"traced/{slug}/{fid}.png","box_page_fraction":[round(box[0]*72/pw,4),round(box[1]*72/ph,4),round(box[2]*72/pw,4),round(box[3]*72/ph,4)],"option":opt,"field":f"q{n}.opt.{opt}" if opt else f"q{n}.stem","what":"scan crop replacing redrawn "+','.join(sids),"box_source":"hand box 2026-11-02","pending_spec":False})
         if opt:
             for o in q.get('options') or []:
                 if o.get('letter','').upper()==opt.upper(): unlink(o,sids)
