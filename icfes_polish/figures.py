@@ -548,14 +548,24 @@ def tidy(a) -> int:
         if str(q).isdigit():
             by_q.setdefault(int(q), []).append(sp)
     drop_specs, drop_crops, rep = set(), set(), []
+    spec_by_id = {sp["id"]: sp for sp in specs.get("figures", []) if sp.get("id")}
     for q in g["questions"]:
         n = q["number"]
         texts = [v for k, v in f.items() if k.split(".")[0] == f"q{n}" and len(k.split(".")[1]) > 1]
         if q.get("group_id"):
             texts += [v for k, v in f.items() if k.split(".")[0] == q["group_id"]]
         inline = sum(t.count("<table") for t in texts)
-        sp = by_q.get(n, [])
-        crops = [c for c in man["figures"] if c.get("auto") and c.get("question") == n and not c.get("option")]
+        sp = list(by_q.get(n, []))
+        # specs linked from the question itself count too, wherever the spec file says they sit (2026-11-02:
+        # links to redraws outside by_q survived next to the scan crop and showed the picture twice)
+        linked = q.get("figure") if isinstance(q.get("figure"), list) else [q.get("figure")] if q.get("figure") else []
+        sp += [s for s in (spec_by_id.get(x) for x in linked) if s and s not in sp]
+        crops = [c for c in man["figures"] if c.get("question") == n and not c.get("option")]
+        opt_crops = {str(c["option"]).upper() for c in man["figures"] if c.get("question") == n and c.get("option")}
+        for o in q.get("options") or []:
+            ol = o.get("figure") if isinstance(o.get("figure"), list) else [o.get("figure")] if o.get("figure") else []
+            if str(o.get("letter", "")).upper() in opt_crops and ol:
+                drop_specs.update(ol); rep.append(f"q{n}{o.get('letter')}: option redraw {ol} dropped, the option has a scan crop")
         tables = [s for s in sp if s.get("kind") == "table"]
         for s in tables[:inline]:
             drop_specs.add(s["id"]); rep.append(f"q{n}: native table {s['id']} dropped, the table is in the text")
@@ -574,12 +584,19 @@ def tidy(a) -> int:
             nv = re.sub(r"\n*\[\[figura:" + re.escape(cid) + r"\]\]\n*", "\n\n", nv)
         if nv != v:
             set_field(g, k, nv.strip())
-    for q in g["questions"]:
-        fl = q.get("figure")
+    f = fields(g)
+    for k, v in f.items():
+        nv = v
+        for sid in drop_specs:
+            nv = re.sub(r"\n*\[\[figura:" + re.escape(sid) + r"(\|[^\]]*)?\]\]\n*", "\n\n", nv)
+        if nv != v:
+            set_field(g, k, nv.strip())
+    for obj in [q for q in g["questions"]] + [o for q in g["questions"] for o in (q.get("options") or [])]:
+        fl = obj.get("figure")
         if isinstance(fl, list):
-            q["figure"] = [x for x in fl if x not in drop_specs] or None
+            obj["figure"] = [x for x in fl if x not in drop_specs] or None
         elif isinstance(fl, str) and fl in drop_specs:
-            q["figure"] = None
+            obj["figure"] = None
     man["figures"] = [c for c in man["figures"] if c["figure_id"] not in drop_crops]
     specs["figures"] = [s for s in specs.get("figures", []) if s.get("id") not in drop_specs]
     json.dump(g, open(a.out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
