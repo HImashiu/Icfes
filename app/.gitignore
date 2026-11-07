@@ -3,3 +3,4 @@ dist/
 # exam content is copied here at dev/build time; never commit it
 public/exams/
 .env.local
+site-dist/

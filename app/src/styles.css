@@ -3160,12 +3160,6 @@ body.spl-open { overflow: hidden; }
 .stimulus table, .stem table, .option-text table { overflow-wrap: normal; }
 .stimulus a { overflow-wrap: anywhere; word-break: break-all; }
 
-/* Public demo bar (LaunchNotice): one compact line, wraps on phones. */
-.launch-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 8px 16px; font-size: 13px; background: var(--surface-2, #1b1f1a); border-bottom: 1px solid var(--line); color: var(--text-2); }
-.launch-chip { background: var(--accent, #C8F04A); color: #142000; font-weight: 700; font-size: 12px; padding: 2px 8px; border-radius: 999px; }
-.launch-text { flex: 1 1 240px; }
-.launch-open { font-weight: 700; }
-@media (max-width: 767px) { .launch-bar { padding: 8px 16px; } }
 
 /* Hoy › Alertas y pendientes (progress alerts with Listo / Posponer) */
 .ai-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 8px; border-top: 1px solid var(--line); }
@@ -3201,3 +3195,13 @@ body.spl-open { overflow: hidden; }
 .ai-sub { margin: 0 0 6px 50px; border-left: 2px solid var(--line); padding-left: 8px; }
 @media (max-width: 767px) { .ai-sub { margin-left: 12px; } }
 .ai-filters .chip.on { color: var(--text); background: color-mix(in srgb, var(--accent) 16%, transparent); }
+/* Public demo notice (LaunchNotice): a slim card at the top of the content column, one row on a phone. */
+.launch-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 0 0 14px; padding: 8px 12px; font-size: 13px; line-height: 1.35; background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; color: var(--text-2); }
+.launch-chip { background: var(--accent); color: #142000; font-weight: 700; font-size: 12px; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.launch-text { flex: 1 1 260px; }
+.launch-open { font-weight: 700; font-size: 13px; white-space: nowrap; }
+@media (max-width: 767px) {
+  .launch-bar { flex-wrap: nowrap; gap: 10px; padding: 6px 10px; }
+  .launch-text { display: none; }
+  .launch-bar .launch-open:first-of-type { margin-left: auto; }
+}

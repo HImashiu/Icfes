@@ -45,6 +45,8 @@ import { resolveModel, xpFactor } from "./lib/grading.js";
 import { attemptForAssignment, attemptRow, attemptsLeft, kindMode, questionsForAttempt, revealAllowed } from "./lib/assignments.js";
 
 const base = import.meta.env.BASE_URL;
+// Screens where the public-demo notice shows (never inside an exam, a live game or the school tools).
+const LAUNCH_VIEWS = new Set(["home", "subjects", "setup", "progress", "profile", "login", "history", "results"]);
 
 // A screen that throws must never leave a blank page: show a way back instead.
 class ScreenBoundary extends Component {
@@ -481,9 +483,9 @@ export default function App() {
     <AuthContext.Provider value={auth}>
     <ExamContext.Provider value={selected?.slug ?? null}>
     {demoEnabled && <DemoBanner side={view === "teacher" ? "teacher" : "student"} onSide={(side) => setView(side === "teacher" ? "teacher" : "home")} />}
-    {!demoEnabled && <LaunchNotice />}
     <div className={view === "test" || view === "teacher" ? "app wide" : "app"}>
       <ScreenBoundary key={view} onHome={goHome}>
+      {!demoEnabled && auth.status !== "ready" && LAUNCH_VIEWS.has(view) && <LaunchNotice />}
       {loadError && <p className="notice error">{loadError}</p>}
       {openError && <p className="notice error">{openError}</p>}
       {opening && <p className="muted pad">Cargando cuadernillo…</p>}

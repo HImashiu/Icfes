@@ -3,7 +3,6 @@ import Icon from "../components/Icon.jsx";
 import Mascot from "../components/Mascot.jsx";
 import MonthCalendar from "../components/MonthCalendar.jsx";
 import TaskRow, { dueText } from "../components/TaskRow.jsx";
-import { SAMPLE_STUDENT } from "../data/mock.js";
 import { areaColor, fmtInt } from "../lib/brand.js";
 import { formatClock, questionsFor } from "../lib/exam.js";
 import { loadHistory } from "../lib/local.js";
@@ -23,7 +22,7 @@ const DAYS = ["L", "M", "X", "J", "V", "S", "D"];
 
 // Inicio: the next thing to do, today's goal, this week's tasks, each subject with its teacher, the countdown to the
 // exam, the month and the student's own progress. Progress is measured against the student's goal and past self,
-// never against classmates. Before the first practice the streak, XP and mastery are SAMPLE data (data/mock.js).
+// never against classmates. Before the first practice everything starts at zero (no invented numbers on the public site).
 export default function Home({ exam, slug, resumable, onContinue, onPractice, onSetup, xpSession, assigned, classes, course, onStartAssigned, onLive, realName, signedOut, onGo, onOpenSubject, exams = [], onStartSession, liveGames = [], onJoinGame = null, announcements = [] }) {
   const now = Date.now();
   const todayIndex = (new Date().getDay() + 6) % 7;
@@ -32,11 +31,11 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
   const goal = useMemo(() => loadGoal(), []);
   const score = useMemo(() => scoreSummary(history), [history]);
   const real = ins.sessions > 0;
-  const streak = real ? ins.streak : SAMPLE_STUDENT.streak;
-  const xp = (real ? ins.xp : SAMPLE_STUDENT.xp) + (xpSession ?? 0);
-  const weekly = real ? ins.week : SAMPLE_STUDENT.weeklyXp;
+  const streak = real ? ins.streak : 0;
+  const xp = (real ? ins.xp : 0) + (xpSession ?? 0);
+  const weekly = real ? ins.week : [0, 0, 0, 0, 0, 0, 0];
   // Only areas with enough first tries behind them (student.js MIN_AREA_ANSWERS): repeats never raise it.
-  const mastery = real ? ins.areas.filter((a) => a.enough).map((a) => [a.name, a.pct]).reverse() : Object.entries(SAMPLE_STUDENT.mastery);
+  const mastery = real ? ins.areas.filter((a) => a.enough).map((a) => [a.name, a.pct]).reverse() : [];
   const subjects = useMemo(() => (assigned ? studentSubjects({ classes, assignments: assigned.assignments, attempts: assigned.attempts, now }) : []), [assigned, classes]); // eslint-disable-line react-hooks/exhaustive-deps
   const tasks = useMemo(() => (assigned ? studentTasks({ subjects, assignments: assigned.assignments, attempts: assigned.attempts, now }) : []), [subjects, assigned]); // eslint-disable-line react-hooks/exhaustive-deps
   const events = useMemo(() => (assigned ? studentEvents({ subjects, assignments: assigned.assignments, attempts: assigned.attempts, now }) : []), [subjects, assigned]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -65,10 +64,10 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
   return (
     <section className="home sh">
       <header className="home-head">
-        <div className="avatar" aria-hidden="true">{(realName ?? SAMPLE_STUDENT.name)[0]}</div>
+        <div className="avatar" aria-hidden="true">{realName ? realName[0] : <Icon name="user" size={22} />}</div>
         <div className="greet">
-          <span className="caption">{course ? `Curso ${course}` : realName ? "Tu colegio" : `${SAMPLE_STUDENT.course} · muestra`}</span>
-          <strong>Hola, {realName ?? SAMPLE_STUDENT.name}</strong>
+          <span className="caption">{course ? `Curso ${course}` : realName ? "Tu colegio" : "Sin cuenta"}</span>
+          <strong>{realName ? `Hola, ${realName}` : "Hola"}</strong>
         </div>
         {onLive && (
           <button type="button" className="tl-live sh-live" onClick={onLive} aria-label="Juego en vivo">
@@ -105,7 +104,7 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
             <strong>{fmtInt(today)} / {goal.dailyXp} XP</strong>
             <div className="week-row mini" aria-label={`Racha de ${streak} días`}>
               {DAYS.map((d, i) => {
-                const state = real ? (i < todayIndex ? (weekly[i] > 0 ? "done" : "empty") : i === todayIndex ? (weekly[i] > 0 ? "done today" : "today") : "empty") : i < todayIndex ? "done" : i === todayIndex ? "today" : "empty";
+                const state = i < todayIndex ? (weekly[i] > 0 ? "done" : "empty") : i === todayIndex ? (weekly[i] > 0 ? "done today" : "today") : "empty";
                 return <span key={d + i} className={`day ${state}`}>{d}</span>;
               })}
             </div>
@@ -180,10 +179,10 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
           <div className="card sh-card">
             <div className="section-head">
               <span className="label">Dominio por área</span>
-              {real ? <button type="button" className="link" onClick={() => onGo?.("progress")}>Ver análisis</button> : <span className="caption">Muestra</span>}
+              {real && <button type="button" className="link" onClick={() => onGo?.("progress")}>Ver análisis</button>}
             </div>
             {real && <span className="caption">Aciertos en primer intento: repetir preguntas no los sube.</span>}
-            {real && mastery.length === 0 && <span className="caption">Aparece cuando respondas al menos {MIN_AREA_ANSWERS} preguntas nuevas de un área.</span>}
+            {mastery.length === 0 && <span className="caption">Aparece cuando respondas al menos {MIN_AREA_ANSWERS} preguntas nuevas de un área.</span>}
             <div className="sh-mastery">
               {mastery.map(([name, value]) => (
                 <div key={name} className="sh-m">
@@ -234,14 +233,13 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
             <svg className="week-chart" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" role="img" aria-label="XP de la semana frente a tu meta diaria">
               {[h / 4, h / 2, (3 * h) / 4].map((y) => <line key={y} x1="0" x2={w} y1={y} y2={y} stroke="var(--line)" strokeWidth="1" />)}
               <line x1="0" x2={w} y1={goalY} y2={goalY} stroke="var(--text-2)" strokeWidth="2" strokeDasharray="4 4" />
-              <polyline className="mine" points={(real ? weekly.slice(0, todayIndex + 1) : weekly).map(pt).join(" ")} fill="none" stroke="var(--accent-ink)" strokeWidth="3" strokeLinejoin="round" />
+              <polyline className="mine" points={weekly.slice(0, todayIndex + 1).map(pt).join(" ")} fill="none" stroke="var(--accent-ink)" strokeWidth="3" strokeLinejoin="round" />
             </svg>
             <div className="week-axis">{DAYS.map((d, i) => <span key={d + i}>{d}</span>)}</div>
           </div>
         </div>
       </div>
 
-      {!real && <span className="caption sample-note">Racha, XP y dominio son datos de muestra hasta tu primer simulacro.</span>}
     </section>
   );
 }

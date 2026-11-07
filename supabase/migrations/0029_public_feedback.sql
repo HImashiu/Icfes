@@ -1,11 +1,11 @@
--- 0029 · Public demo: question flags, general feedback and the launch-discount waitlist.
+-- 0029 · Public demo: question flags, general feedback, school contact requests and the launch-discount waitlist.
 -- Anyone (signed in or not) can INSERT feedback here through the public app; nobody can read these tables through the API.
 -- Juan reads them in the Supabase dashboard (SQL editor / table editor), which bypasses row-level security.
 -- Runs after 0003-0028. Re-runnable.
 
 create table if not exists public.public_feedback (
   id uuid primary key default gen_random_uuid(),
-  kind text not null check (kind in ('question', 'general')),
+  kind text not null check (kind in ('question', 'general', 'school')),
   exam text check (char_length(exam) <= 200),
   question_key text check (char_length(question_key) <= 200),
   question_number int check (question_number is null or question_number between 1 and 500),
@@ -15,6 +15,10 @@ create table if not exists public.public_feedback (
   created_at timestamptz not null default now()
 );
 
+-- Older copies of this table (first draft of 0029) only allowed 'question' and 'general'.
+alter table public.public_feedback drop constraint if exists public_feedback_kind_check;
+alter table public.public_feedback add constraint public_feedback_kind_check check (kind in ('question', 'general', 'school'));
+
 create table if not exists public.launch_waitlist (
   email text primary key check (char_length(email) between 5 and 200 and email like '%@%.%'),
   source text check (char_length(source) <= 64),
@@ -23,6 +27,9 @@ create table if not exists public.launch_waitlist (
 
 alter table public.public_feedback enable row level security;
 alter table public.launch_waitlist enable row level security;
+
+-- Supabase grants table rights to anon/authenticated by default; stated here so the intent is explicit.
+grant insert on public.public_feedback to anon, authenticated;
 
 drop policy if exists pf_insert_anyone on public.public_feedback;
 create policy pf_insert_anyone on public.public_feedback for insert to anon, authenticated with check (true);

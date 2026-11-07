@@ -2,6 +2,9 @@ import { useState } from "react";
 import Popup from "./Popup.jsx";
 import { EMAIL_RE, joinWaitlist, sendFeedback, waitlisted } from "../lib/publicFeedback.js";
 
+// The landing page and its privacy notice live one level above the app (site-dist/, see scripts/build-site.mjs).
+const PRIVACY_URL = "../privacidad.html";
+
 // Shown on the public site: says this is a free demo, that prices are not set yet, and offers the launch discount
 // waitlist plus a place for comments. One compact bar, so it doesn't take space on a phone.
 export default function LaunchNotice() {
@@ -43,7 +46,7 @@ export default function LaunchNotice() {
 
       {panel === "discount" && (
         <Popup title="Descuento de lanzamiento" subtitle="Lo que pagan los primeros usuarios" onClose={close}>
-          <p>Esta versión es una demostración. Cuando definamos los precios, quienes se registren aquí recibirán un descuento. Solo usaremos tu correo para avisarte.</p>
+          <p>Esta versión es una demostración. Cuando definamos los precios, quienes se registren aquí recibirán un descuento. Solo usaremos tu correo para avisarte (<a href={PRIVACY_URL} target="_blank" rel="noopener">privacidad</a>).</p>
           {joined ? <p className="muted">Ya estás en la lista. Te avisaremos al abrir los precios.</p> : (
           <form className="report-form" onSubmit={join} noValidate>
             <label className="label" htmlFor="launch-email">Correo electrónico</label>
@@ -70,6 +73,7 @@ export default function LaunchNotice() {
             </div>
           </form>
           {note && <p className="muted" role="status">{note}</p>}
+          <p className="caption">Si quieres que consultemos, corrijamos o borremos tus datos, escríbelo aquí con el correo que usaste. <a href={PRIVACY_URL} target="_blank" rel="noopener">Política de privacidad</a>.</p>
         </Popup>
       )}
     </>
