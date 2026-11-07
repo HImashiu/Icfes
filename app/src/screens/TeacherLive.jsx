@@ -13,6 +13,7 @@ import { FilePicker, confirmDialog } from "../components/Controls.jsx";
 import Icon from "../components/Icon.jsx";
 import BankEditor from "./BankEditor.jsx";
 import Sheet from "./Sheet.jsx";
+import Dashboards from "./Dashboards.jsx";
 import ResultsInsights from "./ResultsInsights.jsx";
 import "./StudentHistory.jsx"; // adds «Historial completo» to every student profile
 import GradingSettings from "./GradingSettings.jsx";
@@ -150,6 +151,9 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
   const openStudent = (email) => { setFocusStudent(email); go({ section: "estudiantes", tab: "lista" }); };
   const openAssignment = (id, memberId) => { setFocusMember(memberId ?? null); go({ section: "actividad", id, tab: "resultados" }); };
 
+  // The sidebar folds down to an icon rail and back; the choice is remembered on this device.
+  const [rail, setRail] = useState(() => { try { return localStorage.getItem("condor.teacher.rail") === "1"; } catch { return false; } });
+  const toggleRail = () => setRail((v) => { try { localStorage.setItem("condor.teacher.rail", v ? "0" : "1"); } catch { /* storage blocked */ } return !v; });
   const r = route.section === "colegio" && !admin ? normalize({ section: "hoy" }) : route;
   const activity = r.section === "actividad" ? allAssignments.find((a) => a.id === r.id) : null;
   const activityCourse = activity ? allCourses.find((c) => c.id === activity.course_id) : null;
@@ -158,12 +162,17 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
   const tabs = r.section === "actividad" ? [] : (TABS[r.section] ?? []).filter(([id]) => !HIDDEN_TABS.has(id));
 
   return (
-    <div className="teacher tl" style={{ "--ctx": tint }}>
+    <div className={rail ? "teacher tl rail" : "teacher tl"} style={{ "--ctx": tint }}>
       <aside className="t-side" aria-label="Navegación docente">
-        <strong className="t-logo"><Logo size={30} /> Cóndor</strong>
+        <div className="t-side-top">
+          <strong className="t-logo"><Logo size={30} /> <span>Cóndor</span></strong>
+          <button type="button" className="t-rail-btn" onClick={toggleRail} aria-pressed={rail} aria-label={rail ? "Mostrar la barra lateral" : "Contraer la barra lateral"} title={rail ? "Mostrar la barra lateral" : "Contraer la barra lateral"}>
+            <Icon name="panel" size={18} strokeWidth={2.2} />
+          </button>
+        </div>
         <nav>
           {NAV.map((n) => (
-            <button key={n.section} type="button" className={current === n.section ? "t-nav active" : "t-nav"} aria-current={current === n.section ? "page" : undefined} onClick={() => go({ section: n.section })}>
+            <button key={n.section} type="button" className={current === n.section ? "t-nav active" : "t-nav"} aria-current={current === n.section ? "page" : undefined} title={rail ? n.label : undefined} onClick={() => go({ section: n.section })}>
               <Icon name={n.icon} size={18} strokeWidth={2.4} /><span>{n.label}</span>
             </button>
           ))}
@@ -171,7 +180,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           {admin && ADMIN_NAV.map((n) => {
             const on = r.section === "colegio" && r.tab === n.tab;
             return (
-              <button key={n.tab} type="button" className={on ? "t-nav active" : "t-nav"} aria-current={on ? "page" : undefined} onClick={() => go({ section: "colegio", tab: n.tab })}>
+              <button key={n.tab} type="button" className={on ? "t-nav active" : "t-nav"} aria-current={on ? "page" : undefined} title={rail ? n.label : undefined} onClick={() => go({ section: "colegio", tab: n.tab })}>
                 <Icon name={n.icon} size={18} strokeWidth={2.4} /><span>{n.label}</span>
               </button>
             );
@@ -181,9 +190,10 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           <span className="label">{profile.full_name || profile.email}</span>
           <span className="caption">{admin ? "Coordinación" : "Docente"} · Mi cuenta y permisos</span>
         </button>
-        <button type="button" className="link t-exit" onClick={onExit}>
+        <button type="button" className="link t-exit" onClick={onExit} title={rail ? "Volver a la app de estudiante" : undefined}>
           <span className="t-exit-long">Volver a la app de estudiante</span>
           <span className="t-exit-short" aria-hidden="true">‹ Estudiante</span>
+          <span className="t-exit-rail" aria-hidden="true"><Icon name="left" size={18} /></span>
         </button>
       </aside>
 
@@ -283,7 +293,8 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           {r.section === "resultados" && r.tab === "calificacion" && (
             <GradingSettings api={baseApi} profile={profile} courses={courses} assignments={assignments} models={models} reloadModels={reloadModels} guard={guard} setNotice={setNotice} fetchExam={fetchExam} />
           )}
-          {r.section === "resultados" && r.tab === "grafica" && <Sheet api={api} profile={profile} courses={courses} assignments={assignments} models={models} fetchExam={fetchExam} guard={guard} ws={ws} />}
+          {r.section === "resultados" && r.tab === "grafica" && <Sheet api={api} profile={profile} courses={courses} assignments={assignments} models={models} fetchExam={fetchExam} guard={guard} ws={ws} onOpenBoard={() => go({ section: "resultados", tab: "tableros" })} />}
+          {r.section === "resultados" && r.tab === "tableros" && <Dashboards api={api} profile={profile} courses={courses} assignments={assignments} models={models} fetchExam={fetchExam} guard={guard} ws={ws} onOpenSheet={() => go({ section: "resultados", tab: "grafica" })} />}
 
           {r.section === "biblioteca" && r.tab === "banco" && <BankEditor api={baseApi} profile={profile} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} />}
           {r.section === "biblioteca" && r.tab === "preguntas" && <QuestionBuilder api={baseApi} profile={profile} guard={guard} setNotice={setNotice} />}
@@ -313,7 +324,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
 
       <nav className="tl-bottom" aria-label="Secciones">
         {NAV.map((n) => (
-          <button key={n.section} type="button" className={current === n.section ? "on" : ""} aria-current={current === n.section ? "page" : undefined} onClick={() => go({ section: n.section })}>
+          <button key={n.section} type="button" className={current === n.section ? "on" : ""} aria-current={current === n.section ? "page" : undefined} title={rail ? n.label : undefined} onClick={() => go({ section: n.section })}>
             <Icon name={n.icon} size={21} /><span>{n.label}</span>
           </button>
         ))}
