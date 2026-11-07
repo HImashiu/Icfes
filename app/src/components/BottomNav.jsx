@@ -1,6 +1,5 @@
 import Icon from "./Icon.jsx";
 import Logo from "./Logo.jsx";
-import { SAMPLE_STUDENT } from "../data/mock.js";
 
 const ITEMS = [
   { id: "home", label: "Inicio", icon: "home" },
@@ -17,7 +16,7 @@ const ITEMS = [
 // Under the name: a student's curso; a teacher or coordinator who opens the student app sees their role, not the
 // list of every class they teach.
 function meLine(name, course, role) {
-  if (!name) return `${SAMPLE_STUDENT.course} · datos de muestra`;
+  if (!name) return "Sin cuenta";
   if (role === "school_admin") return "Coordinación · vista de estudiante";
   if (role === "teacher") return "Docente · vista de estudiante";
   if (!course) return "Estudiante";
@@ -54,9 +53,9 @@ export default function BottomNav({ active, onGo, name, course, role = null }) {
         </button>
       ))}
       <div className="nav-me" aria-label="Estudiante">
-        <span className="avatar" aria-hidden="true">{(name ?? "Estudiante")[0]}</span>
+        <span className="avatar" aria-hidden="true">{name ? name[0] : <Icon name="user" size={20} />}</span>
         <div>
-          <strong>{name ?? "Estudiante"}</strong>
+          <strong>{name ?? "Visitante"}</strong>
           <span className="caption">{meLine(name, course, role)}</span>
         </div>
       </div>

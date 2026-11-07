@@ -79,6 +79,8 @@ export default function Students({ api, profile, courses, assignments, guard, se
   // Deep link from Resumen or Reportes: open that student's profile.
   useEffect(() => {
     if (!focus || !data) return;
+    // From Hoy: the list already filtered ({ filters: { course, work… } }).
+    if (typeof focus === "object") { setOpenKey(null); setTab("list"); setFilters({ ...EMPTY_FILTERS, ...focus.filters }); setPage(1); if (["work", "followUp", "joined", "weakArea", "sort"].some((k) => focus.filters?.[k])) setMoreFilters(true); onFocusDone?.(); return; }
     const key = String(focus).toLowerCase();
     if (key === "#queue") { setOpenKey(null); setTab("queue"); }
     else if (roster.some((e) => e.key === key)) { setOpenKey(key); setTab("list"); }
@@ -241,7 +243,7 @@ export default function Students({ api, profile, courses, assignments, guard, se
                 <label className="field"><span className="label">Seguimiento</span>
                   <Select value={filters.followUp} onChange={(v) => setF({ followUp: v })}><option value="">Todos</option><option value="yes">En seguimiento</option><option value="due">Seguimiento vencido o de hoy</option><option value="no">Sin seguimiento</option></Select></label>
                 <label className="field"><span className="label">Trabajo</span>
-                  <Select value={filters.work} onChange={(v) => setF({ work: v })}><option value="">Todos</option><option value="late">Con tareas sin entregar</option><option value="pending">Con tareas abiertas</option><option value="none">No ha entregado nada</option><option value="quiet7">Sin entregar hace 7 días o más</option></Select></label>
+                  <Select value={filters.work} onChange={(v) => setF({ work: v })}><option value="">Todos</option><option value="late">Con tareas sin entregar</option><option value="pending">Con tareas abiertas</option><option value="none">No ha entregado nada</option><option value="quiet7">Sin entregar hace 7 días o más</option><option value="exits">Con salidas en exámenes</option></Select></label>
                 <label className="field"><span className="label">Ingreso</span>
                   <Select value={filters.joined} onChange={(v) => setF({ joined: v })}><option value="">Todos</option><option value="yes">Ya ingresó</option><option value="no">Aún no ingresa</option></Select></label>
                 <label className="field"><span className="label">Área más baja</span>

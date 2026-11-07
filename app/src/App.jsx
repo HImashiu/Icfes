@@ -8,7 +8,6 @@ import Profile from "./screens/Profile.jsx";
 import Subjects from "./screens/Subjects.jsx";
 import Progress from "./screens/Progress.jsx";
 import { classesFrom, studentCourses } from "./lib/student.js";
-import Teacher from "./screens/Teacher.jsx";
 import TeacherLive from "./screens/TeacherLive.jsx";
 import Login from "./screens/Login.jsx";
 import History from "./screens/History.jsx";
@@ -24,6 +23,7 @@ import { linkFigures, parseFigureSpecs, prepareExam } from "./lib/figures.js";
 import { applyTheme, currentTheme } from "./lib/theme.js";
 import { AuthContext, useAuth } from "./lib/auth.jsx";
 import DemoBanner from "./demo/DemoBanner.jsx";
+import LaunchNotice from "./components/LaunchNotice.jsx";
 import Consent from "./screens/Consent.jsx";
 import FamilyReport from "./screens/FamilyReport.jsx";
 import { tokenFromHash } from "./lib/family.js";
@@ -44,6 +44,8 @@ import { resolveModel, xpFactor } from "./lib/grading.js";
 import { attemptForAssignment, attemptRow, attemptsLeft, kindMode, questionsForAttempt, revealAllowed } from "./lib/assignments.js";
 
 const base = import.meta.env.BASE_URL;
+// Screens where the public-demo notice shows (never inside an exam, a live game or the school tools).
+const LAUNCH_VIEWS = new Set(["home", "subjects", "setup", "progress", "profile", "login", "history", "results"]);
 
 // A screen that throws must never leave a blank page: show a way back instead.
 class ScreenBoundary extends Component {
@@ -482,6 +484,7 @@ export default function App() {
     {demoEnabled && <DemoBanner side={view === "teacher" ? "teacher" : "student"} onSide={(side) => setView(side === "teacher" ? "teacher" : "home")} />}
     <div className={view === "test" || view === "teacher" ? "app wide" : "app"}>
       <ScreenBoundary key={view} onHome={goHome}>
+      {!demoEnabled && auth.status !== "ready" && LAUNCH_VIEWS.has(view) && <LaunchNotice />}
       {loadError && <p className="notice error">{loadError}</p>}
       {openError && <p className="notice error">{openError}</p>}
       {opening && <p className="muted pad">Cargando cuadernillo…</p>}
@@ -616,7 +619,10 @@ export default function App() {
       {view === "reports" && <Reports onBack={() => setView("profile")} onPractice={() => setView("setup")} onOpen={openFromReport} />}
       {view === "teacher" && (rootAuth.status === "ready" && rootAuth.profile.role !== "student"
         ? <AuthContext.Provider value={rootAuth}><TeacherLive auth={rootAuth} exams={exams} fetchExam={fetchExam} onExit={() => { if (window.location.hash.startsWith("#docente")) history.replaceState(null, "", window.location.pathname + window.location.search); setView("profile"); }} /></AuthContext.Provider>
-        : <Teacher onExit={() => setView("profile")} />)}
+        // The public site never shows a teacher panel to someone who isn't signed in as staff: a #docente link asks
+        // for the school sign-in instead (the full invented school stays available only in ?demo=1).
+        : rootAuth.status === "loading" ? <p className="muted pad">Cargando…</p>
+        : <Login onBack={() => setView("home")} />)}
 
       {needsAttempt && !attempt && <main className="frame"><p className="muted">Esta actividad ya no está abierta.</p><button type="button" className="primary" onClick={goHome}>Volver al inicio</button></main>}
       </ScreenBoundary>

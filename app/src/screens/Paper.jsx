@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import PrintBooklet from "../components/PrintBooklet.jsx";
+import BookletStudio from "../components/print/BookletStudio.jsx";
 import Icon from "../components/Icon.jsx";
 import LiveScanner from "../components/LiveScanner.jsx";
 import Picker from "../components/Picker.jsx";
@@ -37,16 +37,10 @@ export function Overlay({ title, hint, onClose, children, page = "0" }) {
   );
 }
 
-function Booklet({ bundle, questions, title, course, plan, onClose }) {
-  const counts = plan ? versionCounts(plan) : null;
-  const versions = counts ? counts.map((n, v) => v).filter((v) => counts[v] > 0) : [null];
+function Booklet({ api, bundle, questions, title, course, plan, onClose }) {
   return (
-    <Overlay title="Cuadernillo" hint={counts ? `Versiones ${versions.map(versionLabel).join(", ")} · imprime ${versions.map((v) => `${counts[v]} de la ${versionLabel(v)}`).join(", ")}` : `${questions.length} preguntas · se imprime en hojas A4 con márgenes`} onClose={onClose} page="14mm 14mm 16mm">
-      {versions.map((v) => (
-        <div key={v ?? "x"} className="pb-version-set" style={{ breakAfter: "page" }}>
-          <PrintBooklet questions={v == null ? questions : orderForVersion(questions, v, plan.orderSeed)} figures={bundle.figures} examLabel={bundle.exam.title} title={title} course={course} version={v == null ? null : versionLabel(v)} />
-        </div>
-      ))}
+    <Overlay title="Cuadernillo impreso" hint={`${questions.length} preguntas · portada, instrucciones, dos columnas y clave del docente`} onClose={onClose} page="0">
+      <BookletStudio api={api} bundle={bundle} questions={questions} title={title} course={course} plan={plan} />
     </Overlay>
   );
 }
@@ -219,7 +213,7 @@ export default function Paper({ api, assignments, fetchExam, guard, setNotice, f
   const areas = new Set(questions.map((q) => q.section)).size;
   const ready = Boolean(bundle) && !tooMany;
   const steps = [
-    { n: 1, icon: "book", title: "Cuadernillo", text: "Las preguntas en hojas A4, en blanco y negro, con el texto de cada grupo una sola vez.", action: "Imprimir cuadernillo", mode: "booklet", off: !ready },
+    { n: 1, icon: "book", title: "Cuadernillo", text: "Un cuadernillo diagramado como el del ICFES: portada con el logo del colegio, dos columnas, carta o A4, plegado o grapado, y la clave del docente.", action: "Imprimir cuadernillo", mode: "booklet", off: !ready },
     { n: 2, icon: "user", title: "Hojas de respuestas", text: "Una hoja por estudiante, con su código y las burbujas A a D. Imprime al 100 %.", action: "Imprimir hojas", mode: "sheets", off: !ready || noRoster },
     { n: 3, icon: "bolt", title: "Escanear hojas", text: "Pasa las hojas llenas frente a la cámara del celular, o sube fotos. Los resultados entran junto a los demás.", action: "Escanear hojas", mode: "scan", off: !ready || noRoster, primary: true },
   ];
@@ -259,7 +253,7 @@ export default function Paper({ api, assignments, fetchExam, guard, setNotice, f
           <p className="caption paper-note">La lista de estudiantes se ordena por correo. No agregues ni quites estudiantes entre imprimir y calificar: cada hoja lleva el código de su estudiante.</p>
         </>
       )}
-      {mode === "booklet" && bundle && <Booklet bundle={bundle} questions={questions} title={assignment.title} course={course} plan={plan} onClose={() => setMode(null)} />}
+      {mode === "booklet" && bundle && <Booklet api={api} bundle={bundle} questions={questions} title={assignment.title} course={course} plan={plan} onClose={() => setMode(null)} />}
       {mode === "sheets" && bundle && <Sheets assignment={assignment} questions={questions} roster={roster} course={course} plan={plan} onClose={() => setMode(null)} />}
       {mode === "seating" && bundle && (
         <SeatingWizard key={assignment.id} api={api} roster={roster} plan={savedPlan} savePlan={savePlan} onClose={() => setMode(null)} onPrint={() => setMode("chart")}

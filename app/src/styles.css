@@ -3159,3 +3159,65 @@ body.spl-open { overflow: hidden; }
 .stimulus, .stem, .option-text, .stimulus p, .stem p, .option-text p, .stimulus li, .stem li, .option-text li { overflow-wrap: anywhere; word-break: normal; }
 .stimulus table, .stem table, .option-text table { overflow-wrap: normal; }
 .stimulus a { overflow-wrap: anywhere; word-break: break-all; }
+
+
+/* Hoy › Alertas y pendientes (progress alerts with Listo / Posponer) */
+.ai-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 8px; border-top: 1px solid var(--line); }
+.ai-filters { gap: 6px; }
+.ai-filters .chip { min-height: 30px; padding: 0 10px; font-size: 12.5px; }
+.ai-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.ai-row { display: flex; align-items: center; gap: 12px; padding: 8px 6px; border-top: 1px solid var(--line); border-radius: 10px; }
+.ai-row:first-child { border-top: 0; }
+.ai-row.fresh { background: color-mix(in srgb, var(--ctx) 7%, transparent); }
+.ai-row .td-task-text strong { white-space: normal; }
+.ai-hint { font-size: 12px; }
+.ai-new { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 99px; background: var(--accent-soft); color: var(--accent-ink); font-size: 11px; font-weight: 800; vertical-align: 2px; }
+.ai-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+.ai-btn { width: 34px; height: 34px; }
+.ai-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+@media (max-width: 767px) {
+  .ai-row { flex-wrap: wrap; }
+  .ai-row .td-task-text { flex-basis: calc(100% - 52px); }
+  .ai-actions { width: 100%; justify-content: flex-end; }
+}
+
+/* Biblioteca › Banco: chosen questions into slides, a worksheet, a quiz, an exam or a practice */
+.bk-use { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 10px; margin: 6px 0; border-radius: 12px; background: var(--surface-2); }
+.bk-use.on { position: sticky; top: 8px; z-index: 3; background: var(--surface); border: 1px solid var(--ctx, var(--accent)); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18); }
+.bk-use-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.bk-use-btns button { min-height: 34px; padding: 0 10px; font-size: 13px; display: inline-flex; align-items: center; gap: 4px; }
+.b-convert { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.b-convert button { min-height: 32px; padding: 0 10px; font-size: 13px; display: inline-flex; align-items: center; gap: 4px; }
+.qp-switch { margin: 0 auto 10px; width: fit-content; }
+.rs-more { margin-top: 4px; }
+@media (max-width: 767px) { .bk-use.on { position: static; box-shadow: none; } }
+.ai-group { display: grid; }
+.ai-sub { margin: 0 0 6px 50px; border-left: 2px solid var(--line); padding-left: 8px; }
+@media (max-width: 767px) { .ai-sub { margin-left: 12px; } }
+.ai-filters .chip.on { color: var(--text); background: color-mix(in srgb, var(--accent) 16%, transparent); }
+/* Public demo notice (LaunchNotice): a slim card at the top of the content column, one row on a phone. */
+.launch-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 0 0 14px; padding: 8px 12px; font-size: 13px; line-height: 1.35; background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; color: var(--text-2); }
+.launch-chip { background: var(--accent); color: #142000; font-weight: 700; font-size: 12px; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.launch-text { flex: 1 1 260px; }
+.launch-open { font-weight: 700; font-size: 13px; white-space: nowrap; }
+@media (max-width: 767px) {
+  .launch-bar { flex-wrap: nowrap; gap: 10px; padding: 6px 10px; }
+  .launch-text { display: none; }
+  .launch-bar .launch-open:first-of-type { margin-left: auto; }
+}
+
+/* Inicio: a little more life on arrival (cards in each column rise in turn, the goal ring and mastery bars fill). */
+.launch-bar { animation: drop-in 0.35s cubic-bezier(0.3, 0.7, 0.4, 1.4) backwards; }
+.sh-col > * { animation: rise-in 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+.sh-col > :nth-child(2) { animation-delay: 0.08s; }
+.sh-col > :nth-child(3) { animation-delay: 0.16s; }
+.sh-col > :nth-child(4) { animation-delay: 0.24s; }
+.sh-col > :nth-child(n+5) { animation-delay: 0.3s; }
+.sh-ring circle + circle { animation: ring-draw 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 0.25s backwards; }
+.sh-m .progress > span { transform-origin: left; animation: grow-x 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.4s backwards; }
+.home-head .pill { animation: pop-in 0.4s cubic-bezier(0.3, 0.7, 0.4, 1.4) 0.15s backwards; }
+.home-head .pill + .pill { animation-delay: 0.22s; }
+@keyframes ring-draw { from { stroke-dasharray: 0 169.6; } }
+@media (prefers-reduced-motion: reduce) {
+  .launch-bar, .sh-col > *, .sh-ring circle + circle, .sh-m .progress > span, .home-head .pill { animation: none; }
+}

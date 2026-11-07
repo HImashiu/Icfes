@@ -23,6 +23,8 @@ const TEMPLATES = [
   { id: "tema", label: "Temas más difíciles", ds: "respuestas", pivot: { row: "Tema", col: null, value: "Acierto", how: "pct1", minN: 8 }, sort: [1, 1], chart: "bar" },
   { id: "tiempo", label: "Tiempo y acierto por dificultad", ds: "respuestas", pivot: { row: "Dificultad", col: null, value: "Segundos", how: "avg" }, chart: "bar" },
   { id: "pendientes", label: "Estudiantes con menos entregas", ds: "estudiantes", sort: ["% entregado", 1] },
+  // Each scale in its own column, so a 4,2 (1–5) is never averaged with a 70 (0–100).
+  { id: "nota-estudiante", label: "Nota media por estudiante", ds: "entregas", pivot: { row: "Estudiante", col: "Escala", value: "Nota", how: "avg" } },
 ];
 const ROW_H = 32;
 const OVERSCAN = 12;

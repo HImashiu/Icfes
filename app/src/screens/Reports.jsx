@@ -29,7 +29,7 @@ export default function Reports({ onBack, onPractice, onOpen }) {
                   <span className="caption">{new Date(r.at).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}</span>
                 </div>
                 <p>{r.note}</p>
-                <span className="chip-status">Guardado en este navegador{r.slug ? " · Ver pregunta ›" : ""}</span>
+                <span className="chip-status">Reportada{r.slug ? " · Ver pregunta ›" : ""}</span>
               </button>
             </li>
           ))}

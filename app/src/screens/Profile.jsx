@@ -1,6 +1,5 @@
 import Icon from "../components/Icon.jsx";
 import Mascot from "../components/Mascot.jsx";
-import { SAMPLE_STUDENT } from "../data/mock.js";
 import { useMemo, useState } from "react";
 import { useAuth } from "../lib/auth.jsx";
 import { play, setSoundOn, soundOn } from "../lib/motion.js";
@@ -23,7 +22,7 @@ export default function Profile({ theme, onTheme, onTeacher, onReports, onLogin,
   const [goal, setGoalState] = useState(loadGoal);
   const setGoal = (patch) => { const next = { ...goal, ...patch }; setGoalState(next); saveGoal(next); };
   const left = daysUntil(goal.examDate);
-  const name = auth.status === "ready" ? auth.profile.full_name || auth.profile.email : SAMPLE_STUDENT.name;
+  const name = auth.status === "ready" ? auth.profile.full_name || auth.profile.email : "Tu perfil";
 
   return (
     <section className="profile sp">
@@ -35,7 +34,7 @@ export default function Profile({ theme, onTheme, onTeacher, onReports, onLogin,
             <div className="avatar big" aria-hidden="true">{name[0]}</div>
             <div className="profile-name">
               <strong>{name}</strong>
-              <span className="caption">{auth.status === "ready" ? `${course ? `Curso ${course} · ` : ""}${auth.profile.email}` : `${SAMPLE_STUDENT.course} · datos de muestra`}</span>
+              <span className="caption">{auth.status === "ready" ? `${course ? `Curso ${course} · ` : ""}${auth.profile.email}` : "Sin cuenta · tu avance queda en este dispositivo"}</span>
             </div>
             <div className="sp-kpis">
               <span><b className="flame-text">{ins.streak}</b><span className="caption">días de racha</span></span>
@@ -125,11 +124,13 @@ export default function Profile({ theme, onTheme, onTeacher, onReports, onLogin,
             <Icon name="right" />
           </button>
 
-          <button type="button" className="card quick-row" onClick={onTeacher}>
-            <Icon name="user" />
-            <span>{staff ? "Panel docente" : "Vista de docente (datos de muestra)"}</span>
-            <Icon name="right" />
-          </button>
+          {staff && (
+            <button type="button" className="card quick-row" onClick={onTeacher}>
+              <Icon name="user" />
+              <span>Panel docente</span>
+              <Icon name="right" />
+            </button>
+          )}
         </div>
       </div>
     </section>

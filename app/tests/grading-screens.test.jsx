@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from "vitest";
 import { createRoot } from "react-dom/client";
 import { act } from "react";
 import GradingSettings, { targetsFor } from "../src/screens/GradingSettings.jsx";
-import TeacherReports from "../src/screens/TeacherReports.jsx";
 import { attemptForAssignment } from "../src/lib/assignments.js";
 import { attemptXp, xpFor } from "../src/lib/xp.js";
 import { xpFactor } from "../src/lib/grading.js";
@@ -39,21 +38,6 @@ describe("grading settings screen", () => {
     await act(async () => { save.click(); });
     expect(api.saveGradingModel).toHaveBeenCalledWith(expect.objectContaining({ schoolId: "s1", scope: "course", scopeId: "c1", model: expect.objectContaining({ kind: "scale" }) }));
     expect(reloadModels).toHaveBeenCalled();
-    await unmount();
-  });
-});
-
-describe("teacher reports use the grading model", () => {
-  it("shows the class grade next to the share right", async () => {
-    const members = [{ id: "m1", course_id: "c1", profile_id: "p1", email: "a@x.co", full_name: "Ana", role: "student" }];
-    const attempts = [{ profile_id: "p1", assignment_id: "a1", submitted_at: "2026-10-20T10:00:00Z", mode: "practice", duration_sec: 600, score: { keyed: true, correct: 8, answered: 10, total: 10, perArea: [{ name: "Inglés", total: 10, answered: 10, correct: 8 }] }, answers: { 1: "A" } }];
-    const api = { allMembers: vi.fn().mockResolvedValue(members), reportAttempts: vi.fn().mockResolvedValue(attempts) };
-    const models = [{ scope: "school", scope_id: "s1", model: { kind: "scale", scale: { min: 1, max: 5, pass: 3, passPct: 60, decimals: 1 } } }];
-    const fetchExam = vi.fn().mockRejectedValue(new Error("no booklet"));
-    const { host, unmount } = await mount(<TeacherReports api={api} profile={profile} courses={courses} assignments={assignments} models={models} fetchExam={fetchExam} guard={(fn) => fn()} />);
-    await act(async () => { await new Promise((r) => setTimeout(r, 20)); });
-    expect(host.textContent).toContain("Nota media");
-    expect(host.textContent).toContain("4,0"); // 80 % on a 1-5 scale passing at 60 %
     await unmount();
   });
 });

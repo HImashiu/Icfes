@@ -6,6 +6,8 @@ import Workspace from "./builder/Workspace.jsx";
 import { UseBadge, UseHistory } from "../components/QuestionUse.jsx";
 import { holdOf, useIndex } from "../lib/questionUse.js";
 import { loadQuestionControl } from "../lib/questionControl.js";
+import Icon from "../components/Icon.jsx";
+import QuestionsPrint from "../components/QuestionsPrint.jsx";
 import "./builder/builder.css";
 
 const plain = (h) => String(h ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -14,7 +16,14 @@ const PAGE = 30;
 // “Banco de preguntas”: cualquier docente puede corregir o adaptar una pregunta del banco. El cambio se guarda
 // como versión del colegio: los estudiantes y docentes de este colegio ven la versión editada, el banco compartido
 // no cambia y se puede volver a la original en cualquier momento.
-export default function BankEditor({ api, profile, exams, fetchExam, guard, setNotice }) {
+// What chosen bank questions can become in one step (target ids: "clase" and "proyectar" make a class for projecting,
+// the rest are presets of Nueva actividad).
+const USES = [
+  ["clase", "Diapositivas", "play"], ["proyectar", "Proyectar ahora", "expand"], ["hoja", "Hoja de trabajo", "print"],
+  ["quiz", "Quiz", "check"], ["tarea", "Tarea", "book"], ["practica", "Práctica en clase", "pencil"], ["simulacro", "Examen con tiempo", "clock"], ["papel", "Examen en papel", "print"],
+];
+
+export default function BankEditor({ api, profile, exams, fetchExam, guard, setNotice, onConvert = null }) {
   const ready = (exams ?? []).filter((e) => e.status !== "proximamente");
   const [slug, setSlug] = useState(ready[0]?.slug ?? "");
   const [bundle, setBundle] = useState(null);
@@ -26,6 +35,9 @@ export default function BankEditor({ api, profile, exams, fetchExam, guard, setN
   // Where the school already used each question, and its holds (Biblioteca › Control).
   const [qc, setQc] = useState(null);
   const [usage, setUsage] = useState(null);
+  // Questions chosen to turn into slides, a worksheet, a quiz, an exam or a practice (this booklet only).
+  const [chosen, setChosen] = useState(() => new Set());
+  const [printing, setPrinting] = useState(false);
   useEffect(() => { let on = true; loadQuestionControl(api).then((v) => on && setQc(v), () => {}); return () => { on = false; }; }, [api]);
 
   const load = useCallback(() => {
@@ -36,7 +48,7 @@ export default function BankEditor({ api, profile, exams, fetchExam, guard, setN
       setVersions(v);
     });
   }, [slug, fetchExam, api, guard]);
-  useEffect(() => { setBundle(null); setPage(0); load(); }, [load]);
+  useEffect(() => { setBundle(null); setPage(0); setChosen(new Set()); load(); }, [load]);
 
   const byKey = useMemo(() => new Map(versions.map((v) => [v.qkey, v])), [versions]);
   const index = useMemo(() => (qc && bundle ? useIndex(qc.uses, slug, bundle.exam) : new Map()), [qc, bundle, slug]);
@@ -61,12 +73,23 @@ export default function BankEditor({ api, profile, exams, fetchExam, guard, setN
       onClose={async (saved) => { setWork(null); if (saved) setNotice("Guardado como versión de tu colegio."); await load(); }} />;
   }
   const pages = Math.max(1, Math.ceil(shown.length / PAGE));
+  const toggleChosen = (k) => setChosen((cur) => { const n = new Set(cur); if (n.has(k)) n.delete(k); else n.add(k); return n; });
+  const pageKeys = shown.slice(page * PAGE, page * PAGE + PAGE).map((q) => q.key);
+  const pageAll = pageKeys.length > 0 && pageKeys.every((k) => chosen.has(k));
+  const choosePage = () => setChosen((cur) => { const n = new Set(cur); for (const k of pageKeys) if (pageAll) n.delete(k); else n.add(k); return n; });
+  // In booklet order, so the slides, the worksheet and the activity read like the cuadernillo.
+  const chosenKeys = (bundle?.exam.questions ?? []).map((q) => q.key).filter((k) => chosen.has(k));
+  const examTitle = ready.find((e) => e.slug === slug)?.title ?? slug;
+  const use = (target) => {
+    if (target === "hoja") { setPrinting(true); return; }
+    onConvert?.({ target, slug, keys: chosenKeys, title: `${examTitle} · ${chosenKeys.length} preguntas` });
+  };
   return (
     <>
       <header className="t-head">
         <div>
           <h1>Banco de preguntas</h1>
-          <span className="caption">Corrige o adapta cualquier pregunta. Tu colegio ve la versión editada; el banco compartido no cambia y puedes volver a la original.</span>
+          <span className="caption">Corrige o adapta cualquier pregunta, o elige varias y conviértelas en diapositivas, hoja de trabajo, quiz, examen o práctica. Tu colegio ve la versión editada; el banco compartido no cambia y puedes volver a la original.</span>
         </div>
       </header>
       <div className="card t-card">
@@ -86,12 +109,30 @@ export default function BankEditor({ api, profile, exams, fetchExam, guard, setN
             <input className="qb-input" type="search" value={text} placeholder="Número o texto" onChange={(e) => { setText(e.target.value); setPage(0); }} />
           </label>
         </div>
+        {bundle && (
+          <div className={chosen.size ? "bk-use on" : "bk-use"} role="region" aria-label="Usar las preguntas elegidas">
+            <label className="check-row"><input type="checkbox" checked={pageAll} onChange={choosePage} /><span>{pageAll ? "Quitar esta página" : "Elegir esta página"}</span></label>
+            {chosen.size === 0 ? <span className="caption">Elige preguntas para convertirlas en diapositivas, una hoja de trabajo, un quiz, un examen o una práctica.</span> : (
+              <>
+                <strong>{chosen.size} {chosen.size === 1 ? "elegida" : "elegidas"}</strong>
+                <span className="bk-use-btns">
+                  {USES.filter(([id]) => id === "hoja" || onConvert).map(([id, label, icon]) => (
+                    <button key={id} type="button" className={id === "clase" ? "primary small" : "secondary small"} onClick={() => use(id)}><Icon name={icon} size={14} /> {label}</button>
+                  ))}
+                </span>
+                <button type="button" className="link" onClick={() => setChosen(new Set())}>Vaciar</button>
+              </>
+            )}
+          </div>
+        )}
+        {printing && bundle && <QuestionsPrint bundle={bundle} keys={chosenKeys} title={`${examTitle} · hoja de trabajo`} onClose={() => setPrinting(false)} />}
         {!bundle && <p className="caption">Cargando preguntas…</p>}
         <ul className="b-list">
           {shown.slice(page * PAGE, page * PAGE + PAGE).map((q) => {
             const v = byKey.get(q.key);
             return (
-              <li key={q.key} className="b-row" style={{ gridTemplateColumns: "1fr auto" }}>
+              <li key={q.key} className={chosen.has(q.key) ? "b-row on" : "b-row"} style={{ gridTemplateColumns: "auto 1fr auto" }}>
+                <input type="checkbox" aria-label={`Elegir la pregunta ${q.number}`} checked={chosen.has(q.key)} onChange={() => toggleChosen(q.key)} />
                 <div className="b-body">
                   <strong><span className="dot" style={{ background: areaColor(q.section) }} /> N.° {q.number} · {q.section}</strong>
                   <span className="b-text">{plain(q.stem_md || q.stimulus_md).slice(0, 160)}</span>
