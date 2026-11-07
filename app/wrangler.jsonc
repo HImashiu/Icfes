@@ -1,0 +1,17 @@
+// Cloudflare Worker that serves the public site (landing at /, app at /app/) as static assets.
+// Deploy with `npm run deploy` (scripts/deploy-site.sh): build, shrink figures, then `wrangler deploy`.
+// Needs CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in the environment.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "condor",
+  "compatibility_date": "2026-11-07",
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": {
+    "directory": "./site-dist",
+    // /privacidad.html -> /privacidad and /app -> /app/, as the dashboard upload already did
+    "html_handling": "auto-trailing-slash",
+    // The app routes with #hashes, so no SPA fallback is needed; unknown paths get the site's 404 page
+    "not_found_handling": "404-page"
+  }
+}
