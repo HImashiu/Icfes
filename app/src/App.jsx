@@ -24,6 +24,7 @@ import { linkFigures, parseFigureSpecs, prepareExam } from "./lib/figures.js";
 import { applyTheme, currentTheme } from "./lib/theme.js";
 import { AuthContext, useAuth } from "./lib/auth.jsx";
 import DemoBanner from "./demo/DemoBanner.jsx";
+import LaunchNotice from "./components/LaunchNotice.jsx";
 import Consent from "./screens/Consent.jsx";
 import FamilyReport from "./screens/FamilyReport.jsx";
 import { tokenFromHash } from "./lib/family.js";
@@ -480,6 +481,7 @@ export default function App() {
     <AuthContext.Provider value={auth}>
     <ExamContext.Provider value={selected?.slug ?? null}>
     {demoEnabled && <DemoBanner side={view === "teacher" ? "teacher" : "student"} onSide={(side) => setView(side === "teacher" ? "teacher" : "home")} />}
+    {!demoEnabled && <LaunchNotice />}
     <div className={view === "test" || view === "teacher" ? "app wide" : "app"}>
       <ScreenBoundary key={view} onHome={goHome}>
       {loadError && <p className="notice error">{loadError}</p>}

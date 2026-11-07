@@ -3120,3 +3120,10 @@ body.spl-open { overflow: hidden; }
 .an-until { display: flex; align-items: center; gap: 8px; }
 .chip.ghost { background: transparent; border-style: dashed; }
 .td-idle { margin: 8px 2px 0; }
+
+/* Public demo bar (LaunchNotice): one compact line, wraps on phones. */
+.launch-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 8px 16px; font-size: 13px; background: var(--surface-2, #1b1f1a); border-bottom: 1px solid var(--line); color: var(--text-2); }
+.launch-chip { background: var(--accent, #C8F04A); color: #142000; font-weight: 700; font-size: 12px; padding: 2px 8px; border-radius: 999px; }
+.launch-text { flex: 1 1 240px; }
+.launch-open { font-weight: 700; }
+@media (max-width: 767px) { .launch-bar { padding: 8px 16px; } }
