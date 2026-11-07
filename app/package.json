@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "build:site": "npm run build && node scripts/build-site.mjs",
-    "site": "node scripts/build-site.mjs"
+    "site": "node scripts/build-site.mjs",
+    "deploy": "bash scripts/deploy-site.sh"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
@@ -32,6 +33,7 @@
     "@vitejs/plugin-react": "^4.7.0",
     "jsdom": "^29.1.1",
     "vite": "^5.4.21",
-    "vitest": "^2.1.9"
+    "vitest": "^2.1.9",
+    "wrangler": "^4.158.0"
   }
 }
