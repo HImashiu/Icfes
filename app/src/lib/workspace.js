@@ -126,6 +126,7 @@ export function applyFilters(entries, f, ctx = {}) {
     if (f.work === "none" && !(e.assigned > 0 && e.done === 0)) return false;
     if (f.work === "quiet7" && e.lastAt && now - Date.parse(e.lastAt) < 7 * DAY) return false;
     if (f.work === "quiet7" && !e.lastAt && e.assigned === 0) return false;
+    if (f.work === "exits" && !(e.leaves > 0)) return false;
     if (f.weakArea && e.areas[0]?.name !== f.weakArea) return false;
     if (min != null && (e.avgPct == null || e.avgPct < min)) return false;
     if (max != null && (e.avgPct == null || e.avgPct > max)) return false;

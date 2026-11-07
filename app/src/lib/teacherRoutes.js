@@ -32,6 +32,7 @@ const SECTIONS = new Set(Object.keys(TABS));
 export const PRESETS = {
   tarea: { kind: "homework", delivery: "online", label: "Tarea", note: "Para resolver en casa antes de una fecha", icon: "book" },
   practica: { kind: "task", delivery: "online", label: "Práctica en clase", note: "En el salón, con corrección inmediata", icon: "pencil" },
+  quiz: { kind: "homework", delivery: "online", label: "Quiz", note: "Un intento, sin pistas; las respuestas salen al cerrar", icon: "check", config: { attempts: 1, hints: false, instant: false, reveal: "after_close" } },
   simulacro: { kind: "exam", delivery: "online", label: "Simulacro con tiempo", note: "En línea, con cronómetro y un intento", icon: "clock" },
   papel: { kind: "exam", delivery: "paper", label: "Simulacro en papel", note: "Cuadernillo impreso y hoja de burbujas", icon: "print" },
 };
