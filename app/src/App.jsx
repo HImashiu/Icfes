@@ -8,7 +8,6 @@ import Profile from "./screens/Profile.jsx";
 import Subjects from "./screens/Subjects.jsx";
 import Progress from "./screens/Progress.jsx";
 import { classesFrom, studentCourses } from "./lib/student.js";
-import Teacher from "./screens/Teacher.jsx";
 import TeacherLive from "./screens/TeacherLive.jsx";
 import Login from "./screens/Login.jsx";
 import History from "./screens/History.jsx";
@@ -620,7 +619,10 @@ export default function App() {
       {view === "reports" && <Reports onBack={() => setView("profile")} onPractice={() => setView("setup")} onOpen={openFromReport} />}
       {view === "teacher" && (rootAuth.status === "ready" && rootAuth.profile.role !== "student"
         ? <AuthContext.Provider value={rootAuth}><TeacherLive auth={rootAuth} exams={exams} fetchExam={fetchExam} onExit={() => { if (window.location.hash.startsWith("#docente")) history.replaceState(null, "", window.location.pathname + window.location.search); setView("profile"); }} /></AuthContext.Provider>
-        : <Teacher onExit={() => setView("profile")} />)}
+        // The public site never shows a teacher panel to someone who isn't signed in as staff: a #docente link asks
+        // for the school sign-in instead (the full invented school stays available only in ?demo=1).
+        : rootAuth.status === "loading" ? <p className="muted pad">Cargando…</p>
+        : <Login onBack={() => setView("home")} />)}
 
       {needsAttempt && !attempt && <main className="frame"><p className="muted">Esta actividad ya no está abierta.</p><button type="button" className="primary" onClick={goHome}>Volver al inicio</button></main>}
       </ScreenBoundary>

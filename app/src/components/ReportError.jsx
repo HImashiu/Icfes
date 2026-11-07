@@ -22,6 +22,7 @@ export default function ReportError({ question, examLabel }) {
       exam: examLabel || slug || "",
       questionKey: question.key,
       questionNumber: question.number,
+      slug,
     });
     setBusy(false);
     setToast(result.stored === "server" ? "Gracias. Revisaremos esta pregunta." : "Guardado en este navegador. Gracias.");

@@ -3205,3 +3205,19 @@ body.spl-open { overflow: hidden; }
   .launch-text { display: none; }
   .launch-bar .launch-open:first-of-type { margin-left: auto; }
 }
+
+/* Inicio: a little more life on arrival (cards in each column rise in turn, the goal ring and mastery bars fill). */
+.launch-bar { animation: drop-in 0.35s cubic-bezier(0.3, 0.7, 0.4, 1.4) backwards; }
+.sh-col > * { animation: rise-in 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+.sh-col > :nth-child(2) { animation-delay: 0.08s; }
+.sh-col > :nth-child(3) { animation-delay: 0.16s; }
+.sh-col > :nth-child(4) { animation-delay: 0.24s; }
+.sh-col > :nth-child(n+5) { animation-delay: 0.3s; }
+.sh-ring circle + circle { animation: ring-draw 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 0.25s backwards; }
+.sh-m .progress > span { transform-origin: left; animation: grow-x 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.4s backwards; }
+.home-head .pill { animation: pop-in 0.4s cubic-bezier(0.3, 0.7, 0.4, 1.4) 0.15s backwards; }
+.home-head .pill + .pill { animation-delay: 0.22s; }
+@keyframes ring-draw { from { stroke-dasharray: 0 169.6; } }
+@media (prefers-reduced-motion: reduce) {
+  .launch-bar, .sh-col > *, .sh-ring circle + circle, .sh-m .progress > span, .home-head .pill { animation: none; }
+}

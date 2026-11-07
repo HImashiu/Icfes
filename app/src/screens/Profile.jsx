@@ -124,11 +124,13 @@ export default function Profile({ theme, onTheme, onTeacher, onReports, onLogin,
             <Icon name="right" />
           </button>
 
-          <button type="button" className="card quick-row" onClick={onTeacher}>
-            <Icon name="user" />
-            <span>{staff ? "Panel docente" : "Vista de docente (datos de muestra)"}</span>
-            <Icon name="right" />
-          </button>
+          {staff && (
+            <button type="button" className="card quick-row" onClick={onTeacher}>
+              <Icon name="user" />
+              <span>Panel docente</span>
+              <Icon name="right" />
+            </button>
+          )}
         </div>
       </div>
     </section>

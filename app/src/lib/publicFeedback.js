@@ -2,6 +2,7 @@
 // These go to the backend when it is configured, so the owner can read them in the Supabase dashboard. Without a
 // backend (or if the write fails) they are kept in this browser, and the caller still says "saved".
 import { backendConfigured, supabase } from "./supabase.js";
+import { addReport } from "./local.js";
 
 const LOCAL_KEY = "condor:public-feedback";
 const WAITLIST_KEY = "condor:waitlist";
@@ -25,9 +26,11 @@ async function send(row) {
 }
 
 // kind: "question" (with exam, question key and number) or "general".
-export function sendFeedback({ kind, message, exam = null, questionKey = null, questionNumber = null, contact = null }) {
+export function sendFeedback({ kind, message, exam = null, questionKey = null, questionNumber = null, contact = null, slug = null }) {
   const text = String(message ?? "").trim().slice(0, 2000);
   if (!text) return Promise.resolve({ stored: null, error: "empty" });
+  // Question flags also appear in Perfil › Mis reportes de errores, as before.
+  if (kind === "question") addReport({ slug, question: questionKey, number: questionNumber, exam: exam ?? "", note: text });
   return send({
     kind,
     message: text,

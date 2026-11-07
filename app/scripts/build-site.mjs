@@ -6,7 +6,7 @@
 // SITE_URL (default https://condor.juandabarrios12.workers.dev/) goes into canonical, Open Graph, robots and sitemap.
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const appRoot = join(here, "..");
@@ -39,11 +39,57 @@ mkdirSync(out, { recursive: true });
 cpSync(dist, join(out, "app"), { recursive: true });
 cpSync(join(appRoot, "public", "brand"), join(out, "brand"), { recursive: true });
 
+// The owl peeking over the sample question on the landing page: Juan's owl (src/components/owlArt.js), head only,
+// cut just under the eyes so it sits on the card's top edge. Inline, so the landing's CSS can blink and move it.
+const owl = await import(pathToFileURL(join(appRoot, "src", "components", "owlArt.js")).href);
+function owlPeek() {
+  const { OWL_PATHS: P, OWL_ELLIPSES: E, OWL_COLORS: C } = owl;
+  const ell = (e, fill) => `<ellipse cx="${e.cx}" cy="${e.cy}" rx="${e.rx}" ry="${e.ry}" fill="${fill}"/>`;
+  const arc = (e) => `<ellipse cx="${e.cx}" cy="${e.cy}" rx="${e.rx + 6}" ry="${e.ry + 6}" fill="${C.face}"/><path d="M${e.cx - 66} ${e.cy + 24}Q${e.cx} ${e.cy - 74} ${e.cx + 66} ${e.cy + 24}" fill="none" stroke="${C.pupil}" stroke-width="30" stroke-linecap="round"/>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="20 -14 900 704" focusable="false">`
+    + `<path d="${P.board}" fill="${C.board}"/><path d="${P.hood}" fill="${C.hood}"/><path d="${P.face}" fill="${C.face}"/>`
+    + E.blush.map((e) => ell(e, C.blush)).join("")
+    + `<g class="pk-eyes"><g class="pk-open">${E.eyes.map((e) => ell(e, C.eye)).join("")}<g class="pk-pupils"><path d="${P.pupilL}" fill="${C.pupil}"/><path d="${P.pupilR}" fill="${C.pupil}"/></g></g>`
+    + `<g class="pk-happy">${E.eyes.map(arc).join("")}</g></g>`
+    + `<path d="${P.beak}" fill="${C.beak}"/><path d="${P.crown}" fill="${C.crown}"/>`
+    + `<g class="pk-tassel"><path d="${P.cord}" fill="${C.tassel}"/><path d="${P.bell}" fill="${C.tassel}"/></g></svg>`;
+}
+
+// Analytics, only when its id is set at build time (nothing is loaded otherwise):
+//   CF_ANALYTICS_TOKEN   Cloudflare Web Analytics site token (no cookies)
+//   GA_MEASUREMENT_ID    Google Analytics 4 id, G-XXXXXXX
+//   GOOGLE_SITE_VERIFICATION  the content of Search Console's HTML-tag verification
+function analytics() {
+  const out = [];
+  const cf = env.CF_ANALYTICS_TOKEN;
+  const ga = env.GA_MEASUREMENT_ID;
+  if (cf) {
+    if (!/^[A-Za-z0-9]{16,64}$/.test(cf)) { console.error("[build-site] CF_ANALYTICS_TOKEN looks wrong"); process.exit(1); }
+    out.push(`<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "${cf}"}'></script>`);
+  }
+  if (ga) {
+    if (!/^G-[A-Z0-9]{4,16}$/.test(ga)) { console.error("[build-site] GA_MEASUREMENT_ID looks wrong"); process.exit(1); }
+    out.push(`<script async src="https://www.googletagmanager.com/gtag/js?id=${ga}"></script>`
+      // Consent mode with storage denied: Google gets cookieless pings, so no cookie banner is needed (many visitors
+      // are minors). Visits are modelled, a little less exact than with cookies.
+      + `<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}`
+      + `gtag("consent","default",{analytics_storage:"denied",ad_storage:"denied",ad_user_data:"denied",ad_personalization:"denied"});`
+      + `gtag("js",new Date());gtag("config","${ga}");</script>`);
+  }
+  return out.join("\n  ");
+}
+const verification = env.GOOGLE_SITE_VERIFICATION
+  ? `<meta name="google-site-verification" content="${env.GOOGLE_SITE_VERIFICATION.replace(/[^A-Za-z0-9_-]/g, "")}" />`
+  : "";
+
 const TEXT = /\.(html|css|js|txt|xml)$/;
 const fill = (text) => text
   .replaceAll("__SUPABASE_URL__", supabaseUrl)
   .replaceAll("__SUPABASE_ANON_KEY__", supabaseKey)
-  .replaceAll("__SITE_URL__", siteUrl);
+  .replaceAll("__SITE_URL__", siteUrl)
+  .replace("<!--OWL_PEEK-->", owlPeek())
+  .replace("<!--ANALYTICS-->", analytics())
+  .replace("<!--SITE_VERIFICATION-->", verification);
 
 function copyDir(from, to) {
   mkdirSync(to, { recursive: true });
@@ -56,6 +102,10 @@ function copyDir(from, to) {
   }
 }
 copyDir(site, out);
+
+// The app gets the same analytics as the landing page.
+const appIndex = join(out, "app", "index.html");
+writeFileSync(appIndex, readFileSync(appIndex, "utf8").replace("</head>", `  ${analytics()}\n  </head>`));
 
 const left = [];
 (function scan(dir) {
