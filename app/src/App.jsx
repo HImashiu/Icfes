@@ -505,7 +505,9 @@ export default function App() {
   const examTitle = selected ? `${selected.exam.title} · ${scopeTitle}` : "";
   // The sidebar stays on every screen except the test; results and review belong to Practicar, reports to Perfil.
   const navView = { home: "home", subjects: "subjects", setup: "setup", results: "setup", review: "setup", custom: "setup", history: "progress", progress: "progress", profile: "profile", login: "profile", reports: "profile" }[view] ?? null;
-  const course = studentCourses(classesFrom({ classes: myClasses, assignments: signedIn ? assigned.assignments : [] })).join(", ") || null;
+  // A teacher or coordinator previewing the student app is not "in" the classes they teach: no course label.
+  const staffView = signedIn && auth.profile?.role && auth.profile.role !== "student";
+  const course = staffView ? null : studentCourses(classesFrom({ classes: myClasses, assignments: signedIn ? assigned.assignments : [] })).join(", ") || null;
   // A simulacro is both sessions of one cuadernillo: open the session that is missing, whole booklet, with time.
   const startSession = async (slug) => {
     const next = await openExam(slug);
@@ -661,7 +663,7 @@ export default function App() {
 
       {view === "profile" && <Profile theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} onReports={() => setView("reports")} onLogin={() => setView("login")}
         assigned={signedIn ? assigned : null} classes={myClasses} course={course} onGo={go} />}
-      {view === "subjects" && <Subjects onOpenAssigned={openAssignedResult} announcements={signedIn ? announcements : []} assigned={signedIn ? assigned : null} classes={myClasses} course={course} tab={subjectTab} subjectId={subjectId}
+      {view === "subjects" && <Subjects independent={signedIn && !auth.profile?.school_id} onOpenAssigned={openAssignedResult} announcements={signedIn ? announcements : []} assigned={signedIn ? assigned : null} classes={myClasses} course={course} tab={subjectTab} subjectId={subjectId}
         onTab={(t) => { setSubjectTab(t); setSubjectId(null); }} onOpenSubject={setSubjectId} onBack={() => setSubjectId(null)}
         onStartAssigned={startAssigned} onPracticeArea={practiceArea} onLogin={() => setView("login")} />}
       {view === "progress" && <Progress tab={progressTab} onTab={setProgressTab} assigned={signedIn ? assigned : null} classes={myClasses}

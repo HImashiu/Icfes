@@ -73,6 +73,9 @@ export function studentSubjects({ classes, assignments = [], attempts = [], now 
     .map((t) => (t.score.perArea ?? []).find((p) => p.name === area))
     .filter((p) => p && (p.total || p.answered))
     .map((p) => Math.round((p.correct / (p.total || p.answered)) * 100));
+  // Two or more course-wide cards (a student in two prep classes): each says which group it belongs to.
+  const generals = [...cards.values()].filter((x) => x.kind === "general");
+  if (generals.length > 1) for (const x of generals) x.name = `${GENERAL} · ${[...x.groups].join(", ")}`;
   return [...cards.values()].map((x) => {
     const mine = x.items;
     const pending = mine.filter((a) => assignmentState(a, now) === "active" && !delivered.has(a.id))
@@ -203,8 +206,10 @@ export function studentEvents({ subjects, assignments = [], attempts = [], now =
 }
 
 // Who a subject card names: its teacher; for an area with no class yet, the course's teacher, said as such.
-export function teacherLabel(s) {
+// A student with no school (independent) practises on their own: no "your school hasn't assigned" wording.
+export function teacherLabel(s, { independent = false } = {}) {
   if (s.teacher) return s.teacher;
   if (s.courseTeacher) return `Docente del curso: ${s.courseTeacher}`;
-  return s.kind === "general" ? "Tareas de tu curso" : "Tu colegio aún no asigna docente";
+  if (independent) return s.kind === "general" ? "Tareas de tu clase" : "Práctica por tu cuenta";
+  return s.kind === "general" ? "Tareas de tu curso" : "Sin docente asignado aún";
 }
