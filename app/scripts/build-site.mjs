@@ -114,7 +114,9 @@ const vite = await createServer({ root: appRoot, configFile: false, logLevel: "e
 const { renderRich } = await vite.ssrLoadModule("/src/lib/render.js");
 const { buildSeoPages } = await import(pathToFileURL(join(here, "build-seo.mjs")).href);
 const dataDir = env.ICFES_DATA_DIR || "/mnt/project-files/icfes/data";
-const seoPages = await buildSeoPages({ appRoot, out, siteUrl, dataDir, renderRich });
+const saber11 = await vite.ssrLoadModule("/src/lib/saber11.js");
+const national = JSON.parse(readFileSync(join(appRoot, "src", "lib", "saber11-national-2022.json"), "utf8"));
+const seoPages = await buildSeoPages({ appRoot, out, siteUrl, dataDir, renderRich, saber11, national });
 await vite.close();
 for (const p of seoPages) {
   const f = join(out, p, "index.html");

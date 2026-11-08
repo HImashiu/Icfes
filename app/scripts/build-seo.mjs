@@ -178,7 +178,21 @@ function questionHtml({ b, q, passage, groupSize }, area, renderRich) {
 </article>`;
 }
 
-function page({ siteUrl, path, title, desc, body, crumbs, jsonLd, katex }) {
+// The landing page's logo (mark + wordmark) and icon links, so every page carries the same brand.
+let BRAND = null;
+function brandBits(appRoot) {
+  if (BRAND) return BRAND;
+  const html = readFileSync(join(appRoot, "site", "index.html"), "utf8");
+  const header = html.match(/<header class="top">[\s\S]*?<a class="brand"[^>]*>([\s\S]*?)<\/a>/);
+  const footer = html.match(/<footer[\s\S]*?<a class="brand"[^>]*>([\s\S]*?)<\/a>/);
+  const icons = (html.match(/<link rel="(icon|apple-touch-icon)"[^>]*>/g) ?? []).join("\n  ");
+  BRAND = { header: header?.[1] ?? "", footer: footer?.[1] ?? "", icons };
+  return BRAND;
+}
+// Relative links in the landing's markup, rewritten for a page `up` levels deep.
+const rebase = (html, up) => html.replace(/(src|href)="(?!https?:|#|\/|data:)([^"]*)"/g, (m, a, v) => `${a}="${up}${v === "./" ? "" : v}"`);
+
+function page({ siteUrl, path, title, desc, body, crumbs, jsonLd, katex, script }) {
   const url = siteUrl + path;
   const up = "../".repeat(path.split("/").filter(Boolean).length);
   const crumbLd = {
@@ -196,8 +210,7 @@ function page({ siteUrl, path, title, desc, body, crumbs, jsonLd, katex }) {
   <meta name="theme-color" content="#0D110F" />
   <meta name="robots" content="index, follow, max-image-preview:large" />
   <link rel="canonical" href="${url}" />
-  <link rel="icon" type="image/png" href="${up}brand/owl-64.png" />
-  <link rel="apple-touch-icon" href="${up}brand/owl-192.png" />
+  ${rebase(BRAND.icons, up)}
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="Cóndor" />
   <meta property="og:locale" content="es_CO" />
@@ -218,11 +231,12 @@ function page({ siteUrl, path, title, desc, body, crumbs, jsonLd, katex }) {
   <a class="skip" href="#contenido">Saltar al contenido</a>
   <header class="top">
     <div class="wrap top-row">
-      <a class="brand" href="${up}" aria-label="Cóndor, inicio"><img src="${up}img/owl.svg" alt="" width="34" height="34" /><span>Cóndor</span></a>
+      <a class="brand" href="${up}" aria-label="Cóndor, inicio">${rebase(BRAND.header, up)}</a>
       <nav class="top-nav" aria-label="Secciones">
         <a href="${up}simulacro-icfes/">Simulacro</a>
         <a href="${up}preguntas-icfes/">Preguntas</a>
-        <a href="${up}#colegios">Colegios</a>
+        <a href="${up}calculadora-puntaje-icfes/">Calculadora</a>
+        <a href="${up}como-prepararse-para-el-icfes/">Cómo prepararse</a>
       </nav>
       <a class="btn btn-primary btn-sm" href="${up}app/">Practicar gratis</a>
     </div>
@@ -233,16 +247,20 @@ ${body}
   </main>
   <footer class="foot">
     <div class="wrap foot-row">
-      <a class="brand" href="${up}"><img src="${up}img/owl.svg" alt="" width="28" height="28" /><span>Cóndor</span></a>
+      <a class="brand" href="${up}" aria-label="Cóndor, inicio">${rebase(BRAND.footer, up)}</a>
       <p>Plataforma independiente, no afiliada al ICFES. Fuente de las preguntas: ICFES, Saber 11.</p>
       <nav aria-label="Más">
         <a href="${up}simulacro-icfes/">Simulacro ICFES gratis</a>
         <a href="${up}preguntas-icfes/">Preguntas por área</a>
+        <a href="${up}calculadora-puntaje-icfes/">Calculadora de puntaje</a>
+        <a href="${up}niveles-de-desempeno-icfes/">Niveles de desempeño</a>
+        <a href="${up}como-prepararse-para-el-icfes/">Cómo prepararse</a>
         <a href="${up}privacidad.html">Privacidad y términos</a>
       </nav>
     </div>
   </footer>
   <script src="${up}site.js" defer></script>
+  ${script ? `<script src="${up}${script}" defer></script>` : ""}
 </body>
 </html>
 `;
@@ -257,7 +275,8 @@ function faqBlock(items) {
 }
 const faqLd = (items) => ({ "@type": "FAQPage", mainEntity: items.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a.replace(/<[^>]+>/g, "") } })) });
 
-export async function buildSeoPages({ appRoot, out, siteUrl, dataDir, renderRich }) {
+export async function buildSeoPages({ appRoot, out, siteUrl, dataDir, renderRich, saber11, national }) {
+  brandBits(appRoot);
   if (!existsSync(dataDir)) { console.warn(`[build-seo] ${dataDir} not found: question pages skipped.`); return []; }
   const bank = loadBank(dataDir);
   const pages = [];
@@ -353,6 +372,9 @@ ${cta("../", "Empieza tu simulacro ahora")}`;
     }));
   }
 
+  if (saber11 && national) buildScorePages({ siteUrl, write, saber11, national });
+  buildGuidePage({ siteUrl, write });
+
   // KaTeX stylesheet and fonts for the math on the question pages.
   if (usesKatex) {
     const k = join(appRoot, "node_modules", "katex", "dist");
@@ -361,4 +383,160 @@ ${cta("../", "Empieza tu simulacro ahora")}`;
     for (const f of readdirSync(join(k, "fonts")).filter((f) => f.endsWith(".woff2"))) copyFileSync(join(k, "fonts", f), join(out, "katex", "fonts", f));
   }
   return pages;
+}
+
+// ---------------------------------------------------------------- score calculator, levels, study guide
+
+const fmtN = (n) => n.toLocaleString("es-CO");
+// The score at which a given share of the country scored lower (from the ICFES open data counts).
+function scoreAtPercentile(entry, pct) {
+  const n = entry.counts.reduce((a, b) => a + b, 0);
+  let acc = 0;
+  for (let i = 0; i < entry.counts.length; i++) {
+    if ((acc / n) * 100 >= pct) return entry.min + i;
+    acc += entry.counts[i];
+  }
+  return entry.min + entry.counts.length - 1;
+}
+
+function buildScorePages({ siteUrl, write, saber11, national }) {
+  const { TESTS, NATIONAL_SOURCE } = saber11;
+  const total = national.global.counts.reduce((a, b) => a + b, 0);
+
+  // Calculator.
+  {
+    const path = "calculadora-puntaje-icfes/";
+    const pcts = [25, 50, 75, 90, 95, 99];
+    const pctRows = pcts.map((p) => `<tr><td>${p === 50 ? "La mitad del país (mediana)" : `Mejor que el ${p} %`}</td><td><b>${scoreAtPercentile(national.global, p)}</b></td></tr>`).join("");
+    const areaPct = TESTS.map((t) => `<tr><td>${esc(t.name)}</td>${[50, 75, 90].map((p) => `<td>${scoreAtPercentile(national[t.id], p)}</td>`).join("")}</tr>`).join("");
+    const inputs = TESTS.map((t) => `<label class="calc-in"><span>${esc(t.name)}${t.weight === 1 ? " <small>(pesa 1)</small>" : " <small>(pesa 3)</small>"}</span><input type="number" inputmode="numeric" min="0" max="100" step="1" name="${t.id}" placeholder="0 a 100" /></label>`).join("");
+    const levelsJson = Object.fromEntries(TESTS.map((t) => [t.id, t.levels.map((l) => [l.label, l.from, l.to])]));
+    const faq = [
+      ["¿Cuál es el puntaje máximo del ICFES?", "500 en el puntaje global y 100 en cada prueba."],
+      ["¿Qué es un buen puntaje en el ICFES?", `Depende de tu meta. Con datos del ICFES de 2022, un global de ${scoreAtPercentile(national.global, 50)} te pone en la mitad del país, ${scoreAtPercentile(national.global, 75)} en el 25 % más alto y ${scoreAtPercentile(national.global, 90)} en el 10 % más alto. Muchas universidades públicas y becas piden más de 300.`],
+      ["¿Por qué Inglés pesa menos?", "El ICFES le da peso 1 a Inglés y peso 3 a las otras cuatro pruebas. Por eso subir 10 puntos en Matemáticas mueve el global tres veces más que subir 10 en Inglés."],
+      ["¿Esta calculadora es oficial?", "No. Usa la fórmula y los niveles que publica el ICFES y la distribución nacional de 2022 de sus datos abiertos. Tu percentil real depende de los estudiantes que presenten el examen contigo."],
+    ];
+    const body = `<section class="section guide-head"><div class="wrap narrow">
+  <span class="tag">Calculadora</span>
+  <h1>Calculadora del puntaje ICFES</h1>
+  <p class="prose">Escribe tu puntaje de 0 a 100 en cada prueba del Saber 11 y te mostramos tu <b>puntaje global de 0 a 500</b>, tu <b>nivel de desempeño</b> en cada prueba y qué porcentaje de estudiantes del país tuvo un puntaje menor.</p>
+</div></section>
+<section class="wrap narrow">
+  <form class="card calc" id="calc" novalidate>
+    <div class="calc-grid">${inputs}</div>
+    <div class="calc-out" id="calc-out" aria-live="polite">
+      <div class="calc-big"><span>Puntaje global</span><b id="calc-global">–</b><small id="calc-gpct">Llena las cinco pruebas</small></div>
+      <ul class="calc-levels" id="calc-levels"></ul>
+    </div>
+  </form>
+  <script type="application/json" id="calc-data">${JSON.stringify({ levels: levelsJson, dist: Object.fromEntries(Object.entries(national).map(([k, v]) => [k, { min: v.min, counts: v.counts }])) })}</script>
+  <p class="source">Percentiles con la distribución nacional: ${esc(NATIONAL_SOURCE)}.</p>
+</section>
+<section class="wrap narrow guide-body">
+  <h2>Cómo se calcula el puntaje global</h2>
+  <p class="prose">Cada prueba se califica de 0 a 100. El global se calcula así: <b>(3 × Lectura crítica + 3 × Matemáticas + 3 × Sociales + 3 × Ciencias + 1 × Inglés) ÷ 13 × 5</b>, redondeado.</p>
+  <p class="prose">Ejemplo: con 60 en Lectura crítica, 55 en Matemáticas, 50 en Sociales, 52 en Ciencias y 65 en Inglés: (180 + 165 + 150 + 156 + 65) ÷ 13 × 5 = <b>275</b>.</p>
+  <h2>¿Qué es un buen puntaje ICFES?</h2>
+  <p class="prose">Así quedó el puntaje global de los ${fmtN(total)} estudiantes de calendario A que presentaron el Saber 11 en 2022:</p>
+  <div class="tbl"><table><thead><tr><th>Posición en el país</th><th>Puntaje global</th></tr></thead><tbody>${pctRows}</tbody></table></div>
+  <p class="prose">Y por prueba (puntaje de 0 a 100):</p>
+  <div class="tbl"><table><thead><tr><th>Prueba</th><th>Mediana</th><th>Mejor que el 75 %</th><th>Mejor que el 90 %</th></tr></thead><tbody>${areaPct}</tbody></table></div>
+  <p class="prose">Mira qué significa cada rango en <a href="../niveles-de-desempeno-icfes/">niveles de desempeño del ICFES</a>, o mide tu puntaje real con un <a href="../simulacro-icfes/">simulacro ICFES completo</a>.</p>
+  <h2>Preguntas frecuentes</h2>
+  ${faqBlock(faq)}
+</section>
+${cta("../", "Descubre tu puntaje con un simulacro")}`;
+    write(path, page({
+      siteUrl, path, title: "Calculadora del puntaje ICFES 2026: global de 0 a 500 y percentil | Cóndor",
+      desc: "Calcula tu puntaje global del ICFES (Saber 11) de 0 a 500 con la fórmula oficial, tu nivel de desempeño por prueba y en qué percentil del país quedas. Gratis.",
+      body, crumbs: [{ name: "Calculadora de puntaje", path }], script: "calc.js",
+      jsonLd: [faqLd(faq), { "@type": "WebApplication", name: "Calculadora del puntaje ICFES", url: siteUrl + path, applicationCategory: "EducationalApplication", operatingSystem: "Web", inLanguage: "es-CO", isAccessibleForFree: true, offers: { "@type": "Offer", price: "0", priceCurrency: "COP" } }],
+    }));
+  }
+
+  // Levels.
+  {
+    const path = "niveles-de-desempeno-icfes/";
+    const tables = TESTS.map((t) => `<h2>${esc(t.name)}</h2>
+  <div class="tbl"><table><thead><tr><th>${t.mcer ? "Nivel (MCER)" : "Nivel"}</th><th>Puntaje</th><th>Qué sabe hacer el estudiante</th></tr></thead><tbody>${t.levels.map((l) => `<tr><td><b>${esc(l.label)}</b></td><td>${l.from} a ${l.to}</td><td>${esc(l.desc)}</td></tr>`).join("")}</tbody></table></div>`).join("\n  ");
+    const faq = [
+      ["¿Cuántos niveles de desempeño tiene el ICFES?", "Cuatro en Lectura crítica, Matemáticas, Sociales y Ciencias (del 1 al 4). Inglés usa los niveles del Marco Común Europeo: Pre A1, A1, A2 y B1."],
+      ["¿Qué nivel es bueno?", "El nivel 3 indica que el estudiante va más allá de lo literal y relaciona conceptos; el nivel 4 es el más alto. En Inglés, B1 es el nivel más alto que mide el Saber 11."],
+      ["¿Los niveles de Inglés cambiaron?", "Sí. Desde 2025 el ICFES reporta Pre A1, A1, A2 y B1. Hasta 2024 usaba A-, A1, A2, B1 y B+ con otros cortes."],
+    ];
+    const body = `<section class="section guide-head"><div class="wrap narrow">
+  <span class="tag">Guía</span>
+  <h1>Niveles de desempeño del ICFES (Saber 11)</h1>
+  <p class="prose">Además del puntaje de 0 a 100, el ICFES ubica cada prueba en un <b>nivel de desempeño</b> que describe lo que el estudiante sabe hacer. Estos son los rangos de puntaje de cada nivel y lo que significan.</p>
+</div></section>
+<section class="wrap narrow guide-body">
+  ${tables}
+  <p class="prose">Hasta 2024, Inglés usaba otros niveles: A- (0 a 47), A1 (48 a 57), A2 (58 a 67), B1 (68 a 78) y B+ (79 a 100).</p>
+  <p class="prose">¿Quieres saber en qué nivel estás? Usa la <a href="../calculadora-puntaje-icfes/">calculadora del puntaje ICFES</a> o haz un <a href="../simulacro-icfes/">simulacro gratis</a>.</p>
+  <h2>Preguntas frecuentes</h2>
+  ${faqBlock(faq)}
+</section>
+${cta("../", "Mide tu nivel en cada prueba")}`;
+    write(path, page({
+      siteUrl, path, title: "Niveles de desempeño ICFES Saber 11: rangos de puntaje por prueba | Cóndor",
+      desc: "Rangos de puntaje de los niveles de desempeño 1 a 4 del ICFES en Lectura crítica, Matemáticas, Sociales y Ciencias, y los niveles de Inglés Pre A1, A1, A2 y B1.",
+      body, crumbs: [{ name: "Niveles de desempeño", path }],
+      jsonLd: [faqLd(faq), { "@type": "Article", headline: "Niveles de desempeño del ICFES (Saber 11)", inLanguage: "es-CO", url: siteUrl + path, publisher: { "@type": "Organization", name: "Cóndor", url: siteUrl } }],
+    }));
+  }
+}
+
+function buildGuidePage({ siteUrl, write }) {
+  const path = "como-prepararse-para-el-icfes/";
+  const weeks = [
+    ["1", "Simulacro completo de diagnóstico, con tiempo. Anota tu puntaje por prueba y las preguntas que fallaste."],
+    ["2 y 3", "Refuerza tus dos pruebas más bajas de Lectura crítica, Matemáticas, Sociales o Ciencias (pesan 3 cada una). 20 a 30 preguntas al día y repaso de cada error."],
+    ["4", "Segundo simulacro. Compara por prueba y mira qué tipo de pregunta sigues fallando."],
+    ["5 y 6", "Práctica mezclada de las cinco pruebas, con tiempo por pregunta. Inglés unos días por semana."],
+    ["7", "Tercer simulacro completo, en el horario del examen real."],
+    ["8", "Repaso suave de tus errores. Duerme bien y prepara los materiales del día del examen."],
+  ];
+  const tips = [
+    ["Lectura crítica", "Lee primero la pregunta y luego vuelve al texto. Las respuestas casi siempre se apoyan en algo que el texto dice; descarta las opciones que agregan ideas que el autor no plantea."],
+    ["Matemáticas", "No hay calculadora, así que practica operaciones a mano, porcentajes y lectura de gráficas. Muchas preguntas piden validar un procedimiento: revisa paso por paso dónde falla."],
+    ["Sociales y ciudadanas", "Repasa la Constitución (derechos, mecanismos de participación, ramas del poder) y practica identificar los intereses de cada actor en un conflicto."],
+    ["Ciencias naturales", "Lee bien tablas y gráficas de experimentos: qué variable cambia, cuál se mide y qué conclusión se puede sacar. Pregúntate siempre si los datos alcanzan para concluir algo."],
+    ["Inglés", "Las primeras partes son las más fáciles: avisos, vocabulario y conversaciones cortas. Asegura esos puntos y lee en inglés unos minutos al día."],
+  ];
+  const faq = [
+    ["¿Cuánto tiempo antes debo empezar a prepararme?", "Lo ideal son dos o tres meses, con 30 a 60 minutos de práctica al día. Si te queda menos tiempo, prioriza simulacros y repaso de errores."],
+    ["¿Se resta por responder mal?", "No. Una pregunta sin responder cuenta como incorrecta, así que responde todas. Si no sabes, descarta opciones y elige entre las que quedan."],
+    ["¿Puedo llevar calculadora?", "No. En el Saber 11 no se permite calculadora ni celular. Lleva tu documento de identidad original, lápiz de mina negra número 2, borrador y tajalápiz."],
+    ["¿Cuánto tiempo tengo por pregunta?", "Cada sesión dura 4 horas y 30 minutos para unas 120 a 135 preguntas: unos 2 minutos por pregunta. Practica con tiempo para no quedarte sin terminar."],
+  ];
+  const body = `<section class="section guide-head"><div class="wrap narrow">
+  <span class="tag">Guía de estudio</span>
+  <h1>Cómo prepararse para el ICFES: plan de 8 semanas</h1>
+  <p class="prose">Prepararse para el Saber 11 no es estudiar todo de nuevo: es conocer el examen, saber en qué fallas y practicar justo eso. Este plan te sirve si tienes unos dos meses; si tienes menos, comprime las semanas pero conserva los simulacros.</p>
+</div></section>
+<section class="wrap narrow guide-body">
+  <h2>1. Conoce el examen</h2>
+  <p class="prose">Son cinco pruebas en dos sesiones el mismo día. Lectura crítica, Matemáticas, Sociales y Ciencias pesan 3 en el global; Inglés pesa 1. Mira la estructura completa en <a href="../simulacro-icfes/">simulacro ICFES</a> y cómo se calcula tu puntaje en la <a href="../calculadora-puntaje-icfes/">calculadora</a>.</p>
+  <h2>2. Plan semana a semana</h2>
+  <div class="tbl"><table><thead><tr><th>Semana</th><th>Qué hacer</th></tr></thead><tbody>${weeks.map(([w, d]) => `<tr><td><b>${w}</b></td><td>${d}</td></tr>`).join("")}</tbody></table></div>
+  <h2>3. Consejos por prueba</h2>
+  ${tips.map(([a, t]) => `<h3>${a}</h3><p class="prose">${t} <a href="../preguntas-icfes/${AREAS.find((x) => x.name === a).slug}/">Practica ${a}</a>.</p>`).join("\n  ")}
+  <h2>4. El día del examen</h2>
+  <ul class="checks">
+    <li><b>Lleva</b> tu documento de identidad original, lápiz de mina negra número 2, borrador y tajalápiz.</li>
+    <li><b>Responde todas las preguntas:</b> no se resta por equivocarse.</li>
+    <li><b>Marca bien la hoja de respuestas:</b> rellena el óvalo completo y revisa que el número coincida.</li>
+    <li><b>Controla el tiempo:</b> si una pregunta te toma más de 3 minutos, márcala y vuelve al final.</li>
+  </ul>
+  <h2>Preguntas frecuentes</h2>
+  ${faqBlock(faq)}
+</section>
+${cta("../", "Empieza con un simulacro de diagnóstico")}`;
+  write(path, page({
+    siteUrl, path, title: "Cómo prepararse para el ICFES: plan de estudio de 8 semanas | Cóndor",
+    desc: "Plan de estudio para el ICFES Saber 11: simulacros de diagnóstico, qué repasar en cada prueba, manejo del tiempo y qué llevar el día del examen.",
+    body, crumbs: [{ name: "Cómo prepararse", path }],
+    jsonLd: [faqLd(faq), { "@type": "Article", headline: "Cómo prepararse para el ICFES: plan de 8 semanas", inLanguage: "es-CO", url: siteUrl + path, publisher: { "@type": "Organization", name: "Cóndor", url: siteUrl } }],
+  }));
 }
