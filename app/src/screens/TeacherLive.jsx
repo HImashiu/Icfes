@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Logo from "../components/Logo.jsx";
+import Wordmark from "../components/Wordmark.jsx";
 import { assignmentState, scorePct, whoOf } from "../lib/assignments.js";
 import { areaColor } from "../lib/brand.js";
 import { parseRoster } from "../lib/roster.js";
@@ -191,7 +192,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
     <div className={rail ? "teacher tl rail" : "teacher tl"} style={{ "--ctx": tint }}>
       <aside className="t-side" aria-label="Navegación docente">
         <div className="t-side-top">
-          <strong className="t-logo"><Logo size={30} /> <span>Cóndor</span></strong>
+          <strong className="t-logo"><Logo size={30} /> <span><Wordmark height={20} /></span></strong>
           <button type="button" className="t-rail-btn" onClick={toggleRail} aria-pressed={rail} aria-label={rail ? "Mostrar la barra lateral" : "Contraer la barra lateral"} title={rail ? "Mostrar la barra lateral" : "Contraer la barra lateral"}>
             <Icon name="panel" size={18} strokeWidth={2.2} />
           </button>
