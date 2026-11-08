@@ -103,6 +103,29 @@ function copyDir(from, to) {
 }
 copyDir(site, out);
 
+// Public pages for search: simulacro, question hub and one page per area (scripts/build-seo.mjs). The question text goes
+// through the app's own renderer (lib/render.js), loaded with Vite's SSR loader and a jsdom window for DOMPurify.
+const { JSDOM } = await import("jsdom");
+const dom = new JSDOM("<!doctype html><html><body></body></html>");
+globalThis.window = dom.window;
+globalThis.document = dom.window.document;
+const { createServer } = await import("vite");
+const vite = await createServer({ root: appRoot, configFile: false, logLevel: "error", appType: "custom", server: { middlewareMode: true, hmr: false } });
+const { renderRich } = await vite.ssrLoadModule("/src/lib/render.js");
+const { buildSeoPages } = await import(pathToFileURL(join(here, "build-seo.mjs")).href);
+const dataDir = env.ICFES_DATA_DIR || "/mnt/project-files/icfes/data";
+const seoPages = await buildSeoPages({ appRoot, out, siteUrl, dataDir, renderRich });
+await vite.close();
+for (const p of seoPages) {
+  const f = join(out, p, "index.html");
+  writeFileSync(f, fill(readFileSync(f, "utf8")));
+}
+// Sitemap from the pages that exist, with today's date.
+const today = new Date().toISOString().slice(0, 10);
+const urls = [["", "1.0"], ...seoPages.map((p) => [p, p.split("/").filter(Boolean).length === 1 ? "0.9" : "0.8"]), ["privacidad.html", "0.3"]];
+writeFileSync(join(out, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(([p, pr]) => `  <url><loc>${siteUrl}${p}</loc><lastmod>${today}</lastmod><priority>${pr}</priority></url>`).join("\n")}\n</urlset>\n`);
+console.log(`[build-site] ${seoPages.length} search pages: ${seoPages.join(", ")}`);
+
 // The app gets the same analytics as the landing page.
 const appIndex = join(out, "app", "index.html");
 writeFileSync(appIndex, readFileSync(appIndex, "utf8").replace("</head>", `  ${analytics()}\n  </head>`));

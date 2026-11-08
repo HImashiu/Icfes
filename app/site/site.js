@@ -33,6 +33,31 @@ document.documentElement.classList.add("js");
     setTimeout(function () { requestAnimationFrame(step); }, 450);
   });
 
+
+  // Question pages: answer any question card; the right answer shows and its "Ver la respuesta" opens.
+  document.querySelectorAll(".q[data-key]").forEach(function (q) {
+    var key = q.getAttribute("data-key");
+    var opts = q.querySelectorAll(".opt");
+    opts.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var pick = btn.getAttribute("data-l");
+        opts.forEach(function (o) {
+          o.disabled = true;
+          var l = o.getAttribute("data-l");
+          if (l === key) o.classList.add("correct");
+          else if (l === pick) o.classList.add("incorrect");
+          else o.classList.add("dim");
+        });
+        var ans = q.querySelector(".ans");
+        if (ans) {
+          ans.open = true;
+          var s = ans.querySelector("summary");
+          if (s) s.textContent = pick === key ? "¡Correcto!" : "Casi. Mira la respuesta";
+        }
+      });
+    });
+  });
+
   // The sample question: answer like in the app; the owl reacts.
   var card = document.getElementById("muestra");
   if (card) {
