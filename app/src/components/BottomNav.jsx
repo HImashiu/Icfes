@@ -1,5 +1,6 @@
 import Icon from "./Icon.jsx";
 import Logo from "./Logo.jsx";
+import Wordmark from "./Wordmark.jsx";
 
 const ITEMS = [
   { id: "home", label: "Inicio", icon: "home" },
@@ -29,7 +30,7 @@ export default function BottomNav({ active, onGo, name, course, role = null }) {
     <nav className="bottom-nav" aria-label="Navegación principal">
       <div className="nav-brand" aria-hidden="true">
         <Logo size={36} />
-        <strong>Cóndor</strong>
+        <Wordmark height={20} />
       </div>
       {ITEMS.map((item) => (
         <button
