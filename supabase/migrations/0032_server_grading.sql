@@ -13,6 +13,7 @@
 create schema if not exists private;
 revoke all on schema private from public, anon, authenticated;
 create table if not exists private.grade_secret (id int primary key check (id = 1), secret text not null);
+alter table private.grade_secret enable row level security;
 revoke all on private.grade_secret from public, anon, authenticated;
 
 alter table public.attempts add column if not exists receipt jsonb;
