@@ -199,7 +199,7 @@ function page({ siteUrl, path, title, desc, body, crumbs, jsonLd, katex, script 
     "@type": "BreadcrumbList",
     itemListElement: [{ name: "Inicio", path: "" }, ...crumbs].map((c, i) => ({ "@type": "ListItem", position: i + 1, name: c.name, item: siteUrl + c.path })),
   };
-  const ld = { "@context": "https://schema.org", "@graph": [crumbLd, ...jsonLd] };
+  const ld = { "@context": "https://schema.org", "@graph": [crumbLd, ...jsonLd.map((x) => ({ ...x, isPartOf: { "@id": `${siteUrl}#web` } }))] };
   return `<!doctype html>
 <html lang="es-CO">
 <head>
@@ -237,6 +237,7 @@ function page({ siteUrl, path, title, desc, body, crumbs, jsonLd, katex, script 
         <a href="${up}preguntas-icfes/">Preguntas</a>
         <a href="${up}calculadora-puntaje-icfes/">Calculadora</a>
         <a href="${up}como-prepararse-para-el-icfes/">Cómo prepararse</a>
+        <a href="${up}preicfes-para-colegios/">Colegios</a>
       </nav>
       <a class="btn btn-primary btn-sm" href="${up}app/">Practicar gratis</a>
     </div>
@@ -254,6 +255,7 @@ ${body}
         <a href="${up}preguntas-icfes/">Preguntas por área</a>
         <a href="${up}calculadora-puntaje-icfes/">Calculadora de puntaje</a>
         <a href="${up}niveles-de-desempeno-icfes/">Niveles de desempeño</a>
+        <a href="${up}preicfes-para-colegios/">Para colegios</a>
         <a href="${up}como-prepararse-para-el-icfes/">Cómo prepararse</a>
         <a href="${up}privacidad.html">Privacidad y términos</a>
       </nav>
@@ -301,7 +303,7 @@ export async function buildSeoPages({ appRoot, out, siteUrl, dataDir, renderRich
 ${qs}
 </section>
 ${cta("../../", `¿Quieres más preguntas de ${esc(area.name)}?`)}
-<section class="wrap narrow more"><p>Otras áreas: ${others}. ¿Vas a presentar el examen completo? Mira cómo es el <a href="../../simulacro-icfes/">simulacro ICFES</a>.</p></section>`;
+<section class="wrap narrow more"><p>Otras áreas: ${others}.</p><p>¿Vas a presentar el examen completo? Mira cómo es el <a href="../../simulacro-icfes/">simulacro ICFES</a>, calcula tu puntaje con la <a href="../../calculadora-puntaje-icfes/">calculadora ICFES</a> o sigue el <a href="../../como-prepararse-para-el-icfes/">plan de estudio de 8 semanas</a>.</p></section>`;
     write(path, page({
       siteUrl, path, title: `${area.title} · Saber 11 | Cóndor`, desc: area.desc, body, katex: qs.includes('class="katex'),
       crumbs: [{ name: "Preguntas ICFES", path: "preguntas-icfes/" }, { name: area.name, path }],
@@ -374,6 +376,7 @@ ${cta("../", "Empieza tu simulacro ahora")}`;
 
   if (saber11 && national) buildScorePages({ siteUrl, write, saber11, national });
   buildGuidePage({ siteUrl, write });
+  buildSchoolsPage({ siteUrl, write });
 
   // KaTeX stylesheet and fonts for the math on the question pages.
   if (usesKatex) {
@@ -538,5 +541,51 @@ ${cta("../", "Empieza con un simulacro de diagnóstico")}`;
     desc: "Plan de estudio para el ICFES Saber 11: simulacros de diagnóstico, qué repasar en cada prueba, manejo del tiempo y qué llevar el día del examen.",
     body, crumbs: [{ name: "Cómo prepararse", path }],
     jsonLd: [faqLd(faq), { "@type": "Article", headline: "Cómo prepararse para el ICFES: plan de 8 semanas", inLanguage: "es-CO", url: siteUrl + path, publisher: { "@type": "Organization", name: "Cóndor", url: siteUrl } }],
+  }));
+}
+
+function buildSchoolsPage({ siteUrl, write }) {
+  const path = "preicfes-para-colegios/";
+  const features = [
+    ["Simulacros y tareas por curso", "Asigna un simulacro completo, una sesión o una práctica por área a cada curso, con fecha de apertura y cierre. Los estudiantes la presentan desde el celular o el computador."],
+    ["Simulacro en papel", "Imprime el cuadernillo con la portada del colegio, en A4 o carta, con varias versiones que cambian el orden de las preguntas y un plano del salón. Las hojas de respuestas se califican escaneándolas con el celular."],
+    ["Resultados en el formato del ICFES", "Puntaje de 0 a 100 por prueba, global de 0 a 500, niveles de desempeño y percentil nacional estimado, por estudiante, por curso y por competencia."],
+    ["Alertas de quién necesita apoyo", "El docente ve cada día qué estudiantes bajaron, no entregaron o fallan siempre el mismo tipo de pregunta, y puede agruparlos para reforzar."],
+    ["Juego en vivo en clase", "Proyecta preguntas y los estudiantes responden desde su celular con un código o QR. Sin tablas de posiciones: cada estudiante ve su propio avance."],
+    ["Control de preguntas repetidas", "El sistema recuerda qué preguntas vio cada grupo, para que una tarea no repita las del simulacro y los resultados reflejen lo que de verdad saben."],
+    ["Banco de más de 4.000 preguntas", "Preguntas de cuadernillos publicados por el ICFES, con su fuente, más las que el colegio cree con el editor de preguntas."],
+    ["Cuentas del colegio", "Docentes y estudiantes entran con la cuenta de Google del colegio. Coordinación ve todos los cursos; cada docente, los suyos."],
+  ];
+  const faq = [
+    ["¿Qué necesita el colegio para empezar?", "Solo internet y las cuentas de Google del colegio. No hay que instalar nada: funciona en el navegador del computador, la tableta o el celular."],
+    ["¿Sirve si los estudiantes no tienen computador?", "Sí. Los simulacros se pueden presentar en papel con el cuadernillo impreso y calificar escaneando las hojas de respuestas con un celular."],
+    ["¿Las preguntas son del ICFES?", "El banco usa preguntas de cuadernillos que el ICFES publicó, y cada una indica su fuente. Cóndor es independiente y no está afiliado al ICFES."],
+    ["¿Cuánto cuesta?", "Durante la etapa de demostración es gratis. Escríbenos y te mostramos la plataforma con los cursos de tu colegio."],
+  ];
+  const body = `<section class="section guide-head"><div class="wrap narrow">
+  <span class="tag">Para colegios</span>
+  <h1>Preicfes para colegios: simulacros, resultados por curso y simulacros en papel</h1>
+  <p class="prose">Cóndor es una plataforma para preparar el Saber 11 en el colegio. Los docentes asignan simulacros y tareas por curso, los estudiantes practican en línea o en papel, y coordinación ve los resultados en el mismo formato del ICFES.</p>
+  <div class="cta-row"><a class="btn btn-primary" href="../#colegios">Pedir una demostración</a><a class="btn btn-ghost" href="../app/">Ver la plataforma</a></div>
+</div></section>
+<section class="wrap narrow guide-body">
+  <h2>Qué incluye</h2>
+  ${features.map(([t, d]) => `<h3>${t}</h3><p class="prose">${d}</p>`).join("\n  ")}
+  <h2>Cómo funciona en un periodo</h2>
+  <div class="tbl"><table><thead><tr><th>Momento</th><th>Qué pasa</th></tr></thead><tbody>
+    <tr><td><b>Inicio</b></td><td>Simulacro de diagnóstico para todo el grado 11, en línea o en papel.</td></tr>
+    <tr><td><b>Cada semana</b></td><td>Tareas cortas por área según lo que el diagnóstico mostró. Juego en vivo en clase para repasar.</td></tr>
+    <tr><td><b>Mitad</b></td><td>Segundo simulacro. Comparación por curso, área y competencia.</td></tr>
+    <tr><td><b>Antes del examen</b></td><td>Simulacro final con tiempo real y repaso de los errores de cada estudiante.</td></tr>
+  </tbody></table></div>
+  <h2>Preguntas frecuentes</h2>
+  ${faqBlock(faq)}
+</section>
+<section class="section"><div class="wrap narrow"><div class="card price reveal"><div><h2>Muéstrale Cóndor a tu colegio</h2><p>Te hacemos una demostración con tus cursos y tus docentes. Gratis durante la etapa de demostración.</p></div><a class="btn btn-primary" href="../#colegios">Pedir una demostración</a></div></div></section>`;
+  write(path, page({
+    siteUrl, path, title: "Preicfes para colegios: plataforma de simulacros ICFES por curso | Cóndor",
+    desc: "Plataforma preicfes para colegios: simulacros Saber 11 en línea o en papel, resultados por curso y competencia en formato ICFES, alertas de estudiantes y juego en vivo.",
+    body, crumbs: [{ name: "Para colegios", path }],
+    jsonLd: [faqLd(faq), { "@type": "Service", name: "Cóndor para colegios", serviceType: "Preparación Saber 11 (preicfes) para colegios", areaServed: { "@type": "Country", name: "Colombia" }, provider: { "@id": `${siteUrl}#org` }, url: siteUrl + path, inLanguage: "es-CO" }],
   }));
 }
