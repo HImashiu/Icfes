@@ -3,7 +3,7 @@
 //   site-dist/app/        the app exactly as `vite build` wrote it to dist/
 // Run after `vite build` (npm run build:site does both). The landing page's forms need the same Supabase settings
 // as the app: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY from the environment or app/.env.local.
-// SITE_URL (default https://condor.juandabarrios12.workers.dev/) goes into canonical, Open Graph, robots and sitemap.
+// SITE_URL (default https://condoricfes.com/) goes into canonical, Open Graph, robots and sitemap.
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -22,7 +22,7 @@ function envFile(name) {
 const env = { ...envFile(".env"), ...envFile(".env.production"), ...envFile(".env.local"), ...envFile(".env.production.local"), ...process.env };
 const supabaseUrl = env.VITE_SUPABASE_URL ?? "";
 const supabaseKey = env.VITE_SUPABASE_ANON_KEY ?? "";
-let siteUrl = env.SITE_URL || "https://condor.juandabarrios12.workers.dev/";
+let siteUrl = env.SITE_URL || "https://condoricfes.com/";
 if (!siteUrl.endsWith("/")) siteUrl += "/";
 
 if (!existsSync(join(dist, "index.html"))) {
