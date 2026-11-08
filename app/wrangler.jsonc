@@ -12,6 +12,12 @@
   "main": "./worker/index.js",
   // Public values (the same ones the app ships). The deploy script passes the real ones from .env.local.
   "vars": { "SUPABASE_URL": "", "SUPABASE_ANON_KEY": "", "ALLOW_GUESTS": "0" },
+  // Own domain (bought 2026-11-08, zone on this Cloudflare account). workers.dev stays on for old links and QR codes;
+  // every page's canonical points at condoricfes.com, so search engines index only the domain.
+  "routes": [
+    { "pattern": "condoricfes.com", "custom_domain": true },
+    { "pattern": "www.condoricfes.com", "custom_domain": true }
+  ],
   "assets": {
     "directory": "./site-dist",
     "binding": "ASSETS",

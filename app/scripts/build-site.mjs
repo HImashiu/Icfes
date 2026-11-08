@@ -3,7 +3,7 @@
 //   site-dist/app/        the app exactly as `vite build` wrote it to dist/
 // Run after `vite build` (npm run build:site does both). The landing page's forms need the same Supabase settings
 // as the app: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY from the environment or app/.env.local.
-// SITE_URL (default https://condor.juandabarrios12.workers.dev/) goes into canonical, Open Graph, robots and sitemap.
+// SITE_URL (default https://condoricfes.com/) goes into canonical, Open Graph, robots and sitemap.
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { createHash } from "node:crypto";
@@ -23,7 +23,7 @@ function envFile(name) {
 const env = { ...envFile(".env"), ...envFile(".env.production"), ...envFile(".env.local"), ...envFile(".env.production.local"), ...process.env };
 const supabaseUrl = env.VITE_SUPABASE_URL ?? "";
 const supabaseKey = env.VITE_SUPABASE_ANON_KEY ?? "";
-let siteUrl = env.SITE_URL || "https://condor.juandabarrios12.workers.dev/";
+let siteUrl = env.SITE_URL || "https://condoricfes.com/";
 if (!siteUrl.endsWith("/")) siteUrl += "/";
 
 if (!existsSync(join(dist, "index.html"))) {
@@ -103,6 +103,31 @@ function copyDir(from, to) {
   }
 }
 copyDir(site, out);
+
+// Public pages for search: simulacro, question hub and one page per area (scripts/build-seo.mjs). The question text goes
+// through the app's own renderer (lib/render.js), loaded with Vite's SSR loader and a jsdom window for DOMPurify.
+const { JSDOM } = await import("jsdom");
+const dom = new JSDOM("<!doctype html><html><body></body></html>");
+globalThis.window = dom.window;
+globalThis.document = dom.window.document;
+const { createServer } = await import("vite");
+const vite = await createServer({ root: appRoot, configFile: false, logLevel: "error", appType: "custom", server: { middlewareMode: true, hmr: false } });
+const { renderRich } = await vite.ssrLoadModule("/src/lib/render.js");
+const { buildSeoPages } = await import(pathToFileURL(join(here, "build-seo.mjs")).href);
+const dataDir = env.ICFES_DATA_DIR || "/mnt/project-files/icfes/data";
+const saber11 = await vite.ssrLoadModule("/src/lib/saber11.js");
+const national = JSON.parse(readFileSync(join(appRoot, "src", "lib", "saber11-national-2022.json"), "utf8"));
+const seoPages = await buildSeoPages({ appRoot, out, siteUrl, dataDir, renderRich, saber11, national });
+await vite.close();
+for (const p of seoPages) {
+  const f = join(out, p, "index.html");
+  writeFileSync(f, fill(readFileSync(f, "utf8")));
+}
+// Sitemap from the pages that exist, with today's date.
+const today = new Date().toISOString().slice(0, 10);
+const urls = [["", "1.0"], ...seoPages.map((p) => [p, p.split("/").filter(Boolean).length === 1 ? "0.9" : "0.8"]), ["privacidad.html", "0.3"]];
+writeFileSync(join(out, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(([p, pr]) => `  <url><loc>${siteUrl}${p}</loc><lastmod>${today}</lastmod><priority>${pr}</priority></url>`).join("\n")}\n</urlset>\n`);
+console.log(`[build-site] ${seoPages.length} search pages: ${seoPages.join(", ")}`);
 
 // The app gets the same analytics as the landing page.
 const appIndex = join(out, "app", "index.html");

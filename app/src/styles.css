@@ -52,7 +52,7 @@
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) {
-    --bg: #F3F5EF;
+      --bg: #F3F5EF;
     --surface: #FFFFFF;
     --surface-2: #E9EDE4;
     --line: #D8DED3;
@@ -460,8 +460,9 @@ select.booklet-pick {
   }
   .t-side::-webkit-scrollbar { display: none; }
 }
-.t-logo { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 20px; padding: 4px 8px 16px; color: var(--accent-ink); display: flex; align-items: center; gap: 8px; }
-.logo { display: block; flex: none; border-radius: 50%; }
+.t-logo { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 20px; padding: 4px 8px 16px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+.logo { display: block; flex: none; }
+.wordmark { display: block; flex: none; overflow: visible; }
 .t-nav {
   position: relative; min-height: 44px; border: 0; background: transparent; color: var(--text-2);
   text-align: left; padding: 0 12px; border-radius: 12px; font-weight: 600;

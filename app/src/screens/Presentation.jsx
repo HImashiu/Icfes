@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Mascot from "../components/Mascot.jsx";
 import Logo from "../components/Logo.jsx";
+import Wordmark from "../components/Wordmark.jsx";
 import Icon from "../components/Icon.jsx";
 import CountUp from "../components/CountUp.jsx";
 import { APP_NAME, MASCOT_NAME, areaColor } from "../lib/brand.js";
@@ -77,7 +78,7 @@ function Cover() {
   return (
     <div className="pz-cover">
       <div className="pz-cover-text">
-        <Rise className="pz-brand"><Logo size={56} />{APP_NAME}</Rise>
+        <Rise className="pz-brand"><Logo size={56} /><Wordmark height={38} /></Rise>
         <Rise as="h1" className="pz-hero" d={0.08}>
           Preparación <span className="accent-text">Saber 11</span> para todo tu colegio
         </Rise>
@@ -736,7 +737,7 @@ export default function Presentation({ onExit }) {
           <C />
         </section>
         <footer className="pz-foot">
-          <span className="pz-foot-brand"><Logo size={36} /> {APP_NAME} · Saber 11</span>
+          <span className="pz-foot-brand"><Logo size={36} /> <Wordmark height={20} /> · Saber 11</span>
           {SLIDES[i].sample && <SampleTag />}
           <span className="pz-foot-n">{i + 1} / {SLIDES.length}</span>
         </footer>
