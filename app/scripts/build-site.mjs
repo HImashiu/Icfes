@@ -6,6 +6,7 @@
 // SITE_URL (default https://condor.juandabarrios12.workers.dev/) goes into canonical, Open Graph, robots and sitemap.
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { createHash } from "node:crypto";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -116,4 +117,45 @@ const left = [];
   }
 })(out);
 if (left.length) { console.error("[build-site] placeholders left in:", left); process.exit(1); }
+
+// Security headers for every file Cloudflare serves (site-dist/_headers). The content security policy allows only
+// this site, Supabase, Google Fonts and the two analytics services; inline scripts are allowed by their exact hash.
+const hashes = new Set();
+(function scanScripts(dir) {
+  for (const name of readdirSync(dir)) {
+    const p = join(dir, name);
+    if (statSync(p).isDirectory()) { if (name !== "exams") scanScripts(p); continue; }
+    if (!name.endsWith(".html")) continue;
+    for (const m of readFileSync(p, "utf8").matchAll(/<script(?![^>]*\bsrc=)([^>]*)>([\s\S]*?)<\/script>/g)) {
+      if (/type=["']application\/(ld\+)?json["']/.test(m[1]) || !m[2].trim()) continue;
+      hashes.add(`'sha256-${createHash("sha256").update(m[2]).digest("base64")}'`);
+    }
+  }
+})(out);
+const supa = new URL(supabaseUrl);
+const csp = [
+  "default-src 'self'",
+  `script-src 'self' 'wasm-unsafe-eval' ${[...hashes].join(" ")} https://static.cloudflareinsights.com https://www.googletagmanager.com`.replace(/\s+/g, " "),
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https:",
+  "media-src 'self' data: blob:",
+  `connect-src 'self' data: blob: ${supa.origin} wss://${supa.host} https://cloudflareinsights.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com`,
+  "worker-src 'self' blob:",
+  "frame-src 'none'",
+  "frame-ancestors 'none'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "upgrade-insecure-requests",
+].join("; ");
+writeFileSync(join(out, "_headers"), `/*
+  Content-Security-Policy: ${csp}
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(self), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
+`);
 console.log(`[build-site] site-dist ready: landing + app/ (site URL ${siteUrl})`);

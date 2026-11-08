@@ -23,7 +23,7 @@ const DAYS = ["L", "M", "X", "J", "V", "S", "D"];
 // Inicio: the next thing to do, today's goal, this week's tasks, each subject with its teacher, the countdown to the
 // exam, the month and the student's own progress. Progress is measured against the student's goal and past self,
 // never against classmates. Before the first practice everything starts at zero (no invented numbers on the public site).
-export default function Home({ exam, slug, resumable, onContinue, onPractice, onSetup, xpSession, assigned, classes, course, onStartAssigned, onLive, realName, signedOut, onGo, onOpenSubject, exams = [], onStartSession, liveGames = [], onJoinGame = null, announcements = [] }) {
+export default function Home({ exam, slug, resumable, onContinue, onPractice, onSetup, xpSession, assigned, classes, course, onStartAssigned, onLive, realName, independent = false, signedOut, onGo, onOpenSubject, exams = [], onStartSession, liveGames = [], onJoinGame = null, announcements = [] }) {
   const now = Date.now();
   const todayIndex = (new Date().getDay() + 6) % 7;
   const history = useMemo(() => loadHistory(), []);
@@ -66,7 +66,7 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
       <header className="home-head">
         <div className="avatar" aria-hidden="true">{realName ? realName[0] : <Icon name="user" size={22} />}</div>
         <div className="greet">
-          <span className="caption">{course ? `Curso ${course}` : realName ? "Tu colegio" : "Sin cuenta"}</span>
+          <span className="caption">{course ? `Curso ${course}` : realName ? (independent ? "Práctica personal" : "Tu colegio") : "Sin cuenta"}</span>
           <strong>{realName ? `Hola, ${realName}` : "Hola"}</strong>
         </div>
         {onLive && (

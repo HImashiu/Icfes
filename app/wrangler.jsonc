@@ -1,4 +1,6 @@
 // Cloudflare Worker that serves the public site (landing at /, app at /app/) as static assets.
+// worker/index.js runs only for /app/exams/* and lets signed-in accounts download the question files.
+// Security headers for every page come from site-dist/_headers (written by scripts/build-site.mjs).
 // Deploy with `npm run deploy` (scripts/deploy-site.sh): build, shrink figures, then `wrangler deploy`.
 // Needs CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in the environment.
 {
@@ -7,8 +9,13 @@
   "compatibility_date": "2026-11-07",
   "workers_dev": true,
   "preview_urls": false,
+  "main": "./worker/index.js",
+  // Public values (the same ones the app ships). The deploy script passes the real ones from .env.local.
+  "vars": { "SUPABASE_URL": "", "SUPABASE_ANON_KEY": "", "ALLOW_GUESTS": "0" },
   "assets": {
     "directory": "./site-dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/app/exams/*"],
     // /privacidad.html -> /privacidad and /app -> /app/, as the dashboard upload already did
     "html_handling": "auto-trailing-slash",
     // The app routes with #hashes, so no SPA fallback is needed; unknown paths get the site's 404 page

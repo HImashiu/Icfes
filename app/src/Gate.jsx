@@ -1,0 +1,22 @@
+import App from "./App.jsx";
+import Login from "./screens/Login.jsx";
+import { useAuth } from "./lib/auth.jsx";
+import { restoreReturnHash } from "./lib/access.js";
+import { tokenFromHash } from "./lib/family.js";
+
+// The app opens only with an account. Before that, the sign-in is the whole page.
+// Exceptions: family report links (parents have no account) and a build with no backend (local development).
+export default function Gate() {
+  const auth = useAuth();
+  const open = auth.status === "ready" || auth.status === "needs-profile" || auth.status === "demo" || auth.status === "guest";
+  if (typeof window !== "undefined" && tokenFromHash(window.location.hash)) return <App />;
+  if (auth.status === "loading") return <main className="frame"><p className="muted">Cargando…</p></main>;
+  if (!open) return <div className="app"><Login gate /></div>;
+  return <AppAfterRestore />;
+}
+
+// Back from Google: put back the #… the visitor came with (a live-game code, #docente…) before App reads it.
+function AppAfterRestore() {
+  restoreReturnHash();
+  return <App />;
+}

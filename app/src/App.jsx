@@ -22,6 +22,7 @@ import { clearAttempt, loadAttempt, saveAttempt } from "./lib/storage.js";
 import { linkFigures, parseFigureSpecs, prepareExam } from "./lib/figures.js";
 import { applyTheme, currentTheme } from "./lib/theme.js";
 import { AuthContext, useAuth } from "./lib/auth.jsx";
+import { getJson } from "./lib/data.js";
 import DemoBanner from "./demo/DemoBanner.jsx";
 import LaunchNotice from "./components/LaunchNotice.jsx";
 import Consent from "./screens/Consent.jsx";
@@ -43,7 +44,6 @@ import { orderQuestions } from "./lib/order.js";
 import { resolveModel, xpFactor } from "./lib/grading.js";
 import { attemptForAssignment, attemptRow, attemptsLeft, kindMode, questionsForAttempt, revealAllowed } from "./lib/assignments.js";
 
-const base = import.meta.env.BASE_URL;
 // Screens where the public-demo notice shows (never inside an exam, a live game or the school tools).
 const LAUNCH_VIEWS = new Set(["home", "subjects", "setup", "progress", "profile", "login", "history", "results"]);
 
@@ -65,11 +65,6 @@ class ScreenBoundary extends Component {
   }
 }
 
-async function getJson(path) {
-  const res = await fetch(base + path);
-  if (!res.ok) throw new Error(`No se pudo cargar ${path} (${res.status})`);
-  return res.json();
-}
 
 // The student's unfinished attempt for this exam, across the whole exam and each area.
 function findResumable(slug, exam) {
@@ -431,6 +426,7 @@ export default function App() {
   if (signedIn && needsTerms(consents)) {
     return (
       <Consent
+        personal={!auth.profile?.school_id}
         onSignOut={auth.signOut}
         onAccept={async () => {
           await auth.api.acceptConsent(auth.profile.id, "terms", CONSENT_VERSION);
@@ -511,6 +507,7 @@ export default function App() {
           assigned={signedIn ? assigned : null}
           onStartAssigned={startAssigned}
           realName={studentName}
+          independent={signedIn && !auth.profile?.school_id}
           onLive={auth.status !== "demo" && auth.status !== "loading" ? () => { setLiveCode(""); setView("liveJoin"); } : null}
           liveGames={liveGames}
           onJoinGame={demoEnabled ? null : joinGame}
