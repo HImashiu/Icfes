@@ -27,3 +27,29 @@ export async function getJson(path) {
   if (!res.ok) throw new Error(`No se pudo cargar ${path} (${res.status})`);
   return res.json();
 }
+
+// Grading on the server (worker/index.js, POST /app/api/reveal). Returns { answers, enrich, notes, hidden, score?,
+// receipt? }. Students get answers only for the questions they ask about, and none of an activity still in progress.
+export async function reveal(body) {
+  const res = await fetch(`${base}api/reveal`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify(body),
+  });
+  if (res.status === 401) throw new Error("Tu sesión terminó. Vuelve a ingresar.");
+  if (res.status === 429) throw new Error("Demasiadas solicitudes seguidas. Espera un minuto e inténtalo de nuevo.");
+  if (!res.ok) throw new Error(`No se pudo calificar (${res.status})`);
+  return res.json();
+}
+
+// Lays revealed answers, explanations and key notes over a booklet bundle (a new object, so screens re-render).
+export function withRevealed(bundle, r) {
+  if (!bundle || !r) return bundle;
+  const key = new Map(bundle.key ?? []);
+  for (const [k, letter] of Object.entries(r.answers ?? {})) key.set(String(k), letter);
+  const enrich = { ...(bundle.enrich ?? {}) };
+  for (const [k, row] of Object.entries(r.enrich ?? {})) enrich[k] = { ...(enrich[k] ?? {}), ...row };
+  const notes = new Map(bundle.notes ?? []);
+  for (const [k, note] of Object.entries(r.notes ?? {})) notes.set(String(k), note);
+  return { ...bundle, key, enrich, notes };
+}

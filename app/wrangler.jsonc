@@ -11,6 +11,8 @@
   "preview_urls": false,
   "main": "./worker/index.js",
   // Public values (the same ones the app ships). The deploy script passes the real ones from .env.local.
+  // GRADE_SECRET (grading on the server) is a secret: `npx wrangler secret put GRADE_SECRET`, same value as
+  // private.grade_secret in the database (migration 0032).
   "vars": { "SUPABASE_URL": "", "SUPABASE_ANON_KEY": "", "ALLOW_GUESTS": "0" },
   // Own domain (bought 2026-11-08, zone on this Cloudflare account). workers.dev stays on for old links and QR codes;
   // every page's canonical points at condoricfes.com, so search engines index only the domain.
@@ -26,7 +28,7 @@
   "assets": {
     "directory": "./site-dist",
     "binding": "ASSETS",
-    "run_worker_first": ["/app/exams/*"],
+    "run_worker_first": ["/app/exams/*", "/app/api/*"],
     // /privacidad.html -> /privacidad and /app -> /app/, as the dashboard upload already did
     "html_handling": "auto-trailing-slash",
     // The app routes with #hashes, so no SPA fallback is needed; unknown paths get the site's 404 page

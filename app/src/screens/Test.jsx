@@ -28,7 +28,7 @@ function centerIn(pane, el) {
 
 // The answering screen. Shows only the progress, the timer or mode, the flag, the question,
 // the options and the map: no streak or XP chart here.
-export default function Test({ title, examLabel, questions, attempt, answerKey, onChange, onSubmit, onExit, figures, enrich, enrichMeta, onProctorEvent }) {
+export default function Test({ title, examLabel, questions, attempt, answerKey, onReveal = null, onChange, onSubmit, onExit, figures, enrich, enrichMeta, onProctorEvent }) {
   const [now, setNow] = useState(() => Date.now());
   const [sheetOpen, setSheetOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -208,15 +208,23 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
 
   // Practice: "Comprobar" reveals the grade for this question once. XP counts only the first correct check.
   // A right answer gets a chime, confetti from the right option and, every few in a row, a bigger cheer.
-  const check = () => {
-    if (attempt.checked?.[q.key]) return;
-    const hit = Boolean(correctLetter) && attempt.answers[q.key] === correctLetter;
+  // With grading on the server the answer arrives only now (onReveal asks for this one question).
+  const [checking, setChecking] = useState(false);
+  const check = async () => {
+    if (attempt.checked?.[q.key] || checking) return;
+    let letter = correctLetter;
+    if (!letter && onReveal) {
+      setChecking(true);
+      try { letter = await onReveal(q.key); } catch { letter = null; }
+      setChecking(false);
+    }
+    const hit = Boolean(letter) && attempt.answers[q.key] === letter;
     onChange((a) => {
       if (a.checked?.[q.key]) return a;
       return { ...a, checked: { ...(a.checked ?? {}), [q.key]: true }, xp: (a.xp ?? 0) + (hit ? xpFor(q.section, a.xpFactor ?? 1) : 0) };
     });
     setJustChecked(q.key);
-    if (!correctLetter) return;
+    if (!letter) return;
     const nextRun = hit ? run + 1 : 0;
     setRun(nextRun);
     if (hit) {
@@ -266,7 +274,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   const last = current >= questions.length - 1;
   const mainAction = instant && !checked ? (
     picked ? (
-      <button type="button" className="primary big" onClick={check}>Comprobar</button>
+      <button type="button" className="primary big" onClick={check} disabled={checking}>{checking ? "Comprobando…" : "Comprobar"}</button>
     ) : (
       <button type="button" className="secondary big" disabled={last} onClick={() => go(current + 1)}>Saltar</button>
     )

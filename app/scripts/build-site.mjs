@@ -143,6 +143,47 @@ const left = [];
 })(out);
 if (left.length) { console.error("[build-site] placeholders left in:", left); process.exit(1); }
 
+// Grading on the server (worker/index.js): for each booklet, the worker's own file with the key, each question's area
+// and number of options, and the key's notes (<slug>.grade.json, never served), and the AI notes without the
+// explanations, for students (<slug>.enrich.student.json: tags and hints only).
+{
+  const dir = join(out, "app", "exams");
+  const read = (f) => (existsSync(join(dir, f)) ? JSON.parse(readFileSync(join(dir, f), "utf8")) : null);
+  let n = 0;
+  for (const f of readdirSync(dir)) {
+    const m = /^([A-Za-z0-9_-]+)\.json$/.exec(f);
+    if (!m || f === "index.json") continue;
+    const slug = m[1];
+    const exam = read(f);
+    if (exam?.format !== "icfes-golden/1" || !Array.isArray(exam.questions)) continue;
+    const key = read(`${slug}.key.json`);
+    if (!key?.answers) continue;
+    const sidecar = read(`${slug}.sidecar.json`);
+    const enrich = read(`${slug}.enrich.json`);
+    const grade = { k: {}, s: {}, o: {}, n: {}, e: Boolean(enrich) };
+    for (const q of exam.questions) {
+      const k = String(q.number);
+      grade.s[k] = q.section;
+      grade.o[k] = Array.isArray(q.options) ? q.options.length : 4;
+    }
+    for (const [k, letter] of Object.entries(key.answers)) if (typeof letter === "string" && /^[A-H]$/.test(letter)) grade.k[k] = letter;
+    for (const [k, note] of Object.entries(sidecar?.answers ?? {})) {
+      if (note && typeof note === "object") grade.n[k] = { confidence: note.confidence ?? null, reason: note.reason ?? null, status: note.status ?? null };
+    }
+    writeFileSync(join(dir, `${slug}.grade.json`), JSON.stringify(grade));
+    if (enrich) {
+      const questions = {};
+      for (const [k, row] of Object.entries(enrich.questions ?? {})) {
+        const { explicacion, distractores, ...rest } = row ?? {};
+        questions[k] = rest;
+      }
+      writeFileSync(join(dir, `${slug}.enrich.student.json`), JSON.stringify({ ...enrich, questions }));
+    }
+    n++;
+  }
+  console.log(`[build-site] grading files for ${n} booklets`);
+}
+
 // Security headers for every file Cloudflare serves (site-dist/_headers). The content security policy allows only
 // this site, Supabase, Google Fonts and the two analytics services; inline scripts are allowed by their exact hash.
 const hashes = new Set();

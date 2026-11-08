@@ -1,4 +1,4 @@
-import { Component, useCallback, useEffect, useMemo, useState } from "react";
+import { Component, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Home from "./screens/Home.jsx";
 import Setup from "./screens/Setup.jsx";
 import Test from "./screens/Test.jsx";
@@ -22,7 +22,8 @@ import { clearAttempt, loadAttempt, saveAttempt } from "./lib/storage.js";
 import { linkFigures, parseFigureSpecs, prepareExam } from "./lib/figures.js";
 import { applyTheme, currentTheme } from "./lib/theme.js";
 import { AuthContext, useAuth } from "./lib/auth.jsx";
-import { getJson } from "./lib/data.js";
+import { getJson, reveal, withRevealed } from "./lib/data.js";
+import { backendConfigured } from "./lib/supabase.js";
 import DemoBanner from "./demo/DemoBanner.jsx";
 import LaunchNotice from "./components/LaunchNotice.jsx";
 import Consent from "./screens/Consent.jsx";
@@ -141,30 +142,38 @@ export default function App() {
     }
     const entry = exams?.find((e) => e.slug === slug);
     if (!entry || entry.status === "proximamente") throw new Error("Ese cuadernillo todavía no está disponible.");
+    // Students never download the key: answers come from the server one question at a time (lib/data.js reveal),
+    // and their delivered attempts are graded there. Teachers and admins get the files (printing, scanning, reports).
+    const staff = rootAuth.status === "ready" && rootAuth.profile?.role && rootAuth.profile.role !== "student";
+    const optional = (p) => getJson(p).catch(() => null);
     const [raw, rawKey, rawFigures, rawSidecar, rawEnrich] = await Promise.all([
       getJson(`exams/${slug}.json`),
-      entry.hasKey ? getJson(`exams/${slug}.key.json`) : null,
+      entry.hasKey && (staff || !backendConfigured) ? optional(`exams/${slug}.key.json`) : null,
       entry.hasFigures ? getJson(`exams/${slug}.figures.json`) : null,
-      entry.hasSidecar ? getJson(`exams/${slug}.sidecar.json`) : null,
-      entry.hasEnrich ? getJson(`exams/${slug}.enrich.json`) : null,
+      entry.hasSidecar && (staff || !backendConfigured) ? optional(`exams/${slug}.sidecar.json`) : null,
+      entry.hasEnrich ? optional(`exams/${slug}.enrich.json`) : null,
     ]);
     const parsed = parseExam(raw);
     const figures = linkFigures(parsed, parseFigureSpecs(rawFigures), rawFigures);
+    const serverGraded = Boolean(entry.hasKey) && !rawKey;
     const bundle = {
       slug,
       exam: prepareExam(parsed, figures),
-      key: parseKey(rawKey),
+      key: serverGraded ? new Map() : parseKey(rawKey),
+      serverGraded,
       keyStatus: entry.keyStatus ?? null,
-      notes: parseKeyNotes(rawSidecar),
+      notes: parseKeyNotes(rawSidecar) ?? (serverGraded ? new Map() : null),
       enrich: rawEnrich?.questions ?? null,
       enrichMeta: rawEnrich ? { note: rawEnrich.note, estimated: rawEnrich.estimated } : null,
       figures,
     };
-    // The school's own versions of questions (edited by its teachers) are laid over the shared bank.
+    // The school's own versions of questions (edited by its teachers) are laid over the shared bank. For a student
+    // the changed answer comes from the server like any other.
     let versions = [];
     if (auth.api && auth.status === "ready") { try { versions = await auth.api.questionOverrides(slug); } catch { versions = []; } }
+    if (serverGraded) versions = versions.map((v) => ({ ...v, answer: null, explanation: null }));
     return applyOverrides(bundle, versions);
-  }, [exams, auth.api, auth.status]);
+  }, [exams, auth.api, auth.status, rootAuth.status, rootAuth.profile]);
 
   const openExam = useCallback(async (slug, keys = null) => {
     setOpenError(null);
@@ -182,6 +191,18 @@ export default function App() {
       setOpening(false);
     }
   }, [exams, fetchExam]);
+
+  // Grading on the server (students): the answers the server reveals are laid over the open booklet.
+  const revealKeys = useCallback(async (slug, keys, extra = {}) => {
+    const r = await reveal({ slug, keys, ...extra });
+    setSelected((b) => (b && b.slug === slug ? withRevealed(b, r) : b));
+    return r;
+  }, []);
+  const revealOne = useCallback(async (k) => {
+    if (!selected?.serverGraded) return null;
+    const r = await revealKeys(selected.slug, [k]);
+    return r.answers?.[k] ?? null;
+  }, [selected?.serverGraded, selected?.slug, revealKeys]);
 
   // Coming back from Google the page reloads on Inicio. A first-time account (no profile yet) goes straight to the
   // "Casi listo" form; one that just signed in lands on the profile, so the sign-in is visibly done.
@@ -358,19 +379,52 @@ export default function App() {
     setView("results");
   };
 
+  // Server grading of a delivered attempt: the server returns a sealed score (the database keeps only that one) and,
+  // for free practice, the answers. An assignment's answers are asked for again once the attempt is saved, so they
+  // follow the teacher's rule (after delivering, after closing, never).
+  const gradingRef = useRef(null);
+  const sameAttempt = (a, started) => a && a.startedAt === started;
+  useEffect(() => {
+    if (!attempt || attempt.readOnly || !attempt.submittedAt || attempt.receipt || attempt.graded) return;
+    if (!selected?.serverGraded || selected.slug !== attempt.slug || gradingRef.current === attempt.startedAt) return;
+    gradingRef.current = attempt.startedAt;
+    const started = attempt.startedAt;
+    const keys = questionsForAttempt(selected.exam, attempt).map((q) => q.key);
+    revealKeys(attempt.slug, keys, { answers: attempt.answers, submit: { client_id: String(started), assignment_id: attempt.assignmentId ?? null } })
+      .then((r) => setAttempt((a) => (sameAttempt(a, started) ? { ...a, receipt: r.receipt ?? null, graded: !a.assignmentId || !signedIn, gradeFailed: !r.receipt } : a)))
+      .catch(() => setAttempt((a) => (sameAttempt(a, started) ? { ...a, graded: true, gradeFailed: true } : a)));
+  }, [attempt, selected, revealKeys, signedIn]);
+
   // A delivered attempt is saved to the backend once (a retry with the same id replaces it, never duplicates).
   useEffect(() => {
     if (!signedIn || !attempt || attempt.readOnly || !attempt.submittedAt || attempt.synced) return;
     if (!selected || selected.slug !== attempt.slug) return;
-    const row = attemptRow(attempt, questionsForAttempt(selected.exam, attempt), selected.key, selected.keyStatus);
+    if (selected.serverGraded && !attempt.receipt && !attempt.gradeFailed) return;
+    const started = attempt.startedAt;
+    const row = { ...attemptRow(attempt, questionsForAttempt(selected.exam, attempt), selected.key, selected.keyStatus), receipt: attempt.receipt ?? null };
+    const after = () => {
+      setAttempt((a) => (sameAttempt(a, started) ? { ...a, synced: true } : a));
+      loadAssigned();
+      if (selected.serverGraded && attempt.assignmentId && !attempt.graded) {
+        const keys = questionsForAttempt(selected.exam, attempt).map((q) => q.key);
+        revealKeys(attempt.slug, keys).catch(() => null).finally(() => setAttempt((a) => (sameAttempt(a, started) ? { ...a, graded: true } : a)));
+      }
+    };
     auth.api
       .uploadAttempt(row, auth.profile.id)
-      .then(() => {
-        setAttempt((a) => (a && a.startedAt === attempt.startedAt ? { ...a, synced: true } : a));
-        loadAssigned();
-      })
-      .catch(() => {});
-  }, [signedIn, attempt, selected, auth.api, auth.profile, loadAssigned]);
+      .then(after)
+      .catch(() => setAttempt((a) => (sameAttempt(a, started) ? { ...a, graded: true } : a)));
+  }, [signedIn, attempt, selected, auth.api, auth.profile, loadAssigned, revealKeys]);
+
+  // Reopened attempts (history, assigned results, reports): ask the server for the answers of their questions.
+  const reviewRef = useRef(null);
+  useEffect(() => {
+    if (!attempt?.readOnly || !selected?.serverGraded || selected.slug !== attempt.slug) return;
+    if (reviewRef.current === `${attempt.slug}:${attempt.startedAt}`) return;
+    const keys = questionsForAttempt(selected.exam, attempt).map((q) => q.key).filter((k) => !selected.key?.has(k));
+    reviewRef.current = `${attempt.slug}:${attempt.startedAt}`;
+    if (keys.length) revealKeys(attempt.slug, keys).catch(() => null);
+  }, [attempt, selected, revealKeys]);
 
   const resume = (saved) => {
     setAttempt(saved);
@@ -544,6 +598,7 @@ export default function App() {
           attempt={attempt}
           onProctorEvent={(ev, a) => { if (auth.api && a.assignmentId) auth.api.proctorSend([{ assignment_id: a.assignmentId, client_id: String(a.startedAt), ...ev }]).catch(() => {}); }}
           answerKey={locked ? null : selected.key}
+          onReveal={selected.serverGraded && !locked ? revealOne : null}
           onChange={(next) => setAttempt((a) => (a ? (typeof next === "function" ? next(a) : next) : a))}
           onSubmit={submit}
           onExit={goHome}
@@ -555,7 +610,10 @@ export default function App() {
         </AnnotationProvider>
       )}
 
-      {view === "results" && attempt && selected && (
+      {view === "results" && attempt && selected && selected.serverGraded && !attempt.readOnly && !attempt.graded && (
+        <main className="frame"><p className="muted">Calificando…</p></main>
+      )}
+      {view === "results" && attempt && selected && !(selected.serverGraded && !attempt.readOnly && !attempt.graded) && (
         <Results
           title={examTitle}
           questions={questions}
