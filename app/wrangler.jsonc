@@ -10,6 +10,8 @@
   "workers_dev": true,
   "preview_urls": false,
   "main": "./worker/index.js",
+  // Keep variables added in the Cloudflare dashboard when deploying (secrets are always kept).
+  "keep_vars": true,
   // Public values (the same ones the app ships). The deploy script passes the real ones from .env.local.
   // GRADE_SECRET (grading on the server) is a secret: `npx wrangler secret put GRADE_SECRET`, same value as
   // private.grade_secret in the database (migration 0032).
