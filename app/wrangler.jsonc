@@ -18,6 +18,11 @@
     { "pattern": "condoricfes.com", "custom_domain": true },
     { "pattern": "www.condoricfes.com", "custom_domain": true }
   ],
+  // Burst limits for the exam files (worker/index.js). Cloudflare counts per location; periods can be 10 or 60 s.
+  "ratelimits": [
+    { "name": "EXAM_IP_RATE", "namespace_id": "4101", "simple": { "limit": 120, "period": 60 } },
+    { "name": "EXAM_USER_RATE", "namespace_id": "4102", "simple": { "limit": 60, "period": 60 } }
+  ],
   "assets": {
     "directory": "./site-dist",
     "binding": "ASSETS",

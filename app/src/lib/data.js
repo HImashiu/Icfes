@@ -18,6 +18,12 @@ export async function authHeaders() {
 export async function getJson(path) {
   const res = await fetch(base + path, { headers: await authHeaders() });
   if (res.status === 401) throw new Error("Tu sesión terminó. Vuelve a ingresar para ver las preguntas.");
+  if (res.status === 429) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error === "daily_limit"
+      ? "Abriste muchos cuadernillos hoy. Sigue con los que ya abriste; mañana se habilitan más."
+      : "Demasiadas solicitudes seguidas. Espera un minuto e inténtalo de nuevo.");
+  }
   if (!res.ok) throw new Error(`No se pudo cargar ${path} (${res.status})`);
   return res.json();
 }
