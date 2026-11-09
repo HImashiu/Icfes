@@ -5,12 +5,7 @@ import { buildDemo } from "./seed.js";
 import { createDemoClient } from "./client.js";
 import { liveRpc } from "./liveSim.js";
 
-const base = import.meta.env.BASE_URL;
-const getJson = async (path) => {
-  const res = await fetch(base + path);
-  if (!res.ok) throw new Error(`No se pudo cargar ${path}`);
-  return res.json();
-};
+import { getJson } from "../lib/data.js";
 
 export async function loadDemo() {
   const index = (await getJson("exams/index.json")).exams ?? [];

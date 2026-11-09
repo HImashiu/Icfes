@@ -11,7 +11,8 @@
     "test": "vitest run",
     "build:site": "npm run build && node scripts/build-site.mjs",
     "site": "node scripts/build-site.mjs",
-    "deploy": "bash scripts/deploy-site.sh"
+    "deploy": "bash scripts/deploy-site.sh",
+    "og": "node scripts/build-og.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
