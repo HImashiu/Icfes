@@ -1,4 +1,4 @@
--- 0033 · Trial codes: one code per school, for outreach emails.
+-- 0034 · Trial codes: one code per school, for outreach emails.
 --  A school gets one code. Its teachers sign in with Google, choose "Soy docente" and type the code. The first
 --  teacher creates the school's trial school (not linked to any real domain); the next teachers join that same school.
 --  Each code expires (20 days by default) and has a teacher limit (15 by default). Every redemption is recorded, so
