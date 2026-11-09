@@ -71,11 +71,11 @@ function analytics() {
   if (ga) {
     if (!/^G-[A-Z0-9]{4,16}$/.test(ga)) { console.error("[build-site] GA_MEASUREMENT_ID looks wrong"); process.exit(1); }
     out.push(`<script async src="https://www.googletagmanager.com/gtag/js?id=${ga}"></script>`
-      // Consent mode with storage denied: Google gets cookieless pings, so no cookie banner is needed (many visitors
-      // are minors). Visits are modelled, a little less exact than with cookies.
+      // Analytics storage granted: with it denied GA4 only gets cookieless pings for modelling and its reports stay
+      // empty on a small site. Advertising stays off (no ad cookies, ad personalization or Google signals).
       + `<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}`
-      + `gtag("consent","default",{analytics_storage:"denied",ad_storage:"denied",ad_user_data:"denied",ad_personalization:"denied"});`
-      + `gtag("js",new Date());gtag("config","${ga}");</script>`);
+      + `gtag("consent","default",{analytics_storage:"granted",ad_storage:"denied",ad_user_data:"denied",ad_personalization:"denied"});`
+      + `gtag("js",new Date());gtag("config","${ga}",{allow_google_signals:false,allow_ad_personalization_signals:false});</script>`);
   }
   return out.join("\n  ");
 }
