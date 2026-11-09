@@ -289,3 +289,23 @@ b, strong { font-weight: 700; }
 .calc-levels li { display: grid; grid-template-columns: 1fr auto; gap: 0 10px; padding: 10px 14px; border-radius: 12px; background: var(--surface-2); }
 .calc-levels b { color: var(--accent); }
 .calc-levels small { grid-column: 1 / -1; color: var(--text-2); }
+
+/* Content round: mini simulacro score, glossary, blog. */
+.mini-score { display: grid; gap: 8px; justify-items: start; margin: 8px 0 32px; padding: 22px; border: 1px solid var(--accent); background: var(--accent-soft); border-radius: 20px; animation: pop-in 0.45s var(--spring); }
+.mini-score[hidden] { display: none; }
+.mini-score strong { font-family: var(--display); font-size: 1.6rem; line-height: 1.1; }
+.mini-score span { color: var(--text-2); }
+.mini-score .btn { margin-top: 6px; }
+@keyframes pop-in { from { transform: scale(0.94); opacity: 0; } to { transform: none; opacity: 1; } }
+.gloss { display: grid; gap: 12px; margin: 0 0 28px; }
+.gloss > div { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; scroll-margin-top: 90px; }
+.gloss > div:target { border-color: var(--accent); }
+.gloss dt { font-weight: 800; margin-bottom: 4px; }
+.gloss dd { margin: 0; color: var(--text-2); }
+.post-meta { color: var(--text-2); font-size: 0.92rem; margin: -4px 0 14px; }
+.post h2 { margin-top: 32px; }
+.posts { display: grid; gap: 14px; }
+.post-card { display: grid; gap: 6px; padding: 20px; text-decoration: none; color: var(--text); transition: border-color 0.2s, transform 0.2s var(--spring); }
+.post-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.post-card span { color: var(--text-2); }
+@media (prefers-reduced-motion: reduce) { .mini-score { animation: none; } .post-card:hover { transform: none; } }

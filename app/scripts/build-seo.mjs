@@ -7,6 +7,7 @@
 // Only a handful per area: the full bank, review and scoring stay in the app.
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
+import { buildContentPages } from "./build-seo-content.mjs";
 
 const AREAS = [
   {
@@ -86,7 +87,7 @@ function figureQuestions(root, name) {
   return qs;
 }
 
-function loadBank(dataDir) {
+export function loadBank(dataDir) {
   const keysDir = join(dirname(dataDir), "answer-keys");
   const out = [];
   for (const file of readdirSync(dataDir).filter((f) => f.endsWith(".golden.json")).sort()) {
@@ -113,9 +114,12 @@ function settledKey(b, q) {
   return key;
 }
 
-function usable(b, q, area) {
+// S11-A was checked by hand, question by question, in the editor; its provenance flags were never updated.
+const HAND_CHECKED = new Set(["S11-A_1ra", "S11-A_2da"]);
+
+export function usable(b, q, area, handChecked = false) {
   if (canonArea(q.section) !== area) return false;
-  if (!q.ready || q.provenance?.trusted === false || q.figure || q.item_type !== "standard") return false;
+  if (!q.ready || (q.provenance?.trusted === false && !(handChecked && HAND_CHECKED.has(b.name))) || q.figure || q.item_type !== "standard") return false;
   if (!Array.isArray(q.options) || q.options.length < 3 || q.options.length !== (q.expected_options ?? q.options.length)) return false;
   const text = [q.stimulus_md, q.stem_md, ...q.options.map((o) => o.text_md)].join(" ");
   if (PICTURE.test(text) || q.options.some((o) => !String(o.text_md ?? "").trim())) return false;
@@ -192,7 +196,12 @@ function brandBits(appRoot) {
 // Relative links in the landing's markup, rewritten for a page `up` levels deep.
 const rebase = (html, up) => html.replace(/(src|href)="(?!https?:|#|\/|data:)([^"]*)"/g, (m, a, v) => `${a}="${up}${v === "./" ? "" : v}"`);
 
-function page({ siteUrl, path, title, desc, body, crumbs, jsonLd, katex, script }) {
+// Share image of a page (scripts/build-og.mjs draws one per page; falls back to img/og.png if it cannot).
+export const ogName = (path) => path.replace(/\/$/, "").replace(/\//g, "--");
+let SITE_DIR = "";
+const ogImagePath = (path) => existsSync(join(SITE_DIR, "img", "og", `${ogName(path)}.png`)) ? `img/og/${ogName(path)}.png` : "img/og.png";
+
+function page({ siteUrl, path, title, desc, body, crumbs, jsonLd, katex, script, type = "website" }) {
   const url = siteUrl + path;
   const up = "../".repeat(path.split("/").filter(Boolean).length);
   const crumbLd = {
@@ -211,13 +220,16 @@ function page({ siteUrl, path, title, desc, body, crumbs, jsonLd, katex, script 
   <meta name="robots" content="index, follow, max-image-preview:large" />
   <link rel="canonical" href="${url}" />
   ${rebase(BRAND.icons, up)}
-  <meta property="og:type" content="article" />
+  <meta property="og:type" content="${type}" />
   <meta property="og:site_name" content="Cóndor" />
   <meta property="og:locale" content="es_CO" />
   <meta property="og:url" content="${url}" />
   <meta property="og:title" content="${esc(title)}" />
   <meta property="og:description" content="${esc(desc)}" />
-  <meta property="og:image" content="${siteUrl}img/og.png" />
+  <meta property="og:image" content="${siteUrl}${ogImagePath(path)}" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="${esc(title)}" />
   <meta name="twitter:card" content="summary_large_image" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -257,6 +269,10 @@ ${body}
         <a href="${up}niveles-de-desempeno-icfes/">Niveles de desempeño</a>
         <a href="${up}preicfes-para-colegios/">Para colegios</a>
         <a href="${up}como-prepararse-para-el-icfes/">Cómo prepararse</a>
+        <a href="${up}competencias-icfes/">Competencias ICFES</a>
+        <a href="${up}resultados-icfes/">Cómo leer tus resultados</a>
+        <a href="${up}glosario-icfes/">Glosario ICFES</a>
+        <a href="${up}blog/">Blog</a>
         <a href="${up}privacidad.html">Privacidad y términos</a>
       </nav>
     </div>
@@ -279,16 +295,19 @@ const faqLd = (items) => ({ "@type": "FAQPage", mainEntity: items.map(([q, a]) =
 
 export async function buildSeoPages({ appRoot, out, siteUrl, dataDir, renderRich, saber11, national }) {
   brandBits(appRoot);
+  SITE_DIR = join(appRoot, "site");
   if (!existsSync(dataDir)) { console.warn(`[build-seo] ${dataDir} not found: question pages skipped.`); return []; }
   const bank = loadBank(dataDir);
   const pages = [];
   const write = (path, html) => { mkdirSync(join(out, path), { recursive: true }); writeFileSync(join(out, path, "index.html"), html); pages.push(path); };
   let usesKatex = false;
+  const used = new Set(); // questions already on a page, so no page repeats another one's questions
 
   // One page per area.
   for (const area of AREAS) {
     const items = area.grouped ? pickGroups(bank, area.name, area.count) : pickSingles(bank, area.name, area.count);
     if (!items.length) { console.warn(`[build-seo] no sample questions for ${area.name}`); continue; }
+    items.forEach((it) => used.add(`${it.b.name}-${it.q.number}`));
     const qs = items.map((it) => questionHtml(it, area, renderRich)).join("\n");
     if (qs.includes('class="katex')) usesKatex = true;
     const path = `preguntas-icfes/${area.slug}/`;
@@ -360,8 +379,10 @@ ${cta("../", "Practica con más de 4.000 preguntas")}`;
     <li><b>Repaso de errores</b> pregunta por pregunta.</li>
     <li><b>Sin rankings:</b> te comparas con tu meta, no con otros.</li>
   </ul>
-  <h2>Practica por área</h2>
-  ${areaLinks("../")}
+  <h2>Mini simulacro por área</h2>
+  <p class="prose">¿Quieres probar una sola prueba primero? Cada mini simulacro tiene preguntas reales y te dice cuántas acertaste.</p>
+  <div class="areas">${AREAS.map((a) => `<a class="area" href="${a.slug}/" style="--c:${a.color}"><span class="dot"></span><b>${esc(a.name)}</b><span>Mini simulacro</span></a>`).join("")}</div>
+  <p class="prose">También puedes ver <a href="../preguntas-icfes/">preguntas por área con respuestas</a> y <a href="../competencias-icfes/">las competencias que evalúa cada prueba</a>.</p>
   <h2>Preguntas frecuentes</h2>
   ${faqBlock(faq)}
 </section>
@@ -378,6 +399,10 @@ ${cta("../", "Empieza tu simulacro ahora")}`;
   buildGuidePage({ siteUrl, write });
   buildSchoolsPage({ siteUrl, write });
   buildTrialPage({ siteUrl, write });
+  buildContentPages({
+    siteUrl, write, page, esc, faqBlock, faqLd, cta, questionHtml, usable: (b, q, a) => usable(b, q, a, true), renderRich, AREAS, dataDir, used, bank,
+    markKatex: () => { usesKatex = true; }, PICTURE, NEEDS_PICTURE,
+  });
 
   // KaTeX stylesheet and fonts for the math on the question pages.
   if (usesKatex) {

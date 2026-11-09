@@ -54,9 +54,27 @@ document.documentElement.classList.add("js");
           var s = ans.querySelector("summary");
           if (s) s.textContent = pick === key ? "¡Correcto!" : "Casi. Mira la respuesta";
         }
+        q.setAttribute("data-done", pick === key ? "ok" : "bad");
+        miniScore(q.closest(".mini"));
       });
     });
   });
+
+  // Mini simulacro pages: once every question is answered, show the score.
+  function miniScore(mini) {
+    if (!mini) return;
+    var qs = mini.querySelectorAll(".q[data-key]");
+    var done = mini.querySelectorAll(".q[data-done]");
+    if (done.length < qs.length) return;
+    var ok = mini.querySelectorAll('.q[data-done="ok"]').length;
+    var box = mini.querySelector(".mini-score");
+    if (!box) return;
+    var share = ok / qs.length;
+    box.querySelector("strong").textContent = "Acertaste " + ok + " de " + qs.length;
+    box.querySelector("span").textContent = share === 1 ? "¡Perfecto! Mide tu nivel con un simulacro completo." : share >= 0.6 ? "Vas bien. Repasa las que fallaste y prueba el simulacro completo." : "Repasa las respuestas de arriba y sigue practicando: así se sube el puntaje.";
+    box.hidden = false;
+    box.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
 
   // The sample question: answer like in the app; the owl reacts.
   var card = document.getElementById("muestra");
