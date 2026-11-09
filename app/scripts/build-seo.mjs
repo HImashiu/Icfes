@@ -377,6 +377,7 @@ ${cta("../", "Empieza tu simulacro ahora")}`;
   if (saber11 && national) buildScorePages({ siteUrl, write, saber11, national });
   buildGuidePage({ siteUrl, write });
   buildSchoolsPage({ siteUrl, write });
+  buildTrialPage({ siteUrl, write });
 
   // KaTeX stylesheet and fonts for the math on the question pages.
   if (usesKatex) {
@@ -548,12 +549,13 @@ function buildSchoolsPage({ siteUrl, write }) {
   const path = "preicfes-para-colegios/";
   const features = [
     ["Simulacros y tareas por curso", "Asigna un simulacro completo, una sesión o una práctica por área a cada curso, con fecha de apertura y cierre. Los estudiantes la presentan desde el celular o el computador."],
-    ["Simulacro en papel", "Imprime el cuadernillo con la portada del colegio, en A4 o carta, con varias versiones que cambian el orden de las preguntas y un plano del salón. Las hojas de respuestas se califican escaneándolas con el celular."],
+    ["Hoy: lo que necesita atención", "Cada día el docente ve qué estudiantes bajaron, no entregaron o fallan siempre el mismo tipo de pregunta. Agrupa alertas, las marca como listas o las pospone."],
     ["Resultados en el formato del ICFES", "Puntaje de 0 a 100 por prueba, global de 0 a 500, niveles de desempeño y percentil nacional estimado, por estudiante, por curso y por competencia."],
-    ["Alertas de quién necesita apoyo", "El docente ve cada día qué estudiantes bajaron, no entregaron o fallan siempre el mismo tipo de pregunta, y puede agruparlos para reforzar."],
-    ["Juego en vivo en clase", "Proyecta preguntas y los estudiantes responden desde su celular con un código o QR. Sin tablas de posiciones: cada estudiante ve su propio avance."],
+    ["Simulacro en papel con plano del salón", "Imprime el cuadernillo con la portada del colegio, en A4 o carta, con varias versiones que cambian el orden de las preguntas. El plano del salón indica dónde se sienta cada estudiante. Las hojas se califican escaneándolas con el celular."],
+    ["Juego en vivo, ahora o programado", "Proyecta preguntas y los estudiantes responden desde su celular con un código o QR. Puedes dejarlo programado para una hora de clase. Sin tablas de posiciones: cada estudiante ve su propio avance."],
     ["Control de preguntas repetidas", "El sistema recuerda qué preguntas vio cada grupo, para que una tarea no repita las del simulacro y los resultados reflejen lo que de verdad saben."],
-    ["Banco de más de 4.000 preguntas", "Preguntas de cuadernillos publicados por el ICFES, con su fuente, más las que el colegio cree con el editor de preguntas."],
+    ["Banco de más de 4.000 preguntas", "Preguntas de cuadernillos publicados por el ICFES, con su fuente. Conviértelas en diapositivas, taller o quiz para la clase, o crea las tuyas con el editor."],
+    ["Hoja de datos y tableros", "Revisa las notas de cada curso en una hoja de datos, con gráficas que puedes guardar en tableros para la coordinación."],
     ["Cuentas del colegio", "Docentes y estudiantes entran con la cuenta de Google del colegio. Coordinación ve todos los cursos; cada docente, los suyos."],
   ];
   const faq = [
@@ -578,6 +580,8 @@ function buildSchoolsPage({ siteUrl, write }) {
     <tr><td><b>Mitad</b></td><td>Segundo simulacro. Comparación por curso, área y competencia.</td></tr>
     <tr><td><b>Antes del examen</b></td><td>Simulacro final con tiempo real y repaso de los errores de cada estudiante.</td></tr>
   </tbody></table></div>
+  <h2>Prueba con tu código de docente</h2>
+  <p class="prose">Si ya recibiste un código de prueba, entra a la plataforma de docentes en un par de minutos. <a href="../prueba-docente/">Cómo entrar con tu código</a>.</p>
   <h2>Preguntas frecuentes</h2>
   ${faqBlock(faq)}
 </section>
@@ -587,5 +591,40 @@ function buildSchoolsPage({ siteUrl, write }) {
     desc: "Plataforma preicfes para colegios: simulacros Saber 11 en línea o en papel, resultados por curso y competencia en formato ICFES, alertas de estudiantes y juego en vivo.",
     body, crumbs: [{ name: "Para colegios", path }],
     jsonLd: [faqLd(faq), { "@type": "Service", name: "Cóndor para colegios", serviceType: "Preparación Saber 11 (preicfes) para colegios", areaServed: { "@type": "Country", name: "Colombia" }, provider: { "@id": `${siteUrl}#org` }, url: siteUrl + path, inLanguage: "es-CO" }],
+  }));
+}
+
+function buildTrialPage({ siteUrl, write }) {
+  const path = "prueba-docente/";
+  const faq = [
+    ["¿Necesito pagar?", "No. Durante la etapa de demostración la plataforma es gratis para docentes con código de prueba."],
+    ["¿Qué pasa si el código venció o ya no admite más docentes?", "Cada colegio tiene un código con vencimiento de 20 días y un límite de docentes. Escríbenos desde la página de demostración y te enviamos uno nuevo."],
+    ["¿Mis estudiantes necesitan código?", "No. Entran con su cuenta de Google. Si su correo es el del colegio, ven sus cursos y tareas; si no, practican de forma independiente."],
+    ["¿Qué datos se guardan?", "Tu nombre, tu correo de Google y lo que se hace en la plataforma: cursos, tareas y resultados. Puedes leer más en la página de privacidad."],
+  ];
+  const body = `<section class="section guide-head"><div class="wrap narrow">
+  <span class="tag">Docentes</span>
+  <h1>Entra a la plataforma de docentes con tu código de prueba</h1>
+  <p class="prose">Con el código creas tu colegio de prueba, armas tus cursos y pruebas las tareas, los simulacros en línea y en papel, y el juego en vivo con tus estudiantes.</p>
+  <div class="cta-row"><a class="btn btn-primary" href="../app/">Entrar con mi código</a><a class="btn btn-ghost" href="../preicfes-para-colegios/">Qué incluye</a></div>
+</div></section>
+<section class="wrap narrow guide-body">
+  <h2>Cómo entrar</h2>
+  <ol class="steps">
+    <li><b>Abre la app.</b> Ve a <a href="../app/">condoricfes.com/app</a> y entra con tu cuenta de Google.</li>
+    <li><b>Elige “Soy docente”.</b> Aparece un campo para el código.</li>
+    <li><b>Escribe el código de tu colegio.</b> Se parece a <code>CND-XXXX-XXXX-XXXX-XXXX</code>. El primer docente que entra crea el colegio de prueba; los demás entran al mismo.</li>
+  </ol>
+  <h2>Primeros pasos</h2>
+  <p class="prose">Crea un curso, agrega a tus estudiantes con su correo y asigna un simulacro. Ellos lo presentan desde su celular o en papel, y en Hoy ves quién necesita apoyo.</p>
+  <h2>Preguntas frecuentes</h2>
+  ${faqBlock(faq)}
+</section>
+<section class="section"><div class="wrap narrow"><div class="card price reveal"><div><h2>¿Todavía no tienes código?</h2><p>Pide una demostración para tu colegio y te lo enviamos.</p></div><a class="btn btn-primary" href="../#colegios">Pedir una demostración</a></div></div></section>`;
+  write(path, page({
+    siteUrl, path, title: "Entrar a Cóndor para docentes con código de prueba | Cóndor",
+    desc: "Entra a la plataforma de docentes de Cóndor con tu código de prueba: cursos, tareas, simulacros en línea y en papel, y alertas por estudiante.",
+    body, crumbs: [{ name: "Docentes", path }],
+    jsonLd: [faqLd(faq), { "@type": "WebPage", name: "Entrar con código de prueba", url: siteUrl + path, inLanguage: "es-CO" }],
   }));
 }
