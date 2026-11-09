@@ -42,6 +42,8 @@ import { demoEnabled } from "./demo/mode.js";
 import { pendingMisses, repechajeKeys } from "./lib/repechaje.js";
 import { hiddenFor, withoutHidden } from "./lib/questionUse.js";
 import { orderQuestions } from "./lib/order.js";
+import { localQuota, spendLocal } from "./lib/practiceQuota.js";
+import { drawPractice, randomSeed } from "./lib/practiceDraw.js";
 import { resolveModel, xpFactor } from "./lib/grading.js";
 import { attemptForAssignment, attemptRow, attemptsLeft, kindMode, questionsForAttempt, revealAllowed } from "./lib/assignments.js";
 
@@ -118,6 +120,9 @@ export default function App() {
   const [subjectId, setSubjectId] = useState(null);
   const [progressTab, setProgressTab] = useState("resumen");
   const [attempt, setAttempt] = useState(null);
+  // Today's free-practice allowance (null until read). A run that is starting blocks a second start.
+  const [quota, setQuota] = useState(null);
+  const startingRef = useRef(false);
   const [theme, setTheme] = useState(() => currentTheme());
 
   useEffect(() => {
@@ -254,6 +259,15 @@ export default function App() {
   const startKeys = async (slug, keys, opts = {}) => {
     const sel = selected?.slug === slug && slug !== TEACHER_SLUG ? selected : await openExam(slug, slug === TEACHER_SLUG ? keys : null);
     if (!sel || keys.length === 0) return;
+    // A practice made of chosen questions counts against today's allowance too (a teacher's assignment does not).
+    // It is not trimmed: the student is asked to choose fewer when the day's allowance is short.
+    if (slug !== TEACHER_SLUG) {
+      const left = await readQuota();
+      if (left.remaining < keys.length) {
+        return setOpenError(left.remaining > 0 ? `Hoy te quedan ${left.remaining} preguntas de práctica. Elige hasta ${left.remaining}.` : "Hoy ya usaste tus preguntas de práctica. Vuelve mañana.");
+      }
+      setQuota(await takeQuota(keys.length));
+    }
     const mode = opts.mode === "timed" ? "timed" : "practice";
     const qs = questionsForAttempt(sel.exam, { scope: "all", keys });
     clearAttempt(slug, "custom");
@@ -265,16 +279,51 @@ export default function App() {
     setView("test");
   };
 
-  const startAttempt = (scope, mode, order) => {
+  // Today's free-practice allowance: the server's count when signed in, this browser's otherwise (or if it can't be reached).
+  const readQuota = useCallback(async () => {
+    if (signedIn && auth.api) {
+      try { return await auth.api.practiceQuota(); } catch { /* fall back to this browser */ }
+    }
+    return localQuota();
+  }, [signedIn, auth.api]);
+  const takeQuota = async (want) => {
+    if (signedIn && auth.api) {
+      try { return await auth.api.takePracticeQuestions(want); } catch { /* fall back to this browser */ }
+    }
+    return spendLocal(want);
+  };
+  useEffect(() => {
+    if (view === "setup" || view === "home" || view === "custom") readQuota().then(setQuota).catch(() => null);
+  }, [view, readQuota]);
+
+  // Free practice: the questions are drawn at random from the booklet, within today's allowance, and shown in a random
+  // order (areas keep the order the student chose). The booklet's name is not shown in the run. A full simulacro
+  // (timed, whole booklet) keeps its own questions: its score needs both sessions in full, and it is not counted.
+  const startAttempt = async (scope, mode, order) => {
+    if (startingRef.current) return;
     const free = withoutHidden(selected.exam, hidden, selected.slug);
-    const questions = questionsFor(free, scope);
-    if (free.held && questions.length === 0) return setOpenError("Tu colegio reservó estas preguntas para un simulacro. Elige otro cuadernillo.");
+    const pool = questionsFor(free, scope);
+    if (free.held && pool.length === 0) return setOpenError("Tu colegio reservó estas preguntas para un simulacro. Elige otro cuadernillo.");
+    const simulacro = mode === "timed" && scope === "all";
+    let drawn = null;
+    if (!simulacro) {
+      startingRef.current = true;
+      try {
+        const took = await takeQuota(pool.length);
+        if (took.granted === 0) return setOpenError("Hoy ya usaste tus preguntas de práctica. Vuelve mañana.");
+        setQuota(took);
+        drawn = drawPractice(pool, took.granted, { areaOrder: scope === "all" ? order : null, seed: randomSeed() });
+      } finally {
+        startingRef.current = false;
+      }
+    }
+    const questions = drawn ? drawn.questions : questionsFor(free, scope);
     clearAttempt(selected.slug, scope);
     setAttempt({
       slug: selected.slug,
       scope,
-      // Held-back questions leave the set: the attempt then lists the ones it covers, in the chosen order.
-      ...(free.held ? { keys: orderQuestions(questions, scope === "all" ? order : null).map((q) => q.key) } : {}),
+      // Held-back questions leave the set; a drawn run lists the questions it covers, in the order it shows them.
+      ...(drawn || free.held ? { keys: drawn ? drawn.keys : orderQuestions(questions, scope === "all" ? order : null).map((q) => q.key) } : {}),
       mode,
       durationSec: mode === "timed" ? timedSeconds(questions) : null,
       startedAt: Date.now(),
@@ -502,7 +551,8 @@ export default function App() {
   const usedOf = attempt?.assignmentId ? assigned.attempts.filter((x) => x.assignment_id === attempt.assignmentId && x.submitted_at).length : 0;
   const retryAssigned = assignedOf && attemptsLeft(assignedOf, usedOf) > 0 ? () => startAssigned(assignedOf) : null;
   const scopeTitle = attempt?.custom ? attempt.custom.label : attempt?.repechaje ? "Repechaje" : attempt && attempt.scope !== "all" ? attempt.scope : "Examen completo";
-  const examTitle = selected ? `${selected.exam.title} · ${scopeTitle}` : "";
+  // The run is named by its area, not by the booklet it was drawn from.
+  const examTitle = selected ? scopeTitle : "";
   // The sidebar stays on every screen except the test; results and review belong to Practicar, reports to Perfil.
   const navView = { home: "home", subjects: "subjects", setup: "setup", results: "setup", review: "setup", custom: "setup", history: "progress", progress: "progress", profile: "profile", login: "profile", reports: "profile" }[view] ?? null;
   // A teacher or coordinator previewing the student app is not "in" the classes they teach: no course label.
@@ -585,6 +635,7 @@ export default function App() {
           onPickExam={(slug) => openExam(slug)}
           onBack={() => setView("home")}
           onStart={startAttempt}
+          quota={quota}
           pendingKeys={pendingKeys(selected.slug, selected.exam)}
           onRepechaje={() => startRepechaje(pendingKeys(selected.slug, selected.exam))}
         />
@@ -595,7 +646,7 @@ export default function App() {
         <GlossaryProvider glossary={attempt.glossary}>
         <Test
           title={examTitle}
-          examLabel={selected.exam.title}
+          examLabel={null}
           questions={questions}
           attempt={attempt}
           onProctorEvent={(ev, a) => { if (auth.api && a.assignmentId) auth.api.proctorSend([{ assignment_id: a.assignmentId, client_id: String(a.startedAt), ...ev }]).catch(() => {}); }}
@@ -648,7 +699,7 @@ export default function App() {
           enrich={selected.enrich}
           enrichMeta={selected.enrichMeta}
           figures={selected.figures}
-          examLabel={selected.exam.title}
+          examLabel={null}
           startIndex={reviewStart}
           startNumber={reviewNumber}
           onBack={() => setView(attempt.from === "reports" ? "reports" : "results")}

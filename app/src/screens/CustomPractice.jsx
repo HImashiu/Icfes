@@ -4,7 +4,6 @@ import { areaColor } from "../lib/brand.js";
 import { DIFFICULTY_LABEL, bankItems } from "../lib/bank.js";
 import { COUNTS, ORDERS, PACES, SOURCES, matching, pickKeys, questionHistory } from "../lib/customPractice.js";
 import { loadHistory } from "../lib/local.js";
-import { bookletCode, sessionOf } from "../lib/booklets.js";
 import "./study.css";
 
 const toggle = (list, v) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
@@ -44,7 +43,7 @@ export default function CustomPractice({ bundle, slug, onStart, onBack, preset =
         <button type="button" className="icon-btn" onClick={onBack} aria-label="Volver"><Icon name="left" /></button>
         <h1>Práctica a medida</h1>
       </header>
-      <p className="caption">Cuadernillo {bookletCode(slug)} · Sesión {sessionOf(slug)}. Elige qué quieres practicar; las preguntas que comparten un texto salen juntas.</p>
+      <p className="caption">Elige qué quieres practicar; las preguntas que comparten un texto salen juntas.</p>
 
       <div className="card cp-block">
         <span className="label">Áreas</span>

@@ -18,22 +18,39 @@ const clientTag = () => {
 };
 
 // Keeps a copy in the browser first, so nothing is lost if the network fails; then tries the backend.
+// Before migration 0033 the table has no category or exam_slug column: the row is sent without them, so nothing is lost.
 async function send(row) {
   writeLocal(LOCAL_KEY, [...readLocal(LOCAL_KEY), { ...row, at: new Date().toISOString() }].slice(-200));
   if (!backendConfigured) return { stored: "browser" };
-  const { error } = await supabase.from("public_feedback").insert({ ...row, client: clientTag() });
+  let { error } = await supabase.from("public_feedback").insert({ ...row, client: clientTag() });
+  if (error && /category|exam_slug/.test(error.message ?? "")) {
+    const { category, exam_slug, ...older } = row; // eslint-disable-line no-unused-vars
+    ({ error } = await supabase.from("public_feedback").insert({ ...older, client: clientTag() }));
+  }
   return error ? { stored: "browser", error: error.message } : { stored: "server" };
 }
 
+// The reasons a student can pick when reporting a question (the editor sees the same id in question_reports).
+export const REPORT_REASONS = [
+  { id: "format", label: "Formato o texto mal escrito" },
+  { id: "key", label: "La respuesta correcta no es esa" },
+  { id: "figure", label: "Falta o está mal una figura o gráfica" },
+  { id: "options", label: "Las opciones están mal" },
+  { id: "other", label: "Otra cosa" },
+];
+
 // kind: "question" (with exam, question key and number) or "general".
-export function sendFeedback({ kind, message, exam = null, questionKey = null, questionNumber = null, contact = null, slug = null }) {
+export function sendFeedback({ kind, message, exam = null, questionKey = null, questionNumber = null, contact = null, slug = null, category = null }) {
   const text = String(message ?? "").trim().slice(0, 2000);
-  if (!text) return Promise.resolve({ stored: null, error: "empty" });
+  const reason = REPORT_REASONS.find((r) => r.id === category)?.id ?? null;
+  if (!text && !reason) return Promise.resolve({ stored: null, error: "empty" });
   // Question flags also appear in Perfil › Mis reportes de errores, as before.
-  if (kind === "question") addReport({ slug, question: questionKey, number: questionNumber, exam: exam ?? "", note: text });
+  if (kind === "question") addReport({ slug, question: questionKey, number: questionNumber, exam: exam ?? "", note: text, category: reason });
   return send({
     kind,
-    message: text,
+    message: text || (REPORT_REASONS.find((r) => r.id === reason)?.label ?? ""),
+    category: reason,
+    exam_slug: slug ? String(slug).slice(0, 80) : null,
     exam: exam ? String(exam).slice(0, 200) : null,
     question_key: questionKey ? String(questionKey).slice(0, 200) : null,
     question_number: Number.isInteger(questionNumber) ? questionNumber : null,
