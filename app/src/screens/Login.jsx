@@ -42,7 +42,7 @@ export default function Login({ onBack, gate = false }) {
           ) : (
             <label className="field">
               <span className="label">Código de docente</span>
-              <input value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" placeholder="Pídelo a la coordinación" />
+              <input value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" placeholder="Código de prueba o del colegio" />
             </label>
           )}
           {error && <p className="notice error" role="alert">{error}</p>}

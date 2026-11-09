@@ -21,6 +21,8 @@ export function claimMessage(err) {
   const m = String(err?.message ?? "");
   if (m.includes("school_not_found")) return "Para entrar como docente usa el correo de tu colegio o pide una invitación a la coordinación. Si eres estudiante, deja vacío el código.";
   if (m.includes("bad_teacher_code")) return "Ese código de docente no es correcto.";
+  if (m.includes("trial_code_full")) return "Este código de prueba ya tiene el máximo de docentes. Pide uno nuevo a Cóndor.";
+  if (m.includes("trial_code_expired")) return "Ese código de prueba venció. Pide uno nuevo a Cóndor.";
   return "No se pudo completar el ingreso. Inténtalo de nuevo.";
 }
 
