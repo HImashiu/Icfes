@@ -9,6 +9,7 @@ import { loadOrder, moveArea, normalizeOrder, saveOrder } from "../lib/order.js"
 import { loadHistory } from "../lib/local.js";
 import { practiceInsights } from "../lib/student.js";
 import { SESSION_HINT, bookletCode, groupBooklets, sessionOf } from "../lib/booklets.js";
+import { DEFAULT_DAILY_QUESTIONS } from "../lib/practiceQuota.js";
 import "./study.css";
 
 // Nuevo simulacro: booklet, scope (whole exam or one area), mode, and a sticky start button.
@@ -29,7 +30,7 @@ function initialScope(exam, preset) {
   return exam.sections[0]?.name ?? "all";
 }
 
-export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, preset, pendingKeys = [], onRepechaje, onCustom }) {
+export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, preset, pendingKeys = [], onRepechaje, onCustom, quota = null }) {
   const [scope, setScope] = useState(() => initialScope(exam, preset));
   const [mode, setMode] = useState(preset?.mode ?? "practice");
   // Switching booklets can drop the chosen area (1ra booklets have no Inglés): fall back to the whole booklet.
@@ -40,7 +41,12 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, 
   const shown = normalizeOrder(order, areas);
   const move = (i, dir) => { const next = moveArea(shown, i, dir); setOrder(next); saveOrder(next); };
   const scoped = questionsFor(exam, scope);
-  const minutes = timedSeconds(scoped) / 60;
+  // Free practice draws from today's allowance; the full simulacro (timed, whole booklet) is not limited.
+  const full = mode === "timed" && scope === "all";
+  const allowance = quota ? quota.remaining : DEFAULT_DAILY_QUESTIONS;
+  const runSize = full ? scoped.length : Math.min(scoped.length, allowance);
+  const minutes = (timedSeconds(scoped) / 60) * (scoped.length ? runSize / scoped.length : 1);
+  const trimmed = !full && runSize < scoped.length;
   const ins = practiceInsights(loadHistory());
   const books = groupBooklets(exams ?? []);
   const code = bookletCode(slug);
@@ -49,7 +55,7 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, 
   const mine = Object.fromEntries(ins.areas.map((a) => [a.name, a]));
   const lastHere = ins.recent.find((h) => h.snapshot?.slug === slug && (h.snapshot?.scope ?? "all") === scope);
   const parts = scope === "all" ? exam.sections : exam.sections.filter((x) => x.name === scope);
-  const hint = `${mode === "timed" ? `Tiempo: ${formatClock(timedSeconds(scoped))} · ` : ""}+10 XP por acierto · +20 en ${WEAKEST_AREA}`;
+  const hint = `${mode === "timed" ? `Tiempo: ${formatClock(timedSeconds(scoped) * (scoped.length ? runSize / scoped.length : 1))} · ` : ""}+10 XP por acierto · +20 en ${WEAKEST_AREA}`;
 
   return (
     <section className="setup">
@@ -63,13 +69,9 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, 
       <div className="su-grid">
       <div className="su-col">
       <div className="booklet card">
-        <span className="label">Cuadernillo</span>
+        <span className="label">Preguntas</span>
         <div className="su-booklet">
-          {books.length > 1 ? (
-            <Select className="booklet-select" value={code} onChange={(v) => { const b = books.find((x) => x.code === v); const s2 = b?.sessions.find((x) => x.n === session && x.status !== "proximamente") ?? b?.sessions.find((x) => x.status !== "proximamente"); if (s2) onPickExam(s2.slug); }} aria-label="Cambiar cuadernillo">
-              {books.map((b) => <option key={b.code} value={b.code} disabled={!b.ready}>{b.ready ? `Cuadernillo ${b.code}` : `${b.code} · Próximamente`}</option>)}
-            </Select>
-          ) : <strong>Cuadernillo {code}</strong>}
+          <strong>Preguntas oficiales ICFES</strong>
           {book && book.sessions.length > 1 && (
             <div className="segmented su-sessions" role="radiogroup" aria-label="Sesión">
               {book.sessions.map((x) => (
@@ -81,7 +83,7 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, 
           )}
         </div>
         <span className="caption">
-          {book && book.sessions.length > 1 ? `El examen real se presenta en dos sesiones del mismo cuadernillo. Sesión ${session}: ${SESSION_HINT[session] ?? ""}.` : ""} Fuente: ICFES, Saber 11 · {exam.questions.length} preguntas
+          Las preguntas salen mezcladas al azar. Fuente: ICFES, Saber 11 · {exam.questions.length} preguntas
         </span>
       </div>
 
@@ -113,7 +115,7 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, 
         ))}
       </div>
       {!exam.sections.some((s) => s.name === "Inglés") && (
-        <p className="footnote">La sesión 1 no incluye Inglés: Inglés está en la sesión 2 de este mismo cuadernillo.</p>
+        <p className="footnote">La sesión 1 no incluye Inglés.</p>
       )}
 
       {scope === "all" && shown.length > 1 && (
@@ -164,7 +166,7 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, 
           <span className="label">Lo que vas a hacer</span>
           <strong className="su-title">{scope === "all" ? "Examen completo" : scope}</strong>
           <div className="su-facts">
-            <span><b>{fmtInt(scoped.length)}</b><span className="caption">preguntas</span></span>
+            <span><b>{fmtInt(runSize)}</b><span className="caption">preguntas</span></span>
             <span><b>{formatDuration(minutes)}</b><span className="caption">{mode === "timed" ? "con tiempo" : "tiempo del examen"}</span></span>
             <span><b>{mode === "timed" ? "Al final" : "Inmediata"}</b><span className="caption">corrección</span></span>
           </div>
@@ -180,6 +182,9 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, 
               );
             })}
           </div>
+          {!full && quota && <span className="caption">Práctica de hoy: quedan {fmtInt(quota.remaining)} de {fmtInt(quota.limit)} preguntas.</span>}
+          {trimmed && runSize > 0 && <span className="caption">Salen al azar: {fmtInt(runSize)} de {fmtInt(scoped.length)} preguntas.</span>}
+          {runSize === 0 && <span className="caption">Llegaste al límite de hoy. Vuelve mañana: las preguntas de práctica se renuevan cada día.</span>}
           {lastHere && <span className="caption">La última vez aquí: {Math.round(lastHere.percent)} % · {new Date(lastHere.at).toLocaleDateString("es-CO", { day: "numeric", month: "short" })}</span>}
           {pendingKeys.length > 0 && <span className="caption">{pendingKeys.length} {pendingKeys.length === 1 ? "pregunta fallada espera" : "preguntas falladas esperan"} repechaje.</span>}
         </div>
@@ -194,8 +199,8 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, 
       </div>
 
       <div className="sticky-cta">
-        <button type="button" className="primary big" disabled={scoped.length === 0} onClick={() => onStart(scope, mode, shown)}>
-          Empezar · {fmtInt(scoped.length)} preguntas
+        <button type="button" className="primary big" disabled={runSize === 0} onClick={() => onStart(scope, mode, shown)}>
+          Empezar · {fmtInt(runSize)} preguntas
         </button>
         <span className="caption">{hint}</span>
       </div>

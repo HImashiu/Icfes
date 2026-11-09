@@ -267,6 +267,16 @@ export function createApi(client) {
       return unwrap(await client.rpc("family_report", { p_token: token }));
     },
 
+    // Free practice's daily allowance (migration 0033). practiceQuota reads it; takePracticeQuestions takes up to n.
+    async practiceQuota() {
+      const q = unwrap(await client.rpc("practice_quota"));
+      return { used: q.used, limit: q.limit, remaining: q.remaining };
+    },
+    async takePracticeQuestions(n) {
+      const r = unwrap(await client.rpc("take_practice_questions", { p_count: n }));
+      return { granted: r.granted, used: r.used, limit: r.limit, remaining: r.remaining };
+    },
+
     // Teacher-written questions. Row-level security returns the ones this person may read.
     async teacherQuestions() {
       return unwrap(await client.from("teacher_questions").select("*").order("created_at", { ascending: false }));
