@@ -5,3 +5,4 @@ public/exams/
 .env.local
 site-dist/
 .wrangler/
+review-out/
