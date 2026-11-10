@@ -15,6 +15,9 @@ const q = new URLSearchParams(location.search);
 const slug = q.get("slug") ?? "S11-B_1ra";
 const size = q.get("size") ?? "Carta";
 const binding = q.get("binding") ?? "sueltas";
+// Any print format option (lib/bookletStyle.js) as JSON, e.g. &style={"sides":"simplex","cover":"header"}
+const style = { size, binding, ...JSON.parse(q.get("style") ?? "{}") };
+const part = q.get("part") ?? "all";
 const versions = (q.get("versions") ?? "").split(",").filter(Boolean).map(Number);
 const doc = q.get("doc") ?? "booklet";
 const limit = Number(q.get("limit") ?? 0);
@@ -31,7 +34,7 @@ const get = async (p) => { const r = await fetch(`/exams/${p}`); return r.ok ? r
   let questions = bundle.exam.questions.filter((x) => !x.hidden);
   if (sections.length) questions = questions.filter((x) => sections.includes(x.section));
   if (limit) questions = questions.slice(0, limit);
-  const g = geometry(size, binding);
+  const g = geometry(style);
   const paper = size === "A4" ? { w: 210, h: 297 } : { w: 215.9, h: 279.4 };
   const sets = (versions.length ? versions : [null]).map((v) => ({ v, label: v == null ? null : versionLabel(v), qs: v == null ? questions : orderForVersion(questions, v, 12345) }));
   let pending = sets.length;
@@ -55,7 +58,7 @@ const get = async (p) => { const r = await fetch(`/exams/${p}`); return r.ok ? r
       <style>{doc === "key" ? `@page { size: ${paper.w}mm ${paper.h}mm; margin: 14mm 15mm; } @media print { .print-body{padding:0 !important; display:block !important} }` : `@page { size: ${g.sheet.w}mm ${g.sheet.h}mm; margin: 0; } @media print { body{background:#fff !important} .print-body{padding:0 !important; display:block !important} }`}</style>
       {doc === "key"
         ? sets.map((s) => <TeacherKeyPrint key={s.v ?? "x"} questions={s.qs} bundle={bundle} title={title} course="11 A" version={s.label} paper={paper} />)
-        : sets.map((s) => <BookletPages key={s.v ?? "x"} questions={s.qs} figures={bundle.figures} meta={meta(s.label)} onLaid={(r) => { window.__laid.push(r); if (--pending === 0) window.__ready = true; }} />)}
+        : sets.map((s) => <BookletPages key={s.v ?? "x"} questions={s.qs} figures={bundle.figures} meta={meta(s.label)} style={style} part={part} onLaid={(r) => { window.__laid.push(r); if (--pending === 0) window.__ready = true; }} />)}
     </div>,
   );
   if (doc === "key") setTimeout(() => { window.__ready = true; }, 500);

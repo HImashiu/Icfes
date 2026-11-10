@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Icon from "../components/Icon.jsx";
 import PrintBooklet from "../components/PrintBooklet.jsx";
+import BookletStudio from "../components/print/BookletStudio.jsx";
 import TeacherKey from "../components/TeacherKey.jsx";
 import { FilePicker, Select, confirmDialog } from "../components/Controls.jsx";
 import LessonCover from "../components/LessonCover.jsx";
@@ -331,8 +332,8 @@ export default function LessonEditor({ api, profile, row, courses, exams, fetchE
         </Overlay>
       )}
       {printing === "booklet" && (
-        <Overlay title="Cuadernillo de examen" hint="Para calificar con hojas de respuestas, crea la actividad y usa Papel." onClose={() => setPrinting(null)} page="14mm 14mm 16mm">
-          <PrintBooklet questions={questions} figures={bundle.figures} examLabel={bundle.exam.title} title={lesson.title} course={courseName} />
+        <Overlay title="Cuadernillo de examen" hint={`${questions.length} preguntas · elige papel, encuadernación, caras, márgenes, letra, portada y encabezados`} onClose={() => setPrinting(null)} page="0">
+          <BookletStudio api={api} bundle={bundle} questions={questions} title={lesson.title || "Cuadernillo"} course={courseName} />
         </Overlay>
       )}
       {printing === "key" && (
