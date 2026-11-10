@@ -11,7 +11,7 @@
 //
 // Defences against scraping, in order: 120 requests a minute per network address (EXAM_IP_RATE); a valid Supabase
 // session checked with Supabase itself (/auth/v1/user); 60 requests a minute per account (EXAM_USER_RATE); a daily
-// cap of different booklets per account (note_exam_download, migration 0031).
+// cap of different booklets per account and per trial school, and manual blocks (bank_open, migration 0036).
 //
 // Scores: when an attempt is delivered, reveal() grades it here and signs the score with GRADE_SECRET (HMAC-SHA256).
 // The database keeps a delivered attempt's score only with a valid signature (migration 0032), so a score typed in
@@ -62,20 +62,36 @@ async function userOf(token, env) {
   return out;
 }
 
-// "ok", or "limit" when the account has opened too many booklets today. Other failures (migration 0031 not run,
-// Supabase slow) let the request through: the sign-in check already passed and students must never be locked out.
+// "ok", or why the account may not open this booklet now: "access_blocked", "day_limit", "week_limit", "trial_limit"
+// or "files_limit" (bank_open, migration 0036: limits by role, a whole-trial cap shared by a trial school's teachers,
+// manual blocks). Before 0036 runs, the older note_exam_download (0031) is used. Other failures (Supabase slow) let the
+// request through: the sign-in check already passed and students must never be locked out by an outage.
+const DENIED = new Set(["access_blocked", "day_limit", "week_limit", "trial_limit", "files_limit"]);
 async function noteDownload(token, id, slug, env) {
   const k = `${id}:${slug}`;
   const now = Date.now();
   if ((noted.get(k) ?? 0) > now) return "ok";
   try {
-    const res = await rest(env, token, "/rest/v1/rpc/note_exam_download", { method: "POST", body: JSON.stringify({ p_slug: slug }) });
-    if (!res.ok) return (await res.text()).includes("download_limit") ? "limit" : "ok";
+    const res = await rest(env, token, "/rest/v1/rpc/bank_open", { method: "POST", body: JSON.stringify({ p_slug: slug }) });
+    if (res.ok) {
+      const verdict = await res.json().catch(() => "ok");
+      if (DENIED.has(verdict)) return verdict;
+    } else if (res.status === 404) {
+      const old = await rest(env, token, "/rest/v1/rpc/note_exam_download", { method: "POST", body: JSON.stringify({ p_slug: slug }) });
+      if (!old.ok) return (await old.text()).includes("download_limit") ? "day_limit" : "ok";
+    } else {
+      return "ok";
+    }
   } catch { return "ok"; }
   trim(noted);
   noted.set(k, now + OK_FOR);
   return "ok";
 }
+
+// The answer for a denied booklet. 403 for a blocked account; 429 with the reason otherwise (the app explains it).
+const denied = (verdict) => verdict === "access_blocked"
+  ? json(403, { error: "access_blocked" })
+  : json(429, { error: verdict === "files_limit" || verdict === "day_limit" ? "daily_limit" : verdict });
 
 async function underLimit(limiter, key) {
   if (!limiter) return true;
@@ -170,7 +186,8 @@ async function reveal(request, env, user, token) {
   const answers = body.answers && typeof body.answers === "object" ? body.answers : {};
   const submit = body.submit && typeof body.submit === "object" ? body.submit : null;
 
-  if ((await noteDownload(token, user.id, slug, env)) === "limit") return json(429, { error: "daily_limit" });
+  const verdict = await noteDownload(token, user.id, slug, env);
+  if (verdict !== "ok") return denied(verdict);
   const grade = await assetJson(env, request, `/app/exams/${slug}.grade.json`);
   if (!grade) return json(404, { error: "no_key" });
 
@@ -270,7 +287,8 @@ export default {
       if (/\.(key|sidecar)\.json$/.test(name)) return json(403, { error: "teachers_only" });
       if (/\.enrich\.json$/.test(name)) servePath = `/app/exams/${slug}.enrich.student.json`;
     }
-    if ((await noteDownload(token, user.id, slug, env)) === "limit") return json(429, { error: "daily_limit" });
+    const verdict = await noteDownload(token, user.id, slug, env);
+    if (verdict !== "ok") return denied(verdict);
 
     const res = servePath ? await asset(env, request, servePath) : await env.ASSETS.fetch(request);
     const out = new Response(res.body, res);

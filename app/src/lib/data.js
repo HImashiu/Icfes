@@ -15,14 +15,27 @@ export async function authHeaders() {
   }
 }
 
+// Why the server would not hand over a booklet (worker/index.js, bank_open in migration 0036), in words for the person.
+export const LIMIT_MESSAGES = {
+  daily_limit: "Llegaste al número de cuadernillos distintos que se pueden abrir hoy. Sigue con los que ya abriste: esos no cuentan de nuevo. Mañana se habilitan más.",
+  week_limit: "Llegaste al número de cuadernillos distintos de esta semana. Sigue con los que ya abriste: esos no cuentan de nuevo. En unos días se habilitan más.",
+  trial_limit: "Tu colegio ya abrió todos los cuadernillos que incluye la versión de prueba. Pueden seguir usando los que ya abrieron; para el banco completo, escríbenos.",
+  access_blocked: "El acceso a las preguntas de esta cuenta está suspendido. Si crees que es un error, escríbenos.",
+  teachers_only: "Ese archivo es solo para docentes.",
+  too_many_requests: "Demasiadas solicitudes seguidas. Espera un minuto e inténtalo de nuevo.",
+};
+export async function limitMessage(res) {
+  const body = await res.json().catch(() => ({}));
+  return LIMIT_MESSAGES[body.error] ?? LIMIT_MESSAGES.too_many_requests;
+}
+
 export async function getJson(path) {
   const res = await fetch(base + path, { headers: await authHeaders() });
   if (res.status === 401) throw new Error("Tu sesión terminó. Vuelve a ingresar para ver las preguntas.");
-  if (res.status === 429) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error === "daily_limit"
-      ? "Abriste muchos cuadernillos hoy. Sigue con los que ya abriste; mañana se habilitan más."
-      : "Demasiadas solicitudes seguidas. Espera un minuto e inténtalo de nuevo.");
+  if (res.status === 429 || res.status === 403) {
+    const err = new Error(await limitMessage(res));
+    err.limit = true;
+    throw err;
   }
   if (!res.ok) throw new Error(`No se pudo cargar ${path} (${res.status})`);
   return res.json();
@@ -37,7 +50,7 @@ export async function reveal(body) {
     body: JSON.stringify(body),
   });
   if (res.status === 401) throw new Error("Tu sesión terminó. Vuelve a ingresar.");
-  if (res.status === 429) throw new Error("Demasiadas solicitudes seguidas. Espera un minuto e inténtalo de nuevo.");
+  if (res.status === 429 || res.status === 403) throw new Error(await limitMessage(res));
   if (!res.ok) throw new Error(`No se pudo calificar (${res.status})`);
   return res.json();
 }
