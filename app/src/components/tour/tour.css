@@ -12,7 +12,9 @@
 .ob-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; width: 100%; margin-top: 6px; }
 .ob-foot .link { white-space: nowrap; }
 .ob-foot .primary { margin-left: 0; }
-.ob-dots { display: flex; gap: 5px; flex: 1 0 100%; justify-content: center; margin-bottom: 4px; }
+.ob-dots { display: flex; flex-wrap: wrap; gap: 5px; flex: 1 0 100%; justify-content: center; margin-bottom: 4px; min-width: 0; }
+.ob-bar { flex: 1 0 100%; height: 5px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin-bottom: 4px; }
+.ob-bar span { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width 0.25s; }
 .ob-dots span { width: 7px; height: 7px; border-radius: 999px; background: var(--surface-2); transition: width 0.25s, background 0.25s; }
 .ob-dots span.past { background: var(--accent-shadow); }
 .ob-dots span.on { width: 20px; background: var(--accent); }
@@ -45,12 +47,13 @@
 .nav-brand .ob-help { width: 28px; height: 28px; font-size: 13px; margin-left: auto; }
 .sh-head-help { margin-left: 8px; }
 .ob-link { justify-self: start; text-align: left; }
-.t-brand { display: flex; align-items: center; gap: 2px; min-width: 0; }
-.t-brand .t-logo { padding-right: 4px; }
-.t-brand .t-beta { margin-bottom: 14px; }
+/* The sidebar is too narrow for logo + wordmark + pill in one row: the pill sits under the wordmark. */
+.t-brand { display: grid; justify-items: start; gap: 2px; min-width: 0; }
+.t-brand .t-logo { flex: none; }
+.t-brand .t-beta { margin-left: 46px; padding: 0 7px; font-size: 10px; }
 .tl.rail .t-brand .t-logo { padding-right: 0; }
 /* Long lists scroll inside the card; the buttons stay in view. */
-.ob-card .ob-foot { position: sticky; bottom: -14px; z-index: 1; margin: 6px -18px -14px; padding: 8px 18px 14px; width: auto; background: var(--surface); border-radius: 0 0 20px 20px; }
+.ob-card .ob-foot { justify-self: stretch; position: sticky; bottom: -14px; z-index: 1; margin: 6px -18px -14px; padding: 8px 18px 14px; width: auto; background: var(--surface); border-radius: 0 0 20px 20px; }
 .ob-card.sheet { max-height: min(78vh, calc(100vh - 16px)); }
 .ob-card.sheet .ob-foot { bottom: -12px; margin: 6px -14px -12px; padding: 8px 14px 12px; }
 .ob-card.sheet .ob-dots { display: none; }
@@ -59,3 +62,29 @@
   .nav-brand .beta-pill { padding: 1px 6px; font-size: 10px; }
   .nav-brand .ob-help { width: 26px; height: 26px; margin-left: 0; }
 }
+/* «Todas las funciones» */
+.ob-index { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(860px, calc(100vw - 24px)); max-height: calc(100vh - 32px); overflow: auto; scrollbar-width: none; display: grid; gap: 14px; padding: 20px; border-radius: 20px; background: var(--surface); color: var(--text); border: 1px solid var(--line); box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45); outline: none; animation: ob-fade 0.2s ease-out; }
+.ob-index::-webkit-scrollbar { display: none; }
+.fi-head { display: flex; align-items: center; gap: 14px; padding-right: 36px; }
+.fi-head > div { display: grid; gap: 2px; min-width: 0; }
+.fi-head h2 { margin: 0; font-family: "Bricolage Grotesque", sans-serif; font-size: 22px; line-height: 1.15; }
+.fi-head p { margin: 0; color: var(--text-2); font-size: 14px; }
+.fi-grid { columns: 3 240px; column-gap: 12px; }
+.fi-sec { break-inside: avoid; display: grid; gap: 4px; margin-bottom: 12px; padding: 10px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--surface); }
+.fi-sec ul { list-style: none; margin: 0; padding: 0; display: grid; }
+.fi-sec-head, .fi-sec li button { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 0; border: 0; background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; border-radius: 8px; box-shadow: none; }
+.fi-sec-head { padding: 2px 4px 6px; }
+.fi-sec-head b { font-size: 15px; }
+.fi-ico { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border-radius: 9px; background: var(--accent-soft, var(--surface-2)); color: var(--accent-ink); }
+.fi-seen { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: var(--surface); }
+.fi-all { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--accent-ink); white-space: nowrap; }
+.fi-sec li button { justify-content: space-between; padding: 6px 6px 6px 8px; font-size: 14px; line-height: 1.3; color: var(--text-2); }
+.fi-sec li button svg { flex: none; opacity: 0.5; }
+.fi-sec li button:hover, .fi-sec-head:hover { background: var(--surface-2); color: var(--text); }
+.fi-sec li button:hover svg { opacity: 1; color: var(--accent-ink); }
+@media (max-width: 640px) {
+  .ob-index { top: auto; bottom: 8px; transform: translateX(-50%); width: calc(100vw - 16px); max-height: 86vh; padding: 16px 14px; }
+  .fi-head .mascot, .fi-head svg:first-child { display: none; }
+  .fi-head h2 { font-size: 19px; }
+}
+.ob-index:focus, .ob-index:focus-visible { outline: none; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45); border-color: var(--line); }

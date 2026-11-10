@@ -19,12 +19,12 @@ export const TEACHER_TOUR_IDS = ["hoy", "actividades", "nueva", "actividad", "cu
 const LABELS = {
   hoy: "Tutorial · Hoy", actividades: "Tutorial · Actividades", nueva: "Tutorial · Nueva actividad", actividad: "Tutorial · Una actividad",
   cuadernillo: "Cómo hacer un cuadernillo", estudiantes: "Tutorial · Estudiantes", resultados: "Tutorial · Resultados", biblioteca: "Tutorial · Biblioteca",
-  colegio: "Tutorial · Colegio", cuenta: "Tutorial · Mi cuenta", completo: "Recorrido completo",
+  colegio: "Tutorial · Colegio", cuenta: "Tutorial · Mi cuenta",
 };
 
 function hoySteps({ admin, name, first, intro = true }) {
   return seen([
-    intro && { id: "hola", owl: "happy", title: `¡Hola${name ? `, ${name}` : ""}!`, text: "Este es tu espacio docente. Cada sección tiene su propio tutorial: se abre la primera vez que entras y lo repites cuando quieras con el botón «?» de arriba. Empezamos por Hoy." },
+    intro && { id: "hola", owl: "happy", title: `¡Hola${name ? `, ${name}` : ""}!`, text: "Este es tu espacio docente. Cada sección tiene su propio tutorial: se abre la primera vez que entras y lo repites cuando quieras con el botón «?» de arriba. En «Todas las funciones» ves la lista completa. Empezamos por Hoy." },
     intro && BETA_STEP,
     { id: "hoy", route: { section: "hoy" }, target: "nav-hoy", title: "Hoy, tu inicio", text: "Todo lo que pide atención en tus clases, en una sola pantalla.",
       bullets: [
@@ -278,23 +278,29 @@ export function teacherTour(id, ctx) {
   return { label: LABELS[id] ?? "Tutorial", steps };
 }
 
-// Every section in a row, for a first look at everything the school gets (or a demo for a school).
-export function teacherFullTour(ctx) {
-  const tag = (prefix, list) => list.filter((s) => !s.final).map((s) => ({ ...s, id: `${prefix}-${s.id}` }));
-  const steps = [
-    ...hoySteps({ ...ctx, first: null }),
-    ...tag("act", actividadesSteps({ ...ctx, openTour: null })),
-    { id: "go-nueva", route: { section: "actividades", tab: "nueva" }, target: "new", title: "Nueva actividad, paso a paso", text: "Ahora armamos una actividad." },
-    ...tag("nv", nuevaSteps(ctx)),
-    ...(ctx.sample ? tag("ap", actividadSteps({ activityId: ctx.sample })) : []),
-    ...tag("cu", cuadernilloSteps(ctx)).filter((s) => s.id !== "cu-c-nueva" && s.id !== "cu-c-papel"),
-    ...tag("es", estudiantesSteps(ctx)),
-    ...tag("re", resultadosSteps(ctx)),
-    ...tag("bi", bibliotecaSteps(ctx)),
-    ...(ctx.admin ? tag("co", colegioSteps(ctx)) : []),
-    { id: "fin", owl: "celebrating", final: true, route: { section: "hoy" }, title: "Eso es todo Cóndor", text: "Cada sección guarda su tutorial: tócalo en «?» cuando lo necesites.", extra: ctx.first ?? null },
-  ];
-  return { label: LABELS.completo, steps };
+// «Todas las funciones»: every function the school gets, grouped by section. Each one opens its section's tutorial
+// at that step, on its own screen (a long tour chaining every section lost people). Built from the same steps.
+const INDEX = [
+  ["hoy", "Hoy", "home"], ["actividades", "Actividades", "grid"], ["nueva", "Nueva actividad", "plus"], ["actividad", "Una actividad", "flag"],
+  ["cuadernillo", "Cuadernillos en papel", "print"], ["estudiantes", "Estudiantes", "users"], ["resultados", "Resultados", "chart"],
+  ["biblioteca", "Biblioteca", "book"], ["colegio", "Colegio", "school"], ["cuenta", "Mi cuenta", "user"],
+];
+export function teacherFeatureIndex(ctx) {
+  return INDEX
+    .filter(([id]) => id !== "colegio" || ctx.admin)
+    .filter(([id]) => id !== "actividad" || ctx.activityId || ctx.sample)
+    .map(([id, title, icon]) => {
+      const steps = teacherTour(id, { ...ctx, intro: false, first: null }).steps;
+      const items = steps.map((s, k) => ({ title: s.title, start: k, final: s.final })).filter((s) => !s.final || steps.length === 1);
+      return { id, title, icon, items };
+    });
+}
+
+// A tour opened at step k: that step moves the app to the screen the earlier steps were on.
+export function tourFrom(steps, k = 0) {
+  if (!k || steps[k]?.route) return steps;
+  const route = steps.slice(0, k + 1).reverse().find((s) => s.route)?.route;
+  return route ? steps.map((s, n) => (n === k ? { ...s, route } : s)) : steps;
 }
 
 // The booklet print studio (BookletStudio): its own tutorial the first time it opens.

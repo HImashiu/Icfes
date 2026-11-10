@@ -132,7 +132,8 @@ export default function Tour({ steps, label = "Tutorial", navigate = null, onClo
         )}
         {step.extra}
         <div className="ob-foot">
-          <span className="ob-dots" aria-hidden="true">{steps.map((st, k) => <span key={st.id} className={k === i ? "on" : k < i ? "past" : ""} />)}</span>
+          {count > 1 && count <= 12 && <span className="ob-dots" aria-hidden="true">{steps.map((st, k) => <span key={st.id} className={k === i ? "on" : k < i ? "past" : ""} />)}</span>}
+          {count > 12 && <span className="ob-bar" aria-hidden="true"><span style={{ width: `${((i + 1) / count) * 100}%` }} /></span>}
           {i === 0 && !last && <button type="button" className="link" onClick={() => finish(false)}>Ahora no</button>}
           {i > 0 && <button type="button" className="secondary" onClick={() => setI(i - 1)}>Atrás</button>}
           <button type="button" className="primary" onClick={nextStep}>{last ? "Entendido" : i === 0 ? "Empezar" : "Siguiente"}</button>

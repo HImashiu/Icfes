@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import TeacherLive from "../src/screens/TeacherLive.jsx";
 import { firstSteps } from "../src/screens/teacher/Onboarding.jsx";
 import { markTourSeen, tourSeen } from "../src/components/tour/Tour.jsx";
-import { STUDENT_TOUR_IDS, TEACHER_TOUR_IDS, studentTour, studioTour, teacherFullTour, teacherTour, teacherTourId } from "../src/lib/tours.jsx";
+import { STUDENT_TOUR_IDS, TEACHER_TOUR_IDS, studentTour, studioTour, teacherFeatureIndex, teacherTour, teacherTourId, tourFrom } from "../src/lib/tours.jsx";
 
 afterEach(() => { cleanup(); window.location.hash = ""; window.localStorage.clear(); });
 
@@ -79,10 +79,13 @@ describe("teacher onboarding", () => {
     for (const id of STUDENT_TOUR_IDS) expect(studentTour(id).steps.length).toBeGreaterThan(0);
     expect(teacherTourId({ section: "actividades", tab: "nueva" })).toBe("nueva");
     expect(teacherTourId({ section: "actividad", id: "x" })).toBe("actividad");
-    const full = teacherFullTour(ctx).steps;
-    expect(new Set(full.map((s) => s.id)).size).toBe(full.length);
-    expect(full.some((s) => s.route?.section === "colegio")).toBe(true);
-    expect(teacherFullTour({ ...ctx, admin: false }).steps.some((s) => s.route?.section === "colegio")).toBe(false);
+    const index = teacherFeatureIndex(ctx);
+    expect(index.map((s) => s.id)).toContain("colegio");
+    expect(index.every((s) => s.items.length > 0)).toBe(true);
+    expect(teacherFeatureIndex({ ...ctx, admin: false }).map((s) => s.id)).not.toContain("colegio");
+    // Opening a section at a later step still moves the app to that section's screen.
+    const steps = teacherTour("biblioteca", ctx).steps;
+    for (const it of index.find((s) => s.id === "biblioteca").items) expect(tourFrom(steps, it.start)[it.start].route).toBeTruthy();
     expect(studioTour({ versions: true }).map((s) => s.id)).toContain("s-ver");
   });
 });

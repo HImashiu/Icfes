@@ -32,7 +32,8 @@ import "./teacher/colegio.css";
 import { ExampleDataSwitch, FirstSteps, firstSteps } from "./teacher/Onboarding.jsx";
 import Tour, { TourButton, markTourSeen, tourSeen } from "../components/tour/Tour.jsx";
 import { BetaPill } from "../components/Beta.jsx";
-import { TEACHER_TOUR_IDS, teacherFullTour, teacherTour, teacherTourId } from "../lib/tours.jsx";
+import { teacherFeatureIndex, teacherTour, teacherTourId, tourFrom } from "../lib/tours.jsx";
+import FeatureIndex from "../components/tour/FeatureIndex.jsx";
 import { demoEnabled, setDemo } from "../demo/mode.js";
 import { ActivityList, KIND_TABS, NewActivityMenu } from "./teacher/Activities.jsx";
 import ContextSwitcher from "../components/ContextSwitcher.jsx";
@@ -83,7 +84,8 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
   const [shownReceipt, setShownReceipt] = useState(null);
   const [bell, setBell] = useState(false);
   // Tutorials: each section has its own, which opens by itself the first time the teacher visits it (once per
-  // teacher and device) and replays from «?». «Recorrido completo» chains them all. { id } or null.
+  // teacher and device) and replays from «?». «Todas las funciones» lists every function and opens
+  // its section tutorial at that step. { id, start?, from? } or null.
   const [tour, setTour] = useState(null);
   // A trial school (migration 0035): days and teacher seats left, so the end never comes as a surprise.
   const [trial, setTrial] = useState(null);
@@ -176,10 +178,11 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
   // seen and does not set off the next one where it ends.
   const routeKey = `${route.section}/${route.tab ?? ""}`;
   const tourEnd = useRef(null);
-  const closeTour = useCallback(() => {
+  const closeTour = useCallback((done) => {
     setTour((t) => {
-      if (t) for (const id of t.id === "completo" ? TEACHER_TOUR_IDS : [t.id]) markTourSeen("docente", profile.id, id);
-      return null;
+      if (t && t.id !== "completo") markTourSeen("docente", profile.id, t.id);
+      // A section opened from the list goes back to the list when it ends.
+      return t?.from === "completo" && done === true ? { id: "completo" } : null;
     });
     tourEnd.current = routeKey;
   }, [profile.id, routeKey]);
@@ -268,8 +271,8 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           <button type="button" className="t-nav" onClick={() => setTour({ id: teacherTourId(r) ?? "hoy" })} title={rail ? "Tutorial de esta sección" : undefined}>
             <Icon name="play" size={18} strokeWidth={2.4} /><span>Tutorial de esta sección</span>
           </button>
-          <button type="button" className="t-nav" onClick={() => setTour({ id: "completo" })} title={rail ? "Recorrido completo" : undefined}>
-            <Icon name="map" size={18} strokeWidth={2.4} /><span>Recorrido completo</span>
+          <button type="button" className="t-nav" onClick={() => setTour({ id: "completo" })} title={rail ? "Todas las funciones" : undefined}>
+            <Icon name="map" size={18} strokeWidth={2.4} /><span>Todas las funciones</span>
           </button>
           <button type="button" role="switch" aria-checked={demoEnabled} className={demoEnabled ? "t-nav t-demo on" : "t-nav t-demo"} onClick={() => setDemo(!demoEnabled)}
             title={demoEnabled ? "Apagar los datos de ejemplo y volver a tu colegio" : "Ver el panel con un colegio inventado, sin importar nada"}>
@@ -297,7 +300,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
                 {trial && <span className="caption tl-menu-trial">Prueba gratis · {trialLine}</span>}
                 <button type="button" role="menuitem" onClick={() => { setMenu(false); go({ section: "cuenta" }); }}><Icon name="user" size={16} /> Mi cuenta y permisos</button>
                 <button type="button" role="menuitem" onClick={() => { setMenu(false); setTour({ id: teacherTourId(r) ?? "hoy" }); }}><Icon name="play" size={16} /> Tutorial de esta sección</button>
-                <button type="button" role="menuitem" onClick={() => { setMenu(false); setTour({ id: "completo" }); }}><Icon name="map" size={16} /> Recorrido completo</button>
+                <button type="button" role="menuitem" onClick={() => { setMenu(false); setTour({ id: "completo" }); }}><Icon name="map" size={16} /> Todas las funciones</button>
                 <ExampleDataSwitch className="tl-menu-switch" />
                 <button type="button" role="menuitem" onClick={() => { setMenu(false); onExit(); }}><Icon name="left" size={16} /> App de estudiante</button>
               </span>
@@ -440,8 +443,12 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           first: <FirstSteps steps={firstSteps({ admin, courses: allCourses, assignments: allAssignments })} go={(to) => { closeTour(true); go(to); }} />,
           openTour: (id) => { markTourSeen("docente", profile.id, tour.id); setTour({ id }); },
         };
-        const t = tour.id === "completo" ? teacherFullTour(ctx) : teacherTour(tour.id, ctx);
-        return <Tour key={tour.id} label={t.label} steps={t.steps} navigate={go} onClose={closeTour} />;
+        if (tour.id === "completo") {
+          return <FeatureIndex sections={teacherFeatureIndex(ctx)} seen={(id) => tourSeen("docente", profile.id, id)}
+            onPick={(id, start) => setTour({ id, start, from: "completo" })} onClose={() => closeTour(false)} />;
+        }
+        const t = teacherTour(tour.id, { ...ctx, intro: !tour.from, first: tour.from ? null : ctx.first });
+        return <Tour key={`${tour.id}:${tour.start ?? 0}`} label={t.label} steps={tourFrom(t.steps, tour.start)} start={tour.start ?? 0} navigate={go} onClose={closeTour} />;
       })()}
       {shownReceipt && <Receipt receipt={shownReceipt} onGo={(to) => go(to)} onClose={() => setShownReceipt(null)} />}
     </div>
