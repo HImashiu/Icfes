@@ -3223,3 +3223,16 @@ body.spl-open { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .launch-bar, .sh-col > *, .sh-ring circle + circle, .sh-m .progress > span, .home-head .pill { animation: none; }
 }
+.demo-banner .demo-off { pointer-events: auto; border: 0; border-radius: 999px; padding: 3px 12px; font-size: 12px; font-weight: 700; background: #1a1500; color: #ffb547; min-height: 0; }
+/* Sign-in: student or teacher (teachers can bring a trial code) */
+.login-card { display: grid; gap: 12px; justify-items: start; }
+.login-who { width: 100%; }
+.login-who .seg { flex: 1; }
+.login-code { width: 100%; }
+.login-code input { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.04em; text-transform: uppercase; }
+.tc-form { display: grid; gap: 10px; }
+.tc-open { text-align: left; }
+.tc-open > span { display: grid; gap: 2px; }
+.tc-page { display: grid; gap: 12px; max-width: 560px; }
+.demo-banner strong { white-space: nowrap; }
+.login-code input { width: 100%; font-size: 15px; }

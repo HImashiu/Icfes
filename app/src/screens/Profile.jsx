@@ -1,4 +1,6 @@
 import Icon from "../components/Icon.jsx";
+import TeacherCode from "../components/TeacherCode.jsx";
+import { demoEnabled } from "../demo/mode.js";
 import Mascot from "../components/Mascot.jsx";
 import { useMemo, useState } from "react";
 import { useAuth } from "../lib/auth.jsx";
@@ -12,7 +14,7 @@ import { DAILY_GOALS, TARGETS, daysUntil, loadGoal, saveGoal } from "../lib/goal
 
 // Perfil: who you are, your goal (exam date, daily XP, target score), your subjects with their teachers, then
 // settings: theme, sounds, account, error reports and the teacher view. The analysis lives in Progreso.
-export default function Profile({ theme, onTheme, onTeacher, onReports, onLogin, assigned, classes, course, onGo }) {
+export default function Profile({ teacherCodeError = null, theme, onTheme, onTeacher, onReports, onLogin, assigned, classes, course, onGo }) {
   const auth = useAuth();
   const staff = auth.status === "ready" && auth.profile.role !== "student";
   const [sound, setSound] = useState(soundOn);
@@ -123,6 +125,8 @@ export default function Profile({ theme, onTheme, onTeacher, onReports, onLogin,
             <span>Mis reportes de errores</span>
             <Icon name="right" />
           </button>
+
+          {auth.status === "ready" && !staff && !demoEnabled && <TeacherCode onDone={onTeacher} error={teacherCodeError} />}
 
           {staff && (
             <button type="button" className="card quick-row" onClick={onTeacher}>

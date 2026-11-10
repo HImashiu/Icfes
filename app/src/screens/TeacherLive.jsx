@@ -29,6 +29,8 @@ import StaffList from "./teacher/Staff.jsx";
 import AuditLog from "./teacher/AuditLog.jsx";
 import { MyAccount, SchoolSettings } from "./teacher/Settings.jsx";
 import "./teacher/colegio.css";
+import { ExampleDataSwitch, TeacherTour, firstSteps, markTourSeen, tourSeen } from "./teacher/Onboarding.jsx";
+import { demoEnabled, setDemo } from "../demo/mode.js";
 import { ActivityList, KIND_TABS, NewActivityMenu } from "./teacher/Activities.jsx";
 import ContextSwitcher from "../components/ContextSwitcher.jsx";
 import Receipt, { Novedades } from "../components/Receipt.jsx";
@@ -77,6 +79,18 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
   const [receipts, setReceipts] = useState(() => loadReceipts(profile.id));
   const [shownReceipt, setShownReceipt] = useState(null);
   const [bell, setBell] = useState(false);
+  // First visit: the guided tour opens by itself once per teacher and device (never over the example school).
+  const [tour, setTour] = useState(() => !demoEnabled && !tourSeen(profile.id));
+  const closeTour = useCallback(() => { markTourSeen(profile.id); setTour(false); }, [profile.id]);
+  // A trial school (migration 0035): days and teacher seats left, so the end never comes as a surprise.
+  const [trial, setTrial] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    Promise.resolve().then(() => baseApi.myTrial?.()).then((t) => alive && setTrial(t ?? null), () => {});
+    return () => { alive = false; };
+  }, [baseApi]);
+  const trialDays = trial ? Math.max(0, Math.ceil((new Date(trial.expires_at) - Date.now()) / 86400000)) : null;
+  const trialLine = trial ? `${trialDays === 0 ? "Termina hoy" : `Quedan ${trialDays} ${trialDays === 1 ? "día" : "días"}`} · ${trial.teachers} de ${trial.max_teachers} docentes` : null;
   // Statuses, groups, follow-up, notes and saved views (migration 0014; this browser until it runs).
   const [ws, setWs] = useState(null);
   const store = useMemo(
@@ -199,20 +213,35 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
         </div>
         <nav>
           {NAV.map((n) => (
-            <button key={n.section} type="button" className={current === n.section ? "t-nav active" : "t-nav"} aria-current={current === n.section ? "page" : undefined} title={rail ? n.label : undefined} onClick={() => go({ section: n.section })}>
+            <button key={n.section} data-tour={`nav-${n.section}`} type="button" className={current === n.section ? "t-nav active" : "t-nav"} aria-current={current === n.section ? "page" : undefined} title={rail ? n.label : undefined} onClick={() => go({ section: n.section })}>
               <Icon name={n.icon} size={18} strokeWidth={2.4} /><span>{n.label}</span>
             </button>
           ))}
           {admin && <span className="t-group">Colegio</span>}
-          {admin && ADMIN_NAV.map((n) => {
+          {admin && ADMIN_NAV.map((n, k) => {
             const on = r.section === "colegio" && r.tab === n.tab;
             return (
-              <button key={n.tab} type="button" className={on ? "t-nav active" : "t-nav"} aria-current={on ? "page" : undefined} title={rail ? n.label : undefined} onClick={() => go({ section: "colegio", tab: n.tab })}>
+              <button key={n.tab} data-tour={k === 0 ? "nav-colegio" : undefined} type="button" className={on ? "t-nav active" : "t-nav"} aria-current={on ? "page" : undefined} title={rail ? n.label : undefined} onClick={() => go({ section: "colegio", tab: n.tab })}>
                 <Icon name={n.icon} size={18} strokeWidth={2.4} /><span>{n.label}</span>
               </button>
             );
           })}
         </nav>
+        {trial && (
+          <div className={trialDays <= 3 ? "t-trial soon" : "t-trial"} title={trialLine}>
+            <span className="label">Prueba gratis</span>
+            <span className="caption">{trialLine}</span>
+          </div>
+        )}
+        <div className="t-help">
+          <button type="button" className="t-nav" onClick={() => setTour(true)} title={rail ? "Ver el recorrido" : undefined}>
+            <Icon name="play" size={18} strokeWidth={2.4} /><span>Ver el recorrido</span>
+          </button>
+          <button type="button" role="switch" aria-checked={demoEnabled} className={demoEnabled ? "t-nav t-demo on" : "t-nav t-demo"} onClick={() => setDemo(!demoEnabled)}
+            title={demoEnabled ? "Apagar los datos de ejemplo y volver a tu colegio" : "Ver el panel con un colegio inventado, sin importar nada"}>
+            <Icon name="grid" size={18} strokeWidth={2.4} /><span className="t-demo-label">Datos de ejemplo</span><i className="t-mini-switch" aria-hidden="true" />
+          </button>
+        </div>
         <button type="button" className={r.section === "cuenta" ? "card plan tl-me on" : "card plan tl-me"} onClick={() => go({ section: "cuenta" })} aria-label="Mi cuenta">
           <span className="label">{profile.full_name || profile.email}</span>
           <span className="caption">{admin ? "Coordinación" : "Docente"} · Mi cuenta y permisos</span>
@@ -231,12 +260,15 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
             {menu && (
               <span className="tl-menu" role="menu">
                 <strong>{profile.full_name || profile.email}</strong>
+                {trial && <span className="caption tl-menu-trial">Prueba gratis · {trialLine}</span>}
                 <button type="button" role="menuitem" onClick={() => { setMenu(false); go({ section: "cuenta" }); }}><Icon name="user" size={16} /> Mi cuenta y permisos</button>
+                <button type="button" role="menuitem" onClick={() => { setMenu(false); setTour(true); }}><Icon name="play" size={16} /> Ver el recorrido</button>
+                <ExampleDataSwitch className="tl-menu-switch" />
                 <button type="button" role="menuitem" onClick={() => { setMenu(false); onExit(); }}><Icon name="left" size={16} /> App de estudiante</button>
               </span>
             )}
           </span>
-          <ContextSwitcher contexts={contexts} value={context} onChange={pickContext} />
+          <span className="tl-ctx-wrap" data-tour="context"><ContextSwitcher contexts={contexts} value={context} onChange={pickContext} /></span>
           <nav className="tl-crumbs" aria-label="Estás en">
             {trail.map((c, i) => (
               <span key={`${c.label}-${i}`} className="tl-crumb">
@@ -246,10 +278,10 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
             ))}
           </nav>
           <span className="tl-spacer" />
-          <button type="button" className="tl-live" onClick={() => go({ section: "actividades", tab: "vivo" })} aria-label="Juego en vivo">
+          <button type="button" data-tour="live" className="tl-live" onClick={() => go({ section: "actividades", tab: "vivo" })} aria-label="Juego en vivo">
             <Icon name="bolt" size={15} /><span>Juego en vivo</span>
           </button>
-          <NewActivityMenu go={go} disabled={loaded && allCourses.length === 0} onLive={() => setLiveNew((n) => n + 1)} />
+          <span className="tl-new-wrap" data-tour="new"><NewActivityMenu go={go} disabled={loaded && allCourses.length === 0} onLive={() => setLiveNew((n) => n + 1)} /></span>
           <Novedades receipts={receipts} open={bell} onToggle={(v) => { setBell(v); if (v) setReceipts(markSeen(profile.id)); }} onOpen={openReceipt} />
         </header>
 
@@ -276,7 +308,8 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
         <div className="tl-page" key={viewKey}>
           {r.section === "hoy" && (
             <Today api={api} profile={profile} courses={courses} readOnlyIds={contexts.readOnly} assignments={assignments} ws={ws} store={store} alertStore={alertStore} receipts={receipts} subject={context.subject} contextName={contextName}
-              go={go} onOpenStudent={openStudent} onOpenStudents={openStudents} onOpenReceipt={openReceipt} onReinforce={() => go({ section: "actividades", tab: "refuerzo" })} onConvert={convert} />
+              go={go} onOpenStudent={openStudent} onOpenStudents={openStudents} onOpenReceipt={openReceipt} onReinforce={() => go({ section: "actividades", tab: "refuerzo" })} onConvert={convert}
+              steps={firstSteps({ admin, courses: allCourses, assignments: allAssignments })} onTour={() => setTour(true)} />
           )}
 
           {r.section === "actividades" && r.tab === "lista" && <ActivityList courses={courses} assignments={assignments} contextName={contextName} go={go} loaded={loaded} />}
@@ -351,17 +384,18 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
 
       <nav className="tl-bottom" aria-label="Secciones">
         {NAV.map((n) => (
-          <button key={n.section} type="button" className={current === n.section ? "on" : ""} aria-current={current === n.section ? "page" : undefined} title={rail ? n.label : undefined} onClick={() => go({ section: n.section })}>
+          <button key={n.section} data-tour={`nav-${n.section}`} type="button" className={current === n.section ? "on" : ""} aria-current={current === n.section ? "page" : undefined} title={rail ? n.label : undefined} onClick={() => go({ section: n.section })}>
             <Icon name={n.icon} size={21} /><span>{n.label}</span>
           </button>
         ))}
         {admin && (
-          <button type="button" className={current === "colegio" ? "on" : ""} onClick={() => go({ section: "colegio" })}>
+          <button type="button" data-tour="nav-colegio" className={current === "colegio" ? "on" : ""} onClick={() => go({ section: "colegio" })}>
             <Icon name="shield" size={21} /><span>Colegio</span>
           </button>
         )}
       </nav>
 
+      {tour && loaded && <TeacherTour admin={admin} name={String(profile.full_name || "").split(" ")[0]} steps={firstSteps({ admin, courses: allCourses, assignments: allAssignments })} go={go} onClose={closeTour} />}
       {shownReceipt && <Receipt receipt={shownReceipt} onGo={(to) => go(to)} onClose={() => setShownReceipt(null)} />}
     </div>
   );

@@ -10,13 +10,14 @@ import AlertInbox from "./AlertInbox.jsx";
 import { todayModel } from "../../lib/today.js";
 import { areaColor } from "../../lib/brand.js";
 import { areaShort, contextColor } from "../../lib/teaching.js";
+import { FirstSteps } from "./Onboarding.jsx";
 
 const greeting = (now = new Date()) => (now.getHours() < 12 ? "Buenos días" : now.getHours() < 19 ? "Buenas tardes" : "Buenas noches");
 const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 const firstName = (p) => String(p.full_name || p.email || "").split(/[\s@]/)[0];
 
 // Hoy: the teacher's home. What needs attention first, then the week, each class and who needs support.
-export default function Today({ api, profile, courses, readOnlyIds = [], assignments, ws, store, alertStore, receipts, subject, contextName, go, onOpenStudent, onOpenStudents, onOpenReceipt, onReinforce, onConvert }) {
+export default function Today({ api, profile, courses, readOnlyIds = [], assignments, ws, store, alertStore, receipts, subject, contextName, go, onOpenStudent, onOpenStudents, onOpenReceipt, onReinforce, onConvert, steps = [], onTour }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   useEffect(() => {
@@ -52,13 +53,15 @@ export default function Today({ api, profile, courses, readOnlyIds = [], assignm
 
   if (courses.length === 0) {
     return (
-      <div className="td-empty card">
-        <Mascot pose="normal" idle size={96} />
-        <div>
-          <h1>Hola, {firstName(profile)}</h1>
-          <p className="caption">{profile.role === "school_admin" ? "Empieza armando las clases del colegio: grupos, materias y quién dicta cada una." : "Todavía no tienes clases. Coordinación te las asigna; también puedes crear una en Estudiantes › Listas de clase."}</p>
+      <div className="td-empty card ob-empty">
+        <div className="ob-empty-head">
+          <Mascot pose="normal" idle size={88} />
+          <div>
+            <h1>Hola, {firstName(profile)}</h1>
+            <p className="caption">{profile.role === "school_admin" ? "Tu colegio está listo para empezar. Arma los cursos y asigna la primera actividad." : "Tu espacio está listo. Crea tu clase (o espera a que coordinación te la asigne) y asigna la primera actividad."}</p>
+          </div>
         </div>
-        <button type="button" className="primary" onClick={() => go(profile.role === "school_admin" ? { section: "colegio", tab: "docentes" } : { section: "estudiantes", tab: "clases" })}>{profile.role === "school_admin" ? "Armar las clases" : "Crear una clase"}</button>
+        <FirstSteps steps={steps} go={go} onTour={onTour} />
       </div>
     );
   }
@@ -83,6 +86,13 @@ export default function Today({ api, profile, courses, readOnlyIds = [], assignm
         </div>
         <Mascot pose={m.attention.length ? "normal" : "happy"} idle size={84} />
       </section>
+
+      {steps.some((st) => !st.done && st.id !== "resultados") && (
+        <section className="card ob-inline">
+          <div className="section-head"><h2>Primeros pasos</h2><span className="caption">Se marcan solos a medida que avanzas</span></div>
+          <FirstSteps steps={steps} go={go} onTour={onTour} />
+        </section>
+      )}
 
       <div className="td-kpis">
         <button type="button" className="td-kpi card" onClick={() => go({ section: "actividades", tab: "lista" })}>

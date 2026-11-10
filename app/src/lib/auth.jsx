@@ -12,6 +12,23 @@ const AuthContext = createContext({ status: "demo", profile: null, api: null });
 export { AuthContext };
 export const useAuth = () => useContext(AuthContext);
 
+// A teacher can type their code before going to Google (or arrive with ?codigo=… from the invitation email);
+// it waits in this tab until the account exists, then the first screen uses it.
+const CODE_KEY = "condor:teacher-code";
+export function pendingTeacherCode() {
+  try {
+    const fromUrl = new URLSearchParams(window.location.search).get("codigo");
+    if (fromUrl) sessionStorage.setItem(CODE_KEY, fromUrl.trim().toUpperCase());
+    return sessionStorage.getItem(CODE_KEY) || "";
+  } catch { return ""; }
+}
+export function rememberTeacherCode(code) {
+  try { if (code?.trim()) sessionStorage.setItem(CODE_KEY, code.trim().toUpperCase()); else sessionStorage.removeItem(CODE_KEY); } catch { /* storage blocked */ }
+}
+export function forgetTeacherCode() {
+  try { sessionStorage.removeItem(CODE_KEY); } catch { /* storage blocked */ }
+}
+
 const realApi = supabase ? createApi(supabase) : null;
 // Demo mode (?demo=1) swaps in an in-memory school; the real backend is never touched.
 let api = demoEnabled ? null : realApi;
@@ -23,6 +40,8 @@ export function claimMessage(err) {
   if (m.includes("bad_teacher_code")) return "Ese código de docente no es correcto.";
   if (m.includes("trial_code_full")) return "Este código de prueba ya tiene el máximo de docentes. Pide uno nuevo a Cóndor.";
   if (m.includes("trial_code_expired")) return "Ese código de prueba venció. Pide uno nuevo a Cóndor.";
+  if (m.includes("student_in_school")) return "Esta cuenta es de estudiante de un colegio. Entra con otra cuenta de Google para usar el código de docente.";
+  if (m.includes("redeem_teacher_code") || (m.includes("function") && m.includes("does not exist"))) return "Esta opción todavía no está activa. Escríbenos y te ayudamos a entrar como docente.";
   return "No se pudo completar el ingreso. Inténtalo de nuevo.";
 }
 
@@ -97,7 +116,15 @@ export function AuthProvider({ children }) {
       },
       claim: async ({ teacherCode, fullName }) => {
         const profile = await api.claimProfile({ teacherCode, fullName });
+        forgetTeacherCode();
         setState((s) => ({ ...s, status: "ready", profile, error: null }));
+      },
+      // An account that already exists (a student) becomes a teacher with a code (migration 0035).
+      redeemTeacherCode: async (code) => {
+        const profile = await api.redeemTeacherCode(code);
+        forgetTeacherCode();
+        setState((s) => ({ ...s, status: "ready", profile, error: null }));
+        return profile;
       },
       signOut: async () => {
         if (demoEnabled) { window.location.search = ""; return; }

@@ -39,8 +39,8 @@ export function Overlay({ title, hint, onClose, children, page = "0" }) {
 
 function Booklet({ api, bundle, questions, title, course, plan, onClose }) {
   return (
-    <Overlay title="Cuadernillo impreso" hint={`${questions.length} preguntas · portada, instrucciones, dos columnas y clave del docente`} onClose={onClose} page="0">
-      <BookletStudio api={api} bundle={bundle} questions={questions} title={title} course={course} plan={plan} />
+    <Overlay title="Cuadernillo impreso" hint={`${questions.length} preguntas · elige papel, encuadernación, caras, márgenes, letra, portada y encabezados`} onClose={onClose} page="0">
+      <BookletStudio api={api} bundle={bundle} questions={questions} title={title} course={course} plan={plan} answerSheets={false} />
     </Overlay>
   );
 }
@@ -213,7 +213,7 @@ export default function Paper({ api, assignments, fetchExam, guard, setNotice, f
   const areas = new Set(questions.map((q) => q.section)).size;
   const ready = Boolean(bundle) && !tooMany;
   const steps = [
-    { n: 1, icon: "book", title: "Cuadernillo", text: "Un cuadernillo diagramado como el del ICFES: portada con el logo del colegio, dos columnas, carta o A4, plegado o grapado, y la clave del docente.", action: "Imprimir cuadernillo", mode: "booklet", off: !ready },
+    { n: 1, icon: "book", title: "Cuadernillo", text: "Un cuadernillo diagramado como el del ICFES o con el formato del colegio: carta, A4 u oficio, plegado o grapado, una o dos caras, márgenes, letra, portada y encabezados, y la clave del docente.", action: "Imprimir cuadernillo", mode: "booklet", off: !ready },
     { n: 2, icon: "user", title: "Hojas de respuestas", text: "Una hoja por estudiante, con su código y las burbujas A a D. Imprime al 100 %.", action: "Imprimir hojas", mode: "sheets", off: !ready || noRoster },
     { n: 3, icon: "bolt", title: "Escanear hojas", text: "Pasa las hojas llenas frente a la cámara del celular, o sube fotos. Los resultados entran junto a los demás.", action: "Escanear hojas", mode: "scan", off: !ready || noRoster, primary: true },
   ];
