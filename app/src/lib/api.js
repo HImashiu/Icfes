@@ -110,6 +110,11 @@ export function createApi(client) {
       const put = (r) => client.from("attempts").upsert({ ...r, profile_id: profileId }, { onConflict: "profile_id,client_id" });
       const first = await put(row);
       // `activity` arrives with migration 0009; until it runs, the attempt is saved without it.
+      // `receipt` (the server's sealed score) arrives with migration 0032; until it runs, the attempt is saved without it.
+      if (first.error && /receipt/.test(first.error.message ?? "")) {
+        const { receipt, ...rest } = row;
+        return this.uploadAttempt(rest, profileId);
+      }
       if (first.error && /activity|proctor/.test(first.error.message ?? "")) {
         const { activity, proctor, ...rest } = row;
         unwrap(await put(rest));
@@ -260,6 +265,16 @@ export function createApi(client) {
     },
     async familyReport(token) {
       return unwrap(await client.rpc("family_report", { p_token: token }));
+    },
+
+    // Free practice's daily allowance (migration 0033). practiceQuota reads it; takePracticeQuestions takes up to n.
+    async practiceQuota() {
+      const q = unwrap(await client.rpc("practice_quota"));
+      return { used: q.used, limit: q.limit, remaining: q.remaining };
+    },
+    async takePracticeQuestions(n) {
+      const r = unwrap(await client.rpc("take_practice_questions", { p_count: n }));
+      return { granted: r.granted, used: r.used, limit: r.limit, remaining: r.remaining };
     },
 
     // Teacher-written questions. Row-level security returns the ones this person may read.

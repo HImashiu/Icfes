@@ -1,4 +1,6 @@
 // Cloudflare Worker that serves the public site (landing at /, app at /app/) as static assets.
+// worker/index.js runs only for /app/exams/* and lets signed-in accounts download the question files.
+// Security headers for every page come from site-dist/_headers (written by scripts/build-site.mjs).
 // Deploy with `npm run deploy` (scripts/deploy-site.sh): build, shrink figures, then `wrangler deploy`.
 // Needs CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in the environment.
 {
@@ -7,8 +9,28 @@
   "compatibility_date": "2026-11-07",
   "workers_dev": true,
   "preview_urls": false,
+  "main": "./worker/index.js",
+  // Keep variables added in the Cloudflare dashboard when deploying (secrets are always kept).
+  "keep_vars": true,
+  // Public values (the same ones the app ships). The deploy script passes the real ones from .env.local.
+  // GRADE_SECRET (grading on the server) is a secret: `npx wrangler secret put GRADE_SECRET`, same value as
+  // private.grade_secret in the database (migration 0032).
+  "vars": { "SUPABASE_URL": "", "SUPABASE_ANON_KEY": "", "ALLOW_GUESTS": "0" },
+  // Own domain (bought 2026-11-08, zone on this Cloudflare account). workers.dev stays on for old links and QR codes;
+  // every page's canonical points at condoricfes.com, so search engines index only the domain.
+  "routes": [
+    { "pattern": "condoricfes.com", "custom_domain": true },
+    { "pattern": "www.condoricfes.com", "custom_domain": true }
+  ],
+  // Burst limits for the exam files (worker/index.js). Cloudflare counts per location; periods can be 10 or 60 s.
+  "ratelimits": [
+    { "name": "EXAM_IP_RATE", "namespace_id": "4101", "simple": { "limit": 120, "period": 60 } },
+    { "name": "EXAM_USER_RATE", "namespace_id": "4102", "simple": { "limit": 60, "period": 60 } }
+  ],
   "assets": {
     "directory": "./site-dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/app/exams/*", "/app/api/*"],
     // /privacidad.html -> /privacidad and /app -> /app/, as the dashboard upload already did
     "html_handling": "auto-trailing-slash",
     // The app routes with #hashes, so no SPA fallback is needed; unknown paths get the site's 404 page

@@ -3,9 +3,11 @@ import { backendConfigured, supabase } from "./supabase.js";
 import { createApi } from "./api.js";
 import { demoEnabled } from "../demo/mode.js";
 import { setDemoHistory } from "./local.js";
+import { GUESTS_ALLOWED, rememberReturnHash } from "./access.js";
 
 // status: demo (no backend configured), loading, signed-out, guest (anonymous, only for live games), needs-profile (signed in, first visit), ready.
-// Practice never requires an account; signing in only unlocks the school features.
+// The app needs an account (main.jsx shows the sign-in first). Any Google account works: a student whose email
+// belongs to no school gets an independent profile (migration 0030); a school email also unlocks the school features.
 const AuthContext = createContext({ status: "demo", profile: null, api: null });
 export { AuthContext };
 export const useAuth = () => useContext(AuthContext);
@@ -17,8 +19,10 @@ let api = demoEnabled ? null : realApi;
 // Maps the database's error codes to something a person can act on.
 export function claimMessage(err) {
   const m = String(err?.message ?? "");
-  if (m.includes("school_not_found")) return "Tu correo no pertenece a un colegio registrado. Pide a tu colegio que se registre.";
+  if (m.includes("school_not_found")) return "Para entrar como docente usa el correo de tu colegio o pide una invitación a la coordinación. Si eres estudiante, deja vacío el código.";
   if (m.includes("bad_teacher_code")) return "Ese código de docente no es correcto.";
+  if (m.includes("trial_code_full")) return "Este código de prueba ya tiene el máximo de docentes. Pide uno nuevo a Cóndor.";
+  if (m.includes("trial_code_expired")) return "Ese código de prueba venció. Pide uno nuevo a Cóndor.";
   return "No se pudo completar el ingreso. Inténtalo de nuevo.";
 }
 
@@ -30,7 +34,7 @@ export function AuthProvider({ children }) {
     const { data } = await supabase.auth.getSession();
     const user = data?.session?.user ?? null;
     if (!user) return setState({ status: "signed-out", profile: null, user: null, error: null });
-    if (user.is_anonymous) return setState({ status: "guest", profile: null, user, error: null });
+    if (user.is_anonymous) return setState({ status: GUESTS_ALLOWED ? "guest" : "signed-out", profile: null, user: null, error: null });
     try {
       const profile = await api.getProfile();
       setState({ status: profile ? "ready" : "needs-profile", profile, user, error: null });
@@ -42,7 +46,13 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (demoEnabled) {
       let alive = true;
-      import("../demo/load.js")
+      // The demo school reads the same exam files, which need an account: sign in first, then the demo opens.
+      const signedIn = supabase
+        ? supabase.auth.getSession().then(({ data }) => Boolean(data?.session?.user && !data.session.user.is_anonymous))
+        : Promise.resolve(true);
+      signedIn.then((ok) => {
+        if (!ok) { if (alive) setState({ status: "signed-out", profile: null, user: null, error: null }); return; }
+        import("../demo/load.js")
         .then((m) => m.loadDemo())
         .then(({ client, profile, student }) => {
           api = createApi(client);
@@ -51,6 +61,7 @@ export function AuthProvider({ children }) {
           if (alive) setState({ status: "ready", profile, user: { id: profile.id }, error: null, demoStudent });
         })
         .catch((e) => { if (alive) setState({ status: "signed-out", profile: null, user: null, error: e.message }); });
+      });
       return () => { alive = false; };
     }
     if (!supabase) return undefined;
@@ -65,9 +76,11 @@ export function AuthProvider({ children }) {
       api,
       signInWithGoogle: () => {
         try { sessionStorage.setItem("icfes-login-pending", "1"); } catch { /* blocked */ }
+        rememberReturnHash();
         return supabase.auth.signInWithOAuth({
           provider: "google",
-          options: { redirectTo: window.location.origin + window.location.pathname, queryParams: { prompt: "select_account" } },
+          // ?demo=1 comes back with the sign-in; any other query (old codes, errors) is dropped.
+          options: { redirectTo: window.location.origin + window.location.pathname + (demoEnabled ? "?demo=1" : ""), queryParams: { prompt: "select_account" } },
         });
       },
       // A guest plays a live game with a nickname and keeps nothing: no profile, no school data.
@@ -75,11 +88,13 @@ export function AuthProvider({ children }) {
         const { error } = await supabase.auth.signInAnonymously();
         if (error) throw error;
       },
-      signInWithMicrosoft: () =>
-        supabase.auth.signInWithOAuth({
+      signInWithMicrosoft: () => {
+        rememberReturnHash();
+        return supabase.auth.signInWithOAuth({
           provider: "azure",
           options: { scopes: "email", redirectTo: window.location.origin + window.location.pathname },
-        }),
+        });
+      },
       claim: async ({ teacherCode, fullName }) => {
         const profile = await api.claimProfile({ teacherCode, fullName });
         setState((s) => ({ ...s, status: "ready", profile, error: null }));

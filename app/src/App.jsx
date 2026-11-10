@@ -1,4 +1,4 @@
-import { Component, useCallback, useEffect, useMemo, useState } from "react";
+import { Component, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Home from "./screens/Home.jsx";
 import Setup from "./screens/Setup.jsx";
 import Test from "./screens/Test.jsx";
@@ -22,6 +22,8 @@ import { clearAttempt, loadAttempt, saveAttempt } from "./lib/storage.js";
 import { linkFigures, parseFigureSpecs, prepareExam } from "./lib/figures.js";
 import { applyTheme, currentTheme } from "./lib/theme.js";
 import { AuthContext, useAuth } from "./lib/auth.jsx";
+import { getJson, reveal, withRevealed } from "./lib/data.js";
+import { backendConfigured } from "./lib/supabase.js";
 import DemoBanner from "./demo/DemoBanner.jsx";
 import LaunchNotice from "./components/LaunchNotice.jsx";
 import Consent from "./screens/Consent.jsx";
@@ -40,10 +42,11 @@ import { demoEnabled } from "./demo/mode.js";
 import { pendingMisses, repechajeKeys } from "./lib/repechaje.js";
 import { hiddenFor, withoutHidden } from "./lib/questionUse.js";
 import { orderQuestions } from "./lib/order.js";
+import { localQuota, spendLocal } from "./lib/practiceQuota.js";
+import { drawPractice, randomSeed } from "./lib/practiceDraw.js";
 import { resolveModel, xpFactor } from "./lib/grading.js";
 import { attemptForAssignment, attemptRow, attemptsLeft, kindMode, questionsForAttempt, revealAllowed } from "./lib/assignments.js";
 
-const base = import.meta.env.BASE_URL;
 // Screens where the public-demo notice shows (never inside an exam, a live game or the school tools).
 const LAUNCH_VIEWS = new Set(["home", "subjects", "setup", "progress", "profile", "login", "history", "results"]);
 
@@ -65,11 +68,6 @@ class ScreenBoundary extends Component {
   }
 }
 
-async function getJson(path) {
-  const res = await fetch(base + path);
-  if (!res.ok) throw new Error(`No se pudo cargar ${path} (${res.status})`);
-  return res.json();
-}
 
 // The student's unfinished attempt for this exam, across the whole exam and each area.
 function findResumable(slug, exam) {
@@ -122,6 +120,9 @@ export default function App() {
   const [subjectId, setSubjectId] = useState(null);
   const [progressTab, setProgressTab] = useState("resumen");
   const [attempt, setAttempt] = useState(null);
+  // Today's free-practice allowance (null until read). A run that is starting blocks a second start.
+  const [quota, setQuota] = useState(null);
+  const startingRef = useRef(false);
   const [theme, setTheme] = useState(() => currentTheme());
 
   useEffect(() => {
@@ -146,30 +147,38 @@ export default function App() {
     }
     const entry = exams?.find((e) => e.slug === slug);
     if (!entry || entry.status === "proximamente") throw new Error("Ese cuadernillo todavía no está disponible.");
+    // Students never download the key: answers come from the server one question at a time (lib/data.js reveal),
+    // and their delivered attempts are graded there. Teachers and admins get the files (printing, scanning, reports).
+    const staff = rootAuth.status === "ready" && rootAuth.profile?.role && rootAuth.profile.role !== "student";
+    const optional = (p) => getJson(p).catch(() => null);
     const [raw, rawKey, rawFigures, rawSidecar, rawEnrich] = await Promise.all([
       getJson(`exams/${slug}.json`),
-      entry.hasKey ? getJson(`exams/${slug}.key.json`) : null,
+      entry.hasKey && (staff || !backendConfigured) ? optional(`exams/${slug}.key.json`) : null,
       entry.hasFigures ? getJson(`exams/${slug}.figures.json`) : null,
-      entry.hasSidecar ? getJson(`exams/${slug}.sidecar.json`) : null,
-      entry.hasEnrich ? getJson(`exams/${slug}.enrich.json`) : null,
+      entry.hasSidecar && (staff || !backendConfigured) ? optional(`exams/${slug}.sidecar.json`) : null,
+      entry.hasEnrich ? optional(`exams/${slug}.enrich.json`) : null,
     ]);
     const parsed = parseExam(raw);
     const figures = linkFigures(parsed, parseFigureSpecs(rawFigures), rawFigures);
+    const serverGraded = Boolean(entry.hasKey) && !rawKey;
     const bundle = {
       slug,
       exam: prepareExam(parsed, figures),
-      key: parseKey(rawKey),
+      key: serverGraded ? new Map() : parseKey(rawKey),
+      serverGraded,
       keyStatus: entry.keyStatus ?? null,
-      notes: parseKeyNotes(rawSidecar),
+      notes: parseKeyNotes(rawSidecar) ?? (serverGraded ? new Map() : null),
       enrich: rawEnrich?.questions ?? null,
       enrichMeta: rawEnrich ? { note: rawEnrich.note, estimated: rawEnrich.estimated } : null,
       figures,
     };
-    // The school's own versions of questions (edited by its teachers) are laid over the shared bank.
+    // The school's own versions of questions (edited by its teachers) are laid over the shared bank. For a student
+    // the changed answer comes from the server like any other.
     let versions = [];
     if (auth.api && auth.status === "ready") { try { versions = await auth.api.questionOverrides(slug); } catch { versions = []; } }
+    if (serverGraded) versions = versions.map((v) => ({ ...v, answer: null, explanation: null }));
     return applyOverrides(bundle, versions);
-  }, [exams, auth.api, auth.status]);
+  }, [exams, auth.api, auth.status, rootAuth.status, rootAuth.profile]);
 
   const openExam = useCallback(async (slug, keys = null) => {
     setOpenError(null);
@@ -187,6 +196,18 @@ export default function App() {
       setOpening(false);
     }
   }, [exams, fetchExam]);
+
+  // Grading on the server (students): the answers the server reveals are laid over the open booklet.
+  const revealKeys = useCallback(async (slug, keys, extra = {}) => {
+    const r = await reveal({ slug, keys, ...extra });
+    setSelected((b) => (b && b.slug === slug ? withRevealed(b, r) : b));
+    return r;
+  }, []);
+  const revealOne = useCallback(async (k) => {
+    if (!selected?.serverGraded) return null;
+    const r = await revealKeys(selected.slug, [k]);
+    return r.answers?.[k] ?? null;
+  }, [selected?.serverGraded, selected?.slug, revealKeys]);
 
   // Coming back from Google the page reloads on Inicio. A first-time account (no profile yet) goes straight to the
   // "Casi listo" form; one that just signed in lands on the profile, so the sign-in is visibly done.
@@ -238,6 +259,15 @@ export default function App() {
   const startKeys = async (slug, keys, opts = {}) => {
     const sel = selected?.slug === slug && slug !== TEACHER_SLUG ? selected : await openExam(slug, slug === TEACHER_SLUG ? keys : null);
     if (!sel || keys.length === 0) return;
+    // A practice made of chosen questions counts against today's allowance too (a teacher's assignment does not).
+    // It is not trimmed: the student is asked to choose fewer when the day's allowance is short.
+    if (slug !== TEACHER_SLUG) {
+      const left = await readQuota();
+      if (left.remaining < keys.length) {
+        return setOpenError(left.remaining > 0 ? `Hoy te quedan ${left.remaining} preguntas de práctica. Elige hasta ${left.remaining}.` : "Hoy ya usaste tus preguntas de práctica. Vuelve mañana.");
+      }
+      setQuota(await takeQuota(keys.length));
+    }
     const mode = opts.mode === "timed" ? "timed" : "practice";
     const qs = questionsForAttempt(sel.exam, { scope: "all", keys });
     clearAttempt(slug, "custom");
@@ -249,16 +279,51 @@ export default function App() {
     setView("test");
   };
 
-  const startAttempt = (scope, mode, order) => {
+  // Today's free-practice allowance: the server's count when signed in, this browser's otherwise (or if it can't be reached).
+  const readQuota = useCallback(async () => {
+    if (signedIn && auth.api) {
+      try { return await auth.api.practiceQuota(); } catch { /* fall back to this browser */ }
+    }
+    return localQuota();
+  }, [signedIn, auth.api]);
+  const takeQuota = async (want) => {
+    if (signedIn && auth.api) {
+      try { return await auth.api.takePracticeQuestions(want); } catch { /* fall back to this browser */ }
+    }
+    return spendLocal(want);
+  };
+  useEffect(() => {
+    if (view === "setup" || view === "home" || view === "custom") readQuota().then(setQuota).catch(() => null);
+  }, [view, readQuota]);
+
+  // Free practice: the questions are drawn at random from the booklet, within today's allowance, and shown in a random
+  // order (areas keep the order the student chose). The booklet's name is not shown in the run. A full simulacro
+  // (timed, whole booklet) keeps its own questions: its score needs both sessions in full, and it is not counted.
+  const startAttempt = async (scope, mode, order) => {
+    if (startingRef.current) return;
     const free = withoutHidden(selected.exam, hidden, selected.slug);
-    const questions = questionsFor(free, scope);
-    if (free.held && questions.length === 0) return setOpenError("Tu colegio reservó estas preguntas para un simulacro. Elige otro cuadernillo.");
+    const pool = questionsFor(free, scope);
+    if (free.held && pool.length === 0) return setOpenError("Tu colegio reservó estas preguntas para un simulacro. Elige otro cuadernillo.");
+    const simulacro = mode === "timed" && scope === "all";
+    let drawn = null;
+    if (!simulacro) {
+      startingRef.current = true;
+      try {
+        const took = await takeQuota(pool.length);
+        if (took.granted === 0) return setOpenError("Hoy ya usaste tus preguntas de práctica. Vuelve mañana.");
+        setQuota(took);
+        drawn = drawPractice(pool, took.granted, { areaOrder: scope === "all" ? order : null, seed: randomSeed() });
+      } finally {
+        startingRef.current = false;
+      }
+    }
+    const questions = drawn ? drawn.questions : questionsFor(free, scope);
     clearAttempt(selected.slug, scope);
     setAttempt({
       slug: selected.slug,
       scope,
-      // Held-back questions leave the set: the attempt then lists the ones it covers, in the chosen order.
-      ...(free.held ? { keys: orderQuestions(questions, scope === "all" ? order : null).map((q) => q.key) } : {}),
+      // Held-back questions leave the set; a drawn run lists the questions it covers, in the order it shows them.
+      ...(drawn || free.held ? { keys: drawn ? drawn.keys : orderQuestions(questions, scope === "all" ? order : null).map((q) => q.key) } : {}),
       mode,
       durationSec: mode === "timed" ? timedSeconds(questions) : null,
       startedAt: Date.now(),
@@ -363,19 +428,52 @@ export default function App() {
     setView("results");
   };
 
+  // Server grading of a delivered attempt: the server returns a sealed score (the database keeps only that one) and,
+  // for free practice, the answers. An assignment's answers are asked for again once the attempt is saved, so they
+  // follow the teacher's rule (after delivering, after closing, never).
+  const gradingRef = useRef(null);
+  const sameAttempt = (a, started) => a && a.startedAt === started;
+  useEffect(() => {
+    if (!attempt || attempt.readOnly || !attempt.submittedAt || attempt.receipt || attempt.graded) return;
+    if (!selected?.serverGraded || selected.slug !== attempt.slug || gradingRef.current === attempt.startedAt) return;
+    gradingRef.current = attempt.startedAt;
+    const started = attempt.startedAt;
+    const keys = questionsForAttempt(selected.exam, attempt).map((q) => q.key);
+    revealKeys(attempt.slug, keys, { answers: attempt.answers, submit: { client_id: String(started), assignment_id: attempt.assignmentId ?? null } })
+      .then((r) => setAttempt((a) => (sameAttempt(a, started) ? { ...a, receipt: r.receipt ?? null, graded: !a.assignmentId || !signedIn, gradeFailed: !r.receipt } : a)))
+      .catch(() => setAttempt((a) => (sameAttempt(a, started) ? { ...a, graded: true, gradeFailed: true } : a)));
+  }, [attempt, selected, revealKeys, signedIn]);
+
   // A delivered attempt is saved to the backend once (a retry with the same id replaces it, never duplicates).
   useEffect(() => {
     if (!signedIn || !attempt || attempt.readOnly || !attempt.submittedAt || attempt.synced) return;
     if (!selected || selected.slug !== attempt.slug) return;
-    const row = attemptRow(attempt, questionsForAttempt(selected.exam, attempt), selected.key, selected.keyStatus);
+    if (selected.serverGraded && !attempt.receipt && !attempt.gradeFailed) return;
+    const started = attempt.startedAt;
+    const row = { ...attemptRow(attempt, questionsForAttempt(selected.exam, attempt), selected.key, selected.keyStatus), receipt: attempt.receipt ?? null };
+    const after = () => {
+      setAttempt((a) => (sameAttempt(a, started) ? { ...a, synced: true } : a));
+      loadAssigned();
+      if (selected.serverGraded && attempt.assignmentId && !attempt.graded) {
+        const keys = questionsForAttempt(selected.exam, attempt).map((q) => q.key);
+        revealKeys(attempt.slug, keys).catch(() => null).finally(() => setAttempt((a) => (sameAttempt(a, started) ? { ...a, graded: true } : a)));
+      }
+    };
     auth.api
       .uploadAttempt(row, auth.profile.id)
-      .then(() => {
-        setAttempt((a) => (a && a.startedAt === attempt.startedAt ? { ...a, synced: true } : a));
-        loadAssigned();
-      })
-      .catch(() => {});
-  }, [signedIn, attempt, selected, auth.api, auth.profile, loadAssigned]);
+      .then(after)
+      .catch(() => setAttempt((a) => (sameAttempt(a, started) ? { ...a, graded: true } : a)));
+  }, [signedIn, attempt, selected, auth.api, auth.profile, loadAssigned, revealKeys]);
+
+  // Reopened attempts (history, assigned results, reports): ask the server for the answers of their questions.
+  const reviewRef = useRef(null);
+  useEffect(() => {
+    if (!attempt?.readOnly || !selected?.serverGraded || selected.slug !== attempt.slug) return;
+    if (reviewRef.current === `${attempt.slug}:${attempt.startedAt}`) return;
+    const keys = questionsForAttempt(selected.exam, attempt).map((q) => q.key).filter((k) => !selected.key?.has(k));
+    reviewRef.current = `${attempt.slug}:${attempt.startedAt}`;
+    if (keys.length) revealKeys(attempt.slug, keys).catch(() => null);
+  }, [attempt, selected, revealKeys]);
 
   const resume = (saved) => {
     setAttempt(saved);
@@ -431,6 +529,7 @@ export default function App() {
   if (signedIn && needsTerms(consents)) {
     return (
       <Consent
+        personal={!auth.profile?.school_id}
         onSignOut={auth.signOut}
         onAccept={async () => {
           await auth.api.acceptConsent(auth.profile.id, "terms", CONSENT_VERSION);
@@ -452,10 +551,13 @@ export default function App() {
   const usedOf = attempt?.assignmentId ? assigned.attempts.filter((x) => x.assignment_id === attempt.assignmentId && x.submitted_at).length : 0;
   const retryAssigned = assignedOf && attemptsLeft(assignedOf, usedOf) > 0 ? () => startAssigned(assignedOf) : null;
   const scopeTitle = attempt?.custom ? attempt.custom.label : attempt?.repechaje ? "Repechaje" : attempt && attempt.scope !== "all" ? attempt.scope : "Examen completo";
-  const examTitle = selected ? `${selected.exam.title} · ${scopeTitle}` : "";
+  // The run is named by its area, not by the booklet it was drawn from.
+  const examTitle = selected ? scopeTitle : "";
   // The sidebar stays on every screen except the test; results and review belong to Practicar, reports to Perfil.
   const navView = { home: "home", subjects: "subjects", setup: "setup", results: "setup", review: "setup", custom: "setup", history: "progress", progress: "progress", profile: "profile", login: "profile", reports: "profile" }[view] ?? null;
-  const course = studentCourses(classesFrom({ classes: myClasses, assignments: signedIn ? assigned.assignments : [] })).join(", ") || null;
+  // A teacher or coordinator previewing the student app is not "in" the classes they teach: no course label.
+  const staffView = signedIn && auth.profile?.role && auth.profile.role !== "student";
+  const course = staffView ? null : studentCourses(classesFrom({ classes: myClasses, assignments: signedIn ? assigned.assignments : [] })).join(", ") || null;
   // A simulacro is both sessions of one cuadernillo: open the session that is missing, whole booklet, with time.
   const startSession = async (slug) => {
     const next = await openExam(slug);
@@ -511,6 +613,7 @@ export default function App() {
           assigned={signedIn ? assigned : null}
           onStartAssigned={startAssigned}
           realName={studentName}
+          independent={signedIn && !auth.profile?.school_id}
           onLive={auth.status !== "demo" && auth.status !== "loading" ? () => { setLiveCode(""); setView("liveJoin"); } : null}
           liveGames={liveGames}
           onJoinGame={demoEnabled ? null : joinGame}
@@ -532,6 +635,7 @@ export default function App() {
           onPickExam={(slug) => openExam(slug)}
           onBack={() => setView("home")}
           onStart={startAttempt}
+          quota={quota}
           pendingKeys={pendingKeys(selected.slug, selected.exam)}
           onRepechaje={() => startRepechaje(pendingKeys(selected.slug, selected.exam))}
         />
@@ -542,11 +646,12 @@ export default function App() {
         <GlossaryProvider glossary={attempt.glossary}>
         <Test
           title={examTitle}
-          examLabel={selected.exam.title}
+          examLabel={null}
           questions={questions}
           attempt={attempt}
           onProctorEvent={(ev, a) => { if (auth.api && a.assignmentId) auth.api.proctorSend([{ assignment_id: a.assignmentId, client_id: String(a.startedAt), ...ev }]).catch(() => {}); }}
           answerKey={locked ? null : selected.key}
+          onReveal={selected.serverGraded && !locked ? revealOne : null}
           onChange={(next) => setAttempt((a) => (a ? (typeof next === "function" ? next(a) : next) : a))}
           onSubmit={submit}
           onExit={goHome}
@@ -558,7 +663,10 @@ export default function App() {
         </AnnotationProvider>
       )}
 
-      {view === "results" && attempt && selected && (
+      {view === "results" && attempt && selected && selected.serverGraded && !attempt.readOnly && !attempt.graded && (
+        <main className="frame"><p className="muted">Calificando…</p></main>
+      )}
+      {view === "results" && attempt && selected && !(selected.serverGraded && !attempt.readOnly && !attempt.graded) && (
         <Results
           title={examTitle}
           questions={questions}
@@ -591,7 +699,7 @@ export default function App() {
           enrich={selected.enrich}
           enrichMeta={selected.enrichMeta}
           figures={selected.figures}
-          examLabel={selected.exam.title}
+          examLabel={null}
           startIndex={reviewStart}
           startNumber={reviewNumber}
           onBack={() => setView(attempt.from === "reports" ? "reports" : "results")}
@@ -606,7 +714,7 @@ export default function App() {
 
       {view === "profile" && <Profile theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} onReports={() => setView("reports")} onLogin={() => setView("login")}
         assigned={signedIn ? assigned : null} classes={myClasses} course={course} onGo={go} />}
-      {view === "subjects" && <Subjects onOpenAssigned={openAssignedResult} announcements={signedIn ? announcements : []} assigned={signedIn ? assigned : null} classes={myClasses} course={course} tab={subjectTab} subjectId={subjectId}
+      {view === "subjects" && <Subjects independent={signedIn && !auth.profile?.school_id} onOpenAssigned={openAssignedResult} announcements={signedIn ? announcements : []} assigned={signedIn ? assigned : null} classes={myClasses} course={course} tab={subjectTab} subjectId={subjectId}
         onTab={(t) => { setSubjectTab(t); setSubjectId(null); }} onOpenSubject={setSubjectId} onBack={() => setSubjectId(null)}
         onStartAssigned={startAssigned} onPracticeArea={practiceArea} onLogin={() => setView("login")} />}
       {view === "progress" && <Progress tab={progressTab} onTab={setProgressTab} assigned={signedIn ? assigned : null} classes={myClasses}

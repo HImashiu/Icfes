@@ -32,8 +32,8 @@ export function loadReports() {
   return read(REPORTS_KEY);
 }
 
-export function addReport({ slug, question, number, exam, note }) {
-  return write(REPORTS_KEY, [...read(REPORTS_KEY), { slug, question, number, exam, note, at: new Date().toISOString() }]);
+export function addReport({ slug, question, number, exam, note, category = null }) {
+  return write(REPORTS_KEY, [...read(REPORTS_KEY), { slug, question, number, exam, note, category, at: new Date().toISOString() }]);
 }
 
 export function loadHistory() {

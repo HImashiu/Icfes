@@ -20,7 +20,7 @@ const initials = (name) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w)
 
 // Materias: one card per subject (with its teacher) and every task of every subject, with filters. A subject opens
 // its own page. `tab` is "materias" or "tareas"; `subjectId` opens one subject.
-export default function Subjects({ announcements = [], assigned, classes, course, tab, subjectId, onTab, onOpenSubject, onBack, onStartAssigned, onOpenAssigned, onPracticeArea, onLogin }) {
+export default function Subjects({ announcements = [], independent = false, assigned, classes, course, tab, subjectId, onTab, onOpenSubject, onBack, onStartAssigned, onOpenAssigned, onPracticeArea, onLogin }) {
   const now = Date.now();
   const subjects = useMemo(() => (assigned ? studentSubjects({ classes, assignments: assigned.assignments, attempts: assigned.attempts, now }) : []), [assigned, classes]); // eslint-disable-line react-hooks/exhaustive-deps
   const tasks = useMemo(() => (assigned ? studentTasks({ subjects, assignments: assigned.assignments, attempts: assigned.attempts, now }) : []), [subjects, assigned]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -32,15 +32,18 @@ export default function Subjects({ announcements = [], assigned, classes, course
         <header className="screen-head"><h1>Materias</h1></header>
         <div className="card sh-allclear">
           <Mascot size={64} />
-          <div><strong>Tus materias aparecen al iniciar sesión</strong><span className="caption">Con la cuenta del colegio ves cada materia con su docente, las tareas que te asignan y tus notas.</span></div>
+          <div><strong>Tus materias aparecen al iniciar sesión</strong><span className="caption">Con tu cuenta ves cada materia, tu práctica por área y, si un docente te agrega a su clase, sus tareas y tus notas.</span></div>
           {onLogin && <button type="button" className="primary" onClick={onLogin}>Iniciar sesión</button>}
         </div>
       </section>
     );
   }
 
+  // Tasks only exist when a teacher has the student in a class. Without any (a student practising on their own, or
+  // one whose school hasn't added them yet) the page is just the subjects: no Tareas tab, no course tile.
+  const hasClass = Boolean(classes?.length) || tasks.length > 0;
   const subject = subjectId ? subjects.find((s) => s.id === subjectId) : null;
-  if (subject) return <SubjectPage announcements={activeAnnouncements(announcements, { courseIds: subject.courseIds })} subject={subject} tasks={tasks.filter((t) => t.subject?.id === subject.id)} ins={ins} now={now} onBack={onBack} onStartAssigned={onStartAssigned} onOpenAssigned={onOpenAssigned} onPracticeArea={onPracticeArea} />;
+  if (subject) return <SubjectPage independent={independent} announcements={activeAnnouncements(announcements, { courseIds: subject.courseIds })} subject={subject} tasks={tasks.filter((t) => t.subject?.id === subject.id)} ins={ins} now={now} onBack={onBack} onStartAssigned={onStartAssigned} onOpenAssigned={onOpenAssigned} onPracticeArea={onPracticeArea} />;
 
   return (
     <section className="subjects">
@@ -48,18 +51,18 @@ export default function Subjects({ announcements = [], assigned, classes, course
         <h1>Materias</h1>
         {course && <span className="sj-course">Curso {course}</span>}
       </header>
-      <div className="segmented sj-tabs" role="tablist" aria-label="Materias o tareas">
+      {hasClass && <div className="segmented sj-tabs" role="tablist" aria-label="Materias o tareas">
         <button type="button" role="tab" aria-selected={tab !== "tareas"} className={tab !== "tareas" ? "seg active" : "seg"} onClick={() => onTab("materias")}>Mis materias <span className="muted">{subjects.length}</span></button>
         <button type="button" role="tab" aria-selected={tab === "tareas"} className={tab === "tareas" ? "seg active" : "seg"} onClick={() => onTab("tareas")}>Tareas <span className="muted">{tasks.filter((t) => t.status === "pending").length} pendientes</span></button>
-      </div>
-      {tab === "tareas"
+      </div>}
+      {hasClass && tab === "tareas"
         ? <TaskList tasks={tasks} subjects={subjects} now={now} onStartAssigned={onStartAssigned} onOpenAssigned={onOpenAssigned} />
-        : <SubjectGrid subjects={subjects} tasks={tasks} course={course} ins={ins} now={now} onOpenSubject={onOpenSubject} onTasks={() => onTab("tareas")} />}
+        : <SubjectGrid subjects={subjects} tasks={tasks} course={course} independent={independent} hasClass={hasClass} ins={ins} now={now} onOpenSubject={onOpenSubject} onTasks={() => onTab("tareas")} />}
     </section>
   );
 }
 
-function SubjectGrid({ subjects, tasks, course, ins, now, onOpenSubject, onTasks }) {
+function SubjectGrid({ subjects, tasks, course, independent, hasClass, ins, now, onOpenSubject, onTasks }) {
   if (!subjects.length) {
     return (
       <div className="card sh-allclear">
@@ -82,17 +85,17 @@ function SubjectGrid({ subjects, tasks, course, ins, now, onOpenSubject, onTasks
             </span>
             <span className="sj-teacher">
               <span className="sj-avatar" aria-hidden="true">{s.teacher ? initials(s.teacher.split(",")[0]) : "?"}</span>
-              <span><span className="caption">{s.teacher ? "Docente" : s.noClass ? "Sin clase propia" : "Docente"}</span><b>{teacherLabel(s)}</b></span>
+              <span><span className="caption">{s.teacher || s.courseTeacher ? "Docente" : hasClass ? "Sin clase propia" : "Tu práctica"}</span><b>{teacherLabel(s, { independent })}</b></span>
             </span>
             <span className="td-spark sj-spark" aria-hidden="true">{(s.series.length ? s.series : [0]).map((v, i) => <span key={i} style={{ height: `${Math.max(8, v)}%`, background: s.color, opacity: i === s.series.length - 1 ? 1 : 0.45 }} />)}</span>
             <span className="sj-foot">
-              {s.next ? <span className="sh-due">{s.pending} pendiente{s.pending === 1 ? "" : "s"} · {dueText(s.next.due_at, now).toLowerCase()}</span> : <span className="caption">{s.total ? `Al día · ${s.done}/${s.total} entregadas` : s.avg != null ? "Nota según tus simulacros" : "Sin tareas aún"}</span>}
+              {s.next ? <span className="sh-due">{s.pending} pendiente{s.pending === 1 ? "" : "s"} · {dueText(s.next.due_at, now).toLowerCase()}</span> : <span className="caption">{s.total ? `Al día · ${s.done}/${s.total} entregadas` : s.avg != null ? "Nota según tus simulacros" : hasClass ? "Sin tareas aún" : mine ? "Según tu práctica" : "Toca para practicar"}</span>}
               {mine && <span className="caption">Tu práctica: {mine.pct} %</span>}
             </span>
           </button>
         );
       })}
-      <CourseCard tasks={tasks} course={course} now={now} onTasks={onTasks} />
+      {hasClass && <CourseCard tasks={tasks} course={course} now={now} onTasks={onTasks} />}
     </div>
   );
 }
@@ -149,7 +152,7 @@ function TaskList({ tasks, subjects, now, onStartAssigned, onOpenAssigned }) {
   );
 }
 
-function SubjectPage({ announcements, subject: s, tasks, ins, now, onBack, onStartAssigned, onOpenAssigned, onPracticeArea }) {
+function SubjectPage({ independent, announcements, subject: s, tasks, ins, now, onBack, onStartAssigned, onOpenAssigned, onPracticeArea }) {
   const pending = tasks.filter((t) => t.status === "pending" || t.status === "scheduled" || t.status === "paper");
   const done = tasks.filter((t) => t.status === "delivered" || t.status === "missed");
   const areas = s.area ? ins.areas.filter((a) => a.name === s.area) : [...ins.areas].reverse();
@@ -166,7 +169,7 @@ function SubjectPage({ announcements, subject: s, tasks, ins, now, onBack, onSta
         <span className="sjp-band" aria-hidden="true" />
         <div className="sjp-who">
           <span className="sj-avatar big" aria-hidden="true">{s.teacher ? initials(s.teacher.split(",")[0]) : "?"}</span>
-          <span><span className="caption">{s.teacher ? "Docente" : "Sin clase propia"}{s.group ? ` · ${s.group}` : ""}</span><strong>{teacherLabel(s)}</strong></span>
+          <span><span className="caption">{s.teacher || s.courseTeacher ? "Docente" : s.total ? "Sin clase propia" : "Tu práctica"}{s.group ? ` · ${s.group}` : ""}</span><strong>{teacherLabel(s, { independent })}</strong></span>
         </div>
         <div className="sjp-kpis">
           <span><b>{s.last == null ? "—" : `${s.last} %`}</b><span className="caption">última actividad</span></span>

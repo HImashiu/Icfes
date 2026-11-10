@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import FigureBlock from "../components/FigureBlock.jsx";
+import { authHeaders } from "../lib/data.js";
 
 const base = import.meta.env.BASE_URL;
 
@@ -8,7 +9,7 @@ export default function FigureCheck() {
   const [figures, setFigures] = useState(null);
   const [error, setError] = useState(null);
   useEffect(() => {
-    fetch(`${base}exams/figure-check.json`)
+    authHeaders().then((headers) => fetch(`${base}exams/figure-check.json`, { headers }))
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((data) => setFigures(data.figures ?? []))
       .catch((e) => setError(e.message));

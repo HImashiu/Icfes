@@ -23,7 +23,7 @@ const DAYS = ["L", "M", "X", "J", "V", "S", "D"];
 // Inicio: the next thing to do, today's goal, this week's tasks, each subject with its teacher, the countdown to the
 // exam, the month and the student's own progress. Progress is measured against the student's goal and past self,
 // never against classmates. Before the first practice everything starts at zero (no invented numbers on the public site).
-export default function Home({ exam, slug, resumable, onContinue, onPractice, onSetup, xpSession, assigned, classes, course, onStartAssigned, onLive, realName, signedOut, onGo, onOpenSubject, exams = [], onStartSession, liveGames = [], onJoinGame = null, announcements = [] }) {
+export default function Home({ exam, slug, resumable, onContinue, onPractice, onSetup, xpSession, assigned, classes, course, onStartAssigned, onLive, realName, independent = false, signedOut, onGo, onOpenSubject, exams = [], onStartSession, liveGames = [], onJoinGame = null, announcements = [] }) {
   const now = Date.now();
   const todayIndex = (new Date().getDay() + 6) % 7;
   const history = useMemo(() => loadHistory(), []);
@@ -66,7 +66,7 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
       <header className="home-head">
         <div className="avatar" aria-hidden="true">{realName ? realName[0] : <Icon name="user" size={22} />}</div>
         <div className="greet">
-          <span className="caption">{course ? `Curso ${course}` : realName ? "Tu colegio" : "Sin cuenta"}</span>
+          <span className="caption">{course ? `Curso ${course}` : realName ? (independent ? "Práctica personal" : "Tu colegio") : "Sin cuenta"}</span>
           <strong>{realName ? `Hola, ${realName}` : "Hola"}</strong>
         </div>
         {onLive && (
@@ -119,7 +119,7 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
       <div className="sh-grid">
         <div className="sh-col">
           <StudentAnnouncements rows={activeAnnouncements(announcements)} limit={3} subjectOf={(id) => subjects.find((x) => x.courseIds.includes(id)) ?? null} />
-          {assigned ? (
+          {assigned && independent && !tasks.length && !classes?.length ? null : assigned ? (
             <div className="card sh-card">
               <div className="section-head">
                 <span className="label">Tus tareas</span>
@@ -135,7 +135,7 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
           ) : (
             <div className="card sh-card sh-allclear">
               <Mascot size={52} />
-              <div><strong>Tus materias y tareas</strong><span className="caption">Inicia sesión con la cuenta del colegio para ver cada materia con su docente, tus tareas y tus notas.</span></div>
+              <div><strong>Tus materias y tareas</strong><span className="caption">Inicia sesión para ver cada materia, tu práctica y, si estás en una clase, tus tareas y notas.</span></div>
               {onGo && <button type="button" className="secondary" onClick={() => onGo("login")}>Iniciar sesión</button>}
             </div>
           )}
@@ -147,9 +147,9 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
                 {subjects.map((s) => (
                   <button key={s.id} type="button" className="sh-subject" style={{ "--c": s.color }} onClick={() => onOpenSubject?.(s.id)}>
                     <span className="sh-subject-top"><strong>{s.name}</strong><b title="Resultado de tu última actividad">{s.last == null ? "—" : `${s.last} %`}</b></span>
-                    <span className="caption sh-teacher">{teacherLabel(s)}</span>
+                    <span className="caption sh-teacher">{teacherLabel(s, { independent })}</span>
                     <span className="sh-subject-foot caption">
-                      {s.pending ? <span className="sh-due">{s.pending} pendiente{s.pending === 1 ? "" : "s"}</span> : <span>{s.total ? "Al día" : "Sin tareas aún"}</span>}
+                      {s.pending ? <span className="sh-due">{s.pending} pendiente{s.pending === 1 ? "" : "s"}</span> : <span>{s.total ? "Al día" : independent ? "Práctica libre" : "Sin tareas aún"}</span>}
                       {s.total > 0 && <span>{s.done}/{s.total} entregadas</span>}
                     </span>
                   </button>

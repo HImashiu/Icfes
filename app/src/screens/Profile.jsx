@@ -112,7 +112,7 @@ export default function Profile({ theme, onTheme, onTeacher, onReports, onLogin,
             ) : (
               <button type="button" className="card quick-row" onClick={onLogin} disabled={auth.status === "loading"}>
                 <Icon name="user" />
-                <span>Ingresar con la cuenta del colegio</span>
+                <span>Ingresar con Google</span>
                 <Icon name="right" />
               </button>
             )

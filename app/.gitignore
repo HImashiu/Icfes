@@ -4,3 +4,4 @@ dist/
 public/exams/
 .env.local
 site-dist/
+.wrangler/
