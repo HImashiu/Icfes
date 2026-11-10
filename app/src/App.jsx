@@ -21,10 +21,11 @@ import { parseExam, parseKey, parseKeyNotes, questionsFor, timedSeconds } from "
 import { clearAttempt, loadAttempt, saveAttempt } from "./lib/storage.js";
 import { linkFigures, parseFigureSpecs, prepareExam } from "./lib/figures.js";
 import { applyTheme, currentTheme } from "./lib/theme.js";
-import { AuthContext, useAuth } from "./lib/auth.jsx";
+import { AuthContext, claimMessage, pendingTeacherCode, useAuth } from "./lib/auth.jsx";
 import { getJson, reveal, withRevealed } from "./lib/data.js";
 import { backendConfigured } from "./lib/supabase.js";
 import DemoBanner from "./demo/DemoBanner.jsx";
+import TeacherCode from "./components/TeacherCode.jsx";
 import LaunchNotice from "./components/LaunchNotice.jsx";
 import Consent from "./screens/Consent.jsx";
 import FamilyReport from "./screens/FamilyReport.jsx";
@@ -92,6 +93,8 @@ const mixedKeys = (exam, n = 10) => {
 
 const storeScope = (a) => (a.assignmentId ? `asg-${a.assignmentId}` : a.repechaje ? "repechaje" : a.custom ? "custom" : a.scope);
 
+const STUDENT_SIDE = "condor:student-side";
+
 export default function App() {
   const rootAuth = useAuth();
   // Demo mode: the student side is one invented student of 11 A; the teacher side is the school's coordinator.
@@ -128,6 +131,29 @@ export default function App() {
   useEffect(() => {
     applyTheme(theme);
   }, [theme]);
+
+  // Teachers and coordinators land in their panel when they sign in, not on the student home. Once they choose
+  // «App de estudiante» in this tab, they stay there until the tab closes.
+  const landed = useRef(false);
+  useEffect(() => {
+    if (landed.current || rootAuth.status !== "ready" || demoEnabled) return;
+    landed.current = true;
+    let stay = false;
+    try { stay = sessionStorage.getItem(STUDENT_SIDE) === "1"; } catch { /* storage blocked */ }
+    if (!stay && rootAuth.profile?.role && rootAuth.profile.role !== "student") setView((v) => (v === "home" ? "teacher" : v));
+  }, [rootAuth.status, rootAuth.profile?.role]);
+
+  // A student account that came back from Google with a teacher code (typed on the sign-in or from ?codigo=…)
+  // becomes a teacher right away (migration 0035); if the code fails, Perfil shows why and lets them fix it.
+  const [teacherCodeError, setTeacherCodeError] = useState(null);
+  const redeeming = useRef(false);
+  useEffect(() => {
+    if (redeeming.current || demoEnabled || rootAuth.status !== "ready" || rootAuth.profile?.role !== "student" || !pendingTeacherCode()) return;
+    redeeming.current = true;
+    rootAuth.redeemTeacherCode(pendingTeacherCode())
+      .then(() => setView("teacher"))
+      .catch((e) => { setTeacherCodeError(claimMessage(e)); setView("profile"); });
+  }, [rootAuth]);
 
   useEffect(() => {
     getJson("exams/index.json")
@@ -712,7 +738,7 @@ export default function App() {
       {view === "livePlay" && live && <LivePlay api={auth.api} initial={live.row} nickname={live.nickname} fetchExam={fetchExam} onExit={() => { setLive(null); setView("home"); }}
         onPracticeMissed={(slug, keys) => { setLive(null); startKeys(slug, keys, { label: "Las que fallé en vivo" }); }} />}
 
-      {view === "profile" && <Profile theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} onReports={() => setView("reports")} onLogin={() => setView("login")}
+      {view === "profile" && <Profile teacherCodeError={teacherCodeError} theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} onReports={() => setView("reports")} onLogin={() => setView("login")}
         assigned={signedIn ? assigned : null} classes={myClasses} course={course} onGo={go} />}
       {view === "subjects" && <Subjects independent={signedIn && !auth.profile?.school_id} onOpenAssigned={openAssignedResult} announcements={signedIn ? announcements : []} assigned={signedIn ? assigned : null} classes={myClasses} course={course} tab={subjectTab} subjectId={subjectId}
         onTab={(t) => { setSubjectTab(t); setSubjectId(null); }} onOpenSubject={setSubjectId} onBack={() => setSubjectId(null)}
@@ -726,10 +752,19 @@ export default function App() {
       {view === "history" && <History onBack={() => setView("home")} onNew={() => setView("setup")} onOpen={openFromHistory} />}
       {view === "reports" && <Reports onBack={() => setView("profile")} onPractice={() => setView("setup")} onOpen={openFromReport} />}
       {view === "teacher" && (rootAuth.status === "ready" && rootAuth.profile.role !== "student"
-        ? <AuthContext.Provider value={rootAuth}><TeacherLive auth={rootAuth} exams={exams} fetchExam={fetchExam} onExit={() => { if (window.location.hash.startsWith("#docente")) history.replaceState(null, "", window.location.pathname + window.location.search); setView("profile"); }} /></AuthContext.Provider>
+        ? <AuthContext.Provider value={rootAuth}><TeacherLive auth={rootAuth} exams={exams} fetchExam={fetchExam} onExit={() => { if (window.location.hash.startsWith("#docente")) history.replaceState(null, "", window.location.pathname + window.location.search); try { sessionStorage.setItem(STUDENT_SIDE, "1"); } catch { /* storage blocked */ } setView("profile"); }} /></AuthContext.Provider>
         // The public site never shows a teacher panel to someone who isn't signed in as staff: a #docente link asks
         // for the school sign-in instead (the full invented school stays available only in ?demo=1).
         : rootAuth.status === "loading" ? <p className="muted pad">Cargando…</p>
+        // Signed in as a student: the teacher panel asks for the teacher code instead of a second sign-in.
+        : rootAuth.status === "ready" && !demoEnabled ? (
+          <main className="frame tc-page">
+            <h1>Panel docente</h1>
+            <p className="caption">Tu cuenta es de estudiante. Si eres docente, escribe tu código para abrir el panel.</p>
+            <TeacherCode open error={teacherCodeError} onDone={() => setView("teacher")} />
+            <button type="button" className="link" onClick={() => { if (window.location.hash.startsWith("#docente")) history.replaceState(null, "", window.location.pathname + window.location.search); setView("home"); }}>Volver a la app de estudiante</button>
+          </main>
+        )
         : <Login onBack={() => setView("home")} />)}
 
       {needsAttempt && !attempt && <main className="frame"><p className="muted">Esta actividad ya no está abierta.</p><button type="button" className="primary" onClick={goHome}>Volver al inicio</button></main>}

@@ -8,7 +8,7 @@
     // the site root. They now go on to app/ with their address intact, so nothing old breaks.
     (function () {
       var s = location.search, h = location.hash;
-      var forApp = /[?&](code|error|error_description|demo|join)=/.test(s) ||
+      var forApp = /[?&](code|codigo|error|error_description|demo|join)=/.test(s) ||
         /^#(en-vivo=|presentacion|informe|\/informe|docente|access_token=|error=|revision-figuras|figuras)/.test(h);
       if (forApp) location.replace("app/" + s + h);
     })();

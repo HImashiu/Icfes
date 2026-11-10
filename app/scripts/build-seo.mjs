@@ -631,17 +631,17 @@ function buildTrialPage({ siteUrl, write }) {
   <span class="tag">Docentes</span>
   <h1>Entra a la plataforma de docentes con tu código de prueba</h1>
   <p class="prose">Con el código creas tu colegio de prueba, armas tus cursos y pruebas las tareas, los simulacros en línea y en papel, y el juego en vivo con tus estudiantes.</p>
-  <div class="cta-row"><a class="btn btn-primary" href="../app/">Entrar con mi código</a><a class="btn btn-ghost" href="../preicfes-para-colegios/">Qué incluye</a></div>
+  <div class="cta-row"><a class="btn btn-primary" href="../app/#docente">Entrar con mi código</a><a class="btn btn-ghost" href="../preicfes-para-colegios/">Qué incluye</a></div>
 </div></section>
 <section class="wrap narrow guide-body">
   <h2>Cómo entrar</h2>
   <ol class="steps">
-    <li><b>Abre la app.</b> Ve a <a href="../app/">condoricfes.com/app</a> y entra con tu cuenta de Google.</li>
-    <li><b>Elige “Soy docente”.</b> Aparece un campo para el código.</li>
+    <li><b>Abre la app.</b> Ve a <a href="../app/#docente">condoricfes.com/app</a> y elige “Soy docente”.</li>
     <li><b>Escribe el código de tu colegio.</b> Se parece a <code>CND-XXXX-XXXX-XXXX-XXXX</code>. El primer docente que entra crea el colegio de prueba; los demás entran al mismo.</li>
+    <li><b>Entra con tu cuenta de Google.</b> Sirve la del colegio o la personal. Si ya habías entrado antes como estudiante, el código convierte esa cuenta en docente.</li>
   </ol>
   <h2>Primeros pasos</h2>
-  <p class="prose">Crea un curso, agrega a tus estudiantes con su correo y asigna un simulacro. Ellos lo presentan desde su celular o en papel, y en Hoy ves quién necesita apoyo.</p>
+  <p class="prose">Al entrar, un recorrido corto te muestra dónde está cada cosa. Crea un curso, agrega a tus estudiantes con su correo y asigna un simulacro. Ellos lo presentan desde su celular o en papel, y en Hoy ves quién necesita apoyo. ¿Quieres ver primero cómo se ve con datos? Activa «Datos de ejemplo» en el panel: muestra un colegio inventado sin tocar el tuyo.</p>
   <h2>Preguntas frecuentes</h2>
   ${faqBlock(faq)}
 </section>

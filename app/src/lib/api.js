@@ -26,6 +26,15 @@ export function createApi(client) {
     async claimProfile({ teacherCode, fullName }) {
       return unwrap(await client.rpc("claim_profile", { p_teacher_code: teacherCode || null, p_full_name: fullName || null }));
     },
+    // Migration 0035: an account that already exists becomes a teacher with a trial code or the school's code.
+    async redeemTeacherCode(code) {
+      return unwrap(await client.rpc("redeem_teacher_code", { p_code: code }));
+    },
+    // Migration 0035: days and teacher seats left of the caller's trial school (null for a real school).
+    async myTrial() {
+      const rows = unwrap(await client.rpc("my_trial"));
+      return (Array.isArray(rows) ? rows[0] : rows) ?? null;
+    },
     async teacherCode() {
       return unwrap(await client.rpc("school_teacher_code"));
     },
