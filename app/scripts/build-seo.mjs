@@ -631,7 +631,7 @@ function buildTrialPage({ siteUrl, write }) {
   <span class="tag">Docentes</span>
   <h1>Entra a la plataforma de docentes con tu código de prueba</h1>
   <p class="prose">Con el código creas tu colegio de prueba, armas tus cursos y pruebas las tareas, los simulacros en línea y en papel, y el juego en vivo con tus estudiantes.</p>
-  <div class="cta-row"><a class="btn btn-primary" href="../app/#docente">Entrar con mi código</a><a class="btn btn-ghost" href="../preicfes-para-colegios/">Qué incluye</a></div>
+  <div class="cta-row"><a class="btn btn-primary" href="../app/#docente">Activar prueba gratuita</a><a class="btn btn-ghost" href="../preicfes-para-colegios/">Qué incluye</a></div>
 </div></section>
 <section class="wrap narrow guide-body">
   <h2>Cómo entrar</h2>
