@@ -1,0 +1,47 @@
+.ob-tour { position: fixed; inset: 0; z-index: 12000; }
+.ob-tour.dim { background: rgba(5, 8, 6, 0.62); animation: ob-fade 0.2s ease-out; }
+.ob-hole { position: fixed; border-radius: 14px; box-shadow: 0 0 0 200vmax rgba(5, 8, 6, 0.62), 0 0 0 3px var(--accent); pointer-events: none; transition: top 0.3s ease, left 0.3s ease, width 0.3s ease, height 0.3s ease; }
+.ob-card { position: fixed; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 18px 18px 14px; border-radius: 20px; background: var(--surface); color: var(--text); border: 1px solid var(--line); box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45); outline: none; animation: ob-in 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.25); max-height: calc(100vh - 24px); overflow-y: auto; scrollbar-width: none; }
+.ob-card::-webkit-scrollbar { display: none; }
+.ob-card.center, .ob-card.final { justify-items: center; text-align: center; }
+.ob-card.final .ob-steps { margin-top: 4px; }
+.ob-card h2 { margin: 0; font-family: "Bricolage Grotesque", sans-serif; font-size: 22px; line-height: 1.15; }
+.ob-card p { margin: 0; color: var(--text-2); font-size: 15px; line-height: 1.45; }
+.ob-count { text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; font-size: 11px; color: var(--accent-ink); }
+.ob-x { position: absolute; top: 8px; right: 8px; }
+.ob-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; width: 100%; margin-top: 6px; }
+.ob-foot .link { white-space: nowrap; }
+.ob-foot .primary { margin-left: 0; }
+.ob-dots { display: flex; gap: 5px; flex: 1 0 100%; justify-content: center; margin-bottom: 4px; }
+.ob-dots span { width: 7px; height: 7px; border-radius: 999px; background: var(--surface-2); transition: width 0.25s, background 0.25s; }
+.ob-dots span.past { background: var(--accent-shadow); }
+.ob-dots span.on { width: 20px; background: var(--accent); }
+@keyframes ob-in { from { opacity: 0; transform: translateY(10px) scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes ob-fade { from { opacity: 0; } to { opacity: 1; } }
+.ob-card.owl { justify-items: center; text-align: center; }
+.ob-card.owl .ob-bullets { text-align: left; justify-self: stretch; }
+.ob-card.sheet { border-radius: 18px; max-height: min(62vh, calc(100vh - 16px)); padding: 14px 14px 12px; }
+.ob-card.sheet h2 { font-size: 19px; }
+.ob-card.sheet p { font-size: 14px; }
+.ob-bullets { list-style: none; margin: 2px 0 0; padding: 0; display: grid; gap: 6px; }
+.ob-bullets li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 6px; align-items: start; font-size: 14px; line-height: 1.4; color: var(--text-2); }
+.ob-bullets li svg { margin-top: 3px; color: var(--accent-ink); }
+.ob-bullets li b { color: var(--text); font-weight: 700; }
+.ob-help { display: inline-grid; place-items: center; flex: none; width: 32px; height: 32px; min-height: 0; padding: 0; border-radius: 50%; border: 2px solid var(--line); background: var(--surface); color: var(--text); font: 800 15px/1 Figtree, Arial, sans-serif; box-shadow: 0 2px 0 var(--line); }
+.ob-help:hover { border-color: var(--accent); color: var(--accent-ink); }
+.ob-help:active { transform: translateY(2px); box-shadow: none; }
+/* Beta: the pill next to the logo and the one-line notice */
+.beta-pill { display: inline-flex; align-items: center; gap: 4px; min-height: 0; padding: 2px 8px; border-radius: 999px; border: 1.5px solid var(--flame, #ff9f43); background: rgba(255, 159, 67, 0.14); color: var(--text); font: 800 11px/1.4 Figtree, Arial, sans-serif; letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer; }
+.beta-pill:hover { background: rgba(255, 159, 67, 0.26); }
+.beta-note { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 12px; padding: 10px 12px; border-radius: 14px; border: 1.5px solid var(--flame, #ff9f43); background: rgba(255, 159, 67, 0.1); color: var(--text); font-size: 14px; line-height: 1.4; text-align: left; }
+.beta-note > svg { flex: none; margin-top: 2px; color: var(--flame, #ff9f43); }
+.beta-note p { margin: 0; flex: 1; min-width: 0; }
+.beta-note b { font-weight: 800; }
+.beta-note .icon-btn { flex: none; margin: -4px -4px 0 0; }
+@media (prefers-reduced-motion: reduce) { .ob-card, .ob-tour.dim { animation: none; } .ob-hole { transition: none; } }
+@media print { .ob-tour, .beta-note { display: none !important; } }
+.tl.rail .t-beta { display: none; }
+.t-side-top .t-beta { margin-right: auto; }
+.nav-brand .ob-help { width: 28px; height: 28px; font-size: 13px; margin-left: auto; }
+.sh-head-help { margin-left: 8px; }
+.ob-link { justify-self: start; text-align: left; }

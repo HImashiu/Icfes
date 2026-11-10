@@ -7,6 +7,9 @@ import { DEFAULT_STYLE, FONTS, FONT_SIZES, PRESETS, WORK_SPACE, canFold, cleanSt
 import { imageToDataUrl } from "../../lib/imageFile.js";
 import { orderForVersion, versionCounts, versionLabel } from "../../lib/seating.js";
 import { FilePicker, Select } from "../Controls.jsx";
+import Icon from "../Icon.jsx";
+import Tour, { TourButton, markTourSeen, tourSeen } from "../tour/Tour.jsx";
+import { studioTour } from "../../lib/tours.jsx";
 import "./booklet.css";
 
 const STORE = "condor.print.v2";
@@ -40,11 +43,12 @@ function Check({ checked, onChange, children, disabled, note }) {
 }
 
 const TABS = [
-  { value: "papel", label: "Papel" },
-  { value: "pagina", label: "Página" },
-  { value: "letra", label: "Letra" },
-  { value: "portada", label: "Portada" },
-  { value: "bordes", label: "Encabezado y pie" },
+  { value: "plantilla", label: "Tipo de cuadernillo", icon: "grid" },
+  { value: "papel", label: "Papel", icon: "print" },
+  { value: "pagina", label: "Página", icon: "panel" },
+  { value: "letra", label: "Letra", icon: "pencil" },
+  { value: "portada", label: "Portada", icon: "image" },
+  { value: "bordes", label: "Encabezado y pie", icon: "sliders" },
 ];
 
 // The print studio for a cuadernillo: the typeset booklet (cover with the school's logo, instructions, columns,
@@ -59,11 +63,13 @@ export default function BookletStudio({ api = null, bundle, questions, title, co
   });
   const style = prefs.style;
   const [doc, setDoc] = useState(initialDoc);
-  const [tab, setTab] = useState("papel");
+  const [tab, setTab] = useState("plantilla");
   const [only, setOnly] = useState("all");
   const [part, setPart] = useState("all");
   const [reverseBacks, setReverseBacks] = useState(false);
   const [error, setError] = useState(null);
+  // The first time a teacher opens the print studio, its tutorial walks through it (replay with «?»).
+  const [tour, setTour] = useState(() => !tourSeen("docente", null, "estudio"));
   const [notice, setNotice] = useState(null);
   const [stats, setStats] = useState({});
   const [schoolId, setSchoolId] = useState(null);
@@ -161,6 +167,17 @@ export default function BookletStudio({ api = null, bundle, questions, title, co
   const isSchool = schoolStyle && JSON.stringify(schoolStyle) === styleKey;
   const docs = [{ value: "booklet", label: "Cuadernillo" }, ...(answerSheets ? [{ value: "answers", label: "Hoja de respuestas" }] : []), { value: "key", label: "Clave del docente" }];
 
+  // One line under each option in the side list, so the current choice shows without opening it.
+  const preset = PRESETS.find((p) => p.id === chosen);
+  const summary = (t) => ({
+    plantilla: isSchool ? "Formato del colegio" : preset ? preset.label : "Personalizado",
+    papel: `${style.size} · ${BINDINGS[style.binding].label}${style.binding === "sueltas" ? (style.sides === "duplex" ? " · doble cara" : " · una cara") : ""}`,
+    pagina: `${g.cols === 2 ? "Dos columnas" : "Una columna"} · márgenes ${{ estrecho: "estrechos", normal: "normales", amplio: "amplios", custom: "a medida" }[style.margins]}`,
+    letra: `${FONTS[style.font]?.label ?? ""} ${fmtMm(style.fontSize)} pt`,
+    portada: { full: "Página completa", header: "Arriba de la página 1", none: "Sin portada" }[style.cover],
+    bordes: style.head ? "Con encabezado" : "Sin encabezado",
+  })[t];
+
   const printerHint = g.imposed
     ? `En la impresora: papel ${g.sheetLabel}, horizontal, doble cara volteando por el borde corto, tamaño real (100 %). Dobla el paquete por la mitad y grapa en el lomo.`
     : g.duplex
@@ -171,26 +188,42 @@ export default function BookletStudio({ api = null, bundle, questions, title, co
     <div className="bks">
       <style>{pageCss}</style>
       <aside className="bks-panel">
-        <div className="bks-field">Imprimir<Seg label="Qué imprimir" value={doc} onChange={setDoc} options={docs} /></div>
-        {versions.length > 1 && <div className="bks-field">Versiones<Seg label="Versiones" value={only} onChange={setOnly} options={[{ value: "all", label: "Todas" }, ...versions.map((v) => ({ value: String(v), label: versionLabel(v) }))]} /></div>}
+        <div className="bks-top">
+          <div className="bks-field" data-tour="bks-doc">Imprimir<Seg label="Qué imprimir" value={doc} onChange={setDoc} options={docs} /></div>
+          <TourButton label="Cómo funciona el cuadernillo" onClick={() => setTour(true)} />
+        </div>
+        {versions.length > 1 && <div className="bks-field" data-tour="bks-versions">Versiones<Seg label="Versiones" value={only} onChange={setOnly} options={[{ value: "all", label: "Todas" }, ...versions.map((v) => ({ value: String(v), label: versionLabel(v) }))]} /></div>}
 
         {doc === "booklet" && (
           <>
-            <div className="bks-field">Plantilla
-              <div className="bks-presets">
-                {PRESETS.map((p) => (
-                  <button key={p.id} type="button" className="bks-preset" aria-pressed={chosen === p.id} onClick={() => setStyle({ ...p.style, binding: p.style.binding === "plegado" && !canFold(style.size) ? "sueltas" : p.style.binding })}>
-                    <strong>{p.label}</strong><span>{p.note}</span>
+            <div className="bks-cfg" data-tour="bks-cfg">
+              <div className="bks-rail" role="tablist" aria-label="Opciones del cuadernillo" aria-orientation="vertical" data-tour="bks-rail">
+                {TABS.map((t) => (
+                  <button key={t.value} type="button" role="tab" aria-selected={tab === t.value} className={tab === t.value ? "on" : ""} onClick={() => setTab(t.value)}>
+                    <Icon name={t.icon} size={18} strokeWidth={2.4} />
+                    <span className="bks-rail-text"><strong>{t.label}</strong><span>{summary(t.value)}</span></span>
                   </button>
                 ))}
-                {schoolStyle && (
-                  <button type="button" className="bks-preset" aria-pressed={Boolean(isSchool)} onClick={() => setStyle(schoolStyle)}>
-                    <strong>Formato del colegio</strong><span>El que guardó coordinación</span>
-                  </button>
-                )}
               </div>
-            </div>
-            <div className="bks-tabs"><Seg label="Opciones de formato" value={tab} onChange={setTab} options={TABS} /></div>
+              <div className="bks-opts" role="tabpanel" data-tour="bks-opts">
+            {tab === "plantilla" && (
+              <>
+            <div className="bks-field">Elige un punto de partida; luego ajusta cada detalle en las demás opciones.
+                  <div className="bks-presets">
+                    {PRESETS.map((p) => (
+                      <button key={p.id} type="button" className="bks-preset" aria-pressed={chosen === p.id} onClick={() => setStyle({ ...p.style, binding: p.style.binding === "plegado" && !canFold(style.size) ? "sueltas" : p.style.binding })}>
+                        <strong>{p.label}</strong><span>{p.note}</span>
+                      </button>
+                    ))}
+                    {schoolStyle && (
+                      <button type="button" className="bks-preset" aria-pressed={Boolean(isSchool)} onClick={() => setStyle(schoolStyle)}>
+                        <strong>Formato del colegio</strong><span>El que guardó coordinación</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
             {tab === "papel" && (
               <>
                 <div className="bks-field">Tamaño del papel<Seg label="Tamaño" value={style.size} onChange={(size) => setStyle({ size })} options={[{ value: "Carta", label: "Carta" }, { value: "A4", label: "A4" }, { value: "Oficio", label: "Oficio" }]} /></div>
@@ -292,7 +325,9 @@ export default function BookletStudio({ api = null, bundle, questions, title, co
                 </label>
               </>
             )}
-            <div className="bks-save">
+              </div>
+            </div>
+            <div className="bks-save" data-tour="bks-save">
               {api?.saveSchoolSettings && schoolId && <button type="button" className="secondary" disabled={Boolean(isSchool)} onClick={saveSchoolFormat}>{isSchool ? "Es el formato del colegio" : "Guardar como formato del colegio"}</button>}
               <button type="button" className="link" onClick={() => { setStyle(DEFAULT_STYLE); setNotice(null); }}>Volver al formato inicial</button>
             </div>
@@ -304,7 +339,7 @@ export default function BookletStudio({ api = null, bundle, questions, title, co
         )}
 
         {error && <p className="bks-hint bks-warn">{error}</p>}
-        <div className="bks-hint">
+        <div className="bks-hint" data-tour="bks-hint">
           {doc === "key" ? <p>La clave va aparte: no la imprimas con los cuadernillos de los estudiantes.</p>
             : doc === "answers" ? <p>Una hoja por estudiante, para calificar a mano. Imprime una y saca copias, o elige el número de copias en la impresora.{plan ? " Las hojas que lee el celular están en Papel › Hojas de respuestas." : ""}</p>
             : (
@@ -323,7 +358,9 @@ export default function BookletStudio({ api = null, bundle, questions, title, co
             )}
         </div>
       </aside>
-      <div className="bks-pages" ref={boxRef}>
+      {tour && <Tour label="Tutorial · Cuadernillo" steps={studioTour({ versions: versions.length > 1, answerSheets, schoolStyle: Boolean(api?.saveSchoolSettings) })}
+        navigate={(r) => { if (r.doc) setDoc(r.doc); if (r.tab) setTab(r.tab); }} onClose={() => { markTourSeen("docente", null, "estudio"); setTour(false); setDoc("booklet"); }} />}
+      <div className="bks-pages" ref={boxRef} data-tour="bks-pages">
         <div className="bks-zoom">
           {doc === "key"
             ? sets.map((s) => <TeacherKeyPrint key={s.v ?? "x"} questions={s.qs} bundle={bundle} title={title} course={course} version={s.label} paper={paper} zoom={zoom} />)

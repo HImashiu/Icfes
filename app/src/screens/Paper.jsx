@@ -28,7 +28,7 @@ export function Overlay({ title, hint, onClose, children, page = "0" }) {
       <style>{`@page { size: A4; margin: ${page}; }`}</style>
       <div className="print-bar">
         <div className="print-bar-title"><strong>{title}</strong>{hint && <span>{hint}</span>}</div>
-        <button type="button" className="primary" onClick={() => window.print()}><Icon name="book" size={16} /> Imprimir</button>
+        <button type="button" className="primary" data-tour="print-go" onClick={() => window.print()}><Icon name="book" size={16} /> Imprimir</button>
         <button type="button" className="secondary" onClick={onClose}>Cerrar</button>
       </div>
       <div className="print-body">{children}</div>
@@ -238,10 +238,10 @@ export default function Paper({ api, assignments, fetchExam, guard, setNotice, f
             {tooMany && <p className="notice error">Una hoja admite hasta {MAX_QUESTIONS} preguntas.</p>}
             {bundle && noRoster && <p className="notice error">Este curso no tiene estudiantes en la lista. Agrégalos en Estudiantes › Listas de clase.</p>}
           </div>
-          {bundle && !noRoster && <SeatingCard plan={plan} roster={roster} onOpen={() => setMode("seating")} onPrint={() => setMode("chart")} />}
+          {bundle && !noRoster && <div data-tour="paper-seating"><SeatingCard plan={plan} roster={roster} onOpen={() => setMode("seating")} onPrint={() => setMode("chart")} /></div>}
           <div className="paper-steps">
             {steps.map((st) => (
-              <section key={st.n} className={st.primary ? "card paper-step primary-step" : "card paper-step"}>
+              <section key={st.n} data-tour={`paper-${st.mode}`} className={st.primary ? "card paper-step primary-step" : "card paper-step"}>
                 <span className="step-badge" aria-hidden="true">{st.n}</span>
                 <span className="step-icon" aria-hidden="true"><Icon name={st.icon} size={26} /></span>
                 <h2>{st.title}</h2>
@@ -250,6 +250,7 @@ export default function Paper({ api, assignments, fetchExam, guard, setNotice, f
               </section>
             ))}
           </div>
+          <p className="caption paper-note"><button type="button" className="link" onClick={() => window.dispatchEvent(new CustomEvent("condor:tour", { detail: "cuadernillo" }))}>¿Primera vez? Mira cómo hacer un cuadernillo, paso a paso.</button></p>
           <p className="caption paper-note">La lista de estudiantes se ordena por correo. No agregues ni quites estudiantes entre imprimir y calificar: cada hoja lleva el código de su estudiante.</p>
         </>
       )}

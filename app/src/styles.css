@@ -3236,3 +3236,5 @@ body.spl-open { overflow: hidden; }
 .tc-page { display: grid; gap: 12px; max-width: 560px; }
 .demo-banner strong { white-space: nowrap; }
 .login-code input { width: 100%; font-size: 15px; }
+.nav-brand-mark { display: inline-flex; align-items: center; gap: 8px; }
+.tour-anchor { display: inline-block; justify-self: start; }
