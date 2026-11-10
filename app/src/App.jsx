@@ -94,6 +94,8 @@ const mixedKeys = (exam, n = 10) => {
 const storeScope = (a) => (a.assignmentId ? `asg-${a.assignmentId}` : a.repechaje ? "repechaje" : a.custom ? "custom" : a.scope);
 
 const STUDENT_SIDE = "condor:student-side";
+// Screens that cannot show anything without an open booklet.
+const BOOKLET_VIEWS = new Set(["setup", "custom", "test", "results", "review"]);
 
 export default function App() {
   const rootAuth = useAuth();
@@ -110,6 +112,9 @@ export default function App() {
   const [loadError, setLoadError] = useState(null);
   const [selected, setSelected] = useState(null); // { slug, exam, key, keyStatus, notes, figures }
   const [opening, setOpening] = useState(false);
+  // A booklet opened in the background (the first one on entry, or a swap) shows no loader: only an open the
+  // person asked for, or a screen that needs the booklet before it has arrived, says "Cargando cuadernillo…".
+  const [openingQuiet, setOpeningQuiet] = useState(false);
   const [openError, setOpenError] = useState(null);
   // A student who scans a room's QR code lands on the join screen with the code filled in.
   const [joinCode] = useState(() => (typeof window !== "undefined" ? joinCodeFromHash(window.location.hash) : ""));
@@ -206,11 +211,12 @@ export default function App() {
     return applyOverrides(bundle, versions);
   }, [exams, auth.api, auth.status, rootAuth.status, rootAuth.profile]);
 
-  const openExam = useCallback(async (slug, keys = null) => {
+  const openExam = useCallback(async (slug, keys = null, quiet = false) => {
     setOpenError(null);
     const entry = exams?.find((e) => e.slug === slug);
     if (slug !== TEACHER_SLUG && (!entry || entry.status === "proximamente")) return null;
     setOpening(true);
+    setOpeningQuiet(quiet);
     try {
       const next = await fetchExam(slug, keys);
       setSelected(next);
@@ -250,14 +256,14 @@ export default function App() {
   useEffect(() => {
     const open = exams?.filter((e) => e.status !== "proximamente") ?? [];
     const first = open.find((e) => e.sections?.includes("Inglés")) ?? open[0];
-    if (first && !selected && !opening && !openError && !tokenFromHash(window.location.hash)) openExam(first.slug);
+    if (first && !selected && !opening && !openError && !tokenFromHash(window.location.hash)) openExam(first.slug, null, true);
   }, [exams, selected, opening, openError, openExam]);
 
   // A booklet the school hid is not left open for free practice: the first visible one opens instead.
   useEffect(() => {
     if (!hidden || !selected || opening || attempt?.assignmentId || !hidden.slugs.has(selected.slug)) return;
     const next = exams?.find((e) => e.status !== "proximamente" && !hidden.slugs.has(e.slug));
-    if (next) openExam(next.slug);
+    if (next) openExam(next.slug, null, true);
   }, [hidden, selected, opening, attempt, exams, openExam]);
 
   // Keep an attempt in this browser so a reload does not lose answers.
@@ -565,7 +571,6 @@ export default function App() {
     );
   }
   if (exams === null) return <main className="frame"><p className="muted">Cargando…</p></main>;
-  if (!selected) return <main className="frame"><p className="muted">{opening ? "Cargando cuadernillo…" : "Todavía no hay cuadernillos listos."}</p></main>;
 
   const questions = selected && attempt ? questionsForAttempt(selected.exam, attempt) : [];
   // What a student may pick for free practice: booklets the school hid are not offered.
@@ -615,7 +620,9 @@ export default function App() {
       {!demoEnabled && auth.status !== "ready" && LAUNCH_VIEWS.has(view) && <LaunchNotice />}
       {loadError && <p className="notice error">{loadError}</p>}
       {openError && <p className="notice error">{openError}</p>}
-      {opening && <p className="muted pad">Cargando cuadernillo…</p>}
+      {((opening && !openingQuiet) || (!selected && BOOKLET_VIEWS.has(view))) && (
+        <p className="muted pad">{opening || exams.some((e) => e.status !== "proximamente") ? "Cargando cuadernillo…" : "Todavía no hay cuadernillos listos."}</p>
+      )}
 
       {view === "home" && (
         <Home
