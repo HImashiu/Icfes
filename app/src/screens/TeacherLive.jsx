@@ -237,8 +237,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
     <div className={rail ? "teacher tl rail" : "teacher tl"} style={{ "--ctx": tint }}>
       <aside className="t-side" aria-label="Navegación docente">
         <div className="t-side-top">
-          <strong className="t-logo"><Logo size={30} /> <span><Wordmark height={20} /></span></strong>
-          <BetaPill className="t-beta" />
+          <span className="t-brand"><strong className="t-logo"><Logo size={30} /> <span><Wordmark height={20} /></span></strong><BetaPill className="t-beta" /></span>
           <button type="button" className="t-rail-btn" onClick={toggleRail} aria-pressed={rail} aria-label={rail ? "Mostrar la barra lateral" : "Contraer la barra lateral"} title={rail ? "Mostrar la barra lateral" : "Contraer la barra lateral"}>
             <Icon name="panel" size={18} strokeWidth={2.2} />
           </button>

@@ -359,7 +359,7 @@ export default function BookletStudio({ api = null, bundle, questions, title, co
         </div>
       </aside>
       {tour && <Tour label="Tutorial · Cuadernillo" steps={studioTour({ versions: versions.length > 1, answerSheets, schoolStyle: Boolean(api?.saveSchoolSettings) })}
-        navigate={(r) => { if (r.doc) setDoc(r.doc); if (r.tab) setTab(r.tab); }} onClose={() => { markTourSeen("docente", null, "estudio"); setTour(false); setDoc("booklet"); }} />}
+        navigate={(r) => { if (r.doc) setDoc(r.doc); if (r.tab) setTab(r.tab); }} onClose={() => { markTourSeen("docente", null, "estudio"); setTour(false); setDoc("booklet"); setTab("plantilla"); }} />}
       <div className="bks-pages" ref={boxRef} data-tour="bks-pages">
         <div className="bks-zoom">
           {doc === "key"

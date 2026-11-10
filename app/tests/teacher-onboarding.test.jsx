@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import TeacherLive from "../src/screens/TeacherLive.jsx";
-import { firstSteps, markTourSeen, tourSeen } from "../src/screens/teacher/Onboarding.jsx";
+import { firstSteps } from "../src/screens/teacher/Onboarding.jsx";
+import { markTourSeen, tourSeen } from "../src/components/tour/Tour.jsx";
+import { STUDENT_TOUR_IDS, TEACHER_TOUR_IDS, studentTour, studioTour, teacherFullTour, teacherTour, teacherTourId } from "../src/lib/tours.jsx";
 
 afterEach(() => { cleanup(); window.location.hash = ""; window.localStorage.clear(); });
 
@@ -14,41 +16,49 @@ const api = (extra = {}) => ({
 const auth = (a, role = "teacher") => ({ api: a, profile: { id: "t1", school_id: "s1", role, full_name: "Lina Pérez", email: "lina@c.co" } });
 
 describe("teacher onboarding", () => {
-  it("opens the tour on the first visit only, and it can be replayed", async () => {
+  it("opens the Hoy tutorial on the first visit only, and it can be replayed", async () => {
     render(<TeacherLive auth={auth(api())} exams={[]} fetchExam={vi.fn()} onExit={() => {}} />);
-    expect(await screen.findByRole("heading", { name: "¡Hola, Lina!" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "¡Hola, Lina!" }, { timeout: 3000 })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Ahora no" }));
-    expect(tourSeen("t1")).toBe(true);
+    expect(tourSeen("docente", "t1", "hoy")).toBe(true);
     expect(screen.queryByRole("heading", { name: "¡Hola, Lina!" })).toBeNull();
     cleanup();
     render(<TeacherLive auth={auth(api())} exams={[]} fetchExam={vi.fn()} onExit={() => {}} />);
     await screen.findAllByText("Crea tu clase");
+    await new Promise((r) => setTimeout(r, 600));
     expect(screen.queryByRole("heading", { name: "¡Hola, Lina!" })).toBeNull();
-    fireEvent.click(screen.getAllByRole("button", { name: /Ver el recorrido/ })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: /Tutorial de esta sección/ })[0]);
     expect(await screen.findByRole("heading", { name: "¡Hola, Lina!" })).toBeTruthy();
   });
 
-  it("walks every step and ends on the first steps with the example-data switch off", async () => {
+  it("walks every step of Hoy and ends on the first steps with the example-data switch off", async () => {
     render(<TeacherLive auth={auth(api(), "school_admin")} exams={[]} fetchExam={vi.fn()} onExit={() => {}} />);
-    await screen.findByRole("heading", { name: "¡Hola, Lina!" });
+    await screen.findByRole("heading", { name: "¡Hola, Lina!" }, { timeout: 3000 });
     fireEvent.click(screen.getByRole("button", { name: "Empezar" }));
     const titles = [];
-    for (let i = 0; i < 12; i++) {
-      const done = screen.queryByRole("button", { name: "Terminar" });
+    for (let i = 0; i < 15; i++) {
+      const done = screen.queryByRole("button", { name: "Entendido" });
       titles.push(screen.getByRole("dialog", { name: /.+/ }).querySelector("h2").textContent);
       if (done) break;
       fireEvent.click(screen.getByRole("button", { name: "Siguiente" }));
     }
-    expect(titles).toContain("Colegio"); // coordination sees its own step
+    expect(titles).toContain("Estamos en beta");
     expect(titles.at(-1)).toBe("¡Listo para empezar!");
     const switches = screen.getAllByRole("switch", { name: "Datos de ejemplo" });
     expect(switches.every((s) => s.getAttribute("aria-checked") === "false")).toBe(true);
-    fireEvent.click(screen.getByRole("button", { name: "Terminar" }));
-    expect(tourSeen("t1")).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Entendido" }));
+    expect(tourSeen("docente", "t1", "hoy")).toBe(true);
+  });
+
+  it("each section opens its own tutorial the first time", async () => {
+    markTourSeen("docente", "t1", "hoy");
+    window.location.hash = "#docente/resultados/resumen";
+    render(<TeacherLive auth={auth(api())} exams={[]} fetchExam={vi.fn()} onExit={() => {}} />);
+    expect(await screen.findByText("Tutorial · Resultados · 1 de 5", {}, { timeout: 3000 })).toBeTruthy();
   });
 
   it("a new school sees first steps, not invented data, and the trial's days and seats", async () => {
-    markTourSeen("t1");
+    for (const id of TEACHER_TOUR_IDS) markTourSeen("docente", "t1", id);
     const expires = new Date(Date.now() + 5.5 * 864e5).toISOString();
     render(<TeacherLive auth={auth(api({ myTrial: vi.fn().mockResolvedValue({ school_name: "Colegio X", expires_at: expires, max_teachers: 15, teachers: 3 }) }))} exams={[]} fetchExam={vi.fn()} onExit={() => {}} />);
     expect((await screen.findAllByText("Crea tu clase")).length).toBeGreaterThan(0);
@@ -61,5 +71,18 @@ describe("teacher onboarding", () => {
     const s = firstSteps({ admin: false, courses: [{ id: "c" }], assignments: [] });
     expect(s.map((x) => x.done)).toEqual([true, false, false]);
     expect(firstSteps({ admin: true, courses: [], assignments: [] })[0].to).toEqual({ section: "colegio", tab: "cursos" });
+  });
+
+  it("every tutorial has steps, every teacher route maps to one, and coordination sees Colegio", () => {
+    const ctx = { admin: true, name: "Lina", sample: "a1", paper: "p1", first: null, openTour: () => {} };
+    for (const id of TEACHER_TOUR_IDS) expect(teacherTour(id, ctx).steps.length).toBeGreaterThan(0);
+    for (const id of STUDENT_TOUR_IDS) expect(studentTour(id).steps.length).toBeGreaterThan(0);
+    expect(teacherTourId({ section: "actividades", tab: "nueva" })).toBe("nueva");
+    expect(teacherTourId({ section: "actividad", id: "x" })).toBe("actividad");
+    const full = teacherFullTour(ctx).steps;
+    expect(new Set(full.map((s) => s.id)).size).toBe(full.length);
+    expect(full.some((s) => s.route?.section === "colegio")).toBe(true);
+    expect(teacherFullTour({ ...ctx, admin: false }).steps.some((s) => s.route?.section === "colegio")).toBe(false);
+    expect(studioTour({ versions: true }).map((s) => s.id)).toContain("s-ver");
   });
 });
