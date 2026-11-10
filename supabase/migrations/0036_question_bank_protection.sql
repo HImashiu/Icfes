@@ -122,6 +122,25 @@ begin
 end $$;
 revoke all on function public.bank_hit(uuid, text, text) from public, anon, authenticated;
 
+-- Booklets an account has a reason to open again and again: its school's activities and lessons (teachers), the
+-- activities assigned to it and its own past attempts (students). They don't count toward the daily and weekly
+-- limits, so results, the gradebook, the data sheet and the error notebook never hit them. A trial school's total
+-- cap still counts them (a booklet must be opened once to build an activity on it, and that first opening counts).
+create or replace function public.bank_has_reason(p_uid uuid, p_kind text, p_school uuid, p_slug text)
+returns boolean
+language sql stable security definer set search_path = public as $$
+  select case when p_kind in ('staff', 'trial_staff') then
+      exists (select 1 from assignments a join courses c on c.id = a.course_id where a.exam_slug = p_slug and c.school_id = p_school)
+      or exists (select 1 from lessons l where l.exam_slug = p_slug and l.school_id = p_school)
+    else
+      exists (select 1 from attempts t where t.profile_id = p_uid and t.exam_slug = p_slug)
+      or exists (select 1 from assignments a join course_members m on m.course_id = a.course_id
+                  where a.exam_slug = p_slug and m.profile_id = p_uid and a.status <> 'draft'
+                    and (a.assignee_id is null or a.assignee_id = p_uid))
+    end
+$$;
+revoke all on function public.bank_has_reason(uuid, text, uuid, text) from public, anon, authenticated;
+
 -- 4 · Abrir un cuadernillo -------------------------------------------------------------------------------------------
 -- El worker del sitio la llama con el token del usuario antes de servir /app/exams/<slug>.* y /app/api/reveal.
 -- Devuelve 'ok' o el motivo: 'access_blocked', 'day_limit', 'week_limit', 'trial_limit', 'files_limit'.
@@ -153,7 +172,7 @@ begin
   v_seen_today := coalesce(v_seen_today, false);
   if v_files >= lim_files then return bank_hit(v_uid, v_slug, 'files_limit'); end if;
 
-  if not v_seen_today then
+  if not v_seen_today and not bank_has_reason(v_uid, v_acc.kind, v_acc.school_id, v_slug) then
     if v_acc.kind = 'student' then
       lim_day := coalesce((select value from app_limits where key = 'student_booklets_per_day'), 6);
       if v_acc.created_at > now() - interval '24 hours' then
@@ -167,12 +186,18 @@ begin
       lim_day := coalesce((select value from app_limits where key = 'staff_booklets_per_day'), 12);
       lim_week := coalesce((select value from app_limits where key = 'staff_booklets_per_week'), 26);
     end if;
+    -- Only booklets opened without a reason count (activity booklets opened today never use up the day).
+    select count(*) into v_today from exam_downloads
+     where user_id = v_uid and day = v_day and not bank_has_reason(v_uid, v_acc.kind, v_acc.school_id, slug);
     if v_today >= lim_day then return bank_hit(v_uid, v_slug, 'day_limit'); end if;
 
     select count(distinct slug), coalesce(bool_or(slug = v_slug), false) into v_week, v_seen_week
-      from exam_downloads where user_id = v_uid and day > v_day - 7;
+      from exam_downloads where user_id = v_uid and day > v_day - 7
+       and not bank_has_reason(v_uid, v_acc.kind, v_acc.school_id, slug);
     if not v_seen_week and v_week >= lim_week then return bank_hit(v_uid, v_slug, 'week_limit'); end if;
+  end if;
 
+  if not v_seen_today then
     -- A school on trial: all its teachers together open at most N different booklets for the whole trial.
     if v_acc.kind = 'trial_staff' then
       perform pg_advisory_xact_lock(hashtext('bank_school:' || v_acc.school_id::text));
@@ -210,8 +235,10 @@ declare
 begin
   if v_uid is null then raise exception 'not_signed_in'; end if;
   select * into v_acc from bank_account(v_uid);
-  select count(*) into v_today from exam_downloads where user_id = v_uid and day = v_day;
-  select count(distinct slug) into v_week from exam_downloads where user_id = v_uid and day > v_day - 7;
+  select count(*) into v_today from exam_downloads
+   where user_id = v_uid and day = v_day and not bank_has_reason(v_uid, v_acc.kind, v_acc.school_id, slug);
+  select count(distinct slug) into v_week from exam_downloads
+   where user_id = v_uid and day > v_day - 7 and not bank_has_reason(v_uid, v_acc.kind, v_acc.school_id, slug);
   if v_acc.kind = 'student' then
     lim_day := coalesce((select value from app_limits where key = 'student_booklets_per_day'), 6);
     if v_acc.created_at > now() - interval '24 hours' then
