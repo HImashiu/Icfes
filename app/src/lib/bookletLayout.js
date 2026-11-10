@@ -1,46 +1,65 @@
 // Page geometry and pagination for the printed cuadernillo (components/print/BookletPages.jsx).
 // Everything here is pure: the component measures each piece in the browser and this file decides where it goes.
 
-// Paper sizes in millimetres, portrait.
+import { cleanStyle } from "./bookletStyle.js";
+
+// Paper sizes in millimetres, portrait. Oficio is the Colombian 21,6 × 33 cm.
 export const PAPER = {
   A4: { w: 210, h: 297, label: "A4" },
   Carta: { w: 215.9, h: 279.4, label: "Carta" },
+  Oficio: { w: 215.9, h: 330.2, label: "Oficio" },
   A5: { w: 148, h: 210, label: "A5" },
   MediaCarta: { w: 139.7, h: 215.9, label: "Media carta" },
+  MediaOficio: { w: 165.1, h: 215.9, label: "Media oficio" },
   A3: { w: 297, h: 420, label: "A3" },
   DobleCarta: { w: 279.4, h: 431.8, label: "Doble carta" },
 };
 
 // How the school binds the booklet.
-//  sueltas:  one page per sheet side, printed on both sides and stapled at the corner (any printer).
+//  sueltas:  one page per sheet side, printed on one or both sides and stapled at the corner (any printer).
 //  plegado:  saddle-stitched like the real ICFES cuadernillo: two pages per sheet side on paper twice as big
 //            (A3 for A4, doble carta for carta), folded in half and stapled on the fold.
-//  pequeno:  the same fold on ordinary paper: half-size pages (A5 / media carta), one column, two per A4 / carta sheet.
+//  pequeno:  the same fold on ordinary paper: half-size pages (A5 / media carta / media oficio), two per sheet side.
 export const BINDINGS = {
-  sueltas: { label: "Grapado en la esquina", hint: "Cualquier impresora. Imprime por las dos caras." },
+  sueltas: { label: "Grapado en la esquina", hint: "Cualquier impresora." },
   plegado: { label: "Plegado, como el ICFES", hint: "Hoja A3 o doble carta, doblada y grapada en el lomo." },
-  pequeno: { label: "Pequeño (media hoja)", hint: "Páginas de media hoja en papel A4 o carta, dobladas y grapadas en el lomo." },
+  pequeno: { label: "Pequeño (media hoja)", hint: "Páginas de media hoja, dos por cara de la hoja, dobladas y grapadas en el lomo." },
 };
 
-const HALF = { A4: "A5", Carta: "MediaCarta" };
+const HALF = { A4: "A5", Carta: "MediaCarta", Oficio: "MediaOficio" };
 const DOUBLE = { A4: "A3", Carta: "DobleCarta" };
+export const MARGIN_PRESETS = {
+  estrecho: { full: { top: 14, bottom: 14, inner: 13, outer: 10 }, small: { top: 12, bottom: 12, inner: 11, outer: 8 } },
+  normal: { full: { top: 19, bottom: 17, inner: 18, outer: 14 }, small: { top: 15, bottom: 14, inner: 14, outer: 11 } },
+  amplio: { full: { top: 24, bottom: 21, inner: 24, outer: 19 }, small: { top: 18, bottom: 17, inner: 17, outer: 14 } },
+};
 
 // The page the questions are typeset on and the sheet that goes through the printer.
-export function geometry(size = "Carta", binding = "sueltas") {
+// Takes a print style (lib/bookletStyle.js) or, as before, a paper size and a binding.
+export function geometry(sizeOrStyle = "Carta", bindingArg = "sueltas") {
+  const s = cleanStyle(typeof sizeOrStyle === "object" ? sizeOrStyle : { size: sizeOrStyle, binding: bindingArg });
+  const { size, binding } = s;
   const small = binding === "pequeno";
   const page = PAPER[small ? HALF[size] : size];
   const sheetPortrait = binding === "plegado" ? PAPER[DOUBLE[size]] : PAPER[size];
   const imposed = binding !== "sueltas";
+  const duplex = imposed || s.sides !== "simplex";
   // Folded booklets print two pages side by side on a landscape sheet.
   const sheet = imposed ? { w: sheetPortrait.h, h: sheetPortrait.w } : page;
-  const m = small
-    ? { top: 15, bottom: 14, inner: 14, outer: 11 }
-    : { top: 19, bottom: 17, inner: 18, outer: 14 };
-  const cols = small ? 1 : 2;
-  const gap = 7;
+  const m = s.margins === "custom" ? { ...s.custom } : { ...MARGIN_PRESETS[s.margins][small ? "small" : "full"] };
+  // The running head and the folio need room of their own.
+  if (s.head) m.top = Math.max(m.top, 12);
+  if (s.pageNumber !== "none" || s.footText) m.bottom = Math.max(m.bottom, 12);
+  const cols = s.cols === "auto" ? (small ? 1 : 2) : s.cols;
+  const gap = cols === 1 ? 0 : small ? 5 : 7;
   const bodyW = page.w - m.inner - m.outer;
   const colW = cols === 1 ? bodyW : (bodyW - gap) / 2;
-  return { size, binding, page, sheet, imposed, margins: m, cols, gap, colW, bodyW, bodyH: page.h - m.top - m.bottom, small };
+  return { size, binding, page, sheet, imposed, duplex, margins: m, cols, gap, colW, bodyW, bodyH: page.h - m.top - m.bottom, small, sheetLabel: sheetLabel(size, binding) };
+}
+
+function sheetLabel(size, binding) {
+  if (binding === "plegado") return size === "A4" ? "A3" : "doble carta";
+  return PAPER[size].label.toLowerCase() === "a4" ? "A4" : PAPER[size].label.toLowerCase();
 }
 
 const EPS = 0.5;
@@ -52,14 +71,18 @@ const EPS = 0.5;
 //           A chain is never split (the range line with the first paragraph, a stem with its options).
 //  height:  atom -> height in the same unit as colH.
 //  colH:    usable column height on an ordinary page; bannerH is what a section banner takes from it.
+//  areaBreak: "page" starts every area on a new page with a full-width banner; "flow" lets an area start in the
+//           column where the last one ended, under its own heading atom (item.head), kept with its first block.
+//  firstH:  room the first page gives to a header (name, course, date) when the booklet has no cover page.
 // Returns [{ section, banner, columns: [[atom...], ...], over: bool }]. `over` marks a page with a piece taller than a column.
-export function paginate(flow, height, { colH, cols = 2, bannerH = 0, moveBelow = 0.35 }) {
+export function paginate(flow, height, { colH, cols = 2, bannerH = 0, moveBelow = 0.35, areaBreak = "page", firstH = 0 }) {
   const pages = [];
   let page = null;
   let col = 0;
   let used = 0;
   let area = null;
-  const room = () => colH - (page.banner ? bannerH : 0);
+  let head = null; // an area heading waiting for the first block of its area
+  const room = () => colH - (page.banner ? bannerH : 0) - (page === pages[0] ? firstH : 0);
   const newPage = (banner = false) => {
     page = { section: area, banner, columns: Array.from({ length: cols }, () => []), over: false };
     pages.push(page);
@@ -84,11 +107,13 @@ export function paginate(flow, height, { colH, cols = 2, bannerH = 0, moveBelow 
   for (const item of flow) {
     if (item.type === "section") {
       area = item.name;
-      newPage(true);
+      if (areaBreak === "page" || !page || item.head == null) newPage(true);
+      else head = item.head;
       continue;
     }
     if (!page) newPage();
-    const chains = item.chains.filter((c) => c.length);
+    const chains = item.chains.filter((c) => c.length).map((c) => c.slice());
+    if (head != null && chains.length) { chains[0].unshift(head); head = null; }
     const total = chains.reduce((s, c) => s + sum(c), 0);
     if (fits(total)) { chains.forEach(put); continue; }
     // A block that fits a fresh column moves there only when little room is left here; otherwise its chains flow,
@@ -112,11 +137,12 @@ export function paginate(flow, height, { colH, cols = 2, bannerH = 0, moveBelow 
 }
 
 // Adds blank pages before the back cover so the count is a multiple of `of` (4 for a folded booklet, 2 for duplex).
-// pages: any array; blank: the value to insert. The last page (back cover) stays last.
-export function padPages(pages, of, blank) {
+// pages: any array; blank: the value to insert. The last page (back cover) stays last unless keepLast is false.
+export function padPages(pages, of, blank, keepLast = true) {
   const missing = (of - (pages.length % of)) % of;
   if (!missing) return pages.slice();
-  return [...pages.slice(0, -1), ...Array.from({ length: missing }, () => blank), pages.at(-1)];
+  const fill = Array.from({ length: missing }, () => blank);
+  return keepLast ? [...pages.slice(0, -1), ...fill, pages.at(-1)] : [...pages, ...fill];
 }
 
 // Saddle-stitch order: page indexes (0-based) on each sheet side, [left, right].

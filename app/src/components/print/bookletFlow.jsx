@@ -3,6 +3,7 @@ import FigureBlock from "../FigureBlock.jsx";
 import { isMatching } from "../../lib/matching.js";
 import { splitBlocks, splitLongParagraph } from "../../lib/bookletLayout.js";
 import CropImage from "./CropImage.jsx";
+import { areaColor } from "../../lib/brand.js";
 
 const TOKEN_IDS = /\[\[figura:([^\]\s]+)\]\]/g;
 const tokenIdsOf = (...texts) => texts.flatMap((t) => [...(typeof t === "string" ? t : "").matchAll(TOKEN_IDS)].map((m) => m[1]));
@@ -25,6 +26,16 @@ function withCaptions(list, atoms) {
   return chains;
 }
 const blocksOf = (html) => splitBlocks(html).flatMap((b) => splitLongParagraph(b));
+
+// The areas of a printed set, numbered 1..n in the order given: [{ name, from, to }].
+export function areasOf(questions) {
+  const areas = [];
+  questions.forEach((q, i) => {
+    if (!areas.length || areas.at(-1).name !== q.section) areas.push({ name: q.section, from: i + 1, to: i + 1 });
+    areas.at(-1).to = i + 1;
+  });
+  return areas;
+}
 
 // Turns the printed questions into measured pieces ("atoms") and the flow the paginator lays out.
 // Questions are numbered 1..n in the order given (the order of the answer sheet).
@@ -54,8 +65,9 @@ export function buildFlow(questions, figures) {
     if (question.section !== lastSection) {
       if (pending) { flow.push(pending); pending = null; }
       lastSection = question.section;
-      areas.push({ name: question.section, from: number, to: number });
-      flow.push({ type: "section", name: question.section });
+      const area = { name: question.section, from: number, to: number };
+      areas.push(area);
+      flow.push({ type: "section", name: question.section, head: add({ kind: "areahead", area }) });
     }
     areas.at(-1).to = number;
 
@@ -115,9 +127,16 @@ export function buildFlow(questions, figures) {
   return { atoms, flow, areas };
 }
 
-// One measured piece, as printed.
-export function Atom({ atom }) {
+// One measured piece, as printed. `opts` carries the print format choices that change how a piece looks:
+// { optionGrid, workSpace (mm after a math question), colW (mm), fontSize (pt) }.
+export function Atom({ atom, opts = {} }) {
   switch (atom.kind) {
+    case "areahead": return (
+      <div className="bk-areahead" style={{ "--bk-area": areaColor(atom.area.name) }}>
+        <h2>{atom.area.name}</h2>
+        <span>{atom.area.to > atom.area.from ? `Preguntas ${atom.area.from} a ${atom.area.to}` : `Pregunta ${atom.area.from}`}</span>
+      </div>
+    );
     case "range": return <p className="bk-range">{atom.text}</p>;
     case "directions": return <p className="bk-directions">{atom.text}</p>;
     case "html": return <RichText html={atom.html} className={`bk-text${atom.own ? " bk-own" : ""}${isCaption(atom) ? " bk-caption" : ""}`} resolve={atom.resolve} />;
@@ -128,19 +147,34 @@ export function Atom({ atom }) {
         {atom.question.options.map((opt) => <li key={opt.letter}><b>{opt.letter}.</b> <RichText html={opt.text_md} className="bk-text bk-inline" /></li>)}
       </ol>
     );
-    case "question": return <Question {...atom} />;
+    case "question": return <Question {...atom} opts={opts} />;
     default: return null;
   }
 }
 
-function Question({ question, number, resolve, figures }) {
+const plainText = (html) => String(html ?? "").replace(/<[^>]+>/g, "").replace(/&[a-z]+;/g, " ").trim();
+const RICH = /<(table|img|svg|ul|ol|br)|\$|\\\(|katex|\[\[/i;
+
+// How many short text options fit side by side in a column: 4, 2 or 1 (a plain list).
+export function optionAcross(options, colW, fontSize = 10.5) {
+  if (!options?.length || options.some((o) => RICH.test(o.text_md ?? ""))) return 1;
+  const longest = Math.max(...options.map((o) => plainText(o.text_md).length));
+  const perChar = fontSize * 0.2; // mm per character, roughly, for the body type
+  const fitsIn = (n) => longest * perChar <= (colW - 7) / n - 7;
+  if (options.length === 4 && fitsIn(4)) return 4;
+  return fitsIn(2) ? 2 : 1;
+}
+
+function Question({ question, number, resolve, figures, opts = {} }) {
   const optionFigure = (letter) => (figures?.get(question.key) ?? []).find((f) => f.target === "option" && f.option === letter);
   const pictures = question.options.some((o) => optionFigure(o.letter) || o.traced);
+  const across = !pictures && opts.optionGrid ? optionAcross(question.options, opts.colW ?? 85, opts.fontSize) : 1;
+  const work = opts.workSpace && /matem/i.test(question.section ?? "") ? opts.workSpace : 0;
   return (
     <div className="bk-q">
       <div className="bk-stem"><b className="bk-num">{number}.</b><RichText html={question.stem_md} className="bk-text" resolve={resolve} /></div>
       {!isMatching(question) && (
-        <ol className={pictures ? "bk-options bk-pics" : "bk-options"}>
+        <ol className={pictures ? "bk-options bk-pics" : across > 1 ? `bk-options bk-across a${across}` : "bk-options"}>
           {question.options.map((opt) => {
             const figure = optionFigure(opt.letter);
             return (
@@ -156,6 +190,7 @@ function Question({ question, number, resolve, figures }) {
           })}
         </ol>
       )}
+      {work > 0 && <div className="bk-work" style={{ height: `${work}mm` }} aria-hidden="true" />}
     </div>
   );
 }
