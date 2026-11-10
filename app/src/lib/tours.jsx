@@ -152,7 +152,7 @@ function cuadernilloSteps({ paper }) {
     { id: "c-cuadernillo", target: "paper-booklet", title: "3. Imprimir cuadernillo", text: "Abre el estudio de impresión: eliges el tipo de cuadernillo a la izquierda y ajustas papel, página, letra, portada y encabezado, con la vista previa al lado. Sale una copia por versión y la clave del docente." },
     { id: "c-hojas", target: "paper-sheets", title: "4. Hojas de respuestas", text: "Una hoja por estudiante con su código, su versión y las burbujas A a D. Imprime al 100 %, sin «ajustar a la página»." },
     { id: "c-escanear", target: "paper-scan", title: "5. Escanear hojas", text: "Pasa las hojas llenas frente a la cámara del celular (escáner continuo) o sube fotos. Cada hoja se califica con la clave de su versión y los resultados entran junto con los de en línea." },
-    { id: "c-fin", owl: "celebrating", final: true, title: "Así de simple", text: "Los resultados salen en la pestaña Resultados de la actividad y en Resultados › Hoja de datos. Todo lo que imprimes lleva el nombre de tu colegio." },
+    { id: "c-fin", owl: "celebrating", final: true, title: "Así de simple", text: "Los resultados salen en la pestaña Resultados de la actividad y en Resultados › Hoja de datos. Todo lo que imprimes lleva en el pie el nombre de tu colegio, la fecha y una referencia." },
   ]);
 }
 
@@ -213,6 +213,7 @@ function bibliotecaSteps() {
       "Editar: corrige o adapta la versión de tu colegio; Volver a la original cuando quieras.",
       "Uso: dónde y cuándo se usó cada pregunta.",
       "Marca preguntas y conviértelas en Diapositivas, Proyectar ahora, Hoja de trabajo, Quiz, Tarea, Práctica en clase, Examen con tiempo o Examen en papel.",
+      "Protección del banco: cada cuenta abre un número limitado de cuadernillos nuevos al día (lo ves bajo los filtros); volver a abrir uno ya abierto y los de tus actividades no cuentan.",
     ] },
     { ...BETA_STEP, id: "b-beta", target: "tab-banco", owl: null, title: "Si una pregunta tiene un error", text: "Estamos en beta y muchas preguntas aún pueden tener errores de formato. Corrígela para tu colegio con «Editar» o avísanos con «Reportar un error» desde la vista de estudiante." },
     { id: "b-mias", route: { section: "biblioteca", tab: "preguntas" }, target: "tab-preguntas", title: "Mis preguntas", bullets: [
@@ -319,7 +320,7 @@ export function studioTour({ versions = false, answerSheets = true, schoolStyle 
     { id: "s-bordes", route: { tab: "bordes" }, target: "bks-opts", title: "Encabezado y pie", bullets: ["Encabezado con tu texto y el nombre de la prueba.", "Número de página (con el total si quieres) y texto del pie. La fuente ICFES siempre va en el pie."] },
     schoolStyle && { id: "s-save", target: "bks-save", title: "Formato del colegio", text: "Coordinación puede guardar este formato para que todos los docentes impriman igual. «Volver al formato inicial» deshace los cambios." },
     { id: "s-hint", target: "bks-hint", title: "Antes de imprimir", text: "Aquí ves cuántas páginas y hojas salen, cómo poner el papel en la impresora y, si tu impresora no imprime por las dos caras, cómo hacerlo en dos pasadas." },
-    { id: "s-print", target: "print-go", title: "Imprimir o guardar PDF", text: "Imprime directamente o elige «Guardar como PDF» para mandarlo a una imprenta. Todo lo que imprimes lleva el nombre de tu colegio.", final: true },
+    { id: "s-print", target: "print-go", title: "Imprimir o guardar PDF", text: "Imprime directamente o elige «Guardar como PDF» para mandarlo a una imprenta. Lo que imprimes lleva en el pie el nombre de tu colegio, quién imprimió, la fecha y una referencia.", final: true },
   ]);
 }
 
