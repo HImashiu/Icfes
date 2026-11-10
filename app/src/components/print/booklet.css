@@ -2,10 +2,9 @@
 .bk-sheet, .bk-measure { --bk-ink: #000; --bk-mute: #444; --bk-rule: #000; --bk-tint: #ececec; color: var(--bk-ink); color-scheme: light; }
 .bk-sheet { position: relative; display: flex; background: #fff; box-shadow: 0 2px 14px rgba(0, 0, 0, 0.25); box-sizing: border-box; overflow: hidden; break-after: page; page-break-after: always; flex: none; }
 .bk-imposed .bk-page + .bk-page { border-left: 0.2mm dashed #c9c9c9; }
-.bk-page { position: relative; box-sizing: border-box; flex: none; overflow: hidden; background: #fff; font-family: Newsreader, Georgia, "Times New Roman", serif; font-size: 10.5pt; line-height: 1.36; font-variant-numeric: lining-nums; hyphens: auto; -webkit-hyphens: auto; }
+.bk-page { position: relative; box-sizing: border-box; flex: none; overflow: hidden; background: #fff; font-family: var(--bk-font, Newsreader, Georgia, "Times New Roman", serif); font-size: var(--bk-size, 10.5pt); line-height: var(--bk-lead, 1.36); font-variant-numeric: lining-nums; hyphens: auto; -webkit-hyphens: auto; }
 .bk-page *, .bk-measure * { color: var(--bk-ink); }
-.bk-measure { position: absolute; left: -10000px; top: 0; visibility: hidden; pointer-events: none; font-family: Newsreader, Georgia, "Times New Roman", serif; font-size: 10.5pt; line-height: 1.36; font-variant-numeric: lining-nums; hyphens: auto; -webkit-hyphens: auto; }
-.bk-small.bk-page, .bk-measure.bk-small { font-size: 9.5pt; }
+.bk-measure { position: absolute; left: -10000px; top: 0; visibility: hidden; pointer-events: none; font-family: var(--bk-font, Newsreader, Georgia, "Times New Roman", serif); font-size: var(--bk-size, 10.5pt); line-height: var(--bk-lead, 1.36); font-variant-numeric: lining-nums; hyphens: auto; -webkit-hyphens: auto; }
 .bk-wait { padding: 40px; font: 600 15px Figtree, Arial, sans-serif; color: var(--text-2, #555); }
 
 /* Running head and folio */
@@ -15,6 +14,10 @@
 .bk-foot { position: absolute; left: 0; right: 0; bottom: 7mm; display: flex; align-items: baseline; justify-content: space-between; padding: 0 var(--bk-fold-pad, 14mm); font: 7pt Figtree, Arial, sans-serif; color: var(--bk-mute); }
 .bk-foot.r { flex-direction: row; }
 .bk-foot.v { flex-direction: row-reverse; }
+.bk-foot.c { justify-content: flex-start; }
+.bk-foot.c .bk-pn { position: absolute; left: 50%; transform: translateX(-50%); bottom: 0; }
+.bk-foot .bk-src { max-width: 70%; line-height: 1.3; }
+.bk-foot.c .bk-src { max-width: 38%; }
 .bk-foot .bk-pn { font: 800 10pt "Bricolage Grotesque", Figtree, Arial, sans-serif; color: var(--bk-ink); }
 .bk-small .bk-foot { bottom: 5mm; --bk-fold-pad: 11mm; }
 
@@ -24,7 +27,8 @@
 .bk-col { min-width: 0; min-height: 100%; }
 .bk-cols.c2 .bk-col + .bk-col { position: relative; }
 .bk-cols.c2 .bk-col + .bk-col::before { content: ""; position: absolute; left: -3.5mm; top: 0; bottom: 0; border-left: 0.2mm solid var(--bk-rule); }
-.bk-cell { display: flow-root; padding-bottom: 2.6mm; }
+.bk-cell { display: flow-root; padding-bottom: var(--bk-gap, 2.6mm); }
+.bk-cols.norule .bk-col + .bk-col::before { display: none; }
 .bk-banner { display: flex; align-items: baseline; justify-content: space-between; gap: 4mm; margin: 0 0 4mm; padding: 2mm 0 1.6mm; border-top: 1.2mm solid var(--bk-ink); border-bottom: 0.3mm solid var(--bk-ink); }
 .bk-banner h2 { margin: 0; font: 800 15pt "Bricolage Grotesque", Figtree, Arial, sans-serif; letter-spacing: 0.01em; text-transform: uppercase; }
 .bk-banner span { font: 600 8.5pt Figtree, Arial, sans-serif; }
@@ -34,17 +38,21 @@
 .bk-text p { margin: 0 0 1.6mm; text-align: justify; }
 .bk-text p:last-child { margin-bottom: 0; }
 .bk-text p[data-cont] { text-indent: 0; }
-.bk-text .exam-table, .bk-measure .exam-table { display: table; width: auto; max-width: 100%; margin: 1.5mm auto; font: 8.5pt/1.25 Figtree, Arial, sans-serif; border-collapse: collapse; overflow: visible; }
+.bk-text .exam-table, .bk-measure .exam-table { display: table; width: auto; max-width: 100%; margin: 1.5mm auto; font: 0.82em/1.25 Figtree, Arial, sans-serif; border-collapse: collapse; overflow: visible; }
 .bk-page .exam-table th, .bk-page .exam-table td, .bk-measure .exam-table th, .bk-measure .exam-table td { padding: 0.8mm 1.6mm; border: 0.2mm solid #000; }
 .bk-page .exam-table th, .bk-measure .exam-table th { background: var(--bk-tint); font-weight: 700; }
 .bk-range { margin: 0 0 1.8mm; padding: 1.2mm 2mm; background: var(--bk-tint); border-left: 1mm solid var(--bk-ink); font: 700 7.6pt/1.3 Figtree, Arial, sans-serif; letter-spacing: 0.04em; text-transform: uppercase; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .bk-directions { margin: 0 0 1.6mm; font-style: italic; }
 .bk-q { break-inside: avoid; }
 .bk-stem { display: grid; grid-template-columns: auto 1fr; column-gap: 1.6mm; align-items: baseline; margin-bottom: 1.4mm; }
-.bk-num { font: 800 10.5pt "Bricolage Grotesque", Figtree, Arial, sans-serif; min-width: 5.5mm; }
+.bk-num { font: 800 1em "Bricolage Grotesque", Figtree, Arial, sans-serif; min-width: 5.5mm; }
 .bk-options { list-style: none; margin: 0; padding: 0 0 0 7.1mm; display: grid; gap: 0.9mm; }
 .bk-options li { display: grid; grid-template-columns: 5mm 1fr; align-items: baseline; }
-.bk-options li > b { font: 700 9.5pt Figtree, Arial, sans-serif; }
+.bk-options li > b { font: 700 0.9em Figtree, Arial, sans-serif; }
+.bk-across { gap: 0.9mm 3mm; }
+.bk-across.a2 { grid-template-columns: 1fr 1fr; }
+.bk-across.a4 { grid-template-columns: repeat(4, 1fr); }
+.bk-work { border-bottom: 0.15mm dotted #9a9a9a; margin-top: 1mm; }
 .bk-opt { min-width: 0; }
 .bk-opt .bk-text p { text-align: left; margin: 0; }
 .bk-pics { grid-template-columns: 1fr 1fr; gap: 2mm 3mm; }
@@ -133,27 +141,98 @@
 .bkk-area { margin: 4mm 0 1.5mm; font: 800 10pt "Bricolage Grotesque", Figtree, Arial, sans-serif; text-transform: uppercase; }
 .bkk-note { margin-top: 5mm; font-size: 8pt; color: #444; }
 
+/* Area heading inside a column (areas that do not start a new page) */
+.bk-areahead { display: flex; align-items: baseline; justify-content: space-between; gap: 3mm; margin: 1.5mm 0 1mm; padding: 1.4mm 0 1.2mm; border-top: 0.9mm solid var(--bk-ink); border-bottom: 0.25mm solid var(--bk-ink); }
+.bk-areahead h2 { margin: 0; font: 800 11.5pt "Bricolage Grotesque", Figtree, Arial, sans-serif; text-transform: uppercase; }
+.bk-areahead span { font: 600 7.5pt Figtree, Arial, sans-serif; white-space: nowrap; }
+
+/* Cover squeezed into the top of the first page */
+.bk-firsthead { margin: 0 0 4mm; padding: 0 0 3mm; border-bottom: 0.5mm solid #000; font-family: Figtree, Arial, sans-serif; }
+.bk-fh-top { display: flex; align-items: center; gap: 5mm; margin-bottom: 3mm; }
+.bk-fh-top .bk-school img { max-height: 14mm; }
+.bk-fh-top .bk-school strong { font-size: 10pt; max-width: 50mm; }
+.bk-fh-title { min-width: 0; }
+.bk-fh-title .bk-kicker { margin: 0 0 1mm; font-size: 7pt; }
+.bk-fh-title h1 { margin: 0; font: 800 16pt/1.1 "Bricolage Grotesque", Figtree, Arial, sans-serif; }
+.bk-fh-title .bk-sub { margin: 1mm 0 0; font-size: 9pt; }
+.bk-fh-fields { display: grid; grid-template-columns: 3fr 1fr 1fr; gap: 5mm; }
+.bk-fh-fields p { margin: 0; display: grid; gap: 0.6mm; }
+.bk-fh-fields span { font: 700 6.5pt Figtree, Arial, sans-serif; letter-spacing: 0.1em; text-transform: uppercase; }
+.bk-fh-fields i { display: block; min-height: 5.5mm; border-bottom: 0.25mm solid #000; font-style: normal; font-size: 10pt; }
+.bk-fh-note { margin: 2.5mm 0 0; font: 600 8pt Figtree, Arial, sans-serif; }
+
+/* Hand-graded answer sheet at the end */
+.bk-answers { font-family: Figtree, Arial, sans-serif; }
+.bk-answers h2 { margin: 0 0 4mm; font: 800 16pt "Bricolage Grotesque", Figtree, Arial, sans-serif; }
+.bk-answers .bk-fh-fields { margin-bottom: 6mm; }
+.bk-ans-grid { display: grid; gap: 0 6mm; }
+.bk-ans-row { display: flex; align-items: center; gap: 2.2mm; height: 6.6mm; border-left: 0.8mm solid transparent; padding-left: 1.2mm; }
+.bk-ans-row.first { border-top: 0.25mm solid #000; }
+.bk-ans-row b { width: 7mm; font: 800 9pt "Bricolage Grotesque", Figtree, Arial, sans-serif; text-align: right; }
+.bk-ans-row i { width: 4.6mm; height: 4.6mm; border: 0.25mm solid #000; border-radius: 50%; display: inline-grid; place-items: center; font: 600 6.5pt Figtree, Arial, sans-serif; font-style: normal; }
+.bk-ans-note { margin: 5mm 0 0; font-size: 8pt; color: var(--bk-mute); }
+.bk-small .bk-ans-row { height: 5.6mm; gap: 1.6mm; }
+
+/* Colour: area colours on the banners, boxes and cover (print-color-adjust keeps them in the PDF) */
+.bk-color, .bk-color * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.bk-color .bk-banner { padding: 2.4mm 3mm 2mm; background: var(--bk-area, #e6e6e6); border-top-color: #000; }
+.bk-color .bk-areahead { padding: 1.4mm 2mm 1.2mm; background: var(--bk-area, #e6e6e6); }
+.bk-color .bk-range { background: color-mix(in srgb, var(--bk-area, #ddd) 35%, #fff); }
+.bk-color .bk-num { display: inline-grid; place-items: center; min-width: 6mm; height: 5.4mm; border-radius: 1.2mm; background: color-mix(in srgb, var(--bk-area, #ddd) 70%, #fff); font-size: 0.92em; }
+.bk-color.bk-cover .bk-cover-top { border-bottom: 2.4mm solid #C8F04A; }
+.bk-color.bk-cover .bk-kicker { display: inline-block; align-self: flex-start; padding: 1.2mm 3mm; border-radius: 1.5mm; background: #C8F04A; }
+.bk-color .bk-form, .bk-color .bk-count { background: #C8F04A; }
+.bk-color .bk-areas .bk-dot, .bk-areas .bk-dot { display: none; }
+.bk-color .bk-areas .bk-dot { display: inline-block; width: 3mm; height: 3mm; margin-right: 2mm; border-radius: 50%; background: var(--bk-area); vertical-align: -0.3mm; }
+.bk-color .bk-ans-row { border-left-color: var(--bk-area, transparent); }
+.bk-color .bk-head { border-bottom-color: #000; }
+
 /* Studio (screen only) */
-.bks { display: grid; gap: 14px; width: min(100%, 980px); font-family: Figtree, Arial, sans-serif; }
-.bks-panel { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); padding: 14px; background: var(--surface, #fff); color: var(--text, #111); border-radius: 14px; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12); }
-.bks-panel label, .bks-field { display: grid; align-content: start; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-2, #555); }
-.bks-panel input[type="text"] { min-height: 40px; }
-.bks-logo { display: flex; gap: 10px; align-items: center; }
+.bks { display: grid; gap: 14px; width: min(100%, 1480px); font-family: Figtree, Arial, sans-serif; align-items: start; }
+.bks-panel { display: grid; gap: 14px; align-content: start; padding: 16px; background: var(--surface, #fff); color: var(--text, #111); border-radius: 14px; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12); min-width: 0; }
+.bks-panel label, .bks-field { display: grid; align-content: start; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-2, #555); min-width: 0; }
+.bks-panel input[type="text"], .bks-panel textarea { min-height: 40px; width: 100%; box-sizing: border-box; }
+.bks-panel textarea { resize: vertical; padding: 8px 10px; }
+.bks-logo { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .bks-logo img { width: 48px; height: 48px; object-fit: contain; background: #fff; border-radius: 8px; border: 1px solid var(--line, #ddd); }
 .bks-seg { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px; }
 .bks-seg button { min-height: 38px; padding: 0 12px; border-radius: 10px; border: 1.5px solid var(--line, #ccc); background: var(--surface, #fff); color: var(--text, #111); font: 600 14px Figtree, Arial, sans-serif; }
-.bks-seg button[aria-pressed="true"] { border-color: var(--accent, #2f6b3c); background: var(--accent-soft, #e7f2e9); }
-.bks-hint { grid-column: 1 / -1; margin: 0; font-size: 13px; color: var(--text-2, #555); }
+.bks-seg button[aria-pressed="true"] { border-color: var(--accent-shadow, #2f6b3c); background: var(--accent-soft, #e7f2e9); }
+.bks-seg button:disabled { opacity: 0.45; cursor: not-allowed; }
+.bks-tabs { position: sticky; top: 0; z-index: 1; margin: 0 -16px; padding: 10px 16px; background: var(--surface, #fff); border-block: 1px solid var(--line, #e2e2e2); }
+.bks-tabs .bks-seg button { min-height: 34px; padding: 0 10px; font-size: 13px; }
+.bks-presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.bks-preset { display: grid; gap: 2px; text-align: left; padding: 10px 12px; border-radius: 12px; border: 1.5px solid var(--line, #ccc); background: var(--surface, #fff); color: var(--text, #111); font: 500 12px/1.3 Figtree, Arial, sans-serif; }
+.bks-preset strong { font-size: 14px; }
+.bks-preset span { color: var(--text-2, #555); }
+.bks-preset[aria-pressed="true"] { border-color: var(--accent-shadow, #2f6b3c); background: var(--accent-soft, #e7f2e9); }
+.bks-check { font-weight: 600; color: var(--text, #111); font-size: 14px; }
+.bks-check.off { opacity: 0.6; }
+.bks-check > span { display: grid; gap: 2px; }
+.bks-note { font-size: 12.5px; font-weight: 500; color: var(--text-2, #555); }
+.bks-margins { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; }
+.bks-mm { display: flex; align-items: center; gap: 6px; font-weight: 500; }
+.bks-mm input { width: 72px; min-height: 38px; }
+.bks-save { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding-top: 4px; }
+.bks-hint { display: grid; gap: 8px; margin: 0; font-size: 13px; color: var(--text-2, #555); padding-top: 12px; border-top: 1px solid var(--line, #e2e2e2); }
+.bks-hint p { margin: 0; }
 .bks-hint b { color: var(--text, #111); }
+.bks-sum { font-size: 14px; }
+.bks-manual { padding-top: 4px; }
 .bks-warn { color: #a3361c; }
-.bks-pages { display: grid; justify-items: center; gap: 18px; width: 100%; overflow-x: auto; }
+.bks-pages { display: grid; justify-items: center; gap: 18px; width: 100%; min-width: 0; overflow-x: auto; }
 .bks-zoom { display: grid; justify-items: center; gap: 18px; transform-origin: top center; }
+@media (min-width: 1000px) {
+  .bks { grid-template-columns: minmax(330px, 380px) minmax(0, 1fr); }
+  .bks-panel { position: sticky; top: 76px; max-height: calc(100vh - 96px); overflow: auto; scrollbar-width: thin; }
+}
 
 @media print {
   .bks-panel, .bk-wait, .bks-hint { display: none !important; }
   .bks, .bks-pages { display: block; width: auto; overflow: visible; }
   .bks-zoom { display: block; zoom: 1 !important; }
   .bk-sheet { box-shadow: none; margin: 0; }
+  .bk-sheet, .bkk { zoom: 1 !important; }
   .bk-sheet:last-child, .bkk:last-child { break-after: auto; page-break-after: auto; }
   .bk-imposed .bk-page + .bk-page { border-left: 0; }
   .bkk { box-shadow: none; width: auto; padding: 0; }
