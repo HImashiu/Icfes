@@ -4,6 +4,7 @@ import { SOURCE_LINE } from "../lib/exam.js";
 import owlUrl from "../assets/owl.svg";
 import { APP_NAME } from "../lib/brand.js";
 import { isMatching } from "../lib/matching.js";
+import { markLine, useExportMark } from "../lib/protect.js";
 
 const tracedSrc = (url) => (url.startsWith("data:") ? url : `${import.meta.env.BASE_URL}${url}`);
 const TOKEN_IDS = /\[\[figura:([^\]\s]+)\]\]/g;
@@ -25,6 +26,9 @@ export default function PrintBooklet({ questions, figures, examLabel, title, cou
   const areas = [];
   questions.forEach((q) => { if (!areas.length || areas.at(-1).name !== q.section) areas.push({ name: q.section, n: 0 }); areas.at(-1).n += 1; });
   const source = examLabel ? `${SOURCE_LINE}, ${examLabel}` : SOURCE_LINE;
+  // Protección del banco: the school, the date and this print's reference on the cover and at the end (lib/protect.js).
+  const exportMark = useExportMark(variant === "worksheet" ? "hoja" : "cuadernillo-simple", examLabel ?? null, questions.length);
+  const mark = markLine(exportMark.mark);
   let lastGroup = null;
   let lastSection = null;
 
@@ -90,6 +94,7 @@ export default function PrintBooklet({ questions, figures, examLabel, title, cou
     );
   });
 
+  if (exportMark.status === "denied") return <div className="pb"><p className="pm-denied" role="alert">{exportMark.message}</p></div>;
   return (
     <div className="pb">
       {variant === "worksheet" ? (
@@ -103,6 +108,7 @@ export default function PrintBooklet({ questions, figures, examLabel, title, cou
           </div>
           <p className="pb-instr-line">Encierra en un círculo la letra de la respuesta correcta. {questions.length} {questions.length === 1 ? "pregunta" : "preguntas"}.</p>
           <p className="pb-source">{source}</p>
+          {mark && <p className="pm-line">{mark}</p>}
         </section>
       ) : (
       <section className="pb-cover">
@@ -121,9 +127,11 @@ export default function PrintBooklet({ questions, figures, examLabel, title, cou
         </ul>
         {areas.length > 1 && <table className="pb-areas"><tbody>{areas.map((a) => <tr key={a.name}><td>{a.name}</td><td>{a.n} preguntas</td></tr>)}</tbody></table>}
         <p className="pb-source">{source}</p>
+        {mark && <p className="pm-line">{mark}</p>}
       </section>
       )}
       {blocks}
+      {mark && <p className="pm-line pm-end">{mark}</p>}
     </div>
   );
 }
