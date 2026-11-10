@@ -5,6 +5,7 @@ import { FONTS, LEADING, SPACING, cleanStyle, sidesFor } from "../../lib/booklet
 import { SOURCE_LINE } from "../../lib/exam.js";
 import { APP_NAME, areaColor } from "../../lib/brand.js";
 import owlUrl from "../../assets/owl.svg";
+import { markLine, useExportMark } from "../../lib/protect.js";
 
 const frame = () => new Promise((r) => requestAnimationFrame(() => r()));
 
@@ -39,6 +40,9 @@ export default function BookletPages({ questions, figures, meta, style: rawStyle
   const [laid, setLaid] = useState(null);
   const vars = typeVars(style);
   const opts = { optionGrid: style.optionGrid, workSpace: style.workSpace, colW: g.colW, fontSize: style.fontSize };
+  // Protección del banco: every page's foot carries the school, the date and this print's reference (lib/protect.js).
+  const exportMark = useExportMark("cuadernillo", meta.examLabel ?? null, questions.length);
+  const markText = markLine(exportMark.mark);
   const layoutKey = JSON.stringify([g.page, g.margins, g.cols, style.font, style.fontSize, style.leading, style.spacing, style.workSpace, style.optionGrid,
     style.areaBreak, style.cover, style.kicker, style.subtitle, meta.title, meta.schoolName, Boolean(meta.logo), atoms.length]);
 
@@ -112,7 +116,7 @@ export default function BookletPages({ questions, figures, meta, style: rawStyle
     const section = p.kind === "content" ? p.page.section : null;
     const cls = `bk-page bk-${p.kind}${g.small ? " bk-small" : ""}${style.color ? " bk-color" : ""}`;
     const common = { className: cls, style: { width: `${g.page.w}mm`, height: `${g.page.h}mm`, ...pad, ...vars, "--bk-area": section ? areaColor(section) : undefined } };
-    const folio = <Folio n={i + 1} total={totalPages} recto={recto} meta={meta} style={style} pad={pad} />;
+    const folio = <Folio n={i + 1} total={totalPages} recto={recto} meta={meta} style={style} pad={pad} mark={markText} />;
     if (p.kind === "cover") return <div key={i} {...common}><Cover meta={meta} style={style} areas={areas} total={total} /></div>;
     if (p.kind === "back") return <div key={i} {...common}><BackCover meta={meta} /></div>;
     if (p.kind === "blank") return <div key={i} {...common}><p className="bk-blank-note">Página en blanco intencionalmente</p>{folio}</div>;
@@ -148,7 +152,8 @@ export default function BookletPages({ questions, figures, meta, style: rawStyle
         {style.cover === "header" && <div style={{ width: `${g.bodyW}mm` }}><FirstHeader meta={meta} style={style} total={total} /></div>}
         {atoms.map((a, i) => <div key={i} className="bk-cell"><Atom atom={a} opts={opts} /></div>)}
       </div>
-      {!logical ? <div className="bk-wait">Diagramando el cuadernillo…</div> : sides.map((pair) => (
+      {exportMark.status === "denied" ? <div className="bk-wait pm-denied" role="alert">{exportMark.message}</div>
+        : !logical ? <div className="bk-wait">Diagramando el cuadernillo…</div> : sides.map((pair) => (
         <div key={pair.join("-")} className={`bk-sheet${g.imposed ? " bk-imposed" : ""}`} style={{ width: `${g.sheet.w}mm`, height: `${g.sheet.h}mm`, zoom }}>
           {pair.map((idx) => renderPage(logical[idx], idx))}
         </div>
@@ -157,12 +162,12 @@ export default function BookletPages({ questions, figures, meta, style: rawStyle
   );
 }
 
-function Folio({ n, total, recto, meta, style, pad }) {
+function Folio({ n, total, recto, meta, style, pad, mark = "" }) {
   const source = `${SOURCE_LINE}${meta.examLabel ? `, ${meta.examLabel}` : ""}`;
   const number = style.pageNumber === "none" ? null : <b className="bk-pn">{style.pageTotal ? `${n} de ${total}` : n}</b>;
   return (
     <footer className={`bk-foot ${recto ? "r" : "v"}${style.pageNumber === "center" ? " c" : ""}`} style={{ paddingLeft: pad.paddingLeft, paddingRight: pad.paddingRight }}>
-      <span className="bk-src">{source}{style.footText ? <><br />{style.footText}</> : null}</span>
+      <span className="bk-src">{source}{style.footText ? <><br />{style.footText}</> : null}{mark ? <><br /><span className="pm-line">{mark}</span></> : null}</span>
       {number}
     </footer>
   );

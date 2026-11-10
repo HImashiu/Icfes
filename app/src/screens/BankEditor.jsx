@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { quotaLine, useBankQuota } from "../lib/protect.js";
 import { confirmDialog, Select } from "../components/Controls.jsx";
 import { areaColor } from "../lib/brand.js";
 import { draftFromBank, overrideRow } from "../lib/overrides.js";
@@ -50,6 +51,9 @@ export default function BankEditor({ api, profile, exams, fetchExam, guard, setN
   }, [slug, fetchExam, api, guard]);
   useEffect(() => { setBundle(null); setPage(0); setChosen(new Set()); load(); }, [load]);
 
+  // Protección del banco: how many booklets this account has left today (bank_quota, migration 0036).
+  const quota = useBankQuota(bundle);
+  const openedWeek = useMemo(() => new Set(quota?.opened_week ?? []), [quota]);
   const byKey = useMemo(() => new Map(versions.map((v) => [v.qkey, v])), [versions]);
   const index = useMemo(() => (qc && bundle ? useIndex(qc.uses, slug, bundle.exam) : new Map()), [qc, bundle, slug]);
   const areas = useMemo(() => [...new Set((bundle?.exam.questions ?? []).map((q) => q.section))], [bundle]);
@@ -96,7 +100,7 @@ export default function BankEditor({ api, profile, exams, fetchExam, guard, setN
         <div className="bank-filters">
           <label className="field"><span className="label">Cuadernillo</span>
             <Select value={slug} onChange={setSlug} aria-label="Cuadernillo">
-              {ready.map((e) => <option key={e.slug} value={e.slug}>{e.title ?? e.slug}</option>)}
+              {ready.map((e) => <option key={e.slug} value={e.slug}>{`${e.title ?? e.slug}${openedWeek.has(e.slug) ? " · ya abierto" : ""}`}</option>)}
             </Select>
           </label>
           <label className="field"><span className="label">Área</span>
@@ -109,6 +113,7 @@ export default function BankEditor({ api, profile, exams, fetchExam, guard, setN
             <input className="qb-input" type="search" value={text} placeholder="Número o texto" onChange={(e) => { setText(e.target.value); setPage(0); }} />
           </label>
         </div>
+        {quotaLine(quota) && <p className="caption pm-quota">{quotaLine(quota)}</p>}
         {bundle && (
           <div className={chosen.size ? "bk-use on" : "bk-use"} role="region" aria-label="Usar las preguntas elegidas">
             <label className="check-row"><input type="checkbox" checked={pageAll} onChange={choosePage} /><span>{pageAll ? "Quitar esta página" : "Elegir esta página"}</span></label>
