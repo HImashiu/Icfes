@@ -192,7 +192,7 @@ button.card { text-align: left; width: 100%; }
   min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line);
   background: var(--surface); color: var(--text); display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px;
 }
-.chip.on { border: 2px solid var(--accent); background: var(--accent-soft); }
+.chip.on { border: 2px solid var(--accent); background: var(--accent-soft); color: var(--text); }
 .chip .dot { margin-right: 0; }
 
 /* Bottom nav (student phone) */

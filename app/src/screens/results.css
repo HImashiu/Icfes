@@ -47,7 +47,6 @@
 .ar2-qtools { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; }
 .ar2-qtools .chips-row { display: flex; flex-wrap: nowrap; gap: 6px; overflow-x: auto; scrollbar-width: none; max-width: 100%; }
 .ar2-qtools .chips-row::-webkit-scrollbar { display: none; }
-.chip.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 .ar2-qmap { display: grid; grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); gap: 6px; }
 .ar2-q { position: relative; display: grid; gap: 1px; justify-items: center; padding: 8px 4px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; transition: transform 0.12s ease; }
 .ar2-q:hover { transform: translateY(-2px); }
