@@ -260,7 +260,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
   );
 
   const bank = (
-    <section className="card t-card b-bank" aria-label="Banco de preguntas">
+    <section className="card t-card b-bank" aria-label="Banco de preguntas" data-tour="ab-bank">
       <div className="section-head"><strong>Banco de preguntas</strong>
         <Select aria-label="Cuadernillo" value={slug} disabled={Boolean(lesson?.slug)} onChange={(v) => changeExam(v)}>
           {ready.map((x) => <option key={x.slug} value={x.slug}>{x.title ?? x.slug}</option>)}
@@ -279,7 +279,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
         {!lesson && !live && courseIds.length === 0 && <span className="caption">Elige los cursos en «Tu asignación» y el banco marca lo que ya vieron.</span>}
         {nFilters > 0 && <button type="button" className="link" onClick={() => { setFilter(EMPTY_FILTER); setWeak(null); }}>Quitar filtros ({nFilters})</button>}
       </div>
-      <div className="b-actions">
+      <div className="b-actions" data-tour="ab-auto">
         <span className="caption" aria-live="polite">{filtered.length} de {items.length} preguntas</span>
         {hiddenStale > 0 && <button type="button" className="link" onClick={() => setFresh(false)}>{hiddenStale} ya usadas, ocultas</button>}
         <button type="button" className="secondary" disabled={filtered.length === 0} onClick={() => add(filtered.map((i) => i.key))}>Agregar las {filtered.length}</button>
@@ -326,7 +326,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
   );
 
   const mine = (
-    <form className="card t-card b-mine assign-form" onSubmit={submit} aria-label={live ? "Tu sala" : lesson ? "Tu clase" : "Tu asignación"}>
+    <form className="card t-card b-mine assign-form" data-tour="ab-form" onSubmit={submit} aria-label={live ? "Tu sala" : lesson ? "Tu clase" : "Tu asignación"}>
       <div className="section-head"><strong>{live ? "Tu sala" : lesson ? "Tu clase" : "Tu asignación"}</strong><span className="muted">{summary.total} preguntas</span></div>
       {summary.total > 0 && (
         <div className="b-summary">
@@ -412,7 +412,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
           <label key={c.id} className="b-check"><input type="checkbox" checked={courseIds.includes(c.id)} onChange={() => setCourseIds(courseIds.includes(c.id) ? courseIds.filter((x) => x !== c.id) : [...courseIds, c.id])} /> {c.name}{c.grade ? ` · Grado ${c.grade}` : ""}</label>
         ))}
       </fieldset>
-      <fieldset className="field b-delivery"><legend className="label">Cómo la resuelven</legend>
+      <fieldset className="field b-delivery" data-tour="ab-delivery"><legend className="label">Cómo la resuelven</legend>
         <div className="b-delivery-opts" role="radiogroup" aria-label="Cómo la resuelven">
           {DELIVERY.map((d) => (
             <button key={d.id} type="button" role="radio" aria-checked={delivery === d.id} className={delivery === d.id ? "b-delivery-opt on" : "b-delivery-opt"}
@@ -491,7 +491,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
         </div>
       )}
       {msg && <p className="notice error" role="alert">{msg}</p>}
-      <div className="report-actions">
+      <div className="report-actions" data-tour="ab-submit">
         <button type="button" className="secondary" onClick={onCancel}>Cancelar</button>
         <button type="submit" className="primary" disabled={busy}>{busy ? "Guardando…" : lesson ? lesson.label ?? "Guardar clase" : live ? (liveWhen === "later" ? "Programar juego" : "Crear sala y empezar") : paper ? (courseIds.length > 1 ? `Crear para ${courseIds.length} cursos e imprimir` : "Crear e imprimir") : courseIds.length > 1 ? `Asignar a ${courseIds.length} cursos` : "Asignar"}</button>
       </div>

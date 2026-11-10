@@ -1,10 +1,14 @@
 import { SOURCE_LINE } from "../lib/exam.js";
 import { keyRows } from "../lib/lesson.js";
+import { markLine, useExportMark } from "../lib/protect.js";
 
 // The teacher's printed key: letter per question, the skill and, only where the key is settled, the explanation.
 // Never handed to students. The key is preliminary, not official.
 export default function TeacherKey({ questions, bundle, title, course }) {
   const rows = keyRows(questions, bundle);
+  const exportMark = useExportMark("clave-explicada", bundle.exam?.title ?? null, rows.length);
+  const mark = markLine(exportMark.mark);
+  if (exportMark.status === "denied") return <p className="pm-denied" role="alert">{exportMark.message}</p>;
   return (
     <div className="pk">
       <h1>Clave del docente · {title}</h1>
@@ -23,6 +27,7 @@ export default function TeacherKey({ questions, bundle, title, course }) {
         </tbody>
       </table>
       <p className="pk-note">Clave preliminar, no oficial. Las explicaciones son generadas con IA y solo aparecen donde la clave está confirmada.</p>
+      {mark && <p className="pm-line">{mark}</p>}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import Icon from "../components/Icon.jsx";
 import Mascot from "../components/Mascot.jsx";
 import AiAnalysis from "../components/AiAnalysis.jsx";
 import TextToggle from "../components/TextToggle.jsx";
+import { TourButton } from "../components/tour/Tour.jsx";
 import Hint from "../components/Hint.jsx";
 import { useMedia } from "../lib/media.js";
 import { formatClock } from "../lib/exam.js";
@@ -380,7 +381,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   }, [sideText, blockFrom, blockTo, current]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const footer = (
-    <footer className={verdict ? `test-bottom verdict-${verdict}` : "test-bottom"}>
+    <footer className={verdict ? `test-bottom verdict-${verdict}` : "test-bottom"} data-tour="t-bottom">
       {verdictBar}
       <button type="button" className="secondary map-btn" onClick={() => setSheetOpen(true)} aria-label="Mapa de preguntas">
         <Icon name="map" />
@@ -445,7 +446,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
   return (
     <div className={verdict ? "test has-verdict" : "test"}>
       {attempt.proctor && <p className="proctor-note" role="note"><Icon name="shield" size={16} /> Este examen está monitoreado: tu docente ve cuándo sales de la pestaña.</p>}
-      <header className="test-top" ref={topRef}>
+      <header className="test-top" ref={topRef} data-tour="t-top">
         <div className="test-row">
           <button type="button" className="icon-btn" onClick={onExit} aria-label="Salir del simulacro">
             <Icon name="close" />
@@ -459,6 +460,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
           </div>
           <button
             type="button"
+            data-tour="t-flag"
             className={flagged ? "icon-btn flag on flag-top" : "icon-btn flag flag-top"}
             onClick={toggleFlag}
             aria-pressed={flagged}
@@ -466,6 +468,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
           >
             <Icon name="flag" />
           </button>
+          <TourButton label="Tutorial del simulacro" onClick={() => window.dispatchEvent(new CustomEvent("condor:student-tour", { detail: "simulacro" }))} />
           <span className="clock-pill desk-only" aria-hidden="true">
             {timed ? formatClock(remaining) : "Práctica"}
           </span>
@@ -505,7 +508,7 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
           )}
           {dockText && footer}
         </main>
-        <aside className="test-side" aria-label="Mapa de preguntas">
+        <aside className="test-side" aria-label="Mapa de preguntas" data-tour="t-map">
           <span className="label map-title">Mapa de preguntas</span>
           {mapCells}
         </aside>

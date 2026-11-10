@@ -11,6 +11,7 @@ import { todayModel } from "../../lib/today.js";
 import { areaColor } from "../../lib/brand.js";
 import { areaShort, contextColor } from "../../lib/teaching.js";
 import { FirstSteps } from "./Onboarding.jsx";
+import { BetaNote } from "../../components/Beta.jsx";
 
 const greeting = (now = new Date()) => (now.getHours() < 12 ? "Buenos días" : now.getHours() < 19 ? "Buenas tardes" : "Buenas noches");
 const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
@@ -86,6 +87,8 @@ export default function Today({ api, profile, courses, readOnlyIds = [], assignm
         </div>
         <Mascot pose={m.attention.length ? "normal" : "happy"} idle size={84} />
       </section>
+
+      <BetaNote who="teacher" />
 
       {steps.some((st) => !st.done && st.id !== "resultados") && (
         <section className="card ob-inline">

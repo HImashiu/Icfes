@@ -1,5 +1,6 @@
 import { SOURCE_LINE } from "../../lib/exam.js";
 import { keyRows } from "../../lib/lesson.js";
+import { markLine, useExportMark } from "../../lib/protect.js";
 
 const PER_COL = 34;
 
@@ -7,12 +8,15 @@ const PER_COL = 34;
 // question's number in the ICFES booklet (so the versions can be compared). Never handed to students.
 export default function TeacherKeyPrint({ questions, bundle, title, course, version, paper, zoom = 1 }) {
   const rows = keyRows(questions, bundle);
+  const exportMark = useExportMark("clave", bundle.exam?.title ?? null, rows.length);
+  const mark = markLine(exportMark.mark);
   const cols = [];
   rows.forEach((r, i) => {
     if (i % PER_COL === 0) cols.push([]);
     cols.at(-1).push(r);
   });
   const missing = rows.filter((r) => !r.letter).length;
+  if (exportMark.status === "denied") return <p className="pm-denied" role="alert">{exportMark.message}</p>;
   return (
     <div className="bkk" style={{ "--bkk-w": `${paper.w}mm`, "--bkk-cols": Math.max(3, cols.length), minHeight: `${paper.h}mm`, zoom }}>
       <h1>Clave del docente{version ? ` · Versión ${version}` : ""}</h1>
@@ -39,6 +43,7 @@ export default function TeacherKeyPrint({ questions, bundle, title, course, vers
         {version ? " Cada versión tiene su propia clave: califica cada hoja con la clave de su versión (el escáner de Cóndor lo hace solo)." : ""}
         {" "}La columna ICFES es el número de la pregunta en el cuadernillo original.
       </p>
+      {mark && <p className="pm-line">{mark}</p>}
     </div>
   );
 }

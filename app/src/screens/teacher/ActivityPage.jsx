@@ -73,13 +73,13 @@ export default function ActivityPage({ api, profile, assignment, course, tab, go
           <h1>{assignment.title}</h1>
           <span className="caption">{course?.name}{assignment.due_at ? ` · cierra ${shortDate(assignment.due_at)}` : ""}</span>
         </div>
-        <div className="ap-actions">
+        <div className="ap-actions" data-tour="ap-actions">
           <button type="button" className="secondary" onClick={() => go({ section: "actividad", id: assignment.id, tab: "papel" })}><Icon name="print" size={18} /> Imprimir</button>
           <button type="button" className="primary" onClick={() => { setScanNow(true); go({ section: "actividad", id: assignment.id, tab: "papel" }); }}><Icon name="camera" size={18} /> Escanear hojas</button>
         </div>
       </header>
 
-      <ol className="ap-steps" aria-label="Recorrido de la actividad">
+      <ol className="ap-steps" aria-label="Recorrido de la actividad" data-tour="ap-steps">
         {(steps ?? Array.from({ length: 5 }, (_, i) => ({ id: i, label: "…", value: "", note: "", status: "next" }))).map((s) => (
           <li key={s.id} className={`ap-step ${s.status}`}>
             <span className="ap-step-label">{s.status === "done" && <Icon name="check" size={13} strokeWidth={3.4} />}{s.label}</span>
@@ -93,7 +93,7 @@ export default function ActivityPage({ api, profile, assignment, course, tab, go
 
       <div className="seg-tabs" role="tablist" aria-label="Secciones de la actividad">
         {TABS.actividad.map(([id, label]) => (
-          <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? "on" : ""} onClick={() => go({ section: "actividad", id: assignment.id, tab: id })}>{label}</button>
+          <button key={id} type="button" role="tab" data-tour={`ap-tab-${id}`} aria-selected={tab === id} className={tab === id ? "on" : ""} onClick={() => go({ section: "actividad", id: assignment.id, tab: id })}>{label}</button>
         ))}
       </div>
 

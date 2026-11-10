@@ -274,7 +274,7 @@ export default function QuestionView({
           })}
         </ul>}
         {feedback}
-        {report && !question.sourceLine && <ReportError question={question} examLabel={examLabel} />}
+        {report && !question.sourceLine && <span data-tour="t-report" className="tour-anchor"><ReportError question={question} examLabel={examLabel} /></span>}
         {footer}
       </div>
     </div>

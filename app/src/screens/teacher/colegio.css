@@ -220,26 +220,6 @@
 .ob-empty-head h1 { margin: 0 0 4px; font-family: "Bricolage Grotesque", sans-serif; }
 .ob-inline .section-head { margin-bottom: 10px; }
 
-.ob-tour { position: fixed; inset: 0; z-index: 12000; }
-.ob-tour.dim { background: rgba(5, 8, 6, 0.62); animation: ob-fade 0.2s ease-out; }
-.ob-hole { position: fixed; border-radius: 14px; box-shadow: 0 0 0 200vmax rgba(5, 8, 6, 0.62), 0 0 0 3px var(--accent); pointer-events: none; transition: top 0.3s ease, left 0.3s ease, width 0.3s ease, height 0.3s ease; }
-.ob-card { position: fixed; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 18px 18px 14px; border-radius: 20px; background: var(--surface); color: var(--text); border: 1px solid var(--line); box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45); outline: none; animation: ob-in 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.25); max-height: calc(100vh - 24px); overflow-y: auto; scrollbar-width: none; }
-.ob-card::-webkit-scrollbar { display: none; }
-.ob-card.center, .ob-card.final { justify-items: center; text-align: center; }
-.ob-card.final .ob-steps { margin-top: 4px; }
-.ob-card h2 { margin: 0; font-family: "Bricolage Grotesque", sans-serif; font-size: 22px; line-height: 1.15; }
-.ob-card p { margin: 0; color: var(--text-2); font-size: 15px; line-height: 1.45; }
-.ob-count { text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; font-size: 11px; color: var(--accent-ink); }
-.ob-x { position: absolute; top: 8px; right: 8px; }
-.ob-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; width: 100%; margin-top: 6px; }
-.ob-foot .link { white-space: nowrap; }
-.ob-foot .primary { margin-left: 0; }
-.ob-dots { display: flex; gap: 5px; flex: 1 0 100%; justify-content: center; margin-bottom: 4px; }
-.ob-dots span { width: 7px; height: 7px; border-radius: 999px; background: var(--surface-2); transition: width 0.25s, background 0.25s; }
-.ob-dots span.past { background: var(--accent-shadow); }
-.ob-dots span.on { width: 20px; background: var(--accent); }
-@keyframes ob-in { from { opacity: 0; transform: translateY(10px) scale(0.96); } to { opacity: 1; transform: none; } }
-@keyframes ob-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes ob-pop { 0% { transform: scale(0.4); } 70% { transform: scale(1.15); } 100% { transform: scale(1); } }
 @media (prefers-reduced-motion: reduce) { .ob-card, .ob-tour.dim, .ob-steps li.done .ob-num { animation: none; } .ob-hole { transition: none; } }
 @media (max-width: 600px) { .ob-empty-head { flex-direction: column; text-align: center; } .ob-card h2 { font-size: 20px; } }

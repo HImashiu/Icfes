@@ -1,6 +1,8 @@
 import Icon from "./Icon.jsx";
 import Logo from "./Logo.jsx";
 import Wordmark from "./Wordmark.jsx";
+import { BetaPill } from "./Beta.jsx";
+import { TourButton } from "./tour/Tour.jsx";
 
 const ITEMS = [
   { id: "home", label: "Inicio", icon: "home" },
@@ -28,14 +30,16 @@ function meLine(name, course, role) {
 export default function BottomNav({ active, onGo, name, course, role = null }) {
   return (
     <nav className="bottom-nav" aria-label="Navegación principal">
-      <div className="nav-brand" aria-hidden="true">
-        <Logo size={36} />
-        <Wordmark height={20} />
+      <div className="nav-brand">
+        <span aria-hidden="true" className="nav-brand-mark"><Logo size={36} /><Wordmark height={20} /></span>
+        <BetaPill />
+        <TourButton label="Tutorial de esta pantalla" onClick={() => window.dispatchEvent(new CustomEvent("condor:student-tour"))} />
       </div>
       {ITEMS.map((item) => (
         <button
           key={item.id}
           type="button"
+          data-tour={`snav-${item.id}`}
           className={item.id === active ? "nav-item active" : "nav-item"}
           aria-current={item.id === active ? "page" : undefined}
           aria-label={item.label}

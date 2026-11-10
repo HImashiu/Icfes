@@ -40,6 +40,8 @@ import { AnnotationProvider } from "./components/Annotations.jsx";
 import { GlossaryProvider } from "./components/Glossary.jsx";
 import { loadHistory } from "./lib/local.js";
 import { demoEnabled } from "./demo/mode.js";
+import Tour, { markTourSeen, tourSeen } from "./components/tour/Tour.jsx";
+import { studentTour, studentTourId } from "./lib/tours.jsx";
 import { pendingMisses, repechajeKeys } from "./lib/repechaje.js";
 import { hiddenFor, withoutHidden } from "./lib/questionUse.js";
 import { orderQuestions } from "./lib/order.js";
@@ -136,6 +138,24 @@ export default function App() {
   useEffect(() => {
     applyTheme(theme);
   }, [theme]);
+
+  // Student tutorials: each screen's opens by itself the first time (per account and device) and replays from «?».
+  const [studentTourOpen, setStudentTourOpen] = useState(null);
+  const tourScreen = studentTourId(view);
+  const tourUid = auth.profile?.id ?? null;
+  useEffect(() => {
+    if (!tourScreen || auth.status === "loading" || tourSeen("estudiante", tourUid, tourScreen)) return undefined;
+    const t = setTimeout(() => setStudentTourOpen((cur) => cur ?? tourScreen), 700);
+    return () => clearTimeout(t);
+  }, [tourScreen, tourUid, auth.status]);
+  useEffect(() => {
+    const ask = (e) => setStudentTourOpen(e.detail || studentTourId(view) || "inicio");
+    window.addEventListener("condor:student-tour", ask);
+    return () => window.removeEventListener("condor:student-tour", ask);
+  }, [view]);
+  const closeStudentTour = useCallback(() => {
+    setStudentTourOpen((id) => { if (id) markTourSeen("estudiante", tourUid, id); return null; });
+  }, [tourUid]);
 
   // Teachers and coordinators land in their panel when they sign in, not on the student home. Once they choose
   // «App de estudiante» in this tab, they stay there until the tab closes.
@@ -777,6 +797,10 @@ export default function App() {
       {needsAttempt && !attempt && <main className="frame"><p className="muted">Esta actividad ya no está abierta.</p><button type="button" className="primary" onClick={goHome}>Volver al inicio</button></main>}
       </ScreenBoundary>
 
+      {studentTourOpen && view !== "teacher" && (() => {
+        const t = studentTour(studentTourOpen, { name: studentName, signedIn });
+        return <Tour key={studentTourOpen} label={t.label} steps={t.steps} onClose={closeStudentTour} />;
+      })()}
       {navView && <BottomNav active={navView} onGo={go} name={studentName} course={course} role={signedIn ? auth.profile?.role : null} />}
     </div>
     </ExamContext.Provider>

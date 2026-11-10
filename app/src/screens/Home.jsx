@@ -1,3 +1,5 @@
+import { BetaNote } from "../components/Beta.jsx";
+import { TourButton } from "../components/tour/Tour.jsx";
 import { useMemo } from "react";
 import Icon from "../components/Icon.jsx";
 import Mascot from "../components/Mascot.jsx";
@@ -70,7 +72,7 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
           <strong>{realName ? `Hola, ${realName}` : "Hola"}</strong>
         </div>
         {onLive && (
-          <button type="button" className="tl-live sh-live" onClick={onLive} aria-label="Juego en vivo">
+          <button type="button" className="tl-live sh-live" data-tour="s-live" onClick={onLive} aria-label="Juego en vivo">
             <Icon name="bolt" size={15} /><span>Juego en vivo</span>
           </button>
         )}
@@ -79,10 +81,12 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
           <span className="pill" title="Racha"><Icon name="flame" size={16} className="flame-ico" /><b className="flame-text">{streak}</b></span>
           <span className="pill" title="XP"><Icon name="bolt" size={16} className="accent-ico" /><b className="accent-text">{fmtInt(xp)}</b></span>
         </div>
+        <TourButton className="sh-head-help" label="Tutorial" onClick={() => window.dispatchEvent(new CustomEvent("condor:student-tour"))} />
       </header>
 
+      <BetaNote />
       <div className="sh-top">
-        <div className="sh-hero card">
+        <div className="sh-hero card" data-tour="s-hero">
           <Mascot size={84} pose={ins.practicedToday ? "happy" : "normal"} idle />
           <div className="sh-hero-text">
             <span className="label">{hero.kicker}</span>
@@ -93,7 +97,7 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
           <button type="button" className="primary" onClick={hero.go} disabled={!resumable && !next && !exam}>{hero.cta}</button>
         </div>
 
-        <div className="sh-goal card">
+        <div className="sh-goal card" data-tour="s-goal">
           <svg className="sh-ring" viewBox="0 0 64 64" role="img" aria-label={`Meta de hoy: ${today} de ${goal.dailyXp} XP`}>
             <circle cx="32" cy="32" r="27" fill="none" stroke="var(--line)" strokeWidth="7" />
             <circle cx="32" cy="32" r="27" fill="none" stroke="var(--accent)" strokeWidth="7" strokeLinecap="round" strokeDasharray={`${goalPct * 169.6} 169.6`} transform="rotate(-90 32 32)" />
@@ -120,7 +124,7 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
         <div className="sh-col">
           <StudentAnnouncements rows={activeAnnouncements(announcements)} limit={3} subjectOf={(id) => subjects.find((x) => x.courseIds.includes(id)) ?? null} />
           {assigned && independent && !tasks.length && !classes?.length ? null : assigned ? (
-            <div className="card sh-card">
+            <div className="card sh-card" data-tour="s-tasks">
               <div className="section-head">
                 <span className="label">Tus tareas</span>
                 <button type="button" className="link" onClick={() => onGo?.("tasks")}>Ver todas ({tasks.length})</button>
@@ -143,7 +147,7 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
           {subjects.length > 0 && (
             <div className="card sh-card">
               <div className="section-head"><span className="label">Mis materias</span><button type="button" className="link" onClick={() => onGo?.("subjects")}>Ver materias</button></div>
-              <div className="sh-subjects">
+              <div className="sh-subjects" data-tour="s-subjects">
                 {subjects.map((s) => (
                   <button key={s.id} type="button" className="sh-subject" style={{ "--c": s.color }} onClick={() => onOpenSubject?.(s.id)}>
                     <span className="sh-subject-top"><strong>{s.name}</strong><b title="Resultado de tu última actividad">{s.last == null ? "—" : `${s.last} %`}</b></span>
@@ -158,7 +162,7 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
             </div>
           )}
 
-          <div className="sh-quick">
+          <div className="sh-quick" data-tour="s-quick">
             {plan.today && plan.today.kind !== "rest" && !plan.today.done ? (
               <button type="button" className="card sh-q" disabled={!exam} onClick={() => (plan.today.kind === "area" ? onSetup({ scope: plan.today.area, mode: "practice" }) : plan.today.kind === "simulacro" ? onSetup({ scope: "all", mode: "timed" }) : onGo?.(plan.today.kind === "errors" ? "errors" : "plan"))}>
                 <Icon name="bolt" /><span><strong>Hoy en tu plan</strong><span className="caption">{plan.today.label}{plan.today.questions ? ` · ${plan.today.questions} preguntas` : ""}</span></span>
@@ -183,7 +187,7 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
             </div>
             {real && <span className="caption">Aciertos en primer intento: repetir preguntas no los sube.</span>}
             {mastery.length === 0 && <span className="caption">Aparece cuando respondas al menos {MIN_AREA_ANSWERS} preguntas nuevas de un área.</span>}
-            <div className="sh-mastery">
+            <div className="sh-mastery" data-tour="s-mastery">
               {mastery.map(([name, value]) => (
                 <div key={name} className="sh-m">
                   <span className="sh-m-head"><span><span className="dot" style={{ background: areaColor(name) }} /> {areaShort(name)}</span><b>{value} %</b></span>
@@ -195,7 +199,7 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
         </div>
 
         <div className="sh-col">
-          <button type="button" className="card sh-count" onClick={() => onGo?.("profile")}>
+          <button type="button" className="card sh-count" data-tour="s-count" onClick={() => onGo?.("profile")}>
             <span className="sh-count-n">{left == null ? "?" : left < 0 ? "✓" : fmtInt(left)}</span>
             <span>
               <strong>{left == null ? "¿Cuándo es tu Saber 11?" : left < 0 ? "Ya presentaste el examen" : left === 0 ? "Hoy es tu Saber 11" : `${left === 1 ? "día" : "días"} para tu Saber 11`}</strong>
