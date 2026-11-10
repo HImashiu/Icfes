@@ -25,4 +25,17 @@ describe("renderRich", () => {
   it("returns an empty string for missing input", () => {
     expect(renderRich(null)).toBe("");
   });
+
+  it("keeps **bold** when money $ signs sit in two different paragraphs", () => {
+    const html = renderRich("<p>**Paso 2.** Tasa de ($200.000).</p>\n\n<p>**Paso 3.** Pago extra ($100.000) por metro.</p>");
+    expect(html).not.toContain("**");
+    expect(html).toContain("<strong>Paso 3.</strong>");
+  });
+
+  it("draws an example box that was written over several lines as one box", () => {
+    const html = renderRich("<p>Places</p>\n\n[[ejemplo:C|0.\n\na container for liquids.]]\n\n<p>85. next</p>");
+    expect(html).not.toContain("[[");
+    expect(html).toContain("0. a container for liquids.");
+    expect(html).not.toContain("0. 0.");
+  });
 });

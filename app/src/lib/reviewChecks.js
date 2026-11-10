@@ -32,8 +32,13 @@ export function checkRendered(root, question) {
   // 1. Visible text with markup that should have been converted. Formula sources are skipped (KaTeX keeps the TeX
   // in an annotation node that is not visible).
   const clone = root.cloneNode(true);
+  // A blank to fill in is drawn as spaces with a line under it: not a gap in the text.
+  clone.querySelectorAll(".gap").forEach((n) => n.replaceWith("_"));
   clone.querySelectorAll(".katex-mathml, script, style, .option-tag, .card-label, .sr-only, [aria-hidden='true'] .katex-html").forEach((n) => n.remove());
-  const visible = (clone.textContent ?? "").replace(/ /g, " ");
+  // In a browser: the text the student actually sees (the hidden tab of a phone is left out; the desktop pass covers it).
+  // In jsdom, which has no layout: all the text.
+  const seen = typeof root.innerText === "string" && root.innerText ? root.innerText.replace(/\u00a0/g, " ").replace(/[ \t]+\n/g, "\n") : null;
+  const visible = seen ?? (clone.textContent ?? "").replace(/\u00a0/g, " ");
   for (const label of leftoverIssues(visible)) add("error", "leftover", label);
 
   // 2. Formulas KaTeX could not draw.

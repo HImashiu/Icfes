@@ -18,13 +18,20 @@ const MD_IMG = /!\[[^\]]*\]\([^)]*\)/g;
 // Plain text from the exam file keeps its blank lines as paragraphs (HTML would collapse them).
 // A block that already starts with block markup (a table, a paragraph, a list) is left as written.
 const BLOCK_START = /^\s*<(p|div|ul|ol|table|h\d)\b/i;
+// An example box written over several lines ("[[ejemplo:C|0.\n\na container…]]", which is how a model transcription
+// often comes out) is put on one line without the "0." the box draws itself, so it is still one box.
+const EXAMPLE_TOKEN = /\[\[ejemplo:([A-Za-z]?)\|([^\]]*)\]\]/g;
+const oneLineExamples = (text) =>
+  text.replace(EXAMPLE_TOKEN, (_, answer, body) => `[[ejemplo:${answer}|${body.replace(/\s*\n\s*/g, " ").replace(/^\s*0\s*[.:)]\s*/, "")}]]`);
 function paragraphs(text) {
-  return text
+  return oneLineExamples(text)
     .split(/\n\s*\n/)
     .map((block) => block.trim())
     .filter(Boolean)
     .map((block) => (EXAMPLE_PARA.test(block) ? renderExample(block) : BLOCK_START.test(block) ? block : `<p>${block.replace(/\n/g, "<br>")}</p>`))
-    .join("");
+    // A line break between paragraphs keeps a money "$" in one paragraph from pairing with one in the next as a
+    // $…$ span, which hid the **bold** between them (G1 1ra q1 "Paso 3").
+    .join("\n");
 }
 
 const katexHtml = (tex) => katex.renderToString(tex, { throwOnError: false, output: "htmlAndMathml" });
