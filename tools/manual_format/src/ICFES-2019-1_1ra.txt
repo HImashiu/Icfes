@@ -237,6 +237,10 @@ KEY: C conf=high why="bank has no key; worked out from the question"
 #86 copy=B_1ra#119 page=23
 KEY: D conf=high
 #87 copy=G1_2da#52 page=23
+STIM: Un paracaidista se lanza de un avión y registra su rapidez de caída en función del tiempo en la siguiente gráfica.
+
+[[FIG]]
+FIG stim p=23 box=0.58,0.625,0.96,0.78 what="rapidez (m/s) contra tiempo (s): sube hasta 40 m/s y se mantiene"
 KEY: D conf=high
 #88 copy=G1_2da#53 page=24
 KEY: B conf=high

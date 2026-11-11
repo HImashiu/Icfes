@@ -167,7 +167,7 @@ for n in sorted(order):
         ex, bq, bg, sp, man = bankq(a['copy'])
         base = {'stimulus_md': bq.get('stimulus_md') or '', 'stem_md': bq.get('stem_md') or '',
                 'options': [{'letter': o['letter'], 'text_md': o.get('text_md') or '', **({'figure': o['figure']} if o.get('figure') else {})} for o in bq['options']]}
-        if bq.get('figure'): base['figure'] = bq['figure']
+        if bq.get('figure') and not re.search(r'-opt-', str(bq['figure']), re.I): base['figure'] = bq['figure']  # bank bug: option chart set as question figure
         if bq.get('item_type'): base['item_type'] = bq['item_type']
         gtext = [bg.get('passage_md') or ''] if bg else []
         copy_figs(ex, sp, man, n, bq, [base['stimulus_md'], base['stem_md']] + [o['text_md'] for o in base['options']], bq['options'])

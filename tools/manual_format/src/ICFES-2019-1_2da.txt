@@ -102,8 +102,10 @@ KEY: D conf=high
 #42 copy=G1_2da#42 page=43
 KEY: A conf=high
 #43 copy=G1_2da#43 page=43
+FIG stim p=43 box=0.625,0.12,0.975,0.245 what="plan de vuelo de los dos aviones: km recorridos contra hora"
 KEY: B conf=high
 #44 copy=G1_2da#44 page=43
+FIG stim p=43 box=0.58,0.62,0.975,0.785 what="gráfica de barras de frecuencia absoluta por grupo de peso"
 KEY: A conf=high
 // Ciencias naturales
 @group g48-49 48-49 copy=E_2da#54
