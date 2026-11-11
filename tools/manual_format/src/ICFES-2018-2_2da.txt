@@ -1,0 +1,554 @@
+@exam ICFES-2018-2_2da | ICFES 2018-2 2da Sesión | pdf=/mnt/project-files/icfes/sources-new/u4_2018-2a.pdf | dpi=300
+@section Sociales y ciudadanas 1-25
+@section Matemáticas 26-50
+@section Ciencias naturales 51-79
+@section Inglés 80-134
+// Sociales
+#1 copy=E_2da#10 page=2
+KEY: C conf=medium why="bank D; promoting media broadcasts is plausible, but mandatory teaching in schools is the most effective revitalization strategy"
+#2 copy=E_1ra#71 page=2
+STEM: De acuerdo con lo expresado por el Ministerio de Trabajo, la decisión de la Corte Constitucional podría traer
+KEY: C conf=high
+#3 copy=E_2da#22 page=3
+KEY: C conf=high
+#4 copy=ICFES-2018-1_2da#4 page=3
+KEY: C conf=high
+#5 copy=ICFES-2018-1_2da#5 page=3
+KEY: C conf=high
+#6 copy=ICFES-2018-1_2da#6 page=4
+KEY: C conf=high
+#7 copy=ICFES-2018-1_2da#7 page=4
+KEY: D conf=high
+#8 copy=ICFES-2018-1_2da#8 page=4
+KEY: D conf=high
+#9 copy=ICFES-2018-1_2da#9 page=4
+KEY: C conf=high
+#10 copy=ICFES-2018-1_2da#10 page=5
+KEY: C conf=high
+#11 copy=ICFES-2018-1_2da#11 page=5
+KEY: B conf=high
+#12 copy=K1_1ra#91 page=5
+KEY: C conf=high
+#13 copy=K1_2da#1 page=5
+KEY: A conf=high
+#14 copy=K1_2da#3 page=6
+KEY: D conf=high
+#15 copy=B_1ra#84 page=6
+KEY: C conf=high
+#16 copy=B_1ra#82 page=6
+KEY: D conf=high
+#17 copy=B_1ra#88 page=6
+KEY: A conf=high
+#18 copy=B_1ra#87 page=7
+KEY: D conf=high
+#19 copy=B_1ra#86 page=7
+KEY: D conf=high
+#20 copy=B_2da#1 page=7
+KEY: D conf=high
+#21 copy=B_1ra#89 page=7
+KEY: B conf=high
+#22 copy=B_2da#2 page=8
+KEY: C conf=high
+#23 copy=B_2da#3 page=8
+STEM: Este comunicado está relacionado con el contexto social y político de la década de los años 1980 en Colombia, porque, en esa década,
+KEY: C conf=high
+#24 copy=B_2da#4 page=8
+KEY: C conf=high
+#25 copy=B_2da#5 page=8
+KEY: D conf=high
+// Matemáticas
+#26 copy=E_2da#30 page=9
+KEY: D conf=high
+#27 copy=E_2da#31 page=9
+KEY: A conf=high
+#28 copy=E_2da#32 page=9
+KEY: B conf=high
+@group g29-30 29-30 copy=E_2da#37
+DIR: RESPONDA LAS PREGUNTAS 29 Y 30 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#29 copy=E_2da#37 page=10 group=g29-30
+KEY: A conf=high
+#30 copy=E_2da#38 page=10 group=g29-30
+KEY: D conf=high why="bank B; curso III quartiles give 25 % in each of the four intervals"
+#31 copy=E_2da#35 page=10
+KEY: B conf=high
+#32 copy=E_2da#39 page=11
+KEY: B conf=high
+#33 copy=J_2da#39 page=11
+STIM: <p style="text-align:justify">Dos personas crían siete peces de la misma especie en diferentes acuarios: 1 y 2. En algún momento del proceso de crianza, miden la longitud de cada pez, calculan la longitud promedio y grafican sus resultados (ver gráfica).</p>
+
+[[figura:j2-q39-auto-0f9fe3]]
+B: la mayor longitud promedio determinada en el paso 1 corresponde a 8 cm.
+KEY: A conf=high
+#34 copy=E_1ra#1 page=11
+KEY: D conf=high
+#35 copy=K1_2da#34 page=12
+KEY: B conf=high
+#36 copy=E_1ra#2 page=12
+KEY: B conf=high
+#37 copy=A_2da#49 page=12
+KEY: B conf=high
+#38 copy=C_2da#47 page=13
+KEY: A conf=high
+#39 copy=E_1ra#3 page=13
+KEY: A conf=high
+@group g40-41 40-41 copy=ICFES-2018-1_1ra#24
+DIR: RESPONDA LAS PREGUNTAS 40 Y 41 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#40 copy=ICFES-2018-1_1ra#25 page=13 group=g40-41
+KEY: B conf=high
+#41 copy=ICFES-2018-1_1ra#24 page=14 group=g40-41
+KEY: C conf=high
+#42 copy=B_2da#36 page=14
+KEY: B conf=high
+#43 copy=C_2da#37 page=14
+KEY: D conf=high
+#44 copy=B_2da#38 page=15
+KEY: B conf=high
+#45 copy=B_2da#39 page=15
+KEY: B conf=medium
+#46 copy=C_1ra#16 page=15
+KEY: B conf=high
+#47 copy=B_2da#30 page=16
+KEY: A conf=high
+#48 copy=B_2da#40 page=16
+KEY: B conf=high
+#49 copy=B_2da#41 page=16
+KEY: A conf=high
+#50 copy=ICFES-2018-1_2da#38 page=16
+KEY: B conf=high
+// Ciencias naturales
+#51 copy=E_2da#73 page=17
+KEY: B conf=high
+#52 copy=E_2da#74 page=17
+KEY: D conf=high
+#53 copy=E_2da#75 page=17
+KEY: B conf=high
+@group g54-56 54-56 copy=B_1ra#96
+DIR: RESPONDA LAS PREGUNTAS 54 A 56 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#54 copy=B_1ra#96 page=18 group=g54-56
+KEY: C conf=high
+#55 copy=B_1ra#97 page=18 group=g54-56
+KEY: C conf=high
+#56 copy=B_1ra#98 page=18 group=g54-56
+KEY: B conf=high
+#57 copy=E_2da#76 page=18
+KEY: D conf=high
+#58 copy=C_2da#53 page=19
+KEY: B conf=high
+#59 copy=B_2da#78 page=19
+KEY: C conf=high why="bank A; poster A swaps the Resultados and Conclusión labels"
+#60 copy=E_2da#78 page=19
+KEY: D conf=high
+#61 copy=A_2da#73 page=20
+KEY: A conf=high
+#62 copy=E_2da#72 page=20
+KEY: A conf=high
+#63 copy=F_1ra#94 page=20
+KEY: D conf=high
+#64 copy=B_1ra#100 page=20
+KEY: B conf=high
+#65 copy=B_1ra#99 page=20
+KEY: C conf=high
+#66 copy=K1_2da#73 page=21
+KEY: D conf=high
+#67 copy=B_2da#75 page=21
+KEY: B conf=high
+@group g68-70 68-70 copy=I_2da#69
+DIR: RESPONDA LAS PREGUNTAS 68 A 70 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#68 copy=I_2da#71 page=21 group=g68-70
+D: Mantenerla, porque todos los vinos deben tener una cantidad similar de pigmentos, siempre y cuando pasen por la etapa de fermentación.
+KEY: A conf=high
+#69 page=21 group=g68-70
+STEM: Al leer la información del contexto, un investigador piensa que si se emplean pectinasas durante la producción de vino de uva, la intensidad del color de un vino es mayor que la de un vino producido sin pectinasas. Si la hipótesis del investigador es cierta, ¿cuál de las siguientes gráficas muestra los resultados esperados por el investigador?
+A: 
+B: 
+C: 
+D: 
+FIG A p=21 box=0.11,0.778,0.30,0.928 what="barras iguales con y sin pectinasa"
+FIG B p=21 box=0.30,0.778,0.50,0.928 what="barra con pectinasa más alta"
+FIG C p=21 box=0.51,0.778,0.72,0.928 what="líneas en el tiempo, la de con pectinasa cae"
+FIG D p=21 box=0.72,0.778,0.93,0.928 what="líneas en el tiempo, la de sin pectinasa por encima"
+KEY: B conf=high
+#70 copy=I_2da#70 page=22 group=g68-70
+KEY: C conf=high
+#71 copy=B_1ra#117 page=22
+KEY: A conf=high
+#72 copy=B_2da#71 page=22
+KEY: C conf=high
+#73 copy=F_1ra#107 page=23
+KEY: A conf=high
+#74 copy=A_2da#68 page=23
+KEY: C conf=high
+#75 copy=C_2da#67 page=23
+KEY: C conf=high
+#76 copy=B_1ra#107 page=24
+KEY: D conf=high
+#77 copy=E_2da#77 page=24
+KEY: D conf=high
+#78 copy=B_1ra#120 page=24
+KEY: B conf=high
+#79 copy=B_1ra#108 page=24
+KEY: D conf=high
+// Inglés
+@group g80-84 80-84
+DIR: RESPONDA LAS PREGUNTAS 80 A 84 DE ACUERDO CON EL EJEMPLO
+PASSAGE: ¿Dónde puede ver estos avisos?
+#80 page=25 group=g80-84 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=25 box=0.115,0.313,0.405,0.402 what="aviso: Basketball game this evening at 7"
+A: in a shop
+B: on a street
+C: in a school
+KEY: C conf=high
+#81 page=25 group=g80-84 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=25 box=0.130,0.440,0.420,0.530 what="aviso: Please, do not give food to the animals. Thanks!"
+A: in a garden
+B: in a zoo
+C: on a beach
+KEY: B conf=high
+#82 page=25 group=g80-84 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=25 box=0.130,0.560,0.430,0.653 what="aviso: White chocolate balls"
+A: on a milk box
+B: on a candy box
+C: on a cake box
+KEY: B conf=high
+#83 page=25 group=g80-84 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=25 box=0.140,0.684,0.445,0.777 what="aviso: Clean the board in the afternoons"
+A: in a classroom
+B: in a hall
+C: in a bookshop
+KEY: A conf=high
+#84 page=25 group=g80-84 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=25 box=0.145,0.804,0.460,0.912 what="aviso: Today, take beautiful oranges, grapes and coconuts for $3"
+A: in a sports store
+B: in a flower store
+C: in a food store
+KEY: C conf=high
+@group g85-89 85-89
+DIR: RESPONDA LAS PREGUNTAS 85 A 89 DE ACUERDO CON EL EJEMPLO
+PASSAGE: <p style="text-align:center">**Food**</p>
+
+Lea las descripciones de la columna de la izquierda (85 - 89). ¿Cuál palabra de la columna de la derecha (A - H) concuerda con cada descripción? Una opción (A - H) se usa para el ejemplo. Sobran dos palabras más.
+
+Ejemplo: 0. This is a red or green fruit that is white inside. Respuesta: A (apple)
+#85 page=26 group=g85-89 type=matching
+STEM: Rabbits like this long orange vegetable.
+A: apple
+B: candy
+C: carrot
+D: chicken
+E: fish
+F: milk
+G: soup
+H: tea
+KEY: C conf=high
+#86 page=26 group=g85-89 type=matching
+STEM: You get this when you cook vegetables and meat in water.
+A: apple
+B: candy
+C: carrot
+D: chicken
+E: fish
+F: milk
+G: soup
+H: tea
+KEY: G conf=high
+#87 page=26 group=g85-89 type=matching
+STEM: This comes from cows and you can make cheese with it.
+A: apple
+B: candy
+C: carrot
+D: chicken
+E: fish
+F: milk
+G: soup
+H: tea
+KEY: F conf=high
+#88 page=26 group=g85-89 type=matching
+STEM: Children love this sweet food.
+A: apple
+B: candy
+C: carrot
+D: chicken
+E: fish
+F: milk
+G: soup
+H: tea
+KEY: B conf=high
+#89 page=26 group=g85-89 type=matching
+STEM: We eat this animal that lives in rivers or in the sea.
+A: apple
+B: candy
+C: carrot
+D: chicken
+E: fish
+F: milk
+G: soup
+H: tea
+KEY: E conf=high
+@group g90-94 90-94
+DIR: RESPONDA LAS PREGUNTAS 90 A 94 DE ACUERDO CON EL EJEMPLO
+PASSAGE: <p style="text-align:center">**Sports**</p>
+
+Lea las descripciones de la columna de la izquierda (90 - 94). ¿Cuál palabra de la columna de la derecha (A - H) concuerda con cada descripción? Una opción (A - H) se usa para el ejemplo. Sobran dos palabras más.
+
+Ejemplo: 0. When you want to play football, you go to this place. Respuesta: E (field)
+#90 copy=C_2da#85 page=27 group=g90-94 type=matching
+KEY: G conf=high
+#91 copy=C_2da#86 page=27 group=g90-94 type=matching
+STEM: In this game, two people hit a small ball with a racket.
+KEY: H conf=high
+#92 copy=C_2da#87 page=27 group=g90-94 type=matching
+KEY: F conf=high
+#93 copy=C_2da#88 page=27 group=g90-94 type=matching
+KEY: B conf=high
+#94 copy=C_2da#89 page=27 group=g90-94 type=matching
+KEY: D conf=high
+@group g95-99 95-99
+DIR: RESPONDA LAS PREGUNTAS 95 A 99 DE ACUERDO CON EL EJEMPLO
+PASSAGE: Complete las cinco conversaciones.
+
+Ejemplo: 0. Have you ever traveled in a helicopter? A. Yeah. It was great! B. Just a moment! C. Not that much! Respuesta: A
+#95 page=28 group=g95-99 type=conversation
+STEM: Would you like to draw?
+A: Good job!
+B: Sure!
+C: Me too.
+KEY: B conf=high
+#96 page=28 group=g95-99 type=conversation
+STEM: I always go swimming before I go to work.
+A: I feel fine!
+B: So do I!
+C: I'd like it!
+KEY: B conf=high
+#97 page=28 group=g95-99 type=conversation
+STEM: What about staying at home and cooking something?
+A: Let's go there!
+B: You're welcome.
+C: Yeah, why not?
+KEY: C conf=high
+#98 page=28 group=g95-99 type=conversation
+STEM: I'm not interested in doing that now.
+A: Ok, then.
+B: Let him see.
+C: You mustn't go.
+KEY: A conf=high
+#99 page=28 group=g95-99 type=conversation
+STEM: Sorry but I can't drive you home.
+A: I suppose so.
+B: Never mind!
+C: I travel tomorrow.
+KEY: B conf=high
+@group g100-107 100-107
+DIR: RESPONDA LAS PREGUNTAS 100 A 107 DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: <p style="text-align:center">**The Mozart Effect**</p>
+
+You have probably [[hueco:0]] of the Mozart effect. In 1982, the scientist Don Campbell [[hueco:100]] studying the idea that if children or even babies listen to music composed by Mozart, they [[hueco:101]] become more intelligent. He says [[hueco:102]] kinds of music can affect our learning and our health.
+
+We use music to [[hueco:103]] us relax. However, Campbell says music can [[hueco:104]] reduce the stress of being sick. Campbell believes [[hueco:105]] Mozart's music is popular because it's [[hueco:106]] composed and makes your brain more alert.
+
+Music not only makes you more intelligent, but it can improve your memory, too. In one study, students who listened to Mozart before doing a test got much [[hueco:107]] marks than those students who didn't.
+#100 page=29 group=g100-107 type=cloze_text
+STEM: Blank (100): choose the option that completes the text.
+A: begins
+B: began
+C: begun
+KEY: B conf=high
+#101 page=29 group=g100-107 type=cloze_text
+STEM: Blank (101): choose the option that completes the text.
+A: shall
+B: will
+C: must
+KEY: B conf=high
+#102 page=29 group=g100-107 type=cloze_text
+STEM: Blank (102): choose the option that completes the text.
+A: every
+B: both
+C: all
+KEY: C conf=high
+#103 page=29 group=g100-107 type=cloze_text
+STEM: Blank (103): choose the option that completes the text.
+A: helping
+B: helped
+C: help
+KEY: C conf=high
+#104 page=29 group=g100-107 type=cloze_text
+STEM: Blank (104): choose the option that completes the text.
+A: also
+B: once
+C: yet
+KEY: A conf=high
+#105 page=29 group=g100-107 type=cloze_text
+STEM: Blank (105): choose the option that completes the text.
+A: while
+B: that
+C: if
+KEY: B conf=high
+#106 page=29 group=g100-107 type=cloze_text
+STEM: Blank (106): choose the option that completes the text.
+A: well
+B: better
+C: good
+KEY: A conf=high
+#107 page=29 group=g100-107 type=cloze_text
+STEM: Blank (107): choose the option that completes the text.
+A: highest
+B: high
+C: higher
+KEY: C conf=high
+@group g108-114 108-114
+DIR: RESPONDA LAS PREGUNTAS 108 A 114 DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: <p style="text-align:center">**River dolphins**</p>
+
+River dolphins were first described by Henri Marie Ducrotay in 1817. He also gave them names. There are 38 kinds of dolphins, but 33 are sea dolphins and only 5 of them make their homes in large rivers. Although the pink dolphin lives in the Amazon River, it can also be found in the Orinoco and Madeira Rivers in smaller numbers. While they are mostly pink, river dolphins can be light gray or brown but science has not found out why they have their lovely color. We guess they become pinker when they are excited, as it happens to us when we're mad.
+
+River dolphins, like the ones in Southeast Asia or La Plata River, are clever; however, the pink dolphins in the Amazon are the cleverest, but not as much as dolphins in the Atlantic Ocean. Pink dolphins make sounds to show they enjoy being close to people; some stories of people being pushed close to the river by them are popular in the Amazon. If a pink dolphin dies, people think something bad may happen. However, if this happens, they will use the dead animal's oil to help other animals with health problems like infections, but they won't use the meat.
+
+Unfortunately, river dolphins have died as we have built new towns around their area and changed the rain forests. Also, they are caught with other animals to be shown in aquariums.
+#108 page=30 group=g108-114
+STEM: How many types of dolphins are there in the waters of our planet?
+A: 33.
+B: 5.
+C: 38.
+KEY: C conf=high
+#109 page=30 group=g108-114
+STEM: Most pink dolphins can be seen in the
+A: Amazon river.
+B: Orinoco river.
+C: Madeira river.
+KEY: A conf=high
+#110 page=30 group=g108-114
+STEM: What's the reason why pink dolphins are that color?
+A: People bother them.
+B: They have feelings.
+C: Nobody's sure.
+KEY: C conf=high
+#111 page=30 group=g108-114
+STEM: Pink river dolphins are less brilliant than dolphins in
+A: Southeast Asia.
+B: La Plata.
+C: the Atlantic.
+KEY: C conf=high
+#112 page=30 group=g108-114
+STEM: Pink dolphins are
+A: sometimes dangerous.
+B: usually friendly.
+C: always noisy.
+KEY: B conf=high
+#113 page=30 group=g108-114
+STEM: People think river dolphins could
+A: bring bad luck.
+B: become food.
+C: get sick easily.
+KEY: A conf=high
+#114 page=30 group=g108-114
+STEM: Dolphins have been in danger because of
+A: heavy storms.
+B: people's buildings.
+C: animals' meals.
+KEY: B conf=high
+@group g115-119 115-119 copy=E_2da#115
+DIR: RESPONDA LAS PREGUNTAS 115 A 119 DE ACUERDO CON EL SIGUIENTE TEXTO
+#115 copy=E_2da#115 page=31 group=g115-119
+KEY: D conf=high
+#116 copy=E_2da#116 page=31 group=g115-119
+KEY: A conf=medium
+#117 copy=E_2da#117 page=31 group=g115-119
+KEY: C conf=high
+#118 copy=E_2da#118 page=31 group=g115-119
+KEY: B conf=high
+#119 copy=E_2da#119 page=31 group=g115-119
+KEY: A conf=medium
+@group g120-124 120-124 copy=A_2da#110
+DIR: RESPONDA LAS PREGUNTAS 120 A 124 DE ACUERDO CON EL SIGUIENTE TEXTO
+#120 copy=A_2da#110 page=32 group=g120-124
+KEY: D conf=high
+#121 copy=A_2da#111 page=32 group=g120-124
+A: the right clothing for the rain.
+KEY: D conf=high
+#122 copy=A_2da#112 page=32 group=g120-124
+KEY: C conf=high
+#123 copy=A_2da#113 page=32 group=g120-124
+KEY: A conf=high
+#124 copy=A_2da#114 page=32 group=g120-124
+KEY: C conf=high
+@group g125-134 125-134
+DIR: RESPONDA LAS PREGUNTAS 125 A 134 DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: <p style="text-align:center">**Looking after elephants in a zoo**</p>
+
+Elephants love [[hueco:0]] a bath and their regular daily care includes a two-hour shower and brush in summer, and a dust bath in winter, to [[hueco:125]] old skin. Their feet must also be looked at every day as stones get stuck [[hueco:126]] their toes. That's the easy [[hueco:127]]! Their eating habits, however, demand a lot more attention, according to zoo owner Michael Booth, who [[hueco:128]] described the elephant as an enormous fire that [[hueco:129]] lots of fuel. This is [[hueco:130]] elephants in the wild [[hueco:131]] most of their time eating. The ones in Booth's zoo eat large [[hueco:132]] of vegetables and fruit but their favourite food is bread. It [[hueco:133]] about £20 a day to feed a fully-grown elephant.
+
+A male elephant is roughly the same size as a bus, so it isn't a good [[hueco:134]] to make an elephant angry!
+#125 page=33 group=g125-134 type=cloze_text
+STEM: Blank (125): choose the option that completes the text.
+A: pass
+B: remove
+C: take
+D: fall
+KEY: B conf=high
+#126 page=33 group=g125-134 type=cloze_text
+STEM: Blank (126): choose the option that completes the text.
+A: off
+B: along
+C: up
+D: between
+KEY: D conf=high
+#127 page=33 group=g125-134 type=cloze_text
+STEM: Blank (127): choose the option that completes the text.
+A: scene
+B: role
+C: part
+D: piece
+KEY: C conf=high
+#128 page=33 group=g125-134 type=cloze_text
+STEM: Blank (128): choose the option that completes the text.
+A: now
+B: before
+C: once
+D: then
+KEY: C conf=high
+#129 page=33 group=g125-134 type=cloze_text
+STEM: Blank (129): choose the option that completes the text.
+A: searches
+B: needs
+C: asks
+D: keeps
+KEY: B conf=high
+#130 page=33 group=g125-134 type=cloze_text
+STEM: Blank (130): choose the option that completes the text.
+A: when
+B: whether
+C: while
+D: why
+KEY: D conf=high
+#131 page=33 group=g125-134 type=cloze_text
+STEM: Blank (131): choose the option that completes the text.
+A: continue
+B: spend
+C: give
+D: stay
+KEY: B conf=high
+#132 page=33 group=g125-134 type=cloze_text
+STEM: Blank (132): choose the option that completes the text.
+A: totals
+B: weights
+C: numbers
+D: quantities
+KEY: D conf=high
+#133 page=33 group=g125-134 type=cloze_text
+STEM: Blank (133): choose the option that completes the text.
+A: costs
+B: buys
+C: pays
+D: charges
+KEY: A conf=high
+#134 page=33 group=g125-134 type=cloze_text
+STEM: Blank (134): choose the option that completes the text.
+A: purpose
+B: idea
+C: opinion
+D: thought
+KEY: B conf=high

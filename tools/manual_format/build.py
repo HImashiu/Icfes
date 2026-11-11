@@ -100,16 +100,18 @@ def place(text, fid):
     return ((text or '') + '\n\n' + tok).strip()
 
 # bank copy
-bank = {}
+bank = {}; BASE = {}
 def bankq(ref):
-    ex, n = ref.split('#'); ex = ex if ex.startswith('S11-') else 'S11-' + ex
+    ex, n = ref.split('#'); ex = ex if ex.startswith(('S11-', 'ICFES-')) else 'S11-' + ex
+    R = OUT if ex.startswith('ICFES-') else ROOT
+    BASE[ex] = R
     if ex not in bank:
-        d = json.load(open(f'{ROOT}/data/{ex}.golden.json'))
+        d = json.load(open(f'{R}/data/{ex}.golden.json'))
         sp = {}
-        for sf in [f'{ROOT}/figures/specs/{ex}.full.json', f'{ROOT}/figures/specs/{ex}.json', f'{ROOT}/figures/specs/S11-M_1ra-2da.json' if ex.startswith('S11-M_') else '']:
+        for sf in [f'{R}/figures/specs/{ex}.full.json', f'{R}/figures/specs/{ex}.json', f'{ROOT}/figures/specs/S11-M_1ra-2da.json' if ex.startswith('S11-M_') else '']:
             if sf and os.path.exists(sf):
                 for f in json.load(open(sf)).get('figures', []): sp.setdefault(f['id'], f)
-        mf = f'{ROOT}/figures/traced/{ex}/manifest.json'
+        mf = f'{R}/figures/traced/{ex}/manifest.json'
         man = json.load(open(mf)).get('figures', []) if os.path.exists(mf) else []
         bank[ex] = (d, sp, man)
     d, sp, man = bank[ex]
@@ -123,7 +125,7 @@ def copy_figs(ex, sp, man, newn, bq, texts, options):
         if o.get('figure'): ids |= set([o['figure']] if isinstance(o['figure'], str) else o['figure'])
     for e in man:
         if e.get('question') == bq['number'] and e.get('method') in ('azure', 'eyeballed_box', 'manual_box') and e.get('svg') and not str(e.get('field') or '').endswith('passage'):
-            srcf = f'{ROOT}/figures/{e["svg"]}'
+            srcf = f'{BASE.get(ex, ROOT)}/figures/{e["svg"]}'
             if not os.path.exists(srcf): continue
             ext = os.path.splitext(srcf)[1]
             dst = f'traced/{slug}/{e["figure_id"]}{ext}'
@@ -147,7 +149,7 @@ for gid, g in groups.items():
             ids = set(TOKEN.findall(passage))
             for e in man:
                 if e.get('question') == mq['number'] and (e['figure_id'] in ids or e.get('spec_id') in ids) and e.get('svg'):
-                    srcf = f'{ROOT}/figures/{e["svg"]}'; ext = os.path.splitext(srcf)[1]; dst = f'traced/{slug}/{e["figure_id"]}{ext}'
+                    srcf = f'{BASE.get(ex, ROOT)}/figures/{e["svg"]}'; ext = os.path.splitext(srcf)[1]; dst = f'traced/{slug}/{e["figure_id"]}{ext}'
                     if os.path.exists(srcf):
                         shutil.copyfile(srcf, f'{OUT}/figures/{dst}'); ne = dict(e, question=g['from'], svg=dst, copied_from=f'{ex}#{mq["number"]}'); manifest.append(ne)
         for i in set(TOKEN.findall(passage)):
