@@ -374,6 +374,15 @@ KEY: D conf=high
 #110 copy=ICFES-2019-1_2da#64 page=39
 KEY: B conf=high
 #111 copy=B_1ra#106 page=39
+STIM: En un compuesto cada átomo comparte un número determinado de electrones según su estado de oxidación, el cual se determina según su configuración electrónica. Por ejemplo, el SiO₂ es un compuesto neutro conformado por silicio y oxígeno (ver figura), cuya configuración electrónica se muestra en la tabla.
+
+<table class="exam-table"><tbody><tr><th>Átomo</th><th>Configuración electrónica</th></tr><tr><td>Si</td><td>1s² 2s² 2p⁶ 3s² 3p²</td></tr><tr><td>O</td><td>1s² 2s² 2p⁴</td></tr></tbody></table>
+
+<p style="text-align:right">**Tabla**</p>
+
+<p style="text-align:center">**O = Si = O**</p>
+
+<p style="text-align:right">**Figura**</p>
 KEY: B conf=high
 #112 copy=ICFES-2019-1_2da#66 page=39
 KEY: D conf=high

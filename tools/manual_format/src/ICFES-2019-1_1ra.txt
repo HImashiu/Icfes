@@ -43,6 +43,13 @@ KEY: D conf=high
 #13 copy=L_1ra#12 page=4
 KEY: A conf=high
 #14 copy=L_1ra#13 page=4
+STEM: Se proponen dos procedimientos para hallar $h$:
+
+**Procedimiento 1.** $\tan(60^\circ)=\dfrac{h}{6}\rightarrow h=6\tan(60^\circ)$.
+
+**Procedimiento 2.** $\dfrac{h}{\text{sen}(60^\circ)}=\dfrac{6}{\text{sen}(90^\circ)}\rightarrow h=\dfrac{\text{sen}(60^\circ)\,6}{\text{sen}(90^\circ)}$.
+
+Respecto a estos procedimientos, es verdadero afirmar que
 KEY: D conf=high
 #15 page=4
 STIM: Las medidas de dos ángulos de un triángulo se muestran en la figura.
@@ -265,6 +272,17 @@ KEY: C conf=high
 #97 copy=G1_1ra#107 page=27
 KEY: A conf=high
 #98 copy=G1_1ra#103 page=27
+STIM: A continuación se presentan dos unidades mediante las cuales se puede medir la concentración de una disolución:
+
+$\displaystyle \%\ \text{p/V} = \dfrac{\text{Masa de sustancia (g)}}{\text{100 mL de disolución}} \times 100\ \%$
+
+$\displaystyle \text{M} = \dfrac{\text{Masa de sustancia (mol)}}{\text{1 L de disolución}^{*}}$
+
+\*1 L = 1000 mL
+
+Un estudiante tiene dos disoluciones de distinta concentración de una misma sustancia, cuya masa es 200 g por cada mol, como se muestra a continuación.
+
+[[figura:g11-q103-auto-61937e]]
 KEY: B conf=high
 #99 copy=G1_1ra#109 page=27
 KEY: D conf=high

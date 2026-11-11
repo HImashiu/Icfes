@@ -196,6 +196,9 @@ FIG C p=17 box=0.575,0.770,0.760,0.850 what="intensidad transmitida vs grosor: c
 FIG D p=17 box=0.575,0.866,0.760,0.945 what="grosor vs intensidad transmitida: crece y se aplana"
 KEY: A conf=high
 #57 copy=K1_1ra#108 page=18
+STIM: En la tabla se muestra el número de protones, neutrones y electrones presentes en dos átomos del elemento bromo.
+
+<table class="exam-table"><tbody><tr><th>Partícula subatómica</th><th>Átomo I de bromo</th><th>Átomo II de bromo</th></tr><tr><td>Electrones</td><td>35</td><td>36</td></tr><tr><td>Protones</td><td>35</td><td>35</td></tr><tr><td>Neutrones</td><td>45</td><td>45</td></tr></tbody></table>
 STEM: Con base en la información anterior, puede afirmarse que el átomo I es un átomo de bromo neutro porque
 KEY: A conf=high
 #58 copy=K1_1ra#120 page=18

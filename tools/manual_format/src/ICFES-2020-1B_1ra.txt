@@ -204,11 +204,25 @@ KEY: A conf=high
 // Ciencias naturales
 @group g81-83 81-83 copy=L_1ra#100
 DIR: RESPONDA LAS PREGUNTAS 81 A 83 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
-#81 copy=L_1ra#100 page=27 group=g81-83
+PASSAGE: Para suministrarles agua potable a todas las personas existen 2 alternativas de potabilización. La estrategia más conocida es el uso de purificadores de agua que permiten obtener agua potable a partir de agua de mar o incluso agua contaminada. Otra alternativa es la implementación de reacciones químicas que permiten generar unas especies conocidas como radicales libres, los cuales pueden degradar distintos contaminantes presentes en el agua. A continuación, se presentan las reacciones químicas que muestran cómo a partir de oxígeno (O₂), hierro (Fe) y luz solar se puede obtener una de estas especies, conocidas como radical OH•.
+
+Reacción 1: Fe³⁺ + e⁻ → Fe²⁺
+
+Reacción 2: O₂ + 2e⁻ + 2H⁺ → H₂O₂
+
+Reacción 3: Fe²⁺ + H₂O₂ $\xrightarrow{\text{luz}}$ Fe³⁺ + radical OH• + OH⁻
+#81 copy=L_1ra#100 page=27 group=g81-83 nofig=1
+A: Reaccionan 2 moles de O₂ con 2 moles de H⁺ y 2 moles de e⁻ para producir 2 moles de H₂O₂.
+B: 1 mol de H₂O₂ se descompone en 2 moles de O₂, 2 moles de H⁺ y 2 e⁻.
+C: Reaccionan 1 mol de O₂ con 2 moles de H⁺ y 2 e⁻ para producir 1 mol de H₂O₂.
+D: 2 moles de H₂O₂ se descomponen en 1 mol de O₂, 2 moles de H⁺ y 2 e⁻.
 KEY: C conf=high
-#82 copy=L_1ra#101 page=27 group=g81-83
+#82 copy=L_1ra#101 page=27 group=g81-83 nofig=1
+A: Porque el oxígeno (O₂) y luz solar son recursos naturales abundantes, y solo necesitaría adicionar hierro (Fe) al agua contaminada para producir radicales libres que se encarguen de degradar los contaminantes presentes en el agua contaminada.
+B: Porque las reacciones mostradas indican que solo con agregar oxígeno (O₂) a aguas contaminadas se puede generar la evaporación de todos los contaminantes presentes en ellas, y el oxígeno se puede extraer de la atmósfera terrestre.
+C: Porque al agregar hierro (Fe) y oxígeno (O₂) a las fuentes hídricas en presencia de luz solar, se pueden transformar los contaminantes del agua en compuestos que mejoren su aroma y sabor.
 KEY: A conf=high
-#83 copy=L_1ra#102 page=27 group=g81-83
+#83 copy=L_1ra#102 page=27 group=g81-83 nofig=1
 KEY: C conf=high
 #84 copy=L_1ra#94 page=27
 KEY: B conf=high
@@ -275,7 +289,9 @@ KEY: B conf=high
 KEY: C conf=high
 #97 copy=E_1ra#100 page=33
 KEY: A conf=high
-#98 copy=L_1ra#112 page=33
+@group g98-98 98-98 copy=L_1ra#112
+DIR: RESPONDA LA PREGUNTA 98 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#98 copy=L_1ra#112 page=33 group=g98-98
 KEY: C conf=high
 #99 copy=L_1ra#95 page=33
 KEY: B conf=high

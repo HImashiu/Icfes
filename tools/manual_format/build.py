@@ -207,7 +207,7 @@ for n in sorted(order):
          'scan_marked_option': None, 'source': {'pages': [int(a['page'])] if 'page' in a else [], 'crop': None},
          'provenance': {'status': 'claude_transcribed', 'trusted': True, 'notes': notes or ['transcribed by Claude from the scan'], 'flags': []},
          'ready': True}
-    if base.get('figure') and 'STIM' not in s and 'STEM' not in s and not re.search(r'\[\[figura:[^\]]*-q%d-fig-' % n, stim + stem): q['figure'] = base['figure']  # own crop replaces the bank figure
+    if base.get('figure') and not a.get('nofig') and 'STIM' not in s and 'STEM' not in s and not re.search(r'\[\[figura:[^\]]*-q%d-fig-' % n, stim + stem): q['figure'] = base['figure']  # own crop replaces the bank figure
     if a.get('group') and not stim: q['stimulus_md'] = ''
     questions.append(q)
     if s.get('key'):
@@ -222,6 +222,23 @@ golden = {'format': 'icfes-golden/1', 'generated_at': __import__('datetime').dat
           'sections': [dict(s, found=sum(1 for q in questions if s['first'] <= q['number'] <= s['last']), expected=s['last'] - s['first'] + 1) for s in sections],
           'groups': out_groups, 'questions': questions}
 outdir = f'{OUT}/data'
+# nofig=1 on a copied question: none of the bank's figures or crops for it (its text already carries them)
+for nq in [n for n in order if qs[n]['attrs'].get('nofig')]:
+    for e in [e for e in manifest if e.get('question') == nq and e.get('copied_from')]:
+        try: os.remove(f"{OUT}/figures/{e['svg']}")
+        except OSError: pass
+    manifest[:] = [e for e in manifest if not (e.get('question') == nq and e.get('copied_from'))]
+# Plain chemical formulas (CO2, H2O, O2...) get real subscripts; math spans, tags and figure tokens are left alone.
+CHEM = re.compile(r'(?<![\w/.-])(H2O2|H2O|CO2|O2|N2|H2|CH4|NH3|SO2|NO2|C6H12O6|CaCO3|H2SO4)(?![\w/.-])')
+SUB = str.maketrans('0123456789', '₀₁₂₃₄₅₆₇₈₉')
+def chemfix(s):
+    if not s: return s
+    parts = re.split(r'(\$[^$\n]*\$|<[^>]*>|\[\[[^\]]*\]\])', s)
+    return ''.join(p if i % 2 else CHEM.sub(lambda m: re.sub(r'(?<=[A-Za-z])(\d+)', lambda d: d[1].translate(SUB), m[1]), p) for i, p in enumerate(parts))
+for q in golden['questions']:
+    for k in ('stimulus_md', 'stem_md'): q[k] = chemfix(q.get(k))
+    for o in q['options']: o['text_md'] = chemfix(o.get('text_md'))
+for g in golden['groups']: g['passage_md'] = chemfix(g.get('passage_md'))
 json.dump(golden, open(f'{outdir}/{slug}.golden.json', 'w'), ensure_ascii=False, indent=1)
 json.dump({'exam': slug, 'figures': manifest, 'dropped': []}, open(f'{tdir}/manifest.json', 'w'), ensure_ascii=False, indent=1)
 json.dump({'format': 'icfes-figures-specs/1', 'exam': slug, 'note': 'Native figures copied from bank questions; everything else is a scan crop (traced/manifest.json).', 'figures': spec_figs, 'pending': []},

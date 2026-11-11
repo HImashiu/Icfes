@@ -84,6 +84,10 @@ KEY: D conf=high
 #35 copy=K1_2da#34 page=12
 KEY: B conf=high
 #36 copy=E_1ra#2 page=12
+A: verdadera, porque $150 = 3 \times 50$; luego, los porcentajes corresponden al 25 % y al 75 %, respectivamente.
+B: falsa, porque ${}150x = 50(3x)$; por tanto, los precios de la carne comprada son iguales y así se tiene que cada uno es el 50 % del total del dinero.
+C: verdadera, porque uno de los porcentajes es el triple del otro; es decir $0{,}75 = 3 \times 0{,}25$.
+D: falsa, porque $150 = 0{,}75 \times 200$ y $50 = 0{,}25 \times 200$, que es el total de carne comprada.
 KEY: B conf=high
 #37 copy=A_2da#49 page=12
 KEY: B conf=high
@@ -104,6 +108,17 @@ KEY: D conf=high
 #44 copy=B_2da#38 page=15
 KEY: B conf=high
 #45 copy=B_2da#39 page=15
+STIM: En un libro de geometría, se indica la construcción, paso a paso, de un cuadrilátero.
+
+**Paso 1.** Construir una circunferencia de diámetro *MN*.
+
+**Paso 2.** Definir *P* el punto medio entre *M* y el centro de la circunferencia.
+
+**Paso 3.** Construir un segmento de recta perpendicular a *MN* que pase por *P* y corte en dos puntos, *Q* y *R*, a la circunferencia.
+
+**Paso 4.** Construir el segmento de recta paralelo a *QR* que pase por el centro y que corte a la circunferencia en *S*.
+
+**Paso 5.** Obtener el cuadrilátero *MQSR*.
 KEY: B conf=medium
 #46 copy=C_1ra#16 page=15
 KEY: B conf=high

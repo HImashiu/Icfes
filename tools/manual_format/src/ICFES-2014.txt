@@ -256,7 +256,7 @@ D: Mil veces.
 KEY: D conf=high why="Clave oficial."
 #24 page=10
 STEM: En determinada zona de una ciudad se construyen edificios de apartamentos en los que cada metro cuadrado tiene un costo de $800.000, y se asegura a los compradores que en esta zona anualmente, el metro cuadrado se valoriza un 5% respecto al costo del año anterior. ¿Con cuál de las siguientes expresiones se representa el costo de un metro cuadrado en esa zona, transcurridos *n* años?
-A: $800.000 + 5n$
+A: ${}800.000 + 5n$
 B: $800.000\,(5n)$
 C: $800.000\left(\frac{5}{100}\right)^n$
 D: $800.000\left(1 + \frac{5}{100}\right)^n$
