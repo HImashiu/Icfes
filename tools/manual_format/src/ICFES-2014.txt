@@ -1,0 +1,886 @@
+@exam ICFES-2014 | ICFES Saber 11 2014 (cuadernillo de prueba) | pdf=/mnt/project-files/icfes/sources-new/l5_2014.pdf | dpi=300
+@section Matemáticas 1-25
+@section Lectura crítica 26-50
+@section Sociales y ciudadanas 51-75
+@section Ciencias naturales 76-100
+@section Inglés 101-125
+// Matemáticas (official key table on p39)
+#1 page=4
+STIM: A continuación se muestran los resultados de una encuesta que indagó sobre el parque automotor del transporte intermunicipal en Colombia.
+
+[[FIG]]
+FIG stim p=4 box=0.26,0.175,0.76,0.31 what="gráfica circular: transporte intermunicipal de pasajeros (buseta, automóvil, camioneta, campero, bus escalera, bus, microbús)"
+STEM: Según la información anterior, es correcto afirmar que
+A: la mayor parte del parque automotor son automóviles, camionetas y camperos.
+B: la mitad del parque automotor corresponde a automóviles, camionetas y camperos.
+C: la mayor parte del parque automotor son buses, microbuses y busetas.
+D: la mitad del parque automotor corresponde a buses, microbuses y busetas.
+KEY: C conf=high why="Clave oficial."
+#2 page=4
+STEM: Una prueba atlética tiene un récord mundial de 10,49 segundos y un récord olímpico de 10,50 segundos. ¿Es posible que un atleta registre un tiempo, en el mismo tipo de prueba, que rompa el récord olímpico pero no el mundial?
+A: Sí, porque puede registrar, por ejemplo, un tiempo de 10,497 segundos, que está entre los dos tiempos récord.
+B: Sí, porque puede registrar un tiempo menor que 10,4 y marcaría un nuevo récord.
+C: No, porque no existe un registro posible entre los dos tiempos récord.
+D: No, porque cualquier registro menor que el récord olímpico va a ser menor que el récord mundial.
+KEY: A conf=high why="Clave oficial."
+#3 page=4
+STIM: En una institución educativa hay dos cursos en grado undécimo. El número de hombres y mujeres de cada curso se relaciona en la tabla:
+
+<table class="exam-table"><tr><th></th><th>Curso 11 A</th><th>Curso 11 B</th><th>Total</th></tr><tr><th>Número de mujeres</th><td>22</td><td>23</td><td>45</td></tr><tr><th>Número de hombres</th><td>18</td><td>12</td><td>30</td></tr><tr><th>Total</th><td>40</td><td>35</td><td>75</td></tr></table>
+
+<p style="text-align:right">**Tabla**</p>
+STEM: La probabilidad de escoger un estudiante de grado undécimo, de esta institución, que sea mujer es de $\frac{3}{5}$. Este valor corresponde a la razón entre el número total de mujeres y
+A: el número total de estudiantes de grado undécimo.
+B: el número total de hombres de grado undécimo.
+C: el número total de mujeres del curso 11 B.
+D: el número total de hombres del curso 11 A.
+KEY: A conf=high why="Clave oficial."
+#4 page=4
+STIM: Para fijar un aviso publicitario se coloca sobre un muro una escalera a 12 metros del suelo (ver figura 1). Las figuras, además, muestran la situación y algunas de las medidas involucradas.
+
+[[FIG]]
+FIG stim p=4 box=0.53,0.613,0.83,0.748 what="figura 1: escalera apoyada en un muro a 12 m; figura 2: triángulo 12, 5, 13 con ángulo theta"
+STEM: ¿Cuál es el coseno del ángulo θ que forman el suelo y la escalera?
+A: $\frac{12}{13}$
+B: $\frac{12}{5}$
+C: $\frac{5}{13}$
+D: $\frac{13}{5}$
+KEY: C conf=high why="Clave oficial."
+#5 page=5
+STIM: En la tabla se presentan las cartas que conforman una baraja de póquer.
+
+[[FIG]]
+FIG stim p=5 box=0.188,0.176,0.47,0.405 what="tabla: baraja de póquer, negras (picas, tréboles) y rojas (corazones, diamantes), A a K"
+STEM: Si la probabilidad de escoger una de ellas que cumpla dos características determinadas es cero, estas características podrían ser:
+A: Ser una carta negra y ser un número par.
+B: Ser una carta roja y ser de picas.
+C: Ser una carta de corazones y ser un número impar.
+D: Ser la carta roja K y ser de diamantes.
+KEY: B conf=high why="Clave oficial."
+#6 page=5
+STIM: Un *octágono regular* es un polígono de ocho lados y ocho ángulos internos congruentes. La figura muestra un octágono regular inscrito en una circunferencia de radio 2.
+
+[[FIG]]
+FIG stim p=5 box=0.235,0.62,0.42,0.735 what="octágono regular inscrito en circunferencia de centro O, vértices P y Q, ángulos de 135° y 67,5°"
+STEM: Con la expresión $x = \frac{2\,\mathrm{sen}\,45°}{\mathrm{sen}\,67{,}5°}$ se puede calcular en el octágono de la figura, la medida del
+A: ángulo *OPQ*.
+B: segmento *PQ*.
+C: ángulo *QOP*.
+D: segmento *OQ*.
+KEY: B conf=high why="Clave oficial."
+#7 page=5
+STIM: En una fábrica se aplica una encuesta a los empleados para saber el medio de transporte que usan para llegar al trabajo, y luego decidir si se implementa un servicio de ruta. Los resultados mostraron, entre otras, estas tres conclusiones sobre un grupo de 100 empleados que viven cerca de la fábrica y que se desplazan únicamente en bus o a pie:
+
+• El 60% del grupo son mujeres.
+
+• El 20% de las mujeres se desplazan en bus.
+
+• El 40% de los hombres se desplaza caminando.
+STEM: ¿Cuál de las siguientes tablas representa correctamente la información obtenida de ese grupo?
+A: <table class="exam-table"><tr><th>Transporte \ Género</th><th>Hombre</th><th>Mujer</th></tr><tr><td>En bus</td><td>40</td><td>60</td></tr><tr><td>Caminando</td><td>60</td><td>40</td></tr></table>
+B: <table class="exam-table"><tr><th>Transporte \ Género</th><th>Hombre</th><th>Mujer</th></tr><tr><td>En bus</td><td>34</td><td>12</td></tr><tr><td>Caminando</td><td>16</td><td>38</td></tr></table>
+C: <table class="exam-table"><tr><th>Transporte \ Género</th><th>Hombre</th><th>Mujer</th></tr><tr><td>En bus</td><td>0</td><td>20</td></tr><tr><td>Caminando</td><td>40</td><td>40</td></tr></table>
+D: <table class="exam-table"><tr><th>Transporte \ Género</th><th>Hombre</th><th>Mujer</th></tr><tr><td>En bus</td><td>24</td><td>12</td></tr><tr><td>Caminando</td><td>16</td><td>48</td></tr></table>
+KEY: D conf=high why="Clave oficial."
+#8 page=5
+STEM: Un *trapecio isósceles* es un cuadrilátero que tiene un solo par de lados paralelos y los otros dos, de igual medida.
+
+En un plano cartesiano se dibuja un trapecio isósceles de modo que el eje *Y* divide al trapecio en dos figuras iguales.
+
+Si las coordenadas de dos de los vértices del trapecio son (-4, 2) y (-2, 8), ¿cuáles son las coordenadas de los otros dos vértices?
+A: (8, 2) y (2, 4).
+B: (2, 8) y (4, 2).
+C: (-2, -4) y (-8, -2).
+D: (-4, -2) y (-2, -8).
+KEY: B conf=high why="Clave oficial."
+@group g9-10 9-10
+DIR: RESPONDA LAS PREGUNTAS 9 Y 10 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+PASSAGE: Para adquirir un crédito por $6.000.000, Ángela solicita en una entidad financiera información sobre las modalidades de pago para crédito. Un asesor le da la siguiente información.
+
+[[FIG]]
+FIG passage p=6 box=0.175,0.205,0.82,0.4 what="tabla de modalidades I, II y III: número de cuotas, abono al crédito e interés"
+#9 page=6 group=g9-10
+STEM: Después de analizar la información, Ángela afirma: *"Con la modalidad I, el valor de la cuota disminuirá $50.000 en cada mes"*. La afirmación es correcta porque
+A: el interés total del crédito será $300.000 y cada mes disminuirá $50.000.
+B: cada mes se abonará al crédito $1.000.000 y el interés disminuirá en $50.000.
+C: cada mes aumentará el abono al crédito en $50.000, de manera que el interés disminuirá.
+D: el abono al crédito disminuirá $50.000 cada mes, al igual que el interés.
+KEY: B conf=high why="Clave oficial."
+#10 page=6 group=g9-10
+STEM: El interés total de un crédito es la cantidad de dinero que se paga adicional al valor del mismo. ¿Cuál(es) de los siguientes procesos podría utilizar la entidad, para calcular el interés total del crédito de Ángela, si se pagara con la modalidad II?
+
+Proceso 1: calcular el 20% de $6.000.000.
+
+Proceso 2: calcular el 20% de $6.000.000 y multiplicarlo por 12.
+
+Proceso 3: calcular el valor de la cuota, multiplicarlo por 12 y al resultado restarle $6.000.000.
+A: 1 solamente.
+B: 2 solamente.
+C: 1 y 3 solamente.
+D: 2 y 3 solamente.
+KEY: C conf=high why="Clave oficial."
+#11 page=6
+STIM: Una fábrica de lápices que realiza el control de calidad de sus productos, selecciona una muestra de 100 lápices. En la siguiente tabla se registra la longitud de los mismos:
+
+<table class="exam-table"><tr><th>Cantidad de lápices</th><th>Longitud (mm)</th></tr><tr><td>8</td><td>149</td></tr><tr><td>16</td><td>150</td></tr><tr><td>65</td><td>151</td></tr><tr><td>11</td><td>152</td></tr></table>
+
+<p style="text-align:right">**Tabla**</p>
+STEM: Con base en la información presentada en la anterior tabla y teniendo en cuenta que el margen de error del control de calidad es del 3%, el porcentaje correspondiente a los lápices producidos que miden 150 mm está entre
+A: el 8% y el 16%.
+B: el 13% y el 19%.
+C: el 15% y el 18%.
+D: el 16% y el 65%.
+KEY: B conf=high why="Clave oficial."
+#12 page=6
+STEM: Sobre una circunferencia de centro *O* se localizan dos puntos *P* y *P'* diferentes.
+
+De las siguientes, ¿cuál figura **NO** puede resultar al unir entre sí los puntos *P*, *P'* y *O*?
+A: Un triángulo isósceles.
+B: Un radio de la circunferencia.
+C: Un triángulo equilátero.
+D: Un diámetro de la circunferencia.
+KEY: B conf=high why="Clave oficial."
+@group g13-14 13-14
+DIR: RESPONDA LAS PREGUNTAS 13 Y 14 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+PASSAGE: En la gráfica se muestran los resultados de cinco jugadores de tenis. En Australia y Estados Unidos se juega en cancha dura, el Roland Garros en arcilla y el Wimbledon en césped. Cada uno de ellos se juega una vez al año y otorga 2.000 puntos al vencedor, mientras que otros torneos solo entregan como máximo 1.000 puntos al vencedor.
+
+[[FIG]]
+
+<p style="text-align:right">Tomado y adaptado del diario: *http://www.elpais.com*</p>
+FIG passage p=7 box=0.165,0.218,0.81,0.535 what="gráfica: torneos del Grand Slam ganados por los jugadores A a E antes y después de los 24 años"
+#13 page=7 group=g13-14
+STEM: Se desea saber cuál de los jugadores que aparecen en la gráfica consiguió un mayor porcentaje de victorias en las finales del Grand Slam y se concluyó que fue el jugador *C*. Esta conclusión es incorrecta porque
+A: el jugador C no ganó Roland Garros antes de los 24 años.
+B: el más efectivo es el jugador A con 100% de torneos ganados antes de los 24 años.
+C: el más efectivo es el jugador D con 77,8% de efectividad en finales.
+D: no supera los torneos ganados en cancha dura del jugador A.
+KEY: C conf=high why="Clave oficial."
+#14 page=7 group=g13-14
+STEM: Considerando solamente los torneos jugados en cancha dura, ¿cuál es el promedio de torneos ganados por los cinco jugadores?
+A: 1,2
+B: 2,0
+C: 2,6
+D: 4,4
+KEY: D conf=high why="Clave oficial."
+#15 page=7
+STEM: Se puede encontrar números racionales mayores que *k*, de manera que sean cada vez más cercanos a él, calculando $k + \frac{1}{j}$ (con *j* entero positivo). Cuanto más grande sea *j*, más cercano a *k* será el racional construido. ¿Cuántos números racionales se pueden construir cercanos a *k* y menores que $k + \frac{1}{11}$?
+A: 10, que es la cantidad de racionales menores que 11.
+B: Una cantidad infinita, pues existen infinitos números enteros mayores que 11.
+C: 11, que es el número que equivale en este caso a *j*.
+D: Uno, pues el racional más cercano a *k* se halla con *j* = 10, es decir, con *k* + 0,1.
+KEY: B conf=high why="Clave oficial."
+#16 page=8
+STIM: En la figura se representa una cancha de fútbol con las medidas de sus lados.
+
+[[FIG]]
+FIG stim p=8 box=0.195,0.18,0.475,0.272 what="cancha de fútbol de 100 m por 60 m"
+STEM: Un arquitecto realiza una maqueta del diseño de la cancha, con medida de los lados cien veces menor que las medidas originales. El diseño de la maqueta medirá
+A: 
+B: 
+C: 
+D: 
+FIG A p=8 box=0.215,0.365,0.475,0.46 what="cancha de 6 × 10⁻² metros por 1 × 10⁻² metros"
+FIG B p=8 box=0.215,0.5,0.475,0.597 what="cancha de 6 × 10⁻² centímetros por 1 × 10⁻² centímetros"
+FIG C p=8 box=0.215,0.636,0.475,0.732 what="cancha de 6 × 10¹ metros por 1 × 10² metros"
+FIG D p=8 box=0.215,0.77,0.475,0.865 what="cancha de 6 × 10¹ centímetros por 1 × 10² centímetros"
+KEY: D conf=high why="Clave oficial."
+#17 page=8
+STIM: El área de los rectángulos que se pueden construir a partir del origen, los ejes y un punto que pertenece a la gráfica de la función $f(x) = \frac{5}{x}$, donde $x > 0$, se describe con la expresión $A_x = x f(x)$.
+
+[[FIG]]
+FIG stim p=8 box=0.535,0.23,0.81,0.355 what="gráfica de f(x) = 5/x con un rectángulo sombreado"
+STEM: ¿Cuál de las siguientes gráficas corresponde a $A_x$?
+A: 
+B: 
+C: 
+D: 
+FIG A p=8 box=0.565,0.398,0.77,0.5 what="recta creciente desde el origen"
+FIG B p=8 box=0.565,0.513,0.77,0.61 what="recta horizontal y = 5 para x > 0"
+FIG C p=8 box=0.565,0.633,0.77,0.735 what="curva creciente desde el origen"
+FIG D p=8 box=0.565,0.746,0.77,0.862 what="curva decreciente desde (0, 5)"
+KEY: B conf=high why="Clave oficial."
+@group g18-20 18-20
+DIR: RESPONDA LAS PREGUNTAS 18 A 20 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+PASSAGE: El subsidio familiar de vivienda (SFV) es un aporte que entrega el Estado y que constituye un complemento del ahorro, para facilitarle la adquisición, construcción o mejoramiento de una solución de vivienda de interés social al ciudadano. A continuación se presenta la tabla de ingresos en salarios mínimos mensuales legales vigentes (SMMLV) y el subsidio al que tiene derecho, para cierto año.
+
+<p style="text-align:center">**SUBSIDIO FAMILIAR DE VIVIENDA (SFV)**</p>
+
+<table class="exam-table"><tr><th colspan="2">Ingresos (SMMLV)</th><th colspan="2">Valores $</th><th rowspan="2">Valor de SFV en SMMLV</th></tr><tr><th>Desde</th><th>Hasta</th><th>Desde</th><th>Hasta</th></tr><tr><td>0</td><td>1</td><td>0</td><td>535.600</td><td>22</td></tr><tr><td>1</td><td>1,5</td><td>535.601</td><td>803.400</td><td>21,5</td></tr><tr><td>1,5</td><td>2</td><td>803.401</td><td>1.071.200</td><td>21</td></tr><tr><td>2</td><td>2,25</td><td>1.071.201</td><td>1.205.100</td><td>19</td></tr><tr><td>2,25</td><td>2,5</td><td>1.205.101</td><td>1.339.000</td><td>17</td></tr><tr><td>2,5</td><td>2,75</td><td>1.339.001</td><td>1.472.900</td><td>15</td></tr><tr><td>2,75</td><td>3</td><td>1.472.901</td><td>1.606.800</td><td>13</td></tr><tr><td>3</td><td>3,5</td><td>1.606.801</td><td>1.874.600</td><td>9</td></tr><tr><td>3,5</td><td>4</td><td>1.804.601</td><td>2.142.400</td><td>4</td></tr></table>
+#18 page=9 group=g18-20
+STEM: Con el SFV más los ahorros con los que cuente el grupo familiar y el crédito que obtenga de una entidad financiera, se puede comprar la vivienda. Por tanto, el procedimiento correcto para estimar el valor del crédito que debe solicitarse al banco es:
+A: Valor del crédito = ingresos + ahorros + subsidio + valor de la vivienda.
+B: Valor del crédito = valor de la vivienda − ahorros − subsidio.
+C: Valor del crédito = ingresos + ahorros − subsidio + valor de la vivienda.
+D: Valor del crédito = valor de la vivienda + subsidio − ahorros.
+KEY: B conf=high why="Clave oficial."
+#19 page=9 group=g18-20
+STIM: Una persona que observa la información de la tabla elabora la gráfica que se presenta a continuación.
+
+[[FIG]]
+FIG stim p=9 box=0.335,0.568,0.70,0.677 what="gráfica Ingresos/Subsidio: recta decreciente de 22 a 4"
+STEM: La gráfica presenta una inconsistencia porque
+A: los ingresos y el subsidio correspondientes se dan en miles de pesos, y no en SMMLV.
+B: la correspondencia entre ingresos y subsidios es inversa, pero no disminuye de manera constante y continua.
+C: faltan algunos valores de los subsidios presentados en la tabla.
+D: los valores del subsidio deben ser ascendentes, pues a menores ingresos, mayor es el subsidio.
+KEY: B conf=high why="Clave oficial."
+#20 page=9 group=g18-20
+STEM: Una familia con ingresos entre 0 y 1 SMMLV recibe un subsidio equivalente a
+A: 1,4 veces el subsidio de una familia de ingresos entre 2 y 2,25 SMMLV.
+B: 1,8 veces el subsidio de una familia de ingresos entre 2,5 y 2,75 SMMLV.
+C: 3,5 veces el subsidio de una familia de ingresos entre 3 y 3,5 SMMLV.
+D: 5,5 veces el subsidio de una familia de ingresos entre 3,5 y 4 SMMLV.
+KEY: D conf=high why="Clave oficial."
+#21 page=10
+STEM: Un colegio necesita enviar 5 estudiantes como representantes a un foro sobre la contaminación del medio ambiente. Se decidió que 2 estudiantes sean de grado décimo y 3 de grado undécimo. En décimo hay 5 estudiantes preparados para el foro y en undécimo hay 4. ¿Cuántos grupos diferentes pueden formarse para enviar al foro?
+A: 9
+B: 14
+C: 20
+D: 40
+KEY: D conf=high why="Clave oficial."
+#22 page=10
+STEM: Entre los 16 estudiantes de un salón de clases se va a rifar una boleta para ingresar a un parque de diversiones. Cada estudiante debe escoger un número del 3 al 18. El sorteo se efectúa de la siguiente manera: se depositan 6 balotas en una urna, cada una numerada del 1 al 6; se extrae una balota, se mira el número y se vuelve a depositar en la urna. El experimento se repite dos veces más. La suma de los tres puntajes obtenidos determina el número ganador de la rifa. Si en la primera extracción del sorteo se obtuvo 2, es más probable que el estudiante que escogió el número 10 gane la rifa a que la gane el estudiante con el número 7, porque
+A: al ser mayor el número escogido, es mayor la probabilidad de ganar.
+B: el primer estudiante tiene una posibilidad más de ganar que el segundo.
+C: es más probable seguir obteniendo números pares.
+D: es mayor la diferencia entre 10 y 18 que entre 2 y 7.
+KEY: B conf=high why="Clave oficial."
+#23 page=10
+STEM: La expresión $10^3 = \frac{I}{I_0}$ relaciona la sonoridad de un sonido de 30 decibeles con su intensidad ($I$) y la menor intensidad ($I_0$) que percibe el oído humano.
+
+¿Cuántas veces es el valor de $I$ respecto a $I_0$?
+A: Una milésima.
+B: Un tercio.
+C: Tres veces.
+D: Mil veces.
+KEY: D conf=high why="Clave oficial."
+#24 page=10
+STEM: En determinada zona de una ciudad se construyen edificios de apartamentos en los que cada metro cuadrado tiene un costo de $800.000, y se asegura a los compradores que en esta zona anualmente, el metro cuadrado se valoriza un 5% respecto al costo del año anterior. ¿Con cuál de las siguientes expresiones se representa el costo de un metro cuadrado en esa zona, transcurridos *n* años?
+A: $800.000 + 5n$
+B: $800.000\,(5n)$
+C: $800.000\left(\frac{5}{100}\right)^n$
+D: $800.000\left(1 + \frac{5}{100}\right)^n$
+KEY: D conf=high why="Clave oficial."
+// Q25 is an open-response question (no options); left out.
+// Lectura crítica
+@group g26-28 26-28 copy=M_1ra#37
+DIR: RESPONDA LAS PREGUNTAS 26 A 28 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#26 copy=M_1ra#37 page=11 group=g26-28
+KEY: C conf=high why="Clave oficial."
+#27 copy=M_1ra#38 page=11 group=g26-28
+KEY: B conf=high why="Clave oficial."
+#28 copy=M_1ra#39 page=11 group=g26-28
+KEY: C conf=high why="Clave oficial."
+@group g29-33 29-33 copy=M_1ra#42
+DIR: RESPONDA LAS PREGUNTAS 29 A 33 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#29 copy=M_1ra#42 page=12 group=g29-33
+KEY: A conf=high why="Clave oficial."
+#30 copy=M_1ra#43 page=12 group=g29-33
+KEY: B conf=high why="Clave oficial."
+#31 copy=M_1ra#44 page=12 group=g29-33
+KEY: D conf=high why="Clave oficial."
+#32 page=13 group=g29-33
+STEM: ¿Cuál de las siguientes afirmaciones sintetiza adecuadamente las ideas contenidas en el primer párrafo?
+A: El que alguien sea justo es un deber que se deriva de la conciencia moral que tienen todos los hombres.
+B: El que alguien sea justo resulta de una imposición, pues toda persona sin las restricciones y exigencias de la ley buscará satisfacer sus deseos.
+C: La justicia es una ilusión, ya que lo natural es que una persona busque cumplir sus deseos y alcanzar sus intereses, sin reparar en la igualdad que exige la ley.
+D: La justicia es un ideal inalcanzable, ya que toda persona, por más justa que aparente ser, tiene intereses propios que pueden llevarla a cometer injusticias.
+KEY: B conf=high why="Clave oficial."
+#33 page=13 group=g29-33
+STEM: Dada la estructura del texto anterior, ¿qué propósito general tiene el autor al introducir el relato sobre el anillo de Giges, y cómo lo alcanza?
+A: Promover en la audiencia la idea de que es más ventajoso seguir el camino de la injusticia. El caso de Giges muestra cómo obtuvo beneficios gracias al comportamiento injusto que le posibilitó el anillo.
+B: Convencer a la audiencia de que todo hombre cometerá injusticias cuando tenga la oportunidad. Así lo hizo Giges una vez descubrió el poder que le otorgaba el anillo.
+C: Reforzar en la audiencia la idea de que todos cometemos injusticias. El caso de Giges ilustra cómo las personas aparentemente justas en realidad cometen grandes injusticias.
+D: Persuadir a la audiencia de que actuar justamente requiere mucha fuerza de voluntad. En el caso de Giges, la tentación derivada del poder del anillo doblegó su voluntad.
+KEY: B conf=high why="Clave oficial."
+@group g34-41 34-41 copy=A_1ra#44
+DIR: RESPONDA LAS PREGUNTAS 34 A 41 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#34 page=14 group=g34-41
+STEM: Para el autor, el amor o el enamoramiento son
+A: las bases fundamentales del matrimonio y de la familia.
+B: amenazas al respeto y la solidaridad debida a la familia.
+C: ideas solo recientemente vinculadas al matrimonio y a la familia.
+D: sentimientos irracionales que contradicen el deber ser del matrimonio.
+KEY: C conf=high why="Clave oficial."
+#35 page=14 group=g34-41
+STEM: La función del conector "sin embargo" del penúltimo párrafo es:
+A: introducir un nuevo tema de reflexión.
+B: negar información suministrada previamente.
+C: agregar nuevos detalles acerca de lo dicho anteriormente.
+D: contrastar la información anterior sin llegar a invalidarla.
+KEY: D conf=high why="Clave oficial."
+#36 copy=A_1ra#44 page=14 group=g34-41
+A: ahorros de la futura esposa
+B: dinero de los familiares
+C: aporte patrimonial
+D: ceremonia matrimonial
+KEY: C conf=high why="Clave oficial."
+#37 copy=A_1ra#46 page=14 group=g34-41
+A: presenta un paralelo entre las concepciones del amor y el matrimonio en la China tradicional y en Occidente.
+B: demuestra que en China el enamoramiento entre esposos era una amenaza al respeto y la solidaridad de la familia.
+C: sintetiza las razones por las cuales en algunas culturas el enamoramiento y el matrimonio se consideran incompatibles.
+D: provee un ejemplo de que la asociación entre el amor y el matrimonio no es algo propio de todos los tiempos y culturas.
+KEY: D conf=high why="Clave oficial."
+#38 page=14 group=g34-41
+STEM: ¿Cuál de los siguientes enunciados apoya la idea de que el amor maduro y sincero no siempre ha sido considerado como la base de la familia?
+A: En los años 50 se produjo una marcada distinción entre los roles masculino y femenino en la familia.
+B: La idea del amor como la razón que ha de llevar al matrimonio surgió con el movimiento romántico en el siglo XVIII.
+C: Ambos miembros de la pareja deben poner mucho empeño para que el matrimonio se sostenga.
+D: El matrimonio se consolidó en el siglo XIX como la principal forma de institucionalización del amor conyugal.
+KEY: B conf=high why="Clave oficial."
+#39 copy=A_1ra#45 page=14 group=g34-41
+KEY: A conf=high why="Clave oficial."
+#40 page=15 group=g34-41
+STEM: ¿Qué implicación sobre el matrimonio entre los fulbes africanos puede derivarse a partir de lo dicho por el autor?
+A: Que en esa comunidad no sucede que haya amor entre esposos.
+B: Que en esa comunidad el amor no es una condición necesaria para el matrimonio.
+C: Que las mujeres de esa comunidad sienten temor a enamorarse de sus esposos.
+D: Que las mujeres de esa comunidad no ven su amor correspondido por sus esposos.
+KEY: B conf=high why="Clave oficial."
+#41 page=15 group=g34-41
+STEM: De acuerdo con el texto, ¿qué se puede concluir acerca del matrimonio?
+A: Que es una institución que tiene únicamente propósitos económicos y políticos.
+B: Que es la base de la familia en culturas tan diversas y complejas como las nuestras.
+C: Que es una institución que varía dependiendo del contexto histórico y social.
+D: Que es un pacto entre dos individuos que debe basarse en el amor y la confianza.
+KEY: C conf=high why="Clave oficial."
+@group g42-49 42-49 copy=M_1ra#58
+DIR: RESPONDA LAS PREGUNTAS 42 A 49 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#42 copy=M_1ra#58 page=16 group=g42-49
+KEY: A conf=high why="Clave oficial."
+#43 copy=M_1ra#59 page=16 group=g42-49
+KEY: C conf=high why="Clave oficial."
+#44 copy=M_1ra#60 page=16 group=g42-49
+KEY: D conf=high why="Clave oficial."
+#45 page=16 group=g42-49
+STEM: De la información del cuadro inferior izquierdo, donde se presentan estadísticas sobre la cantidad relativa de muertes por accidentes de tránsito en función de la región, se puede inferir
+A: cuáles son los países donde menos se utilizan vehículos motorizados.
+B: que en el Pacífico y en Asia hay el mismo número de muertes por accidentes de tránsito.
+C: cuál es el riesgo de morir en un accidente de tránsito según la zona geográfica.
+D: cuáles son las zonas geográficas en donde se requiere un mejoramiento de las vías.
+KEY: C conf=high why="Clave oficial."
+#46 page=16 group=g42-49
+STEM: A partir de las gráficas sobre la relación entre el número de vehículos y el número de muertes en accidentes de tránsito se puede inferir que, comparada con la población de los países de ingresos medios, la de los países de ingresos altos
+A: tiene más vehículos por persona.
+B: usa menos el vehículo particular.
+C: es más educada en materia vial.
+D: está más expuesta a multas de tránsito.
+KEY: C conf=medium why="Clave oficial (C). Con solo la infografía, A también parece defendible."
+#47 page=17 group=g42-49
+STEM: A propósito del cuadro que presenta la información según la cual 3 de 4 de los fallecidos en accidentes de tránsito son del sexo masculino, se puede afirmar que las figuras que acompañan el texto
+A: ilustran la información presentada.
+B: profundizan la información dada.
+C: proporcionan información adicional.
+D: ejemplifican la información descrita.
+KEY: A conf=high why="Clave oficial."
+#48 page=17 group=g42-49
+STEM: A partir de la información presentada, se puede afirmar que el autor de la infografía tiene como propósito
+A: sensibilizar al espectador sobre los riesgos de morir en un accidente de tránsito.
+B: incentivar al espectador a que use formas de movilidad alternas al automóvil.
+C: conmover al espectador presentando datos sobre el número de accidentes de tránsito.
+D: sensibilizar al espectador acerca de la necesidad de manejar sobrio y despacio.
+KEY: A conf=high why="Clave oficial."
+#49 page=17 group=g42-49
+STEM: De acuerdo con el contenido de la información presentada, ¿a cuál de los siguientes contextos se adecuaría mejor la infografía?
+A: Una protesta ecológica en contra del uso de vehículos motorizados.
+B: Una exposición sobre el transporte público como alternativa de movilidad.
+C: Una campaña diseñada para promover la adquisición de seguros de vida.
+D: Un estudio sobre asesinatos según el género y la condición socioeconómica.
+KEY: C conf=high why="Clave oficial."
+// Q50 is an open-response question; left out.
+// Sociales y ciudadanas
+#51 copy=M_1ra#91 page=18
+KEY: A conf=high why="Clave oficial."
+#52 page=18
+STEM: En las principales ciudades del mundo moderno está produciéndose un paulatino abandono de las zonas residenciales del centro urbano, al tiempo que las zonas periféricas tienden a un mayor poblamiento. Estas migraciones las realizan personas o familias que tienen ingresos medios y altos. La principal causa de este fenómeno se atribuye
+A: al creciente desarrollo de la industria en el centro de las ciudades.
+B: a la búsqueda de mejor calidad de vida en barrios tranquilos.
+C: a la escasa oferta de servicios en los barrios del centro de la ciudad.
+D: a la creciente oferta de vivienda barata en las afueras de la ciudad.
+KEY: B conf=high why="Clave oficial."
+#53 copy=M_1ra#81 page=18
+KEY: C conf=high why="Clave oficial."
+#54 copy=M_1ra#86 page=18
+KEY: A conf=high why="Clave oficial."
+#55 copy=M_1ra#87 page=18
+KEY: D conf=high why="Clave oficial."
+#56 copy=M_1ra#90 page=19
+KEY: C conf=high why="Clave oficial."
+#57 copy=M_1ra#88 page=19
+KEY: C conf=high why="Clave oficial."
+#58 page=19
+STEM: La crisis económica que se desató en 1929, en Estados Unidos, también afectó a los países latinoamericanos al reducirse sus exportaciones y, por consiguiente, sus importaciones. Para contrarrestar el efecto de esta crisis, los estados latinoamericanos adoptaron medidas como la sustitución de importaciones, que consistió en
+A: prohibir el ingreso de toda clase de productos extranjeros.
+B: otorgar total libertad de producción, de cambio y de consumo.
+C: producir los bienes que tradicionalmente se traían del exterior.
+D: dejar actuar libremente las leyes de la oferta y la demanda.
+KEY: C conf=high why="Clave oficial."
+#59 copy=M_1ra#85 page=19
+KEY: D conf=high why="Clave oficial."
+#60 copy=M_2da#1 page=19
+KEY: D conf=high why="Clave oficial."
+#61 copy=M_2da#2 page=20
+KEY: C conf=high why="Clave oficial."
+#62 page=20
+STEM: En 1994, como parte del proceso de paz entre el gobierno israelí y la Organización para la Liberación de Palestina (OLP), se llevaron a cabo los acuerdos de Oslo. La Autoridad Nacional Palestina se creó como un interlocutor válido que representaba los intereses de esta nación. Sin embargo, Palestina no se reconoce como un Estado propiamente dicho porque
+A: su estatus como observador en las Naciones Unidas le otorga derecho a voz pero no a voto.
+B: carece del reconocimiento internacional como territorio con fronteras perfectamente definidas.
+C: en los territorios de Gaza y Cisjordania viven aproximadamente 230.000 colonos israelíes.
+D: más de la mitad de la población palestina vive en Líbano y Jordania, en calidad de refugiada.
+KEY: B conf=high why="Clave oficial."
+#63 copy=M_2da#3 page=20
+KEY: C conf=high why="Clave oficial."
+#64 copy=M_2da#5 page=20
+KEY: C conf=high why="Clave oficial."
+#65 copy=M_2da#6 page=21
+KEY: B conf=high why="Clave oficial."
+#66 copy=M_2da#8 page=21
+KEY: C conf=high why="Clave oficial."
+#67 page=21
+STIM: En un periódico de la ciudad han aparecido continuamente titulares como los siguientes:
+
+"El alcalde no es capaz de solucionar el problema de criminalidad en la ciudad", "Al alcalde le queda grande erradicar el crimen de la ciudad" y "La ciudad y la Alcaldía están sometidas a los criminales".
+STEM: Antes de creer que el alcalde está haciendo mal su trabajo en materia de seguridad, ¿qué deberían revisar los ciudadanos principalmente?
+A: El plan de gobierno para ver si había propuestas en el tema de seguridad.
+B: Los índices de criminalidad en otras ciudades del país y de los países vecinos.
+C: Los cambios en los índices de criminalidad desde que el alcalde se posesionó.
+D: Las declaraciones oficiales del alcalde sobre si lo está haciendo bien o no.
+KEY: C conf=high why="Clave oficial."
+#68 copy=M_2da#9 page=21
+KEY: D conf=high why="Clave oficial."
+#69 copy=M_2da#10 page=22
+KEY: C conf=high why="Clave oficial."
+#70 page=22
+STEM: Ante los crecientes robos a residencias en algunos sectores de estratos altos de una ciudad, el alcalde está considerando autorizar el cerramiento de grandes sectores residenciales que agrupan varios barrios de la ciudad, para que sean vigilados por seguridad privada y para que solo se permita la entrada a los residentes o a personas autorizadas por estos. A la hora de evaluar la propuesta, ¿qué intereses en conflicto deben ser tenidos en cuenta?
+A: Los de las empresas de seguridad privada que buscan expandir su negocio, y los de las bandas de ladrones que buscan seguir realizando sus actividades sin obstáculos.
+B: Los de los residentes que buscan su seguridad, y los de los demás habitantes de la ciudad que dejarían de tener acceso a las vías y otros espacios públicos de los sectores encerrados.
+C: Los de los residentes que buscan su beneficio particular y los intereses del gobierno local que debe encargarse del bienestar de la comunidad.
+D: Los de las empresas de seguridad privada que serían contratadas para cuidar los sectores encerrados, y los de la Policía encargada de la seguridad en la ciudad.
+KEY: B conf=high why="Clave oficial."
+#71 page=22
+STIM: La Corte Constitucional falló a favor de un soldado que había interpuesto una tutela al considerar que la institución militar no le respetaba el derecho a la objeción de conciencia, porque su religión le prohíbe el uso de armas y las prácticas militares. El fundamento del fallo es la defensa de la libertad de conciencia del soldado.
+STEM: ¿Cuál de las siguientes acciones es coherente con este fallo?
+A: Ordenarle al Ejército la entrega de la libreta militar al soldado y su inmediata desvinculación de la institución.
+B: Ordenarle al soldado cumplir su servicio militar obligatorio con todas las responsabilidades asignadas.
+C: Ordenarle al Ejército que el soldado participe de los entrenamientos y haga solo tareas de oficina.
+D: Ordenarle al soldado participar únicamente en paradas militares, portando con orgullo la dotación militar.
+KEY: A conf=high why="Clave oficial."
+#72 page=22
+STIM: Durante las épocas de lluvias, en muchas zonas rurales de Colombia se inundan escuelas y se interrumpen los caminos para llegar a estas.
+STEM: ¿Cuál de las siguientes opciones vulnera más claramente el derecho a la educación?
+A: Organizar esquemas de transporte para que los estudiantes vayan a clases en escuelas no afectadas por las inundaciones.
+B: Ajustar el calendario escolar para que no haya clases en las épocas de inundación.
+C: Dar una parte de las clases a través de la emisora de radio local, para reducir los días en los que tienen que asistir al colegio.
+D: Trasladar a los niños a escuelas no inundadas dos veces por semana y reducir el número de horas de clases.
+KEY: D conf=high why="Clave oficial."
+#73 page=23
+STIM: Pekín y otras partes de China sufren de elevados niveles de contaminación. Debido a la contaminación en Pekín, algunos días las autoridades cancelan las actividades deportivas en el exterior en colegios y guarderías y recomiendan a niños y ancianos que no salgan a la calle. Aunque se han cerrado centenares de fábricas en la capital y en otros puntos del país, la situación no mejora. Los expertos consideran que la única solución es que la segunda economía mundial reduzca de forma paulatina su dependencia de las industrias pesadas y apueste por un modelo de energía mixta. Las industrias pesadas, entre ellas los sectores de la construcción y el manufacturero, aportaron el 46 por ciento del Producto Interior Bruto (PIB) en 2012. "China debería rebajar esta cifra hasta 9 puntos porcentuales entre 2013 y 2030 si quiere cumplir su objetivo de reducción de la contaminación", señala un experto.
+
+<p style="text-align:right">Adaptado de: http://www.elpais.com.co/elpais/internacional/noticias/pese-medidas-pekin-y-parte-china-siguen-bajo-elevada-contaminacion</p>
+STEM: En esta situación, ¿cuáles dimensiones están en conflicto?
+A: La educativa y la ambiental.
+B: La cultural y la educativa.
+C: La económica y la ambiental.
+D: La cultural y la económica.
+KEY: C conf=high why="Clave oficial."
+#74 page=23
+STIM: Un estudiante se intoxicó con comida que compró a un vendedor ambulante a la salida del colegio. Por esto, el Consejo Directivo del colegio, con la ayuda de la Policía, logró la expulsión de los vendedores ambulantes del sector.
+STEM: De los siguientes, ¿cuál sería un efecto de la expulsión de los vendedores?
+A: El aumento de la inseguridad en las inmediaciones del colegio.
+B: El aumento de las intoxicaciones alimentarias de los estudiantes en el colegio.
+C: La disminución del apoyo de la comunidad al Consejo Directivo y a la Policía.
+D: La disminución de los ingresos de las familias que dependían de esas ventas.
+KEY: D conf=high why="Clave oficial."
+// Q75 is an open-response question; left out.
+// Ciencias naturales
+#76 copy=M_2da#55 page=24
+KEY: A conf=high why="Clave oficial."
+#77 page=24
+STIM: La materia puede clasificarse analizando su composición como se muestra en el diagrama.
+
+[[FIG]]
+
+El acero es un material que contiene los elementos hierro y carbono. Dos muestras distintas de acero tienen diferentes cantidades de estos elementos pero ambas muestras tienen composición uniforme.
+FIG stim p=24 box=0.188,0.487,0.48,0.607 what="diagrama: materia, ¿es uniforme en todas sus partes?, mezcla heterogénea, ¿tiene composición variable?, sustancia pura, mezcla homogénea"
+STEM: Usando el diagrama anterior, ¿cómo clasificaría al acero?
+A: Como mezcla homogénea, porque está formado por diferentes elementos y es uniforme.
+B: Como sustancia pura, porque tiene composición uniforme y es un solo compuesto.
+C: Como mezcla heterogénea, porque está formado por diferentes elementos.
+D: Como sustancia pura, porque muestras distintas tienen composición diferente.
+KEY: A conf=high why="Clave oficial."
+#78 page=24
+STIM: En un experimento, un sólido de identidad desconocida se calienta y se mide su temperatura cada minuto hasta que se evapora, obteniendo la siguiente gráfica.
+
+[[FIG]]
+
+Para identificar el sólido se cuenta con los datos de la tabla.
+
+<table class="exam-table"><tr><th>Sustancia</th><th>Temperatura de fusión (°C)</th><th>Temperatura de ebullición (°C)</th></tr><tr><td>Benceno</td><td>5,5</td><td>80,2</td></tr><tr><td>Agua</td><td>0</td><td>100</td></tr><tr><td>Acetonitrilo</td><td>-45</td><td>82</td></tr><tr><td>2-butanol</td><td>-115</td><td>100</td></tr></table>
+FIG stim p=24 box=0.555,0.512,0.78,0.637 what="gráfica de temperatura (°C) contra tiempo: sólido, meseta en 0 °C, líquido, meseta en 100 °C, gas"
+STEM: ¿A qué sustancia corresponde el sólido inicial?
+A: Al benceno.
+B: Al agua.
+C: Al acetonitrilo.
+D: Al 2-butanol.
+KEY: B conf=high why="Clave oficial."
+#79 page=25
+STIM: Una estudiante realiza diferentes ensayos con el objetivo de determinar el efecto de la concentración de los reactivos sobre la velocidad de formación de *W* en la reacción *X* + *Y* → *W*. En cada ensayo mide la velocidad de formación de *W* manteniendo constante la concentración de uno de los reactivos y variando la del otro, como se muestra en las siguientes gráficas:
+
+[[FIG]]
+FIG stim p=25 box=0.23,0.204,0.72,0.363 what="dos gráficas: velocidad de formación de W contra concentración de X (crece) y contra concentración de Y (constante)"
+STEM: Con base en estos resultados se puede concluir que el cambio en la velocidad de formación de *W*
+A: no depende de la concentración de los reactivos.
+B: depende de la concentración de ambos reactivos.
+C: depende solamente de la concentración de *X*.
+D: depende solamente de la concentración de *Y*.
+KEY: C conf=high why="Clave oficial."
+#80 copy=M_2da#53 page=25
+KEY: A conf=high why="Clave oficial."
+#81 copy=N_1ra#100 page=25
+KEY: D conf=high why="Clave oficial."
+#82 copy=N_2da#77 page=26
+KEY: B conf=high why="Clave oficial."
+#83 copy=M_2da#54 page=26
+KEY: B conf=high why="Clave oficial."
+#84 copy=M_2da#56 page=27
+KEY: A conf=high why="Clave oficial."
+#85 copy=M_2da#57 page=27
+KEY: D conf=high why="Clave oficial."
+#86 copy=N_1ra#117 page=27
+KEY: C conf=high why="Clave oficial."
+#87 page=28
+STIM: Al agitar una cuerda extendida horizontalmente, cada sección de la cuerda se mueve de arriba abajo en dirección perpendicular a la dirección de propagación de la onda generada; este es un ejemplo de una onda *transversal*. En contraste, en una onda *longitudinal*, las partículas del medio vibran en la misma dirección de propagación de la onda.
+
+Un grupo de personas quiere representar una onda longitudinal; para esto, se ubican como muestra la figura. La fila representa el medio de propagación y las personas representan las partículas del medio.
+
+[[FIG]]
+FIG stim p=28 box=0.335,0.255,0.68,0.31 what="fila de personas de perfil"
+STEM: Para lograr la representación, el movimiento que debe hacer la primera persona y que los demás deben repetir sucesivamente es
+A: alzar y bajar lateralmente los brazos.
+B: sentarse y ponerse de pie.
+C: balancearse de izquierda a derecha.
+D: moverse hacia adelante y atrás.
+KEY: D conf=high why="Clave oficial."
+#88 page=28
+STIM: Un estudiante sopla una pelota por un tubo vertical como muestra la figura.
+
+[[FIG]]
+FIG stim p=28 box=0.215,0.483,0.44,0.623 what="pelota en un tubo vertical que se mueve aceleradamente hacia arriba; flechas: dirección de movimiento del aire soplado"
+STEM: La pelota sube aceleradamente por el tubo. Esto ocurre porque
+A: el peso de la pelota cambia cuando el estudiante sopla aire por el tubo.
+B: la fuerza que ejerce el aire que sopla el estudiante es igual que el peso de la pelota.
+C: el peso de la pelota es mayor que la fuerza del aire que sopla el estudiante.
+D: la fuerza que ejerce el aire que sopla el estudiante es mayor que el peso de la pelota.
+KEY: D conf=high why="Clave oficial."
+#89 copy=N_1ra#103 page=28
+KEY: A conf=high why="Clave oficial."
+#90 page=29
+STIM: Los rayos de luz emitidos por objetos luminosos viajan en línea recta dentro de un mismo medio (ver figura 1). Si un rayo de luz pasa de aire a agua cambia su dirección como se muestra en la figura 2.
+
+[[FIG]]
+FIG stim p=29 box=0.23,0.19,0.785,0.363 what="figura 1: piscina vacía, rayo de luz recto del farol al nadador; figura 2: piscina llena, el rayo se desvía al entrar al agua"
+STEM: Cuando una piscina está vacía, un nadador observa el farol que está en el borde (ver figura 1); luego, cuando se llena la piscina (ver figura 2) el nadador verá el farol
+A: más bajo.
+B: de la misma altura.
+C: más alto.
+D: invertido.
+KEY: C conf=high why="Clave oficial."
+#91 page=29
+STIM: Una estudiante realizó un experimento para medir la velocidad de propagación del sonido en el aire a diferentes temperaturas. Los resultados que obtuvo se muestran en la siguiente tabla.
+
+<table class="exam-table"><tr><th>Temperatura (°C)</th><th>Velocidad del sonido (m/s)</th></tr><tr><td>0</td><td>331,7</td></tr><tr><td>1</td><td>332,3</td></tr><tr><td>2</td><td>332,9</td></tr><tr><td>3</td><td>333,5</td></tr></table>
+STEM: ¿Cuál de las siguientes gráficas muestra los resultados del experimento?
+A: 
+B: 
+C: 
+D: 
+FIG A p=29 box=0.19,0.66,0.475,0.755 what="gráfica: temperatura (°C) contra velocidad del sonido (m/s), eje vertical de 331,7 a 333,5"
+FIG B p=29 box=0.53,0.66,0.82,0.755 what="gráfica: velocidad del sonido (m/s) de 331,7 a 333,5 contra temperatura de 0 a 3 °C"
+FIG C p=29 box=0.19,0.768,0.475,0.865 what="gráfica: temperatura de 0 a 3 contra velocidad del sonido de 333,5 a 331,7"
+FIG D p=29 box=0.53,0.768,0.82,0.865 what="gráfica: velocidad del sonido de 0 a 3 contra temperatura de 333,5 a 331,7"
+KEY: B conf=high why="Clave oficial."
+#92 page=30
+STIM: Un investigador somete dos grupos de ratones a las condiciones que muestra la tabla.
+
+<table class="exam-table"><tr><th>Grupo 1</th><td>En ejercicio durante un mes antes del experimento.</td></tr><tr><th>Grupo 2</th><td>Sin ejercicio durante un mes antes del experimento.</td></tr></table>
+
+Él quiere evaluar la capacidad que tienen estos dos grupos de ratones de recordar un lugar, guiados por objetos ubicados en el espacio. Para esto mete los ratones de cada grupo en un tanque con agua durante un minuto por 7 días consecutivos, para que encuentren un recipiente transparente que flota en el tanque y que está señalizado con un triángulo en la pared.
+
+El último día registra la trayectoria que recorre cada ratón, como se muestra en la figura.
+
+[[FIG]]
+FIG stim p=30 box=0.188,0.452,0.48,0.695 what="trayectorias del ratón del grupo 1 (directa al recipiente) y del grupo 2 (recorre todo el tanque); objeto en la pared, recipiente que flota"
+STEM: De acuerdo con el experimento, ¿por qué los ratones del grupo 1 ubicaron tan fácilmente el recipiente?
+A: Porque el triángulo los guió hasta el recipiente.
+B: Porque nadaron más rápido que los ratones del grupo 2.
+C: Porque permanecieron más tiempo en el tanque que los ratones del grupo 2.
+D: Porque el ejercicio mejoró su capacidad de memorizar.
+KEY: D conf=high why="Clave oficial."
+#93 page=30
+STIM: El objetivo de una práctica es la detección de almidón en la papa, utilizando el lugol como colorante. Se realizan cuatro experimentos con las condiciones que se muestran en la tabla.
+
+<table class="exam-table"><tr><th>Experimento</th><th>Agua (mL)</th><th>Lugol (mL)</th><th>Papa (g)</th><th>Solución de almidón 10% (mL)</th></tr><tr><td>1</td><td>10</td><td>1</td><td>10</td><td>0</td></tr><tr><td>2</td><td>10</td><td>1</td><td>0</td><td>0</td></tr><tr><td>3</td><td>10</td><td>0</td><td>5</td><td>0</td></tr><tr><td>4</td><td>10</td><td>1</td><td>0</td><td>2</td></tr></table>
+STEM: En esta práctica, el experimento 4 es importante porque
+A: permite que el almidón se encuentre soluble.
+B: contiene el colorante con el cual se logra la detección de almidón.
+C: contiene más almidón que el que contiene la papa.
+D: permite establecer el color esperado para la detección de almidón.
+KEY: D conf=high why="Clave oficial."
+#94 copy=N_1ra#108 page=30
+KEY: A conf=high why="Clave oficial."
+#95 copy=N_1ra#109 page=31
+KEY: A conf=high why="Clave oficial."
+#96 copy=N_1ra#110 page=31
+KEY: A conf=high why="Clave oficial."
+#97 copy=N_2da#54 page=31
+KEY: C conf=high why="Clave oficial."
+#98 copy=M_2da#59 page=32
+STEM: A partir de las cadenas de ARN mensajero se forman las proteínas. En este proceso, por cada tres nucleótidos consecutivos de ARN mensajero se codifica un aminoácido. A continuación se muestra una secuencia de ARN mensajero.
+
+<p style="text-align:center">AUGGCAAGAAACGACCACAUCUAGGUAUGC</p>
+
+Los nucleótidos AUG codifican únicamente para indicar el inicio de la formación de la proteína y los nucleótidos UAG codifican únicamente para indicar su terminación. Con base en esta información, ¿cuántos aminoácidos conformarán la proteína?
+KEY: C conf=high why="Clave oficial."
+#99 copy=N_1ra#113 page=32
+KEY: B conf=high why="Clave oficial."
+// Q100 is an open-response question; left out.
+// Inglés
+@group g101-103 101-103
+DIR: RESPONDA LAS PREGUNTAS 101 A 103 DE ACUERDO CON EL EJEMPLO
+PASSAGE: ¿Dónde puede ver estos avisos?
+#101 page=33 group=g101-103 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=33 box=0.245,0.373,0.492,0.438 what="aviso: How do I drive? Phone: 0152067"
+A: on a plane
+B: on a bus
+C: on a boat
+KEY: B conf=high why="Clave oficial."
+#102 page=33 group=g101-103 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=33 box=0.245,0.451,0.49,0.523 what="aviso: New Toys: Green monsters, angry dolls, and black helicopters"
+A: in a house
+B: in a shop
+C: in a zoo
+KEY: B conf=high why="Clave oficial."
+#103 page=33 group=g101-103 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=33 box=0.248,0.535,0.49,0.598 what="aviso: Please, choose the one you want to read"
+A: on a board
+B: on a computer
+C: on a bookcase
+KEY: C conf=high why="Clave oficial."
+@group g104-106 104-106
+DIR: RESPONDA LAS PREGUNTAS 104 A 106 DE ACUERDO CON EL EJEMPLO
+PASSAGE: Lea las descripciones de la columna de la izquierda (104 - 106) y las palabras de la columna de la derecha (A - H). ¿Cuál palabra (A - H) concuerda con la descripción de cada frase de la izquierda (104 - 106)? Tenga en cuenta que sobran cinco (5) palabras de las ocho (8) opciones (A - H), una de las cuales se usa en el ejemplo (0).
+
+0. You often learn to ride it when you are a child. (Respuesta: A)
+#104 page=34 group=g104-106 type=matching
+STEM: People drive it on a road and it carries big things.
+A: bike
+B: boat
+C: bus
+D: helicopter
+E: motorbike
+F: plane
+G: truck
+H: train
+KEY: G conf=high why="Clave oficial."
+#105 page=34 group=g104-106 type=matching
+STEM: This is for only one or two people to go by road.
+A: bike
+B: boat
+C: bus
+D: helicopter
+E: motorbike
+F: plane
+G: truck
+H: train
+KEY: E conf=high why="Clave oficial."
+#106 page=34 group=g104-106 type=matching
+STEM: Many people fly on it to go to a place.
+A: bike
+B: boat
+C: bus
+D: helicopter
+E: motorbike
+F: plane
+G: truck
+H: train
+KEY: F conf=high why="Clave oficial."
+@group g107-109 107-109
+DIR: RESPONDA LAS PREGUNTAS 107 A 109 DE ACUERDO CON EL EJEMPLO
+PASSAGE: Complete las tres conversaciones.
+
+0. I think I am getting sick. A. I am sorry. B. I can too. C. I need it. (Respuesta: A)
+#107 page=34 group=g107-109 type=conversation
+STEM: I can't eat a cold sandwich. It is horrible!
+A: I hope so.
+B: I agree.
+C: I am not.
+KEY: B conf=high why="Clave oficial."
+#108 page=34 group=g107-109 type=conversation
+STEM: I am going on vacation to Vancouver!
+A: That's great!
+B: I like swimming!
+C: You are first!
+KEY: A conf=high why="Clave oficial."
+#109 page=34 group=g107-109 type=conversation
+STEM: It rained a lot last night!
+A: Did you accept?
+B: Did you understand?
+C: Did you sleep?
+KEY: C conf=high why="Clave oficial."
+@group g110-114 110-114
+DIR: RESPONDA LAS PREGUNTAS 110 A 114 DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: Lea el texto y seleccione la palabra correcta para cada espacio.
+
+<p style="text-align:center">**The Ethiopian Wolf**</p>
+
+It is an African animal, [[hueco:0]] is called the Simien Jackal. Some scientists have [[hueco:110]] it is not a real wolf. But studies show that [[hueco:111]] close relationship to grey wolves and coyotes is evident. [[hueco:112]] Ethiopian wolves are more similar to grey wolves and coyotes than any other African canines. Scientists also believe there are about 450 of them living in wild conditions. The [[hueco:113]] group of Ethiopian wolves exists [[hueco:114]] the Bale Mountains National Park.
+
+The Ethiopian wolf has a special red coat with a white part in the front of the body. It is in size from 1,1 to 1,4 meters. By nature, the Ethiopian wolf looks for food by day, but it is sometimes nocturnal in areas where other animals follow it.
+
+Ejemplo: 0. A. which B. where C. who (Respuesta: A)
+#110 page=35 group=g110-114 type=cloze_text
+STEM: Blank (110): choose the option that completes the text.
+A: saying
+B: said
+C: say
+KEY: B conf=high why="Clave oficial."
+#111 page=35 group=g110-114 type=cloze_text
+STEM: Blank (111): choose the option that completes the text.
+A: its
+B: his
+C: your
+KEY: A conf=high why="Clave oficial."
+#112 page=35 group=g110-114 type=cloze_text
+STEM: Blank (112): choose the option that completes the text.
+A: This
+B: That
+C: These
+KEY: C conf=high why="Clave oficial."
+#113 page=35 group=g110-114 type=cloze_text
+STEM: Blank (113): choose the option that completes the text.
+A: larger
+B: largest
+C: large
+KEY: B conf=high why="Clave oficial."
+#114 page=35 group=g110-114 type=cloze_text
+STEM: Blank (114): choose the option that completes the text.
+A: in
+B: at
+C: on
+KEY: A conf=high why="Clave oficial."
+@group g115-119 115-119
+DIR: RESPONDA LAS PREGUNTAS 115 A 119 DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: Lea el artículo y luego responda las preguntas.
+
+<p style="text-align:center">**My Artistic Adventure**</p>
+
+When I was a child in Ireland, I went to bed late, and I could not sleep past six. One morning, I found a Spanish television show with a French man who was painting a beautiful countryside with oil paints.
+
+Right then, I began watching this show. With his quiet voice he explained his natural way of painting, and he quickly made trees and rivers, simply by moving his hand across the paper. He made it look simple and easy, so I thought I could do it by myself.
+
+Every Sunday morning, I would try to paint what he was painting on the screen, but I needed oil paints to make my paintings as beautiful as his. I could not buy oil paints; I was only seven, and my parents would not buy them for me. Then I decided to use my mother's cosmetics and paper for my painting. I was ready to paint my first picture.
+
+After my mum saw what I did with her things, I was told I could not paint again. This put an end to my idea of using food the next time to make a picture. After a while, I stopped watching the French painter. It was difficult for me to simply watch him when I was unable to paint my own pictures.
+
+Ejemplo: 0. When she was seven, she slept A. for some hours. B. very well. C. a lot. (Respuesta: A)
+#115 page=36 group=g115-119
+STEM: Where was the painter from?
+A: Ireland
+B: Spain
+C: France
+KEY: C conf=high why="Clave oficial."
+#116 page=36 group=g115-119
+STEM: She was mostly excited by the
+A: painter's ability.
+B: painter's voice.
+C: painter's show.
+KEY: A conf=high why="Clave oficial."
+#117 page=36 group=g115-119
+STEM: How often did she watch the show?
+A: three times a week
+B: once a week
+C: twice a week
+KEY: B conf=high why="Clave oficial."
+#118 page=36 group=g115-119
+STEM: She could not get oil paints because she
+A: didn't speak Spanish.
+B: was too young.
+C: always watched TV.
+KEY: B conf=high why="Clave oficial."
+#119 page=36 group=g115-119
+STEM: Stopping painting was
+A: the painter's idea.
+B: her mother's order.
+C: her own decision.
+KEY: B conf=high why="Clave oficial."
+@group g120-121 120-121
+DIR: RESPONDA LAS PREGUNTAS 120 Y 121 DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: Lea el texto y las preguntas de la siguiente parte.
+
+<p style="text-align:center">**Jonathan's Trip to Colombia**</p>
+
+I went to Colombia last summer. My journey began on the Caribbean coast and ended on the border with Ecuador. Colombia is a splendid country, extremely diverse and full of wonderful people. I will tell you why.
+
+In South Colombia there is a city called Pereira; just outside you can find a track where you will see the farm Villa Maria - a hidden paradise that takes a long time to get to-. It is a working coffee farm located in the middle of a valley. Coffee and plantain grow as far as the eye can see. The farm is made up of the house and the processing plant. The family business has guests at the house for just $45.000 a night. This includes 3 home cooked meals a day, a swimming pool, and as much coffee as you can drink. The scene is quite unbelievable. Bamboo chairs rest on the corners of the Villa, mangos hang from the trees, parrots and birds fly wild.
+
+A wonderful man named Hector who runs the farm is happy to show guests around the coffee processing plant. By day, the only sounds are of the horses coming down the valley side carrying food. By night, the wildlife comes alive, and depending on the time of the year - thunderstorms offer a spectacular light show. For those who wish to escape, Villa Maria is the answer.
+
+This is just one attraction of many in Colombia. I could write pages on the country and not get bored. I graduate next year and I can't wait to return to this beautiful country. Some of those reading may be stimulated to do the same.
+#120 page=37 group=g120-121
+STEM: What is the writer trying to do in this article?
+A: describe a tourism-leading Colombian coffee farm
+B: tell readers to run a coffee business in Colombia
+C: invite tourists to write about places they visit in Colombia
+D: encourage tourists to visit Colombia
+KEY: D conf=high why="Clave oficial."
+#121 page=37 group=g120-121
+STEM: What can a reader find out from this text?
+A: which activities tourists prefer to do at the farm
+B: when the best time is to visit the farm
+C: what the accommodation price includes
+D: how to grow coffee on the farm
+KEY: C conf=high why="Clave oficial."
+@group g122-125 122-125
+DIR: RESPONDA LAS PREGUNTAS 122 A 125 DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: Lea el artículo y seleccione la palabra adecuada para cada espacio.
+
+<p style="text-align:center">**VALENTINE'S DAY**</p>
+
+Do you know what [[hueco:0]] on February 14th every year? Many people exchange gifts, chocolates, cards, and flowers. This is done to celebrate Valentine's Day. It's always a lot of fun to get a card or some chocolates, but [[hueco:122]] do we do this? There is a lot of mystery about this day.
+
+One of the [[hueco:123]] says that the original Valentine was a priest. It is said that the king, Claudius II, had forbidden marriage because he thought that only unmarried men made the best soldiers. However, Valentine continued to hold weddings for a lot of young couples in secret. When the King found [[hueco:124]], he ordered soldiers to kill Valentine!
+
+Valentine's Day is now the second biggest holiday for cards and gifts. Women buy [[hueco:125]] 90% of the cards, but gentlemen still buy the most chocolates and flowers to give as a Valentine's Day present.
+
+Ejemplo: 0. A. happens B. appears C. shows D. passes (Respuesta: A)
+#122 page=38 group=g122-125 type=cloze_text
+STEM: Blank (122): choose the option that completes the text.
+A: where
+B: why
+C: when
+D: what
+KEY: B conf=high why="Clave oficial."
+#123 page=38 group=g122-125 type=cloze_text
+STEM: Blank (123): choose the option that completes the text.
+A: essays
+B: stories
+C: reports
+D: letters
+KEY: B conf=high why="Clave oficial."
+#124 page=38 group=g122-125 type=cloze_text
+STEM: Blank (124): choose the option that completes the text.
+A: off
+B: in
+C: at
+D: out
+KEY: D conf=high why="Clave oficial."
+#125 page=38 group=g122-125 type=cloze_text
+STEM: Blank (125): choose the option that completes the text.
+A: almost
+B: only
+C: hardly
+D: just
+KEY: A conf=high why="Clave oficial."
