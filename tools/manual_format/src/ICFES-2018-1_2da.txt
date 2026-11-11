@@ -1,0 +1,597 @@
+@exam ICFES-2018-1_2da | ICFES 2018-1 2da Sesión | pdf=/mnt/project-files/icfes/sources-new/2018-1 sesion 2 (2018 - 1 1).pdf | dpi=300
+@section Sociales y ciudadanas 1-25
+@section Matemáticas 26-50
+@section Ciencias naturales 51-79
+@section Inglés 80-124
+
+#1 copy=K1_1ra#83 page=1
+KEY: A conf=high
+#2 copy=K1_1ra#84 page=1
+A: Porque evidencia la existencia de procesos de concentración de la tierra y la riqueza; procesos sociales que no se habían presentado en Colombia antes de 1990.
+KEY: B conf=high why="Los paramilitares que el testimonio menciona operaron en zonas rurales durante los años 1990; la concentración de tierras y las guerrillas son anteriores. La clave del banco (A, marca azul) no se sostiene."
+#3 copy=K1_1ra#85 page=1
+KEY: A conf=medium why="En 2016, ya como alcalde, valora las ventajas de costo y tiempo del metro elevado que antes criticaba."
+#4 copy=A_1ra#74 page=2
+KEY: C conf=high
+#5 copy=K1_1ra#86 page=2
+KEY: C conf=high
+#6 copy=K1_1ra#87 page=2
+KEY: C conf=high
+#7 copy=K1_1ra#88 page=3
+KEY: D conf=high
+#8 copy=C_2da#20 page=3
+KEY: D conf=high
+#9 copy=K1_1ra#89 page=3
+KEY: C conf=high
+#10 copy=K1_1ra#82 page=3
+KEY: C conf=high
+#11 copy=K1_1ra#90 page=3
+KEY: B conf=medium why="La segunda teoría rechaza la intervención estatal; subastar las empresas públicas para acabar el monopolio estatal es afín a ella."
+#12 copy=K1_1ra#91 page=4
+KEY: C conf=high
+#13 copy=K1_2da#1 page=4
+KEY: A conf=high
+#14 copy=K1_2da#3 page=4
+KEY: D conf=high
+#15 copy=J_1ra#68 page=5
+KEY: A conf=high
+#16 copy=K1_2da#21 page=5
+KEY: D conf=high
+#17 copy=K1_2da#5 page=5
+KEY: C conf=high
+#18 copy=K1_2da#6 page=5
+KEY: B conf=high
+#19 copy=K1_2da#7 page=6
+KEY: A conf=high
+#20 copy=K1_2da#8 page=6
+KEY: D conf=high
+#21 copy=K1_2da#10 page=6
+KEY: B conf=high
+#22 copy=K1_2da#11 page=6
+KEY: D conf=high
+#23 copy=K1_2da#9 page=7
+KEY: B conf=high
+#24 copy=J_2da#14 page=7
+STEM: El uso que el docente hace de las cifras del informe *¡Basta ya!* en su afirmación es
+KEY: A conf=high
+#25 copy=K1_2da#13 page=7
+KEY: C conf=high
+#26 copy=K1_1ra#10 page=8
+FIG stim p=8 box=0.455,0.122,0.870,0.258 what="gráfica de barras: costo total acumulado de los materiales ($50, $100, $175, $200)"
+KEY: D conf=high
+#27 copy=K1_1ra#11 page=8
+KEY: D conf=high
+#28 copy=K1_1ra#12 page=8
+KEY: C conf=high
+#29 copy=A_1ra#21 page=9
+KEY: A conf=high
+#30 copy=A_1ra#17 page=9
+A: $\frac{1}{4} \times 125.000$
+B: $0{,}25 \times 125.000$
+C: $0{,}75 \times 125.000$
+D: $\frac{125.000 \times 25}{100}$
+KEY: C conf=high
+#31 copy=A_2da#26 page=9
+KEY: C conf=high
+#32 copy=A_2da#27 page=9
+KEY: D conf=high
+@group g33-34 33-34 copy=A_2da#28
+DIR: RESPONDA LAS PREGUNTAS 33 Y 34 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#33 copy=A_2da#28 page=10 group=g33-34
+KEY: A conf=high
+#34 copy=A_2da#29 page=10 group=g33-34
+KEY: A conf=high
+@group g35-36 35-36
+DIR: RESPONDA LAS PREGUNTAS 35 Y 36 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+PASSAGE: Una universidad realizó un estudio para determinar si existe alguna relación entre el color de los automóviles y la seguridad vial. Del estudio se concluyó que el color plata es el más seguro, pues por cada 10 autos, 1 fue objeto de algún accidente. Se obtuvo también la información de la gráfica correspondiente al porcentaje de accidentalidad de automóviles de varios colores.
+
+[[FIG]]
+FIG passage p=10 box=0.475,0.428,0.810,0.550 what="barras: accidentes de automóviles por color (plata 10 %, rojo 20 %, azul 30 %, blanco 35 %, negro 70 %)"
+#35 page=10 group=g35-36
+STIM: La compañía productora de pinturas publicó la información de la tabla sobre las preferencias de color en las ventas de carros.
+
+<table class="exam-table"><tr><th>Color</th><th>Porcentaje de ventas</th></tr><tr><td>Plata</td><td>35 %</td></tr><tr><td>Blanco</td><td>25 %</td></tr><tr><td>Negro</td><td>20 %</td></tr><tr><td>Rojo</td><td>10 %</td></tr><tr><td>Otros colores</td><td>10 %</td></tr></table>
+
+<p style="text-align:right">**Tabla**</p>
+STEM: Respecto a la información anterior, ¿cuál de las siguientes afirmaciones es correcta?
+A: Como los vehículos color plata son los más vendidos, con un 35 %, serán los más accidentados.
+B: Como los vehículos de color negro son los de mayor accidentalidad, y con 20 % en ventas, serán los más accidentados.
+C: Como los vehículos de color negro solo tienen el 20 % en ventas, tendrán menos accidentes que los de color blanco que tienen ventas superiores.
+D: Como los vehículos color blanco se venden 10 % menos que los de color plata y no tienen una accidentalidad tan alta, se accidentarán menos que los de color plata.
+KEY: B conf=high why="Negro: 20 % × 70 % = 14 % del total; plata: 35 % × 10 % = 3,5 %; blanco: 25 % × 35 % ≈ 8,8 %."
+#36 page=10 group=g35-36
+STIM: El Ministerio de Transporte, basado en esta información, quiere implementar una estrategia para bajar la tasa de accidentalidad. Para esto exigirá adquirir un seguro cuyo valor a pagar por el propietario será proporcional al porcentaje de accidentalidad del color del automóvil.
+STEM: Teniendo en cuenta la información de la gráfica, es correcto afirmar que el valor a pagar del seguro
+A: de los automóviles color blanco será el segundo de bajo a alto.
+B: de los automóviles color negro será el más alto de todos.
+C: de los automóviles de cada color es el mismo.
+D: de los automóviles color plata será el más alto.
+KEY: B conf=high
+#37 copy=I_2da#42 page=11
+KEY: B conf=high
+#38 page=11
+STIM: En clase de Educación Física, el profesor les pide a sus estudiantes que escojan la actividad deportiva que más preferirían realizar en las canchas del colegio. La tabla muestra información correspondiente a la preferencia de los estudiantes.
+
+<table class="exam-table"><tr><th>Género del estudiante \ Actividad</th><th>Patinar</th><th>Trotar</th></tr><tr><td>Hombre</td><td>10</td><td>3</td></tr><tr><td>Mujer</td><td>5</td><td>14</td></tr></table>
+
+<p style="text-align:right">**Tabla**</p>
+STEM: ¿Cuál de las siguientes gráficas muestra correctamente la cantidad de estudiantes que prefiere cada actividad?
+FIG A p=11 box=0.200,0.498,0.495,0.600 what="barras por género: Hombre 13, Mujer 19"
+FIG B p=11 box=0.200,0.605,0.495,0.708 what="barras por actividad: Patinar 15, Trotar 17"
+FIG C p=11 box=0.200,0.715,0.495,0.822 what="barras por actividad: Patinar 10, Trotar 14"
+FIG D p=11 box=0.200,0.826,0.495,0.935 what="barras por género: Hombre 25, Mujer 8"
+KEY: B conf=high why="Patinar 10+5=15, trotar 3+14=17."
+#39 copy=G_1ra#17 page=11
+KEY: A conf=high
+#40 copy=A_2da#45 page=12
+KEY: B conf=high
+#41 copy=K1_1ra#13 page=12
+STIM: Con el fin de integrar a la comunidad de un pueblo, la alcaldía organiza un evento comunitario todos los fines de semana, en un centro de convenciones. La tabla presenta el horario de actividades para todos los fines de semana.
+
+<table class="exam-table"><tr><th>Sábado</th><th>Actividad</th></tr><tr><td>1:00 p.m. - 2:00 p.m.</td><td>Charla grupal</td></tr><tr><td>2:00 p.m. - 3:00 p.m.</td><td>Taller educativo</td></tr><tr><td>3:00 p.m. - 4:00 p.m.</td><td>Actividad recreativa</td></tr><tr><td>4:00 p.m. - 6:00 p.m.</td><td>Taller artístico</td></tr><tr><th>Domingo</th><th></th></tr><tr><td>1:00 p.m. - 2:00 p.m.</td><td>Charla grupal</td></tr><tr><td>2:00 p.m. - 3:00 p.m.</td><td>Taller artístico</td></tr><tr><td>3:00 p.m. - 4:00 p.m.</td><td>Actividad recreativa</td></tr></table>
+
+<p style="text-align:right">**Tabla**</p>
+KEY: C conf=high why="5 h el sábado + 3 h el domingo = 8 h por fin de semana; 40 h se cumplen al final del quinto."
+#42 copy=K1_1ra#14 page=12
+KEY: B conf=high
+#43 copy=K1_1ra#15 page=12
+KEY: A conf=high
+#44 copy=K1_1ra#17 page=13
+STIM: Un estudio quiere determinar la relación entre la cantidad de casos de dengue que se presentan en un municipio cada mes y la precipitación (cantidad de lluvia). Al presentar el estudio, el investigador incluye la siguiente diapositiva.
+
+[[FIG]]
+
+<p style="text-align:right">**Diapositiva**</p>
+
+El coeficiente de correlación indica el tipo de relación que existe entre ambas variables.
+
+• Un coeficiente positivo indica que aumentar los valores de la variable independiente genera un aumento en los valores de la variable dependiente.
+
+• Un coeficiente negativo indica que aumentar los valores de la variable independiente genera una disminución en los valores de la variable dependiente.
+FIG stim p=13 box=0.135,0.185,0.462,0.372 what="dispersión casos de dengue vs precipitación, y = 0,48x + 7,98, coeficiente de correlación = -0,85"
+STEM: Con base en esto, una persona que observa la diapositiva afirma que hay un error en la información presentada. ¿Cuál de los siguientes argumentos permite justificar esta afirmación?
+KEY: C conf=high
+#45 copy=H_1ra#10 page=13
+KEY: C conf=high
+#46 copy=K1_1ra#20 page=13
+KEY: B conf=high
+#47 copy=A_2da#49 page=14
+KEY: B conf=high
+@group g48-50 48-50 copy=A_1ra#1
+DIR: RESPONDA LAS PREGUNTAS 48 A 50 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#48 copy=A_1ra#2 page=14 group=g48-50
+KEY: B conf=high why="(30.000 - 25.000) × 800 = 4.000.000; 4.000.000 / 17.000.000 ≈ 23,5 %."
+#49 copy=A_1ra#3 page=14 group=g48-50
+STEM: El contador quiere saber el valor total, en pesos, de las ventas de un producto. ¿Qué operación debe efectuar para hallar este valor?
+KEY: A conf=high
+#50 copy=A_1ra#4 page=14 group=g48-50
+D: El primero, porque al ejecutar el paso 2 es posible que cambie el orden obtenido.
+KEY: D conf=high
+#51 copy=K1_1ra#102 page=15
+KEY: B conf=high why="El control sin bacterias también pierde cerca del 80 % de la gasolina a los 30 días: la mayor parte de la disminución es evaporación. La clave del banco (C, marca azul) no se sostiene."
+#52 copy=K1_1ra#100 page=15
+KEY: C conf=high why="Los animales responden en segundos y por segundos (sistema nervioso); las plantas, en horas o días. A es falsa porque los animales también usan hormonas según la tabla. La clave del banco (A) no se sostiene."
+#53 copy=K1_2da#51 page=16
+STIM: En una clase de Ciencias naturales se quiere construir un termómetro, en el cual, varíe la altura del agua en una manguera al variar la temperatura, como se muestra a continuación.
+
+**Descripción del funcionamiento del termómetro**
+
+Cuando el gas que se encuentra dentro del recipiente se calienta y su presión cambia: si la temperatura disminuye, el gas se comprime; si la temperatura aumenta, el gas se expande. Lo anterior hace que la columna de agua suba o baje, es decir, cambia la altura *h* de la columna. Al finalizar, se relaciona la temperatura que hace que el gas cambie de presión con la altura del agua dentro de la manguera.
+
+[[FIG]]
+FIG stim p=16 box=0.455,0.212,0.630,0.400 what="termómetro: recipiente con gas, manguera y columna de agua de altura h"
+STEM: Teniendo en cuenta la información anterior, ¿cuál de las siguientes tablas permite registrar los datos tomados para calibrar el termómetro?
+KEY: B conf=high
+@group g54-56 54-56 copy=K1_1ra#105
+DIR: RESPONDA LAS PREGUNTAS 54 A 56 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#54 copy=K1_1ra#105 page=17 group=g54-56
+KEY: A conf=high
+#55 copy=K1_1ra#106 page=17 group=g54-56
+KEY: A conf=high
+#56 page=17 group=g54-56
+STEM: La capacidad de penetración de las radiaciones ionizantes se mide cuantificando la intensidad de energía transmitida a través de una barrera. Este valor depende del material de la barrera y del espesor de esta. Para radiaciones como los rayos X y los rayos γ, su intensidad energética disminuye cada vez que atraviesan un material hasta que esta se considera despreciable; sin embargo, pasa energía con alguna intensidad. ¿Cuál será la gráfica que mejor describe la intensidad de energía transmitida por los rayos X y γ al atravesar una barrera, dependiendo de su grosor?
+FIG A p=17 box=0.575,0.594,0.760,0.670 what="intensidad transmitida vs grosor: decrece y se aplana"
+FIG B p=17 box=0.575,0.685,0.760,0.765 what="grosor vs intensidad transmitida: línea horizontal"
+FIG C p=17 box=0.575,0.770,0.760,0.850 what="intensidad transmitida vs grosor: crece"
+FIG D p=17 box=0.575,0.866,0.760,0.945 what="grosor vs intensidad transmitida: crece y se aplana"
+KEY: A conf=high
+#57 copy=K1_1ra#108 page=18
+STEM: Con base en la información anterior, puede afirmarse que el átomo I es un átomo de bromo neutro porque
+KEY: A conf=high
+#58 copy=K1_1ra#120 page=18
+KEY: A conf=high
+#59 copy=K1_1ra#110 page=18
+KEY: C conf=high
+#60 copy=K1_1ra#111 page=19
+KEY: C conf=high
+#61 copy=J_2da#68 page=19
+KEY: C conf=high
+#62 copy=K1_1ra#112 page=19
+KEY: D conf=high
+#63 copy=K1_1ra#113 page=19
+KEY: D conf=high
+#64 copy=A_2da#74 page=20
+STIM: Cuando un objeto se sumerge en un líquido, actúan dos fuerzas sobre este: la fuerza de empuje que el líquido ejerce sobre el objeto y el peso del objeto. Dos estudiantes observan que cuando sumergen una bola de tenis y una bola de billar en la piscina, la bola de billar se hunde y la bola de tenis flota. Las fuerzas que actúan sobre las dos pelotas sumergidas se muestran en la figura.
+
+[[FIG]]
+FIG stim p=20 box=0.520,0.078,0.860,0.242 what="diagramas de fuerzas (empuje y peso) sobre la bola de tenis y la bola de billar"
+STEM: Los estudiantes saben que la fuerza de empuje es mayor que el peso, si la densidad del líquido es mayor que la del objeto. ¿Cómo son las densidades de las bolas de tenis y de billar, respecto a la densidad del agua?
+KEY: B conf=high
+#65 copy=K1_1ra#114 page=20
+KEY: C conf=high
+#66 copy=E_1ra#93 page=20
+KEY: C conf=high
+#67 copy=G_2da#73 page=21
+STIM: A continuación se presentan los modelos atómicos del nitrógeno y el sodio neutros.
+
+[[FIG]]
+FIG stim p=21 box=0.160,0.122,0.490,0.240 what="modelos atómicos: nitrógeno 7p 7n, sodio 11p 12n, con electrones en órbitas"
+KEY: A conf=high
+@group g68-70 68-70 copy=K1_1ra#115
+DIR: RESPONDA LAS PREGUNTAS 68 A 70 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#68 copy=K1_1ra#115 page=21 group=g68-70
+KEY: C conf=high
+#69 page=21 group=g68-70
+STEM: El agua oceánica es ligeramente alcalina. El valor de su pH está entre 7,5 y 8,4 pero puede ser ácida si la temperatura aumenta. Con base en la información anterior, ¿cuál de las siguientes gráficas muestra el porcentaje de eclosión de los huevos de krill de acuerdo con la variación en el pH del agua?
+FIG A p=21 box=0.612,0.493,0.870,0.592 what="eclosión vs pH: sube hasta un máximo cerca de pH 7-8 y baja"
+FIG B p=21 box=0.612,0.597,0.870,0.698 what="eclosión vs pH: baja en línea recta"
+FIG C p=21 box=0.612,0.703,0.870,0.808 what="eclosión vs pH: sube en línea recta"
+FIG D p=21 box=0.612,0.812,0.870,0.921 what="eclosión vs pH: mínimo entre pH 7 y 9"
+KEY: A conf=medium why="Eclosión normal a pH cercano al neutro/ligeramente alcalino del océano y nula en pH ácido."
+#70 copy=K1_1ra#117 page=22 group=g68-70
+KEY: D conf=medium why="La afirmación se obtiene de experimentos con variables (pH) y sus efectos: es una conclusión. A es falsa: no se muestra que no haya vida."
+#71 copy=A_2da#57 page=22
+KEY: B conf=high
+#72 copy=A_2da#62 page=22
+STIM: Para subir una caja en un camión, una máquina la empuja a través de una rampa, como se muestra en la figura.
+
+[[FIG]]
+FIG stim p=22 box=0.585,0.092,0.775,0.186 what="máquina empujando una caja por una rampa hacia un camión"
+KEY: D conf=high
+#73 copy=K1_1ra#119 page=22
+KEY: D conf=high
+#74 page=23
+STIM: Un equipo de béisbol realiza un entrenamiento en una cancha donde el paso de corrientes de aire es muy poco. En el entrenamiento se utiliza una máquina lanzapelotas que permite ajustar la fuerza con la que se dispara la pelota y medir la fricción que genera el aire a la pelota lanzada, como se observa en la figura.
+
+[[FIG]]
+
+Los datos obtenidos en el entrenamiento se muestran en la tabla.
+
+<table class="exam-table"><tr><th>Fuerza (N)</th><td>10</td><td>15</td><td>20</td></tr><tr><th>Fricción con el aire (N)</th><td>1,4</td><td>1,4</td><td>1,4</td></tr><tr><th>Distancia horizontal alcanzada (m)</th><td>8</td><td>20</td><td>32</td></tr></table>
+FIG stim p=23 box=0.175,0.232,0.475,0.317 what="máquina lanzapelotas, trayectoria de la pelota y bateador"
+STEM: Si el siguiente entrenamiento se realiza en una cancha donde el paso de corrientes de aire es mayor, lo cual aumenta la fricción que ejerce el aire a la pelota, ¿qué tabla contiene los resultados de los lanzamientos en el nuevo entrenamiento?
+A: <table class="exam-table"><tr><th>Fuerza (N)</th><td>10</td><td>15</td><td>20</td></tr><tr><th>Fricción con el aire (N)</th><td>0,4</td><td>0,4</td><td>0,4</td></tr><tr><th>Distancia horizontal alcanzada (m)</th><td>10</td><td>24</td><td>36</td></tr></table>
+B: <table class="exam-table"><tr><th>Fuerza (N)</th><td>10</td><td>15</td><td>20</td></tr><tr><th>Fricción con el aire (N)</th><td>2,4</td><td>2,4</td><td>2,4</td></tr><tr><th>Distancia horizontal alcanzada (m)</th><td>10</td><td>24</td><td>36</td></tr></table>
+C: <table class="exam-table"><tr><th>Fuerza (N)</th><td>10</td><td>15</td><td>20</td></tr><tr><th>Fricción con el aire (N)</th><td>0,4</td><td>0,4</td><td>0,4</td></tr><tr><th>Distancia horizontal alcanzada (m)</th><td>6</td><td>16</td><td>28</td></tr></table>
+D: <table class="exam-table"><tr><th>Fuerza (N)</th><td>10</td><td>15</td><td>20</td></tr><tr><th>Fricción con el aire (N)</th><td>2,4</td><td>2,4</td><td>2,4</td></tr><tr><th>Distancia horizontal alcanzada (m)</th><td>6</td><td>16</td><td>28</td></tr></table>
+KEY: D conf=high why="Más fricción del aire (2,4 N) y, por tanto, menor alcance para cada fuerza."
+#75 copy=K1_1ra#118 page=23
+KEY: B conf=high
+#76 copy=K1_1ra#98 page=24
+KEY: B conf=high
+#77 copy=K1_1ra#99 page=24
+KEY: C conf=high
+#78 copy=I_1ra#94 page=24
+KEY: B conf=high
+#79 copy=A_1ra#105 page=24
+KEY: C conf=high
+@group g80-84 80-84
+DIR: RESPONDA LAS PREGUNTAS 80 A 84 DE ACUERDO CON EL EJEMPLO
+PASSAGE: ¿Dónde puede ver estos avisos?
+#80 page=25 group=g80-84 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=25 box=0.215,0.358,0.455,0.437 what="aviso: Cars for children from 4-8"
+A: in a toy room
+B: in a computer room
+C: in a music room
+KEY: A conf=high
+#81 page=25 group=g80-84 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=25 box=0.215,0.450,0.455,0.538 what="aviso: Read the questions and write your answers with a black pen"
+A: on a picture
+B: on a bookcase
+C: on a page
+KEY: C conf=high
+#82 page=25 group=g80-84 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=25 box=0.215,0.546,0.455,0.628 what="aviso: Do not eat here"
+A: in the street
+B: in a classroom
+C: in a bedroom
+KEY: B conf=high
+#83 page=25 group=g80-84 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=25 box=0.210,0.638,0.455,0.723 what="aviso: Please, do not stand next to the animals"
+A: at the zoo
+B: at the park
+C: at the playground
+KEY: A conf=high
+#84 page=25 group=g80-84 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=25 box=0.210,0.729,0.455,0.822 what="aviso: Come and try the new beautiful red shirts and black skirts"
+A: in a candy store
+B: in a flower store
+C: in a clothes store
+KEY: C conf=high
+@group g85-89 85-89 copy=K1_2da#85
+DIR: RESPONDA LAS PREGUNTAS 85 A 89 DE ACUERDO CON EL EJEMPLO
+#85 copy=K1_2da#85 page=26 group=g85-89
+KEY: D conf=high
+#86 copy=K1_2da#86 page=26 group=g85-89
+KEY: E conf=high
+#87 copy=K1_2da#87 page=26 group=g85-89
+KEY: B conf=high
+#88 copy=K1_2da#88 page=26 group=g85-89
+KEY: G conf=high
+#89 copy=K1_2da#89 page=26 group=g85-89
+KEY: C conf=high
+@group g90-94 90-94
+DIR: RESPONDA LAS PREGUNTAS 90 A 94 DE ACUERDO CON EL EJEMPLO
+PASSAGE: Complete las cinco conversaciones.
+#90 page=27 group=g90-94 type=conversation
+STEM: How about walking to the town?
+A: It's pretty!
+B: Take the elevator.
+C: I'm tired!
+KEY: C conf=high
+#91 page=27 group=g90-94 type=conversation
+STEM: My dad would like to play tennis with us.
+A: That's great!
+B: I have to go.
+C: Can I do it?
+KEY: A conf=high
+#92 page=27 group=g90-94 type=conversation
+STEM: Have you ever gotten in trouble at the university?
+A: What a pity!
+B: Several times.
+C: Is it here?
+KEY: B conf=high
+#93 page=27 group=g90-94 type=conversation
+STEM: I must call my doctor.
+A: I'm bad at it.
+B: What's wrong?
+C: Look for the message!
+KEY: B conf=high
+#94 page=27 group=g90-94 type=conversation
+STEM: Should I try on this costume?
+A: Quite polite!
+B: Great party!
+C: That's not your size!
+KEY: C conf=high
+@group g95-102 95-102
+DIR: RESPONDA LAS PREGUNTAS 95 A 102 DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: <p style="text-align:center">**FAST FOOD VS. SLOW FOOD**</p>
+
+The term fast food is [[hueco:0]] for restaurants that serve cheap meals [[hueco:95]] in paper bags or boxes, for example burgers and chips. Fast food [[hueco:96]] popular in the 1950s in the United States, but today, it's known that it is bad for your body.
+
+There's also slow food. It began in 1986 thanks to Carlo Petrini, an Italian journalist [[hueco:97]] found a McDonalds's restaurant in Rome. He thought it was horrible.
+
+[[hueco:98]], he started "slow food", that is about [[hueco:99]] fresh food that is cooked for a longer time; that's why this food is [[hueco:100]]. It has two goals: to make the food of one's town popular, and to buy food made [[hueco:101]] small farmers. This movement now has [[hueco:102]] 80,000 members in 100 countries.
+#95 page=28 group=g95-102 type=cloze_text
+STEM: Blank (95): choose the option that completes the text.
+A: quickly
+B: quickest
+C: quicker
+KEY: A conf=high
+#96 page=28 group=g95-102 type=cloze_text
+STEM: Blank (96): choose the option that completes the text.
+A: becoming
+B: become
+C: became
+KEY: C conf=high
+#97 page=28 group=g95-102 type=cloze_text
+STEM: Blank (97): choose the option that completes the text.
+A: what
+B: who
+C: which
+KEY: B conf=high
+#98 page=28 group=g95-102 type=cloze_text
+STEM: Blank (98): choose the option that completes the text.
+A: So
+B: If
+C: As
+KEY: A conf=high
+#99 page=28 group=g95-102 type=cloze_text
+STEM: Blank (99): choose the option that completes the text.
+A: eat
+B: eaten
+C: eating
+KEY: C conf=high
+#100 page=28 group=g95-102 type=cloze_text
+STEM: Blank (100): choose the option that completes the text.
+A: healthiest
+B: health
+C: healthier
+KEY: C conf=high
+#101 page=28 group=g95-102 type=cloze_text
+STEM: Blank (101): choose the option that completes the text.
+A: by
+B: near
+C: off
+KEY: A conf=high
+#102 page=28 group=g95-102 type=cloze_text
+STEM: Blank (102): choose the option that completes the text.
+A: until
+B: over
+C: across
+KEY: B conf=high
+@group g103-109 103-109
+DIR: RESPONDA LAS PREGUNTAS 103 A 109 DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: <p style="text-align:center">**River dolphins**</p>
+
+River dolphins were first described by Henri Marie Ducrotay in 1817. He also gave them names. There are 38 kinds of dolphins, but 33 are sea dolphins and only 5 of them make their homes in large rivers. Although the pink dolphin lives in the Amazon River, it can also be found in the Orinoco and Madeira Rivers in smaller numbers. While they are mostly pink, river dolphins can be light gray or brown but science has not found out why they have their lovely color. We guess they become pinker when they are excited, as it happens to us when we're mad.
+
+River dolphins, like the ones in Southeast Asia or La Plata River, are clever; however, the pink dolphins in the Amazon are the cleverest, but not as much as dolphins in the Atlantic Ocean. Pink dolphins make sounds to show they enjoy being close to people; some stories of people being pushed close to the river by them are popular in the Amazon. If a pink dolphin dies, people think something bad may happen. However, if this happens, they will use the dead animal's oil to help other animals with health problems like infections, but they won't use the meat.
+
+Unfortunately, river dolphins have died as we have built new towns around their area and changed the rain forests. Also, they are caught with other animals to be shown in aquariums.
+#103 page=30 group=g103-109
+STEM: How many types of dolphins are there in the waters of our planet?
+A: 33.
+B: 5.
+C: 38.
+KEY: C conf=high
+#104 page=30 group=g103-109
+STEM: Most pink dolphins can be seen in the
+A: Amazon river.
+B: Orinoco river.
+C: Madeira river.
+KEY: A conf=high
+#105 page=30 group=g103-109
+STEM: What's the reason why pink dolphins are that color?
+A: People bother them.
+B: They have feelings.
+C: Nobody's sure.
+KEY: C conf=high
+#106 page=30 group=g103-109
+STEM: Pink river dolphins are less brilliant than dolphins in
+A: Southeast Asia.
+B: La Plata.
+C: the Atlantic.
+KEY: C conf=high
+#107 page=30 group=g103-109
+STEM: Pink dolphins are
+A: sometimes dangerous.
+B: usually friendly.
+C: always noisy.
+KEY: B conf=high
+#108 page=30 group=g103-109
+STEM: People think river dolphins could
+A: bring bad luck.
+B: become food.
+C: get sick easily.
+KEY: A conf=high
+#109 page=30 group=g103-109
+STEM: Dolphins have been in danger because of
+A: heavy storms.
+B: people's buildings.
+C: animals' meals.
+KEY: B conf=high
+@group g110-114 110-114
+DIR: RESPONDA LAS PREGUNTAS 110 A 114 DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: <p style="text-align:center">**Environmental Education**</p>
+
+To the editor:
+
+I will mention my position on Environmental Education (EE) in our society.
+
+The ability to work together towards a common goal is absolutely essential and I consider it appears in childhood, when kids get involved in positive experiences. I have personally discovered how nature acts positively in their development. I used to organize expeditions to natural reservations with my son and daughter and we would discover magnificent landscapes from which we learned a lot. Those occasions were marvelous.
+
+Vincent Simmons, author of "The Natural Rule", argues how family environmental organizations are a suitable way to get families outside to learn from nature and to consider the importance of protecting the planet. Families are more likely to go to natural spaces if another family arranges to go with them.
+
+In Simmons' opinion, getting involved in such experiences creates suitable conditions for working together, and I agree. Children will feel more comfortable being outside if others their age are involved too. This new approach can also be transferred to schools where children realize the importance of wildlife and its protection. Students will get to actually see the animals and habitats they are learning about in subjects such as biology or science.
+
+Active involvement in EE should be applied in the classrooms because kids will learn better and recognize its real world application so they would be able, for instance, to confirm in what region penguins are normally located. Such involvement may be introduced in academic events aiming at discussing environmental education, so kids could gain more knowledge of how our planet works and what they can do to take care of it.
+#110 page=32 group=g110-114
+STEM: The writer talks about EE in order to
+A: explain in what ways kids can protect our planet.
+B: describe its advantages on social relationships in children.
+C: persuade people that this method is good to teach children.
+D: encourage students to learn about animals' natural environment.
+KEY: C conf=medium why="Es una carta al editor que defiende una posición sobre la educación ambiental para los niños."
+#111 page=32 group=g110-114
+STEM: What can a reader find out from this text?
+A: The effects of nature on parents and children's relationships.
+B: The situations in which the project can be carried out.
+C: The role of a parent involved in environmental groups.
+D: The activities families can perform together in excursions.
+KEY: B conf=medium why="El texto recorre dónde se aplica la EE: familias, organizaciones, colegios, aulas y eventos académicos."
+#112 page=32 group=g110-114
+STEM: According to the text,
+A: exploring nature leads kids to promote EE in their families.
+B: EE helps children to get involved in animal life easily.
+C: EE is essential for children to understand school programs.
+D: students are encouraged to admire nature through EE instruction.
+KEY: D conf=low why="En el colegio los niños comprenden la importancia de la vida silvestre y ven los animales y hábitats que estudian."
+#113 page=32 group=g110-114
+STEM: The text suggests that in our current world, EE needs
+A: more classroom teaching about our planet.
+B: parents to be involved in their children's education.
+C: more engaged students in our real environment.
+D: teachers with essential biology knowledge.
+KEY: C conf=medium why="El autor pide participación activa para que los niños reconozcan la aplicación en el mundo real."
+#114 page=32 group=g110-114
+STEM: A neat way to recommend this system for teachers would be:
+A: Allow your students to develop a sense of responsibility with our planet. Provide them with broad and realistic opportunities to face environmental issues.
+B: Environmental instruction is a recent trend to make your students improve their academic performance in science subjects. Give them that opportunity.
+C: An advantage of EE is that kids will employ this knowledge to favor their social demands. Accompany them in this extraordinary action.
+D: Encourage the children in your classes to use EE in order to create environmental organizations. Our planet will thank your effort.
+KEY: A conf=medium
+@group g115-124 115-124
+DIR: RESPONDA LAS PREGUNTAS 115 A 124 DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: <p style="text-align:center">**A friend of animals**</p>
+
+Paul O'Grady, famous for his [[hueco:0]] Lily Savage on a TV program, is today an animal charity worker. He has a farm where he [[hueco:115]] sheep, goats, and pigs.
+
+As a child, he liked [[hueco:116]] street animals. His first pet was a hamster. [[hueco:117]] its owner couldn't look after it, feeling [[hueco:118]], she gave it to him in a cute cage, and he went on to keep rabbits, mice, and rats.
+
+His parents didn't [[hueco:119]] him to have pets. His mother was not an animal [[hueco:120]]: cats that visited her garden were frightened by having things thrown at them. His father was [[hueco:121]] interested, not like his mother. O'Grady's remembers that his first dog [[hueco:122]] to follow him everywhere: his mother could get [[hueco:123]] in the park, because if he lost the way, the dog [[hueco:124]] use movements to push the kid gently in the right direction.
+#115 page=33 group=g115-124 type=cloze_text
+STEM: Blank (115): choose the option that completes the text.
+A: rises
+B: produces
+C: raises
+D: increases
+KEY: C conf=high
+#116 page=33 group=g115-124 type=cloze_text
+STEM: Blank (116): choose the option that completes the text.
+A: reserving
+B: rescuing
+C: recovering
+D: retiring
+KEY: B conf=high
+#117 page=33 group=g115-124 type=cloze_text
+STEM: Blank (117): choose the option that completes the text.
+A: Since
+B: Unless
+C: Although
+D: Until
+KEY: A conf=high
+#118 page=33 group=g115-124 type=cloze_text
+STEM: Blank (118): choose the option that completes the text.
+A: amazed
+B: depressed
+C: ashamed
+D: surprised
+KEY: C conf=medium
+#119 page=33 group=g115-124 type=cloze_text
+STEM: Blank (119): choose the option that completes the text.
+A: promote
+B: trust
+C: convince
+D: encourage
+KEY: D conf=high
+#120 page=33 group=g115-124 type=cloze_text
+STEM: Blank (120): choose the option that completes the text.
+A: supporter
+B: leader
+C: fighter
+D: manager
+KEY: A conf=high
+#121 page=33 group=g115-124 type=cloze_text
+STEM: Blank (121): choose the option that completes the text.
+A: beyond
+B: away
+C: rather
+D: close
+KEY: C conf=high
+#122 page=33 group=g115-124 type=cloze_text
+STEM: Blank (122): choose the option that completes the text.
+A: ought
+B: used
+C: appeared
+D: accompanied
+KEY: B conf=high
+#123 page=33 group=g115-124 type=cloze_text
+STEM: Blank (123): choose the option that completes the text.
+A: delighted
+B: relaxed
+C: satisfied
+D: pleased
+KEY: B conf=high
+#124 page=33 group=g115-124 type=cloze_text
+STEM: Blank (124): choose the option that completes the text.
+A: should
+B: must
+C: would
+D: might
+KEY: C conf=high

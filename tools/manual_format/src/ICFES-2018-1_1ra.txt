@@ -1,0 +1,562 @@
+@exam ICFES-2018-1_1ra | ICFES 2018-1 1ra Sesión | pdf=/mnt/project-files/icfes/sources-new/2018-1 sesion 1 (S11 - 20181 S1).pdf | dpi=300
+@section Matemáticas 1-25
+@section Lectura crítica 26-66
+@section Sociales y ciudadanas 67-91
+@section Ciencias naturales 92-120
+
+#1 copy=K1_1ra#1 page=1
+KEY: B conf=high
+#2 copy=K1_1ra#2 page=1
+KEY: D conf=high
+#3 copy=K1_1ra#3 page=1
+KEY: B conf=high
+#4 copy=A_2da#34 page=2
+KEY: C conf=high
+@group g5-6 5-6 copy=D_2da#47
+#5 copy=D_2da#48 page=2 group=g5-6
+KEY: D conf=high
+#6 copy=D_2da#47 page=2 group=g5-6
+A: 2009.
+B: 2010.
+C: 2007.
+D: 2008.
+KEY: A conf=high
+#7 copy=K1_1ra#4 page=2
+KEY: C conf=high
+#8 copy=K1_1ra#5 page=2
+KEY: B conf=high
+#9 copy=K1_1ra#6 page=3
+KEY: A conf=high
+#10 copy=K1_1ra#7 page=3
+KEY: C conf=high
+#11 copy=I_2da#32 page=3
+STEM: El profesor afirma que la probabilidad de seleccionar un estudiante de 15 años de edad entre el grupo de los hombres es igual a 2/5, porque hay 2 hombres de 15 años de edad en el curso de 5 estudiantes.
+
+La interpretación del profesor es errada, porque
+KEY: C conf=high
+#12 copy=K1_1ra#8 page=4
+KEY: A conf=high
+#13 copy=E_1ra#17 page=4
+KEY: D conf=high
+#14 copy=K1_1ra#9 page=4
+KEY: A conf=high
+@group g15-16 15-16 copy=J_1ra#4
+DIR: RESPONDA LAS PREGUNTAS 15 Y 16 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#15 copy=J_1ra#4 page=5 group=g15-16
+KEY: A conf=medium why="El domingo se paga 20% más; solo la barra del domingo es más alta y en esa proporción."
+#16 copy=J_1ra#5 page=5 group=g15-16
+KEY: A conf=high
+#17 copy=H_1ra#19 page=5
+KEY: B conf=high
+@group g18-19 18-19 copy=J_1ra#7
+DIR: RESPONDA LAS PREGUNTAS 18 Y 19 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#18 copy=J_1ra#7 page=6 group=g18-19
+KEY: C conf=high
+#19 copy=J_1ra#8 page=6 group=g18-19
+KEY: B conf=high
+#20 page=6
+STIM: La tabla muestra el ingreso y gasto mensual de una familia durante los primeros seis meses del año.
+
+<table class="exam-table"><tr><th>Mes</th><th>Gasto mensual (pesos)</th><th>Ingreso mensual (pesos)</th></tr><tr><td>Enero</td><td>320.000</td><td>640.000</td></tr><tr><td>Febrero</td><td>380.000</td><td>630.000</td></tr><tr><td>Marzo</td><td>430.000</td><td>600.000</td></tr><tr><td>Abril</td><td>480.000</td><td>590.000</td></tr><tr><td>Mayo</td><td>360.000</td><td>540.000</td></tr><tr><td>Junio</td><td>310.000</td><td>500.000</td></tr></table>
+
+<p style="text-align:right">**Tabla**</p>
+STEM: La gráfica que representa correctamente la información presentada en la tabla es
+A:
+B:
+C:
+D:
+FIG A p=6 box=0.58,0.364,0.94,0.49 what="gráfica opción A"
+FIG B p=6 box=0.58,0.512,0.94,0.637 what="gráfica opción B"
+FIG C p=6 box=0.58,0.668,0.94,0.805 what="gráfica opción C"
+FIG D p=6 box=0.58,0.822,0.94,0.965 what="gráfica opción D"
+KEY: D conf=high why="El gasto sube hasta abril y luego baja; el ingreso baja de 640.000 a 500.000."
+#21 copy=J_1ra#6 page=7
+KEY: B conf=high
+#22 page=7
+STEM: Un elefante recorre 200 metros al norte, 100 metros al este y 200 metros al sur.
+
+¿Qué distancia y hacia qué dirección debe caminar el elefante para volver al punto inicial?
+A: 100 metros al oeste.
+B: 500 metros al norte.
+C: 100 metros al este.
+D: 500 metros al sur.
+KEY: A conf=high
+#23 copy=J_1ra#20 page=7
+KEY: D conf=high
+@group g24-25 24-25 copy=H_1ra#3
+DIR: RESPONDA LAS PREGUNTAS 24 Y 25 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#24 page=7 group=g24-25
+STEM: Si se sabe que el costo de un motor fue 6.500 dólares, es posible que el motor sea de cualquiera de las tecnologías
+A: *V*, *W*, *Z*.
+B: *Y*, *W*.
+C: *V*, *W*.
+D: *W*.
+KEY: C conf=medium why="La línea de 6.500 dólares corta los campos de V y de W; Z no llega a ese costo y Y queda por debajo."
+#25 copy=H_1ra#3 page=7 group=g24-25
+KEY: B conf=high
+@group g26-28 26-28 copy=K1_1ra#26
+#26 copy=K1_1ra#26 page=8 group=g26-28
+STEM: Lea el siguiente fragmento:
+
+<blockquote>“El término *moral* solo hace referencia a reglas que indican qué acciones son malas, buenas, justas o injustas, en una determinada cultura... No hay moral universal, porque en distintas culturas es muy diferente lo que se considera ‘bueno’ o ‘malo’, ‘justo’ o ‘injusto’”.</blockquote>
+
+¿Cuál de las siguientes opciones resume el fragmento?
+KEY: A conf=high
+#27 copy=K1_1ra#27 page=8 group=g26-28
+KEY: C conf=high
+#28 copy=K1_1ra#28 page=8 group=g26-28
+KEY: B conf=high
+@group g29-30 29-30
+DIR: RESPONDA LAS PREGUNTAS 29 Y 30 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+PASSAGE: [[FIG]]
+
+<p style="text-align:right">Tomado de: *http://www.taringa.net/posts/info/18009250/La-corrupcion-de-los-intelectuales.html*</p>
+FIG passage p=8 box=0.540,0.455,0.915,0.618 what="caricatura: apretón de manos pasando un fajo de billetes"
+#29 page=8 group=g29-30
+STEM: La caricatura representa
+A: la práctica de la corrupción.
+B: a los políticos corruptos.
+C: la ausencia de las mujeres en las transacciones ilegales.
+D: el intercambio de divisas en los mercados ilegales.
+KEY: A conf=high
+#30 page=8 group=g29-30
+STEM: ¿Cuál de las siguientes frases podría acompañar la ilustración?
+A: “Ser un buen negociante exige renunciar a los valores”.
+B: “Algunas acciones están mediadas por intereses monetarios”.
+C: “Que tu mano derecha no sepa lo que hace tu mano izquierda”.
+D: “El dinero no nos proporciona amigos, sino enemigos de mejor calidad”.
+KEY: C conf=medium why="El billete pasa oculto bajo el saludo: la frase alude a lo que se hace a escondidas."
+@group g31-34 31-34 copy=K1_1ra#34
+DIR: RESPONDA LAS PREGUNTAS 31 A 34 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#31 copy=K1_1ra#34 page=9 group=g31-34
+KEY: D conf=medium
+#32 copy=K1_1ra#35 page=9 group=g31-34
+KEY: D conf=high
+#33 copy=K1_1ra#36 page=9 group=g31-34
+KEY: D conf=high
+#34 page=9 group=g31-34
+STEM: La caricatura critica
+A: la ausencia de movilizaciones sociales que busquen el bien común.
+B: la convicción de que las cosas malas solo le pasan a la gente mala.
+C: la indiferencia de las clases altas frente a los problemas que no las afectan.
+D: la falta de comprensión de que algunos problemas tienen dimensión global.
+KEY: D conf=medium why="El personaje cree que el mundo arde siempre en otro lado, sin ver que el planeta entero está en peligro."
+@group g35-39 35-39 copy=K1_1ra#29
+DIR: RESPONDA LAS PREGUNTAS 35 A 39 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#35 copy=K1_1ra#29 page=10 group=g35-39
+KEY: D conf=high
+#36 copy=K1_1ra#30 page=10 group=g35-39
+KEY: A conf=high
+#37 copy=K1_1ra#31 page=10 group=g35-39
+KEY: C conf=medium why="Sócrates dice estar decidido a considerar e investigar qué es la virtud."
+#38 copy=K1_1ra#32 page=10 group=g35-39
+KEY: D conf=high
+#39 copy=K1_1ra#33 page=10 group=g35-39
+KEY: C conf=high
+@group g40-41 40-41 copy=E_1ra#35
+DIR: RESPONDA LAS PREGUNTAS 40 Y 41 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#40 copy=E_1ra#35 page=11 group=g40-41
+KEY: A conf=high
+#41 copy=E_1ra#36 page=11 group=g40-41
+A: un negrero.
+B: un príncipe.
+C: un caníbal.
+D: un isleño.
+KEY: D conf=medium
+@group g42-43 42-43
+DIR: RESPONDA LAS PREGUNTAS 42 Y 43 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+PASSAGE: [[FIG]]
+
+<p class="fuente">Tomado de: McCloud, Scott. (1995). *Cómo se hace un cómic: el arte invisible*. Ediciones B.</p>
+FIG passage p=12 box=0.150,0.112,0.892,0.395 what="cómic de Scott McCloud sobre Carl"
+#42 page=12 group=g42-43
+STEM: Considere la siguiente secuencia en el cómic:
+
+[[FIG]]
+
+Teniendo en cuenta el resto del cómic, ¿cuál de las siguientes opciones describe mejor la secuencia anterior?
+FIG stem p=12 box=0.140,0.448,0.455,0.615 what="secuencia de seis viñetas: Carl, Daisy y el choque"
+A: Al no poder salir con una amiga, Carl decide tomarse unos tragos y, bajo efectos del alcohol, maneja, se estrella y muere.
+B: Al ser rechazado por una mujer, Carl no sabe qué hacer con su vida y toma la decisión de suicidarse, estrellando su carro contra un árbol.
+C: Al no poder salir con una amiga, Carl se estrella y muere debido a que se distrae con una bebida mientras conduce camino a casa.
+D: Al ser rechazado por una mujer, Carl resuelve manejar a toda velocidad y termina por estrellar su carro contra un árbol.
+KEY: A conf=medium
+#43 page=12 group=g42-43
+STEM: Considere la siguiente viñeta:
+
+[[FIG]]
+
+En este recuadro, los lentes del personaje representan
+FIG stem p=12 box=0.548,0.452,0.870,0.652 what="viñeta: personaje con lentes de distinto tamaño"
+A: la armonía narrativa que un autor, a fin de evitar carencias o excesos de contenido, debe plasmar en su cómic.
+B: la visión doble que deben tener los autores de los cómics para poder ver sus creaciones desde su punto de vista y desde el punto de vista del lector.
+C: la gran capacidad imaginativa y creadora que, como se explica en el texto, es un elemento crucial para todo creador del mundo del cómic.
+D: la simetría contextual que debe existir entre los elementos gráficos y textuales que conforman el relato de un cómic.
+KEY: A conf=medium why="El personaje habla del equilibrio entre lo demasiado y lo demasiado poco; un lente grande y uno pequeño lo ilustran."
+@group g44-48 44-48
+DIR: RESPONDA LAS PREGUNTAS 44 A 48 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+PASSAGE: [[FIG]]
+FIG passage p=13 box=0.295,0.096,0.920,0.458 what="tira de Calvin y Hobbes sobre los tiranosaurios"
+#44 page=13 group=g44-48
+STEM: El argumento del niño es
+A: inválido, porque los tiranosaurios serían más geniales si fueran carroñeros.
+B: válido, porque sí implica que los tiranosaurios son geniales depredadores.
+C: inválido, porque no implica que los tiranosaurios sean depredadores.
+D: válido, porque o bien los tiranosaurios son temibles depredadores o bien son desagradables carroñeros.
+KEY: C conf=high why="Que algo sea más genial así no prueba que sea así."
+#45 page=13 group=g44-48
+STEM: ¿Cuál es el tema del trabajo del niño?
+A: ¿Por qué los tiranosaurios son geniales?
+B: ¿Por qué los tiranosaurios son depredadores?
+C: ¿Son los tiranosaurios temibles o desagradables?
+D: ¿Son los tiranosaurios depredadores o carroñeros?
+KEY: D conf=high
+#46 page=13 group=g44-48
+STEM: Según lo dicho por el niño, se puede suponer que los tiranosaurios
+A: son geniales, aun si no resultan ser depredadores.
+B: no son geniales, si resulta que no son depredadores.
+C: son geniales, solamente si resultan ser depredadores.
+D: son depredadores, solamente si resultan ser geniales.
+KEY: C conf=medium why="Calvin dice que son mucho más geniales si son depredadores: su genialidad depende de serlo."
+#47 page=13 group=g44-48
+STEM: El niño afirma que los tiranosaurios son depredadores porque
+A: así son más temibles.
+B: así son más geniales.
+C: no son carroñeros.
+D: cazan presas.
+KEY: B conf=high
+#48 page=13 group=g44-48
+STEM: ¿Cuál es la tesis que quiere defender Calvin (el niño) en su trabajo?
+A: Los tiranosaurios son geniales.
+B: Los depredadores son geniales.
+C: Los depredadores son temibles.
+D: Los tiranosaurios son depredadores.
+KEY: D conf=high
+@group g49-53 49-53 copy=E_1ra#37
+DIR: RESPONDA LAS PREGUNTAS 49 A 53 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#49 copy=E_1ra#39 page=14 group=g49-53
+KEY: D conf=high
+#50 copy=E_1ra#37 page=14 group=g49-53
+KEY: C conf=high
+#51 copy=E_1ra#38 page=14 group=g49-53
+KEY: D conf=medium why="El ministro convoca a los habitantes de la capital, donde se hicieron las elecciones."
+#52 copy=K1_1ra#42 page=14 group=g49-53
+KEY: B conf=high
+#53 page=14 group=g49-53
+STEM: El uso de la palabra “finalmente”, en la primera frase del texto, sugiere que
+A: con su presencia el primer ministro concluyó el orden del día.
+B: a las diez se dio por terminada una reunión del primer ministro.
+C: se produjo algo que se esperaba desde hacía ya bastante tiempo.
+D: aquella aparición fue lo último que el primer ministro hizo aquel día.
+KEY: C conf=high
+@group g54-55 54-55
+DIR: RESPONDA LAS PREGUNTAS 54 Y 55 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+PASSAGE: Lo que llaman la “Ley Seca”, a estilo y texto yanquis, está en la mente de varios legisladores y en el corazón de muchos colombianos. Ignoramos si saldrá temprano o tarde o si no saldrá esta ley prohibitiva; vista por un lado, parece un prodigio de redención; vista por otro lado, bien puede parecer una solemne necedad. Prodigio, si por ella logran acabarse los crímenes que el consumo de alcohol provoca; necedad, si por ella se entregan las gentes a otras bebidas que las envenenen y las enloquezcan más que el aguardiente de caña y la chicha.
+
+Que con la ley se evitarían crímenes de sangre y otras bestialidades es cierto, ciertísimo. Por desgracia, no gozaremos de tanta dicha: la Ley Seca, aunque rija oficial y aparentemente, en cualquier parte, es un imposible físico y moral. Para establecerla habría que tumbar instituciones, leyes sobre tributos, sobre industrias, sobre comercio; habría que acabar con la química, con el reino vegetal y con el agua del cielo. El linaje humano parece necesitar de algo que lo intoxique, bien porque se lo exija el organismo, bien por buscar en la embriaguez olvido de pesares o mirajes de ilusión. ¿Quién se escapa de la quimera? Todos los pueblos, bárbaros o avanzados, han perseguido, en todo tiempo y lugar, los “paraísos artificiales” que ofrece el alcohol.
+
+<p class="fuente">Tomado y adaptado de: Carrasquilla, Tomás (1922). “Discos cortos II”. En: Vallejo, M. (ed.) (1997). *La crónica en Colombia: medio siglo de oro*. Bogotá: Presidencia de la República.</p>
+#54 page=15 group=g54-55
+STEM: Teniendo en cuenta el texto, ¿cuál de las siguientes opciones apoya fuertemente la idea de que la Ley Seca permitiría evitar “crímenes de sangre”?
+A: Debido a que la Ley Seca es un prodigio de redención, haría que los hombres sean más tolerantes entre sí y resuelvan sus diferencias por medios no violentos.
+B: Dado que la Ley Seca prohíbe el consumo de alcohol, las riñas generadas por estados de embriaguez y las consecuencias mortales de estas riñas disminuirían.
+C: La Ley Seca es una ley prohibitiva que impide la venta de bebidas alcohólicas tóxicas, por lo que su aplicación prevendría muchas muertes causadas por envenenamiento.
+D: Puesto que la Ley Seca prohíbe el aguardiente de caña y la chicha, menos gente moriría debido al tráfico ilegal de estas dos bebidas alcohólicas.
+KEY: B conf=high
+#55 page=15 group=g54-55
+STEM: Para demostrar que la Ley Seca **NO** puede establecerse, el autor supone que
+A: la Ley Seca es una ley prohibitiva que evitaría que los hombres cometieran actos bestiales.
+B: la necesidad de los humanos de buscar los efectos del alcohol impide que la Ley Seca sea respetada.
+C: no existen pueblos bárbaros o avanzados que no conozcan los efectos psicoactivos del alcohol.
+D: las únicas bebidas alcohólicas sobre las que se aplica la ley son el aguardiente de caña y la chicha.
+KEY: B conf=high
+@group g56-57 56-57
+DIR: RESPONDA LAS PREGUNTAS 56 Y 57 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+PASSAGE: [[FIG]]
+FIG passage p=15 box=0.535,0.308,0.920,0.598 what="«Ver entre líneas» de Mónica Serrano: Buscar o encontrar, Siddhartha, con dos dibujos"
+#56 page=15 group=g56-57
+STEM: El triángulo rodeado por un círculo y con signos de interrogación a los lados representa
+A: el escepticismo del personaje frente a lo que sus ojos ven.
+B: la forma en que el diamante aparece ante los ojos del personaje.
+C: la parte superior del diamante que el personaje observa.
+D: aquello que el personaje está buscando.
+KEY: D conf=medium
+#57 page=15 group=g56-57
+STEM: El diamante que se encuentra frente al personaje de la parte inferior está dividido en los dos triángulos que lo constituyen. Así, se muestra gráficamente que este personaje
+A: encontró aquello que el personaje de la parte superior buscaba.
+B: rompió la obsesión con los triángulos que el personaje de la parte superior tenía.
+C: puede ver a través de los objetos que se presentan ante sus ojos.
+D: comprendió que todos los objetos se componen de partes más pequeñas.
+KEY: A conf=medium why="El triángulo que buscaba el de arriba estaba dentro del diamante que tenía enfrente; el de abajo lo ve."
+@group g58-61 58-61 copy=G_1ra#43
+DIR: RESPONDA LAS PREGUNTAS 58 A 61 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#58 copy=G_1ra#43 page=16 group=g58-61
+KEY: C conf=high
+#59 copy=G_1ra#45 page=16 group=g58-61
+KEY: D conf=high
+#60 copy=G_1ra#46 page=16 group=g58-61
+C: presenta las reflexiones de Descartes sobre el tema primero de la filosofía.
+KEY: D conf=high
+#61 copy=G_1ra#44 page=16 group=g58-61
+KEY: B conf=high
+@group g62-63 62-63 copy=J_1ra#31
+DIR: RESPONDA LAS PREGUNTAS 62 Y 63 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#62 copy=J_1ra#31 page=16 group=g62-63
+D: holgazanería y arrogancia.
+KEY: B conf=high
+#63 copy=J_1ra#32 page=17 group=g62-63
+KEY: D conf=high
+@group g64-66 64-66 copy=J_1ra#33
+DIR: RESPONDA LAS PREGUNTAS 64 A 66 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#64 copy=J_1ra#33 page=17 group=g64-66
+KEY: D conf=high
+#65 copy=J_1ra#34 page=17 group=g64-66
+KEY: D conf=high
+#66 copy=J_1ra#35 page=17 group=g64-66
+KEY: A conf=high
+#67 copy=K1_1ra#67 page=18
+KEY: B conf=high
+#68 copy=K1_1ra#68 page=18
+KEY: B conf=high
+@group g69 69-69 copy=K1_1ra#69
+#69 copy=K1_1ra#69 page=18 group=g69
+KEY: C conf=high
+#70 copy=A_1ra#89 page=19
+KEY: B conf=high
+#71 copy=A_1ra#84 page=19
+C: favorezcan la apertura económica.
+KEY: C conf=high
+#72 copy=A_1ra#90 page=19
+KEY: D conf=high
+#73 copy=A_1ra#91 page=19
+D: Son similares: ambos apoyan el sacrificio del animal, ya sea para el espectáculo o para el consumo humano.
+KEY: D conf=medium
+#74 copy=A_2da#1 page=20
+KEY: A conf=high
+#75 copy=A_2da#19 page=20
+STIM: Un proyecto que se discute en el Concejo de Bogotá pretende reducir la evasión en el pago de pasaje del servicio público de transporte de la ciudad, debido a que este problema representa pérdidas millonarias. El proyecto contempla que los infractores deban enfrentar multas, detenciones transitorias, expulsiones temporales del sistema, trabajo comunitario e incluso labores de pedagogía ciudadana o de asistencia humanitaria.
+
+<p class="fuente">Tomado y adaptado de: ‘Tatequieto’ a colados en TransMilenio. *http://www.semana.com/Imprimir/410960*.</p>
+KEY: C conf=high
+#76 page=20
+STEM: El rector de un colegio considera necesario aumentar las horas de Educación Física, para lo cual propone reducir el número de horas de otras clases. Al presentarle su propuesta a otros docentes, enfrenta diferentes reacciones. El profesor de Matemáticas no está de acuerdo con la iniciativa del rector y le dice que, si la va a llevar a cabo, no debería disminuir las clases de Matemáticas dado que estas son las que más ayudan a los estudiantes a desarrollar sus habilidades de pensamiento abstracto. La profesora de Inglés dice estar en desacuerdo con la idea del rector, pero cree que hay áreas más importantes que otras –como Inglés y Matemáticas– cuyas horas de clase no deben reducirse. La profesora de Sociales dice que para los estudiantes es fundamental tener conocimientos de su materia, pues son necesarios para poder ser buenos ciudadanos, y que también deben saber de Matemáticas, Inglés y Español, para así desarrollar todas sus capacidades intelectuales. Finalmente, el profesor de Español dice que si se reducen las clases, debe hacerse por igual para todas las materias de forma que ningún área se vea más perjudicada que la otra.
+
+De acuerdo con la situación anterior, ¿entre quiénes se podría presentar un conflicto?
+A: Entre el profesor de Matemáticas y la profesora de Inglés, porque cada uno de ellos cree que su materia es más importante que las demás, por lo que debería privilegiarse en la decisión del rector.
+B: Entre el profesor de Matemáticas y el profesor de Español, porque el primero quiere que la clase de Matemáticas se privilegie en la decisión del rector, mientras que el segundo quiere que todas las áreas sean tenidas en cuenta de forma equitativa.
+C: Entre la profesora de Sociales y el profesor de Español, porque la primera reconoce la importancia de que los estudiantes adquieran conocimientos de diferentes áreas, mientras que el segundo sostiene que solo se necesitan algunas áreas.
+D: Entre la profesora de Inglés y la de Sociales, porque cada una cree que debería haber más clases de la materia que dicta y menos de todas las otras materias que son poco importantes.
+KEY: B conf=high
+#77 page=21
+STEM: Una comunidad mantiene una antigua tradición de cacería y recolección de alimentos, y casi toda su organización social interna se basa en estas actividades. Los hombres jóvenes salen a buscar alimentos, puesto que de esta forma se ganan su lugar en la comunidad. En aquellas ocasiones en las que no logran cazar se abstienen de alimentarse, pues comer algo que no ha sido cazado por ellos disminuye su valor en la comunidad. Los hombres jóvenes traen los alimentos, y las mujeres se encargan de prepararlos. La función principal que ellas tienen es darle de comer a la comunidad y garantizar que las tradiciones culinarias ancestrales se mantengan.
+
+Por su parte, los niños se encargan de limpiar el lugar donde se servirán los alimentos y de organizarlo para que toda la comunidad se pueda reunir. Finalmente, los adultos mayores se encargan de hacer los rituales necesarios para pedir que siempre les lleguen los alimentos y que nadie en su comunidad padezca hambre.
+
+Esta comunidad indígena atraviesa una grave situación de desabastecimiento de alimentos, por lo que el Gobierno decide intervenir y suministrarles todo tipo de alimentos a los miembros de la comunidad. Después de un tiempo, los funcionarios del Gobierno se dan cuenta de que apenas solucionaron una parte del problema, pues no todos los miembros de la comunidad están comiendo.
+
+A partir de lo anterior, ¿cuál miembro de la comunidad probablemente no come los alimentos suministrados por el Gobierno?
+A: Las mujeres.
+B: Los niños.
+C: Los adultos mayores.
+D: Los hombres jóvenes.
+KEY: D conf=high
+#78 page=21
+STEM: En el artículo 114 de la Constitución política de 1991 se establece lo siguiente:
+
+<blockquote>“Corresponde al Congreso de la República reformar la Constitución, hacer las leyes y ejercer control político sobre el Gobierno y la administración. El Congreso de la República estará integrado por el Senado y la Cámara de Representantes”.</blockquote>
+
+¿Por qué es importante que el Congreso de la República ejerza funciones de control político sobre el Gobierno?
+A: Porque el control político impide que el Gobierno apruebe autónomamente leyes.
+B: Porque el control político evita que el Gobierno abuse del poder.
+C: Porque el control político garantiza que el Gobierno haga buenas leyes.
+D: Porque el control político le permite al Gobierno aprobar leyes a través del Congreso.
+KEY: B conf=high
+#79 page=21
+STEM: En los departamentos de La Guajira, Cesar, Norte de Santander y Vichada, se presenta con frecuencia la práctica de contrabando de combustible. En esta actividad económica ilegal participan actores armados como guerrillas o bandas criminales, quienes cobran “impuestos” a quienes circulen cargando combustible de contrabando por las vías que ellos controlan.
+
+¿Cuál de los siguientes factores geográficos explica mejor la presencia del contrabando de combustible en estos departamentos?
+A: Su alta densidad de población, lo cual incrementa el uso del automóvil y, por esa vía, el consumo de gasolina.
+B: Su cercanía a la frontera con Venezuela, pues allí el combustible es más barato, lo que hace rentable el negocio.
+C: La presencia de grupos violentos en su territorio, pues estos presionan a la gente a realizar estas actividades.
+D: El buen estado de las vías, pues este permite un transporte rápido y seguro de la gasolina.
+KEY: B conf=high
+#80 page=21
+STEM: Un sindicato es una asociación de trabajadores, de empresas públicas o privadas, que busca el bienestar de sus miembros, mediante la negociación de los salarios y las condiciones de trabajo. El poder de negociación que adquiere el sindicato como consecuencia de la unión de los trabajadores le permite solicitar diálogos con el empleador para reevaluar ciertos aspectos del empleo. La libertad para crear, organizar y afiliarse a sindicatos se considera un derecho, según lo establece el artículo 39 de la Constitución política de Colombia. ¿En qué situaciones el derecho a la libre asociación o sindicato podría afectarse?
+A: Cuando el Estado limita su protección a los dirigentes sindicales y a los sindicatos.
+B: Cuando el sindicato interrumpe las actividades laborales y exige una revisión contractual.
+C: Cuando el Estado le otorga legitimidad a los procesos de negociación del sindicato.
+D: Cuando un empleado promueve la creación de un sindicato dentro de una empresa privada.
+KEY: A conf=high
+@group g81 81-81 copy=K1_1ra#70
+#81 copy=K1_1ra#70 page=22 group=g81
+KEY: C conf=high
+#82 copy=K1_1ra#76 page=22
+KEY: A conf=high
+@group g83 83-83 copy=K1_1ra#71
+#83 copy=K1_1ra#71 page=22 group=g83
+KEY: A conf=high
+#84 copy=K1_1ra#73 page=22
+KEY: C conf=high
+#85 copy=K1_1ra#74 page=23
+KEY: A conf=high
+#86 copy=K1_1ra#75 page=23
+KEY: A conf=high
+#87 copy=K1_1ra#77 page=23
+KEY: D conf=high
+#88 copy=K1_1ra#78 page=23
+KEY: B conf=high
+#89 copy=K1_1ra#79 page=24
+KEY: A conf=medium
+#90 copy=K1_1ra#80 page=24
+KEY: C conf=high
+#91 copy=K1_1ra#81 page=24
+KEY: B conf=high
+#92 copy=K1_1ra#92 page=25
+KEY: C conf=high
+#93 copy=K1_1ra#93 page=25
+KEY: C conf=high
+#94 copy=K1_1ra#94 page=25
+KEY: B conf=high
+@group g95-97 95-97 copy=J_1ra#117
+DIR: RESPONDA LAS PREGUNTAS 95 A 97 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#95 copy=J_1ra#117 page=26 group=g95-97
+KEY: D conf=high
+#96 copy=J_1ra#118 page=26 group=g95-97
+KEY: C conf=high
+#97 copy=J_1ra#119 page=26 group=g95-97
+KEY: C conf=high
+#98 page=26
+STEM: A continuación se muestra una figura en la cual una persona, con la ayuda de un guante, sostiene una varilla sobre una fogata.
+
+[[FIG]]
+
+Al cabo de un tiempo, la persona siente que el guante se calienta. ¿Cómo fue el flujo de calor para que el guante se calentara?
+FIG stem p=26 box=0.628,0.672,0.885,0.795 what="mano con guante sosteniendo una varilla sobre una fogata"
+A: Desde el guante hacia la varilla.
+B: Desde el guante hacia la fogata.
+C: Desde la varilla hacia el guante.
+D: Desde la varilla hacia la fogata.
+KEY: C conf=high
+#99 copy=J_2da#62 page=27
+STIM: Cuando un ácido carboxílico reacciona con una base, se forma una sal y agua, como se muestra a continuación:
+
+[[FIG]]
+FIG stim p=27 box=0.180,0.100,0.805,0.172 what="reacción: ácido carboxílico + NaOH → sal + agua"
+
+En la reacción de un ácido carboxílico con NaOH, se obtuvo como producto la sal
+
+[[FIG]]
+FIG stim p=27 box=0.325,0.192,0.625,0.243 what="sal CH3-CH2-CH2-COO-Na"
+KEY: B conf=high
+#100 page=27
+STIM: La resistencia de la bacteria *Neisseria gonorrhoeae* a la penicilina le ha generado a la comunidad médica algunos problemas con el tratamiento de la blenorragia, una enfermedad de transmisión sexual. La gráfica muestra los resultados de la resistencia a la penicilina presentada por esta especie de bacteria, en un estudio realizado durante la década comprendida entre 1980 y 1990.
+
+[[FIG]]
+FIG stim p=27 box=0.130,0.552,0.465,0.832 what="barras: porcentaje de resistencia a la penicilina 1980-1990, con ¿? en 2015"
+STEM: Si la resistencia a la penicilina de esta especie de bacteria continúa con este comportamiento, ¿cuál sería el porcentaje de resistencia esperado en el año 2015?
+A: Menor que el 5 %.
+B: Entre el 5 % y 8 %.
+C: Entre el 8 % y 9 %.
+D: Mayor que el 10 %.
+KEY: D conf=high
+#101 copy=J_2da#64 page=27
+KEY: D conf=high
+#102 copy=J_2da#65 page=28
+KEY: D conf=high
+#103 copy=J_2da#66 page=28
+KEY: A conf=high
+#104 page=29
+STIM: A continuación se muestra una reacción química:
+
+<p style="text-align:center">*W* + *R* → *S* + *T*</p>
+
+Para determinar la velocidad de esta reacción se usa la siguiente ecuación:
+
+<p style="text-align:center">**Velocidad** = *k* [*W*][*R*]²</p>
+
+Donde
+
+*k* = constante de velocidad.<br>[*W*]: concentración del reactivo *W*.<br>[*R*]: concentración de reactivo *R*.
+STEM: Con base en la ecuación anterior, si se duplica la concentración de *R*, manteniendo las demás condiciones iguales, ¿qué sucederá con la velocidad de la reacción?
+A: Disminuirá, porque la velocidad depende únicamente de *W* y de la constante *k*.
+B: Aumentará, porque la velocidad de reacción depende de *R* y no de *W*.
+C: Disminuirá, porque a mayor concentración de reactivos, menor es la velocidad.
+D: Aumentará, porque cuando se incrementa la concentración de *R*, la velocidad se incrementa.
+KEY: D conf=high
+#105 copy=J_1ra#116 page=29
+KEY: A conf=high why="En la restauración pasiva nadie siembra: las semillas llegan con animales y viento."
+#106 copy=H_1ra#101 page=29
+KEY: A conf=high
+#107 page=29
+STIM: Un jugador de fútbol practica sus cobros. Sus cobros siempre salen con la misma rapidez y lo único que cambia es el ángulo de lanzamiento del balón. En la siguiente figura se muestran cinco de los cobros hechos por el jugador.
+
+[[FIG]]
+FIG stim p=29 box=0.562,0.533,0.885,0.656 what="cinco trayectorias parabólicas de un balón con distinto ángulo"
+STEM: Teniendo en cuenta la información anterior, ¿cuál de las siguientes tendencias explica mejor las trayectorias de los cobros mostrados?
+A: Cuanto mayor sea el ángulo del cobro respecto al suelo, mayor será el desplazamiento y velocidad del balón a lo largo del eje horizontal.
+B: Cuanto mayor sea el ángulo de cobro respecto al suelo, mayor será la altura máxima que alcanza el balón.
+C: Cuanto mayor sea el ángulo del cobro respecto al suelo, menor serán el tiempo que el balón permanece en el aire.
+D: Cuanto mayor sea el ángulo del cobro respecto al suelo, menor será la aceleración a la que se somete el balón.
+KEY: B conf=high
+#108 copy=A_1ra#118 page=30
+KEY: C conf=high
+#109 page=30
+STIM: Se tienen 4 sustancias a las cuales se les compara su conductividad eléctrica en tres estados o fases distintas.
+
+<table class="exam-table"><tr><th rowspan="2">Sustancia</th><th colspan="3">Conductividad eléctrica en cada estado</th></tr><tr><th>Sólido</th><th>Líquido</th><th>Gaseoso</th></tr><tr><td>*M*</td><td>Alta</td><td>Baja</td><td>No presenta</td></tr><tr><td>*X*</td><td>No presenta</td><td>No presenta</td><td>No presenta</td></tr><tr><td>*R*</td><td>Baja</td><td>Alta</td><td>No presenta</td></tr><tr><td>*T*</td><td>Baja</td><td>Baja</td><td>Baja</td></tr></table>
+STEM: A partir de lo anterior, un estudiante concluye: “La conductividad eléctrica de dos (2) de las sustancias varía dependiendo del estado en el que se encuentren”. ¿La tabla de datos contiene evidencias suficientes para llegar a esta conclusión?
+A: Sí, porque las sustancias *M* y *R* tienen diferente conductividad en los estados sólido, líquido y gaseoso.
+B: No, porque las sustancias *M* y *R* conducen la electricidad en estado líquido, pero no en estado sólido.
+C: Sí, porque las sustancias *X* y *T* no presentan conductividad en estado sólido, pero en estado líquido sí.
+D: No, porque las sustancias *X* y *T* no presentan conductividad eléctrica en ninguno de los tres estados.
+KEY: A conf=high
+#110 copy=K1_1ra#95 page=30
+KEY: C conf=high
+@group g111-113 111-113 copy=A_1ra#92
+DIR: RESPONDA LAS PREGUNTAS 111 A 113 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#111 copy=A_1ra#92 page=30 group=g111-113
+KEY: D conf=high
+#112 copy=A_1ra#93 page=30 group=g111-113
+KEY: B conf=high
+#113 copy=K1_1ra#97 page=31 group=g111-113
+STIM:
+KEY: C conf=high
+#114 page=31
+STEM: En el genoma de la bacteria *Escherichia coli* hay tres genes responsables del metabolismo de la lactosa. Cuando estas bacterias crecen en un medio de cultivo sin lactosa son de color blanco, pero si el medio contiene lactosa, cuando la metabolizan, las bacterias se tornan de color azul.
+
+Un investigador expuso una colonia de *E. coli* a una fuente de rayos ultravioleta. Posteriormente, las puso en un medio de cultivo que contenía lactosa y horas después encontró que las bacterias tenían un color blanco. Con base en la información anterior, ¿qué le pudo haber sucedido a la colonia de bacterias que explique este resultado?
+A: La colonia de bacterias adquirió la capacidad de metabolizar sustratos diferentes de la lactosa.
+B: Los rayos ultravioleta generaron mutaciones en estos genes impidiendo que las bacterias metabolizaran la lactosa.
+C: Las bacterias metabolizaron una cantidad de lactosa muy superior a la que requieren para sobrevivir.
+D: Los rayos ultravioleta quemaron la colonia de bacterias exponiendo el color blanco del sustrato de la lactosa.
+KEY: B conf=high
+#115 copy=A_1ra#102 page=31
+KEY: B conf=high
+#116 copy=A_2da#63 page=31
+KEY: A conf=medium
+#117 copy=A_1ra#116 page=32
+KEY: B conf=high
+#118 copy=A_1ra#104 page=32
+KEY: D conf=high
+#119 page=32
+STEM: La figura muestra un proceso que se da en el cuerpo humano.
+
+[[FIG]]
+
+Con base en esta información, ¿cuál proceso se describe en la figura?
+FIG stem p=32 box=0.150,0.585,0.490,0.768 what="inspiración y espiración: pulmones, músculos y diafragma"
+A: La circulación, porque describe cómo entra el oxígeno a la sangre y sale de esta.
+B: La respiración, porque describe los movimientos que se dan para el ingreso del aire y la salida de este.
+C: La secreción, porque describe cómo los pulmones producen oxígeno y lo liberan al aire.
+D: La locomoción, porque muestra cómo se genera el movimiento de los músculos en el cuerpo.
+KEY: B conf=high
+#120 page=32
+STIM: Un equipo de investigadores mide el tamaño promedio de ratas silvestres en poblaciones que habitan desde el trópico hasta el Polo Norte, para ver si el tamaño corporal está determinado por la temperatura del ambiente. Los resultados se muestran en la tabla.
+
+<table class="exam-table"><tr><th>País</th><th>Temperatura promedio</th><th>Tamaño corporal promedio</th></tr><tr><td>1</td><td>24 °C</td><td>35 cm</td></tr><tr><td>2</td><td>26 °C</td><td>37 cm</td></tr><tr><td>3</td><td>18 °C</td><td>35 cm</td></tr><tr><td>4</td><td>14 °C</td><td>38 cm</td></tr><tr><td>5</td><td>12 °C</td><td>37 cm</td></tr></table>
+STEM: Los científicos concluyen que el tamaño corporal en estas ratas es mayor en climas fríos. Con base en la información anterior, ¿hay evidencia de la conclusión de los investigadores?
+A: No, porque hay ratas del mismo tamaño en climas cálidos y fríos.
+B: Sí, porque la dieta asociada a climas fríos hace que las ratas aumenten su tamaño.
+C: No, porque el tamaño de las ratas solo aumentó 1 cm por cada grado que disminuyó la temperatura.
+D: Sí, porque las ratas que viven a 26 °C miden menos que las ratas que viven a 12 °C.
+KEY: A conf=high
