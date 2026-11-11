@@ -38,7 +38,7 @@ export function applyOverrides(bundle, rows) {
 // What the builder opens for a bank question: the question as this school sees it now.
 export function draftFromBank(q, answer, row = null) {
   const j = row?.question_json;
-  return draftFromRow({
+  const draft = draftFromRow({
     id: row?.id,
     area: q.section,
     visibility: "school",
@@ -51,10 +51,18 @@ export function draftFromBank(q, answer, row = null) {
       traced: j?.traced ?? [],
     },
   });
+  // The bank's own crops (charts, drawings) are shown in the builder too, so a [[figura:…]] in the text is not
+  // "missing". They stay in the bank: overrideRow leaves them out, and applyOverrides adds them back.
+  const own = new Set(draft.figures.map((f) => f.id));
+  const bankFigures = (q.traced ?? []).filter((t) => t?.url && !own.has(t.figure_id)).map((t) => ({ id: t.figure_id, url: bankUrl(t.url), bank: true }));
+  return { ...draft, figures: [...bankFigures, ...draft.figures] };
 }
+
+// Crops in the built app are data URIs; a local build may still point at a file next to the app.
+const bankUrl = (url) => (/^(data:|https?:|\/)/.test(url) ? url : `${import.meta.env?.BASE_URL ?? "/"}${url}`);
 
 // The row to store for an edited draft.
 export function overrideRow(draft, { schoolId, userId, slug, qkey }) {
-  const row = draftToRow(draft, { schoolId, ownerId: userId });
+  const row = draftToRow({ ...draft, figures: (draft.figures ?? []).filter((f) => !f.bank) }, { schoolId, ownerId: userId });
   return { school_id: schoolId, exam_slug: slug, qkey, question_json: row.question_json, answer: row.answer, explanation: row.explanation, edited_by: userId };
 }
