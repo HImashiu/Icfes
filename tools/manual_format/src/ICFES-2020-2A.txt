@@ -1,0 +1,678 @@
+@exam ICFES-2020-2A | ICFES 2020-2 (Calendario A) | pdf=/mnt/project-files/icfes/sources-new/l3_2020A.pdf | dpi=300
+@section Matemáticas 1-30
+@section Lectura crítica 31-57
+@section Sociales y ciudadanas 58-90
+@section Ciencias naturales 91-129
+@section Inglés 130-164
+// Matemáticas
+#1 copy=ICFES-2019-1_2da#34 page=2
+KEY: A conf=high
+#2 copy=ICFES-2019-1_2da#37 page=2
+KEY: D conf=high
+#3 copy=ICFES-2019-1_2da#38 page=3
+KEY: C conf=high
+#4 copy=ICFES-2019-1_2da#39 page=3
+KEY: A conf=high
+#5 copy=ICFES-2019-1_2da#41 page=3
+KEY: D conf=high
+#6 copy=ICFES-2019-1_2da#43 page=3
+KEY: B conf=high
+#7 copy=ICFES-2019-1_2da#40 page=3
+KEY: A conf=high
+#8 copy=ICFES-2019-1_2da#36 page=4
+KEY: C conf=high
+#9 copy=ICFES-2019-1_2da#35 page=4
+KEY: C conf=high
+#10 copy=ICFES-2019-1_2da#44 page=4
+KEY: A conf=high
+#11 copy=ICFES-2018-2_2da#31 page=5
+KEY: B conf=high
+@group g12-13 12-13 copy=ICFES-2018-2_2da#29
+DIR: RESPONDA LAS PREGUNTAS 12 Y 13 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#12 copy=ICFES-2018-2_2da#29 page=5 group=g12-13
+KEY: A conf=high
+#13 copy=ICFES-2018-2_2da#30 page=5 group=g12-13
+KEY: D conf=high
+#14 copy=I_1ra#24 page=6
+KEY: A conf=high
+#15 copy=ICFES-2018-2_2da#34 page=6
+KEY: D conf=high
+#16 copy=ICFES-2018-2_2da#35 page=6
+KEY: B conf=high
+#17 copy=ICFES-2018-2_2da#36 page=7
+KEY: B conf=high
+#18 copy=ICFES-2018-2_2da#37 page=7
+KEY: B conf=high
+#19 copy=ICFES-2018-2_2da#38 page=7
+KEY: A conf=high
+#20 copy=ICFES-2018-2_2da#39 page=7
+KEY: A conf=high
+@group g21-22 21-22 copy=ICFES-2018-1_2da#36
+DIR: RESPONDA LAS PREGUNTAS 21 Y 22 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#21 copy=ICFES-2018-1_2da#36 page=8 group=g21-22
+KEY: B conf=high
+#22 copy=B_1ra#15 page=8 group=g21-22
+STIM: El 40 % de los automóviles vendidos por una compañía automotriz es de color rojo y el 60 % es de color negro. El 20 % de los automóviles de color rojo accidentados corresponde al 8 % del total de accidentados de la compañía y el 70 % de automóviles de color negro corresponde al 42 % del total de accidentados; por tanto, el 50 % de automóviles de la compañía se accidentan.
+STEM: Si otra compañía produce solo carros de color plata y de color azul, y se vende 75 % de color plata y 25 % de color azul, ¿cuál es el porcentaje de carros accidentados de esta compañía?
+KEY: A conf=high
+#23 copy=C_1ra#19 page=8
+KEY: C conf=high
+#24 copy=B_1ra#17 page=8
+KEY: B conf=high
+#25 copy=ICFES-2020-1B_1ra#10 page=8
+KEY: D conf=high
+#26 page=9
+STIM: La figura muestra una construcción geométrica y las medidas de algunos de los ángulos de esta.
+
+[[FIG]]
+FIG stim p=9 box=0.335,0.11,0.57,0.175 what="construcción geométrica con ángulos x, y, z, m, p, q"
+STEM: ¿Cuál de las siguientes tablas muestra correctamente la relación entre los ángulos formados?
+A: <table class="exam-table"><tr><td>x + y + z = 360°</td></tr><tr><td>m + p + q = 360°</td></tr><tr><td>x + m = 180°</td></tr><tr><td>y + p = 180°</td></tr><tr><td>z + q = 180°</td></tr></table>
+B: <table class="exam-table"><tr><td>x + y + z = 360°</td></tr><tr><td>m + p + q = 180°</td></tr><tr><td>x + m = 360°</td></tr><tr><td>y + p = 360°</td></tr><tr><td>z + q = 360°</td></tr></table>
+C: <table class="exam-table"><tr><td>x + y + z = 180°</td></tr><tr><td>m + p + q = 180°</td></tr><tr><td>x + m = 360°</td></tr><tr><td>y + p = 360°</td></tr><tr><td>z + q = 360°</td></tr></table>
+D: <table class="exam-table"><tr><td>x + y + z = 360°</td></tr><tr><td>m + p + q = 180°</td></tr><tr><td>x + m = 180°</td></tr><tr><td>y + p = 180°</td></tr><tr><td>z + q = 180°</td></tr></table>
+KEY: D conf=high why="Los ángulos x, y, z rodean un punto (suman 360°); m, p, q son los ángulos interiores de un triángulo (180°); cada par x+m, y+p, z+q forma un ángulo llano (180°)."
+#27 copy=C_1ra#14 page=9
+KEY: A conf=high
+#28 page=9
+STIM: En una perfumería envasan uno de sus productos en frascos cilíndricos con tapas esféricas. La imagen muestra el prototipo de uno de los frascos, donde r₁ = 3 cm corresponde al radio de la esfera, h = 10 cm corresponde a la altura del cilindro, y r₂ = 5 cm corresponde al radio del cilindro.
+
+[[FIG]]
+
+La perfumería quiere construir una caja donde pueda empacar este frasco; por tanto, analiza 3 opciones:
+
+Opción 1: construir una caja cilíndrica que tenga una altura mayor que 10 cm + (2 × 3 cm) = 16 cm y una base de diámetro mayor que 2 × 5 cm = 10 cm.
+
+Opción 2: construir una caja con una base cuadrada que tenga de lado una longitud mayor que 2 × 5 cm = 10 cm y que tenga una altura de 10 cm + (2 × 3 cm) = 16 cm.
+
+Opción 3: construir una caja cilíndrica que tenga una altura de 10 cm + (2 × 3 cm) = 16 cm y una base de diámetro de 5 cm.
+FIG stim p=9 box=0.645,0.42,0.78,0.605 what="frasco cilíndrico con tapa esférica, r1, h, r2"
+STEM: ¿Cuál o cuáles de las opciones analizadas sirven para empacar el frasco?
+A: Solamente la 1.
+B: La 1 y 2.
+C: Solamente la 3.
+D: La 2 y 3.
+KEY: B conf=medium why="El frasco mide 16 cm de alto y 10 cm de diámetro; las opciones 1 y 2 tienen esas medidas o más; la 3 tiene una base de solo 5 cm de diámetro."
+#29 copy=C_2da#41 page=10
+STIM: En la gráfica se muestra la cantidad de remesas que ingresaron a una ciudad y el número de personas, por año, que enviaron remesas a la ciudad desde 1990 hasta el 2006.
+
+[[FIG]]
+FIG stim p=10 box=0.34,0.115,0.92,0.27 what="gráfica: remesas y número de personas que las enviaron, 1990-2006"
+STEM: Según la gráfica, ¿en qué año la cantidad de remesas enviadas por persona es la mayor después del año 2000?
+KEY: A conf=high
+#30 copy=ICFES-2018-1_1ra#20 page=10
+KEY: D conf=high
+// Lectura crítica
+@group g31-33 31-33
+DIR: RESPONDA LAS PREGUNTAS 31 A 33 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+PASSAGE: [...] Bajo el golpe de mi navaja Torres rejuvenecía, sí; porque yo soy un buen barbero, el mejor de este pueblo, lo digo sin vanidad. Un poco más de jabón, aquí, bajo la barbilla, sobre la manzana, sobre esta gran vena. ¡Qué calor! Torres debe estar sudando como yo. Pero él no tiene miedo. Es un hombre sereno que ni siquiera piensa en lo que ha de hacer esta tarde con los prisioneros. En cambio yo, con esta navaja entre las manos, puliendo y puliendo esta piel, evitando que brote sangre de estos poros, cuidando todo golpe, no puedo pensar serenamente. Maldita la hora en que vino, porque yo soy un revolucionario pero no soy un asesino. Y tan fácil como resultaría matarlo. Y lo merece. ¿Lo merece? No, ¡qué diablos! Nadie merece que los demás hagan el sacrificio de convertirse en asesinos. ¿Qué se gana con ello? Pues nada. Vienen otros y otros y los primeros matan a los segundos y estos a los terceros y siguen y siguen hasta que todo es un mar de sangre. Yo podría cortar este cuello, así, ¡zas! No le daría tiempo de quejarse y como tiene los ojos cerrados no vería ni el brillo de la navaja ni el brillo de mis ojos. Pero estoy temblando como un verdadero asesino. De ese cuello brotaría un chorro de sangre sobre la sábana, sobre la silla, sobre mis manos, sobre el suelo. Tendría que cerrar la puerta. Y la sangre seguiría corriendo por el piso, tibia, imborrable, incontenible, hasta la calle, como un pequeño arroyo escarlata. Estoy seguro de que un golpe fuerte, una honda incisión, le evitaría todo dolor. No sufriría. ¿Y qué hacer con el cuerpo? ¿Dónde ocultarlo? Yo tendría que huir, dejar estas cosas, refugiarme lejos, bien lejos. Pero me perseguirían hasta dar conmigo. "El asesino del capitán Torres. Lo degolló mientras le afeitaba la barba. Una cobardía". Y por otro lado: "El vengador de los nuestros. Un nombre para recordar (aquí mi nombre). Era el barbero del pueblo. Nadie sabía que él defendía nuestra causa..." ¿Y qué? ¿Asesino o héroe? [...]
+
+Pero yo no quiero ser un asesino, no señor. Usted vino para que yo lo afeitara. Y yo cumplo honradamente con mi trabajo... No quiero mancharme de sangre. De espuma y nada más. Usted es un verdugo y yo no soy más que un barbero. Y cada cual en su puesto. Eso es. Cada cual en su puesto.
+
+La barba había quedado limpia, pulida y templada. El hombre se incorporó para mirarse en el espejo. Se pasó las manos por la piel y la sintió fresca y nuevecita.
+
+"Gracias", dijo. Se dirigió al ropero en busca del cinturón, de la pistola y del sombrero. Yo debía estar muy pálido y sentía la camisa empapada. Torres concluyó de ajustar la hebilla, rectificó la posición de la pistola en la funda y, luego de alisarse maquinalmente los cabellos, se puso el sombrero. Del bolsillo del pantalón extrajo unas monedas para pagarme el importe del servicio. Y empezó a caminar hacia la puerta. En el umbral se detuvo un segundo y volviéndose me dijo:
+
+"Me habían dicho que usted me mataría. Vine para comprobarlo. Pero matar no es fácil. Yo sé por qué se lo digo". Y siguió calle abajo.
+
+<p style="text-align:right">Tomado y adaptado de: Téllez, H. (1984). Espuma y nada más. En *Cenizas para el viento y otras historias*. Bogotá: El Áncora Editores.</p>
+#31 page=11 group=g31-33
+STEM: En el primer párrafo, el autor menciona un "pequeño arroyo escarlata" para referirse a
+A: la apariencia que tomaría la calle después de que el capitán Torres fuera asesinado.
+B: un golpe rápido que necesitaría el narrador para convertirse en un verdadero asesino.
+C: la sangre derramándose por el piso si el narrador llegara a asesinar al capitán Torres.
+D: un caudal de agua que corre cerca de la calle del lugar donde vive el asesino de la historia.
+KEY: C conf=high
+#32 page=11 group=g31-33
+STIM: Considere el siguiente resumen del contenido del texto:
+
+La historia trata acerca del barbero de un pueblo que, como parte de un plan para convertirse en héroe, lleva al capitán Torres a su casa para arreglarle la barba y así tener la oportunidad de asesinarlo en favor de los revolucionarios. Aunque el capitán accede, la cobardía del barbero y su falta de compromiso con la revolución le impiden llevar a cabo su plan. Luego de examinar los pros y contras que implican el asesinato, el barbero decide, finalmente, dejar con vida al capitán, quien le asegura que lo ha defraudado porque esperaba que él lo asesinara, como le habían dicho que lo haría.
+STEM: El resumen anterior puede considerarse
+A: inadecuado, porque tergiversa elementos de la historia e introduce otros que no están presentes.
+B: adecuado, pues resalta los detalles más importantes de la narración de una manera correcta.
+C: inadecuado, porque omite el estilo propio del autor que le imprime un sello particular a la historia.
+D: adecuado, pues presenta los hechos del texto de una manera articulada y en el orden en que ocurrieron.
+KEY: A conf=high why="El capitán llega por su cuenta a la barbería; no hay plan ni el capitán se dice defraudado."
+#33 page=12 group=g31-33
+STEM: Al final del primer párrafo, unos puntos suspensivos entre corchetes indican un fragmento del texto original que no se ha incluido en esta adaptación. ¿Cuál de las siguientes opciones es la continuación más coherente y adecuada para completar ese párrafo?
+A: "La navaja seguía descendiendo. Ahora de la otra patilla hacia abajo. Una barba azul, cerrada. Debía dejársela crecer como algunos poetas o como algunos sacerdotes. Le quedaría bien. Muchos no lo reconocerían. Y mejor para él, pensé, mientras trataba de pulir suavemente todo el sector del cuello".
+B: "Del filo de esta navaja depende mi destino. Puedo inclinar un poco más la mano, apoyar un poco más la hoja, y hundirla. La piel cederá como la seda, como el caucho, como la badana. No hay nada más tierno que la piel del hombre y la sangre siempre está ahí, lista a brotar. Una navaja como esta no traiciona. Es la mejor de mis navajas".
+C: "Probablemente muchos de los nuestros lo habrían visto entrar. Y el enemigo en la casa impone condiciones. Yo tendría que afeitar esa barba como cualquiera otra, con cuidado, con esmero, como la de un buen parroquiano, cuidando de que ni por un solo poro fuese a brotar una gota de sangre".
+D: "El día en que ordenó que el pueblo desfilara por el patio de la escuela para ver a los cuatro rebeldes allí colgados, me crucé con él un instante. Pero el espectáculo de los cuerpos mutilados me impedía fijarme en el rostro del hombre que lo dirigía todo y que ahora iba a tomar en mis manos. No era un rostro desagradable, ciertamente".
+KEY: B conf=high why="El párrafo termina dudando entre asesino o héroe; B sigue esa duda (su destino depende de la navaja) antes de la decisión del párrafo siguiente."
+@group g34-35 34-35 copy=A_1ra#34
+DIR: RESPONDA LAS PREGUNTAS 34 Y 35 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#34 copy=A_1ra#34 page=12 group=g34-35
+KEY: A conf=high
+#35 copy=A_1ra#36 page=12 group=g34-35
+KEY: B conf=high
+@group g36-37 36-37 copy=A_1ra#39
+DIR: RESPONDA LAS PREGUNTAS 36 Y 37 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#36 copy=A_1ra#39 page=13 group=g36-37
+KEY: C conf=high
+#37 copy=A_1ra#37 page=13 group=g36-37
+STIM:
+KEY: C conf=high
+@group g38-39 38-39 copy=I_1ra#46
+DIR: RESPONDA LAS PREGUNTAS 38 Y 39 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#38 copy=I_1ra#46 page=13 group=g38-39
+KEY: A conf=high
+#39 copy=I_1ra#47 page=13 group=g38-39
+KEY: C conf=high
+@group g40-42 40-42 copy=N_1ra#56
+DIR: RESPONDA LAS PREGUNTAS 40 A 42 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#40 copy=N_1ra#56 page=14 group=g40-42
+B: alertar sobre el alcance de un Estado de tipo paternalista.
+KEY: B conf=high
+#41 copy=N_1ra#53 page=15 group=g40-42
+KEY: D conf=high
+#42 copy=N_1ra#54 page=15 group=g40-42
+B: aprecie lo inaceptable de que el Estado regule la dieta de los ciudadanos.
+KEY: C conf=high
+@group g43-44 43-44 copy=H_1ra#55
+DIR: RESPONDA LAS PREGUNTAS 43 Y 44 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#43 copy=H_1ra#56 page=15 group=g43-44
+A: afianzar el lazo entre seres queridos.
+B: expresar el dolor y el sufrimiento de la vida.
+C: permanecer en el tiempo a través de la literatura.
+D: manifestar la importancia del vínculo entre madre e hijo.
+KEY: C conf=high
+#44 copy=H_1ra#55 page=15 group=g43-44
+A: al escribir el poema revive memorias dolorosas.
+B: el verso es la única manera de expresar sus emociones.
+C: mediante esta poesía puede pervivir después de la muerte.
+D: en el momento de escribir el poema se encuentra en el final de su vida.
+KEY: A conf=medium why="Clave del banco (H 1ra 55) con las opciones en el orden de este cuadernillo."
+@group g45-46 45-46 copy=E_1ra#57
+DIR: RESPONDA LAS PREGUNTAS 45 Y 46 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#45 copy=E_1ra#57 page=16 group=g45-46
+KEY: A conf=high
+#46 copy=E_1ra#59 page=16 group=g45-46
+KEY: C conf=high
+@group g47-48 47-48 copy=A_1ra#26
+DIR: RESPONDA LAS PREGUNTAS 47 Y 48 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#47 copy=A_1ra#26 page=17 group=g47-48
+KEY: D conf=high
+#48 copy=A_1ra#27 page=17 group=g47-48
+KEY: C conf=high
+@group g49-51 49-51 copy=H_1ra#34
+DIR: RESPONDA LAS PREGUNTAS 49 A 51 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#49 copy=H_1ra#35 page=18 group=g49-51
+KEY: D conf=high
+#50 copy=H_1ra#34 page=18 group=g49-51
+KEY: A conf=high
+#51 copy=H_1ra#36 page=18 group=g49-51
+KEY: C conf=high
+@group g52-54 52-54 copy=E_1ra#49
+DIR: RESPONDA LAS PREGUNTAS 52 A 54 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#52 copy=E_1ra#51 page=18 group=g52-54
+KEY: B conf=high
+#53 copy=E_1ra#49 page=18 group=g52-54
+A: presentar la conclusión del texto.
+KEY: D conf=high
+#54 copy=E_1ra#50 page=19 group=g52-54
+KEY: C conf=high
+@group g55-57 55-57
+DIR: RESPONDA LAS PREGUNTAS 55 A 57 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+PASSAGE: Guerra intestina del hombre entre la razón y las pasiones. Si no tuviera más que la razón sin pasiones. Si no tuviera más que las pasiones sin razón. Pero, al tener lo uno y lo otro, no puede estar sin guerra, pues no puede tener paz con lo uno sin tener guerra con lo otro. Así, está siempre dividido y opuesto a sí mismo.
+
+Esta guerra interior de la razón contra las pasiones ha hecho que los que han querido tener paz se hayan dividido en dos sectas. Unos han querido renunciar a las pasiones y llegar a ser dioses; otros, han querido renunciar a la razón y llegar a ser bestias. [...] Pero no lo han conseguido ni unos ni otros, y la razón permanece siempre que acusa la bajeza y la injusticia de las pasiones y que turba el reposo de los que se abandonan a ellas. Y las pasiones están siempre vivas en los que quieren renunciar a ellas.
+
+<p style="text-align:right">Tomado de: Pascal, B. (2009). *Pensamientos*. Madrid, España: Alianza Editorial.</p>
+#55 page=19 group=g55-57
+STEM: La frase con la que finaliza el texto, "Y las pasiones están siempre vivas en los que quieren renunciar a ellas",
+A: presenta nuevamente la pregunta fundamental del texto.
+B: sintetiza la resolución del problema que discute el texto.
+C: reformula la tesis que se sugiere al comienzo del texto.
+D: resume uno de los problemas que plantea el texto.
+KEY: C conf=medium why="La frase final vuelve a la tesis inicial: el ser humano no puede librarse de la guerra entre razón y pasiones."
+#56 page=19 group=g55-57
+STEM: ¿Cuál de las siguientes preguntas resume el problema central del que se ocupa el autor en este texto?
+A: ¿En qué medida los seres humanos somos esclavos de las pasiones?
+B: ¿Cómo podemos educar la razón para ser mejores seres humanos?
+C: ¿Por qué es problemático considerar al ser humano como un ser racional?
+D: ¿Cómo se relacionan en el ser humano la razón y las pasiones?
+KEY: D conf=high
+#57 page=19 group=g55-57
+STEM: Según el autor, el ser humano "está siempre dividido y opuesto a sí mismo". Una razón para quitarle fuerza a esta conclusión es la siguiente:
+A: El ser humano es un sujeto escindido que no logra jamás armonizar sus propias pasiones con su razón.
+B: Las pasiones, aunque están inevitablemente presentes, pueden ser gobernadas y controladas en su intensidad y duración por la razón.
+C: La razón no puede someterse y ser esclava de las pasiones si se quiere que el ser humano realice su propia naturaleza.
+D: No es posible que el ser humano renuncie a las pasiones de forma definitiva, sin renunciar a su propia naturaleza.
+KEY: B conf=high why="Si la razón puede gobernar las pasiones, la guerra interior no es permanente."
+// Sociales y ciudadanas
+@group g58-60 58-60 copy=H_2da#1
+DIR: RESPONDA LAS PREGUNTAS 58 A 60 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#58 copy=H_2da#1 page=20 group=g58-60
+KEY: A conf=high
+#59 copy=B_1ra#91 page=20 group=g58-60
+STIM:
+A: han generado procesos de paz exitosos.
+KEY: D conf=high
+#60 copy=H_2da#2 page=20 group=g58-60
+STEM: En el texto, por un lado, se hace alusión a situaciones de discriminación y, por otro lado, se menciona la democracia como sistema de gobierno. ¿Qué relación hay entre estos conceptos?
+KEY: B conf=high
+#61 copy=B_1ra#85 page=21
+KEY: D conf=high
+#62 copy=K1_2da#15 page=21
+KEY: A conf=high
+#63 copy=M_1ra#73 page=21
+KEY: C conf=high
+#64 page=22
+STIM: En 1991, en el Plan de Desarrollo del entonces presidente colombiano César Gaviria se planteaba lo siguiente:
+
+"Las decisiones administrativas y económicas, siempre tomadas en Bogotá, no interpretan las necesidades y aspiraciones de las comunidades, que en buena parte ya tienen capacidad de asumir el peso de su destino. En esta área, el proceso político, el regional y el económico adquieren una dimensión única, en la búsqueda de mayor libertad (...). La autonomía regional es la contrapartida local de la mayor democracia política y de la creciente libertad económica".
+
+<p style="text-align:right">Tomado de: Gaviria, C. (1991). *La Revolución Pacífica: Plan de Desarrollo Económico y Social 1990-1994*. Recuperado de: https://colaboracion.dnp.gov.co</p>
+STEM: ¿Cuál de los siguientes supuestos sobre la organización de un Estado se evidencia en este planteamiento?
+A: La centralización política fortalece progresivamente la autonomía de las comunidades y genera prosperidad.
+B: La descentralización política favorece la satisfacción de las necesidades de las comunidades y fortalece la democracia.
+C: La centralización política contribuye a la satisfacción de las aspiraciones de las comunidades y fomenta el desarrollo regional.
+D: La descentralización política favorece la consolidación de Bogotá, D. C. como capital del país y permite su desarrollo económico.
+KEY: B conf=high
+#65 copy=B_2da#16 page=22
+KEY: D conf=high
+#66 page=23
+STIM: La Secretaría de Planeación de una ciudad ha decidido establecer una norma en beneficio de los ciudadanos. Según esta norma, los constructores de nuevos edificios deben construir un área de espacio público de un tamaño equivalente a por lo menos la mitad del lote en el que va a ser construido el edificio. Un representante del gremio de la construcción de la ciudad responde a la medida y asegura estar muy preocupado por los altos gastos económicos que esta va a generar en sus nuevos proyectos de construcción.
+STEM: En esta situación, ¿qué quieren, posiblemente, lograr la secretaría y el gremio?
+A: El aumento de la construcción de espacio público para mejorar el bienestar de los ciudadanos.
+B: Reducir los costos económicos de quienes tienen nuevos proyectos de construcción en la ciudad.
+C: La primera busca maximizar el área urbana de espacio público a través de la construcción privada; el segundo, minimizar costos.
+D: La primera busca que aumenten los costos para los nuevos proyectos de construcción en la ciudad; el segundo, que se construya más espacio público en la ciudad.
+KEY: C conf=high
+#67 copy=C_1ra#77 page=23
+KEY: C conf=high why="Exigir a los indígenas cambiar su vestido y hablar solo español vulnera su identidad cultural; las otras opciones son medidas de protección (el banco marca D)."
+#68 copy=B_2da#21 page=23
+KEY: C conf=high
+#69 copy=ICFES-2019-1_2da#9 page=24
+KEY: D conf=high
+#70 copy=ICFES-2019-1_2da#3 page=24
+KEY: B conf=high
+#71 copy=ICFES-2019-1_2da#1 page=24
+KEY: B conf=high
+#72 copy=ICFES-2019-1_2da#4 page=25
+KEY: B conf=high
+#73 copy=ICFES-2019-1_2da#8 page=25
+KEY: D conf=high
+#74 copy=ICFES-2019-1_2da#6 page=25
+KEY: D conf=high
+#75 copy=ICFES-2019-1_2da#5 page=26
+KEY: D conf=high
+#76 copy=ICFES-2019-1_2da#10 page=26
+KEY: C conf=high
+#77 copy=ICFES-2019-1_2da#7 page=27
+KEY: C conf=high
+#78 copy=ICFES-2019-1_2da#11 page=27
+KEY: B conf=high
+#79 copy=ICFES-2019-1_2da#2 page=27
+KEY: C conf=high
+#80 copy=ICFES-2019-1_1ra#77 page=28
+KEY: D conf=high
+#81 copy=ICFES-2019-1_1ra#70 page=28
+KEY: C conf=high
+#82 copy=ICFES-2019-1_1ra#78 page=28
+KEY: D conf=high
+#83 copy=ICFES-2019-1_1ra#76 page=29
+KEY: D conf=high
+#84 copy=ICFES-2019-1_1ra#73 page=29
+KEY: D conf=high
+#85 copy=N_1ra#69 page=30
+KEY: A conf=high
+#86 copy=ICFES-2019-1_1ra#74 page=30
+KEY: D conf=high
+#87 copy=ICFES-2019-1_1ra#75 page=30
+KEY: A conf=high
+#88 copy=ICFES-2019-1_1ra#72 page=31
+KEY: A conf=high
+#89 copy=ICFES-2019-1_1ra#71 page=31
+KEY: D conf=high
+#90 copy=ICFES-2019-1_1ra#79 page=31
+KEY: A conf=high
+// Ciencias naturales
+@group g91-93 91-93 copy=ICFES-2018-2_2da#54
+DIR: RESPONDA LAS PREGUNTAS 91 A 93 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#91 copy=ICFES-2018-2_2da#54 page=32 group=g91-93
+KEY: C conf=high
+#92 copy=ICFES-2018-2_2da#55 page=32 group=g91-93
+KEY: C conf=high
+#93 copy=ICFES-2018-2_2da#56 page=32 group=g91-93
+KEY: B conf=high
+#94 copy=ICFES-2018-2_2da#57 page=32
+KEY: D conf=high
+#95 copy=ICFES-2018-2_2da#58 page=33
+KEY: B conf=high
+#96 copy=ICFES-2018-2_2da#60 page=33
+KEY: D conf=high
+#97 copy=ICFES-2018-2_2da#59 page=34
+KEY: C conf=high
+#98 copy=ICFES-2018-2_2da#61 page=35
+KEY: A conf=high
+#99 copy=ICFES-2018-2_2da#62 page=35
+KEY: A conf=high
+#100 copy=ICFES-2018-2_2da#63 page=35
+KEY: D conf=high
+#101 copy=ICFES-2018-2_2da#64 page=36
+KEY: B conf=high
+#102 copy=ICFES-2018-2_2da#65 page=36
+KEY: C conf=high
+#103 copy=ICFES-2018-2_2da#66 page=36
+KEY: D conf=high
+@group g104-106 104-106 copy=ICFES-2019-1_2da#58
+DIR: RESPONDA LAS PREGUNTAS 104 A 106 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#104 copy=ICFES-2019-1_2da#58 page=37 group=g104-106
+KEY: C conf=high
+#105 copy=ICFES-2019-1_2da#59 page=37 group=g104-106
+KEY: C conf=high
+#106 copy=ICFES-2019-1_2da#60 page=38 group=g104-106
+KEY: B conf=high
+#107 copy=ICFES-2019-1_2da#61 page=38
+KEY: B conf=high
+#108 copy=ICFES-2019-1_2da#62 page=38
+KEY: A conf=high
+#109 copy=ICFES-2019-1_2da#63 page=39
+KEY: D conf=high
+#110 copy=ICFES-2019-1_2da#64 page=39
+KEY: B conf=high
+#111 copy=B_1ra#106 page=39
+KEY: B conf=high
+#112 copy=ICFES-2019-1_2da#66 page=39
+KEY: D conf=high
+#113 copy=ICFES-2019-1_2da#67 page=40
+KEY: A conf=high
+#114 copy=ICFES-2019-1_2da#68 page=40
+KEY: B conf=high
+#115 copy=ICFES-2019-1_2da#69 page=40
+KEY: A conf=high
+#116 copy=ICFES-2019-1_2da#70 page=40
+KEY: B conf=high
+#117 copy=E_2da#52 page=41
+KEY: B conf=high
+#118 copy=E_2da#53 page=41
+KEY: C conf=high
+@group g119-121 119-121 copy=E_2da#54
+DIR: RESPONDA LAS PREGUNTAS 119 A 121 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#119 copy=E_2da#54 page=42 group=g119-121
+KEY: B conf=high
+#120 copy=ICFES-2019-1_2da#49 page=42 group=g119-121
+KEY: B conf=high
+#121 copy=ICFES-2019-1_2da#48 page=42 group=g119-121
+KEY: D conf=high
+#122 copy=ICFES-2019-1_2da#50 page=43
+KEY: D conf=high
+#123 copy=ICFES-2019-1_2da#51 page=43
+KEY: C conf=high
+#124 copy=ICFES-2019-1_2da#52 page=43
+KEY: C conf=high
+#125 copy=ICFES-2019-1_2da#53 page=44
+KEY: C conf=high
+#126 copy=ICFES-2019-1_2da#54 page=44
+KEY: B conf=high
+#127 copy=ICFES-2019-1_2da#55 page=45
+KEY: A conf=high
+#128 copy=ICFES-2019-1_2da#56 page=45
+KEY: D conf=high
+#129 copy=ICFES-2019-1_2da#57 page=45
+KEY: D conf=high
+// Inglés
+@group g130-134 130-134
+DIR: RESPONDA LAS PREGUNTAS 130 A 134 DE ACUERDO CON EL EJEMPLO
+PASSAGE: Lea las descripciones de la columna de la izquierda (130 - 134). ¿Cuál palabra de la columna de la derecha (A - G) concuerda con cada descripción? La opción H se usa para el ejemplo. Sobran dos palabras más.
+
+<p style="text-align:center">**In the kitchen**</p>
+
+0. It is a yellow fruit and monkeys love it. (Respuesta: H)
+#130 page=46 group=g130-134 type=matching
+STEM: This thing can be on the kitchen wall, with food and plates in it.
+A: bowl
+B: chair
+C: cupboard
+D: glass
+E: salad
+F: soup
+G: table
+H: banana
+KEY: C conf=high
+#131 page=46 group=g130-134 type=matching
+STEM: You take this and drink from it when you are thirsty.
+A: bowl
+B: chair
+C: cupboard
+D: glass
+E: salad
+F: soup
+G: table
+H: banana
+KEY: D conf=high
+#132 page=46 group=g130-134 type=matching
+STEM: It is round and you can put your vegetables inside it.
+A: bowl
+B: chair
+C: cupboard
+D: glass
+E: salad
+F: soup
+G: table
+H: banana
+KEY: A conf=high
+#133 page=46 group=g130-134 type=matching
+STEM: When you are hungry, you cook this and have it hot.
+A: bowl
+B: chair
+C: cupboard
+D: glass
+E: salad
+F: soup
+G: table
+H: banana
+KEY: F conf=high
+#134 page=46 group=g130-134 type=matching
+STEM: It has four legs and you sit on it.
+A: bowl
+B: chair
+C: cupboard
+D: glass
+E: salad
+F: soup
+G: table
+H: banana
+KEY: B conf=high
+@group g135-139 135-139
+DIR: RESPONDA LAS PREGUNTAS 135 A 139 DE ACUERDO CON EL EJEMPLO
+PASSAGE: ¿Dónde puede ver estos avisos?
+#135 page=47 group=g135-139 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=47 box=0.125,0.322,0.425,0.405 what="aviso: Please, do not eat or drink in this place"
+A: in a café
+B: in a flat
+C: in a library
+KEY: C conf=high
+#136 page=47 group=g135-139 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=47 box=0.125,0.452,0.432,0.535 what="aviso: Tickets for 9 pm show today $25.000"
+A: in a cinema
+B: in a bank
+C: on a train
+KEY: A conf=high
+#137 page=47 group=g135-139 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=47 box=0.125,0.57,0.432,0.655 what="aviso: All you need for your birthday party. Nice toys and great presents"
+A: in playgrounds
+B: in shops
+C: at schools
+KEY: B conf=high
+#138 page=47 group=g135-139 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=47 box=0.125,0.698,0.432,0.775 what="aviso: Animal and flower books 30% off only on Thursday"
+A: in a classroom
+B: in a bookstore
+C: in a garden
+KEY: B conf=high
+#139 page=47 group=g135-139 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=47 box=0.125,0.81,0.44,0.905 what="aviso: Please drive carefully. Children at play"
+A: at a lake
+B: on a beach
+C: on a road
+KEY: C conf=high
+@group g140-147 140-147
+DIR: RESPONDA LAS PREGUNTAS 140 A 147 DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: Lea el texto y seleccione la palabra correcta para cada espacio.
+
+<p style="text-align:center">**History of Paper**</p>
+
+Since the beginning of writing, people tried to [[hueco:0]] of something easy and cheap to write on, [[hueco:140]] it took 3000 years until the Chinese people made paper.
+
+Only one thousand years afterwards, people were [[hueco:141]] paper all over Europe and Asia. In the 8th century, the Arabs and the Chinese were enemies, and the Arabs captured [[hueco:142]] Chinese men. Many of [[hueco:143]] men knew how to make paper, and [[hueco:144]] explained it to the Arabs as the price to be able to go home.
+
+Almost eight centuries [[hueco:145]] Europeans began to make [[hueco:146]] own paper.
+
+At that time, people in the country of the Aztecs [[hueco:147]] the way to make paper too, while the Chinese people were already famous for paper kites and toilet paper!
+
+Ejemplo: 0. A. think B. thinking C. thinks (Respuesta: A)
+#140 page=48 group=g140-147 type=cloze_text
+STEM: Blank (140): choose the option that completes the text.
+A: or
+B: so
+C: but
+KEY: C conf=high
+#141 page=48 group=g140-147 type=cloze_text
+STEM: Blank (141): choose the option that completes the text.
+A: uses
+B: used
+C: using
+KEY: C conf=high
+#142 page=48 group=g140-147 type=cloze_text
+STEM: Blank (142): choose the option that completes the text.
+A: some
+B: any
+C: much
+KEY: A conf=high
+#143 page=48 group=g140-147 type=cloze_text
+STEM: Blank (143): choose the option that completes the text.
+A: that
+B: these
+C: this
+KEY: B conf=high
+#144 page=48 group=g140-147 type=cloze_text
+STEM: Blank (144): choose the option that completes the text.
+A: he
+B: they
+C: it
+KEY: B conf=high
+#145 page=48 group=g140-147 type=cloze_text
+STEM: Blank (145): choose the option that completes the text.
+A: late
+B: latest
+C: later
+KEY: C conf=high
+#146 page=48 group=g140-147 type=cloze_text
+STEM: Blank (146): choose the option that completes the text.
+A: their
+B: our
+C: your
+KEY: A conf=high
+#147 page=48 group=g140-147 type=cloze_text
+STEM: Blank (147): choose the option that completes the text.
+A: find
+B: finding
+C: found
+KEY: C conf=high
+@group g148-154 148-154 copy=B_2da#113
+DIR: RESPONDA LAS PREGUNTAS 148 A 154 DE ACUERDO CON EL SIGUIENTE TEXTO
+#148 copy=B_2da#113 page=49 group=g148-154
+KEY: B conf=high
+#149 copy=B_2da#114 page=49 group=g148-154
+KEY: B conf=high
+#150 copy=B_2da#115 page=49 group=g148-154
+KEY: A conf=high
+#151 copy=B_2da#116 page=49 group=g148-154
+KEY: C conf=high
+#152 copy=B_2da#117 page=49 group=g148-154
+KEY: C conf=high why="La pirámide se construyó por orden del rey Khufu: él decidía; quien la planeó fue su arquitecto Hemon (el banco marca A)."
+#153 copy=B_2da#118 page=49 group=g148-154
+KEY: B conf=high
+#154 copy=B_2da#119 page=49 group=g148-154
+KEY: B conf=high
+@group g155-164 155-164
+DIR: RESPONDA LAS PREGUNTAS 155 A 164 DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: Lea el texto y seleccione la palabra correcta para cada espacio.
+
+<p style="text-align:center">**Are you sleeping enough?**</p>
+
+Do you know [[hueco:0]] is "enough" regarding sleep time?
+
+The first thing about sleeping is that there is no magic number. Different people like babies, children and adults [[hueco:155]] different amounts of sleep; besides that, sleep needs are [[hueco:156]] individual. Just like any other characteristics you are born with, the essential number of sleep hours you need to perform well [[hueco:157]] be different from somebody else, even if they are people of your same [[hueco:158]] and sex. While you may be at your [[hueco:159]] sleeping seven hours a night, someone else may need nine hours to have a [[hueco:160]] productive life.
+
+To decide how [[hueco:161]] sleep your body needs, it is [[hueco:162]] to examine the possible daily life issues that are affecting the quality and quantity of your sleep such as the number of hours you spend working or studying and [[hueco:163]], the time you're online. In addition, you need to pay attention to the amount of stress you [[hueco:164]] in your daily life.
+
+Ejemplo: 0. A. what B. which C. who D. where (Respuesta: A)
+#155 page=50 group=g155-164 type=cloze_text
+STEM: Blank (155): choose the option that completes the text.
+A: receive
+B: require
+C: reach
+D: realize
+KEY: B conf=high
+#156 page=50 group=g155-164 type=cloze_text
+STEM: Blank (156): choose the option that completes the text.
+A: also
+B: either
+C: too
+D: neither
+KEY: A conf=high
+#157 page=50 group=g155-164 type=cloze_text
+STEM: Blank (157): choose the option that completes the text.
+A: must
+B: should
+C: shall
+D: can
+KEY: D conf=medium
+#158 page=50 group=g155-164 type=cloze_text
+STEM: Blank (158): choose the option that completes the text.
+A: period
+B: date
+C: time
+D: age
+KEY: D conf=high
+#159 page=50 group=g155-164 type=cloze_text
+STEM: Blank (159): choose the option that completes the text.
+A: biggest
+B: most
+C: best
+D: longest
+KEY: C conf=high
+#160 page=50 group=g155-164 type=cloze_text
+STEM: Blank (160): choose the option that completes the text.
+A: wise
+B: happy
+C: funny
+D: reliable
+KEY: B conf=high
+#161 page=50 group=g155-164 type=cloze_text
+STEM: Blank (161): choose the option that completes the text.
+A: many
+B: few
+C: much
+D: little
+KEY: C conf=high
+#162 page=50 group=g155-164 type=cloze_text
+STEM: Blank (162): choose the option that completes the text.
+A: clear
+B: nice
+C: important
+D: true
+KEY: C conf=high
+#163 page=50 group=g155-164 type=cloze_text
+STEM: Blank (163): choose the option that completes the text.
+A: especially
+B: spontaneously
+C: extremely
+D: commonly
+KEY: A conf=high
+#164 page=50 group=g155-164 type=cloze_text
+STEM: Blank (164): choose the option that completes the text.
+A: take
+B: handle
+C: try
+D: apply
+KEY: B conf=medium
