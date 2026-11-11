@@ -1,0 +1,484 @@
+@exam ICFES-2015-2018 | Preguntas ICFES 2015-2018 (compilado de guías) | pdf=/mnt/project-files/icfes/sources-new/l7_2015-2017.pdf | dpi=300
+@section Lectura crítica 1-7
+@section Matemáticas 8-18
+@section Ciencias naturales 19-28
+@section Inglés 29-47
+// Keys = "Respuesta correcta" printed in the compilation (ICFES guides 2015-2018). Numbers are our own order.
+// Lectura crítica
+#1 page=1
+STIM: [[FIG]]
+FIG stim p=1 box=0.25,0.285,0.75,0.62 what="infografía sobre la rabia: qué es, transmisión, síntomas, tratamiento, prevención"
+STEM: Según la infografía, en caso de mordedura o rasguño de un animal infectado con rabia, **NO** se debería
+A: lavar la herida con agua y jabón.
+B: administrar inmunoglobulina antirrábica.
+C: entrar en contacto directo con material infeccioso.
+D: acudir al médico para la aplicación de una vacuna antirrábica.
+KEY: C conf=high why="Clave publicada: es lo único que no aparece en el apartado Tratamiento."
+@group g2-3 2-3
+DIR: RESPONDA LAS PREGUNTAS 2 Y 3 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+PASSAGE: 1 En lo más intrincado de la Selva existió en tiempos lejanos un Búho que empezó a preocuparse por los demás.
+
+2 En consecuencia se dio a meditar sobre las evidentes maldades que hacía el León con su poder; sobre la debilidad de la Hormiga, que era aplastada todos los días, tal vez cuando más ocupada se hallaba; sobre la risa de la Hiena, que nunca venía al caso; sobre la Paloma, que se queja del aire que la sostiene en su vuelo; sobre la Araña que atrapa a la Mosca y sobre la Mosca que con toda su inteligencia se deja atrapar por la Araña, y en fin, sobre todos los defectos que hacían desgraciada a la Humanidad, y se puso a pensar en la manera de remediarlos.
+
+3 Pronto adquirió la costumbre de desvelarse y de salir a la calle a observar cómo se conducía la gente, y se fue llenando de conocimientos científicos y psicológicos que poco a poco iba ordenando en su pensamiento y en una pequeña libreta.
+
+4 De modo que algunos años después se le desarrolló una gran facilidad para clasificar, y sabía a ciencia cierta cuándo el León iba a rugir y cuándo la Hiena se iba a reír, y lo que iba a hacer el Ratón del campo cuando visitara al de la ciudad, y lo que haría el Perro que traía la torta en la boca cuando viera reflejado en el agua el rostro de un Perro que traía una torta en la boca, y el Cuervo cuando le decían que qué bonito cantaba.
+
+5 Y así, concluía: "Si el León no hiciera lo que hace sino lo que hace el Caballo, y el Caballo no hiciera lo que hace sino lo que hace el León; y si la Boa no hiciera lo que hace sino lo que hace el Ternero, y el Ternero no hiciera lo que hace sino lo que hace la Boa, y así hasta el infinito, la Humanidad se salvaría, dado que todos vivirían en paz y la guerra volvería a ser como en los tiempos en que no había guerra".
+
+6 Pero los otros animales no apreciaban los esfuerzos del Búho, por sabio que éste supusiera que lo suponían; antes bien pensaban que era tonto, no se daban cuenta de la profundidad de su pensamiento, y seguían comiéndose unos a otros, menos el Búho, que no era comido por nadie ni se comía nunca a nadie.
+
+<p style="text-align:right">Tomado de: Monterroso, A. (1990). *La oveja negra y demás fábulas*. Ediciones Era.</p>
+#2 page=2 group=g2-3
+STEM: En el relato el autor hace referencia a la Hormiga, "que era aplastada todos los días, tal vez cuando más ocupada se hallaba". Con esta descripción se da a entender que en el mundo hay personas que
+A: viven continuamente con miedo de morir.
+B: son maltratadas a pesar de sus esfuerzos.
+C: trabajan en comunidades necesitadas.
+D: pueden trabajar de manera relajada y segura.
+KEY: B conf=high why="Clave publicada: aplastar quiere decir maltratar, y estar ocupada es el esfuerzo de la hormiga."
+#3 page=3 group=g2-3
+STEM: ¿Qué relación hay entre los párrafos 3 y 5?
+A: Los dos introducen premisas sobre un mismo tema.
+B: El segundo desarrolla lo expuesto en el primero.
+C: El primero introduce una premisa y el segundo expone su refutación.
+D: El primero narra un suceso y el segundo la condición de ese suceso.
+KEY: B conf=high why="Clave publicada: lo dicho en el párrafo 5 es consecuencia de lo descrito en el 3."
+#4 page=4
+STIM: Aunque las comodidades de esta vida pueden aumentarse con la ayuda mutua, sin embargo, como eso se puede conseguir dominando a los demás mejor que asociándose con ellos, nadie debe dudar de que los hombres por su naturaleza, si no existiera el miedo, se verían inclinados más al dominio que a la sociedad. Por lo tanto, hay que afirmar que el origen de las sociedades grandes y duraderas no se ha debido a la mutua benevolencia de los hombres sino al miedo mutuo.
+
+<p style="text-align:right">Tomado de: Hobbes, T. (1999). *Tratado sobre el ciudadano*. Trad. Joaquín Rodríguez Feo, Madrid, Trotta.</p>
+STEM: De acuerdo con las ideas expresadas en el texto, si "los hombres por su naturaleza están más inclinados al dominio que a la sociedad", ¿por qué aparecieron sociedades grandes y duraderas?
+A: Es natural para el hombre asociarse con otros para ejercer su dominio con seguridad.
+B: Para ampliar su capacidad de dominio, al hombre le resulta más efectivo vivir en sociedad.
+C: Es propio del hombre evitar todo tipo de dominio a través de las relaciones confiables que le brinda la vida en sociedad.
+D: El hombre busca la seguridad y es más seguro para él vivir en comunidad que estar expuesto a ser dominado por otro.
+KEY: D conf=high why="Clave publicada: según Hobbes, el hombre se asocia por el peligro que representan los otros."
+#5 page=5
+STIM: [[FIG]]
+
+<p style="text-align:right">Tomado y adaptado de: http://www.edizzz.com/es-para-masticarlo-pero-no-hay-que-tragarselo/</p>
+FIG stim p=5 box=0.333,0.179,0.667,0.5 what="historieta en dos viñetas: el padre dice 'Es para masticarlo, pero no hay que tragárselo' y la niña pregunta '¿El discurso de quién?'"
+STEM: La expresión en la cara del padre al oír la pregunta de la niña se debe a que
+A: no está de acuerdo con lo que dice la niña.
+B: no entendió lo que la niña quería decir.
+C: le disgustó que la niña lo interrumpiera tan súbitamente.
+D: no esperaba la interpretación que hizo la niña de sus palabras.
+KEY: D conf=high why="Clave publicada: el gesto del padre expresa sorpresa."
+#6 page=6
+STIM: <p style="text-align:center">**PRIMERA MEDITACIÓN**</p>
+
+(…) Con todo, debo considerar aquí que soy hombre y, por consiguiente, que tengo costumbre de dormir y de representarme en sueños las mismas cosas, y a veces cosas menos verosímiles, que esos insensatos cuando están despiertos. ¡Cuántas veces no me habrá ocurrido soñar, por la noche, que estaba aquí mismo, vestido, junto al fuego, estando en realidad desnudo y en la cama! En este momento, estoy seguro de que yo miro este papel con los ojos de la vigilia, de que esta cabeza que muevo no está soñolienta, de que alargo esta mano y la siento de propósito y con plena conciencia: lo que acaece en sueños no me resulta tan claro y distinto como todo esto. Pero, pensándolo mejor, recuerdo haber sido engañado, mientras dormía, por ilusiones semejantes. Y fijándome en este pensamiento, veo de un modo tan manifiesto que no hay indicios concluyentes ni señales que basten a distinguir con claridad el sueño de la vigilia, que acabo atónito, y mi estupor es tal que casi puede persuadirme de que estoy durmiendo.
+
+<p style="text-align:right">Tomado de: Descartes, R. (1982). *Meditaciones filosóficas*. Anagrama, Madrid.</p>
+STEM: Si suponemos que Descartes tiene razón, se podría concluir que
+A: es fácil distinguir con certeza qué es real y qué no lo es.
+B: no hay un criterio definitivo para saber qué es real y qué es fantasía.
+C: cuando se cree estar despierto se enfrenta la realidad y no la fantasía.
+D: hay que asegurarse de estar dormido para conocer la realidad.
+KEY: B conf=high why="Clave publicada: es la conclusión del argumento del texto."
+#7 page=7
+STIM: [[FIG]]
+FIG stim p=7 box=0.212,0.194,0.79,0.753 what="infografía Día Mundial del Inodoro: personas sin servicios sanitarios, tipos de inodoros, historia del inodoro"
+STEM: De acuerdo con la infografía, las problemáticas de saneamiento se refieren a
+A: la separación higiénica de los excrementos del contacto humano.
+B: las condiciones necesarias para tener una vida digna.
+C: un indicador que mide el nivel de limpieza de una comunidad.
+D: las instalaciones desinfectadas y libres de gérmenes.
+KEY: A conf=high why="Clave publicada: saneamiento se refiere a la separación higiénica de los excrementos."
+// Matemáticas
+#8 page=9
+STIM: La gráfica muestra la cantidad de productos vendidos en una tienda, en marzo y abril.
+
+[[FIG]]
+FIG stim p=9 box=0.29,0.232,0.69,0.352 what="gráfica de barras: productos vendidos en marzo y abril (billeteras, carteras, correas, chaquetas)"
+STEM: En el mes de marzo, el número de unidades vendidas de cada producto es un número entre
+A: 5 y 10.
+B: 15 y 45.
+C: 10 y 25.
+D: 5 y 30.
+KEY: D conf=high why="Clave publicada: en marzo lo mínimo vendido es 5 (billeteras y chaquetas) y lo máximo 30 (correas)."
+#9 copy=G_2da#46 page=10
+KEY: D conf=high why="Clave publicada: (1.000.000 + 1.200.000) ÷ 6 es la cuota de una nevera y un televisor a seis meses, sin intereses."
+#10 page=11
+STEM: La desviación estándar de un conjunto da una medida de qué tan dispersos están los datos con respecto al promedio de los mismos. Entre más dispersos, la desviación estándar es mayor.
+
+¿En cuál de los siguientes conjuntos la variable *Z* tiene mayor desviación estándar?
+A: 
+B: 
+C: 
+D: 
+FIG A p=11 box=0.245,0.23,0.465,0.333 what="nube de puntos dispersos entre 0 y 1"
+FIG B p=11 box=0.558,0.23,0.795,0.333 what="puntos concentrados en 0,6"
+FIG C p=11 box=0.245,0.341,0.465,0.442 what="puntos sobre una curva que crece de 0,2 a 0,6"
+FIG D p=11 box=0.558,0.341,0.795,0.442 what="puntos concentrados en 0,6 y en 0,8"
+KEY: A conf=high why="Clave publicada: en A los datos no se concentran en ningún valor."
+@group g11-12 11-12
+DIR: RESPONDA LAS PREGUNTAS 11 Y 12 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+PASSAGE: En la figura se presenta un mapa de la vista aérea de las calles de una parte de una ciudad. Se muestran tres puntos A, B y C; y la medida de dos segmentos sobre el mapa. Cada uno de los cuadriláteros ilustrados corresponde a un cuadrado.
+
+[[FIG]]
+FIG passage p=12 box=0.363,0.462,0.647,0.66 what="figura 1: mapa de calles con los puntos A, C y B; tramos de 10 cm y 15 cm"
+#11 page=13 group=g11-12
+STIM: Una persona debe ir del punto A al punto B en la ciudad. Se le sugieren las tres posibles rutas que muestra la figura 2.
+
+[[FIG]]
+FIG stim p=12 box=0.196,0.75,0.775,0.872 what="figura 2: rutas I, II y III de A a B pasando por C"
+STEM: ¿Cuál(es) de la(s) ruta(s) presentada(s) es (son) de longitud igual a la mostrada en la figura 1?
+A: Solamente I.
+B: Solamente I y III.
+C: Solamente II.
+D: Solamente II y III.
+KEY: B conf=high why="Clave publicada: cada cuadrado mide 5 cm; las rutas I y III miden 25 cm y la II mide 35 cm."
+#12 page=14 group=g11-12
+STEM: Una representación de los posibles caminos entre dos puntos, *X* y *Y*, en la ciudad se da al establecer el número de posibilidades entre ellos. Por ejemplo, si entre los puntos *X* y *Y* hay tres caminos posibles se escribe *X*(3)*Y*. La representación de los posibles caminos de *A* a *B* de longitud igual a 25 cm, pasando por *C*, es
+A: *A*(1)*C*(1)*B*.
+B: *A*(2)*C*(1)*B*.
+C: *A*(3)*C*(2)*B*.
+D: *A*(4)*C*(2)*B*.
+KEY: C conf=high why="Clave publicada: hay tres caminos de 15 cm de A a C y dos de 10 cm de C a B."
+#13 page=15
+STEM: Al hacer una encuesta en un curso, se determinó que la mayoría de estudiantes tienen 15 años de edad. ¿Cuál de las siguientes gráficas **NO** puede corresponder a la distribución de los estudiantes del curso?
+A: 
+B: 
+C: 
+D: 
+FIG A p=15 box=0.245,0.22,0.47,0.33 what="barras de número de estudiantes por edad (13 a 17), máximo en 15"
+FIG B p=15 box=0.569,0.22,0.795,0.33 what="barras por edad, máximo en 15"
+FIG C p=15 box=0.245,0.348,0.47,0.458 what="barras por edad, máximo en 13 y decreciente"
+FIG D p=15 box=0.569,0.348,0.795,0.458 what="barras por edad, máximo en 15"
+KEY: C conf=high why="Clave publicada: en C la moda es 13 años, no 15."
+#14 copy=H_2da#28 page=16
+A: cierta, pues basta multiplicar el área de uno de los vidrios por 2.
+B: falsa, pues se desconocen las dimensiones de la ventana resultante.
+C: cierta, pues la ventana resultante tiene un lado de medida 2x.
+D: falsa, pues el área de la ventana resultante es x² cm⁴.
+KEY: A conf=high why="Clave publicada: el área de los dos vidrios es x multiplicado por 2."
+#15 page=17
+STIM: La gráfica muestra el costo de producción y el precio de venta de un videojuego (una unidad) en el año 2010. Por otro lado, la tabla muestra el número de videojuegos vendidos por una empresa del año 2008 al 2012.
+
+[[FIG]]
+
+<table class="exam-table"><tr><th>Año</th><th>Número de videojuegos vendidos</th></tr><tr><td>2008</td><td>20.000</td></tr><tr><td>2009</td><td>15.000</td></tr><tr><td>2010</td><td>10.000</td></tr><tr><td>2011</td><td>25.000</td></tr><tr><td>2012</td><td>30.000</td></tr></table>
+FIG stim p=17 box=0.255,0.265,0.506,0.427 what="gráfica de barras: costo de producción y precio de venta de un videojuego en 2010"
+STEM: Con base en la información presentada, ¿cuál de las siguientes gráficas muestra el número de videojuegos vendidos durante el periodo 2008 - 2012?
+A: 
+B: 
+C: 
+D: 
+FIG A p=17 box=0.186,0.55,0.455,0.66 what="barras crecientes de 2008 a 2012"
+FIG B p=17 box=0.53,0.55,0.795,0.66 what="barras 20.000, 15.000, 10.000, 25.000, 30.000"
+FIG C p=17 box=0.186,0.7,0.455,0.818 what="barras que bajan y suben"
+FIG D p=17 box=0.53,0.7,0.795,0.818 what="barras decrecientes de 2008 a 2012"
+KEY: B conf=high why="Clave publicada: la altura de cada barra corresponde a las filas de la tabla."
+#16 copy=C16_1ra#3 page=19
+KEY: B conf=high why="Clave publicada: falta el número de clases de cada curso para calcular el costo total."
+#17 page=20
+STEM: Dos mil personas se encuestarán para conocer su intención de voto en futuras elecciones. El 60 % de las personas que votarán tienen entre 18 y 38 años, y el 40 % restante son mayores de 39 años.
+
+La encuesta representará la intención de voto de toda la población, cuando la cantidad de encuestados entre los 18 y 38 años sea
+A: 2.000
+B: 1.200
+C: 1.000
+D: 600
+KEY: B conf=high why="Clave publicada: el 60 % de 2.000 es 1.200."
+#18 copy=A_2da#47 page=21
+STIM: En la figura se representa el cuadrilátero *MNOP* con la medida de algunos de sus lados, ángulos y de una de sus diagonales.
+
+[[FIG]]
+FIG stim p=21 box=0.355,0.21,0.66,0.35 what="cuadrilátero MNOP con ángulos α=40°, β=70°, γ=70°, δ=40°, ε=110° y lados PM=NO=7,8 cm, MO=MN=11,4 cm"
+A: MO es congruente con MN.
+B: γ es congruente con β.
+C: PM es congruente con NO.
+D: α es congruente con δ.
+KEY: D conf=high why="Clave publicada: α y δ son alternos internos respecto a PO y MN con transversal MO."
+// Ciencias naturales
+#19 page=24
+STIM: El siguiente modelo muestra el ciclo biogeoquímico del dióxido de carbono.
+
+[[FIG]]
+FIG stim p=24 box=0.365,0.193,0.655,0.39 what="modelo del ciclo del CO2: fotosíntesis, respiración, emisiones de vehículos y fábricas, combustibles fósiles"
+STEM: Con base en el modelo mostrado, ¿qué efecto tiene para el ecosistema el aumento de la emisión de CO$_2$ por causa de las fábricas?
+A: Pérdida de la capacidad de las plantas para realizar su respiración.
+B: Incremento en la concentración de este gas en la atmósfera.
+C: Pérdida de la concentración de carbón en los combustibles fósiles.
+D: Pérdida de las bacterias anaerobias que realizan la descomposición.
+KEY: B conf=high why="Clave publicada: el CO2 emitido por las fábricas se acumula en la atmósfera."
+#20 page=25
+STIM: Las sustancias con el grupo C=O en su estructura química pueden reducirse en presencia de un catalizador *M* y un medio ácido, para formar un alcano, como se muestra a continuación.
+
+[[FIG]]
+FIG stim p=25 box=0.36,0.196,0.665,0.29 what="reacción: sustancia con grupo C=O, catalizador M y medio ácido, da un alcano"
+STEM: Con base en la anterior información, ¿cuál de las siguientes sustancias puede reducirse para formar un alcano de 4 carbonos?
+A: 
+B: 
+C: 
+D: 
+FIG A p=25 box=0.295,0.338,0.465,0.4 what="H-C-C-C-C-O-H (butanol)"
+FIG B p=25 box=0.565,0.338,0.755,0.4 what="Cl-C-C-C-C-C-NH2"
+FIG C p=25 box=0.295,0.418,0.465,0.48 what="cadena de 4 carbonos con doble enlace C=C"
+FIG D p=25 box=0.565,0.418,0.705,0.48 what="cadena de 4 carbonos con grupo C=O"
+KEY: D conf=high why="Clave publicada: es la única de 4 carbonos con el grupo C=O."
+#21 page=26
+STIM: Una estudiante toma cuatro recipientes con cuatro líquidos diferentes y de diferente masa, y los pone encima de una estufa para proporcionarles calor con llamas idénticas (ver figura).
+
+[[FIG]]
+FIG stim p=26 box=0.36,0.195,0.685,0.305 what="estufa con cuatro recipientes: 1 (0,5 kg), 2 (0,25 kg), 3 (1 kg), 4 (0,75 kg)"
+STEM: Si la estudiante nota que el líquido del recipiente 1 llegó primero al punto de ebullición, luego el líquido del recipiente 3, después el líquido del recipiente 4 y por último el líquido del recipiente 2, ¿cuál de los líquidos necesitó mayor energía calórica para alcanzar el punto de ebullición?
+A: El del recipiente 3.
+B: El del recipiente 4.
+C: El del recipiente 1.
+D: El del recipiente 2.
+KEY: D conf=high why="Clave publicada: con llamas iguales, el que tarda más en hervir recibió más calor."
+#22 page=27
+STIM: Una boya se ata al fondo del mar mediante una cuerda. En un día con el mar tranquilo, un estudiante observa que la boya se mantiene quieta durante unos segundos. Las fuerzas sobre la boya en ese intervalo de tiempo se representan en la figura.
+
+[[FIG]]
+FIG stim p=27 box=0.385,0.22,0.69,0.33 what="boya con flechas: fuerza de flotación hacia arriba, peso y tensión de la cuerda hacia abajo"
+STEM: Puede afirmarse que la boya se mantiene quieta porque
+A: la fuerza de flotación es igual al peso de la boya sumado a la tensión de la cuerda.
+B: la tensión de la cuerda más el peso de la boya es mayor que la fuerza de flotación.
+C: la fuerza de flotación es igual al peso de la boya.
+D: la fuerza de flotación es igual a la tensión de la cuerda.
+KEY: A conf=high why="Clave publicada: fuerza neta cero, la flotación equilibra peso más tensión."
+#23 page=28
+STIM: Un diagrama de fases muestra las condiciones de presión y temperatura de los estados o fases de un mismo compuesto (sólido, líquido o gas). A continuación se muestra el diagrama de fases del compuesto *W*, dos valores de presión ($P_1$ y $P_2$) y dos valores de temperatura ($T_1$ y $T_2$).
+
+[[FIG]]
+FIG stim p=28 box=0.405,0.198,0.61,0.348 what="diagrama de fases del compuesto W con P1, P2, T1, T2 y regiones sólido, líquido, gas"
+STEM: Si durante el procesamiento de un alimento que contiene el compuesto *W*, en el momento 1 se tiene una presión $P_1$ y una temperatura $T_1$ y en el momento 2 se pasa a una presión $P_2$ y a una temperatura $T_2$, ¿cuál es el estado del compuesto *W* en el momento 1 y en el momento 2?
+A: En el momento 1 el compuesto *W* es un sólido y en el momento 2 es un líquido, porque hubo un aumento de la temperatura.
+B: En el momento 1 el compuesto *W* es un sólido y en el momento 2 también es un sólido, porque aunque hay un aumento de presión y temperatura no hay un cambio de fase.
+C: En el momento 1 el compuesto *W* es un gas y en el momento 2 es un sólido, porque hubo un aumento de la presión.
+D: En el momento 1 el compuesto *W* es un líquido y en el momento 2 también es un líquido, porque aunque hay un aumento de presión y temperatura no hay un cambio de fase.
+KEY: B conf=high why="Clave publicada: los puntos (P1,T1) y (P2,T2) quedan en la región sólida."
+@group g24-24 24-24 copy=D_2da#72
+DIR: RESPONDA LA PREGUNTA DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#24 copy=D_2da#72 page=29 group=g24-24
+KEY: A conf=high why="Clave publicada: los árboles absorben el CO2 por fotosíntesis."
+#25 page=30
+STEM: Las micorrizas son asociaciones simbióticas entre hongos y plantas. Los hongos crecen en la superficie de las raíces de las plantas, lo cual le genera un sistema especializado para la absorción de nutrientes hacia la planta. En esta asociación, el hongo obtiene carbohidratos de la planta. Un grupo de estudiantes quiere aprender más acerca de las micorrizas.
+
+¿Cuál de las siguientes preguntas guiaría una investigación para obtener más información sobre las simbiosis entre estos organismos?
+A: ¿La presencia de micorrizas afecta la absorción de nutrientes en las plantas?
+B: ¿Cuántos tipos de micorrizas se han clasificado hasta el momento?
+C: ¿Los hongos de las micorrizas son microscópicos?
+D: ¿Con qué órgano absorben las plantas los nutrientes del suelo?
+KEY: A conf=high why="Clave publicada: es la única que se responde con un experimento controlado sobre la simbiosis."
+#26 page=31
+STIM: La energía geotérmica es la generación de energía eléctrica aprovechando el calor del interior de la Tierra. Para lograrlo, se realizan perforaciones en la tierra de varios kilómetros de profundidad, para luego bombear, a través de una de estas, agua fría. Una vez el agua se calienta abajo hasta el punto de ebullición, el vapor sube a la superficie en donde se disponen de turbinas que, al moverse, generan corrientes eléctricas (ver figura).
+
+[[FIG]]
+
+Para estimar la eficiencia de un pozo geotérmico, los ingenieros del pozo inyectaron determinada cantidad de agua y midieron el tiempo durante el cual el pozo generaba suficiente presión de vapor para las turbinas a partir del agua inyectada. Esto se realizó cuatro (4) veces, una detrás de otra, reutilizando el agua del ciclo anterior. Los resultados se muestran en la tabla.
+
+<table class="exam-table"><tr><th>Ciclo</th><th>Tiempo (minutos)</th><th>Proporción de agua recuperada como vapor</th></tr><tr><td>1</td><td>50</td><td>98 %</td></tr><tr><td>2</td><td>22</td><td>99 %</td></tr><tr><td>3</td><td>21</td><td>99 %</td></tr><tr><td>4</td><td>23</td><td>99 %</td></tr></table>
+FIG stim p=31 box=0.345,0.215,0.655,0.387 what="pozo geotérmico: agua fría bombeada hacia abajo, vapor de agua que sube al generador eléctrico"
+STEM: Los ingenieros saben que cuanto más caliente esté el agua inicialmente, menos calor necesita para evaporarse. Por tanto, puede concluirse que la temperatura del agua al principio del
+A: primer ciclo era mayor que en los ciclos 2, 3 y 4.
+B: primer ciclo era menor que en los ciclos 2, 3 y 4.
+C: cuarto ciclo era mayor que en los ciclos 1, 2 y 3.
+D: cuarto ciclo era menor que en los ciclos 1, 2 y 3.
+KEY: B conf=high why="Clave publicada: el primer ciclo tardó más, luego su agua empezó más fría."
+#27 page=32
+STEM: Un estudiante tiene la mezcla 1 y la mezcla 2 y tiene la hipótesis que la mezcla 2 tiene menor pH que la mezcla 1.
+
+Si la hipótesis del estudiante es cierta, ¿cuál de las siguientes gráficas muestra los resultados que se esperaría encontrar?
+A: 
+B: 
+C: 
+D: 
+FIG A p=32 box=0.265,0.243,0.505,0.325 what="barras de pH: mezcla 1 en 0, mezcla 2 en 10"
+FIG B p=32 box=0.59,0.243,0.83,0.325 what="barras de pH: mezcla 1 en 6, mezcla 2 en 3"
+FIG C p=32 box=0.265,0.345,0.505,0.428 what="barras de pH: mezcla 1 en 8, mezcla 2 en 9,5"
+FIG D p=32 box=0.59,0.345,0.83,0.428 what="barras de pH: mezcla 1 y mezcla 2 en 7"
+KEY: B conf=high why="Clave publicada: solo en B la mezcla 2 tiene menor pH."
+#28 copy=M_2da#60 page=33
+KEY: C conf=high why="Clave publicada: varía la temperatura y mide el canto de los machos."
+// Inglés
+@group g29-29 29-29
+DIR: ¿Dónde puede ver este aviso? Marque A, B o C.
+PASSAGE: Ejemplo: 0. "YOU CAN RIDE YOUR MOTORBIKE HERE": A. in the street B. in the playground C. in the garden (Respuesta: A)
+#29 page=34 group=g29-29 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=34 box=0.225,0.455,0.44,0.523 what="aviso: The test starts at 5:00 p.m"
+A: in a living room
+B: in a bedroom
+C: in a classroom
+KEY: C conf=high why="Clave publicada: un examen se presenta en un salón de clase."
+@group g30-31 30-31
+DIR: ¿Cuál palabra (A - D) concuerda con la descripción de cada frase?
+PASSAGE: Ejemplo: 0. When children see him, they are often happy. (Respuesta: clown)
+#30 page=35 group=g30-31 type=matching
+STEM: You can see him in the countryside picking fruit.
+A: clown
+B: doctor
+C: farmer
+D: teacher
+KEY: C conf=high why="Clave publicada (farmer). La guía solo muestra cuatro de las ocho palabras."
+#31 page=35 group=g30-31 type=matching
+STEM: She is the one who gives lessons at school.
+A: clown
+B: doctor
+C: farmer
+D: teacher
+KEY: D conf=high why="Clave publicada (teacher). La guía solo muestra cuatro de las ocho palabras."
+@group g32-32 32-32
+DIR: Complete la conversación. Marque A, B o C.
+PASSAGE: Ejemplo: 0. It's a nice day, isn't it? A. Do you want to walk? B. Yes, thanks. C. No, it can't. (Respuesta: B)
+#32 page=36 group=g32-32 type=conversation
+STEM: What else shall we buy?
+A: I don't know.
+B: Two, please.
+C: I have some money.
+KEY: A conf=high why="Clave publicada."
+@group g33-34 33-34
+DIR: RESPONDA LAS PREGUNTAS 33 Y 34 DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: Lea el texto y seleccione la palabra correcta para cada espacio.
+
+<p style="text-align:center">**SKATEBOARDING**</p>
+
+*Skateboarding is one of the [[hueco:0|hottest]] summer sports around. Skateboarding started in the 50s, ______ surfboarders got the idea of putting wheels on their boards in winter.*
+
+*Like any ______ sport, you have to know what you are doing ______ you jump on your board. You can skateboard [[hueco:33]] your family, friends, or alone; the important thing to start is to know how, where and what to use.*
+
+*______ careful! The first time you ride a skateboard you [[hueco:34]] just hit the floor. To practice this sport, make sure your skateboard is made of good materials and wear safe clothes for your head, legs and arms. Learn in an area where there is ______ traffic. The best place to ______ is the skateboarding area of some parks.*
+
+Ejemplo: 0. A. hottest B. hotter C. hot (Respuesta: A)
+#33 page=38 group=g33-34 type=cloze_text
+STEM: Blank (33): choose the option that completes the text.
+A: with
+B: around
+C: between
+KEY: A conf=high why="Clave publicada."
+#34 page=38 group=g33-34 type=cloze_text
+STEM: Blank (34): choose the option that completes the text.
+A: should
+B: must
+C: can
+KEY: A conf=high why="Clave publicada: 'should' expresa una sugerencia."
+@group g35-36 35-36
+DIR: RESPONDA LAS PREGUNTAS 35 Y 36 DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: Lea el artículo y luego responda las preguntas.
+
+<p style="text-align:center">**SLEEP**</p>
+
+With the fast ways of modern life, many men and women think it is hard to wake up in the morning. Our busy lives mean that it can feel like there is just not enough time in the day to finish our activities. We are often so busy that we feel there is not enough time to sleep well. This can make us sad and even change our health in a bad way. But sleeping can actually give you more time, by making your head cooler and clearer so you can work better. A fifteen minute sleep after eating in the afternoon in the office or at home can help you to feel much better very quickly.
+
+We can understand our own ideas more clearly through sleeping. Dreams can help us to think about our problems and how we can help ourselves in real life. Sleep can change our feelings from bad to good, from unhappy to happy.
+
+Sleep can help us in our daily lives, in our job, study. This is a very good practice you can enjoy during the day, not just at the weekend, but also during the week.
+
+The most important thing about sleeping is not the moment of the day or the place you do it but just to enjoy it. Sweet dreams!
+#35 page=40 group=g35-36
+STEM: If you sleep what will you mainly improve in?
+A: your body
+B: your job
+C: your thoughts
+KEY: C conf=high why="Clave publicada: el sueño ayuda a pensar y comprender nuestras ideas."
+#36 page=40 group=g35-36
+STEM: What matters when you sleep is
+A: how you feel.
+B: when you do it.
+C: where you sleep.
+KEY: A conf=high why="El texto dice que lo importante no es el momento ni el lugar, sino disfrutarlo. La guía no muestra la clave impresa."
+@group g37-37 37-37
+DIR: RESPONDA LA PREGUNTA DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: Lea el texto y la pregunta de la siguiente parte.
+
+<p style="text-align:center">**Why We Love to Travel**</p>
+
+Anyone can travel, and it's my opinion that everyone should travel. You can use travel to relax, to see the world, to connect with others who share your interest for traveling or just to have adventure, but especially to create a collection of many experiences to remember, as you grow older.
+
+You might be traveling to visit family or friends, for work, because you're moving or sightseeing or just to relax on a beach somewhere to get away from everything. The purpose depends on what you want to do and your personal view of life.
+
+Traveling for business or a family event are common reasons. But the most difficult question is why some people are happy to spend their whole lives within 50 miles away of where they were born while others just can't stop traveling around the world. These travelers (called long-term travelers) are easily recognized. There is something in their eyes when they're discussing their latest trip; it's a careless attitude when something goes wrong or an ability to live in extreme conditions simply to discover a new village in a distant area of Peru.
+
+Traveling is amazingly rewarding. It helps you answer basic human questions as: how are we different? How are we the same? Then you want to know about the art and the history and see what experiences helped people become what they are. For some, this is sightseeing; for others, it's simply part of "being". For those who love traveling, the question is not simply "when is my next trip?" but also "why can't I stop?"
+#37 page=42 group=g37-37
+STEM: What is the writer trying to do in the text?
+A: explain why traveling is wonderful
+B: mention his experience of a nice trip
+C: describe good places to travel to
+D: invite people to visit faraway areas
+KEY: A conf=high why="Clave publicada."
+@group g38-47 38-47
+DIR: RESPONDA LAS PREGUNTAS 38 A 47 DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: Lea el artículo y seleccione la palabra adecuada para cada espacio.
+
+<p style="text-align:center">**FOOTBALL WORLD CUP**</p>
+
+One of the most famous [[hueco:0|events]] in sports is the FIFA World Cup. It takes [[hueco:38]] every four years in a different location, much like the Olympics. Indeed, there is some research that [[hueco:39]] the World Cup creates as much international interest as the Olympics [[hueco:40]]. Teams from around the world [[hueco:41]] for a month. The same country rarely [[hueco:42]] two years in a row.
+
+The competition, [[hueco:43]] has been interrupted only by World War II, makes athletes feel proud of their nation because it has created [[hueco:44]] feelings of national belonging. There have even been wars between countries stopped until the teams knew whether or not they had qualified. For fans, football [[hueco:45]] far more than a simple sport. It is a way to prove their country's importance [[hueco:46]] sport. The popularity of football hasn't decreased over the decades [[hueco:47]] it is still the king of sports.
+
+Ejemplo: 0. A. events B. actions C. games D. festivals (Respuesta: A)
+#38 page=44 group=g38-47 type=cloze_text
+STEM: Blank (38): choose the option that completes the text.
+A: part
+B: position
+C: time
+D: place
+KEY: D conf=high why="La guía solo publica las claves de 2 espacios; resuelta: takes place."
+#39 page=44 group=g38-47 type=cloze_text
+STEM: Blank (39): choose the option that completes the text.
+A: talks
+B: tells
+C: speaks
+D: argues
+KEY: D conf=high why="La guía solo publica las claves de 2 espacios; resuelta: research that argues."
+#40 page=44 group=g38-47 type=cloze_text
+STEM: Blank (40): choose the option that completes the text.
+A: may
+B: are
+C: do
+D: will
+KEY: C conf=high why="La guía solo publica las claves de 2 espacios; resuelta: as much interest as the Olympics do."
+#41 page=44 group=g38-47 type=cloze_text
+STEM: Blank (41): choose the option that completes the text.
+A: fight
+B: compete
+C: walk
+D: race
+KEY: B conf=high why="La guía solo publica las claves de 2 espacios; resuelta: teams compete."
+#42 page=44 group=g38-47 type=cloze_text
+STEM: Blank (42): choose the option that completes the text.
+A: wins
+B: gains
+C: earns
+D: gets
+KEY: A conf=high why="Clave publicada."
+#43 page=44 group=g38-47 type=cloze_text
+STEM: Blank (43): choose the option that completes the text.
+A: when
+B: where
+C: which
+D: who
+KEY: C conf=high why="La guía solo publica las claves de 2 espacios; resuelta: pronombre relativo para 'the competition'."
+#44 page=44 group=g38-47 type=cloze_text
+STEM: Blank (44): choose the option that completes the text.
+A: thick
+B: strong
+C: large
+D: high
+KEY: B conf=high why="La guía solo publica las claves de 2 espacios; resuelta: strong feelings."
+#45 page=44 group=g38-47 type=cloze_text
+STEM: Blank (45): choose the option that completes the text.
+A: shows
+B: means
+C: does
+D: says
+KEY: B conf=high why="La guía solo publica las claves de 2 espacios; resuelta: football means far more."
+#46 page=44 group=g38-47 type=cloze_text
+STEM: Blank (46): choose the option that completes the text.
+A: across
+B: without
+C: through
+D: against
+KEY: C conf=high why="Clave publicada."
+#47 page=44 group=g38-47 type=cloze_text
+STEM: Blank (47): choose the option that completes the text.
+A: yet
+B: or
+C: but
+D: and
+KEY: D conf=high why="La guía solo publica las claves de 2 espacios; resuelta: une dos ideas que se suman."

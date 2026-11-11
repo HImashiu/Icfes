@@ -207,7 +207,7 @@ for n in sorted(order):
          'scan_marked_option': None, 'source': {'pages': [int(a['page'])] if 'page' in a else [], 'crop': None},
          'provenance': {'status': 'claude_transcribed', 'trusted': True, 'notes': notes or ['transcribed by Claude from the scan'], 'flags': []},
          'ready': True}
-    if base.get('figure') and 'STIM' not in s and 'STEM' not in s: q['figure'] = base['figure']
+    if base.get('figure') and 'STIM' not in s and 'STEM' not in s and not re.search(r'\[\[figura:[^\]]*-q%d-fig-' % n, stim + stem): q['figure'] = base['figure']  # own crop replaces the bank figure
     if a.get('group') and not stim: q['stimulus_md'] = ''
     questions.append(q)
     if s.get('key'):
