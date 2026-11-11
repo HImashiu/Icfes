@@ -1,0 +1,307 @@
+@exam ICFES-2020-1B_1ra | ICFES 2020-1 (Calendario B) 1ra Sesión | pdf=/mnt/project-files/icfes/sources-new/l2_2020B.pdf | dpi=300
+@section Matemáticas 1-22
+@section Lectura crítica 23-58
+@section Sociales y ciudadanas 59-80
+@section Ciencias naturales 81-106
+// Matemáticas
+#1 copy=E_1ra#5 page=2
+KEY: B conf=high
+#2 copy=G1_1ra#24 page=2
+KEY: C conf=high
+#3 copy=G1_1ra#11 page=2
+KEY: B conf=high
+#4 copy=L_1ra#4 page=2
+KEY: C conf=high
+// Q5-7: booklet page 3 is not in the session-1 photos; same items appear as Q27-29 of session 2 (PDF p46)
+#5 copy=G1_1ra#14 page=46
+KEY: A conf=high
+#6 copy=G1_1ra#15 page=46
+KEY: A conf=high
+#7 copy=G1_1ra#16 page=46
+KEY: B conf=high
+#8 copy=G1_2da#39 page=3
+KEY: C conf=high
+#9 copy=G1_1ra#19 page=3
+KEY: A conf=high
+#10 copy=G1_2da#47 page=3
+FIG stim p=3 box=0.24,0.59,0.51,0.72 what="cantidad de hojas (miles) por mes, enero a julio"
+KEY: D conf=high
+#11 copy=G1_1ra#23 page=3
+KEY: B conf=high
+#12 copy=B_2da#36 page=4
+KEY: B conf=high
+#13 copy=G1_1ra#4 page=4
+KEY: B conf=high
+#14 copy=G1_1ra#6 page=4
+FIG stim p=4 box=0.63,0.545,0.86,0.66 what="nivel de audiencia de los documentales P y Q por día del mes"
+KEY: D conf=high
+#15 copy=G1_1ra#9 page=5
+KEY: D conf=high
+#16 copy=B_2da#30 page=5
+KEY: A conf=high
+#17 copy=G1_1ra#12 page=5
+KEY: B conf=high
+#18 copy=G1_1ra#13 page=6
+FIG stim p=6 box=0.27,0.16,0.86,0.34 what="ganancias mensuales de la empresa, enero a diciembre"
+KEY: D conf=high
+#19 copy=G1_1ra#21 page=6
+KEY: B conf=high
+#20 copy=G1_1ra#20 page=6
+KEY: C conf=high
+#21 copy=G1_2da#34 page=6
+KEY: C conf=high
+#22 copy=E_1ra#6 page=6
+KEY: C conf=high
+// Lectura crítica
+@group g23-24 23-24 copy=C_1ra#31
+DIR: RESPONDA LAS PREGUNTAS 23 Y 24 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#23 copy=C_1ra#31 page=7 group=g23-24
+KEY: B conf=high
+#24 copy=C_1ra#32 page=7 group=g23-24
+KEY: A conf=high
+@group g25-29 25-29 copy=L_1ra#37
+DIR: RESPONDA LAS PREGUNTAS 25 A 29 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#25 copy=L_1ra#37 page=8 group=g25-29
+KEY: B conf=high
+#26 copy=L_1ra#41 page=8 group=g25-29
+KEY: D conf=high
+#27 copy=L_1ra#39 page=8 group=g25-29
+KEY: D conf=high
+#28 copy=L_1ra#40 page=9 group=g25-29
+KEY: B conf=high
+#29 copy=L_1ra#38 page=9 group=g25-29
+KEY: C conf=high
+@group g30-31 30-31 copy=L_1ra#35
+DIR: RESPONDA LAS PREGUNTAS 30 Y 31 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#30 copy=L_1ra#35 page=9 group=g30-31
+KEY: D conf=high
+#31 copy=L_1ra#36 page=9 group=g30-31
+KEY: A conf=high
+@group g32-33 32-33 copy=L_1ra#44
+DIR: RESPONDA LAS PREGUNTAS 32 Y 33 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#32 copy=L_1ra#44 page=10 group=g32-33
+KEY: B conf=high
+#33 copy=L_1ra#45 page=10 group=g32-33
+KEY: C conf=high
+@group g34-37 34-37 copy=L_1ra#48
+DIR: RESPONDA LAS PREGUNTAS 34 A 37 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#34 copy=L_1ra#49 page=11 group=g34-37
+KEY: C conf=high
+#35 copy=L_1ra#48 page=11 group=g34-37
+KEY: D conf=high
+#36 copy=L_1ra#50 page=11 group=g34-37
+KEY: A conf=high
+#37 copy=L_1ra#51 page=11 group=g34-37
+KEY: D conf=high
+@group g38-40 38-40 copy=G1_1ra#26
+DIR: RESPONDA LAS PREGUNTAS 38 A 40 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#38 copy=G1_1ra#26 page=12 group=g38-40
+KEY: C conf=high
+#39 copy=G1_1ra#28 page=12 group=g38-40
+KEY: C conf=high
+#40 copy=G1_1ra#27 page=12 group=g38-40
+KEY: B conf=high
+@group g41-44 41-44 copy=G1_1ra#58
+DIR: RESPONDA LAS PREGUNTAS 41 A 44 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#41 copy=G1_1ra#58 page=13 group=g41-44
+KEY: A conf=high
+#42 copy=G1_1ra#59 page=13 group=g41-44
+KEY: D conf=high
+#43 copy=G1_1ra#60 page=13 group=g41-44
+KEY: D conf=high
+#44 copy=G1_1ra#61 page=13 group=g41-44
+KEY: D conf=high
+@group g45-46 45-46 copy=G1_1ra#53
+DIR: RESPONDA LAS PREGUNTAS 45 Y 46 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#45 copy=G1_1ra#53 page=14 group=g45-46
+KEY: C conf=high
+#46 copy=G1_1ra#54 page=14 group=g45-46
+KEY: A conf=high
+@group g47-49 47-49 copy=L_1ra#42
+DIR: RESPONDA LAS PREGUNTAS 47 A 49 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#47 copy=B_1ra#50 page=15 group=g47-49
+KEY: D conf=high
+#48 copy=L_1ra#42 page=15 group=g47-49
+KEY: A conf=high
+#49 copy=L_1ra#43 page=15 group=g47-49
+KEY: B conf=high
+@group g50-52 50-52 copy=G1_1ra#55
+DIR: RESPONDA LAS PREGUNTAS 50 A 52 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#50 copy=G1_1ra#55 page=16 group=g50-52
+KEY: C conf=high
+#51 copy=G1_1ra#56 page=16 group=g50-52
+KEY: B conf=high
+#52 copy=G1_1ra#57 page=16 group=g50-52
+KEY: B conf=high
+@group g53-54 53-54 copy=L_1ra#57
+DIR: RESPONDA LAS PREGUNTAS 53 Y 54 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+PASSAGE: [[FIG]]
+
+<p style="text-align:right">Infografía: Rowilsonh Jonathan – El Espectador.com 2013</p>
+FIG passage p=17 box=0.28,0.215,0.78,0.84 what="infografía Los símbolos que perderá el Papa: mitra, escudo oficial de plata, báculo y palio"
+#53 copy=L_1ra#57 page=18 group=g53-54
+KEY: B conf=high
+#54 copy=L_1ra#59 page=18 group=g53-54
+KEY: A conf=high
+@group g55-56 55-56 copy=G1_1ra#44
+DIR: RESPONDA LAS PREGUNTAS 55 Y 56 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#55 copy=G1_1ra#44 page=18 group=g55-56
+KEY: D conf=high
+#56 copy=G1_1ra#45 page=18 group=g55-56
+KEY: C conf=high
+@group g57-58 57-58 copy=L_1ra#26
+DIR: RESPONDA LAS PREGUNTAS 57 Y 58 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#57 copy=L_1ra#27 page=19 group=g57-58
+KEY: D conf=high
+#58 copy=L_1ra#28 page=19 group=g57-58
+KEY: C conf=high
+// Sociales
+#59 copy=L_1ra#91 page=20
+KEY: D conf=high
+#60 copy=B_2da#5 page=20
+KEY: D conf=high
+#61 copy=G1_1ra#87 page=20
+KEY: C conf=high
+#62 copy=E_2da#1 page=21
+KEY: D conf=high
+#63 copy=G1_2da#7 page=21
+KEY: A conf=high
+#64 copy=B_2da#8 page=22
+KEY: B conf=high
+#65 copy=E_1ra#67 page=22
+KEY: D conf=high
+#66 copy=G1_2da#2 page=22
+KEY: D conf=high
+#67 copy=G1_2da#13 page=23
+KEY: A conf=high
+#68 copy=G1_2da#16 page=23
+KEY: B conf=high
+#69 copy=G1_2da#10 page=23
+KEY: A conf=high
+#70 copy=B_2da#25 page=24
+KEY: D conf=high
+#71 copy=B_1ra#83 page=24
+KEY: C conf=high
+#72 copy=G1_1ra#79 page=24
+KEY: D conf=high
+#73 copy=B_2da#9 page=24
+KEY: C conf=high
+#74 copy=B_2da#22 page=25
+KEY: B conf=high
+#75 copy=E_1ra#71 page=25
+STEM: De acuerdo con lo expresado por el Ministerio de Trabajo, la decisión de la Corte Constitucional podría traer
+KEY: C conf=high
+#76 copy=L_1ra#74 page=25
+KEY: C conf=high
+#77 copy=E_1ra#73 page=25
+KEY: C conf=high
+#78 copy=E_1ra#75 page=26
+KEY: B conf=high
+#79 copy=C_2da#14 page=26
+KEY: A conf=high
+#80 copy=E_1ra#70 page=26
+KEY: A conf=high
+// Ciencias naturales
+@group g81-83 81-83 copy=L_1ra#100
+DIR: RESPONDA LAS PREGUNTAS 81 A 83 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#81 copy=L_1ra#100 page=27 group=g81-83
+KEY: C conf=high
+#82 copy=L_1ra#101 page=27 group=g81-83
+KEY: A conf=high
+#83 copy=L_1ra#102 page=27 group=g81-83
+KEY: C conf=high
+#84 copy=L_1ra#94 page=27
+KEY: B conf=high
+#85 page=28
+STEM: Durante su ciclo de vida la lombriz parásita, conocida como tenia, necesita de un huésped intermediario y de uno definitivo. El huésped intermediario se infecta al comer pasto contaminado con huevos de tenia. Estos huevos se transforman en larvas y viajan desde el intestino hasta los músculos a través de la sangre. Las larvas se quedan a vivir dentro de los músculos. Los depredadores o huéspedes definitivos consumen a estos animales e ingieren las larvas de tenia; estas larvas crecen y se reproducen dentro del depredador. Los huevos de tenia se expulsan en las heces y luego quedan adheridos al pasto. De acuerdo con la información anterior, si un humano es huésped definitivo de una tenia, ¿cuál de los siguientes modelos representa todo el ciclo de vida de la tenia?
+A: 
+B: 
+C: 
+D: 
+FIG A p=28 box=0.20,0.315,0.52,0.485 what="ciclo A"
+FIG B p=28 box=0.50,0.315,0.86,0.475 what="ciclo B"
+FIG C p=28 box=0.20,0.485,0.51,0.69 what="ciclo C"
+FIG D p=28 box=0.50,0.485,0.86,0.705 what="ciclo D: humano come carne de cerdo mal cocinada, tenia adulta en el intestino, huevos en heces, cerdo come huevos en el pasto, larvas en músculo"
+KEY: D conf=medium why="only D closes the cycle: eggs in human feces, pig eats eggs on grass, larvae in pig muscle, human eats undercooked pork; scan is blurry"
+#86 copy=E_2da#57 page=28
+KEY: D conf=high
+#87 copy=G1_1ra#95 page=28
+KEY: B conf=high
+#88 page=29
+STEM: Un estudiante quiere saber cuál es la dieta principal del murciélago *Sturnira aratathomasi*. Para ello, recolecta muestras de excremento de 10 individuos y determina el tipo de alimento que consume usualmente esta especie. Él encontró semillas y pulpa de tomatillo, por lo cual el estudiante concluyó que los murciélagos de esta especie se alimentan principalmente de tomatillo.
+
+¿Cuál de las siguientes carteleras muestra de forma correcta la investigación realizada por el estudiante?
+A: 
+B: 
+C: 
+D: 
+FIG A p=29 box=0.23,0.29,0.70,0.44 what="cartelera con pregunta, experimento y conclusión"
+FIG B p=29 box=0.23,0.445,0.70,0.60 what="cartelera con pregunta, experimento y resultados"
+FIG C p=29 box=0.23,0.60,0.70,0.745 what="cartelera con pregunta y experimento"
+FIG D p=29 box=0.23,0.75,0.70,0.905 what="cartelera con pregunta, experimento, resultados y conclusión"
+KEY: D conf=high why="only D shows question, experiment, results and conclusion"
+#89 copy=E_2da#51 page=30
+KEY: A conf=high
+#90 copy=G1_1ra#94 page=30
+KEY: D conf=high
+#91 copy=L_1ra#103 page=31
+KEY: B conf=high
+#92 page=31
+STIM: Una estudiante quiere encender el bombillo de un circuito, el cual tiene un espacio para ubicar una resistencia, como se muestra en la figura.
+
+[[FIG]]
+FIG stim p=31 box=0.265,0.50,0.47,0.575 what="circuito con pila, espacio para la resistencia y bombillo"
+
+Ella tiene 4 objetos para usar como resistencias, y cada uno de ellos tiene diferentes características, como se muestra en la tabla.
+
+<table class="exam-table"><tr><th>Objeto</th><th>Material</th><th>Sección transversal (mm²)</th><th>Longitud (cm)</th></tr><tr><td>1</td><td>Madera</td><td>200</td><td>7,2</td></tr><tr><td>2</td><td>Metal</td><td>200</td><td>7,2</td></tr><tr><td>3</td><td>Madera</td><td>75</td><td>20,3</td></tr><tr><td>4</td><td>Metal</td><td>75</td><td>20,3</td></tr></table>
+
+La estudiante lee en un libro que la alta resistividad de un material permite un paso de corriente menor. Ella sabe que la corriente que pasa por un objeto es menor cuando su sección transversal disminuye y su longitud aumenta. Y que los metales son mejores conductores de electricidad que la madera.
+STEM: Si la estudiante desea la resistencia más alta, con los objetos que tiene disponibles, ¿cuál objeto debe elegir como resistencia?
+A: El objeto 3.
+B: El objeto 2.
+C: El objeto 4.
+D: El objeto 1.
+KEY: A conf=high why="wood (higher resistivity), smallest section, longest length"
+#93 copy=L_1ra#115 page=31
+KEY: B conf=high
+@group g94-96 94-96 copy=L_1ra#97
+DIR: RESPONDA LAS PREGUNTAS 94 A 96 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#94 copy=L_1ra#99 page=32 group=g94-96
+KEY: D conf=high
+#95 copy=L_1ra#98 page=32 group=g94-96
+KEY: B conf=high
+#96 copy=L_1ra#97 page=32 group=g94-96
+KEY: C conf=high
+#97 copy=E_1ra#100 page=33
+KEY: A conf=high
+#98 copy=L_1ra#112 page=33
+KEY: C conf=high
+#99 copy=L_1ra#95 page=33
+KEY: B conf=high
+#100 copy=L_1ra#107 page=34
+KEY: A conf=high
+#101 copy=L_1ra#114 page=34
+KEY: B conf=high
+#102 copy=B_2da#67 page=34
+KEY: C conf=high
+#103 copy=C_2da#55 page=35
+KEY: C conf=high
+#104 copy=L_1ra#113 page=35
+KEY: C conf=high
+#105 page=36
+STIM: Una estación de monitoreo de calidad del aire en un sitio de una ciudad, analiza la concentración de dióxido de nitrógeno (NO₂) y ozono (O₃) durante un día con equipos automatizados. En la tabla se muestran los resultados obtenidos.
+
+<table class="exam-table"><tr><th>Hora</th><th>1:00</th><th>4:00</th><th>7:00</th><th>10:00</th><th>13:00</th><th>16:00</th><th>19:00</th><th>22:00</th><th>24:00</th></tr><tr><th>Concentración de O₃ (ppb)</th><td>1,70</td><td>4,17</td><td>2,75</td><td>19,60</td><td>22,17</td><td>23,76</td><td>7,83</td><td>3,76</td><td>6,92</td></tr><tr><th>Concentración NO₂ (ppb)</th><td>19,34</td><td>14,20</td><td>15,64</td><td>4,60</td><td>3,19</td><td>3,92</td><td>17,39</td><td>18,30</td><td>14,14</td></tr></table>
+STEM: De acuerdo con la tabla, ¿cuál de las siguientes gráficas representa los resultados correctamente?
+A: 
+B: 
+C: 
+D: 
+FIG A p=36 box=0.22,0.345,0.53,0.51 what="ozono bajo de noche y alto de día; NO2 al revés"
+FIG B p=36 box=0.56,0.345,0.87,0.51 what="ambas curvas suben de día"
+FIG C p=36 box=0.22,0.52,0.53,0.67 what="curvas intercambiadas"
+FIG D p=36 box=0.56,0.52,0.87,0.67 what="ambas curvas bajan de día"
+KEY: A conf=high why="O3 peaks 10:00-16:00 while NO2 drops then"
+#106 copy=L_1ra#93 page=36
+KEY: C conf=high

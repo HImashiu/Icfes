@@ -1,0 +1,493 @@
+@exam ICFES-2020-1B_2da | ICFES 2020-1 (Calendario B) 2da Sesión | pdf=/mnt/project-files/icfes/sources-new/l2_2020B.pdf | dpi=300
+@section Sociales y ciudadanas 1-22
+@section Matemáticas 23-44
+@section Ciencias naturales 45-70
+@section Inglés 71-115
+// Items 1-70 are the same items as session 1 (Soc 59-80, Mat 1-22, CN 81-106), printed again in this booklet; copied from the session-1 source
+// Sociales
+#1 copy=ICFES-2020-1B_1ra#59 page=38
+KEY: D conf=high
+#2 copy=ICFES-2020-1B_1ra#60 page=38
+KEY: D conf=high
+#3 copy=ICFES-2020-1B_1ra#61 page=38
+KEY: C conf=high
+#4 copy=ICFES-2020-1B_1ra#62 page=39
+KEY: D conf=high
+#5 copy=ICFES-2020-1B_1ra#63 page=39
+KEY: A conf=high
+#6 copy=ICFES-2020-1B_1ra#64 page=40
+KEY: B conf=high
+#7 copy=ICFES-2020-1B_1ra#65 page=40
+KEY: D conf=high
+#8 copy=ICFES-2020-1B_1ra#66 page=40
+KEY: D conf=high
+#9 copy=ICFES-2020-1B_1ra#67 page=41
+KEY: A conf=high
+#10 copy=ICFES-2020-1B_1ra#68 page=41
+KEY: B conf=high
+#11 copy=ICFES-2020-1B_1ra#69 page=41
+KEY: A conf=high
+#12 copy=ICFES-2020-1B_1ra#70 page=42
+KEY: D conf=high
+#13 copy=ICFES-2020-1B_1ra#71 page=42
+KEY: C conf=high
+#14 copy=ICFES-2020-1B_1ra#72 page=42
+KEY: D conf=high
+#15 copy=ICFES-2020-1B_1ra#73 page=42
+KEY: C conf=high
+#16 copy=ICFES-2020-1B_1ra#74 page=43
+KEY: B conf=high
+#17 copy=ICFES-2020-1B_1ra#75 page=43
+KEY: C conf=high
+#18 copy=ICFES-2020-1B_1ra#76 page=43
+KEY: C conf=high
+#19 copy=ICFES-2020-1B_1ra#77 page=43
+KEY: C conf=high
+#20 copy=ICFES-2020-1B_1ra#78 page=44
+KEY: B conf=high
+#21 copy=ICFES-2020-1B_1ra#79 page=44
+KEY: A conf=high
+#22 copy=ICFES-2020-1B_1ra#80 page=44
+KEY: A conf=high
+// Matemáticas
+#23 copy=ICFES-2020-1B_1ra#1 page=45
+KEY: B conf=high
+#24 copy=ICFES-2020-1B_1ra#2 page=45
+KEY: C conf=high
+#25 copy=ICFES-2020-1B_1ra#3 page=45
+KEY: B conf=high
+#26 copy=ICFES-2020-1B_1ra#4 page=45
+KEY: C conf=high
+#27 copy=ICFES-2020-1B_1ra#5 page=46
+KEY: A conf=high
+#28 copy=ICFES-2020-1B_1ra#6 page=46
+KEY: A conf=high
+#29 copy=ICFES-2020-1B_1ra#7 page=46
+KEY: B conf=high
+#30 copy=ICFES-2020-1B_1ra#8 page=47
+KEY: C conf=high
+#31 copy=ICFES-2020-1B_1ra#9 page=47
+KEY: A conf=high
+#32 copy=ICFES-2020-1B_1ra#10 page=47
+KEY: D conf=high
+#33 copy=ICFES-2020-1B_1ra#11 page=47
+KEY: B conf=high
+#34 copy=ICFES-2020-1B_1ra#12 page=48
+KEY: B conf=high
+#35 copy=ICFES-2020-1B_1ra#13 page=48
+KEY: B conf=high
+#36 copy=ICFES-2020-1B_1ra#14 page=48
+KEY: D conf=high
+#37 copy=ICFES-2020-1B_1ra#15 page=49
+KEY: D conf=high
+#38 copy=ICFES-2020-1B_1ra#16 page=49
+KEY: A conf=high
+#39 copy=ICFES-2020-1B_1ra#17 page=49
+KEY: B conf=high
+#40 copy=ICFES-2020-1B_1ra#18 page=50
+KEY: D conf=high
+#41 copy=ICFES-2020-1B_1ra#19 page=50
+KEY: B conf=high
+#42 copy=ICFES-2020-1B_1ra#20 page=50
+KEY: C conf=high
+#43 copy=ICFES-2020-1B_1ra#21 page=50
+KEY: C conf=high
+#44 copy=ICFES-2020-1B_1ra#22 page=50
+KEY: C conf=high
+// Ciencias naturales
+@group g45-47 45-47 copy=ICFES-2020-1B_1ra#81
+DIR: RESPONDA LAS PREGUNTAS 45 A 47 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#45 copy=ICFES-2020-1B_1ra#81 page=51 group=g45-47
+KEY: C conf=high
+#46 copy=ICFES-2020-1B_1ra#82 page=51 group=g45-47
+KEY: A conf=high
+#47 copy=ICFES-2020-1B_1ra#83 page=51 group=g45-47
+KEY: C conf=high
+#48 copy=ICFES-2020-1B_1ra#84 page=51
+KEY: B conf=high
+#49 copy=ICFES-2020-1B_1ra#85 page=52
+KEY: D conf=high
+#50 copy=ICFES-2020-1B_1ra#86 page=52
+KEY: D conf=high
+#51 copy=ICFES-2020-1B_1ra#87 page=52
+KEY: B conf=high
+#52 copy=ICFES-2020-1B_1ra#88 page=53
+KEY: D conf=high
+#53 copy=ICFES-2020-1B_1ra#89 page=54
+KEY: A conf=high
+#54 copy=ICFES-2020-1B_1ra#90 page=54
+KEY: D conf=high
+#55 copy=ICFES-2020-1B_1ra#91 page=55
+KEY: B conf=high
+#56 copy=ICFES-2020-1B_1ra#92 page=55
+KEY: A conf=high
+#57 copy=ICFES-2020-1B_1ra#93 page=55
+KEY: B conf=high
+@group g58-60 58-60 copy=ICFES-2020-1B_1ra#94
+DIR: RESPONDA LAS PREGUNTAS 58 A 60 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#58 copy=ICFES-2020-1B_1ra#94 page=56 group=g58-60
+KEY: D conf=high
+#59 copy=ICFES-2020-1B_1ra#95 page=56 group=g58-60
+KEY: B conf=high
+#60 copy=ICFES-2020-1B_1ra#96 page=56 group=g58-60
+KEY: C conf=high
+#61 copy=ICFES-2020-1B_1ra#97 page=57
+KEY: A conf=high
+#62 copy=ICFES-2020-1B_1ra#98 page=57
+KEY: C conf=high
+#63 copy=ICFES-2020-1B_1ra#99 page=57
+KEY: B conf=high
+#64 copy=ICFES-2020-1B_1ra#100 page=58
+KEY: A conf=high
+#65 copy=ICFES-2020-1B_1ra#101 page=58
+KEY: B conf=high
+#66 copy=ICFES-2020-1B_1ra#102 page=58
+KEY: C conf=high
+#67 copy=ICFES-2020-1B_1ra#103 page=59
+KEY: C conf=high
+#68 copy=ICFES-2020-1B_1ra#104 page=59
+KEY: C conf=high
+#69 copy=ICFES-2020-1B_1ra#105 page=60
+KEY: A conf=high
+#70 copy=ICFES-2020-1B_1ra#106 page=60
+KEY: C conf=high
+// Inglés
+@group g71-75 71-75
+DIR: RESPONDA LAS PREGUNTAS 71 A 75 DE ACUERDO CON EL EJEMPLO
+PASSAGE: Lea las descripciones de la columna de la izquierda (71 - 75). ¿Cuál palabra de la columna de la derecha (A - G) concuerda con cada descripción? La opción H se usa para el ejemplo. Sobran dos palabras más.
+
+<p style="text-align:center">**The home**</p>
+
+0. You can listen to music on it at home. (Respuesta: H)
+#71 page=61 group=g71-75 type=matching
+STEM: This place is below the ground floor of your house.
+A: basement
+B: chair
+C: picture
+D: sofa
+E: stairs
+F: table
+G: towel
+H: radio
+KEY: A conf=high
+#72 page=61 group=g71-75 type=matching
+STEM: This is a person's photo you have in your bedroom.
+A: basement
+B: chair
+C: picture
+D: sofa
+E: stairs
+F: table
+G: towel
+H: radio
+KEY: C conf=high
+#73 page=61 group=g71-75 type=matching
+STEM: Two or three people can sit on it.
+A: basement
+B: chair
+C: picture
+D: sofa
+E: stairs
+F: table
+G: towel
+H: radio
+KEY: D conf=high
+#74 page=61 group=g71-75 type=matching
+STEM: You dry your body with it.
+A: basement
+B: chair
+C: picture
+D: sofa
+E: stairs
+F: table
+G: towel
+H: radio
+KEY: G conf=high
+#75 page=61 group=g71-75 type=matching
+STEM: You go up or down on them at home.
+A: basement
+B: chair
+C: picture
+D: sofa
+E: stairs
+F: table
+G: towel
+H: radio
+KEY: E conf=high
+@group g76-80 76-80
+DIR: RESPONDA LAS PREGUNTAS 76 A 80 DE ACUERDO CON EL EJEMPLO
+PASSAGE: ¿Dónde puede ver estos avisos?
+#76 page=62 group=g76-80 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=62 box=0.30,0.36,0.515,0.42 what="aviso: Cars for children from 4-8 years old"
+A: in a toy room
+B: in a computer room
+C: in a music room
+KEY: A conf=high
+#77 page=62 group=g76-80 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=62 box=0.30,0.452,0.515,0.517 what="aviso: Do not eat here"
+A: in the street
+B: in a classroom
+C: in a bedroom
+KEY: B conf=high
+#78 page=62 group=g76-80 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=62 box=0.30,0.548,0.52,0.607 what="aviso: Please, do not stand near the animals"
+A: at the zoo
+B: at the park
+C: at the playground
+KEY: A conf=high
+#79 page=62 group=g76-80 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=62 box=0.30,0.638,0.52,0.717 what="aviso: Enjoy the sea with us now and watch the beautiful fish!"
+A: on a boat
+B: on a plane
+C: on a bus
+KEY: A conf=high
+#80 page=62 group=g76-80 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=62 box=0.30,0.745,0.52,0.817 what="aviso: Tickets for 9 pm show today $25"
+A: in a cinema
+B: in a bank
+C: on a train
+KEY: A conf=high
+@group g81-85 81-85
+DIR: RESPONDA LAS PREGUNTAS 81 A 85 DE ACUERDO CON EL EJEMPLO
+PASSAGE: Complete las cinco conversaciones.
+#81 page=63 group=g81-85 type=conversation
+STEM: I'm tired, I want to go to sleep now.
+A: So, let's begin.
+B: Have a nice day.
+C: Good night.
+KEY: C conf=high
+#82 page=63 group=g81-85 type=conversation
+STEM: Why don't we go to the beach?
+A: Sounds great!
+B: Same to you!
+C: Nice to meet you!
+KEY: A conf=high
+#83 page=63 group=g81-85 type=conversation
+STEM: Where did they buy their new car?
+A: I don't know.
+B: You are right.
+C: It's bigger.
+KEY: A conf=high
+#84 page=63 group=g81-85 type=conversation
+STEM: I'm going to the art exhibition soon.
+A: By the way.
+B: How long ago?
+C: That's interesting!
+KEY: C conf=high
+#85 page=63 group=g81-85 type=conversation
+STEM: We haven't discussed our tour plans yet.
+A: You poor thing.
+B: Let's do it now.
+C: As late as possible.
+KEY: B conf=high
+@group g86-93 86-93
+DIR: RESPONDA LAS PREGUNTAS 86 A 93 DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: <p style="text-align:center">**Fast food vs. Slow food**</p>
+
+The term "fast food" is [[hueco:0]] for restaurants that serve cheap meals [[hueco:86]] in paper bags or boxes, for example burgers and French fries. Fast food [[hueco:87]] popular in the United States in the 1950s, but today, it's known that it is bad for your body.
+
+There's also "slow food". It began in 1986 thanks to Carlo Petrini, an Italian journalist [[hueco:88]] visited a McDonald's restaurant in Rome. He thought it was horrible.
+
+[[hueco:89]], Petrini started "slow food", which is about [[hueco:90]] fresh food that is cooked for a longer time; that's why this food is [[hueco:91]]. It has two goals: to make the food of your town popular, and to buy food grown [[hueco:92]] small farmers. This movement now has [[hueco:93]] 80,000 members in 100 countries.
+#86 page=64 group=g86-93 type=cloze_text
+STEM: Blank (86): choose the option that completes the text.
+A: quickly
+B: quickest
+C: quicker
+KEY: A conf=high
+#87 page=64 group=g86-93 type=cloze_text
+STEM: Blank (87): choose the option that completes the text.
+A: becoming
+B: become
+C: became
+KEY: C conf=high
+#88 page=64 group=g86-93 type=cloze_text
+STEM: Blank (88): choose the option that completes the text.
+A: what
+B: who
+C: which
+KEY: B conf=high
+#89 page=64 group=g86-93 type=cloze_text
+STEM: Blank (89): choose the option that completes the text.
+A: So
+B: If
+C: As
+KEY: A conf=high
+#90 page=64 group=g86-93 type=cloze_text
+STEM: Blank (90): choose the option that completes the text.
+A: ate
+B: eats
+C: eating
+KEY: C conf=high
+#91 page=64 group=g86-93 type=cloze_text
+STEM: Blank (91): choose the option that completes the text.
+A: healthiest
+B: health
+C: healthier
+KEY: C conf=high
+#92 page=64 group=g86-93 type=cloze_text
+STEM: Blank (92): choose the option that completes the text.
+A: by
+B: near
+C: off
+KEY: A conf=high
+#93 page=64 group=g86-93 type=cloze_text
+STEM: Blank (93): choose the option that completes the text.
+A: until
+B: over
+C: across
+KEY: B conf=high
+@group g94-100 94-100 copy=G1_2da#113
+DIR: RESPONDA LAS PREGUNTAS 94 A 100 DE ACUERDO CON EL SIGUIENTE TEXTO
+#94 copy=G1_2da#113 page=65 group=g94-100
+KEY: C conf=high
+#95 copy=G1_2da#116 page=65 group=g94-100
+KEY: B conf=high
+#96 copy=G1_2da#117 page=65 group=g94-100
+A: two o'clock.
+B: a quarter to twelve.
+C: half past ten.
+KEY: B conf=high
+#97 copy=G1_2da#114 page=65 group=g94-100
+KEY: A conf=high
+#98 copy=G1_2da#118 page=65 group=g94-100
+KEY: C conf=high
+#99 copy=G1_2da#119 page=65 group=g94-100
+KEY: B conf=high
+#100 copy=G1_2da#115 page=65 group=g94-100
+STEM: Before going to sleep, Paula
+KEY: A conf=high
+@group g101-105 101-105
+DIR: RESPONDA LAS PREGUNTAS 101 A 105 DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: <p style="text-align:center">**Fitness and health**</p>
+
+<p style="text-align:center">by Dr. Charles Perry</p>
+
+A strong body is often the aim, if not always the result, of working out. However, "just because someone looks fit on the outside, it doesn't necessarily mean they are healthy on the inside," Dr. Michael Smith says. "Fitness and health, things that can and should be connected, are often very different things," he mentions.
+
+Nutritionist Anna Jackson explains that "fitness is when your body gets used to exercise. If you lift a heavy weight, your body gets stronger so that the next time you lift that weight, it is better able to deal with that routine. Health can be explained as the lack of disease, but it also depends on environmental factors such as pollution or a poor diet."
+
+Taking into account the previous definition of health, I could say it is possible to be healthy but unfit. As exercising does provide a level of protection from many medical conditions such as diabetes and heart disease, being fit increases your chances of being healthy and living a long life; however, being fit doesn't mean you won't suffer from poor health at some point.
+
+You can be both fit and healthy. Honestly, extremes in exercise or poor diet choices can destroy your health. The charming benefits of running could be all but cancelled out by the health complications brought on by smoking or drinking too much. Everybody has to be very careful and understand that exercising won't give us a perfect health. Too much workout could reduce its benefits, and exercising always requires a well-planned diet to help our body gain the maximum.
+#101 page=66 group=g101-105
+STEM: What is the purpose of the writer in this article?
+A: to describe a suitable exercise routine to do a good workout
+B: to provide several recipes to be used to improve our meals
+C: to inform about the awful effects of certain dangerous exercise routines
+D: to explain that being in good shape doesn't mean you won't need medicine
+KEY: D conf=high
+#102 page=66 group=g101-105
+STEM: What can the reader discover in the article?
+A: Too much training may produce trouble in your body.
+B: Working out prevents you from being healthy.
+C: How to avoid body pains during an exercise program.
+D: When to take advantage of a good training plan.
+KEY: A conf=high
+#103 page=66 group=g101-105
+STEM: Based on Dr. Smith's words in paragraph 1, we can imagine that
+A: the possibility to achieve a gorgeous body is exciting.
+B: the solution to curing illnesses is being strong.
+C: a healthy shape might make us good-looking people.
+D: a person who doesn't look fit can also be healthy.
+KEY: D conf=medium
+#104 page=66 group=g101-105
+STEM: What does Ms. Jackson communicate about fitness?
+A: Exercise performance improves as you make it a habit.
+B: The more weight you lift the fewer illnesses you will get.
+C: A complicated environment increases your stress.
+D: Proper eating is the key to become stronger.
+KEY: A conf=high
+#105 page=66 group=g101-105
+STEM: Which sign in a gym agrees with Dr. Perry's ideas?
+A: "Heroes eat more to be as strong as a wooden wall and exercise more to be healthier. Go for it!"
+B: "Remember to support your exercise routine with the perfect diet for you. Visit our nutritionist regularly."
+C: "Get rid of stress with our new routine. Ask our trainers how you can benefit from it now."
+D: "Being unfit makes you suffer. Thin people are likely to look unhealthy. Work out hard."
+KEY: B conf=high
+@group g106-115 106-115 copy=E_2da#125
+DIR: RESPONDA LAS PREGUNTAS 106 A 115 DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: <p style="text-align:center">**The astronaut artist**</p>
+
+Scott Kelly, officer of the International Space Station, has [[hueco:0]] become the US astronaut that NASA has [[hueco:106]] stay for the longest period in space. Up there, he said that his hobby was taking photographs of the [[hueco:107]] planet underneath. Kelly calls his pictures "Earth art". These photographs have shown us what to [[hueco:108]] next in terms of technology. Kelly is not [[hueco:109]] a man with a camera orbiting Earth – he is [[hueco:110]] an artist.
+
+[[figura:e2-g125-134-auto-cfba75]]
+
+It's the human mind [[hueco:111]] work that makes art unique. Despite having robots near other planets capturing images, their photographs [[hueco:112]] been called pieces of art. Robots cannot [[hueco:113]] these kinds of poetic pictures; [[hueco:114]], we can say they have taken some interesting photographs.
+
+These works have [[hueco:115]] that automatically operated space research is not enough; it should be done by humans.
+#106 page=67 group=g106-115 type=cloze_text
+STEM: Blank (106): choose the option that completes the text.
+A: make
+B: makes
+C: made
+D: making
+KEY: C conf=high
+#107 page=67 group=g106-115 type=cloze_text
+STEM: Blank (107): choose the option that completes the text.
+A: lively
+B: incredible
+C: accurate
+D: challenging
+KEY: B conf=high
+#108 page=67 group=g106-115 type=cloze_text
+STEM: Blank (108): choose the option that completes the text.
+A: wonder
+B: affect
+C: contain
+D: expect
+KEY: D conf=high
+#109 page=67 group=g106-115 type=cloze_text
+STEM: Blank (109): choose the option that completes the text.
+A: nearby
+B: absolutely
+C: just
+D: straight
+KEY: C conf=high
+#110 page=67 group=g106-115 type=cloze_text
+STEM: Blank (110): choose the option that completes the text.
+A: definitely
+B: generally
+C: particularly
+D: directly
+KEY: A conf=high
+#111 page=67 group=g106-115 type=cloze_text
+STEM: Blank (111): choose the option that completes the text.
+A: on
+B: for
+C: in
+D: at
+KEY: D conf=high
+#112 page=67 group=g106-115 type=cloze_text
+STEM: Blank (112): choose the option that completes the text.
+A: didn't
+B: haven't
+C: don't
+D: hasn't
+KEY: B conf=high
+#113 page=67 group=g106-115 type=cloze_text
+STEM: Blank (113): choose the option that completes the text.
+A: achieve
+B: affect
+C: reach
+D: perform
+KEY: A conf=medium why="achieve as in the other printings of this text; perform is also offered here"
+#114 page=67 group=g106-115 type=cloze_text
+STEM: Blank (114): choose the option that completes the text.
+A: otherwise
+B: wherever
+C: either
+D: however
+KEY: D conf=high
+#115 page=67 group=g106-115 type=cloze_text
+STEM: Blank (115): choose the option that completes the text.
+A: tested
+B: convinced
+C: proved
+D: persuaded
+KEY: C conf=high
