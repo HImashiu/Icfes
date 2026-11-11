@@ -1,0 +1,274 @@
+@exam ICFES-2021-1-LC | Lectura crítica 2021-1 | pdf=/mnt/project-files/icfes/sources-new/u1_lc2021.pdf | dpi=300
+@section Lectura crítica 1-59
+// Most items reuse released ICFES items already in the bank; keys from the bank (KEY: BANK) or solved by Claude for new items.
+@group g1-4 1-4 copy=G1_1ra#59
+DIR: RESPONDA LAS PREGUNTAS 1 A 4 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#1 copy=G1_1ra#59 page=1 group=g1-4
+KEY: D conf=high
+#2 copy=G1_1ra#60 page=1 group=g1-4
+KEY: D conf=high
+#3 copy=G1_1ra#58 page=1 group=g1-4
+KEY: A conf=high
+#4 copy=G1_1ra#61 page=1 group=g1-4
+KEY: D conf=high
+@group g5-6 5-6 copy=N_1ra#58
+DIR: RESPONDA LAS PREGUNTAS 5 Y 6 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#5 copy=N_1ra#58 page=2 group=g5-6
+KEY: B conf=high
+#6 copy=N_1ra#57 page=2 group=g5-6
+KEY: D conf=high
+@group g7-9 7-9 copy=B_1ra#50
+DIR: RESPONDA LAS PREGUNTAS 7 A 9 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#7 copy=B_1ra#50 page=3 group=g7-9
+KEY: D conf=high
+#8 copy=L_1ra#42 page=3 group=g7-9
+KEY: A conf=high
+#9 copy=L_1ra#43 page=3 group=g7-9
+KEY: B conf=high
+@group g10-13 10-13 copy=G1_1ra#29
+DIR: RESPONDA LAS PREGUNTAS 10 A 13 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+PASSAGE: [[FIG]]
+FIG passage p=4 box=0.272,0.062,0.728,0.43 what="historieta: un extraterrestre pregunta a un gorila, un chimpancé y un mono si todo funcionaba bien hasta que sus primos se creyeron superiores"
+#10 page=4 group=g10-13
+STEM: El personaje que formula la pregunta en la imagen anterior es
+A: un pariente de los primates.
+B: un *Homo sapiens sapiens*.
+C: una planta carnívora.
+D: un extraterrestre.
+KEY: D conf=high why="Es el personaje verde con antenas que bajó del platillo volador del fondo."
+#11 copy=G1_1ra#31 page=4 group=g10-13
+KEY: B conf=high
+#12 copy=G1_1ra#29 page=4 group=g10-13
+KEY: C conf=high
+#13 copy=G1_1ra#30 page=4 group=g10-13
+KEY: B conf=high
+@group g14-15 14-15 copy=G1_1ra#49
+DIR: RESPONDA LAS PREGUNTAS 14 Y 15 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#14 copy=G1_1ra#49 page=5 group=g14-15
+KEY: C conf=high
+#15 copy=G1_1ra#50 page=5 group=g14-15
+A: una investigación, pues pretende comprender y caracterizar la evolución de las instituciones universitarias desde la Edad Media hasta el siglo XX.
+KEY: B conf=high
+@group g16-18 16-18 copy=M_1ra#63
+DIR: RESPONDA LAS PREGUNTAS 16 A 18 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#16 copy=G1_1ra#37 page=6 group=g16-18
+KEY: B conf=high
+#17 copy=M_1ra#64 page=6 group=g16-18
+KEY: D conf=high
+#18 copy=M_1ra#63 page=6 group=g16-18
+KEY: C conf=high
+@group g19-21 19-21 copy=L_1ra#27
+DIR: RESPONDA LAS PREGUNTAS 19 A 21 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#19 copy=L_1ra#27 page=7 group=g19-21
+KEY: D conf=high
+#20 copy=L_1ra#28 page=7 group=g19-21
+KEY: C conf=high
+#21 copy=L_1ra#29 page=7 group=g19-21
+KEY: D conf=high
+@group g22-23 22-23 copy=G1_1ra#62
+DIR: RESPONDA LAS PREGUNTAS 22 Y 23 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#22 copy=G1_1ra#62 page=8 group=g22-23
+KEY: C conf=high
+#23 copy=G1_1ra#63 page=8 group=g22-23
+KEY: B conf=high
+@group g24-25 24-25 copy=G1_1ra#42
+DIR: RESPONDA LAS PREGUNTAS 24 Y 25 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#24 copy=G1_1ra#43 page=8 group=g24-25
+KEY: C conf=high
+#25 copy=G1_1ra#42 page=8 group=g24-25
+KEY: D conf=high
+@group g26-27 26-27 copy=L_1ra#61
+DIR: RESPONDA LAS PREGUNTAS 26 Y 27 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#26 copy=L_1ra#62 page=9 group=g26-27
+KEY: A conf=high
+#27 copy=L_1ra#61 page=9 group=g26-27
+KEY: D conf=high
+@group g28-29 28-29 copy=L_1ra#44
+DIR: RESPONDA LAS PREGUNTAS 28 Y 29 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+PASSAGE: <p style="text-align:center">**¿CÓMO ILUSTRARÍAS EL MAL MOMENTO QUE VIVE LA ECONOMÍA PORTUGUESA?**</p>
+
+[[FIG]]
+
+Otra de las aportaciones de Peirce al campo de la semántica (el estudio de los significados) fue la clasificación de los signos por tipos. En función de la relación existente entre signo y objeto, Peirce definió tres tipos de signos: íconos, indicios y símbolos. Los íconos son signos que mantienen una relación de semejanza con aquello que representan. Por ejemplo, en la fotografía de una casa reconocemos algunos de los atributos formales de una casa (las proporciones, los elementos que la componen, etc.) y, por lo tanto, interpretamos que lo que estamos viendo es este elemento. Del mismo modo, para que podamos considerar una determinada ilustración como el ícono de una casa, tiene que tener una serie de rasgos que la hagan identificable, como un tejado, una chimenea o una puerta de entrada. Una fotografía tiene un grado alto de iconicidad mientras que un dibujo seguramente lo tiene más bajo (normalmente diremos que es menos "realista"), pero ambos casos son íconos, porque se asemejan al objeto que representan. El segundo tipo de signo, los indicios, mantiene una conexión asociativa real con el objeto, a menudo mediante una relación causa/efecto. Una huella es un indicio del paso de un animal por un determinado lugar, una columna de humo es un indicio de la presencia de fuego, etc.; sin embargo, ni la huella ni el humo son en sí mismos la imagen del animal o del fuego. Y, por último, los símbolos. Los símbolos son signos que no mantienen una relación lógica o intuitiva con su significado sino que están conectados con él por una convención.
+
+Por tanto, es necesario que la persona que vaya a interpretarlos haya aprendido antes cuál es la relación que se establece entre un símbolo y su significado. Por ejemplo, casi todo el mundo reconoce el símbolo de la Cruz Roja, aunque no posea ningún rasgo físico que lo conecte con aquello que simboliza. La imagen de arriba contiene estas tres categorías de signos. El gallo, un conocido *souvenir* que nos sirve también como símbolo de Portugal, es un ícono. La cabeza gacha y la lagrimita con la que hemos modificado la imagen original son indicios de que el país, o más concretamente, su economía, no va bien.
+
+<p style="text-align:right">Tomado de: Jardí, E. (2012). Tipos de signos. En: E. Jardí (ed.) *Pensar con imágenes*, pp. 46-47. Barcelona: Gustavo Gili.</p>
+FIG passage p=10 box=0.394,0.089,0.604,0.239 what="gallo de Portugal con la cabeza gacha y una lágrima"
+#28 copy=L_1ra#44 page=10 group=g28-29
+KEY: B conf=high
+#29 copy=L_1ra#45 page=10 group=g28-29
+STEM: Considere esta imagen: [[FIG]]
+
+Según la tipología de Peirce, esta es
+FIG stem p=10 box=0.752,0.604,0.79,0.638 what="señal de prohibido: círculo con una barra diagonal"
+KEY: C conf=high
+@group g30-31 30-31 copy=G1_1ra#28
+DIR: RESPONDA LAS PREGUNTAS 30 Y 31 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#30 copy=G1_1ra#28 page=11 group=g30-31
+KEY: C conf=high
+#31 copy=G1_1ra#27 page=11 group=g30-31
+KEY: B conf=high
+@group g32-33 32-33 copy=N_1ra#38
+DIR: RESPONDA LAS PREGUNTAS 32 Y 33 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+PASSAGE: [[FIG]]
+FIG passage p=12 box=0.135,0.06,0.866,0.463 what="historieta de seis viñetas: un personaje pide ayuda para encontrar su motivación y el otro le pega un cartel"
+#32 copy=N_1ra#38 page=12 group=g32-33
+KEY: C conf=high
+#33 copy=N_1ra#39 page=12 group=g32-33
+KEY: C conf=high
+@group g34-36 34-36 copy=K1_1ra#48
+DIR: RESPONDA LAS PREGUNTAS 34 A 36 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#34 page=13 group=g34-36
+STEM: ¿Cuál de las siguientes opciones sintetiza mejor el contenido del segundo párrafo?
+A: Para establecer la Ley Seca es necesario llevar a cabo cosas importantes como acabar con la química, con las leyes sobre tributos, con el reino animal, con el agua del cielo. Además, en todas las sociedades humanas se ha bebido alcohol.
+B: Aunque establecer la Ley Seca permitirá reducir los crímenes asociados con el alcohol, no es posible establecerla, pues los humanos parecen necesitar el alcohol e históricamente han deseado los efectos de su consumo.
+C: Puesto que todos los pueblos, desde los más primitivos hasta los más avanzados, han consumido siempre alcohol, una ley que pretenda vetar el alcohol sería en principio inútil, pues no sería respetada.
+D: La Ley Seca evitaría crímenes de sangre y otras bestialidades al establecerse, debido a que lograría algo que parece física y moralmente imposible, esto es, vencer la necesidad humana de intoxicarse.
+KEY: B conf=high why="El párrafo admite que la ley evitaría crímenes, pero la declara imposible porque el ser humano busca intoxicarse desde siempre."
+#35 copy=K1_1ra#48 page=13 group=g34-36
+KEY: B conf=high
+#36 copy=K1_1ra#47 page=13 group=g34-36
+KEY: B conf=high
+@group g37-39 37-39
+DIR: RESPONDA LAS PREGUNTAS 37 A 39 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+PASSAGE: <p style="text-align:center">**¿LA VIDA NO TIENE SENTIDO?**</p>
+
+En ocasiones la mayoría de las personas sentimos que la vida es absurda, y algunos lo sienten de manera vívida y continua. Pero las razones que usualmente se ofrecen en defensa de esa convicción son patentemente inadecuadas: no podrían explicar por qué la vida es absurda. Consideremos algunos ejemplos.
+
+En primer lugar, suele hacérsenos notar que nada de lo que hagamos tendrá importancia dentro de un millón de años. Pero si eso es verdadero, entonces por la misma razón nada de lo que ocurra en un millón de años tiene importancia ahora. En particular, no importa ahora que en un millón de años nuestros actos carezcan de importancia. Incluso si supiéramos que lo que hagamos ahora sí tendrá importancia dentro de un millón de años, ¿en qué manera ayudaría a evitar que nuestras preocupaciones presentes resulten absurdas?
+
+En segundo lugar, las cosas que se dicen para expresar lo absurdo de nuestras vidas suelen estar relacionadas con nuestra posición espaciotemporal: somos pequeños puntos en la infinita vastedad del universo; nuestras vidas son meros instantes incluso en una escala de tiempo geológica, por no hablar de una escala cósmica: en cualquier minuto estaremos todos muertos. Pero obviamente ninguno de estos hechos evidentes pueden ser los que hacen que la vida sea absurda. Supongamos que viviéramos por siempre; ¿una vida que ya es absurda si dura setenta años, no resultaría infinitamente absurda si durara por toda la eternidad? Y si nuestras vidas resultan absurdas dado nuestro actual tamaño, ¿por qué serían menos absurdas si ocupáramos todo el universo (ya sea que nosotros fuéramos más grandes, o más pequeño este último)? La reflexión acerca de nuestra pequeñez y brevedad parece estar íntimamente conectada con la sensación de que la vida carece de sentido; pero no resulta claro cuál es esa conexión.
+
+En tercer lugar, se puede decir que la vida no tiene sentido porque no tenemos un fin último en la vida: uno estudia y trabaja para ganar dinero, para pagar por ropa, alojamiento, entretenimiento, comida, para mantenerse de año a año, quizá para sostener una familia y seguir una carrera, pero ¿cuál es el fin último? Se trata de un elaborado viaje que conduce a ninguna parte. Sin embargo, no es necesaria ninguna justificación ulterior que haga razonable tomar una aspirina para una jaqueca, asistir a la exhibición de un pintor que uno admira, o evitar que un niño apoye su mano en una estufa encendida. Para que estos actos tengan sentido no es necesario ningún contexto más amplio ni ningún propósito superior.
+
+Tomado y adaptado de: Nagel, T. (1971). The Absurd. En *The Journal of Philosophy*, pp. 716-727. Vol. 68, No. 20.
+#37 page=14 group=g37-39
+STIM: Considere el siguiente resumen del anterior texto:
+
+<div class="cita">Aunque muchas personas tienen la idea de que la vida no tiene sentido, las razones que se suelen ofrecer a favor de esta idea no son buenas. En términos generales, estas razones tienen que ver o bien con nuestros rasgos espaciotemporales o bien con la importancia futura de nuestras acciones presentes. Aunque estas razones expresen cierto malestar que muchos puedan sentir en algún momento de su vida, dichas razones no son buenas, pues no muestran realmente lo que hace que la vida sea absurda: en primer lugar, la finitud y el espacio ocupado parecen irrelevantes para determinar que una vida sea absurda, pues una vida eterna o la vida de un ser gigantesco no serían menos absurdas que las vidas de los humanos actuales. En segundo lugar, el hecho de que lo que hagamos ahora sí tenga importancia en un futuro remoto no muestra cómo lo que hagamos ahora no sea, ahora mismo, absurdo.</div>
+STEM: El anterior resumen es
+A: completo, pues recoge exhaustivamente las críticas del autor a los defensores del sinsentido de la vida.
+B: incompleto, pues no da cuenta de todas las razones comunes que menciona el texto para pensar que la vida es absurda.
+C: completo, pues expone las razones que según el texto suelen ofrecer quienes mantienen que la vida no tiene sentido.
+D: incompleto, pues no presenta la tesis central que defiende el autor a lo largo de todo el texto.
+KEY: B conf=high why="El resumen omite la tercera razón: que la vida no tiene un fin último."
+#38 page=14 group=g37-39
+STIM: A partir del texto anterior se puede construir el siguiente argumento:
+
+<div class="cita">Si nuestra vida no tiene sentido debido a que ocupamos un minúsculo lugar en el universo, entonces al ocupar un lugar de grandes proporciones nuestra vida tendría más sentido. No obstante, la vida no tendría más sentido al ocupar un lugar de grandes proporciones. En conclusión, no es verdad que la vida no tenga sentido debido al tamaño del espacio que ocupamos en el universo.</div>
+STEM: El anterior argumento es
+A: válido, ya que va de lo particular a lo general.
+B: inválido, porque necesita más premisas para llegar a su conclusión.
+C: válido, pues al aceptar las premisas se acepta también la conclusión.
+D: inválido, dado que al aceptar las premisas no se tiene que aceptar la conclusión.
+KEY: C conf=high why="Es un modus tollens (si P entonces Q; no Q; luego no P): forma válida."
+#39 page=15 group=g37-39
+STIM: Considere el siguiente enunciado:
+
+<div class="cita">"La felicidad es el fin último de la vida".</div>
+STEM: Este enunciado permite
+A: defender el pensamiento de que la vida no tiene sentido.
+B: refutar una de las razones para pensar que la vida no tiene sentido.
+C: refutar la idea de que nada de lo que hagamos tendrá importancia en el futuro.
+D: defender la opción de que la vida es un elaborado viaje que no conduce a ninguna parte.
+KEY: B conf=high why="Contradice la tercera razón del texto: que la vida no tiene un fin último."
+@group g40-41 40-41
+DIR: RESPONDA LAS PREGUNTAS 40 Y 41 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+PASSAGE: <p style="text-align:center">**RAZONAMIENTO CRÍTICO**</p>
+
+<p style="text-align:center">Por Marianne Talbot</p>
+
+Mi taza de café está a mi derecha haciendo nada. Esto se debe a que ella cree que en este sitio está en el centro del universo, y su deseo de estar en el centro del universo es más fuerte que cualquier otro de sus deseos.
+
+Supongo que usted rechazará esta explicación del comportamiento de mi taza de café. ¿Por qué –preguntaría usted– pensaríamos que la taza de café está actuando por razones?
+
+Esta es una buena pregunta. Un humano con la creencia y el deseo mencionados podría tener una razón para estar allí sin hacer nada, pero ¿una taza de café?
+
+Podríamos decir, por supuesto, que un humano que crea y desee esas cosas es irracional, que sus razones están mal. ¿Qué lo hará creer que ese sitio es el centro del universo? ¿Por qué querrá permanecer allí más que cualquier otra cosa? Raro… Sin embargo, no tendríamos problema en creer que esa persona está actuando por razones; no problematizaríamos que esa persona es racional. De hecho, en esto radica la posibilidad de que uno sea irracional. La taza de café, por su parte, no es irracional: es no-racional. No actúa por razones, ni buenas ni malas. Solamente las cosas racionales pueden ser irracionales; sólo las cosas que actúan por razones pueden actuar por razones que están mal.
+
+Según Aristóteles, el ser humano es el único animal racional. Sin tomar parte en este debate, podemos decir, ciertamente, que la razón es central para el ser humano. Sin la razón, todas nuestras decisiones serían simples reacciones a la experiencia o al recuerdo de experiencias. Sin ella, no sería posible reflexionar sobre nuestras experiencias.
+
+La capacidad humana de razonar es una característica de la especie. Se desarrollará en un individuo humano desde que ese individuo tenga un crecimiento normal. Se desarrollará en la medida en que ese individuo adquiera un lenguaje. De hecho, es interesante especular sobre la relación entre ambas cosas. ¿Sería posible la razón sin el lenguaje? ¿Sería posible el lenguaje sin la razón? ¿Qué piensa usted?
+
+Tomado, traducido y adaptado de Talbot, M. (2015). Critical Reasoning. *Philosophy Now*, 106.
+#40 page=15 group=g40-41
+STIM: Considere los siguientes enunciados del texto:
+
+<div class="cita">Enunciado A: "La taza de café es no-racional".
+
+Enunciado B: "La taza de café no actúa por razones".</div>
+STEM: ¿Cuál es la relación entre estos dos enunciados?
+A: El enunciado B explica el enunciado A.
+B: El enunciado A restringe el enunciado B.
+C: El enunciado B matiza el enunciado A.
+D: El enunciado A contradice el enunciado B.
+KEY: A conf=high why="La taza es no-racional porque no actúa por razones: B da la razón de A."
+#41 page=15 group=g40-41
+STIM: Considere el siguiente enunciado del quinto párrafo:
+
+<div class="cita">"Sin la razón no sería posible reflexionar sobre nuestras experiencias".</div>
+STEM: Del texto se infiere que la antítesis de este enunciado es:
+A: Es necesario reflexionar sobre las propias experiencias para emplear la capacidad de razonar.
+B: Es posible reflexionar sobre las propias experiencias sin emplear la capacidad de razonar.
+C: Es necesario emplear la capacidad de razonar para reflexionar sobre las propias experiencias.
+D: Es posible emplear conjuntamente la capacidad de razonar y la capacidad de reflexionar.
+KEY: B conf=high why="La antítesis niega el enunciado: reflexionar sería posible sin la razón."
+@group g42-45 42-45 copy=N_1ra#40
+DIR: RESPONDA LAS PREGUNTAS 42 A 45 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#42 copy=N_1ra#40 page=16 group=g42-45
+KEY: A conf=high
+#43 copy=N_1ra#42 page=16 group=g42-45
+KEY: C conf=high
+#44 copy=N_1ra#41 page=16 group=g42-45
+KEY: C conf=high
+#45 copy=N_1ra#43 page=17 group=g42-45
+KEY: A conf=high
+@group g46-48 46-48 copy=G1_1ra#64
+DIR: RESPONDA LAS PREGUNTAS 46 A 48 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#46 copy=G1_1ra#64 page=17 group=g46-48
+KEY: C conf=high
+#47 copy=G1_1ra#65 page=17 group=g46-48
+KEY: C conf=high
+#48 page=17 group=g46-48
+STEM: ¿Cuál de las siguientes implicaciones **NO** corresponde con lo que dice la mujer al ser interrogada?
+A: Si la física es correcta, hubo errores de medición.
+B: Si hay errores de medición, Einstein es reevaluado.
+C: Si no hubo errores de medición, la física está mal.
+D: Si la física está equivocada, Einstein es reevaluado.
+KEY: B conf=medium why="Ella dice 'error de medición o toda la física está mal'; A y C se siguen de eso, D es lo que retoma el titular; un error de medición no lleva a reevaluar a Einstein."
+@group g49-50 49-50 copy=N_1ra#34
+DIR: RESPONDA LAS PREGUNTAS 49 Y 50 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#49 copy=N_1ra#34 page=18 group=g49-50
+KEY: B conf=high
+#50 copy=N_1ra#35 page=18 group=g49-50
+KEY: B conf=high
+@group g51-53 51-53 copy=P_1ra#62
+DIR: RESPONDA LAS PREGUNTAS 51 A 53 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#51 copy=P_1ra#62 page=19 group=g51-53
+KEY: A conf=high
+#52 copy=P_1ra#63 page=19 group=g51-53
+KEY: C conf=high
+#53 page=19 group=g51-53
+STEM: En el segundo párrafo, la metáfora "faros de justificación"
+A: se refiere al brillo que tienen los ojos de las personas tiernas.
+B: lleva a pensar que los ojos se orientan en medio de la oscuridad.
+C: se refiere a ojos que atraen por su belleza en medio de la fealdad.
+D: lleva a pensar que los ojos son el espejo donde se refleja el alma.
+KEY: C conf=high why="Los ojos tiernos son 'faros' por los que los feos consiguen arrimarse a la belleza."
+@group g54-56 54-56 copy=O_1ra#43
+DIR: RESPONDA LAS PREGUNTAS 54 A 56 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#54 copy=O_1ra#43 page=20 group=g54-56
+KEY: B conf=high
+#55 copy=O_1ra#44 page=20 group=g54-56
+KEY: A conf=high
+#56 copy=O_1ra#45 page=20 group=g54-56
+KEY: A conf=high
+@group g57-59 57-59 copy=P_1ra#40
+DIR: RESPONDA LAS PREGUNTAS 57 A 59 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#57 copy=P_1ra#40 page=20 group=g57-59
+KEY: D conf=high
+#58 copy=P_1ra#41 page=20 group=g57-59
+KEY: C conf=high
+#59 copy=P_1ra#42 page=20 group=g57-59
+KEY: B conf=high
