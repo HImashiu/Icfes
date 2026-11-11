@@ -251,7 +251,7 @@ function page({ siteUrl, path, title, desc, body, crumbs, jsonLd, katex, script,
         <a href="${up}como-prepararse-para-el-icfes/">Cómo prepararse</a>
         <a href="${up}preicfes-para-colegios/">Colegios</a>
       </nav>
-      <a class="btn btn-primary btn-sm" href="${up}app/">Practicar gratis</a>
+      <a class="btn btn-primary btn-sm" href="${up}app/?empezar=1">Practicar gratis</a>
     </div>
   </header>
   <main id="contenido">
@@ -286,7 +286,7 @@ ${body}
 
 const areaLinks = (up) => `<div class="areas">${AREAS.map((a) => `<a class="area" href="${up}preguntas-icfes/${a.slug}/" style="--c:${a.color}"><span class="dot"></span><b>${esc(a.name)}</b><span>Ver preguntas</span></a>`).join("")}</div>`;
 
-const cta = (up, text) => `<section class="section"><div class="wrap narrow"><div class="card price reveal"><div><h2>${text}</h2><p>En la app tienes los 18 cuadernillos completos, simulacros con tiempo, tu puntaje de 0 a 500 y el repaso de tus errores.</p></div><a class="btn btn-primary" href="${up}app/">Empezar a practicar</a></div></div></section>`;
+const cta = (up, text) => `<section class="section"><div class="wrap narrow"><div class="card price reveal"><div><h2>${text}</h2><p>En la app tienes los 18 cuadernillos completos, simulacros con tiempo, tu puntaje de 0 a 500 y el repaso de tus errores.</p></div><a class="btn btn-primary" href="${up}app/?empezar=1">Empezar a practicar</a></div></div></section>`;
 
 function faqBlock(items) {
   return `<div class="faq">${items.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${a}</p></details>`).join("")}</div>`;
@@ -363,7 +363,7 @@ ${cta("../", "Practica con más de 4.000 preguntas")}`;
   <span class="tag">Gratis</span>
   <h1>Simulacro ICFES gratis: presenta el Saber 11 completo</h1>
   <p class="prose">Haz el simulacro con preguntas reales de cuadernillos publicados por el ICFES, con la Sesión 1 y la Sesión 2, el tiempo del examen y tu puntaje estimado de 0 a 500 al terminar. Después repasas tus errores hasta acertarlos.</p>
-  <div class="cta-row"><a class="btn btn-primary" href="../app/">Hacer el simulacro</a><a class="btn btn-ghost" href="../preguntas-icfes/">Ver preguntas de muestra</a></div>
+  <div class="cta-row"><a class="btn btn-primary" href="../app/?empezar=1">Hacer el simulacro</a><a class="btn btn-ghost" href="../preguntas-icfes/">Ver preguntas de muestra</a></div>
 </div></section>
 <section class="wrap narrow guide-body">
   <h2>Cómo es el examen Saber 11</h2>

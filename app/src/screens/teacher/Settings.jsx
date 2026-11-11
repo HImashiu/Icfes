@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Icon from "../../components/Icon.jsx";
 import { DateField, confirmDialog } from "../../components/Controls.jsx";
-import { CONSENT_VERSION, GUARDIAN_TEXT, hasGuardianAuth } from "../../lib/consent.js";
+import { GUARDIAN_VERSION as CONSENT_VERSION, GUARDIAN_TEXT, hasGuardianAuth } from "../../lib/consent.js";
 import { GRADES, gradeLabel } from "../../lib/spaces.js";
 import { ACCESS_LABEL, ROLE_LABEL, accessOf, grantText } from "../../lib/colegio.js";
 import { areaColor } from "../../lib/brand.js";

@@ -55,6 +55,7 @@ document.documentElement.classList.add("js");
           if (s) s.textContent = pick === key ? "¡Correcto!" : "Casi. Mira la respuesta";
         }
         q.setAttribute("data-done", pick === key ? "ok" : "bad");
+        if (window.condorTrack) window.condorTrack("sample");
         miniScore(q.closest(".mini"));
       });
     });
@@ -97,6 +98,7 @@ document.documentElement.classList.add("js");
           else if (l === pick) o.classList.add("incorrect");
           else o.classList.add("dim");
         });
+        if (window.condorTrack) window.condorTrack("sample");
         peek.classList.remove("happy", "think");
         void peek.offsetWidth;
         peek.classList.add(right ? "happy" : "think");
@@ -141,6 +143,39 @@ document.documentElement.classList.add("js");
       if (!res.ok) throw new Error("HTTP " + res.status);
     });
   }
+
+  // Usage statistics (migration 0037): a random id kept by this browser (shared with the app), the page, where the
+  // visit came from, and whether a sample question was answered. No IP, no name, no third-party cookie.
+  function visitorId() {
+    try {
+      var id = localStorage.getItem("condor:vid");
+      if (!id || !/^[0-9a-f-]{36}$/.test(id)) {
+        id = crypto.randomUUID ? crypto.randomUUID() : "10000000-1000-4000-8000-100000000000".replace(/[018]/g, function (c) {
+          return (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16);
+        });
+        localStorage.setItem("condor:vid", id);
+      }
+      return id;
+    } catch (e) { return null; }
+  }
+  function sourceOf() {
+    try {
+      var q = new URLSearchParams(location.search);
+      var utm = q.get("utm_source") || q.get("fuente");
+      if (utm) return utm.slice(0, 80);
+      if (!document.referrer) return null;
+      var host = new URL(document.referrer).hostname.replace(/^www\.|^m\.|^l\.|^lm\./, "");
+      return host && host !== location.hostname.replace(/^www\./, "") ? host : null;
+    } catch (e) { return null; }
+  }
+  var tracked = {};
+  window.condorTrack = function (event) {
+    var id = visitorId();
+    if (!id || tracked[event] || !configured) return;
+    tracked[event] = true;
+    post("rpc/track_visit", { p_visitor: id, p_event: event, p_path: location.pathname, p_source: sourceOf() }).catch(function () {});
+  };
+  window.condorTrack("view");
 
   function say(form, text, kind) {
     var msg = form.querySelector(".form-msg");
