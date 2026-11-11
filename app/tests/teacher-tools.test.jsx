@@ -83,3 +83,16 @@ describe("activity report", () => {
     expect(csv).toContain("Ana,a@x.co,Inglés 9no A,Tarea 1,Entregado,80");
   });
 });
+
+describe("bank crops in the school editor", () => {
+  it("shows the bank's crops but does not store them", async () => {
+    const { draftFromBank, overrideRow, applyOverrides } = await import("../src/lib/overrides.js");
+    const q = { key: "1", section: "Matemáticas", stimulus_md: "Texto\n\n[[figura:c1]]", stem_md: "¿?", options: [{ letter: "A", text_md: "a" }], traced: [{ figure_id: "c1", url: "data:image/webp;base64,AAA" }] };
+    const d = draftFromBank(q, "A");
+    expect(d.figures).toEqual([{ id: "c1", url: "data:image/webp;base64,AAA", bank: true }]);
+    const row = overrideRow(d, { schoolId: "s", userId: "u", slug: "e", qkey: "1" });
+    expect(row.question_json.traced).toEqual([]);
+    const out = applyOverrides({ exam: { questions: [q], sections: [] }, key: new Map() }, [row]);
+    expect(out.exam.questions[0].traced.map((t) => t.figure_id)).toEqual(["c1"]);
+  });
+});

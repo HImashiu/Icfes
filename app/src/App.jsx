@@ -45,6 +45,9 @@ import { studentTour, studentTourId } from "./lib/tours.jsx";
 import { pendingMisses, repechajeKeys } from "./lib/repechaje.js";
 import { hiddenFor, withoutHidden } from "./lib/questionUse.js";
 import { orderQuestions } from "./lib/order.js";
+import { answerChanges, logAnswer, trackVisit } from "./lib/usage.js";
+import { clearQuickStart, readQuickStart } from "./lib/quickStart.js";
+import AdminUsage from "./screens/AdminUsage.jsx";
 import { localQuota, spendLocal } from "./lib/practiceQuota.js";
 import { drawPractice, randomSeed } from "./lib/practiceDraw.js";
 import { resolveModel, xpFactor } from "./lib/grading.js";
@@ -96,6 +99,7 @@ const mixedKeys = (exam, n = 10) => {
 const storeScope = (a) => (a.assignmentId ? `asg-${a.assignmentId}` : a.repechaje ? "repechaje" : a.custom ? "custom" : a.scope);
 
 const STUDENT_SIDE = "condor:student-side";
+const FIRST_PRACTICE = "Primera práctica";
 // Screens that cannot show anything without an open booklet.
 const BOOKLET_VIEWS = new Set(["setup", "custom", "test", "results", "review"]);
 
@@ -130,6 +134,15 @@ export default function App() {
   const [subjectId, setSubjectId] = useState(null);
   const [progressTab, setProgressTab] = useState("resumen");
   const [attempt, setAttempt] = useState(null);
+  // Came from the landing's «Practicar gratis» (#empezar): straight into a first short practice once signed in.
+  const [quickStart, setQuickStart] = useState(() => readQuickStart());
+  // The owner's «Uso» page (#admin/uso): only accounts in app_admins get data (migration 0037).
+  const [adminPage, setAdminPage] = useState(() => typeof window !== "undefined" && window.location.hash.startsWith("#admin"));
+  useEffect(() => {
+    const on = () => setAdminPage(window.location.hash.startsWith("#admin"));
+    window.addEventListener("hashchange", on);
+    return () => window.removeEventListener("hashchange", on);
+  }, []);
   // Today's free-practice allowance (null until read). A run that is starting blocks a second start.
   const [quota, setQuota] = useState(null);
   const startingRef = useRef(false);
@@ -145,9 +158,11 @@ export default function App() {
   const tourUid = auth.profile?.id ?? null;
   useEffect(() => {
     if (!tourScreen || auth.status === "loading" || tourSeen("estudiante", tourUid, tourScreen)) return undefined;
+    // The first practice from the landing goes straight to the question: no tutorial on top of it.
+    if (quickStart || attempt?.custom?.label === FIRST_PRACTICE) return undefined;
     const t = setTimeout(() => setStudentTourOpen((cur) => cur ?? tourScreen), 700);
     return () => clearTimeout(t);
-  }, [tourScreen, tourUid, auth.status]);
+  }, [tourScreen, tourUid, auth.status, quickStart, attempt?.custom?.label]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const ask = (e) => setStudentTourOpen(e.detail || studentTourId(view) || "inicio");
     window.addEventListener("condor:student-tour", ask);
@@ -268,7 +283,7 @@ export default function App() {
     if (auth.status === "ready") {
       let pending = false;
       try { pending = sessionStorage.getItem("icfes-login-pending") === "1"; sessionStorage.removeItem("icfes-login-pending"); } catch { /* blocked */ }
-      if (pending && view === "home") setView("profile");
+      if (pending && view === "home" && !quickStart) setView("profile");
     }
   }, [auth.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -291,6 +306,15 @@ export default function App() {
   useEffect(() => {
     if (attempt && !attempt.readOnly) saveAttempt(attempt.slug, storeScope(attempt), attempt);
   }, [attempt]);
+
+  // Usage statistics (migration 0037): this visit, and every question answered with an account.
+  useEffect(() => { if (!demoEnabled) trackVisit("app"); }, []);
+  useEffect(() => { if (signedIn && !demoEnabled) trackVisit("signin"); }, [signedIn]);
+  const answersSeen = useRef(new Map());
+  useEffect(() => {
+    if (!signedIn || demoEnabled || !attempt || attempt.readOnly || !selected || selected.slug !== attempt.slug) return;
+    for (const row of answerChanges(attempt, questionsForAttempt(selected.exam, attempt), selected.key, answersSeen.current)) logAnswer(row);
+  }, [signedIn, attempt, selected]);
 
   // Second chance: the questions this student missed before and has not answered right since.
   const pendingKeys = (slug, exam) => {
@@ -442,6 +466,17 @@ export default function App() {
     auth.api.myConsents().then(setConsents).catch(() => setConsents([{ kind: "terms", version: CONSENT_VERSION }]));
   }, [signedIn, auth.api]);
 
+  // «Practicar gratis» from the landing: once there is an account, a booklet open and the terms accepted, five
+  // questions (one per area) start right away, no menus in between.
+  useEffect(() => {
+    if (!quickStart || !signedIn || !selected || opening || attempt || consents === null || needsTerms(consents)) return;
+    setQuickStart(false);
+    clearQuickStart();
+    if (selected.slug === TEACHER_SLUG) return;
+    const keys = mixedKeys(withoutHidden(selected.exam, hidden, selected.slug), 5);
+    if (keys.length) startKeys(selected.slug, keys, { label: FIRST_PRACTICE, mode: "practice" });
+  }, [quickStart, signedIn, selected, opening, attempt, consents]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const startAssigned = async (a) => {
     if (a.delivery === "paper") return; // answered on the printed sheet, never in the app
     const sel = await openExam(a.exam_slug, a.question_keys);
@@ -590,6 +625,7 @@ export default function App() {
       />
     );
   }
+  if (adminPage && signedIn && !demoEnabled) return <AdminUsage onExit={() => { history.replaceState(null, "", window.location.pathname); setAdminPage(false); }} />;
   if (exams === null) return <main className="frame"><p className="muted">Cargando…</p></main>;
 
   const questions = selected && attempt ? questionsForAttempt(selected.exam, attempt) : [];
@@ -775,7 +811,7 @@ export default function App() {
         fetchExam={fetchExam} onPracticeKeys={startKeys} onGoal={() => go("profile")}
         onSimulacro={() => { setPreset({ scope: "all", mode: "timed" }); setView("setup"); }}
         onMix={() => selected && startKeys(selected.slug, mixedKeys(selected.exam), { label: "Mezcla de áreas", mode: "timed", perQuestionSec: 120 })} />}
-      {view === "login" && <Login onBack={() => setView("profile")} />}
+      {view === "login" && <Login onBack={() => setView(quickStart ? "home" : "profile")} />}
       {view === "history" && <History onBack={() => setView("home")} onNew={() => setView("setup")} onOpen={openFromHistory} />}
       {view === "reports" && <Reports onBack={() => setView("profile")} onPractice={() => setView("setup")} onOpen={openFromReport} />}
       {view === "teacher" && (rootAuth.status === "ready" && rootAuth.profile.role !== "student"

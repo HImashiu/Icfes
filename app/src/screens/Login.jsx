@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Mascot from "../components/Mascot.jsx";
 import { claimMessage, pendingTeacherCode, rememberTeacherCode, useAuth } from "../lib/auth.jsx";
 import { authLanding, microsoftEnabled } from "../lib/supabase.js";
+import { chromeIntent, inAppBrowser, readQuickStart } from "../lib/quickStart.js";
+
+const AUTO = "condor:quick-google";
 
 // Ingreso. La app necesita una cuenta: cualquier cuenta de Google sirve para practicar; con el correo del colegio
 // además aparecen las tareas y clases. `gate`: es la primera pantalla de /app/ (sin «Volver», con enlace al inicio).
@@ -19,6 +22,28 @@ export default function Login({ onBack, gate = false }) {
     return auth.signInWithGoogle();
   };
 
+  // A student's first visit needs nothing more than the Google account: the name comes from Google, no form.
+  // Teachers (a code or #docente) still see the form. If it fails, the form is shown with the reason.
+  const autoClaim = useRef(false);
+  const [autoFailed, setAutoFailed] = useState(false);
+  useEffect(() => {
+    if (auth.status !== "needs-profile" || teacher || autoClaim.current) return;
+    autoClaim.current = true;
+    auth.claim({ teacherCode: "", fullName: "" }).then(() => onBack?.(), (err) => { setError(claimMessage(err)); setAutoFailed(true); });
+  }, [auth.status, teacher]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // From the landing's «Practicar gratis»: Google opens right away (once per tab, and never in Facebook's own browser,
+  // where Google refuses to sign in).
+  const embedded = typeof window !== "undefined" ? inAppBrowser() : null;
+  const [quick] = useState(() => gate && readQuickStart());
+  const [going, setGoing] = useState(false);
+  useEffect(() => {
+    if (!quick || embedded || teacher || auth.status !== "signed-out" || authLanding?.error || authLanding?.arrived) return;
+    try { if (sessionStorage.getItem(AUTO) === "1") return; sessionStorage.setItem(AUTO, "1"); } catch { return; }
+    setGoing(true);
+    Promise.resolve(auth.signInWithGoogle()).catch(() => setGoing(false));
+  }, [quick, auth.status]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const claim = async (e) => {
     e.preventDefault();
     setBusy(true);
@@ -32,6 +57,10 @@ export default function Login({ onBack, gate = false }) {
       setBusy(false);
     }
   };
+
+  if (auth.status === "needs-profile" && !teacher && !autoFailed) {
+    return <section className="profile signin-gate"><div className="card login-card"><Mascot size={64} /><strong>Preparando tu cuenta…</strong></div></section>;
+  }
 
   if (auth.status === "needs-profile") {
     return (
@@ -70,10 +99,12 @@ export default function Login({ onBack, gate = false }) {
           <button type="button" role="radio" aria-checked={!teacher} className={!teacher ? "seg active" : "seg"} onClick={() => setTeacher(false)}>Soy estudiante</button>
           <button type="button" role="radio" aria-checked={teacher} className={teacher ? "seg active" : "seg"} onClick={() => setTeacher(true)}>Soy docente</button>
         </div>
-        {!teacher ? (
+        {!teacher && embedded ? (
+          <OpenOutside embedded={embedded} />
+        ) : !teacher ? (
           <>
-            <strong>Entra con tu cuenta de Google</strong>
-            <span className="caption">Cualquier cuenta sirve para practicar y guardar tu avance. Si tu colegio usa Cóndor, entra con el correo del colegio para ver tus tareas y clases.</span>
+            <strong>{going ? "Te llevamos a Google…" : "Practica gratis con tu cuenta de Google"}</strong>
+            <span className="caption">Un toque y empiezas con tu primera pregunta. Tu avance queda guardado. Si tu colegio usa Cóndor, entra con el correo del colegio.</span>
             <button type="button" className="primary big" onClick={auth.signInWithGoogle}>Continuar con Google</button>
             {microsoftEnabled && <button type="button" className="secondary big" onClick={auth.signInWithMicrosoft}>Continuar con Microsoft</button>}
           </>
@@ -96,5 +127,29 @@ export default function Login({ onBack, gate = false }) {
       </div>
       {gate ? <a className="link" href="../">Volver a la página principal</a> : <button type="button" className="link" onClick={onBack}>Volver</button>}
     </section>
+  );
+}
+
+// Facebook's (or Instagram's…) own browser: Google does not let anyone sign in there. One button opens the page in
+// Chrome on Android; on iPhone the steps to open it in Safari; on both, copy the link.
+function OpenOutside({ embedded }) {
+  const [copied, setCopied] = useState(false);
+  const url = typeof window !== "undefined" ? `${window.location.origin}${window.location.pathname}?empezar=1` : "";
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(url); setCopied(true); } catch { window.prompt("Copia este enlace", url); }
+  };
+  return (
+    <div className="open-outside">
+      <strong>Ábrelo en tu navegador para entrar</strong>
+      <span className="caption">Estás dentro de {embedded.app}. Google no deja iniciar sesión aquí, así que abre Cóndor en {embedded.ios ? "Safari" : "Chrome"} (es un solo paso).</span>
+      {embedded.android && <a className="primary big btn-like" href={chromeIntent(url)}>Abrir en Chrome</a>}
+      {!embedded.android && (
+        <ol className="open-steps">
+          <li>Toca <b>···</b> (arriba o abajo a la derecha).</li>
+          <li>Elige <b>Abrir en el navegador</b> o <b>Abrir en Safari</b>.</li>
+        </ol>
+      )}
+      <button type="button" className="secondary big" onClick={copy}>{copied ? "Enlace copiado: pégalo en tu navegador" : "Copiar el enlace"}</button>
+    </div>
   );
 }

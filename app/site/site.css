@@ -121,6 +121,7 @@ b, strong { font-weight: 700; }
 .verdict.ok strong { color: var(--ok); }
 .verdict.bad strong { color: var(--bad); }
 .verdict span { flex: 1 1 200px; color: var(--text-2); font-size: 14px; }
+.verdict .verdict-note { flex-basis: 100%; color: var(--text-2); font-size: 12px; font-weight: 600; }
 .source { margin: 0; font-size: 12px; font-weight: 600; color: var(--text-2); padding: 0 4px; }
 .floater { position: absolute; z-index: 5; pointer-events: none; font: 800 18px var(--display); color: var(--accent); animation: float-up 0.9s ease-out forwards; }
 

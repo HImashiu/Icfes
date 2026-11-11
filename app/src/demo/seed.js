@@ -3,7 +3,7 @@
 // No exam text is stored here: answers refer to question keys of whatever booklets are loaded.
 import { bankItems } from "../lib/bank.js";
 import { scoreAttempt } from "../lib/exam.js";
-import { CONSENT_VERSION } from "../lib/consent.js";
+import { CONSENT_VERSION, GUARDIAN_VERSION } from "../lib/consent.js";
 import { PRESETS } from "../lib/chartBuilder.js";
 import { BUILTIN_FORMATS } from "../lib/lesson.js";
 import { generatePlan } from "../lib/seating.js";
@@ -429,7 +429,7 @@ export function buildDemo({ bundles, now = Date.now() }) {
       courses, course_members: members, assignments, attempts, grading_models: grading, saved_charts: charts, lessons, activity_formats: formats,
       paper_seating: seating, proctor_events: proctorEvents,
       consents: [{ kind: "terms", version: CONSENT_VERSION, granted_at: new Date(now - 60 * DAY).toISOString() }],
-      school_consents: [{ kind: "guardian_authorization", version: CONSENT_VERSION, granted_at: new Date(now - 60 * DAY).toISOString() }],
+      school_consents: [{ kind: "guardian_authorization", version: GUARDIAN_VERSION, granted_at: new Date(now - 60 * DAY).toISOString() }],
       student_statuses: statuses, student_flags: flags, student_groups: groups, student_group_members: groupMembers, student_notes: notes, saved_views: views,
       teacher_questions: [], question_overrides: [], annotations: [], live_sessions: liveSessions, live_players: [], live_answers: [], class_announcements: announcements,
       group_directors: [{ id: "demo-gd-1", school_id: SCHOOL_ID, grade: "11", group_label: "A", profile_id: staff[1].id }],

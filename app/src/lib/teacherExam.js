@@ -97,7 +97,7 @@ export function validateDraft(d) {
   const filled = d.options.map((o) => o.trim().toLowerCase()).filter(Boolean);
   if (new Set(filled).size !== filled.length) out.push("Hay opciones repetidas.");
   if (!d.answer) out.push("Marca cuál es la respuesta correcta.");
-  if (out.length === 0 && JSON.stringify(draftToRow(d, {}).question_json).length > QUESTION_BYTES) {
+  if (out.length === 0 && JSON.stringify(draftToRow({ ...d, figures: (d.figures ?? []).filter((f) => !f.bank) }, {}).question_json).length > QUESTION_BYTES) {
     out.push("La pregunta pesa demasiado: quita alguna imagen o recórtala más pequeña.");
   }
   return out;
