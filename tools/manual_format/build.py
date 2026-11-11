@@ -96,6 +96,7 @@ def crop(owner_q, fig, tag):
     return fid
 def place(text, fid):
     tok = f'[[figura:{fid}]]'
+    if re.search(r'<p[^>]*>\s*\[\[FIG\]\]\s*</p>', text or ''): return re.sub(r'<p[^>]*>\s*\[\[FIG\]\]\s*</p>', lambda m: tok, text, count=1)
     if '[[FIG]]' in (text or ''): return text.replace('[[FIG]]', '\n\n' + tok + '\n\n', 1)
     return ((text or '') + '\n\n' + tok).strip()
 
@@ -140,9 +141,9 @@ questions = []; out_groups = []; keys = {}; side = {}
 secs = lambda n: next((s['name'] for s in sections if s['first'] <= n <= s['last']), None)
 for gid, g in groups.items():
     passage = md(g['PASSAGE'])
-    if 'copy' in g['attrs'] and not g['PASSAGE'].strip():
+    if 'copy' in g['attrs']:
         ex, bq, bg, sp, man = bankq(g['attrs']['copy'])
-        passage = bg.get('passage_md') or bg.get('stimulus_md') or ''
+        if not g['PASSAGE'].strip(): passage = bg.get('passage_md') or bg.get('stimulus_md') or ''
         if not g['DIR'].strip(): g['DIR'] = bg.get('directions') or ''
         d0 = bank[ex][0]
         for mq in [x for x in d0['questions'] if x.get('group_id') == bg['id']]:

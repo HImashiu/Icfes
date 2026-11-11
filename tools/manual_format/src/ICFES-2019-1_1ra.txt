@@ -1,0 +1,288 @@
+@exam ICFES-2019-1_1ra | ICFES 2019-1 1ra Sesión | pdf=/mnt/project-files/icfes/sources-new/l1_2019-1_completa.pdf | dpi=300
+@section Matemáticas 1-22
+@section Lectura crítica 23-58
+@section Sociales y ciudadanas 59-80
+@section Ciencias naturales 81-106
+// Matemáticas
+#1 copy=L_1ra#2 page=1
+KEY: C conf=high
+#2 copy=B_2da#26 page=1
+A: 
+B: 
+C: 
+D: 
+FIG A p=1 box=0.08,0.665,0.255,0.79 what="triángulo a la derecha del eje y, arriba del eje x"
+FIG B p=1 box=0.30,0.665,0.475,0.795 what="triángulo a la izquierda del eje y, abajo del eje x"
+FIG C p=1 box=0.07,0.815,0.255,0.955 what="triángulo a la derecha del eje y, abajo del eje x"
+FIG D p=1 box=0.30,0.815,0.475,0.97 what="triángulo a la izquierda del eje y, arriba del eje x"
+KEY: D conf=high
+#3 copy=L_1ra#4 page=1
+KEY: C conf=high
+#4 copy=L_1ra#9 page=1
+KEY: A conf=high
+#5 copy=L_1ra#20 page=2
+KEY: C conf=high
+#6 copy=L_1ra#17 page=2
+KEY: A conf=high
+#7 copy=L_1ra#15 page=2
+KEY: B conf=high
+#8 copy=L_1ra#8 page=2
+KEY: A conf=high
+#9 copy=L_1ra#5 page=3
+KEY: C conf=high
+#10 copy=L_1ra#7 page=3
+KEY: B conf=high
+#11 copy=A_2da#33 page=3
+STIM: En la figura se muestra un hexágono regular y un ángulo θ.
+
+[[FIG]]
+FIG stim p=3 box=0.33,0.545,0.71,0.75 what="hexágono regular con diagonales punteadas, ángulo de 60° y ángulo θ"
+KEY: C conf=high
+#12 copy=L_1ra#11 page=4
+KEY: D conf=high
+#13 copy=L_1ra#12 page=4
+KEY: A conf=high
+#14 copy=L_1ra#13 page=4
+KEY: D conf=high
+#15 page=4
+STIM: Las medidas de dos ángulos de un triángulo se muestran en la figura.
+
+[[FIG]]
+FIG stim p=4 box=0.59,0.665,0.975,0.725 what="triángulo con dos ángulos de 15° y vértice Q arriba"
+STEM: ¿Cuál es la medida del ángulo Q?
+A: 60°
+B: 75°
+C: 150°
+D: 165°
+KEY: C conf=high why="180 - 15 - 15 = 150"
+#19 copy=L_1ra#3 page=5
+KEY: A conf=high
+#20 page=5
+STEM: Un recipiente contiene dos litros y medio de agua. Si cada litro equivale a 1.000 cm³, en total, en ese recipiente hay
+A: 25 × 10³ cm³ de agua.
+B: 2,5 × 10⁴ cm³ de agua.
+C: 25 × 10⁴ cm³ de agua.
+D: 2,5 × 10³ cm³ de agua.
+KEY: D conf=high why="2,5 L × 1.000 cm³ = 2.500 cm³"
+#21 copy=L_1ra#10 page=5
+KEY: D conf=high
+#22 copy=L_1ra#18 page=5
+KEY: C conf=high
+// Lectura crítica
+@group g23-29 23-29 copy=L_1ra#26
+DIR: RESPONDA LAS PREGUNTAS 23 A 29 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#23 copy=L_1ra#26 page=6 group=g23-29
+KEY: D conf=high
+#24 copy=L_1ra#27 page=6 group=g23-29
+KEY: D conf=high
+#25 copy=L_1ra#28 page=6 group=g23-29
+KEY: C conf=high
+#26 copy=L_1ra#29 page=6 group=g23-29
+KEY: D conf=high
+#27 copy=L_1ra#30 page=7 group=g23-29
+KEY: D conf=high
+#28 copy=L_1ra#31 page=7 group=g23-29
+KEY: C conf=high
+#29 copy=L_1ra#32 page=7 group=g23-29
+KEY: A conf=high
+@group g30-31 30-31 copy=L_1ra#33
+DIR: RESPONDA LAS PREGUNTAS 30 Y 31 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#30 copy=L_1ra#33 page=7 group=g30-31
+KEY: C conf=high
+#31 copy=L_1ra#34 page=7 group=g30-31
+KEY: C conf=high
+@group g32-33 32-33 copy=C_1ra#31
+DIR: RESPONDA LAS PREGUNTAS 32 Y 33 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#32 copy=C_1ra#31 page=8 group=g32-33
+KEY: B conf=high
+#33 copy=C_1ra#32 page=8 group=g32-33
+KEY: A conf=high
+@group g34-38 34-38 copy=L_1ra#37
+DIR: RESPONDA LAS PREGUNTAS 34 A 38 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#34 copy=L_1ra#37 page=9 group=g34-38
+KEY: B conf=high
+#35 copy=L_1ra#41 page=9 group=g34-38
+KEY: D conf=high
+#36 copy=L_1ra#39 page=9 group=g34-38
+KEY: D conf=high
+#37 copy=L_1ra#40 page=10 group=g34-38
+KEY: B conf=high
+#38 copy=L_1ra#38 page=10 group=g34-38
+KEY: C conf=high
+@group g39-40 39-40 copy=L_1ra#35
+DIR: RESPONDA LAS PREGUNTAS 39 Y 40 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#39 copy=L_1ra#35 page=10 group=g39-40
+KEY: D conf=high
+#40 copy=L_1ra#36 page=10 group=g39-40
+KEY: A conf=high
+@group g41-42 41-42 copy=L_1ra#44
+DIR: RESPONDA LAS PREGUNTAS 41 Y 42 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#41 copy=L_1ra#44 page=11 group=g41-42
+KEY: B conf=high
+#42 copy=L_1ra#45 page=11 group=g41-42
+KEY: C conf=high
+@group g43-46 43-46 copy=L_1ra#48
+DIR: RESPONDA LAS PREGUNTAS 43 A 46 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#43 copy=L_1ra#49 page=12 group=g43-46
+KEY: C conf=high
+#44 copy=L_1ra#48 page=12 group=g43-46
+KEY: D conf=high
+#45 copy=L_1ra#50 page=12 group=g43-46
+KEY: A conf=high
+#46 copy=L_1ra#51 page=12 group=g43-46
+KEY: D conf=high
+@group g47-49 47-49 copy=G1_1ra#26
+DIR: RESPONDA LAS PREGUNTAS 47 A 49 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#47 copy=G1_1ra#26 page=13 group=g47-49
+KEY: C conf=high
+#48 copy=G1_1ra#28 page=13 group=g47-49
+KEY: C conf=high
+#49 copy=G1_1ra#27 page=13 group=g47-49
+KEY: B conf=high
+@group g50-52 50-52 copy=G1_1ra#39
+DIR: RESPONDA LAS PREGUNTAS 50 A 52 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#50 copy=G1_1ra#39 page=14 group=g50-52
+KEY: C conf=high
+#51 copy=G1_1ra#40 page=14 group=g50-52
+KEY: C conf=high
+#52 copy=G1_1ra#41 page=14 group=g50-52
+KEY: C conf=high
+@group g53-56 53-56 copy=C_1ra#40
+DIR: RESPONDA LAS PREGUNTAS 53 A 56 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#53 copy=C_1ra#40 page=15 group=g53-56
+KEY: B conf=high
+#54 copy=B_1ra#48 page=15 group=g53-56
+KEY: B conf=high
+#55 copy=B_1ra#49 page=15 group=g53-56
+KEY: D conf=high
+#56 copy=C_1ra#41 page=15 group=g53-56
+KEY: D conf=high
+@group g57-58 57-58 copy=L_1ra#52
+DIR: RESPONDA LAS PREGUNTAS 57 Y 58 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#57 copy=L_1ra#52 page=15 group=g57-58
+KEY: C conf=high
+#58 copy=L_1ra#53 page=15 group=g57-58
+KEY: D conf=high
+// Sociales
+#59 copy=L_1ra#67 page=16
+KEY: B conf=high
+#60 copy=L_1ra#70 page=16
+KEY: A conf=high why="bank C; read against the scan, A fits the critique asked"
+#61 copy=L_1ra#77 page=16
+KEY: D conf=high
+#62 copy=L_1ra#80 page=16
+KEY: D conf=high
+#63 copy=L_1ra#69 page=17
+KEY: D conf=high
+#64 copy=L_1ra#74 page=17
+KEY: C conf=high
+#65 copy=L_1ra#75 page=17
+KEY: C conf=high
+#66 page=17
+STIM: El cine llegó a Colombia a finales del siglo XIX. La primera función tuvo lugar el 14 de abril de 1897, en Puerto Colón, Panamá, que para entonces hacía parte del territorio nacional. Uno de los periódicos que reportó este acontecimiento, The Colon Telegram, afirmaba: "El efecto es sumamente realista y da prueba de los avances hechos por la ciencia en nuestros días". Así, a pesar de la curiosidad que representó el cine para muchos colombianos, también despertó inquietudes en relación con los potenciales riesgos que tendrían las películas para niños y jóvenes. Por ejemplo, a principios del siglo XX, un reconocido médico publicó en un libro el siguiente llamado de atención: "en la adolescencia es cuando el cine va a ejercer sus más desastrosas influencias, porque va a acentuar y a hacer más peligrosas las perturbaciones de la pubertad y porque le va a dar armas de dudosa moral a un ser desequilibrado y enloquecido por el despertar de las pasiones".
+
+<p style="text-align:right">Adaptado de: Torres Umaña, C. (1935). *Nociones de Puericultura*, p.49. Bogotá: Ministerio de Educación Nacional y Hellriegel, D. y Vallejo F. (1997). Cien años de la llegada del Cine a Colombia. En *Credencial Historia*, 88</p>
+STEM: A partir de la información anterior, ¿es posible inferir que el cine tuvo una influencia negativa en el comportamiento de los adolescentes colombianos de principios del siglo XX?
+A: Sí, porque el médico tiene la autoridad académica e intelectual para hablar de los efectos del cine en todos los adolescentes.
+B: Sí, porque el argumento está basado en evidencia médica que indica que el cine es un instrumento nocivo para cualquier adolescente.
+C: No, porque el cine fue recibido positivamente por toda la comunidad científica y académica como una prueba del avance técnico y social de la época.
+D: No, porque el médico hace una generalización sobre los efectos del cine en los adolescentes sin presentar evidencia que sustente esa relación causal.
+KEY: D conf=high
+#67 copy=L_1ra#76 page=18
+KEY: D conf=high
+#68 copy=L_1ra#78 page=18
+KEY: C conf=high why="bank A; C matches the scan reading"
+#69 copy=B_1ra#69 page=18
+KEY: D conf=high
+#70 copy=C_2da#5 page=19
+KEY: C conf=high
+#71 copy=B_1ra#81 page=19
+KEY: D conf=high
+#72 copy=B_2da#6 page=19
+KEY: A conf=high
+#73 copy=L_1ra#83 page=19
+KEY: D conf=high
+#74 copy=L_1ra#85 page=20
+KEY: D conf=high
+#75 copy=B_1ra#78 page=20
+KEY: A conf=high
+#76 copy=L_1ra#86 page=20
+KEY: D conf=high
+#77 page=20
+STEM: En Colombia, como estrategia para evitar la concentración del poder político en una misma persona u organización,
+A: se creó la Contraloría General de la República para investigar y controlar el uso de los recursos públicos.
+B: se establecieron elecciones populares para elegir funcionarios públicos de altos cargos del Estado colombiano.
+C: se creó la Fiscalía General de la Nación para velar por la protección de los derechos de los ciudadanos.
+D: se dividió el poder público en tres ramas, ejecutiva, legislativa y judicial, las cuales se controlan recíprocamente.
+KEY: D conf=high why="separación de poderes con frenos y contrapesos"
+#78 copy=L_1ra#87 page=21
+KEY: D conf=high
+#79 copy=C_2da#1 page=21
+KEY: A conf=high
+#80 copy=L_1ra#89 page=21
+KEY: D conf=high
+// Ciencias naturales
+@group g81-83 81-83 copy=ICFES-2018-1_2da#68
+DIR: RESPONDA LAS PREGUNTAS 81 A 83 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#81 copy=ICFES-2018-1_2da#68 page=22 group=g81-83
+KEY: C conf=high
+#82 copy=ICFES-2018-1_2da#69 page=22 group=g81-83
+KEY: A conf=high
+#83 copy=ICFES-2018-1_2da#70 page=22 group=g81-83
+KEY: D conf=high
+#84 copy=L_1ra#105 page=23
+KEY: D conf=high
+#85 copy=G1_2da#78 page=23
+KEY: C conf=high why="bank has no key; worked out from the question"
+#86 copy=B_1ra#119 page=23
+KEY: D conf=high
+#87 copy=G1_2da#52 page=23
+KEY: D conf=high
+#88 copy=G1_2da#53 page=24
+KEY: B conf=high
+#89 copy=B_2da#63 page=24
+KEY: B conf=high
+#90 copy=G1_2da#51 page=24
+KEY: B conf=high
+#91 copy=G1_2da#54 page=25
+KEY: A conf=high
+#92 copy=G1_2da#55 page=25
+KEY: A conf=high
+#93 copy=C_1ra#112 page=25
+KEY: D conf=high
+@group g94-96 94-96 copy=L_1ra#117
+DIR: RESPONDA LAS PREGUNTAS 94 A 96 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#94 copy=L_1ra#117 page=26 group=g94-96
+KEY: A conf=high
+#95 copy=L_1ra#118 page=26 group=g94-96
+KEY: D conf=high
+#96 copy=L_1ra#119 page=26 group=g94-96
+KEY: C conf=high
+#97 copy=G1_1ra#107 page=27
+KEY: A conf=high
+#98 copy=G1_1ra#103 page=27
+KEY: B conf=high
+#99 copy=G1_1ra#109 page=27
+KEY: D conf=high
+#100 copy=B_2da#61 page=28
+KEY: C conf=high
+#101 copy=G1_1ra#111 page=28
+KEY: B conf=high
+#102 copy=L_1ra#108 page=28
+KEY: C conf=high
+#103 page=28
+STIM: En un experimento se tomaron medidas de la variación del volumen (ΔV) de un cubo de un material elástico (respecto a un volumen de referencia), de su temperatura (T) y de la presión (P) a la que se sometía. Los datos del experimento se muestran en la tabla.
+
+<table class="exam-table"><tr><th rowspan="2">P = 1,0 atm</th><td>T (°C)</td><td>32</td><td>35</td><td>40</td></tr><tr><td>ΔV (cm³)</td><td>1,1</td><td>1,6</td><td>1,9</td></tr><tr><th rowspan="2">P = 1,1 atm</th><td>T (°C)</td><td>31</td><td>36</td><td>39</td></tr><tr><td>ΔV (cm³)</td><td>0,9</td><td>1,2</td><td>1,4</td></tr><tr><th rowspan="2">P = 1,3 atm</th><td>T (°C)</td><td>29</td><td>33</td><td>38</td></tr><tr><td>ΔV (cm³)</td><td>0,7</td><td>0,8</td><td>1,0</td></tr></table>
+STEM: Teniendo en cuenta la información anterior, ¿cuál de los siguientes sería el título más apropiado para esta tabla?
+A: Variación del volumen con la temperatura a diferentes presiones.
+B: Comportamiento de la temperatura y el volumen a diferentes presiones.
+C: Comportamiento de la temperatura con la presión a diferentes volúmenes.
+D: Variación del volumen y la presión a diferentes temperaturas.
+KEY: A conf=high why="the measured variable is ΔV vs T, one series per pressure"
+#104 copy=G1_1ra#112 page=29
+KEY: C conf=high
+#105 copy=G1_1ra#113 page=29
+KEY: D conf=high
+#106 copy=G1_1ra#114 page=29
+KEY: C conf=high

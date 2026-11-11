@@ -1,0 +1,494 @@
+@exam ICFES-2019-1_2da | ICFES 2019-1 2da Sesión | pdf=/mnt/project-files/icfes/sources-new/l1_2019-1_completa.pdf | dpi=300
+@section Sociales y ciudadanas 1-22
+@section Matemáticas 23-45
+@section Ciencias naturales 46-70
+@section Inglés 71-115
+// Sociales
+#1 copy=G1_2da#3 page=31
+KEY: B conf=high
+#2 copy=G1_2da#11 page=31
+KEY: C conf=high
+#3 copy=G1_2da#17 page=31
+KEY: B conf=high
+#4 copy=G1_2da#1 page=32
+KEY: B conf=high
+#5 copy=C_1ra#74 page=32
+KEY: D conf=high
+#6 copy=B_2da#7 page=32
+KEY: D conf=high
+#7 copy=G1_2da#19 page=33
+KEY: C conf=high
+#8 copy=G1_2da#8 page=33
+KEY: D conf=high
+#9 copy=G1_2da#20 page=33
+KEY: D conf=high
+#10 copy=G1_2da#9 page=34
+KEY: C conf=high why="bank A; C fits the scan reading"
+#11 copy=G1_2da#6 page=34
+KEY: B conf=high
+#12 copy=E_1ra#70 page=35
+KEY: A conf=high
+#13 copy=E_1ra#71 page=35
+STEM: De acuerdo con lo expresado por el Ministerio de Trabajo, la decisión de la Corte Constitucional podría traer
+KEY: C conf=high
+#14 copy=B_2da#9 page=35
+KEY: C conf=high
+#15 copy=E_1ra#72 page=36
+KEY: B conf=high
+#16 copy=B_1ra#83 page=36
+KEY: C conf=high
+#17 copy=G1_1ra#79 page=36
+KEY: D conf=high
+#18 copy=E_1ra#73 page=37
+KEY: C conf=high
+#19 copy=E_1ra#74 page=37
+KEY: D conf=high
+#20 copy=E_1ra#75 page=37
+KEY: B conf=high
+#21 copy=B_2da#22 page=37
+KEY: B conf=high
+#22 copy=B_2da#25 page=37
+KEY: D conf=high
+// Matemáticas
+#23 copy=C_1ra#3 page=38
+KEY: C conf=high
+#24 copy=E_2da#36 page=38
+KEY: C conf=high
+#25 copy=E_1ra#8 page=38
+KEY: D conf=high
+#26 page=38
+STEM: Dos funciones continuas se intersectan en los puntos con coordenadas (-2, 0), (0, 6) y (2, 12). ¿Cuál de las siguientes gráficas representa dos funciones que cumplen esto?
+A: 
+B: 
+C: 
+D: 
+FIG A p=38 box=0.575,0.181,0.71,0.313 what="parábola y recta"
+FIG B p=38 box=0.725,0.181,0.89,0.313 what="dos curvas que se cortan cerca de y=5"
+FIG C p=38 box=0.575,0.322,0.71,0.453 what="parábola y recta"
+FIG D p=38 box=0.725,0.322,0.89,0.453 what="dos curvas que se cortan en (-2,0), (0,6), (2,12)"
+KEY: D conf=low why="scan is faint; D is the option marked on the sheet and its curves meet at the three points; needs a check against a clean copy"
+#27 copy=F_1ra#4 page=38
+KEY: B conf=high
+#28 copy=E_1ra#10 page=39
+KEY: C conf=high
+#29 copy=E_1ra#11 page=39
+KEY: C conf=high
+#30 copy=E_1ra#12 page=39
+KEY: C conf=high
+@group g31-32 31-32 copy=E_2da#26
+DIR: RESPONDA LAS PREGUNTAS 31 Y 32 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#31 copy=E_2da#26 page=40 group=g31-32
+KEY: A conf=high
+#32 copy=E_2da#27 page=40 group=g31-32
+KEY: B conf=high
+#33 copy=E_2da#29 page=40
+KEY: D conf=high
+#34 copy=G1_2da#35 page=41
+KEY: A conf=high
+#35 copy=G1_2da#37 page=41
+KEY: C conf=high
+#36 copy=G1_2da#38 page=41
+KEY: C conf=high
+#37 copy=B_1ra#9 page=42
+KEY: D conf=high
+#38 copy=G1_1ra#17 page=42
+KEY: C conf=high
+#39 copy=G1_2da#40 page=42
+KEY: A conf=high
+#40 copy=F_1ra#10 page=43
+KEY: A conf=high
+#41 copy=G1_2da#41 page=43
+KEY: D conf=high
+#42 copy=G1_2da#42 page=43
+KEY: A conf=high
+#43 copy=G1_2da#43 page=43
+KEY: B conf=high
+#44 copy=G1_2da#44 page=43
+KEY: A conf=high
+// Ciencias naturales
+@group g48-49 48-49 copy=E_2da#54
+DIR: RESPONDA LAS PREGUNTAS 48 Y 49 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+#48 copy=E_2da#55 page=44 group=g48-49
+KEY: D conf=high
+#49 copy=E_2da#56 page=44 group=g48-49
+KEY: B conf=high
+#50 copy=E_2da#57 page=44
+KEY: D conf=high
+#51 copy=B_2da#70 page=44
+KEY: C conf=high
+#52 copy=E_2da#66 page=45
+KEY: C conf=high
+#53 copy=B_2da#57 page=45
+KEY: C conf=high
+#54 copy=B_2da#59 page=45
+KEY: B conf=high
+#55 copy=E_2da#59 page=46
+KEY: A conf=high
+#56 copy=E_2da#60 page=46
+KEY: D conf=high
+#57 copy=C_2da#74 page=46
+KEY: D conf=medium why="bank C; D fits the scan reading"
+@group g58-60 58-60
+DIR: RESPONDA LAS PREGUNTAS 58 A 60 DE ACUERDO CON LA SIGUIENTE INFORMACIÓN
+PASSAGE: Los métodos para el control de la natalidad, o anticonceptivos, se diseñan para prevenir el embarazo y pueden clasificarse, según el mecanismo que empleen, en:
+
+<ul><li>Métodos de barrera: condón (masculino y femenino), diafragma y cubiertas cervicales.</li><li>Métodos hormonales: píldoras, parches e inyecciones.</li><li>Métodos de esterilización: vasectomía (masculino) y ligadura de trompas (femenino).</li></ul>
+
+Según las estadísticas, se ha aumentado el número de embarazos involuntarios en parejas que estaban usando alguno de estos métodos. Para comprobarlo, una entidad especializada en salud sexual realizó una encuesta a 500 mujeres y 500 hombres para conocer cuáles son los métodos anticonceptivos más utilizados y qué métodos de planificación utilizaron las parejas que presentaron embarazos no deseados.
+
+Se obtuvieron los resultados que se muestran en la tabla.
+
+<table class="exam-table"><tr><th rowspan="2">Método</th><th colspan="2">Métodos más utilizados</th><th rowspan="2">Mujeres embarazadas usando el método (%)</th></tr><tr><th>Mujeres (%)</th><th>Hombres (%)</th></tr><tr><td>Condón</td><td>58,8</td><td>82,5</td><td>7,7</td></tr><tr><td>Píldoras</td><td>31,9</td><td>8,8</td><td>9,4</td></tr><tr><td>Inyección</td><td>4,7</td><td>2,9</td><td>46,8</td></tr><tr><td>Métodos combinados</td><td>2,3</td><td>5,8</td><td>12,2</td></tr><tr><td>Esterilización</td><td>2,3</td><td>0</td><td>0,9</td></tr></table>
+#58 page=47 group=g58-60
+STEM: Con base en la información brindada, el recuadro que explica correctamente el funcionamiento de los métodos hormonales y los de barrera es
+A: **Métodos hormonales:** El estrógeno y progesterona evitan que se produzca la ovulación, cambian el revestimiento del útero evitando la implantación, y generan el engrosamiento de la mucosa cervical.
+
+**Métodos de barrera:** Previenen el embarazo al cortar, cerrar o bloquear de manera permanente los conductos que transportan el esperma. No ofrecen protección contra las enfermedades de transmisión sexual.
+B: **Métodos hormonales:** Previenen el embarazo al impedir físicamente que el semen entre en el útero. Algunos de ellos previenen la propagación de algunas enfermedades de transmisión sexual (VIH - sida).
+
+**Métodos de barrera:** Al medir la temperatura basal, se determinan los días más fértiles del ciclo menstrual, y en esos días se deben evitar las relaciones sexuales.
+C: **Métodos hormonales:** El estrógeno y progesterona evitan que se produzca la ovulación, cambian el revestimiento del útero evitando la implantación, y generan el engrosamiento de la mucosa cervical.
+
+**Métodos de barrera:** Previenen el embarazo al impedir físicamente que el semen entre en el útero. Algunos de ellos previenen la propagación de algunas enfermedades de transmisión sexual (VIH - sida).
+D: **Métodos hormonales:** Previenen el embarazo al cortar, cerrar o bloquear de manera permanente los conductos que transportan el esperma.
+
+**Métodos de barrera:** Previenen el embarazo al impedir físicamente que el semen entre en el útero. Algunos de ellos previenen la propagación de algunas enfermedades de transmisión sexual (VIH - sida).
+KEY: C conf=high
+#59 page=47 group=g58-60
+STEM: Un investigador concluyó erróneamente que el método anticonceptivo menos eficaz es el condón, porque es el método más utilizado por mujeres y hombres, y el 7,7 % de las mujeres quedan embarazadas usando este método.
+
+Teniendo en cuenta los datos de la tabla, ¿cuál de las siguientes es una conclusión correcta?
+A: La eficacia de las píldoras es la menor, pues al utilizarlas se presentó el mayor porcentaje de mujeres embarazadas.
+B: La eficacia de los métodos combinados es la menor, pues al utilizarlos se presentó el menor porcentaje de mujeres embarazadas.
+C: La eficacia de la inyección es la menor, pues al utilizarla se presentó un mayor porcentaje de mujeres embarazadas.
+D: La eficacia de los métodos de barrera es el menor, pues al utilizarlos se presentó el mayor porcentaje de mujeres embarazadas.
+KEY: C conf=high why="inyección: 46,8 % of pregnant women"
+#60 copy=C_2da#79 page=48 group=g58-60
+KEY: B conf=high
+#61 copy=E_2da#67 page=48
+KEY: B conf=high
+#62 copy=E_2da#68 page=48
+KEY: A conf=high
+#63 copy=E_2da#62 page=49
+KEY: D conf=high
+#64 copy=E_2da#61 page=49
+KEY: B conf=high
+#65 copy=B_1ra#105 page=49
+KEY: D conf=high
+#66 copy=E_2da#64 page=49
+KEY: D conf=high
+#67 copy=E_2da#69 page=50
+KEY: A conf=high
+#68 copy=B_2da#66 page=50
+KEY: B conf=high
+#69 copy=E_2da#58 page=50
+KEY: A conf=high
+#70 copy=E_2da#65 page=50
+KEY: B conf=high
+// Inglés
+@group g71-75 71-75 copy=E_2da#85
+DIR: RESPONDA LAS PREGUNTAS 71 A 75 DE ACUERDO CON EL EJEMPLO
+PASSAGE: Lea las descripciones de la columna de la izquierda (71 - 75). ¿Cuál palabra de la columna de la derecha (A - G) concuerda con cada descripción? La opción H se usa para el ejemplo. Sobran dos palabras más.
+
+<p style="text-align:center">**Places for children**</p>
+
+[[figura:e2-g85-89-auto-5cc014]]
+
+0. Children can ask teachers questions about their lessons here.
+#71 copy=E_2da#85 page=51 group=g71-75 type=matching
+KEY: D conf=high
+#72 copy=E_2da#86 page=51 group=g71-75 type=matching
+KEY: E conf=high
+#73 copy=E_2da#87 page=51 group=g71-75 type=matching
+KEY: G conf=high
+#74 copy=E_2da#88 page=51 group=g71-75 type=matching
+KEY: F conf=high
+#75 copy=E_2da#89 page=51 group=g71-75 type=matching
+KEY: B conf=high
+@group g76-80 76-80
+DIR: RESPONDA LAS PREGUNTAS 76 A 80 DE ACUERDO CON EL EJEMPLO
+PASSAGE: ¿Dónde puede ver estos avisos?
+#76 page=52 group=g76-80 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=52 box=0.181,0.282,0.478,0.351 what="aviso"
+A: at the beach
+B: at the park
+C: at the zoo
+KEY: C conf=high
+#77 page=52 group=g76-80 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=52 box=0.157,0.415,0.466,0.474 what="aviso"
+A: on a watch
+B: on a book
+C: on a drink
+KEY: C conf=high
+#78 page=52 group=g76-80 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=52 box=0.151,0.547,0.466,0.611 what="aviso"
+A: in a music room
+B: in a sports room
+C: in a computer room
+KEY: B conf=high
+#79 page=52 group=g76-80 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=52 box=0.127,0.684,0.460,0.756 what="aviso"
+A: on a game
+B: on a lamp
+C: on a phone
+KEY: A conf=high
+#80 page=52 group=g76-80 type=sign_picture
+STEM: [[FIG]]
+FIG stem p=52 box=0.103,0.803,0.466,0.915 what="aviso"
+A: in a bathroom
+B: in a hall
+C: in a classroom
+KEY: C conf=high
+@group g81-85 81-85
+DIR: RESPONDA LAS PREGUNTAS 81 A 85 DE ACUERDO CON EL EJEMPLO
+PASSAGE: Complete las cinco conversaciones.
+#81 page=53 group=g81-85 type=conversation
+STEM: How about walking to the town?
+A: It's pretty!
+B: That's the elevator.
+C: I'm tired!
+KEY: C conf=high
+#82 page=53 group=g81-85 type=conversation
+STEM: My dad would like to play tennis with us.
+A: That's great!
+B: You're welcome.
+C: Can I do it?
+KEY: A conf=high
+#83 page=53 group=g81-85 type=conversation
+STEM: Have you ever gotten in trouble at the university?
+A: What a pity!
+B: Several times.
+C: Is it here?
+KEY: B conf=high
+#84 page=53 group=g81-85 type=conversation
+STEM: I must call my doctor.
+A: I'm bad at it.
+B: What's wrong?
+C: Look for the message!
+KEY: B conf=high
+#85 page=53 group=g81-85 type=conversation
+STEM: Should I try on this costume?
+A: Quite polite!
+B: Great party!
+C: That's not your size!
+KEY: C conf=high
+@group g86-93 86-93
+DIR: RESPONDA LAS PREGUNTAS 86 A 93 DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: <p style="text-align:center">**Useful things**</p>
+
+Few things are [[hueco:0]] than having everything you need with you. I am a single father and I have to look [[hueco:86]] two teenagers; both of them are beautiful and clever. My car has become a very useful thing when it comes to [[hueco:87]] them to the museum or to the department store. [[hueco:88]] their friends in these places is important for them.
+
+However, the [[hueco:89]] important thing on my list is my cell phone. I [[hueco:90]] shopping and bought a modern one two months [[hueco:91]]. It is useful since I use it as an alarm clock to wake up [[hueco:92]] 5 o'clock, and I can [[hueco:93]] check information on the web or send text messages to my colleagues.
+#86 page=54 group=g86-93 type=cloze_text
+STEM: Blank (86): choose the option that completes the text.
+A: about
+B: after
+C: around
+KEY: B conf=high
+#87 page=54 group=g86-93 type=cloze_text
+STEM: Blank (87): choose the option that completes the text.
+A: take
+B: taking
+C: taken
+KEY: B conf=high
+#88 page=54 group=g86-93 type=cloze_text
+STEM: Blank (88): choose the option that completes the text.
+A: Met
+B: Meet
+C: Meeting
+KEY: C conf=high
+#89 page=54 group=g86-93 type=cloze_text
+STEM: Blank (89): choose the option that completes the text.
+A: more
+B: most
+C: much
+KEY: B conf=high
+#90 page=54 group=g86-93 type=cloze_text
+STEM: Blank (90): choose the option that completes the text.
+A: go
+B: went
+C: gone
+KEY: B conf=high
+#91 page=54 group=g86-93 type=cloze_text
+STEM: Blank (91): choose the option that completes the text.
+A: ever
+B: already
+C: ago
+KEY: C conf=high
+#92 page=54 group=g86-93 type=cloze_text
+STEM: Blank (92): choose the option that completes the text.
+A: at
+B: into
+C: on
+KEY: A conf=high
+#93 page=54 group=g86-93 type=cloze_text
+STEM: Blank (93): choose the option that completes the text.
+A: quite
+B: also
+C: once
+KEY: B conf=high
+@group g94-100 94-100
+DIR: RESPONDA LAS PREGUNTAS 94 A 100 DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: <p style="text-align:center">**How planes were born**</p>
+
+The history of planes started before 1800. In the 16th century, Mark Clerck was the first man to think of flying machines; he had dreams and made drawings of helicopters, but he did not actually build them.
+
+Many years later, the Irwins, two French brothers, made a balloon that flew for five miles in 1738. In 1848, John Hartman made a small plane that was able to make short flights. Then, in January 1890, Samuel Secrest tried to fly a flying machine, but he couldn't because the weather was too bad. He tried once more the next month, but again it didn't go up, so he stopped the project.
+
+In 1901, the Americans Orville and Wilbur Wright built a machine to fly, but it didn't work the first time. Finally, on December 17, 1903, they flew the Kitty Hawk Flyer, which was in the air for 12 seconds. The Wright Brothers made 1,000 short-distance flights in the desert in North Carolina. Thanks to the experience learned during these flights, the practice of air transport began in 1907.
+
+Then, in 1910, the first airplane company was created by two pilots from Rome, Gabriel and Charles Oliveri, while the American Brett Graham and the Englishman Mike Major started the first US airline in New York. Air transport is now one of the biggest businesses in the world.
+#94 page=55 group=g94-100
+STEM: When did the first plane fly?
+A: In 1890
+B: In 1738
+C: In 1848
+KEY: C conf=high
+#95 page=55 group=g94-100
+STEM: Who made the first thing that could fly?
+A: John Hartman
+B: The Irwins
+C: Samuel Secrest
+KEY: B conf=high
+#96 page=55 group=g94-100
+STEM: Why was Secrest's project finished?
+A: flights took little time
+B: flights were delayed
+C: flights failed
+KEY: C conf=high
+#97 page=55 group=g94-100
+STEM: Orville and Wilbur were important because they
+A: started the air age.
+B: worked together.
+C: knew the desert.
+KEY: A conf=high
+#98 page=55 group=g94-100
+STEM: Passengers have been able to travel by air since
+A: 1901.
+B: 1903.
+C: 1907.
+KEY: C conf=high
+#99 page=55 group=g94-100
+STEM: The Kitty Hawk Flyer flew
+A: at once.
+B: for a short time.
+C: many kilometers.
+KEY: B conf=high
+#100 page=55 group=g94-100
+STEM: Who was born in the United States?
+A: Brett
+B: Gabriel
+C: Mike
+KEY: A conf=high
+@group g101-105 101-105 copy=C16_2da#100
+DIR: RESPONDA LAS PREGUNTAS 101 A 105 DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: <p style="text-align:center">**My trip to Bogotá and other places**</p>
+
+I arrived in Bogotá feeling excited and ready to explore a big city. Unfortunately, many hours of unstoppable rain didn't allow me to go out for a while. It rains a lot there, maybe more than in Wales, and I never thought that was possible.
+
+First, I decided to visit a museum. I think museums are now more interesting and enjoyable places than before. I visited the Gold Museum and saw the gold from all over Colombia. Ancient people used to stick little gold pieces to their clothes during religious activities. They never considered it as a valuable metal. I wonder why people love gold and money so much nowadays. It's nothing special, just a metal. If you die, will you enjoy it?
+
+After that, I stayed with a family I met at the museum. They invited me to stay with them in Chía. They live on the land that used to be their parents' farm. That's why they have divided it into smaller parts, which means that they all live close to, next to, opposite or near each other. That is one really close and warm family! The houses are old and badly designed, built by the people themselves in different styles, but all beautiful and amazing. To have such a beautiful sense of family was something I had not seen in my whole life.
+
+Finally, we went to a typical restaurant. It was huge, with a fantastic view, and the food I ate was great. This was the part I liked the most, Colombian food is magnificent.
+#101 copy=C16_2da#100 page=56 group=g101-105
+KEY: C conf=high
+#102 copy=C16_2da#101 page=56 group=g101-105
+STEM: What attitude does the writer show in the text?
+KEY: B conf=high
+#103 copy=C16_2da#102 page=56 group=g101-105
+STEM: What's the writer's opinion about gold?
+C: you can wear it on your clothes all the time.
+KEY: D conf=high
+#104 copy=C16_2da#103 page=56 group=g101-105
+STEM: What does the writer think about the family's houses in Chía?
+KEY: A conf=high
+#105 copy=C16_2da#104 page=56 group=g101-105
+STEM: Which of these ideas shows the writer's opinion?
+A: Lots of people in Colombia need gold to build bigger and more modern houses.
+KEY: B conf=high
+@group g106-115 106-115 copy=E_2da#125
+DIR: RESPONDA LAS PREGUNTAS 106 A 115 DE ACUERDO CON EL SIGUIENTE TEXTO
+PASSAGE: <p style="text-align:center">**The astronaut artist**</p>
+
+Scott Kelly, officer of the International Space Station, has [[hueco:0]] become the US astronaut that NASA has [[hueco:106]] stay for the longest period in space. Up there, he said that his hobby was taking photographs of the [[hueco:107]] planet underneath. Kelly calls his pictures "Earth art". These photographs have shown us what to [[hueco:108]] next in terms of technology. Kelly is not [[hueco:109]] a man with a camera orbiting Earth – he is [[hueco:110]] an artist.
+
+[[figura:e2-g125-134-auto-cfba75]]
+
+It's the human mind [[hueco:111]] work that makes art unique. [[hueco:112]] having robots near other planets capturing images, their photographs haven't been called pieces of art. Robots cannot [[hueco:113]] these kinds of poetic pictures; they have taken some interesting images, [[hueco:114]].
+
+These works have [[hueco:115]] that automatically operated space research is not enough; it should be done by humans.
+#106 copy=E_2da#125 page=57 group=g106-115 type=cloze_text
+STEM: Blank (106): choose the option that completes the text.
+A: make
+B: makes
+C: made
+D: making
+KEY: C conf=high
+#107 copy=E_2da#126 page=57 group=g106-115 type=cloze_text
+STEM: Blank (107): choose the option that completes the text.
+A: lively
+B: incredible
+C: accurate
+D: challenging
+KEY: B conf=high
+#108 copy=E_2da#127 page=57 group=g106-115 type=cloze_text
+STEM: Blank (108): choose the option that completes the text.
+A: wonder
+B: affect
+C: contain
+D: expect
+KEY: D conf=high
+#109 copy=E_2da#128 page=57 group=g106-115 type=cloze_text
+STEM: Blank (109): choose the option that completes the text.
+A: nearby
+B: absolutely
+C: just
+D: straight
+KEY: C conf=high
+#110 copy=E_2da#129 page=57 group=g106-115 type=cloze_text
+STEM: Blank (110): choose the option that completes the text.
+A: definitely
+B: generally
+C: particularly
+D: directly
+KEY: A conf=high
+#111 copy=E_2da#130 page=57 group=g106-115 type=cloze_text
+STEM: Blank (111): choose the option that completes the text.
+A: on
+B: for
+C: in
+D: at
+KEY: D conf=high
+#112 copy=E_2da#131 page=57 group=g106-115 type=cloze_text
+STEM: Blank (112): choose the option that completes the text.
+A: Besides
+B: Despite
+C: Regarding
+D: Towards
+KEY: B conf=high
+#113 copy=E_2da#132 page=57 group=g106-115 type=cloze_text
+STEM: Blank (113): choose the option that completes the text.
+A: achieve
+B: affect
+C: reach
+D: approach
+KEY: A conf=high
+#114 copy=E_2da#133 page=57 group=g106-115 type=cloze_text
+STEM: Blank (114): choose the option that completes the text.
+A: otherwise
+B: wherever
+C: either
+D: though
+KEY: D conf=high
+#115 copy=E_2da#134 page=57 group=g106-115 type=cloze_text
+STEM: Blank (115): choose the option that completes the text.
+A: tested
+B: convinced
+C: proved
+D: persuaded
+KEY: C conf=high
