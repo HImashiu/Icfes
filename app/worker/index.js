@@ -1,5 +1,6 @@
-// The site's worker. Static files are served by Cloudflare directly; this code runs only for /app/exams/* and
-// /app/api/* (run_worker_first in wrangler.jsonc).
+// The site's worker. It runs first for pages and the app's exam files and API (run_worker_first in wrangler.jsonc);
+// images, styles, fonts and the app's built assets are served by Cloudflare directly. For pages it only sends other
+// hosts to condoricfes.com and rate-limits the pages that show bank questions, then hands over to the static files.
 //
 // Who gets what:
 //  - Anyone: exams/index.json (the catalog).
@@ -256,10 +257,82 @@ async function reveal(request, env, user, token) {
   return json(200, out);
 }
 
+// One address for search engines: condoricfes.com. Public pages asked for on workers.dev or www get a 301 there (the
+// app under /app/ stays on any host, so sessions and old QR codes keep working). A request with the header
+// "x-condor-preview: 1" is served on workers.dev as is, for checks from places that cannot reach the domain.
+export const HOME_HOST = "condoricfes.com";
+export function canonicalRedirect(request, url) {
+  if (request.method !== "GET" && request.method !== "HEAD") return null;
+  if (url.pathname === "/app" || url.pathname.startsWith("/app/")) return null;
+  const host = url.hostname;
+  const other = host === `www.${HOME_HOST}` || host.endsWith(".workers.dev");
+  if (!other || request.headers.get("x-condor-preview") === "1") return null;
+  return Response.redirect(`https://${HOME_HOST}${url.pathname}${url.search}`, 301);
+}
+
+// Public pages that show bank questions (solved questions, past exams by area, topic pages): a per-address limit, so
+// nobody copies them by the hundred. Search engines Cloudflare has verified (Googlebot, Bingbot...) are not limited.
+const LIMITED_PAGES = [/^\/pregunta-icfes\//, /^\/examenes-icfes-anteriores\/[^/]+\/[^/]+\//, /^\/preguntas-icfes\/[^/]+\/[^/]+\//];
+export const isLimitedPage = (path) => LIMITED_PAGES.some((r) => r.test(path));
+
+// Crawler log: one line per request from a search engine or other known bot (no address kept), read back with
+// tools/crawl-report.mjs through Workers Logs. Shows what Google and Bing actually crawl, how often, and the status codes.
+const BOTS = [
+  ["Googlebot", /Googlebot|Google-InspectionTool|GoogleOther|Storebot-Google|AdsBot-Google/i], ["Bingbot", /bingbot|BingPreview|msnbot/i],
+  ["Applebot", /Applebot/i], ["DuckDuckBot", /DuckDuck/i], ["YandexBot", /Yandex/i], ["Baiduspider", /Baiduspider/i],
+  ["Facebook", /facebookexternalhit|meta-externalagent|facebookcatalog/i], ["WhatsApp", /WhatsApp/i], ["Twitterbot", /Twitterbot/i],
+  ["AhrefsBot", /AhrefsBot/i], ["SemrushBot", /SemrushBot/i], ["AI", /GPTBot|ChatGPT|OAI-SearchBot|ClaudeBot|Claude-|anthropic|PerplexityBot|CCBot|Bytespider|Amazonbot/i],
+  ["OtherBot", /bot\b|crawler|spider|slurp/i],
+];
+export function botOf(request) {
+  const ua = request.headers.get("User-Agent") || "";
+  const hit = BOTS.find(([, re]) => re.test(ua));
+  const verified = request.cf?.verifiedBotCategory || "";
+  if (!hit && !verified) return null;
+  return { bot: hit ? hit[0] : "Verified", verified };
+}
+
+// IndexNow (Bing, Yandex, Seznam, Naver; Google ignores it): after a deploy, scripts/deploy-site.sh POSTs to /__indexnow
+// and the worker submits the pages that changed in that build (site-dist/indexnow.json). The key file is /<key>.txt.
+export const INDEXNOW_KEY = "c0nd0r7f3a9b41d28e6c5aa0b9e4d1f2";
+async function indexNow(request, env) {
+  if (request.method !== "POST") return json(405, { error: "post_only" });
+  if (!(await underLimit(env.INDEXNOW_RATE, "indexnow"))) return json(429, { error: "too_many_requests" });
+  const res = await env.ASSETS.fetch(new Request(new URL("/indexnow.json", request.url), { method: "GET" }));
+  if (!res.ok) return json(404, { error: "no_list" });
+  const { urls = [] } = await res.json();
+  const urlList = urls.filter((u) => typeof u === "string" && u.startsWith(`https://${HOME_HOST}/`)).slice(0, 10000);
+  if (!urlList.length) return json(200, { submitted: 0 });
+  const r = await fetch("https://api.indexnow.org/indexnow", {
+    method: "POST", headers: { "Content-Type": "application/json; charset=utf-8" },
+    body: JSON.stringify({ host: HOME_HOST, key: INDEXNOW_KEY, keyLocation: `https://${HOME_HOST}/${INDEXNOW_KEY}.txt`, urlList }),
+  });
+  return json(200, { submitted: urlList.length, indexnow: r.status });
+}
+
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
+    const res = await handle(request, env);
+    const who = botOf(request);
+    if (who) console.log(JSON.stringify({ crawl: 1, ...who, path: new URL(request.url).pathname, status: res.status, method: request.method }));
+    return res;
+  },
+};
+
+async function handle(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
+    if (path === "/__indexnow") return indexNow(request, env);
+    const moved = canonicalRedirect(request, url);
+    if (moved) return moved;
+    if (isLimitedPage(path) && !request.cf?.verifiedBotCategory) {
+      const ip = request.headers.get("CF-Connecting-IP") || "local";
+      if (!(await underLimit(env.PAGE_IP_RATE, `page:${ip}`))) {
+        return new Response("Demasiadas páginas seguidas. Espera un minuto y vuelve a intentarlo.", {
+          status: 429, headers: { "Content-Type": "text/plain; charset=utf-8", "Retry-After": "60", "Cache-Control": "no-store" },
+        });
+      }
+    }
     const isApi = path === "/app/api/reveal";
     const isExamFile = path.startsWith("/app/exams/") && path !== "/app/exams/index.json";
     if ((!isApi && !isExamFile) || request.method === "OPTIONS") return env.ASSETS.fetch(request);
@@ -296,5 +369,4 @@ export default {
     out.headers.set("Cache-Control", "private, max-age=3600");
     out.headers.set("Vary", "Authorization");
     return out;
-  },
-};
+}

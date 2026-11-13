@@ -10,84 +10,84 @@ import { join } from "node:path";
 
 const COMPETENCIES = [
   {
-    slug: "interpretacion-y-representacion", area: "Matemáticas", name: "Interpretación y representación",
+    slug: "interpretacion-y-representacion", seoTitle: "Interpretación y representación: competencia ICFES", area: "Matemáticas", name: "Interpretación y representación",
     tag: "Interpretación y representación",
     what: "Es la capacidad de leer y usar representaciones de información cuantitativa: tablas, gráficas, diagramas, expresiones algebraicas y enunciados verbales, y de pasar de una representación a otra sin cambiar lo que dicen.",
     tasks: ["Leer un dato o comparar valores en una tabla o gráfica.", "Elegir la gráfica que representa correctamente unos datos.", "Traducir una situación escrita a una expresión o ecuación.", "Reconocer qué información aporta una representación y cuál no."],
     tips: ["Antes de mirar las opciones, di en una frase qué muestra la tabla o gráfica: qué variable va en cada eje y en qué unidades.", "Revisa escalas y unidades: muchas opciones incorrectas usan bien el número pero con la unidad equivocada.", "Cuando debas elegir una gráfica, comprueba dos o tres puntos concretos en vez de mirar la forma general."],
   },
   {
-    slug: "formulacion-y-ejecucion", area: "Matemáticas", name: "Formulación y ejecución",
+    slug: "formulacion-y-ejecucion", seoTitle: "Formulación y ejecución: competencia ICFES", area: "Matemáticas", name: "Formulación y ejecución",
     tag: "Formulación y ejecución",
     what: "Es la capacidad de plantear una estrategia para resolver un problema, elegir el modelo o procedimiento adecuado (una ecuación, una proporción, un conteo, una probabilidad) y llevarlo a cabo con precisión.",
     tasks: ["Plantear la ecuación o el procedimiento que resuelve una situación.", "Calcular porcentajes, proporciones, áreas, volúmenes o probabilidades.", "Elegir entre varios procedimientos el que sirve para responder una pregunta.", "Resolver problemas de varios pasos."],
     tips: ["Escribe primero qué te piden y qué datos tienes; muchas veces sobra información.", "Estima el resultado antes de calcular: te ayuda a descartar opciones absurdas.", "Practica operaciones a mano: en el examen no se permite calculadora."],
   },
   {
-    slug: "argumentacion", area: "Matemáticas", name: "Argumentación",
+    slug: "argumentacion", seoTitle: "Argumentación en Matemáticas: competencia ICFES", area: "Matemáticas", name: "Argumentación",
     tag: "Argumentación",
     what: "Es la capacidad de justificar o refutar afirmaciones, procedimientos y conclusiones con razones matemáticas: decir por qué algo es correcto o en qué paso falla.",
     tasks: ["Decidir si una afirmación sobre unos datos es verdadera y por qué.", "Encontrar el error en un procedimiento resuelto paso a paso.", "Elegir la razón que justifica una conclusión.", "Reconocer cuándo los datos no alcanzan para concluir algo."],
     tips: ["En las opciones de la forma 'sí, porque…' o 'no, porque…', revisa por separado la decisión y la razón: muchas opciones aciertan una y fallan la otra.", "Para encontrar un error, revisa cada paso con un número concreto.", "Desconfía de las afirmaciones con 'siempre' o 'nunca': basta un contraejemplo."],
   },
   {
-    slug: "contenidos-locales-de-un-texto", area: "Lectura crítica", name: "Identificar y entender los contenidos locales de un texto",
+    slug: "contenidos-locales-de-un-texto", seoTitle: "Contenidos locales de un texto: competencia ICFES", area: "Lectura crítica", name: "Identificar y entender los contenidos locales de un texto",
     tag: "Identificar y entender los contenidos locales que conforman un texto",
     what: "Es la capacidad de comprender el significado de palabras, expresiones y frases dentro del texto en que aparecen, y de entender lo que dice explícitamente cada parte.",
     tasks: ["Explicar qué significa una palabra o expresión en su contexto.", "Identificar quién dice algo o a quién se refiere un pronombre.", "Reconocer la información que el texto dice de forma literal.", "Parafrasear una oración sin cambiar su sentido."],
     tips: ["Vuelve siempre al texto: la respuesta correcta está apoyada en lo que el texto dice.", "Para el significado de una palabra, reemplázala por cada opción y lee la frase completa.", "Descarta las opciones que agregan información que el texto no menciona."],
   },
   {
-    slug: "articulacion-de-las-partes-de-un-texto", area: "Lectura crítica", name: "Comprender cómo se articulan las partes de un texto",
+    slug: "articulacion-de-las-partes-de-un-texto", seoTitle: "Cómo se articulan las partes de un texto (ICFES)", area: "Lectura crítica", name: "Comprender cómo se articulan las partes de un texto",
     tag: "Comprender cómo se articulan las partes de un texto para darle un sentido global",
     what: "Es la capacidad de entender cómo se relacionan las partes de un texto para formar un sentido global: la idea principal, la función de cada párrafo, la estructura y las relaciones entre ideas.",
     tasks: ["Identificar la idea principal o la tesis del texto.", "Reconocer la función de un párrafo (ejemplificar, contrastar, concluir).", "Relacionar dos partes del texto o dos ideas.", "Identificar la estructura del texto o el tipo de texto."],
     tips: ["Después de leer, resume el texto en una sola frase antes de ver las preguntas.", "Fíjate en los conectores (sin embargo, por lo tanto, en cambio): muestran cómo se relacionan las ideas.", "Para la idea principal, descarta las opciones que solo hablan de un párrafo."],
   },
   {
-    slug: "reflexionar-y-evaluar-un-texto", area: "Lectura crítica", name: "Reflexionar a partir de un texto y evaluar su contenido",
+    slug: "reflexionar-y-evaluar-un-texto", seoTitle: "Reflexionar y evaluar un texto: competencia ICFES", area: "Lectura crítica", name: "Reflexionar a partir de un texto y evaluar su contenido",
     tag: "Reflexionar a partir de un texto y evaluar su contenido",
     what: "Es la capacidad de asumir una postura crítica frente al texto: evaluar sus argumentos y supuestos, reconocer la intención del autor, distinguir hechos de opiniones y relacionar el texto con otros textos o contextos.",
     tasks: ["Reconocer la intención o la postura del autor.", "Evaluar si un argumento es válido o qué lo fortalece o debilita.", "Distinguir entre un hecho y una opinión.", "Relacionar el texto con otra fuente o situación."],
     tips: ["Pregúntate para qué escribió el autor el texto: informar, convencer, criticar, narrar.", "Para fortalecer o debilitar un argumento, busca la opción que toque directamente la razón principal.", "Una opinión usa juicios de valor; un hecho se puede comprobar."],
   },
   {
-    slug: "pensamiento-social", area: "Sociales y ciudadanas", name: "Pensamiento social",
+    slug: "pensamiento-social", seoTitle: "Pensamiento social: competencia ICFES de Sociales", area: "Sociales y ciudadanas", name: "Pensamiento social",
     tag: "Pensamiento social",
     what: "Es la capacidad de usar conceptos básicos de las ciencias sociales (historia, geografía, economía, política) y de la Constitución Política de Colombia para comprender problemas sociales.",
     tasks: ["Reconocer derechos y deberes y los mecanismos para protegerlos.", "Identificar la función de las ramas del poder y los órganos de control.", "Usar conceptos históricos, geográficos o económicos para explicar una situación.", "Relacionar un hecho con su contexto histórico."],
     tips: ["Repasa la Constitución: derechos fundamentales, tutela, acción popular, ramas del poder y organismos de control.", "Lee el caso completo antes de mirar las opciones: el concepto clave suele estar en un detalle.", "Relaciona cada concepto con un ejemplo concreto de la vida diaria."],
   },
   {
-    slug: "interpretacion-y-analisis-de-perspectivas", area: "Sociales y ciudadanas", name: "Interpretación y análisis de perspectivas",
+    slug: "interpretacion-y-analisis-de-perspectivas", seoTitle: "Análisis de perspectivas: competencia ICFES", area: "Sociales y ciudadanas", name: "Interpretación y análisis de perspectivas",
     tag: "Interpretación y análisis de perspectivas",
     what: "Es la capacidad de analizar un problema desde la mirada de los distintos actores que participan en él: sus intereses, argumentos y prejuicios, y de evaluar la información y las fuentes que usan.",
     tasks: ["Identificar los intereses de cada actor en un conflicto.", "Reconocer un prejuicio o una generalización en un argumento.", "Comparar dos posturas sobre un mismo problema.", "Evaluar si una fuente es confiable o suficiente."],
     tips: ["Haz una lista rápida de actores y de lo que cada uno gana o pierde.", "Desconfía de las opciones que atribuyen a todo un grupo una característica.", "No respondas con tu opinión: la pregunta pide la postura de un actor."],
   },
   {
-    slug: "pensamiento-reflexivo-y-sistemico", area: "Sociales y ciudadanas", name: "Pensamiento reflexivo y sistémico",
+    slug: "pensamiento-reflexivo-y-sistemico", seoTitle: "Pensamiento reflexivo y sistémico (ICFES Sociales)", area: "Sociales y ciudadanas", name: "Pensamiento reflexivo y sistémico",
     tag: "Pensamiento reflexivo y sistémico",
     what: "Es la capacidad de comprender la realidad social como un sistema, en el que un problema tiene dimensiones económicas, políticas, ambientales y culturales, y de evaluar las consecuencias de las soluciones que se proponen.",
     tasks: ["Identificar las dimensiones de un problema social.", "Prever consecuencias de una decisión o política.", "Evaluar si una solución resuelve el problema planteado.", "Relacionar factores que influyen entre sí."],
     tips: ["Pregúntate qué otras áreas afecta una decisión: la economía, el ambiente, la convivencia.", "Una buena solución ataca la causa del problema, no solo sus efectos.", "Busca la opción que tenga en cuenta a todos los afectados."],
   },
   {
-    slug: "uso-comprensivo-del-conocimiento-cientifico", area: "Ciencias naturales", name: "Uso comprensivo del conocimiento científico",
+    slug: "uso-comprensivo-del-conocimiento-cientifico", seoTitle: "Uso comprensivo del conocimiento científico (ICFES)", area: "Ciencias naturales", name: "Uso comprensivo del conocimiento científico",
     tag: "Uso comprensivo del conocimiento científico",
     what: "Es la capacidad de comprender y usar conceptos, nociones y teorías de biología, química y física para resolver problemas, no solo de recordarlos.",
     tasks: ["Aplicar un concepto (energía, célula, reacción, fuerza) a una situación nueva.", "Relacionar un fenómeno con la teoría que lo explica.", "Reconocer las propiedades de sustancias, organismos u objetos.", "Usar unidades y magnitudes correctamente."],
     tips: ["Repasa los conceptos base de cada componente: biología celular y ecología, cambios químicos y mezclas, fuerza, energía y ondas.", "Identifica qué concepto está en juego antes de leer las opciones.", "Practica con situaciones cotidianas: cocina, deporte, salud."],
   },
   {
-    slug: "explicacion-de-fenomenos", area: "Ciencias naturales", name: "Explicación de fenómenos",
+    slug: "explicacion-de-fenomenos", seoTitle: "Explicación de fenómenos: competencia ICFES", area: "Ciencias naturales", name: "Explicación de fenómenos",
     tag: "Explicación de fenómenos",
     what: "Es la capacidad de construir explicaciones y comprender argumentos y modelos que dicen por qué ocurre un fenómeno natural.",
     tasks: ["Elegir la explicación correcta de un fenómeno observado.", "Usar un modelo (de partículas, de un circuito, de un ecosistema) para predecir.", "Reconocer la causa de un cambio.", "Evaluar si una explicación es coherente con los datos."],
     tips: ["Busca la relación de causa y efecto: ¿qué cambia primero y qué cambia como consecuencia?", "Descarta las explicaciones que usan bien las palabras pero invierten la causa.", "Dibuja un esquema rápido cuando haya varios elementos."],
   },
   {
-    slug: "indagacion", area: "Ciencias naturales", name: "Indagación",
+    slug: "indagacion", seoTitle: "Indagación en Ciencias naturales: competencia ICFES", area: "Ciencias naturales", name: "Indagación",
     tag: "Indagación",
     what: "Es la capacidad de plantear preguntas y procedimientos para investigar, y de buscar, organizar y analizar datos para sacar conclusiones válidas.",
     tasks: ["Identificar la variable que se mide y la que se cambia en un experimento.", "Elegir el procedimiento adecuado para responder una pregunta.", "Sacar una conclusión de una tabla o gráfica de resultados.", "Reconocer cuándo los datos no permiten concluir algo."],
@@ -253,7 +253,7 @@ ${questionsBlock(ctx, items, area)}
 </section>
 ${ctx.cta("../../", `Haz el simulacro completo de ${ctx.esc(area.name)}`)}`;
     ctx.write(path, ctx.page({
-      siteUrl: ctx.siteUrl, path, title: `${title} gratis: mini simulacro con preguntas reales | Cóndor`,
+      siteUrl: ctx.siteUrl, path, title: `${title} gratis`,
       desc: `Simulacro ICFES de ${area.name} gratis: ${items.length} preguntas reales del Saber 11 con tu resultado al final, cómo es la prueba, cuánto tiempo tienes y estrategias.`,
       body, katex: body.includes('class="katex'),
       crumbs: [{ name: "Simulacro ICFES", path: "simulacro-icfes/" }, { name: area.name, path }],
@@ -291,7 +291,7 @@ ${items.length ? `<section class="qlist wrap narrow" aria-label="Preguntas de ej
 <section class="wrap narrow more"><p>Las otras competencias de ${ctx.esc(c.area)}: ${siblings.map((s) => `<a href="../${s.slug}/">${ctx.esc(s.name)}</a>`).join(" · ")}. Practica la prueba completa en el <a href="../../simulacro-icfes/${area.slug}/">simulacro ICFES de ${ctx.esc(c.area)}</a>.</p></section>
 ${ctx.cta("../../", "Practica por competencia en la app")}`;
     ctx.write(path, ctx.page({
-      siteUrl: ctx.siteUrl, path, title: `${c.name}: competencia de ${c.area} en el ICFES | Cóndor`,
+      siteUrl: ctx.siteUrl, path, title: c.seoTitle,
       desc: `Qué es la competencia ${c.name} del ICFES Saber 11 (${c.area}), qué piden las preguntas, cómo mejorar y preguntas reales de ejemplo.`,
       body, katex: body.includes('class="katex'),
       crumbs: [{ name: "Competencias ICFES", path: "competencias-icfes/" }, { name: c.name, path }],
@@ -313,7 +313,7 @@ ${ctx.cta("../../", "Practica por competencia en la app")}`;
 </section>
 ${ctx.cta("../", "Practica cada competencia")}`;
   ctx.write(path, ctx.page({
-    siteUrl: ctx.siteUrl, path, title: "Competencias del ICFES Saber 11 por prueba, explicadas | Cóndor",
+    siteUrl: ctx.siteUrl, path, title: "Competencias ICFES Saber 11 por prueba, explicadas",
     desc: "Las competencias que evalúa el ICFES en Matemáticas, Lectura crítica, Sociales y Ciencias: qué significa cada una, qué preguntan y cómo prepararlas.",
     body, crumbs: [{ name: "Competencias ICFES", path }],
     jsonLd: [{ "@type": "CollectionPage", name: "Competencias del ICFES", url: ctx.siteUrl + path, inLanguage: "es-CO", hasPart: COMPETENCIES.map((c) => ({ "@type": "LearningResource", name: c.name, url: `${ctx.siteUrl}competencias-icfes/${c.slug}/` })) }],
@@ -347,12 +347,13 @@ function buildResults(ctx) {
 <section class="wrap narrow guide-body">
   <h2>Qué trae el reporte</h2>
   <div class="tbl"><table><thead><tr><th>Dato</th><th>Qué significa</th></tr></thead><tbody>${rows.map(([a, b]) => `<tr><td><b>${a}</b></td><td>${b}</td></tr>`).join("")}</tbody></table></div>
+  <p class="prose">El reporte también trae tu <a href="../numero-de-registro-icfes/">número de registro</a>, que te piden muchas universidades. Si necesitas una copia para legalizar o apostillar, mira el <a href="../certificado-icfes/">certificado del ICFES</a>.</p>
   <h2>Cómo se relacionan</h2>
   <p class="prose">El puntaje global sale de los cinco puntajes por prueba: <b>(3 × Lectura crítica + 3 × Matemáticas + 3 × Sociales + 3 × Ciencias + 1 × Inglés) ÷ 13 × 5</b>. Por eso un punto en Matemáticas mueve el global tres veces más que un punto en Inglés. Compruébalo con la <a href="../calculadora-puntaje-icfes/">calculadora del puntaje ICFES</a>.</p>
   <p class="prose">El nivel de desempeño depende del rango en que cae tu puntaje de cada prueba. Mira los rangos en <a href="../niveles-de-desempeno-icfes/">niveles de desempeño del ICFES</a>.</p>
   <h2>Qué hacer con tu resultado</h2>
   <ul class="checks">
-    <li><b>Si vas a la universidad:</b> revisa el puntaje y las pruebas que pondera el programa que te interesa en su convocatoria oficial.</li>
+    <li><b>Si vas a la universidad:</b> revisa el puntaje y las pruebas que pondera el programa que te interesa en su convocatoria oficial. Tenemos los pesos y cortes de varias públicas en <a href="../puntaje-icfes/">puntaje ICFES para entrar a la universidad</a>.</li>
     <li><b>Si vas a repetir el examen:</b> empieza por la prueba con el percentil más bajo entre las cuatro que pesan 3; ahí está la mayor ganancia.</li>
     <li><b>Si eres docente:</b> compara los niveles de desempeño del curso por prueba para decidir qué competencias reforzar.</li>
   </ul>
@@ -361,7 +362,7 @@ function buildResults(ctx) {
 </section>
 ${ctx.cta("../", "Mide tu puntaje antes del examen")}`;
   ctx.write(path, ctx.page({
-    siteUrl: ctx.siteUrl, path, title: "Resultados ICFES: cómo leer tu puntaje, percentil y niveles | Cóndor",
+    siteUrl: ctx.siteUrl, path, title: "Resultados ICFES: cómo leer tu puntaje y percentil",
     desc: "Qué significa cada dato de los resultados del ICFES Saber 11: puntaje global, percentil, puntaje por prueba y nivel de desempeño, y qué hacer con ellos.",
     body, crumbs: [{ name: "Resultados ICFES", path }],
     jsonLd: [ctx.faqLd(faq), { "@type": "Article", headline: "Cómo leer tus resultados del ICFES", inLanguage: "es-CO", url: ctx.siteUrl + path, author: { "@id": `${ctx.siteUrl}#org` }, publisher: { "@id": `${ctx.siteUrl}#org` }, datePublished: "2026-11-09" }],
@@ -407,7 +408,7 @@ function buildGlossary(ctx) {
 </section>
 ${ctx.cta("../", "Practica para el Saber 11")}`;
   ctx.write(path, ctx.page({
-    siteUrl: ctx.siteUrl, path, title: "Glosario ICFES: qué es percentil, puntaje global, MCER y más | Cóndor",
+    siteUrl: ctx.siteUrl, path, title: "Glosario ICFES: percentil, puntaje global, MCER y más",
     desc: "Glosario del ICFES Saber 11: percentil, puntaje global, nivel de desempeño, MCER, competencia, cuadernillo, citación y otros términos explicados en una frase.",
     body, crumbs: [{ name: "Glosario ICFES", path }],
     jsonLd: [{ "@type": "DefinedTermSet", name: "Glosario del ICFES", url: ctx.siteUrl + path, inLanguage: "es-CO", hasDefinedTerm: TERMS.map(([t, d]) => ({ "@type": "DefinedTerm", name: t, description: d, url: `${ctx.siteUrl}${path}#${slug(t)}` })) }],
@@ -418,7 +419,7 @@ ${ctx.cta("../", "Practica para el Saber 11")}`;
 
 const ARTICLES = [
   {
-    slug: "como-mejorar-en-lectura-critica-icfes", date: "2026-11-09",
+    slug: "como-mejorar-en-lectura-critica-icfes", date: "2026-11-09", seoTitle: "Cómo mejorar en Lectura crítica del ICFES: 7 hábitos",
     title: "Cómo mejorar en Lectura crítica del ICFES: 7 hábitos que sí funcionan",
     desc: "Siete hábitos concretos para subir tu puntaje en Lectura crítica del Saber 11: cómo leer, cómo descartar opciones y cómo practicar cada semana.",
     intro: "Lectura crítica pesa 3 en el puntaje global y tiene 41 preguntas, todas en la primera sesión. La buena noticia es que mejora rápido con práctica dirigida. Estos son los hábitos que más ayudan.",
@@ -434,7 +435,7 @@ const ARTICLES = [
     links: [["competencias-icfes/reflexionar-y-evaluar-un-texto/", "Competencia: reflexionar y evaluar un texto"], ["simulacro-icfes/lectura-critica/", "Mini simulacro de Lectura crítica"]],
   },
   {
-    slug: "errores-comunes-ingles-icfes", date: "2026-11-09",
+    slug: "errores-comunes-ingles-icfes", date: "2026-11-09", seoTitle: "Errores comunes en Inglés del ICFES y cómo evitarlos",
     title: "Errores comunes en la prueba de Inglés del ICFES y cómo evitarlos",
     desc: "Los errores más frecuentes en la prueba de Inglés del Saber 11, parte por parte, y cómo evitarlos para subir tu nivel MCER.",
     intro: "La prueba de Inglés tiene unas 55 preguntas en 7 partes, todas en la segunda sesión. Muchos puntos se pierden por errores evitables, no por falta de vocabulario. Estos son los más comunes.",
@@ -464,7 +465,7 @@ function buildBlog(ctx) {
 </article>
 ${ctx.cta("../../", "Pon en práctica estos consejos")}`;
     ctx.write(path, ctx.page({
-      siteUrl: ctx.siteUrl, path, title: `${a.title} | Cóndor`, desc: a.desc, body, type: "article",
+      siteUrl: ctx.siteUrl, path, title: a.seoTitle ?? a.title, desc: a.desc, body, type: "article",
       crumbs: [{ name: "Blog", path: "blog/" }, { name: a.title, path }],
       jsonLd: [{ "@type": "BlogPosting", headline: a.title, description: a.desc, inLanguage: "es-CO", url: ctx.siteUrl + path, datePublished: a.date, dateModified: a.date, author: { "@id": `${ctx.siteUrl}#org` }, publisher: { "@id": `${ctx.siteUrl}#org` }, mainEntityOfPage: ctx.siteUrl + path }],
     }));

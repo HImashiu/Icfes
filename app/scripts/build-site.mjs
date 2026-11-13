@@ -40,21 +40,9 @@ mkdirSync(out, { recursive: true });
 cpSync(dist, join(out, "app"), { recursive: true });
 cpSync(join(appRoot, "public", "brand"), join(out, "brand"), { recursive: true });
 
-// The owl peeking over the sample question on the landing page: Juan's owl (src/components/owlArt.js), head only,
-// cut just under the eyes so it sits on the card's top edge. Inline, so the landing's CSS can blink and move it.
-const owl = await import(pathToFileURL(join(appRoot, "src", "components", "owlArt.js")).href);
-function owlPeek() {
-  const { OWL_PATHS: P, OWL_ELLIPSES: E, OWL_COLORS: C } = owl;
-  const ell = (e, fill) => `<ellipse cx="${e.cx}" cy="${e.cy}" rx="${e.rx}" ry="${e.ry}" fill="${fill}"/>`;
-  const arc = (e) => `<ellipse cx="${e.cx}" cy="${e.cy}" rx="${e.rx + 6}" ry="${e.ry + 6}" fill="${C.face}"/><path d="M${e.cx - 66} ${e.cy + 24}Q${e.cx} ${e.cy - 74} ${e.cx + 66} ${e.cy + 24}" fill="none" stroke="${C.pupil}" stroke-width="30" stroke-linecap="round"/>`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="20 -14 900 704" focusable="false">`
-    + `<path d="${P.board}" fill="${C.board}"/><path d="${P.hood}" fill="${C.hood}"/><path d="${P.face}" fill="${C.face}"/>`
-    + E.blush.map((e) => ell(e, C.blush)).join("")
-    + `<g class="pk-eyes"><g class="pk-open">${E.eyes.map((e) => ell(e, C.eye)).join("")}<g class="pk-pupils"><path d="${P.pupilL}" fill="${C.pupil}"/><path d="${P.pupilR}" fill="${C.pupil}"/></g></g>`
-    + `<g class="pk-happy">${E.eyes.map(arc).join("")}</g></g>`
-    + `<path d="${P.beak}" fill="${C.beak}"/><path d="${P.crown}" fill="${C.crown}"/>`
-    + `<g class="pk-tassel"><path d="${P.cord}" fill="${C.tassel}"/><path d="${P.bell}" fill="${C.tassel}"/></g></svg>`;
-}
+// Juan's owl (src/components/owlArt.js) inline in the pages, so their CSS can blink and move it: the head peeking over
+// the sample question (<!--OWL_PEEK-->) and the whole owl wherever <!--OWL_FULL--> or <!--OWL_FULL:classes--> appears.
+const { fillOwls } = await (await import(pathToFileURL(join(here, "owl-svg.mjs")).href)).owlBuilders(appRoot);
 
 // Analytics, only when its id is set at build time (nothing is loaded otherwise):
 //   CF_ANALYTICS_TOKEN   Cloudflare Web Analytics site token (no cookies)
@@ -84,11 +72,10 @@ const verification = env.GOOGLE_SITE_VERIFICATION
   : "";
 
 const TEXT = /\.(html|css|js|txt|xml)$/;
-const fill = (text) => text
+const fill = (text) => fillOwls(text)
   .replaceAll("__SUPABASE_URL__", supabaseUrl)
   .replaceAll("__SUPABASE_ANON_KEY__", supabaseKey)
   .replaceAll("__SITE_URL__", siteUrl)
-  .replace("<!--OWL_PEEK-->", owlPeek())
   .replace("<!--ANALYTICS-->", analytics())
   .replace("<!--SITE_VERIFICATION-->", verification);
 
@@ -113,7 +100,7 @@ globalThis.document = dom.window.document;
 const { createServer } = await import("vite");
 const vite = await createServer({ root: appRoot, configFile: false, logLevel: "error", appType: "custom", server: { middlewareMode: true, hmr: false } });
 const { renderRich } = await vite.ssrLoadModule("/src/lib/render.js");
-const { buildSeoPages } = await import(pathToFileURL(join(here, "build-seo.mjs")).href);
+const { buildSeoPages, injectRelated } = await import(pathToFileURL(join(here, "build-seo.mjs")).href);
 const dataDir = env.ICFES_DATA_DIR || "/mnt/project-files/icfes/data";
 const saber11 = await vite.ssrLoadModule("/src/lib/saber11.js");
 const national = JSON.parse(readFileSync(join(appRoot, "src", "lib", "saber11-national-2022.json"), "utf8"));
@@ -123,10 +110,49 @@ for (const p of seoPages) {
   const f = join(out, p, "index.html");
   writeFileSync(f, fill(readFileSync(f, "utf8")));
 }
-// Sitemap from the pages that exist, with today's date.
+// "Sigue con" links on every search page (after all of them exist, so new families are linked too).
+injectRelated(out, seoPages);
+// Sitemap from the pages that exist. lastmod is the day a page's content last changed (scripts/seo-lastmod.json keeps
+// a hash per page; commit it after a deploy), so Google can trust it instead of seeing every page "changed" daily.
 const today = new Date().toISOString().slice(0, 10);
-const urls = [["", "1.0"], ...seoPages.map((p) => [p, p.split("/").filter(Boolean).length === 1 ? "0.9" : "0.8"]), ["privacidad.html", "0.3"]];
-writeFileSync(join(out, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(([p, pr]) => `  <url><loc>${siteUrl}${p}</loc><lastmod>${today}</lastmod><priority>${pr}</priority></url>`).join("\n")}\n</urlset>\n`);
+const urls = [["", "1.0"], ...seoPages.map((p) => [p, p.split("/").filter(Boolean).length === 1 ? "0.9" : "0.8"]), ["privacidad", "0.3"]];
+const lastmodFile = join(here, "seo-lastmod.json");
+const lastmod = existsSync(lastmodFile) ? JSON.parse(readFileSync(lastmodFile, "utf8")) : {};
+const changed = [];
+for (const [p] of urls) {
+  const f = p === "" || p.endsWith("/") ? join(out, p, "index.html") : join(out, `${p}.html`);
+  const main = (readFileSync(f, "utf8").match(/<main[^>]*>([\s\S]*)<\/main>|<body[^>]*>([\s\S]*)<\/body>/) ?? [""])[0].replace("<!--UPDATED-->\n", "");
+  const hash = createHash("sha1").update(main).digest("hex").slice(0, 16);
+  if (lastmod[p]?.hash !== hash) { lastmod[p] = { hash, date: today, first: lastmod[p]?.first ?? lastmod[p]?.date ?? today }; changed.push(p); }
+  lastmod[p].first ??= lastmod[p].date;
+}
+// Freshness: a visible "Actualizado el ..." line and WebPage dates in the JSON-LD, both from the same lastmod the sitemap
+// uses. Pages whose family already dates its facts (university and trámites pages: dateModified = day checked) keep theirs.
+const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+const longDate = (d) => `${Number(d.slice(8, 10))} de ${MONTHS[Number(d.slice(5, 7)) - 1]} de ${d.slice(0, 4)}`;
+for (const p of seoPages) {
+  const f = join(out, p, "index.html");
+  let html = readFileSync(f, "utf8");
+  const { date, first } = lastmod[p];
+  if (!html.includes('"dateModified"')) {
+    html = html.replace(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/, (m, json) => {
+      const ld = JSON.parse(json);
+      const name = (html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1] ?? "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+      ld["@graph"].push({ "@type": "WebPage", "@id": siteUrl + p, url: siteUrl + p, name, inLanguage: "es-CO", datePublished: first, dateModified: date, isPartOf: { "@id": `${siteUrl}#web` } });
+      return `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script>`;
+    });
+    html = html.replace("<!--UPDATED-->", `<div class="wrap narrow updated"><p>Actualizado el <time datetime="${date}">${longDate(date)}</time>.</p></div>`);
+  } else html = html.replace("<!--UPDATED-->", "");
+  writeFileSync(f, html);
+}
+// IndexNow: the pages that changed in this build (INDEXNOW_ALL=1: every page), submitted by the worker after deploy.
+const indexList = process.env.INDEXNOW_ALL === "1" ? urls.map(([p]) => p) : changed;
+writeFileSync(join(out, "indexnow.json"), JSON.stringify({ built: new Date().toISOString(), urls: indexList.map((p) => siteUrl + p) }) + "\n");
+const { INDEXNOW_KEY } = await import(pathToFileURL(join(appRoot, "worker", "index.js")).href);
+writeFileSync(join(out, `${INDEXNOW_KEY}.txt`), INDEXNOW_KEY);
+console.log(`[build-site] ${changed.length} pages changed since the last build (IndexNow list: ${indexList.length})`);
+writeFileSync(lastmodFile, JSON.stringify(Object.fromEntries(Object.entries(lastmod).sort()), null, 1) + "\n");
+writeFileSync(join(out, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(([p, pr]) => `  <url><loc>${siteUrl}${p}</loc><lastmod>${lastmod[p].date}</lastmod><priority>${pr}</priority></url>`).join("\n")}\n</urlset>\n`);
 console.log(`[build-site] ${seoPages.length} search pages: ${seoPages.join(", ")}`);
 
 // The app gets the same analytics as the landing page.
@@ -223,5 +249,20 @@ writeFileSync(join(out, "_headers"), `/*
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(self), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
   Cross-Origin-Opener-Policy: same-origin-allow-popups
+
+/insertar/calculadora/*
+  ! X-Frame-Options
+  ! Content-Security-Policy
+  Content-Security-Policy: ${csp.replace("frame-ancestors 'none'", "frame-ancestors *")}
 `);
+// /insertar/calculadora/ is the score calculator other sites put in an iframe (scripts/build-seo-embeds.mjs): no
+// forms or sign-in there, so it may be framed by anyone. Every other page keeps frame-ancestors 'none' and DENY.
 console.log(`[build-site] site-dist ready: landing + app/ (site URL ${siteUrl})`);
+
+// Search checks on the finished site (titles, h1, canonical, JSON-LD, orphan pages): errors stop the build.
+const { checkSeo } = await import(pathToFileURL(join(here, "check-seo.mjs")).href);
+const seo = checkSeo(out);
+for (const w of seo.warns) console.warn(`[check-seo] warn: ${w}`);
+for (const e of seo.errors) console.error(`[check-seo] ERROR: ${e}`);
+console.log(`[check-seo] ${seo.pages} pages, ${seo.errors.length} errors, ${seo.warns.length} warnings`);
+if (seo.errors.length) process.exit(1);

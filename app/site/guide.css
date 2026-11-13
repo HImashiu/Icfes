@@ -1,0 +1,108 @@
+/* Guide pages (simulacro, preguntas por área, exámenes anteriores, calculadora, guías, blog): the landing's look as a
+   template. Loaded after site.css and landing.css; body has class "landing guide". A dark head with the squared grid,
+   the doodles and the owl, then the content on cream paper with ink lines, lime stickers and chunky cards. */
+
+.guide main { background: var(--cream); }
+
+/* Breadcrumbs and head on the dark grid. */
+.guide .crumbs { position: relative; z-index: 2; box-shadow: 0 0 0 100vmax var(--bg); clip-path: inset(0 -100vmax); background: var(--bg); padding-top: 22px; padding-bottom: 4px; font-weight: 600; }
+.guide .crumbs a { color: var(--text-2); text-decoration: none; }
+.guide .crumbs a:hover { color: var(--accent); }
+.guide-head.dots { background-color: var(--bg); padding: 34px 0 96px; }
+.guide-head .wrap { position: relative; z-index: 1; }
+.guide-head h1 { font: 800 clamp(34px, 6vw, 68px)/0.96 var(--display); text-transform: uppercase; letter-spacing: -0.02em; text-wrap: balance; margin: 0 0 22px; }
+.guide-head .tag { --t: -3deg; display: inline-block; padding: 7px 14px 8px; border-radius: 10px; background: var(--accent); color: var(--ink); font: 800 14px/1 var(--ui); text-transform: uppercase; letter-spacing: 0.05em; transform: rotate(var(--t)); box-shadow: 0 0 0 3px var(--bg), 0 4px 0 3px rgba(0, 0, 0, 0.3); margin-bottom: 22px; }
+.guide-head .prose { font-size: clamp(17px, 1.8vw, 19px); color: var(--text-2); max-width: 58ch; }
+.guide-head .cta-row { margin-top: 26px; }
+.gh-owl { position: absolute; z-index: 1; right: max(24px, calc(50% - 600px)); bottom: 6px; width: clamp(110px, 16vw, 210px); aspect-ratio: 1; cursor: pointer; }
+.gh-owl .ow { width: 100%; height: 100%; overflow: visible; }
+@media (max-width: 1180px) { .guide-head.dots { padding-bottom: 150px; } .gh-owl { width: 120px; right: 20px; bottom: 18px; } }
+@media (max-width: 600px) { .guide-head.dots { padding: 22px 0 120px; } .gh-owl { width: 96px; } }
+
+/* Chunky buttons, like the landing's. */
+.guide .btn-primary { background: var(--accent); color: var(--ink); border: 2px solid var(--ink); box-shadow: 0 4px 0 var(--ink), 0 0 0 3px var(--accent-shadow) inset; }
+.guide .btn-primary:active { transform: translateY(4px); box-shadow: 0 0 0 var(--ink), 0 0 0 3px var(--accent-shadow) inset; }
+.guide-head .btn-ghost { border-color: rgba(242, 245, 239, 0.4); box-shadow: 0 4px 0 rgba(242, 245, 239, 0.25); }
+
+/* Content on cream: the same tokens, recoloured for paper. */
+.guide-body, .guide main > .section:not(.guide-head), .guide .qlist, .guide .more, .guide .calc {
+  --text: #0D110F; --text-2: #3E4A42; --line: rgba(13, 17, 15, 0.16); --surface: #FFFFFF; --surface-2: #ECE7DA;
+  color: var(--text);
+}
+.guide-body { padding-top: 30px; padding-bottom: 40px; }
+.guide-body h2 { font: 800 clamp(26px, 3.6vw, 40px)/1.02 var(--display); text-transform: uppercase; letter-spacing: -0.015em; text-wrap: balance; margin: 56px 0 16px; }
+.guide-body h2::after { content: ""; display: block; width: 56px; height: 6px; margin-top: 12px; border-radius: 3px; background: var(--accent); box-shadow: 0 0 0 2px var(--ink); }
+.guide-body h3 { font: 800 21px/1.25 var(--display); margin: 26px 0 8px; }
+.guide-body .prose, .guide .more { color: var(--text-2); }
+.guide-body .prose b { color: var(--text); }
+.guide-body .prose a, .guide .more a, .guide-body li a, .guide-body td a { color: #2B5F2E; font-weight: 700; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.guide-body .prose a:hover, .guide .more a:hover { background: var(--accent); color: var(--ink); }
+
+/* Lists with lime ticks, tables and cards with ink lines. */
+.guide-body .checks li { color: var(--text-2); }
+.guide-body .checks li::before { box-shadow: 0 0 0 2px var(--ink); }
+.guide .tbl { background: #fff; border: 2px solid var(--ink); border-radius: 18px; box-shadow: 0 5px 0 var(--ink); padding: 4px 14px; margin: 12px 0 18px; }
+.guide .tbl table { margin: 0; }
+.guide .tbl th { color: var(--text-2); }
+.guide .tbl tr:last-child td { border-bottom: 0; }
+.guide main .card { background: #fff; border: 2px solid var(--ink); border-radius: 22px; box-shadow: 0 6px 0 var(--ink); }
+
+/* Area links become coloured tiles that tilt. */
+.guide .areas { gap: 12px; }
+.guide .area { background: var(--c); color: var(--ink); border: 2px solid var(--ink); box-shadow: 0 4px 0 var(--ink); border-radius: 18px; transition: translate 0.4s var(--ease), rotate 0.4s var(--ease), box-shadow 0.4s var(--ease); }
+.guide .area:nth-child(odd) { rotate: -1.5deg; }
+.guide .area:nth-child(even) { rotate: 1.5deg; }
+.guide .area:hover { rotate: 0deg; translate: 0 -4px; box-shadow: 0 8px 0 var(--ink); border-color: var(--ink); }
+.guide .area .dot { display: none; }
+.guide .area b { font: 800 17px/1.15 var(--display); text-transform: uppercase; }
+.guide .area span:last-child { color: var(--ink); opacity: 0.75; }
+
+/* FAQ like the landing's: white cards with an ink edge and a lime plus. */
+.guide .faq details { background: #fff; border: 2px solid var(--ink); border-radius: 18px; box-shadow: 0 4px 0 var(--ink); }
+.guide .faq summary { color: var(--ink); }
+.guide .faq summary::after { background-color: var(--accent); box-shadow: 0 0 0 2px var(--ink); }
+
+/* The closing call to action: a dark green panel. */
+.guide main > .section:not(.guide-head) { padding-bottom: 90px; }
+.guide .section .price { background: var(--g1); color: #F2F5EF; border: 0; border-radius: 30px; box-shadow: 0 8px 0 var(--ink); padding: 36px 30px; }
+.guide .section .price h2 { font: 800 clamp(28px, 4vw, 44px)/1 var(--display); text-transform: uppercase; letter-spacing: -0.015em; color: #F2F5EF; }
+.guide .section .price p { color: rgba(242, 245, 239, 0.82); }
+
+/* Sample questions keep the app's paper card, with the landing's ink outline. */
+.guide .qcard { margin-bottom: 26px; }
+.guide .qcard .paper { overflow-x: auto; }
+
+/* Calculator: dark text and white inputs on the white card. */
+.guide .calc-in input { background: #fff; color: var(--ink); border-color: rgba(13, 17, 15, 0.28); }
+.guide .calc-in input::placeholder { color: #6B746D; }
+.guide .calc-big { background: var(--accent); border-color: var(--ink); box-shadow: 0 4px 0 var(--ink); }
+.guide .calc-big b { color: var(--ink); }
+.guide .calc-big span, .guide .calc-big small { color: rgba(13, 17, 15, 0.78); }
+.guide .calc-levels b { color: #2B5F2E; }
+.guide .ans { background: #EEF5D6; border: 2px solid var(--ink); }
+.guide .ans summary { color: var(--ink); }
+.guide .ans summary::marker { color: #2B5F2E; }
+@media (min-width: 720px) { .guide .areas { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } }
+.guide .areas .area:last-child:nth-child(odd) { grid-column: auto; }
+
+/* "Sigue con": related guides at the end of every search page (injectRelated in scripts/build-seo.mjs) */
+.guide .related { padding-top: 8px; padding-bottom: 40px; }
+.guide .related h2 { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; text-transform: uppercase; font-size: clamp(22px, 3vw, 30px); margin: 0 0 14px; }
+.guide .rel { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.guide .rel a { display: flex; align-items: center; min-height: 56px; height: 100%; padding: 10px 16px; border-radius: 16px; background: #fff; color: var(--ink); border: 2px solid var(--ink); box-shadow: 0 3px 0 var(--ink); font-weight: 700; line-height: 1.25; text-decoration: none; transition: translate 0.3s var(--ease), box-shadow 0.3s var(--ease); }
+.guide .rel a:hover { translate: 0 -2px; box-shadow: 0 5px 0 var(--ink); }
+
+/* Phones: tables inside question cards shrink so the last column stays on screen (still scrolls if it must). */
+@media (max-width: 560px) {
+  .guide .tbl { padding: 2px 8px; }
+  .guide .tbl table { font-size: 13px; }
+  .guide .tbl th { font-size: 11px; letter-spacing: 0.02em; }
+  .guide .tbl th, .guide .tbl td { padding: 7px 5px; }
+  .guide .paper table { font-size: 13px; }
+  .guide .paper th, .guide .paper td { padding: 5px 6px; }
+  .guide .paper th { font-size: 12px; hyphens: auto; -webkit-hyphens: auto; }
+  .guide .qcard .paper { padding: 14px 12px; }
+}
+
+/* "Actualizado el ..." under the content (scripts/build-site.mjs, from the sitemap's lastmod). */
+.guide .updated p { margin: 0; padding: 0 0 18px; color: #3E4A42; font-size: 14px; font-weight: 600; }
