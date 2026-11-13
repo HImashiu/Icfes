@@ -289,6 +289,7 @@ ${guideBody(body)}
         <a href="${up}resultados-icfes/">Cómo leer tus resultados</a>
         <a href="${up}glosario-icfes/">Glosario ICFES</a>
         <a href="${up}blog/">Blog</a>
+        <a href="${up}insertar/">Para tu página</a>
         <a href="${up}privacidad">Privacidad y términos</a>
       </nav>
     </div>

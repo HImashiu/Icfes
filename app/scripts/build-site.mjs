@@ -222,7 +222,14 @@ writeFileSync(join(out, "_headers"), `/*
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(self), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
   Cross-Origin-Opener-Policy: same-origin-allow-popups
+
+/insertar/calculadora/*
+  ! X-Frame-Options
+  ! Content-Security-Policy
+  Content-Security-Policy: ${csp.replace("frame-ancestors 'none'", "frame-ancestors *")}
 `);
+// /insertar/calculadora/ is the score calculator other sites put in an iframe (scripts/build-seo-embeds.mjs): no
+// forms or sign-in there, so it may be framed by anyone. Every other page keeps frame-ancestors 'none' and DENY.
 console.log(`[build-site] site-dist ready: landing + app/ (site URL ${siteUrl})`);
 
 // Search checks on the finished site (titles, h1, canonical, JSON-LD, orphan pages): errors stop the build.
