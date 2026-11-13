@@ -26,8 +26,13 @@ const clean = (s, n = 400) => String(s ?? "").replace(/<[^>]+>/g, " ").replace(/
 const httpsOrNull = (u) => (typeof u === "string" && /^https:\/\//.test(u) ? u.replace(/&amp;/g, "&") : null);
 const iso = (d) => { const t = Date.parse(d); return Number.isFinite(t) ? new Date(t).toISOString() : null; };
 
+// The panel (src/screens/Radar.jsx) also runs reddit(), bluesky() and mastodon() in the founder's own browser, because
+// Reddit and Bluesky refuse searches from Cloudflare's addresses. There, no custom headers (they would force a CORS
+// preflight that Reddit refuses).
+const inBrowser = typeof document !== "undefined";
 async function getJson(url, init = {}) {
-  const res = await fetch(url, { ...init, headers: { "User-Agent": UA, Accept: "application/json", ...(init.headers ?? {}) } });
+  const headers = inBrowser ? init.headers ?? {} : { "User-Agent": UA, Accept: "application/json", ...(init.headers ?? {}) };
+  const res = await fetch(url, { ...init, headers });
   if (!res.ok) throw new Error(`${res.status} ${new URL(url).hostname}`);
   return res.json();
 }
