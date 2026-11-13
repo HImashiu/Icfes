@@ -19,7 +19,7 @@ import { missedKeys, rightKeys } from "../lib/repechaje.js";
 const shareLink = (global) => {
   const url = `${typeof window !== "undefined" ? window.location.origin : "https://condoricfes.com"}/?fuente=wa-resultado`;
   const lead = global != null ? `Saqué ${Math.round(global)}/500 en un simulacro del ICFES con preguntas reales.` : "Estoy practicando para el ICFES con preguntas reales de exámenes anteriores.";
-  return `https://wa.me/?text=${encodeURIComponent(`${lead} Es gratis, con puntaje de 0 a 500 y corrección al instante: ${url}`)}`;
+  return `https://wa.me/?text=${encodeURIComponent(`${lead} Tiene puntaje de 0 a 500 y corrección al instante: ${url}`)}`;
 };
 
 // Resultados: celebrating mascot, three stats, per-area bars, the preliminary-key notice and the next steps.
@@ -204,7 +204,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
         </div>
         {delivered && !attempt.readOnly && (
           <div className="share-row">
-            <span className="caption">¿Tu curso también presenta el ICFES? Practicar en Cóndor es gratis.</span>
+            <span className="caption">¿Tu curso también presenta el ICFES? Compárteles Cóndor.</span>
             <a className="secondary small" href={shareLink(sim?.complete ? sim.global : null)} target="_blank" rel="noreferrer">Compartir por WhatsApp</a>
           </div>
         )}
