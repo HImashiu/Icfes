@@ -15,6 +15,7 @@ import { buildScoreUniversityPages } from "./build-seo-scores.mjs";
 import { buildTramitePages } from "./build-seo-tramites.mjs";
 import { buildEstructuraPages } from "./build-seo-estructura.mjs";
 import { buildBecasPages } from "./build-seo-becas.mjs";
+import { buildGrowthPages } from "./build-seo-growth.mjs";
 import { bankLinks, buildBankPages } from "./build-seo-bank.mjs";
 
 const AREAS = [
@@ -297,6 +298,7 @@ ${guideBody(body)}
         <a href="${up}preguntas-icfes/">Preguntas por área</a>
         <a href="${up}pregunta-icfes/">Preguntas resueltas</a>
         <a href="${up}calculadora-puntaje-icfes/">Calculadora de puntaje</a>
+        <a href="${up}herramientas-icfes/">Herramientas ICFES</a>
         <a href="${up}puntaje-icfes/">Puntaje para la universidad</a>
         <a href="${up}que-es-el-saber-11/">Qué es el Saber 11</a>
         <a href="${up}fechas-icfes-2027/">Fechas ICFES 2027</a>
@@ -527,6 +529,11 @@ ${cta("../", "Empieza tu simulacro ahora")}`;
   buildTramitePages({ siteUrl, write, page, esc, faqBlock, faqLd, cta });
   buildEstructuraPages({ siteUrl, write, page, esc, faqBlock, faqLd, cta });
   buildBecasPages({ siteUrl, write, page, esc, faqBlock, faqLd, cta });
+  // Growth tools (diagnóstico, calculadoras, plan, retos...): last, so they reuse only questions already public.
+  await buildGrowthPages({
+    siteUrl, write, page, esc, faqBlock, faqLd, cta, renderRich, AREAS, bank, used, usable: (b, q, a) => usable(b, q, a, true), questionHtml, saber11, appRoot, out,
+    markKatex: () => { usesKatex = true; },
+  });
 
   // KaTeX stylesheet and fonts for the math on the question pages.
   if (usesKatex) {
