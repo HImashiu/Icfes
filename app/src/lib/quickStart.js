@@ -26,13 +26,29 @@ export function readQuickExam() {
   }
 }
 
+// An area card on the landing («Matemáticas · 970+ preguntas») adds ?area=<slug>: the first practice is five questions
+// of that test. Returns the test id of lib/saber11.js (ma, lc, sc, cn, in).
+const AREA = "condor:quick-area";
+export const AREA_SLUGS = { matematicas: "ma", "lectura-critica": "lc", "sociales-y-ciudadanas": "sc", "ciencias-naturales": "cn", ingles: "in" };
+export function readQuickArea() {
+  if (typeof window === "undefined") return null;
+  try {
+    const slug = new URLSearchParams(window.location.search).get("area");
+    if (slug && AREA_SLUGS[slug]) sessionStorage.setItem(AREA, AREA_SLUGS[slug]);
+    return sessionStorage.getItem(AREA);
+  } catch {
+    return null;
+  }
+}
+
 export function clearQuickStart() {
-  try { sessionStorage.removeItem(KEY); sessionStorage.removeItem(EXAM); } catch { /* blocked */ }
+  try { sessionStorage.removeItem(KEY); sessionStorage.removeItem(EXAM); sessionStorage.removeItem(AREA); } catch { /* blocked */ }
   try {
     const q = new URLSearchParams(window.location.search);
-    const had = q.has("empezar") || q.has("cuadernillo");
+    const had = q.has("empezar") || q.has("cuadernillo") || q.has("area");
     q.delete("empezar");
     q.delete("cuadernillo");
+    q.delete("area");
     if (had || window.location.hash === "#empezar") {
       const search = q.toString();
       history.replaceState(null, "", window.location.pathname + (search ? `?${search}` : "") + (window.location.hash === "#empezar" ? "" : window.location.hash));

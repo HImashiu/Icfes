@@ -46,12 +46,13 @@ import { pendingMisses, repechajeKeys } from "./lib/repechaje.js";
 import { hiddenFor, withoutHidden } from "./lib/questionUse.js";
 import { orderQuestions } from "./lib/order.js";
 import { answerChanges, logAnswer, trackVisit } from "./lib/usage.js";
-import { clearQuickStart, readQuickExam, readQuickStart } from "./lib/quickStart.js";
+import { clearQuickStart, readQuickArea, readQuickExam, readQuickStart } from "./lib/quickStart.js";
 import AdminUsage from "./screens/AdminUsage.jsx";
 import { localQuota, spendLocal } from "./lib/practiceQuota.js";
 import { drawPractice, randomSeed } from "./lib/practiceDraw.js";
 import { resolveModel, xpFactor } from "./lib/grading.js";
 import { attemptForAssignment, attemptRow, attemptsLeft, kindMode, questionsForAttempt, revealAllowed } from "./lib/assignments.js";
+import { testOf } from "./lib/saber11.js";
 
 // Screens where the public-demo notice shows (never inside an exam, a live game or the school tools).
 const LAUNCH_VIEWS = new Set(["home", "subjects", "setup", "progress", "profile", "login", "history", "results"]);
@@ -138,6 +139,8 @@ export default function App() {
   const [quickStart, setQuickStart] = useState(() => readQuickStart());
   const [quickExam] = useState(() => readQuickExam());
   const quickExamTried = useRef(false);
+  const [quickArea] = useState(() => readQuickArea());
+  const quickAreaTried = useRef(false);
   // The owner's «Uso» page (#admin/uso): only accounts in app_admins get data (migration 0037).
   const [adminPage, setAdminPage] = useState(() => typeof window !== "undefined" && window.location.hash.startsWith("#admin"));
   useEffect(() => {
@@ -481,12 +484,30 @@ export default function App() {
       setView("setup");
       return;
     }
+    // From an area card on the landing: five questions of that test. If the open booklet has none (Inglés is only in
+    // Sesión 2), a booklet that has it opens first.
+    if (quickArea && selected.slug !== TEACHER_SLUG) {
+      const hasArea = (names) => (names ?? []).some((n) => testOf(n)?.id === quickArea);
+      if (!hasArea(selected.exam.sections.map((s) => s.name)) && !quickAreaTried.current) {
+        quickAreaTried.current = true;
+        const pool = (exams ?? []).filter((e) => e.status !== "proximamente" && /^S11-/.test(e.slug) && hasArea(e.sections));
+        if (pool.length) { openExam(pool[Math.floor(Math.random() * pool.length)].slug); return; }
+      }
+      const sec = withoutHidden(selected.exam, hidden, selected.slug).sections.find((s) => testOf(s.name)?.id === quickArea);
+      const areaKeys = sec ? [...sec.questions].sort(() => Math.random() - 0.5).slice(0, 5).map((q) => q.key) : [];
+      if (areaKeys.length) {
+        setQuickStart(false);
+        clearQuickStart();
+        startKeys(selected.slug, areaKeys, { label: FIRST_PRACTICE, mode: "practice" });
+        return;
+      }
+    }
     setQuickStart(false);
     clearQuickStart();
     if (selected.slug === TEACHER_SLUG) return;
     const keys = mixedKeys(withoutHidden(selected.exam, hidden, selected.slug), 5);
     if (keys.length) startKeys(selected.slug, keys, { label: FIRST_PRACTICE, mode: "practice" });
-  }, [quickStart, quickExam, exams, signedIn, selected, opening, attempt, consents]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [quickStart, quickExam, quickArea, exams, signedIn, selected, opening, attempt, consents]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const startAssigned = async (a) => {
     if (a.delivery === "paper") return; // answered on the printed sheet, never in the app
