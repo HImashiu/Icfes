@@ -559,3 +559,14 @@ document.documentElement.classList.add("js");
     });
   }
 })();
+
+// Growth runtime (events, experiments, referral links, notices, sticky button...): site/growth.js, loaded after this
+// file so a problem there can never break the page.
+(function () {
+  var me = document.querySelector('script[src$="site.js"]');
+  if (!me || document.querySelector('script[src$="growth.js"]')) return;
+  var s = document.createElement("script");
+  s.src = me.src.replace(/site\.js(\?.*)?$/, "growth.js");
+  s.defer = true;
+  document.body.appendChild(s);
+})();

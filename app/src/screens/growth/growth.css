@@ -1,0 +1,35 @@
+/* Growth cards (docs/growth/LEDGER.md): Inicio, Perfil, Parche, control room. */
+.gr-home, .gr-profile { display: grid; gap: 12px; margin: 12px 0; }
+.gr-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.gr-grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 6px 0 10px; }
+.gr-grid2 label { display: grid; gap: 4px; }
+.gr-notice, .gr-back, .gr-install { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.gr-notice > div:first-of-type, .gr-back > div, .gr-install > div { display: grid; gap: 2px; flex: 1 1 220px; }
+.gr-steps ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.gr-steps li button { width: 100%; display: flex; align-items: center; gap: 10px; background: none; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.gr-steps li button span:nth-child(2) { flex: 1; }
+.gr-steps li.done button { color: var(--text-2); cursor: default; text-decoration: line-through; }
+.gr-tick { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; flex: none; }
+.gr-steps li.done .gr-tick { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.gr-parche-mini { display: flex; gap: 12px; align-items: center; color: var(--text); text-decoration: none; }
+.gr-parche-mini > div { flex: 1; display: grid; gap: 4px; }
+.gr-meter { display: block; height: 8px; border-radius: 6px; background: var(--surface-2); overflow: hidden; }
+.gr-meter i { display: block; height: 100%; background: var(--accent); }
+.gr-code { display: flex; gap: 8px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
+.gr-code code { padding: 8px 12px; border-radius: 10px; background: var(--surface-2); font-weight: 700; word-break: break-all; }
+.gr-kpis { display: flex; gap: 18px; margin-top: 10px; flex-wrap: wrap; }
+.gr-kpis span { display: grid; }
+.gr-kpis b { font-size: 22px; }
+.gr-checks { margin: 6px 0 10px; padding-left: 18px; }
+.gr-checks li.done { color: var(--ok); }
+.gr-scale { display: grid; grid-template-columns: repeat(11, 1fr); gap: 4px; margin: 8px 0; }
+.gr-scale button { padding: 8px 0; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); font: inherit; font-weight: 700; cursor: pointer; }
+.gr-scale button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+.gr-members { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 6px; }
+.gr-members li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); }
+.gr-admin .au-card { overflow-x: auto; }
+.gr-admin table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.gr-admin td, .gr-admin th { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.gr-verdict { font-weight: 800; }
+.gr-verdict.win { color: var(--ok); }
+.gr-verdict.lose { color: var(--bad); }

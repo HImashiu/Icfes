@@ -25,7 +25,7 @@ const DAYS = ["L", "M", "X", "J", "V", "S", "D"];
 // Inicio: the next thing to do, today's goal, this week's tasks, each subject with its teacher, the countdown to the
 // exam, the month and the student's own progress. Progress is measured against the student's goal and past self,
 // never against classmates. Before the first practice everything starts at zero (no invented numbers on the public site).
-export default function Home({ exam, slug, resumable, onContinue, onPractice, onFirstPractice = null, onSetup, xpSession, assigned, classes, course, onStartAssigned, onLive, realName, independent = false, signedOut, onGo, onOpenSubject, exams = [], onStartSession, liveGames = [], onJoinGame = null, announcements = [] }) {
+export default function Home({ exam, slug, resumable, onContinue, onPractice, onFirstPractice = null, onSetup, xpSession, assigned, classes, course, onStartAssigned, onLive, realName, independent = false, signedOut, onGo, onOpenSubject, exams = [], onStartSession, liveGames = [], onJoinGame = null, announcements = [], extra = null }) {
   const now = Date.now();
   const todayIndex = (new Date().getDay() + 6) % 7;
   const history = useMemo(() => loadHistory(), []);
@@ -121,6 +121,7 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
       {liveGames.length > 0 && <LiveGames games={liveGames} now={now} onJoin={onJoinGame} />}
 
       <ScoreCard summary={score} target={goal.target} exams={exams} onStartSession={onStartSession} />
+      {extra}
 
       <div className="sh-grid">
         <div className="sh-col">

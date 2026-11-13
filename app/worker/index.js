@@ -18,6 +18,8 @@
 // The database keeps a delivered attempt's score only with a valid signature (migration 0032), so a score typed in
 // the browser is never trusted.
 
+import { growthCron, growthRoute } from "./growth.js";
+
 const OK_FOR = 5 * 60 * 1000;
 const users = new Map(); // token -> { id, role, until }
 const noted = new Map(); // `${id}:${slug}` -> until
@@ -322,6 +324,10 @@ export default {
     if (who) console.log(JSON.stringify({ crawl: 1, ...who, path: new URL(request.url).pathname, status: res.status, method: request.method }));
     return res;
   },
+  // Hourly (wrangler.jsonc triggers): the day's practice reminders (worker/growth.js).
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(growthCron(env).catch((e) => console.log(JSON.stringify({ push: 1, error: String(e).slice(0, 200) }))));
+  },
 };
 
 async function handle(request, env) {
@@ -330,6 +336,8 @@ async function handle(request, env) {
     if (path === "/__indexnow") return indexNow(request, env);
     const moved = canonicalRedirect(request, url);
     if (moved) return moved;
+    const grown = await growthRoute(request, env, url);
+    if (grown) return grown;
     if (isLimitedPage(path) && !request.cf?.verifiedBotCategory) {
       const ip = request.headers.get("CF-Connecting-IP") || "local";
       if (!(await underLimit(env.PAGE_IP_RATE, `page:${ip}`))) {

@@ -110,8 +110,15 @@ for (const p of seoPages) {
   const f = join(out, p, "index.html");
   writeFileSync(f, fill(readFileSync(f, "utf8")));
 }
+// Growth pages kept out of the sitemap (noindex) get the same placeholders filled; then the site search index (F22).
+const growthMod = await import(pathToFileURL(join(here, "build-seo-growth.mjs")).href);
+for (const p of growthMod.RAW_PAGES) {
+  const f = join(out, p, "index.html");
+  if (existsSync(f)) writeFileSync(f, fill(readFileSync(f, "utf8")));
+}
 // "Sigue con" links on every search page (after all of them exist, so new families are linked too).
 injectRelated(out, seoPages);
+growthMod.writeSearchIndex(out);
 // Sitemap from the pages that exist. lastmod is the day a page's content last changed (scripts/seo-lastmod.json keeps
 // a hash per page; commit it after a deploy), so Google can trust it instead of seeing every page "changed" daily.
 const today = new Date().toISOString().slice(0, 10);

@@ -14,7 +14,7 @@ import { DAILY_GOALS, TARGETS, daysUntil, loadGoal, saveGoal } from "../lib/goal
 
 // Perfil: who you are, your goal (exam date, daily XP, target score), your subjects with their teachers, then
 // settings: theme, sounds, account, error reports and the teacher view. The analysis lives in Progreso.
-export default function Profile({ teacherCodeError = null, theme, onTheme, onTeacher, onReports, onLogin, assigned, classes, course, onGo }) {
+export default function Profile({ teacherCodeError = null, theme, onTheme, onTeacher, onReports, onLogin, assigned, classes, course, onGo, extra = null }) {
   const auth = useAuth();
   const staff = auth.status === "ready" && auth.profile.role !== "student";
   const [sound, setSound] = useState(soundOn);
@@ -70,6 +70,7 @@ export default function Profile({ teacherCodeError = null, theme, onTheme, onTea
             <button type="button" className="card quick-row" onClick={() => onGo?.("progress")}><Icon name="chart" /><span>Mi progreso y análisis por área</span><Icon name="right" /></button>
             <button type="button" className="card quick-row" onClick={() => onGo?.("achievements")}><Icon name="trophy" /><span>Mis logros</span><Icon name="right" /></button>
           </div>
+          {extra}
 
           {subjects.length > 0 && (
             <div className="card sp-card">
