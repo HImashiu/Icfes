@@ -263,6 +263,24 @@ async function reveal(request, env, user, token) {
 // app under /app/ stays on any host, so sessions and old QR codes keep working). A request with the header
 // "x-condor-preview: 1" is served on workers.dev as is, for checks from places that cannot reach the domain.
 export const HOME_HOST = "condoricfes.com";
+// GET /app/api/radar: the posts about the ICFES that the radar worker (radar/index.js) keeps in KV, for the founder's
+// panel (#admin/posts). Only accounts in app_admins (am_admin(), migration 0037).
+export async function radar(request, env) {
+  if (request.method !== "GET") return json(405, { error: "get_only" });
+  const ip = request.headers.get("CF-Connecting-IP") || "local";
+  if (!(await underLimit(env.EXAM_IP_RATE, `ip:${ip}`))) return json(429, { error: "too_many_requests" });
+  const auth = request.headers.get("Authorization") || "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
+  if (!token || token.length > 4096 || token.split(".").length !== 3) return json(401, { error: "sign_in_required" });
+  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) return json(503, { error: "not_configured" });
+  const r = await rest(env, token, "/rest/v1/rpc/am_admin", { method: "POST", body: "{}" });
+  if (r.status === 401) return json(401, { error: "sign_in_required" });
+  if (!r.ok || (await r.json().catch(() => false)) !== true) return json(403, { error: "not_admin" });
+  if (!env.RADAR) return json(200, { posts: [], state: null, missing: "kv" });
+  const [posts, state] = await Promise.all([env.RADAR.get("posts", "json"), env.RADAR.get("state", "json")]);
+  return json(200, { posts: posts ?? [], state: state ?? null });
+}
+
 export function canonicalRedirect(request, url) {
   if (request.method !== "GET" && request.method !== "HEAD") return null;
   if (url.pathname === "/app" || url.pathname.startsWith("/app/")) return null;
@@ -346,6 +364,7 @@ async function handle(request, env) {
         });
       }
     }
+    if (path === "/app/api/radar") return radar(request, env);
     const isApi = path === "/app/api/reveal";
     const isExamFile = path.startsWith("/app/exams/") && path !== "/app/exams/index.json";
     if ((!isApi && !isExamFile) || request.method === "OPTIONS") return env.ASSETS.fetch(request);

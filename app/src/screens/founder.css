@@ -200,3 +200,53 @@
   .fd-visits .fd-left th:nth-child(2), .fd-left td:nth-child(2), .fd-left th:nth-child(3), .fd-left td:nth-child(3) { text-align: left; }
 .fd-mono { grid-column: 1 / -1; }
 }
+
+/* #admin/posts (Radar.jsx): posts about the ICFES to comment on by hand */
+.rd-sources { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.rd-sources li { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: var(--surface-2); color: var(--text-2); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rd-sources li.ok b { color: var(--ok); }
+.rd-sources li.off b { color: var(--text-2); }
+.rd-filters .rd-search { flex: 1 1 220px; min-height: 40px; max-width: 360px; }
+.rd-nets { display: flex; gap: 6px; flex-wrap: wrap; }
+.rd-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-weight: 700; font-size: 14px; cursor: pointer; }
+.rd-chip i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.rd-chip span { color: var(--text-2); font-weight: 600; font-variant-numeric: tabular-nums; }
+.rd-chip.on { border-color: var(--accent); background: var(--surface-2); }
+.rd-empty { padding: 8px 2px; }
+.rd-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.rd-post { display: grid; grid-template-columns: 148px minmax(0, 1fr); gap: 14px; padding: 12px; align-items: start; }
+.rd-thumb { position: relative; display: block; aspect-ratio: 16 / 10; border-radius: 10px; overflow: hidden; background: color-mix(in srgb, var(--net) 16%, var(--surface-2)); }
+.rd-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.rd-thumb-net { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 800; font-size: 14px; color: var(--net); }
+.rd-thumb img + .rd-thumb-net { display: none; }
+.rd-main { display: grid; gap: 6px; min-width: 0; }
+.rd-meta { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; font-size: 13px; }
+.rd-net { font-weight: 800; color: var(--net); }
+.rd-who { font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
+.rd-new, .rd-done { font-size: 11px; font-weight: 800; padding: 1px 8px; border-radius: 999px; }
+.rd-new { background: var(--accent); color: var(--on-accent, #fff); }
+.rd-done { background: var(--surface-2); color: var(--ok); }
+.rd-title { font-weight: 800; font-size: 16px; color: var(--text); text-decoration: none; overflow-wrap: anywhere; }
+.rd-title:hover { text-decoration: underline; }
+.rd-text { margin: 0; color: var(--text-2); font-size: 14px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.rd-actions { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-top: 2px; }
+.rd-actions .primary, .rd-actions .secondary { min-height: 36px; padding: 0 14px; font-size: 14px; width: auto; }
+.rd-open { display: inline-flex; align-items: center; text-decoration: none; }
+.rd-noapi { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.rd-noapi li { display: grid; gap: 2px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
+.rd-noapi a { color: var(--accent-ink); text-decoration: none; }
+@media (max-width: 640px) {
+  .rd-sources { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .rd-sources::-webkit-scrollbar { display: none; }
+  .rd-sources li { flex: none; }
+  .rd-sources li span { display: none; }
+  .rd-head .secondary { min-height: 34px; padding: 0 12px; font-size: 13px; }
+  .rd-nets { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .rd-nets::-webkit-scrollbar { display: none; }
+  .rd-chip { flex: none; }
+  .rd-post { grid-template-columns: 76px minmax(0, 1fr); gap: 10px; }
+  .rd-actions { gap: 6px 12px; }
+  .rd-actions .primary, .rd-actions .secondary { min-height: 34px; padding: 0 12px; font-size: 13px; }
+  .rd-noapi { grid-template-columns: 1fr; }
+  .rd-filters .rd-search { max-width: none; }
+}
