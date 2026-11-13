@@ -468,10 +468,16 @@ document.documentElement.classList.add("js");
       return host && host !== location.hostname.replace(/^www\./, "") ? host : null;
     } catch (e) { return null; }
   }
+  // Crawlers and headless browsers (Googlebot runs this script) are not visitors.
+  var isBot = (function () {
+    try {
+      return Boolean(navigator.webdriver) || /bot|crawl|spider|slurp|headless|lighthouse|pagespeed|preview|facebookexternalhit|whatsapp|bingpreview|ahrefs|semrush|mj12/i.test(navigator.userAgent || "");
+    } catch (e) { return false; }
+  })();
   var tracked = {};
   window.condorTrack = function (event) {
     var id = visitorId();
-    if (!id || tracked[event] || !configured) return;
+    if (!id || tracked[event] || !configured || isBot) return;
     tracked[event] = true;
     post("rpc/track_visit", { p_visitor: id, p_event: event, p_path: location.pathname, p_source: sourceOf() }).catch(function () {});
   };

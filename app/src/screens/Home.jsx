@@ -25,7 +25,7 @@ const DAYS = ["L", "M", "X", "J", "V", "S", "D"];
 // Inicio: the next thing to do, today's goal, this week's tasks, each subject with its teacher, the countdown to the
 // exam, the month and the student's own progress. Progress is measured against the student's goal and past self,
 // never against classmates. Before the first practice everything starts at zero (no invented numbers on the public site).
-export default function Home({ exam, slug, resumable, onContinue, onPractice, onSetup, xpSession, assigned, classes, course, onStartAssigned, onLive, realName, independent = false, signedOut, onGo, onOpenSubject, exams = [], onStartSession, liveGames = [], onJoinGame = null, announcements = [], extra = null }) {
+export default function Home({ exam, slug, resumable, onContinue, onPractice, onFirstPractice = null, onSetup, xpSession, assigned, classes, course, onStartAssigned, onLive, realName, independent = false, signedOut, onGo, onOpenSubject, exams = [], onStartSession, liveGames = [], onJoinGame = null, announcements = [], extra = null }) {
   const now = Date.now();
   const todayIndex = (new Date().getDay() + 6) % 7;
   const history = useMemo(() => loadHistory(), []);
@@ -61,6 +61,8 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
     ? { kicker: "Sigue donde quedaste", title: resumable.scope === "all" ? "Examen completo" : resumable.scope, text: `${resumable.answered} de ${resumable.total} respondidas${resumable.mode === "timed" ? ` · ${formatClock(resumable.left)} restantes` : ""}`, cta: "Continuar", go: onContinue, progress: resumable.answered / resumable.total }
     : next
       ? { kicker: `${pending.length} ${pending.length === 1 ? "tarea pendiente" : "tareas pendientes"}`, title: next.a.title, text: `${next.subject?.name ?? ""}${next.subject?.teacher ? ` · ${next.subject.teacher}` : ""} · ${dueText(next.a.due_at, now)}`, cta: "Empezar", go: () => onStartAssigned(next.a) }
+      : !real && onFirstPractice
+        ? { kicker: "Para empezar", title: "Tu primera práctica", text: "5 preguntas cortas del ICFES, una de cada prueba. Unos 5 minutos.", cta: "Empezar", go: onFirstPractice }
       : { kicker: ins.practicedToday ? "Ya practicaste hoy" : "Para hoy", title: ins.weakest ? `Repasa ${areaShort(ins.weakest.name)}` : "Empieza un simulacro", text: ins.weakest ? `Tu área con menos aciertos: ${ins.weakest.pct} %. Diez preguntas bastan.` : exam ? `${exam.title} · ${exam.questions.length} preguntas` : "Preguntas reales del ICFES, con tu puntaje de 0 a 500.", cta: "Practicar", go: ins.weakest && exam?.sections.some((s) => s.name === ins.weakest.name) ? () => onSetup({ scope: ins.weakest.name, mode: "practice" }) : onPractice };
 
   return (

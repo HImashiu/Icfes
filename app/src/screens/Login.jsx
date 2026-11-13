@@ -1,7 +1,7 @@
 import { noteAuthStart } from "../lib/growth/app.js";
 import { useEffect, useRef, useState } from "react";
 import Mascot from "../components/Mascot.jsx";
-import { claimMessage, pendingTeacherCode, rememberTeacherCode, useAuth } from "../lib/auth.jsx";
+import { claimMessage, pendingInviter, pendingTeacherCode, rememberTeacherCode, useAuth } from "../lib/auth.jsx";
 import { authLanding, microsoftEnabled } from "../lib/supabase.js";
 import { chromeIntent, inAppBrowser, readQuickStart } from "../lib/quickStart.js";
 
@@ -11,8 +11,11 @@ const AUTO = "condor:quick-google";
 // además aparecen las tareas y clases. `gate`: es la primera pantalla de /app/ (sin «Volver», con enlace al inicio).
 export default function Login({ onBack, gate = false }) {
   const auth = useAuth();
-  const [code, setCode] = useState(() => (typeof window !== "undefined" ? pendingTeacherCode() : ""));
+  const [code, setCode] = useState(() => (typeof window !== "undefined" ? (pendingInviter(), pendingTeacherCode()) : ""));
   const [name, setName] = useState("");
+  // A teacher without a code opens their own trial workspace (migration 0038): only the school and the city.
+  const [school, setSchool] = useState("");
+  const [city, setCity] = useState("");
   const [error, setError] = useState(auth.error ? `No se pudo leer tu perfil: ${auth.error}` : null);
   const [busy, setBusy] = useState(false);
   const [teacher, setTeacher] = useState(() => Boolean(code) || (typeof window !== "undefined" && window.location.hash.startsWith("#docente")));
@@ -52,7 +55,8 @@ export default function Login({ onBack, gate = false }) {
     setBusy(true);
     setError(null);
     try {
-      await auth.claim({ teacherCode: code, fullName: name });
+      if (teacher && !code.trim()) await auth.startTrial({ schoolName: school, city, fullName: name });
+      else await auth.claim({ teacherCode: code, fullName: name });
       onBack?.();
     } catch (err) {
       setError(claimMessage(err));
@@ -78,15 +82,30 @@ export default function Login({ onBack, gate = false }) {
           {!teacher ? (
             <button type="button" className="link" onClick={() => setTeacher(true)}>Soy docente</button>
           ) : (
-            <label className="field">
-              <span className="label">Código de docente</span>
-              <input value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" placeholder="Código de prueba o del colegio" />
-            </label>
+            <>
+              {!code.trim() && (
+                <>
+                  <label className="field">
+                    <span className="label">Tu colegio</span>
+                    <input value={school} onChange={(e) => setSchool(e.target.value)} maxLength={120} autoComplete="organization" placeholder="Ej.: IE San José" required />
+                  </label>
+                  <label className="field">
+                    <span className="label">Ciudad o municipio</span>
+                    <input value={city} onChange={(e) => setCity(e.target.value)} maxLength={80} autoComplete="address-level2" placeholder="Ej.: Pasto" />
+                  </label>
+                </>
+              )}
+              <label className="field">
+                <span className="label">Código de docente (si tu colegio te dio uno)</span>
+                <input value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" spellCheck={false} placeholder="CND-0000-0000-0000-0000" />
+              </label>
+              <span className="caption">{code.trim() ? "Entras al espacio de tu colegio con este código." : "Sin código creas tu propio espacio de prueba y luego invitas a tus colegas."}</span>
+            </>
           )}
           {error && <p className="notice error" role="alert">{error}</p>}
           <div className="report-actions">
             <button type="button" className="secondary" onClick={auth.signOut}>Salir</button>
-            <button type="submit" className="primary" disabled={busy}>{busy ? "Entrando…" : "Continuar"}</button>
+            <button type="submit" className="primary" disabled={busy || (teacher && !code.trim() && !school.trim())}>{busy ? "Entrando…" : teacher && !code.trim() ? "Crear mi espacio docente" : "Continuar"}</button>
           </div>
         </form>
       </section>
@@ -113,14 +132,14 @@ export default function Login({ onBack, gate = false }) {
           </>
         ) : (
           <>
-            <strong>Entra a tu panel docente</strong>
-            <span className="caption">Si tu colegio te envió un código de prueba, escríbelo aquí y entra con tu Google (el del colegio o el personal). Si coordinación ya te invitó con tu correo, deja el código vacío.</span>
+            <strong>Crea tu espacio docente</strong>
+            <span className="caption">Entra con tu Google y en un minuto tienes tus cursos, el banco de preguntas y tus primeros simulacros. Gratis durante la demostración, sin tarjeta.</span>
             <label className="field login-code">
-              <span className="label">Código de docente (opcional)</span>
+              <span className="label">¿Tu colegio te dio un código? (opcional)</span>
               <input value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" spellCheck={false} placeholder="CND-0000-0000-0000-0000" />
             </label>
             <button type="button" className="primary big" onClick={googleAsTeacher}>Continuar con Google</button>
-            <span className="caption">¿Ya entraste antes como estudiante con esa cuenta? No pasa nada: el código convierte tu cuenta en docente.</span>
+            <span className="caption">¿Ya entraste antes como estudiante con esa cuenta? No pasa nada: tu cuenta pasa a ser de docente.</span>
           </>
         )}
         {authLanding?.error && <p className="notice error" role="alert">Google o Supabase devolvió un error: {authLanding.error}</p>}

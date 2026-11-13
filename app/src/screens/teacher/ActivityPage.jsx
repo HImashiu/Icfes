@@ -8,6 +8,7 @@ import { MODEL_KINDS, resolveModel } from "../../lib/grading.js";
 import { areaOf, areaShort, contextColor, groupOf } from "../../lib/teaching.js";
 import { TABS } from "../../lib/teacherRoutes.js";
 import PaperGuide from "./PaperGuide.jsx";
+import ActivityTools from "./ActivityTools.jsx";
 
 const KIND_LABEL = { task: "Práctica en clase", homework: "Tarea", exam: "Simulacro" };
 const shortDate = (iso) => new Date(iso).toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "short" });
@@ -31,7 +32,7 @@ export function activitySteps({ assignment, students, attempts, paper, model, no
   ];
 }
 
-export default function ActivityPage({ api, profile, assignment, course, tab, go, models, reloadModels, fetchExam, guard, setNotice, reload, assignments, courses, onScanned, focusMember, onOpenStudent }) {
+export default function ActivityPage({ api, profile, assignment, course, tab, go, models, reloadModels, fetchExam, guard, setNotice, reload, assignments, courses, onScanned, focusMember, onOpenStudent, readOnly = false, editableCourses = null, log, schoolMembers = [] }) {
   const [info, setInfo] = useState(null);
   const [scanNow, setScanNow] = useState(false);
   const [version, setVersion] = useState(0);
@@ -41,8 +42,8 @@ export default function ActivityPage({ api, profile, assignment, course, tab, go
       try {
         const [members, attempts] = await Promise.all([api.listMembers(assignment.course_id), api.assignmentAttempts(assignment.id)]);
         const seating = await api.getSeating?.(assignment.id).catch(() => null);
-        if (alive) setInfo({ students: members.filter((m) => m.role === "student").length, attempts, seating });
-      } catch { if (alive) setInfo({ students: 0, attempts: [], seating: null }); }
+        if (alive) setInfo({ students: members.filter((m) => m.role === "student").length, members: members.map((m) => ({ ...m, course_id: m.course_id ?? assignment.course_id })), attempts, seating });
+      } catch { if (alive) setInfo({ students: 0, members: [], attempts: [], seating: null }); }
     })();
     return () => { alive = false; };
   }, [api, assignment.id, assignment.course_id, version]);
@@ -90,6 +91,11 @@ export default function ActivityPage({ api, profile, assignment, course, tab, go
           </li>
         ))}
       </ol>
+
+      {!readOnly && (
+        <ActivityTools api={api} profile={profile} assignment={assignment} course={course} courses={editableCourses ?? courses} assignments={assignments}
+          members={info?.members ?? null} attempts={info?.attempts ?? null} guard={guard} reload={async () => { await reload?.(); setVersion((v) => v + 1); }} setNotice={setNotice} go={go} log={log} schoolMembers={schoolMembers} />
+      )}
 
       <div className="seg-tabs" role="tablist" aria-label="Secciones de la actividad">
         {TABS.actividad.map(([id, label]) => (

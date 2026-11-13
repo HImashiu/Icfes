@@ -17,6 +17,7 @@ import { buildEstructuraPages } from "./build-seo-estructura.mjs";
 import { buildBecasPages } from "./build-seo-becas.mjs";
 import { buildGrowthPages } from "./build-seo-growth.mjs";
 import { bankLinks, buildBankPages } from "./build-seo-bank.mjs";
+import { buildTeacherPages, teacherApp } from "./build-seo-docentes.mjs";
 
 const AREAS = [
   {
@@ -507,6 +508,8 @@ ${cta("../", "Empieza tu simulacro ahora")}`;
   buildGuidePage({ siteUrl, write });
   buildSchoolsPage({ siteUrl, write });
   buildTrialPage({ siteUrl, write });
+  // Teachers: simulacro para imprimir, banco de preguntas para docentes (each ends in the self-serve teacher sign-up).
+  buildTeacherPages({ siteUrl, write, page, faqBlock, faqLd });
   buildContentPages({
     siteUrl, write, page, esc, faqBlock, faqLd, cta, questionHtml, usable: (b, q, a) => usable(b, q, a, true), renderRich, AREAS, dataDir, used, bank,
     markKatex: () => { usesKatex = true; }, PICTURE, NEEDS_PICTURE,
@@ -720,13 +723,13 @@ function buildSchoolsPage({ siteUrl, write }) {
     ["¿Qué necesita el colegio para empezar?", "Solo internet y las cuentas de Google del colegio. No hay que instalar nada: funciona en el navegador del computador, la tableta o el celular."],
     ["¿Sirve si los estudiantes no tienen computador?", "Sí. Los simulacros se pueden presentar en papel con el cuadernillo impreso y calificar escaneando las hojas de respuestas con un celular."],
     ["¿Las preguntas son del ICFES?", "El banco usa preguntas de cuadernillos que el ICFES publicó, y cada una indica su fuente. Cóndor es independiente y no está afiliado al ICFES."],
-    ["¿Cuánto cuesta?", "Durante la etapa de demostración es gratis. Escríbenos y te mostramos la plataforma con los cursos de tu colegio."],
+    ["¿Cuánto cuesta?", "Durante la etapa de demostración es gratis. Cualquier docente puede crear su espacio sin tarjeta, o escríbenos y te mostramos la plataforma con los cursos de tu colegio."],
   ];
   const body = `<section class="section guide-head"><div class="wrap narrow">
   <span class="tag">Para colegios</span>
   <h1>Preicfes para colegios: simulacros, resultados por curso y simulacros en papel</h1>
   <p class="prose">Cóndor es una plataforma para preparar el Saber 11 en el colegio. Los docentes asignan simulacros y tareas por curso, los estudiantes practican en línea o en papel, y coordinación ve los resultados en el mismo formato del ICFES.</p>
-  <div class="cta-row"><a class="btn btn-primary" href="../#colegios">Pedir una demostración</a><a class="btn btn-ghost" href="../app/">Ver la plataforma</a></div>
+  <div class="cta-row"><a class="btn btn-primary" href="${teacherApp("../", "colegios")}">Crear mi espacio docente</a><a class="btn btn-ghost" href="../#colegios">Pedir una demostración</a></div>
 </div></section>
 <section class="wrap narrow guide-body">
   <h2>Qué incluye</h2>
@@ -738,8 +741,8 @@ function buildSchoolsPage({ siteUrl, write }) {
     <tr><td><b>Mitad</b></td><td>Segundo simulacro. Comparación por curso, área y competencia.</td></tr>
     <tr><td><b>Antes del examen</b></td><td>Simulacro final con tiempo real y repaso de los errores de cada estudiante.</td></tr>
   </tbody></table></div>
-  <h2>Prueba con tu código de docente</h2>
-  <p class="prose">Si ya recibiste un código de prueba, entra a la plataforma de docentes en un par de minutos. <a href="../prueba-docente/">Cómo entrar con tu código</a>.</p>
+  <h2>Empieza con un docente, sigue con el colegio</h2>
+  <p class="prose">Cualquier docente puede crear su espacio en un minuto, sin esperar a coordinación: <a href="../prueba-docente/">así se crea tu espacio docente</a>. Desde ahí invita a sus colegas con un enlace y, cuando el colegio decide, todo el grado 11 queda en un solo panel. Para empezar por algo concreto: <a href="../simulacro-icfes-para-imprimir/">un simulacro ICFES para imprimir</a> con la portada del colegio, o un taller del <a href="../banco-de-preguntas-icfes-docentes/">banco de preguntas para docentes</a>.</p>
   <p class="prose">Si tu colegio ya practica con Cóndor, puedes poner el sello y la calculadora del puntaje en la página del colegio: <a href="../insertar/">recursos para tu página</a>.</p>
   <h2>Preguntas frecuentes</h2>
   ${faqBlock(faq)}
@@ -755,35 +758,39 @@ function buildSchoolsPage({ siteUrl, write }) {
 
 function buildTrialPage({ siteUrl, write }) {
   const path = "prueba-docente/";
+  const go = teacherApp("../", "prueba-docente");
   const faq = [
-    ["¿Necesito pagar?", "No. Durante la etapa de demostración la plataforma es gratis para docentes con código de prueba."],
-    ["¿Qué pasa si el código venció o ya no admite más docentes?", "Cada colegio tiene un código con vencimiento de 20 días y un límite de docentes. Escríbenos desde la página de demostración y te enviamos uno nuevo."],
-    ["¿Mis estudiantes necesitan código?", "No. Entran con su cuenta de Google. Si su correo es el del colegio, ven sus cursos y tareas; si no, practican de forma independiente."],
+    ["¿Necesito un código?", "No. Escribes el nombre de tu colegio y tu ciudad, y Cóndor crea tu espacio. Si tu colegio te dio un código, escríbelo y entras al espacio de tu colegio."],
+    ["¿Necesito pagar?", "No. Durante la etapa de demostración es gratis para docentes, sin tarjeta. Tu espacio de prueba dura 30 días; si necesitas más tiempo, escríbenos."],
+    ["¿Cómo entran mis colegas?", "Desde Hoy, en «Trae a tus colegas», les mandas un enlace por WhatsApp o correo. Entran al mismo espacio y cada uno ve sus cursos."],
+    ["¿Mis estudiantes necesitan código?", "No. Entran con su cuenta de Google. Si su correo es el del colegio, ven sus cursos y tareas; si no, practican de forma independiente. Para un simulacro en papel no necesitan cuenta."],
     ["¿Qué datos se guardan?", "Tu nombre, tu correo de Google y lo que se hace en la plataforma: cursos, tareas y resultados. Puedes leer más en la página de privacidad."],
   ];
   const body = `<section class="section guide-head"><div class="wrap narrow">
   <span class="tag">Docentes</span>
-  <h1>Entra a la plataforma de docentes con tu código de prueba</h1>
-  <p class="prose">Con el código creas tu colegio de prueba, armas tus cursos y pruebas las tareas, los simulacros en línea y en papel, y el juego en vivo con tus estudiantes.</p>
-  <div class="cta-row"><a class="btn btn-primary" href="../app/#docente">Activar prueba gratuita</a><a class="btn btn-ghost" href="../preicfes-para-colegios/">Qué incluye</a></div>
+  <h1>Crea tu espacio docente en Cóndor, con o sin código</h1>
+  <p class="prose">En un minuto tienes tus cursos, más de 4.000 preguntas de cuadernillos del ICFES, simulacros en línea y en papel, el juego en vivo y los resultados de cada estudiante. No tienes que esperar a que el colegio lo apruebe.</p>
+  <div class="cta-row"><a class="btn btn-primary" href="${go}">Crear mi espacio docente</a><a class="btn btn-ghost" href="../preicfes-para-colegios/">Qué incluye</a></div>
 </div></section>
 <section class="wrap narrow guide-body">
   <h2>Cómo entrar</h2>
   <ol class="steps">
-    <li><b>Abre la app.</b> Ve a <a href="../app/#docente">condoricfes.com/app</a> y elige “Soy docente”.</li>
-    <li><b>Escribe el código de tu colegio.</b> Se parece a <code>CND-XXXX-XXXX-XXXX-XXXX</code>. El primer docente que entra crea el colegio de prueba; los demás entran al mismo.</li>
-    <li><b>Entra con tu cuenta de Google.</b> Sirve la del colegio o la personal. Si ya habías entrado antes como estudiante, el código convierte esa cuenta en docente.</li>
+    <li><b>Abre la app</b> en <a href="${go}">condoricfes.com/app</a> y elige “Soy docente”.</li>
+    <li><b>Entra con tu cuenta de Google.</b> Sirve la del colegio o la personal. Si ya habías entrado como estudiante, tu cuenta pasa a ser de docente.</li>
+    <li><b>Escribe tu colegio y tu ciudad.</b> Si tu colegio te dio un código (<code>CND-XXXX-XXXX-XXXX-XXXX</code>), escríbelo en su lugar y entras al espacio de tu colegio.</li>
   </ol>
   <h2>Primeros pasos</h2>
-  <p class="prose">Al entrar, un recorrido corto te muestra dónde está cada cosa. Crea un curso, agrega a tus estudiantes con su correo y asigna un simulacro. Ellos lo presentan desde su celular o en papel, y en Hoy ves quién necesita apoyo. ¿Quieres ver primero cómo se ve con datos? Activa «Datos de ejemplo» en el panel: muestra un colegio inventado sin tocar el tuyo.</p>
+  <p class="prose">Al entrar, un recorrido corto te muestra dónde está cada cosa. Crea un curso, agrega a tus estudiantes con su correo y asigna una actividad: un <a href="../simulacro-icfes-para-imprimir/">simulacro para imprimir</a>, un taller del <a href="../banco-de-preguntas-icfes-docentes/">banco de preguntas</a> o un juego en vivo. En Hoy ves quién necesita apoyo. ¿Quieres ver primero cómo se ve con datos? Activa «Datos de ejemplo» en el panel: muestra un colegio inventado sin tocar el tuyo.</p>
+  <h2>Trae a tu colegio</h2>
+  <p class="prose">Hasta 15 docentes del mismo colegio entran a tu espacio con el enlace que compartes desde Hoy. Cuando coordinación quiera verlo con todo el grado 11, le envías un resumen de lo que ya hiciste con un toque. Mira lo que incluye para el colegio en <a href="../preicfes-para-colegios/">preicfes para colegios</a>.</p>
   <h2>Preguntas frecuentes</h2>
   ${faqBlock(faq)}
 </section>
-<section class="section"><div class="wrap narrow"><div class="card price reveal"><div><h2>¿Todavía no tienes código?</h2><p>Pide una demostración para tu colegio y te lo enviamos.</p></div><a class="btn btn-primary" href="../#colegios">Pedir una demostración</a></div></div></section>`;
+<section class="section"><div class="wrap narrow"><div class="card price reveal"><div><h2>Crea tu espacio docente</h2><p>Gratis durante la demostración, sin tarjeta. ¿Prefieres que te lo mostremos? Pide una demostración para tu colegio.</p></div><a class="btn btn-primary" href="${go}">Crear mi espacio docente</a></div></div></section>`;
   write(path, page({
-    siteUrl, path, title: "Entrar como docente con código de prueba",
-    desc: "Entra a la plataforma de docentes de Cóndor con tu código de prueba: cursos, tareas, simulacros en línea y en papel, y alertas por estudiante.",
+    siteUrl, path, title: "Prueba gratis para docentes: crea tu espacio",
+    desc: "Crea tu espacio docente en Cóndor sin esperar un código: cursos, 4.000 preguntas ICFES, simulacros en línea y en papel, y resultados por estudiante.",
     body, crumbs: [{ name: "Docentes", path }],
-    jsonLd: [faqLd(faq), { "@type": "WebPage", name: "Entrar con código de prueba", url: siteUrl + path, inLanguage: "es-CO" }],
+    jsonLd: [faqLd(faq), { "@type": "WebPage", name: "Crea tu espacio docente", url: siteUrl + path, inLanguage: "es-CO" }],
   }));
 }

@@ -351,13 +351,13 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
               steps={firstSteps({ admin, courses: allCourses, assignments: allAssignments })} onTour={() => setTour({ id: "hoy" })} />
           )}
 
-          {r.section === "actividades" && r.tab === "lista" && <ActivityList courses={courses} assignments={assignments} contextName={contextName} go={go} loaded={loaded} />}
-          {r.section === "actividades" && KIND_TABS[r.tab] && <ActivityList key={r.tab} kind={KIND_TABS[r.tab].kind} courses={courses} assignments={assignments} contextName={contextName} go={go} loaded={loaded} />}
+          {r.section === "actividades" && r.tab === "lista" && <ActivityList api={api} members={members} courses={courses} assignments={assignments} contextName={contextName} go={go} loaded={loaded} />}
+          {r.section === "actividades" && KIND_TABS[r.tab] && <ActivityList key={r.tab} kind={KIND_TABS[r.tab].kind} api={api} members={members} courses={courses} assignments={assignments} contextName={contextName} go={go} loaded={loaded} />}
           {r.section === "actividades" && r.tab === "nueva" && (
             courses.length === 0 ? <p className="caption">Primero necesitas una clase (Estudiantes › Listas de clase).</p> : (
               <AssignBuilder key={`${r.preset ?? "any"}-${seed?.at ?? 0}`} preset={PRESETS[r.preset] ?? null} seed={seed} onConvert={convert} api={baseApi} courses={courses.filter((c) => !contexts.subjects.some((s) => s.classes.some((k) => k.id === c.id && k.readOnly)))} exams={exams} fetchExam={fetchExam} guard={guard}
                 onCancel={() => go({ section: "actividades" })} grading={{ models, profile, onChange: reloadModels }}
-                onSaved={async (a, n) => { await reload(); go({ section: "actividad", id: a.id, tab: a.delivery === "paper" ? "papel" : "resultados" }); showReceipt(assignmentReceipt({ assignment: a, classes: n })); }} />
+                onSaved={async (a, n, weeks = 1) => { await reload(); go({ section: "actividad", id: a.id, tab: a.delivery === "paper" ? "papel" : "resultados" }); showReceipt(assignmentReceipt({ assignment: a, classes: n, weeks })); }} />
             )
           )}
           {r.section === "actividades" && r.tab === "vivo" && <LiveSection key={liveNew} startCreating={liveNew > 0} api={baseApi} courses={courses} exams={exams} fetchExam={fetchExam} guard={guard} AssignBuilder={AssignBuilder} />}
@@ -369,6 +369,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           {r.section === "actividad" && activity && (
             <ActivityPage key={activity.id} api={baseApi} profile={profile} assignment={activity} course={activityCourse} tab={r.tab} go={go} models={models} reloadModels={reloadModels}
               fetchExam={fetchExam} guard={guard} setNotice={setNotice} reload={reload} assignments={allAssignments} courses={allCourses} focusMember={focusMember} onOpenStudent={openStudent}
+              readOnly={contexts.readOnly?.includes(activity.course_id)} editableCourses={allCourses.filter((c) => contexts.all.includes(c.id) && !contexts.readOnly?.includes(c.id))} log={log} schoolMembers={members}
               onScanned={(info) => { reload(); showReceipt(scanReceipt(info)); }} />
           )}
 

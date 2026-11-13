@@ -35,7 +35,7 @@ function headline(pct, answered) {
 }
 const isPhone = typeof window !== "undefined" && !window.matchMedia?.("(min-width: 768px)").matches;
 
-export default function Results({ title, questions, attempt, answerKey, keyStatus, onReview, onReviewAt, onHome, onRetry, locked = false, lockedNote = null, onReviewTimes, onRepechaje, grading = null, exams = [], onStartSession }) {
+export default function Results({ title, questions, attempt, answerKey, keyStatus, onReview, onReviewAt, onHome, onRetry, locked = false, lockedNote = null, onReviewTimes, onRepechaje, grading = null, exams = [], onStartSession, retryLabel = null }) {
   const score = scoreAttempt(questions, attempt.answers, answerKey);
   const preliminary = keyStatus !== "official";
   // A simulacro is graded like the real exam: blanks count as wrong, so the score is out of every question.
@@ -332,7 +332,7 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
         ) : (
           <button type="button" className="primary big" onClick={onReview}>Revisar respuestas</button>
         ))}
-        {onRetry && <button type="button" className="secondary big" onClick={onRetry}>{attempt.assignmentId ? "Otro intento" : "Practicar de nuevo"}</button>}
+        {onRetry && <button type="button" className={retryLabel ? "primary big" : "secondary big"} onClick={onRetry}>{retryLabel ?? (attempt.assignmentId ? "Otro intento" : "Practicar de nuevo")}</button>}
         <button type="button" className="text-btn" onClick={onHome}>Volver al inicio</button>
       </div>
     </section>

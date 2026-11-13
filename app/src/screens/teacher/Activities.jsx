@@ -2,7 +2,8 @@ import { createPortal } from "react-dom";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Icon from "../../components/Icon.jsx";
 import { Select } from "../../components/Controls.jsx";
-import { assignmentState } from "../../lib/assignments.js";
+import { assignmentState, scorePct, whoOf } from "../../lib/assignments.js";
+import "./time.css";
 import { areaColor } from "../../lib/brand.js";
 import { PRESETS } from "../../lib/teacherRoutes.js";
 import { areaOf, areaShort, groupOf } from "../../lib/teaching.js";
@@ -28,8 +29,17 @@ const subjectOf = (a, byCourse) => {
 
 // Actividades › Todas / Tareas / Prácticas / Simulacros: grouped by subject so it is always clear what belongs where;
 // each card opens the activity page.
-export function ActivityList({ courses, assignments, contextName, go, loaded, kind = null }) {
+export function ActivityList({ courses, assignments, contextName, go, loaded, kind = null, api = null, members = null }) {
   const [tab, setTab] = useState("open");
+  // Delivery and average on every card, so the teacher sees who is behind without opening each activity.
+  const [attempts, setAttempts] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    if (!api?.reportAttempts) return undefined;
+    api.reportAttempts().then((a) => alive && setAttempts(a ?? []), () => alive && setAttempts(null));
+    return () => { alive = false; };
+  }, [api]);
+  const progress = activityProgress(assignments, members, attempts);
   const [space, setSpace] = useState("");
   const [subject, setSubject] = useState("");
   const info = kind ? Object.values(KIND_TABS).find((k) => k.kind === kind) : null;
@@ -77,7 +87,7 @@ export function ActivityList({ courses, assignments, contextName, go, loaded, ki
         <div key={s} className="al-group" style={{ "--subj": s === MIXED ? "var(--accent)" : areaColor(s) }}>
           {many && <h3 className="al-group-head"><span className="ctx-dot" aria-hidden="true" />{s}<span className="caption">{rows.length}</span></h3>}
           <div className="assign-cards">
-            {rows.map((a) => <ActivityCard key={a.id} a={a} course={byCourse[a.course_id]} go={go} />)}
+            {rows.map((a) => <ActivityCard key={a.id} a={a} course={byCourse[a.course_id]} go={go} prog={progress?.get(a.id)} />)}
           </div>
         </div>
       ))}
@@ -85,7 +95,31 @@ export function ActivityList({ courses, assignments, contextName, go, loaded, ki
   );
 }
 
-function ActivityCard({ a, course, go }) {
+// Per activity: how many of its class delivered and their average (preliminary key). null until both lists arrive.
+export function activityProgress(assignments, members, attempts) {
+  if (!members || !attempts) return null;
+  const students = new Map();
+  for (const m of members) if (m.role === "student") students.set(m.course_id, (students.get(m.course_id) ?? 0) + 1);
+  const by = new Map();
+  for (const t of attempts) {
+    if (!t.submitted_at || !t.assignment_id) continue;
+    const who = whoOf(t);
+    const cur = by.get(t.assignment_id) ?? new Map();
+    const p = scorePct(t);
+    if (!cur.has(who) || (p ?? -1) > (cur.get(who) ?? -1)) cur.set(who, p);
+    by.set(t.assignment_id, cur);
+  }
+  const out = new Map();
+  for (const a of assignments) {
+    const done = by.get(a.id) ?? new Map();
+    const pcts = [...done.values()].filter((v) => v != null);
+    const total = a.assignee_id ? 1 : students.get(a.course_id) ?? 0;
+    out.set(a.id, { done: done.size, total, avg: pcts.length ? Math.round(pcts.reduce((x, y) => x + y, 0) / pcts.length) : null });
+  }
+  return out;
+}
+
+function ActivityCard({ a, course, go, prog }) {
   const state = assignmentState(a);
   const area = course ? areaOf(course) : null;
   const subj = area ?? (a.scope && a.scope !== "all" ? a.scope : null);
@@ -101,6 +135,12 @@ function ActivityCard({ a, course, go }) {
           <span className="caption">{course ? groupOf(course).name : a.courses?.name} · {KIND_NAME[a.kind] ?? "Actividad"}{isPaper(a) ? " en papel" : ""}{a.due_at ? ` · ${state === "closed" ? "cerró" : "cierra"} ${shortDate(a.due_at)}` : ""}</span>
         </span>
       </span>
+      {prog && state !== "scheduled" && prog.total > 0 ? (
+        <span className="al-prog" title={`${prog.done} de ${prog.total} entregaron${prog.avg != null ? ` · promedio ${prog.avg} %` : ""}`}>
+          <span className="al-prog-row"><span className="caption">{prog.done}/{prog.total}</span>{prog.avg != null && <b className={prog.avg < 50 ? "low" : ""}>{prog.avg} %</b>}</span>
+          <span className="al-prog-bar" style={{ "--subj": subj ? areaColor(subj) : "var(--accent)" }} aria-hidden="true"><span style={{ width: `${Math.round((prog.done / prog.total) * 100)}%` }} /></span>
+        </span>
+      ) : null}
       <span className="assign-state">{STATE_LABEL[state]}</span>
       <span className="assign-chevron" aria-hidden="true"><Icon name="right" size={18} strokeWidth={2.8} /></span>
     </button>

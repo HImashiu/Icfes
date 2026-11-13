@@ -40,6 +40,7 @@ function hoySteps({ admin, name, first, intro = true }) {
       "Anuncios para tus estudiantes: escribir, Fijar, Desfijar y Borrar.",
       "Calendario del mes con lo que abre y cierra; toca una entrega para abrirla.",
       "Resultados nuevos: lo último que entró, en línea y en papel.",
+      "En un espacio de prueba: «Trae a tus colegas» (invitar por WhatsApp, correo o enlace) y «Enviar a coordinación», un resumen de lo que ya hiciste para llevar Cóndor a todo el colegio.",
     ] },
     { id: "ctx", target: "context", title: "Materia y curso", text: "Elige una materia, un curso o un grupo y todo el panel se filtra a esa clase. Coordinación también ve «Todo el colegio». Las clases donde solo tienes permiso de ver aparecen como «Solo ves»." },
     { id: "nueva", target: "new", title: "Nueva actividad", text: "El botón principal: crea cualquier tipo de actividad desde cualquier sección.",
@@ -66,7 +67,7 @@ function hoySteps({ admin, name, first, intro = true }) {
 function actividadesSteps({ openTour }) {
   return [
     { id: "a-todas", route: { section: "actividades", tab: "lista" }, target: "tab-lista", title: "Todas las actividades", bullets: [
-      "Tarjetas agrupadas por materia, con su estado: Abierta, Programada, Cerrada o Borrador.",
+      "Tarjetas agrupadas por materia, con su estado (Abierta, Programada, Cerrada o Borrador), cuántos entregaron y su promedio.",
       "Filtros Abiertas y Cerradas, por clase y por materia. Toca una actividad para abrir su página.",
     ] },
     { id: "a-tipos", route: { section: "actividades", tab: "tareas" }, target: "tab-tareas", title: "Tareas, prácticas y simulacros", bullets: [
@@ -105,6 +106,7 @@ function nuevaSteps() {
       "Avisos de preguntas que el grupo ya vio o que el colegio reservó: Quitar las repetidas, Quitar las bloqueadas o Usar igual.",
       "Cursos: asigna a varios cursos a la vez.",
       "Tipo, título, fecha de apertura y de entrega, tiempo en minutos e intentos permitidos.",
+      "Rutina semanal: elige muchas preguntas y repártelas en 2 a 8 semanas; queda programada una tarea por semana.",
       "Mostrar respuestas y explicaciones: al entregar, cuando cierre o nunca; corrección inmediata o al final.",
       "Calificación: como la clase o un modelo propio para esta actividad.",
       "Reservar estas preguntas para el simulacro, Monitorear el examen (aviso al salir de la pestaña), Permitir pistas y definiciones de palabras escritas por ti.",
@@ -120,6 +122,11 @@ function actividadSteps({ activityId }) {
   return seen([
     { id: "ap-steps", route: at("resultados"), target: "ap-steps", title: "El recorrido de la actividad", text: "Cada actividad muestra en qué va: Crear, Entregar, Recoger, Calificar y Resultados, con lo que falta en cada paso." },
     { id: "ap-actions", target: "ap-actions", title: "Imprimir y escanear", text: "Cualquier actividad se puede imprimir y calificar con hojas escaneadas, aunque la hayas creado en línea." },
+    { id: "ap-tools", target: "ap-tools", title: "Lo de todos los días, en un toque", bullets: [
+      "Dar más tiempo o Reabrir: +1 día, +3 días, +1 semana u otra fecha; los estudiantes la ven de inmediato.",
+      "Recordar a quienes faltan: la lista de quién no ha entregado y un mensaje listo para publicar en la clase, copiar o enviar por WhatsApp.",
+      "Usar en otra clase: las mismas preguntas y ajustes en otros cursos, con sus propias fechas.",
+    ] },
     { id: "ap-res", route: at("resultados"), target: "ap-tab-resultados", title: "Resultados", bullets: [
       "Mapa y tabla por pregunta: Por número o Más falladas, filtrado por área.",
       "Autopsia de cada pregunta: qué eligió cada estudiante. Proyectar las más falladas en clase.",
@@ -202,6 +209,8 @@ function resultadosSteps() {
       "Para todo el colegio, una clase o una actividad (la más específica gana).",
       "Porcentaje de aciertos, escala del colegio (1,0 a 5,0), estimado Saber 11, puntaje por dificultad (IRT) o tu propia fórmula.",
       "Ajustes opcionales: pistas que restan, errores que restan, curvas por área y crédito parcial. Notas finales por periodo.",
+      "Notas finales: desempeño Bajo, Básico, Alto o Superior; orden por nombre, apellido o nota; Copiar solo las notas finales para la plataforma del colegio.",
+      "Informes para padres: una página por estudiante con su nota, sus actividades, sus aciertos por área y tu observación, lista para imprimir o guardar en PDF.",
     ] },
   ];
 }

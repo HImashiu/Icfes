@@ -35,6 +35,14 @@ export function createApi(client) {
       const rows = unwrap(await client.rpc("my_trial"));
       return (Array.isArray(rows) ? rows[0] : rows) ?? null;
     },
+    // Migration 0038: a teacher with no code opens their own trial workspace (school + city) and becomes its first teacher.
+    async startTeacherTrial({ schoolName, city, fullName }) {
+      return unwrap(await client.rpc("start_teacher_trial", { p_school_name: schoolName, p_city: city || null, p_full_name: fullName || null }));
+    },
+    // Migration 0038: a colleague who came from an invitation link records who invited them (best effort).
+    async noteTrialInviter(inviterId) {
+      return unwrap(await client.rpc("note_trial_inviter", { p_inviter: inviterId }));
+    },
     async teacherCode() {
       return unwrap(await client.rpc("school_teacher_code"));
     },
@@ -107,6 +115,13 @@ export function createApi(client) {
       const r = await client.from("assignments").update({ delivery }).eq("id", id);
       if (r.error && /delivery/.test(r.error.message ?? "")) throw new Error("Para guardar si una actividad es en papel hace falta correr la migración 0023 en Supabase.");
       unwrap(r);
+    },
+    // Dates and status of one activity (extend, reopen, reschedule). The worker reads due_at on every request, so the
+    // new dates apply at once to grading and to what students see.
+    async updateAssignment(id, patch) {
+      const allowed = ["title", "opens_at", "due_at", "status"];
+      const clean = Object.fromEntries(Object.entries(patch).filter(([k]) => allowed.includes(k)));
+      return unwrap(await client.from("assignments").update(clean).eq("id", id).select().single());
     },
     async setAssignmentStatus(id, status) {
       unwrap(await client.from("assignments").update({ status }).eq("id", id));
