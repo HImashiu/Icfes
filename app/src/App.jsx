@@ -46,7 +46,7 @@ import { pendingMisses, repechajeKeys } from "./lib/repechaje.js";
 import { hiddenFor, withoutHidden } from "./lib/questionUse.js";
 import { orderQuestions } from "./lib/order.js";
 import { answerChanges, logAnswer, trackVisit } from "./lib/usage.js";
-import { clearQuickStart, readQuickArea, readQuickExam, readQuickStart } from "./lib/quickStart.js";
+import { clearQuickStart, readQuickArea, readQuickExam, readQuickQuestion, readQuickStart } from "./lib/quickStart.js";
 import AdminUsage from "./screens/AdminUsage.jsx";
 import { localQuota, spendLocal } from "./lib/practiceQuota.js";
 import { drawPractice, randomSeed } from "./lib/practiceDraw.js";
@@ -140,6 +140,7 @@ export default function App() {
   const [quickExam] = useState(() => readQuickExam());
   const quickExamTried = useRef(false);
   const [quickArea] = useState(() => readQuickArea());
+  const [quickQuestion] = useState(() => readQuickQuestion());
   const quickAreaTried = useRef(false);
   // The owner's «Uso» page (#admin/uso): only accounts in app_admins get data (migration 0037).
   const [adminPage, setAdminPage] = useState(() => typeof window !== "undefined" && window.location.hash.startsWith("#admin"));
@@ -480,6 +481,13 @@ export default function App() {
       if (selected.slug !== quickExam && !quickExamTried.current) { quickExamTried.current = true; openExam(quickExam); return; }
       setQuickStart(false);
       clearQuickStart();
+      // A question a friend shared: it first, then four more mixed ones. A question hidden by the school is skipped.
+      const open = withoutHidden(selected.exam, hidden, selected.slug);
+      if (quickQuestion && open.sections.some((s) => s.questions.some((qq) => qq.key === quickQuestion))) {
+        const rest = mixedKeys(open, 6).filter((k) => k !== quickQuestion).slice(0, 4);
+        startKeys(selected.slug, [quickQuestion, ...rest], { label: FIRST_PRACTICE, mode: "practice" });
+        return;
+      }
       setPreset({ scope: "all", mode: "timed" });
       setView("setup");
       return;
@@ -507,7 +515,7 @@ export default function App() {
     if (selected.slug === TEACHER_SLUG) return;
     const keys = mixedKeys(withoutHidden(selected.exam, hidden, selected.slug), 5);
     if (keys.length) startKeys(selected.slug, keys, { label: FIRST_PRACTICE, mode: "practice" });
-  }, [quickStart, quickExam, quickArea, exams, signedIn, selected, opening, attempt, consents]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [quickStart, quickExam, quickArea, quickQuestion, exams, signedIn, selected, opening, attempt, consents]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const startAssigned = async (a) => {
     if (a.delivery === "paper") return; // answered on the printed sheet, never in the app
@@ -779,6 +787,7 @@ export default function App() {
           figures={selected.figures}
           enrich={selected.enrich}
           enrichMeta={selected.enrichMeta}
+          shareSlug={!attempt.assignmentId && !demoEnabled && selected.slug !== TEACHER_SLUG ? selected.slug : null}
         />
         </GlossaryProvider>
         </AnnotationProvider>

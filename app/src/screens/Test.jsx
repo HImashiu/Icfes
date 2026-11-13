@@ -15,6 +15,7 @@ import { xpFor } from "../lib/xp.js";
 import { addTime } from "../lib/studentRun.js";
 import { useProctor } from "../lib/proctor.js";
 import { buzz, confetti, play } from "../lib/motion.js";
+import { questionShareLink } from "../lib/quickStart.js";
 
 // +10 XP per correct practice answer, double in the weakest area.
 const PRAISE = ["¡Correcto!", "¡Muy bien!", "¡Excelente!", "¡Así se hace!", "¡Bien pensado!"];
@@ -29,7 +30,7 @@ function centerIn(pane, el) {
 
 // The answering screen. Shows only the progress, the timer or mode, the flag, the question,
 // the options and the map: no streak or XP chart here.
-export default function Test({ title, examLabel, questions, attempt, answerKey, onReveal = null, onChange, onSubmit, onExit, figures, enrich, enrichMeta, onProctorEvent }) {
+export default function Test({ title, examLabel, questions, attempt, answerKey, onReveal = null, onChange, onSubmit, onExit, figures, enrich, enrichMeta, onProctorEvent, shareSlug = null }) {
   const [now, setNow] = useState(() => Date.now());
   const [sheetOpen, setSheetOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -305,6 +306,12 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
         <span>{verdict === "neutral" ? "Esta pregunta todavía no tiene clave." : right ? `+${xpFor(q.section, attempt.xpFactor ?? 1)} XP · clave preliminar` : explained ? "Mira la explicación abajo · clave preliminar" : "Clave preliminar, no oficial"}</span>
       </div>
       {cheer && <span className="verdict-run"><Icon name="flame" size={16} /> {cheer}</span>}
+      {shareSlug && verdict !== "neutral" && (
+        <a className="verdict-share" target="_blank" rel="noopener noreferrer"
+          href={`https://wa.me/?text=${encodeURIComponent(`¿Cuál marcarías tú? Esta pregunta salió en el ICFES: ${questionShareLink(shareSlug, q.key)}`)}`}>
+          <Icon name="chat" size={16} /> Mándasela a alguien
+        </a>
+      )}
     </div>
   );
 
