@@ -25,7 +25,7 @@
 .guide-head .btn-ghost { border-color: rgba(242, 245, 239, 0.4); box-shadow: 0 4px 0 rgba(242, 245, 239, 0.25); }
 
 /* Content on cream: the same tokens, recoloured for paper. */
-.guide-body, .guide main > .section:not(.guide-head), .guide .qlist, .guide .more {
+.guide-body, .guide main > .section:not(.guide-head), .guide .qlist, .guide .more, .guide .calc {
   --text: #0D110F; --text-2: #3E4A42; --line: rgba(13, 17, 15, 0.16); --surface: #FFFFFF; --surface-2: #ECE7DA;
   color: var(--text);
 }
@@ -70,6 +70,15 @@
 
 /* Sample questions keep the app's paper card, with the landing's ink outline. */
 .guide .qcard { margin-bottom: 26px; }
+.guide .qcard .paper { overflow-x: auto; }
+
+/* Calculator: dark text and white inputs on the white card. */
+.guide .calc-in input { background: #fff; color: var(--ink); border-color: rgba(13, 17, 15, 0.28); }
+.guide .calc-in input::placeholder { color: #6B746D; }
+.guide .calc-big { background: var(--accent); border-color: var(--ink); box-shadow: 0 4px 0 var(--ink); }
+.guide .calc-big b { color: var(--ink); }
+.guide .calc-big span, .guide .calc-big small { color: rgba(13, 17, 15, 0.78); }
+.guide .calc-levels b { color: #2B5F2E; }
 .guide .ans { background: #EEF5D6; border: 2px solid var(--ink); }
 .guide .ans summary { color: var(--ink); }
 .guide .ans summary::marker { color: #2B5F2E; }
@@ -89,4 +98,6 @@
   .guide .tbl table { font-size: 13px; }
   .guide .tbl th { font-size: 11px; letter-spacing: 0.02em; }
   .guide .tbl th, .guide .tbl td { padding: 7px 5px; }
+  .guide .paper table { font-size: 13px; }
+  .guide .paper th, .guide .paper td { padding: 5px 6px; }
 }
