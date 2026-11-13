@@ -164,7 +164,7 @@ export function buildExamPages(ctx) {
       [`¿Dónde descargo el ${ex.name} en PDF?`, `El ICFES publica sus cuadernillos en icfes.gov.co. En Cóndor no necesitas descargar nada: resuelves el ${ex.name} en línea, con cronómetro, corrección al instante y tu puntaje estimado de 0 a 500, gratis.`],
       [`¿El ${ex.name} trae las respuestas?`, official ? "Sí: este cuadernillo se publicó con su clave oficial, y es la que usamos." : "El cuadernillo se publicó sin clave. Cóndor resolvió cada pregunta y la clave se marca como preliminar; si encuentras un error, repórtalo desde la app y lo revisamos."],
       [`¿Sirve practicar con el ${ex.name} para el Saber 11 de 2027?`, "Sí. La estructura del examen (cinco pruebas, dos sesiones, preguntas de selección múltiple) es la misma desde 2014, y el ICFES vuelve a usar el mismo tipo de preguntas. Practicar con exámenes reales es la mejor forma de acostumbrarte al formato y al tiempo."],
-      ["¿Cuánto cuesta?", "Practicar en Cóndor es gratis. Entras con tu cuenta de Google y empiezas."],
+      ["¿Cuánto cuesta?", "Durante la demostración es gratis. Entras con tu cuenta de Google y empiezas."],
     ];
     const body = `<section class="section guide-head"><div class="wrap narrow">
   <span class="tag">Examen real · ${ex.year}</span>
