@@ -18,6 +18,7 @@ import { familyPayload, reportUrl, whatsappLink } from "../lib/family.js";
 import ProctorPanel from "./ProctorPanel.jsx";
 import { Select, confirmDialog } from "../components/Controls.jsx";
 import "./results.css";
+import Loading from "../components/Loading.jsx";
 
 const shortDate = (iso) => new Date(iso).toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "short" });
 function download(name, text) {
@@ -111,7 +112,7 @@ export default function AssignmentReport({ api, assignment, course = null, relat
 
   const details = useMemo(() => (view ? new Map(view.items.map((i) => [i.key, questionDetail(i, view.rows)])) : new Map()), [view]);
 
-  if (!view) return <p className="caption">Cargando resultados…</p>;
+  if (!view) return <Loading label="Cargando resultados…" />;
   const { prog, rows, items, timed } = view;
   const sorted = [...items].filter((i) => i.pct != null).sort((a, b) => a.pct - b.pct);
   const areaNames = [...new Set(items.map((i) => i.section))];

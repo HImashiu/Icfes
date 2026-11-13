@@ -3,6 +3,7 @@ import { amAdmin } from "../lib/usage.js";
 import { call } from "../lib/growth/app.js";
 import { experimentVerdict, nps, tally, vanWestendorp } from "../lib/growth/stats.js";
 import "./growth/growth.css";
+import Loading from "../components/Loading.jsx";
 
 // Growth control room (#admin/crecimiento, F7 in docs/growth/LEDGER.md). Only app_admins (migration 0037) get data.
 // Funnel, experiments with a verdict, referrals, partners, leads, surveys, content gaps, errors, web vitals, item
@@ -40,7 +41,7 @@ export default function AdminGrowth({ onExit }) {
   };
   useEffect(() => { if (allowed) load(); }, [allowed, days]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (allowed === null) return <main className="frame"><p className="muted">Cargando…</p></main>;
+  if (allowed === null) return <Loading page label="Cargando…" />;
   if (!allowed) return <main className="frame"><div className="card"><p className="caption">Esta página es solo para el equipo de Cóndor.</p><button type="button" className="secondary" onClick={onExit}>Volver a la app</button></div></main>;
 
   const act = (fn) => async () => { try { await fn(); await load(); } catch (e) { setError(e.message); } };
@@ -63,7 +64,7 @@ export default function AdminGrowth({ onExit }) {
         {PERIODS.map(([n, label]) => <button key={n} type="button" role="radio" aria-checked={days === n} className={days === n ? "seg active" : "seg"} onClick={() => setDays(n)}>{label}</button>)}
       </div>
       {error && <p className="notice error" role="alert">{/function|does not exist/.test(error) ? "Falta correr el SQL 0050 en Supabase." : error}</p>}
-      {!d && !error && <p className="muted">Cargando…</p>}
+      {!d && !error && <Loading label="Cargando…" />}
       {d && (
         <>
           <section className="au-tiles">

@@ -4,6 +4,7 @@ import { areaColor } from "../lib/brand.js";
 import { hasGuardianAuth } from "../lib/consent.js";
 import { cohortProjection, studentSummaries } from "../lib/students.js";
 import Icon from "../components/Icon.jsx";
+import Loading from "../components/Loading.jsx";
 
 // Horizontal bars for a share (0-100) per row. Colour only carries the area; the number is always written.
 export function Bars({ rows, unit = " %" }) {
@@ -70,7 +71,7 @@ export default function Dashboard({ api, profile, guard }) {
   }, [data, people]);
   const admin = profile.role === "school_admin";
 
-  if (!s) return <p className="caption">Cargando resumen…</p>;
+  if (!s) return <Loading label="Cargando resumen…" />;
   if (data.courses.length === 0) {
     return (
       <>

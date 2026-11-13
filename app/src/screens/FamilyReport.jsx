@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Bars } from "./Dashboard.jsx";
 import { areaColor } from "../lib/brand.js";
+import Loading from "../components/Loading.jsx";
 
 // Lo que ve la familia al abrir el enlace: sin iniciar sesión, una sola página, en español sencillo.
 export default function FamilyReport({ api, token }) {
@@ -8,7 +9,7 @@ export default function FamilyReport({ api, token }) {
   useEffect(() => {
     api.familyReport(token).then((data) => setState({ status: data ? "ok" : "missing", data })).catch(() => setState({ status: "error", data: null }));
   }, [api, token]);
-  if (state.status === "loading") return <main className="frame"><p className="muted">Cargando…</p></main>;
+  if (state.status === "loading") return <Loading page label="Cargando…" />;
   if (state.status !== "ok") {
     return <main className="frame"><div className="card"><h1>No pudimos abrir este informe</h1><p className="caption">El enlace venció o fue retirado. Pídele al colegio uno nuevo.</p></div></main>;
   }

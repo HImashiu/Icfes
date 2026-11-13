@@ -12,6 +12,7 @@ import { DateField, Select, confirmDialog } from "../components/Controls.jsx";
 import { joinUrl } from "../lib/joinLink.js";
 import { Bars } from "./Dashboard.jsx";
 import "./live.css";
+import Loading from "../components/Loading.jsx";
 
 function download(name, text) {
   const url = URL.createObjectURL(new Blob([text], { type: "text/csv;charset=utf-8" }));
@@ -348,7 +349,7 @@ export function LiveReport({ api, session, bundle: given = null, fetchExam = nul
           <span className="caption">{new Date(session.created_at ?? Date.now()).toLocaleDateString("es-CO", { day: "numeric", month: "long" })} · {MODES.find((m) => m.id === mode).label} · solo tú ves los nombres; nadie ve posiciones.</span></div>
         <button type="button" className="secondary" onClick={onExit}>Cerrar</button>
       </header>
-      {!report && <p className="caption">Cargando el informe…</p>}
+      {!report && <Loading label="Cargando el informe…" />}
       {report && (
         <>
           <div className="lv-tiles">

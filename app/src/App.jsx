@@ -64,6 +64,7 @@ import { testOf } from "./lib/saber11.js";
 import { bankItems } from "./lib/bank.js";
 import { daysUntil, loadGoal } from "./lib/goal.js";
 import { bookletsFor, condorDay, condorKeys, condorTaskRows } from "./lib/condorTeacher.js";
+import Loading from "./components/Loading.jsx";
 
 // Screens where the public-demo notice shows (never inside an exam, a live game or the school tools).
 const LAUNCH_VIEWS = new Set(["home", "subjects", "setup", "progress", "profile", "login", "history", "results"]);
@@ -90,17 +91,6 @@ class ScreenBoundary extends Component {
   }
 }
 
-
-// While something loads: the shape of a screen in grey, never a lone «Cargando…».
-function Loading() {
-  return (
-    <div className="cx-skel" role="status" aria-label="Cargando">
-      <i style={{ width: "38%", height: 30 }} /><i style={{ width: "62%" }} />
-      <div className="cx-skel-card"><i style={{ width: "40%" }} /><i style={{ width: "86%", height: 22 }} /><i style={{ width: "70%" }} /></div>
-      <div className="cx-skel-card"><i style={{ width: "30%" }} /><i style={{ width: "100%", height: 70 }} /></div>
-    </div>
-  );
-}
 
 // When the device loses the connection a slim strip says so; it goes away when the signal comes back.
 function OfflineStrip() {
@@ -761,7 +751,7 @@ export default function App() {
   if (familyToken && auth.api) return <FamilyReport api={auth.api} token={familyToken} />;
   // Internal review of every figure spec (not in the student navigation).
   if (typeof window !== "undefined" && window.location.hash === "#revision-figuras") return <FigureReview />;
-  if (signedIn && consents === null) return <main className="frame"><Loading /></main>;
+  if (signedIn && consents === null) return <Loading page label="Cargando…" />;
   if (signedIn && needsTerms(consents)) {
     return (
       <Consent
@@ -780,7 +770,7 @@ export default function App() {
     return <main className="app"><Parche profile={auth.profile} code={(hashNow.split("/")[1] || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 6) || null} onExit={() => { history.replaceState(null, "", window.location.pathname); setHashNow(""); }} /></main>;
   }
   if (adminPage && signedIn && !demoEnabled) return <Founder onExit={() => { history.replaceState(null, "", window.location.pathname); setAdminPage(false); }} />;
-  if (exams === null) return <main className="frame"><p className="muted">Cargando…</p></main>;
+  if (exams === null) return <Loading page label="Cargando…" />;
 
   const questions = selected && attempt ? questionsForAttempt(selected.exam, attempt) : [];
   // What a student may pick for free practice: booklets the school hid are not offered.
@@ -843,7 +833,7 @@ export default function App() {
       {loadError && <p className="notice error">{loadError}</p>}
       {openError && <p className="notice error">{openError}</p>}
       {((opening && !openingQuiet) || (!selected && BOOKLET_VIEWS.has(view))) && (
-        <p className="muted pad">{opening || exams.some((e) => e.status !== "proximamente") ? "Cargando cuadernillo…" : "Todavía no hay cuadernillos listos."}</p>
+        opening || exams.some((e) => e.status !== "proximamente") ? <Loading page label="Cargando cuadernillo…" note="Las preguntas son del ICFES; las explicaciones, de Cóndor." /> : <p className="muted pad">Todavía no hay cuadernillos listos.</p>
       )}
 
       {view === "home" && (
@@ -997,7 +987,7 @@ export default function App() {
         ? <AuthContext.Provider value={rootAuth}><TeacherLive auth={rootAuth} exams={exams} fetchExam={fetchExam} onExit={() => { if (window.location.hash.startsWith("#docente")) history.replaceState(null, "", window.location.pathname + window.location.search); try { sessionStorage.setItem(STUDENT_SIDE, "1"); } catch { /* storage blocked */ } setView("profile"); }} /></AuthContext.Provider>
         // The public site never shows a teacher panel to someone who isn't signed in as staff: a #docente link asks
         // for the school sign-in instead (the full invented school stays available only in ?demo=1).
-        : rootAuth.status === "loading" ? <p className="muted pad">Cargando…</p>
+        : rootAuth.status === "loading" ? <Loading label="Cargando…" />
         // Signed in as a student: the teacher panel asks for the teacher code instead of a second sign-in.
         : rootAuth.status === "ready" && !demoEnabled ? (
           <main className="frame tc-page">

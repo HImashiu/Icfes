@@ -47,6 +47,7 @@ import { ADMIN_NAV, HIDDEN_TABS, NAV, PRESETS, TABS, crumbs, navSection, normali
 import { schoolGrades } from "../lib/colegio.js";
 import { areaOf, areaShort, buildContexts, contextColor, contextCourseIds, contextLabel, groupOf, scopeApi, validContext } from "../lib/teaching.js";
 import { assignmentReceipt, loadReceipts, markSeen, reinforcementReceipt, rosterReceipt, saveReceipt, scanReceipt } from "../lib/receipts.js";
+import Loading from "../components/Loading.jsx";
 
 const shortDate = (iso) => new Date(iso).toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "short" });
 const STATE_LABEL = { active: "Abierta", scheduled: "Programada", closed: "Cerrada", draft: "Borrador" };
@@ -367,7 +368,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
             <Reinforcement api={api} courses={courses} exams={exams} fetchExam={fetchExam} guard={guard} setNotice={setNotice} onSaved={(count) => { reload(); showReceipt(reinforcementReceipt({ count })); }} />
           )}
 
-          {r.section === "actividad" && !activity && <p className="caption">{loaded ? "Esta actividad no existe o no tienes acceso a ella." : "Cargando…"}</p>}
+          {r.section === "actividad" && !activity && (loaded ? <p className="caption">Esta actividad no existe o no tienes acceso a ella.</p> : <Loading label="Cargando la actividad…" />)}
           {r.section === "actividad" && activity && (
             <ActivityPage key={activity.id} api={baseApi} profile={profile} assignment={activity} course={activityCourse} tab={r.tab} go={go} models={models} reloadModels={reloadModels}
               fetchExam={fetchExam} guard={guard} setNotice={setNotice} reload={reload} assignments={allAssignments} courses={allCourses} focusMember={focusMember} onOpenStudent={openStudent}
@@ -409,14 +410,14 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
               onOpenClass={(id) => { const c = allCourses.find((x) => x.id === id); pickContext({ subject: areaOf(c) ?? contexts.subjects.find((s) => s.classes.some((k) => k.id === id))?.key ?? null, courseId: id }); go({ section: "hoy" }); }} />
           )}
           {r.section === "colegio" && r.tab === "docentes" && (
-            !colegio ? <p className="caption">Cargando…</p> : (
+            !colegio ? <Loading label="Cargando…" /> : (
               <StaffList api={baseApi} profile={profile} staff={colegio.staff} invites={colegio.invites} courses={allCourses} members={members} grants={grants} authorship={colegio.authorship}
                 attempts={colegio.attempts} audit={colegio.audit} grades={grades} guard={guard} setNotice={setNotice} reload={reloadAll} log={log}
                 onOpenAssignment={(id) => go({ section: "actividad", id, tab: "resultados" })} />
             )
           )}
           {r.section === "colegio" && r.tab === "registro" && (
-            !colegio ? <p className="caption">Cargando…</p> : <AuditLog audit={colegio.audit} authorship={colegio.authorship} staff={colegio.staff} courses={allCourses} onOpenAssignment={(id) => go({ section: "actividad", id, tab: "resultados" })} />
+            !colegio ? <Loading label="Cargando…" /> : <AuditLog audit={colegio.audit} authorship={colegio.authorship} staff={colegio.staff} courses={allCourses} onOpenAssignment={(id) => go({ section: "actividad", id, tab: "resultados" })} />
           )}
           {r.section === "colegio" && r.tab === "calificacion" && <GradingSettings api={baseApi} profile={profile} courses={allCourses} assignments={allAssignments} models={models} reloadModels={reloadModels} guard={guard} setNotice={setNotice} fetchExam={fetchExam} />}
           {r.section === "colegio" && r.tab === "ajustes" && <SchoolSettings api={baseApi} profile={profile} settings={settings} school={colegio?.school} guard={guard} setNotice={setNotice} reload={reloadAll} log={log} />}
@@ -520,7 +521,7 @@ function ResultsByActivity({ api, courses, assignments, go, contextName }) {
           );
         })}
         {rows && rows.length === 0 && <p className="caption">Sin actividades en {contextName}.</p>}
-        {!rows && <p className="caption">Cargando…</p>}
+        {!rows && <Loading label="Cargando…" />}
       </div>
     </section>
   );

@@ -1,3 +1,4 @@
+import Loading from "../components/Loading.jsx";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { authHeaders } from "../lib/data.js";
 
@@ -147,7 +148,7 @@ export default function Radar() {
       </div>
 
       {error && <p className="notice error" role="alert">{error}</p>}
-      {!data && !error && <p className="muted">Cargando…</p>}
+      {!data && !error && <Loading label="Cargando…" />}
       {data && shown.length === 0 && (
         <p className="muted rd-empty">{posts.length === 0 ? "El radar todavía no ha guardado posts. La primera revisión llega en máximo 30 minutos después de activarlo." : "Nada con estos filtros."}</p>
       )}

@@ -8,6 +8,7 @@ import "./results.css";
 import ReportCards from "./teacher/ReportCards.jsx";
 import { DESEMPENOS, desempeno, desempenoCuts, finalColumn, sortRows } from "../lib/teacherTime.js";
 import "./teacher/time.css";
+import Loading from "../components/Loading.jsx";
 
 function download(name, text) {
   const url = URL.createObjectURL(new Blob([`﻿${text}\n`], { type: "text/csv;charset=utf-8" }));
@@ -128,7 +129,7 @@ export default function Gradebook({ api, profile, courses, assignments, models, 
         )}
       </section>
 
-      {!book && <p className="caption">Cargando notas…</p>}
+      {!book && <Loading label="Cargando notas…" />}
       {book && (
         <section className="card t-card">
           <div className="section-head gb-head">

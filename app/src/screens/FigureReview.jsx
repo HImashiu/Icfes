@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import FigureBlock from "../components/FigureBlock.jsx";
 import { authHeaders } from "../lib/data.js";
+import Loading from "../components/Loading.jsx";
 
 const base = import.meta.env.BASE_URL;
 
@@ -17,7 +18,7 @@ export default function FigureReview() {
   }, []);
 
   if (error) return <main className="frame"><p className="notice error">No se pudo cargar: {error}</p></main>;
-  if (!data) return <main className="frame"><p className="muted">Cargando…</p></main>;
+  if (!data) return <Loading page label="Cargando…" />;
   const total = data.exams.reduce((sum, ex) => sum + ex.figures.length, 0);
   return (
     <main className="frame figure-review">

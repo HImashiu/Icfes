@@ -7,6 +7,7 @@ import { areaColor } from "../lib/brand.js";
 import { TEACHER_ENTRY } from "../lib/teacherExam.js";
 import { holdRows, loadQuestionControl } from "../lib/questionControl.js";
 import { bookletMap, DEFAULT_RULES, filterMap, holdOf, MAP_FILTERS, mapTotals, RULE_TEXT, useIndex } from "../lib/questionUse.js";
+import Loading from "../components/Loading.jsx";
 
 const STATE_LABEL = { free: "Sin usar", practice: "En tareas o clases", exam: "En simulacros", both: "Un grupo la vio en tarea y simulacro" };
 const LEVELS = [["block", "Bloquear"], ["warn", "Avisar"], ["off", "Permitir"]];
@@ -179,7 +180,7 @@ export default function QuestionControl({ api, profile, exams, fetchExam, guard,
           {selecting && <button type="button" className="link" onClick={() => setSel(shown.map((r) => r.key))}>Elegir las {shown.length}</button>}
         </div>
 
-        {!bundle && <p className="caption">Cargando preguntas…</p>}
+        {!bundle && <Loading label="Cargando preguntas…" />}
         <div className="qc-grid" role="list" aria-label={`Preguntas de ${title}`}>
           {shown.map((r) => (
             <button key={r.key} type="button" role="listitem" className={`qc-tile s-${r.state}${sel.includes(r.key) ? " picked" : ""}${r.repeated ? " rep" : ""}`}

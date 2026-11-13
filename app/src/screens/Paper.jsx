@@ -13,6 +13,7 @@ import { FilePicker, Select } from "../components/Controls.jsx";
 import SeatingChart from "../components/SeatingChart.jsx";
 import { loadLocalPlan, orderForVersion, planMatches, saveLocalPlan, seatOfMember, versionCounts, versionLabel, versionOfMember } from "../lib/seating.js";
 import { SeatingCard, SeatingWizard } from "./teacher/SeatingPlanner.jsx";
+import Loading from "../components/Loading.jsx";
 
 // The roster order the sheets are printed with and read back with. Keep the list unchanged between printing and scanning.
 export const sheetRoster = (members) => members.filter((m) => m.role === "student").sort((a, b) => a.email.toLowerCase().localeCompare(b.email.toLowerCase()));
@@ -227,7 +228,7 @@ export default function Paper({ api, assignments, fetchExam, guard, setNotice, f
             {!fixedId && <div className="field"><span className="label">Asignación</span>
               <Picker label="Asignación" value={assignment?.id ?? ""} onChange={setId} options={choices.map((a) => ({ value: a.id, label: `${a.courses?.name} · ${a.title}` }))} /></div>}
             <div className="paper-stats" aria-live="polite">
-              {!bundle ? <span className="chip">Cargando preguntas…</span> : (
+              {!bundle ? <Loading label="Cargando preguntas…" /> : (
                 <>
                   <span className="chip"><strong>{questions.length}</strong> preguntas</span>
                   <span className="chip"><strong>{areas}</strong> {areas === 1 ? "área" : "áreas"}</span>

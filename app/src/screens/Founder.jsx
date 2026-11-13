@@ -4,6 +4,7 @@ import { DateField, Select } from "../components/Controls.jsx";
 import AdminUsage from "./AdminUsage.jsx";
 import Radar from "./Radar.jsx";
 import "./founder.css";
+import Loading from "../components/Loading.jsx";
 
 // The founder's dashboard (#admin). Only accounts in app_admins get data: every number comes from admin_dashboard(),
 // admin_people() and admin_person() (migration 0040), which check app_admins on the server. Hiding this page is not
@@ -129,7 +130,7 @@ export default function Founder({ onExit }) {
 
   const openPeople = useCallback((status) => { setPeopleStatus(status ?? ""); go("personas"); }, []);
 
-  if (allowed === null) return <main className="frame"><p className="muted">Cargando…</p></main>;
+  if (allowed === null) return <Loading page label="Cargando…" />;
   if (!allowed) {
     return (
       <main className="frame">
@@ -185,7 +186,7 @@ export default function Founder({ onExit }) {
       )}
 
       {error && <p className="notice error" role="alert">{error === "not_admin" ? "Tu cuenta no está en app_admins." : error}</p>}
-      {!data && !error && route.tab !== "posts" && <p className="muted">Cargando…</p>}
+      {!data && !error && route.tab !== "posts" && <Loading label="Cargando…" />}
 
       {route.tab === "posts" && <Radar />}
       {data && route.tab === "resumen" && <Overview data={data} people={filteredPeople} openPeople={openPeople} setChannel={setChannel} />}
@@ -622,7 +623,7 @@ function People({ people, loading, status, setStatus }) {
           <label className="field fd-search"><span className="label">Buscar</span><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Nombre, correo, colegio o fuente" /></label>
           <label className="field"><span className="label">Ordenar</span><Select value={sort} onChange={setSort} options={SORTS.map(([value, label]) => ({ value, label }))} /></label>
         </div>
-        {loading && <p className="muted">Cargando…</p>}
+        {loading && <Loading label="Cargando…" />}
         <ul className="fd-people">
           {rows.slice(0, limit).map((p) => (
             <li key={p.id}>
@@ -748,7 +749,7 @@ function Person({ id }) {
 
   const back = () => { if (window.history.length > 1) window.history.back(); else go("personas"); };
   if (error) return <div className="fd-body"><p className="notice error" role="alert">{error === "not_found" ? "Esa cuenta ya no existe." : error}</p><button type="button" className="secondary" onClick={back}>Volver</button></div>;
-  if (!d) return <div className="fd-body"><p className="muted">Cargando…</p></div>;
+  if (!d) return <div className="fd-body"><Loading label="Cargando…" /></div>;
 
   const p = d.profile ?? {};
   const days = d.days ?? [];

@@ -6,6 +6,7 @@ import { parseExam, parseKey } from "../lib/exam.js";
 import { linkFigures, parseFigureSpecs, prepareExam } from "../lib/figures.js";
 import { useMedia } from "../lib/media.js";
 import { checkRendered } from "../lib/reviewChecks.js";
+import Loading from "../components/Loading.jsx";
 
 // Question review (#revision-preguntas): one question drawn with the same components and layout rules as the student's
 // test screen (screens/Test.jsx), so a person or a Claude session can look at it as a student sees it and write down
@@ -66,7 +67,7 @@ function BookletList() {
   useEffect(() => { getJson("exams/index.json").then((d) => setList(d.exams ?? [])).catch((e) => setError(e.message)); }, []);
   useEffect(() => { document.body.dataset.reviewState = list || error ? "ready" : "loading"; }, [list, error]);
   if (error) return <main className="frame"><p className="notice error">{error}</p></main>;
-  if (!list) return <main className="frame"><p className="muted">Cargando…</p></main>;
+  if (!list) return <Loading page label="Cargando…" />;
   return (
     <main className="frame">
       <h1>Revisión de preguntas</h1>
@@ -95,7 +96,7 @@ function BookletMap({ slug }) {
   const { bundle, error } = useBundle(slug);
   useEffect(() => { document.body.dataset.reviewState = bundle || error ? "ready" : "loading"; }, [bundle, error]);
   if (error) return <main className="frame"><p className="notice error">{error}</p></main>;
-  if (!bundle) return <main className="frame"><p className="muted">Cargando…</p></main>;
+  if (!bundle) return <Loading page label="Cargando…" />;
   const qs = bundle.exam.questions;
   return (
     <main className="frame">
@@ -174,7 +175,7 @@ function OneQuestion({ slug, number, bare, showKey }) {
   ));
 
   if (error) return <main className="frame"><p className="notice error">{error}</p></main>;
-  if (!bundle) return <main className="frame"><p className="muted">Cargando…</p></main>;
+  if (!bundle) return <Loading page label="Cargando…" />;
   if (!q) return <main className="frame"><p className="notice error">El cuadernillo {slug} no tiene la pregunta {number} visible para el estudiante.</p></main>;
 
   const prev = questions[index - 1]; const next = questions[index + 1];

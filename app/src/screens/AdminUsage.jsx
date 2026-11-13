@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { adminUsage, amAdmin } from "../lib/usage.js";
+import Loading from "../components/Loading.jsx";
 
 // «Uso»: who comes to Cóndor and how much they practice. Only for the owner's accounts (app_admins, migration 0037).
 // Open it at /app/#admin/uso. Data: admin_usage() — visitors of the site (anonymous), accounts, questions answered.
@@ -42,7 +43,7 @@ export default function AdminUsage({ onExit }) {
       && (!q || `${u.nombre} ${u.correo} ${u.colegio ?? ""} ${u.fuente ?? ""}`.toLowerCase().includes(q)));
   }, [data, query, onlyActive]);
 
-  if (allowed === null) return <main className="frame"><p className="muted">Cargando…</p></main>;
+  if (allowed === null) return <Loading page label="Cargando…" />;
   if (!allowed) {
     return (
       <main className="frame">
@@ -95,7 +96,7 @@ export default function AdminUsage({ onExit }) {
       </div>
 
       {error && <p className="notice error" role="alert">{/admin_usage|function/.test(error) ? "Falta correr el SQL 0037 en Supabase." : error}</p>}
-      {!data && !error && <p className="muted">Cargando…</p>}
+      {!data && !error && <Loading label="Cargando…" />}
 
       {data && (
         <>

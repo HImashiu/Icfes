@@ -274,3 +274,14 @@
 @keyframes cx-fade { from { opacity: 0; } }
 @keyframes cx-up { from { transform: translateY(40px); opacity: 0.4; } }
 @media (min-width: 801px) { .cx-sheet-wrap { display: none; } }
+/* Loading: owl + display label + a lime bar sweeping (replaces every bare «Cargando…»). */
+#root .cx-load-page { min-height: 70vh; display: grid; place-content: center; justify-items: center; gap: 14px; text-align: center; }
+#root .cx-load-title { font-size: clamp(30px, 5vw, 56px); margin-bottom: 4px; }
+.cx-load-bar { display: block; position: relative; width: min(260px, 70vw); height: 8px; border-radius: 99px; background: var(--surface-2); overflow: hidden; border: 1.5px solid var(--line); }
+.cx-load-bar i { position: absolute; top: 0; bottom: 0; width: 40%; border-radius: 99px; background: var(--accent); animation: cx-sweep 1.1s var(--cx-ease) infinite; }
+@keyframes cx-sweep { from { left: -40%; } to { left: 100%; } }
+#root .cx-load { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 18px; background: var(--surface); border: 1.5px solid var(--line); width: max-content; max-width: 100%; }
+#root .cx-load-text { display: grid; gap: 6px; }
+#root .cx-load-text b { font: 800 15px/1 var(--cx-display); text-transform: uppercase; letter-spacing: 0.01em; }
+#root .cx-load .cx-load-bar { width: 160px; height: 6px; }
+@media (prefers-reduced-motion: reduce) { .cx-load-bar i { animation: none; left: 0; width: 100%; opacity: 0.5; } }

@@ -10,6 +10,7 @@ import { loadQuestionControl } from "../lib/questionControl.js";
 import Icon from "../components/Icon.jsx";
 import QuestionsPrint from "../components/QuestionsPrint.jsx";
 import "./builder/builder.css";
+import Loading from "../components/Loading.jsx";
 
 const plain = (h) => String(h ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 const PAGE = 30;
@@ -131,7 +132,7 @@ export default function BankEditor({ api, profile, exams, fetchExam, guard, setN
           </div>
         )}
         {printing && bundle && <QuestionsPrint bundle={bundle} keys={chosenKeys} title={`${examTitle} · hoja de trabajo`} onClose={() => setPrinting(false)} />}
-        {!bundle && <p className="caption">Cargando preguntas…</p>}
+        {!bundle && <Loading label="Cargando preguntas…" />}
         <ul className="b-list">
           {shown.slice(page * PAGE, page * PAGE + PAGE).map((q) => {
             const v = byKey.get(q.key);

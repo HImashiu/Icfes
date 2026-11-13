@@ -10,6 +10,7 @@ import { CHART_AGGS, CHART_TYPES, autoTitle } from "../lib/sheetChart.js";
 import SheetChart from "./SheetChart.jsx";
 import { useFacts } from "./useFacts.js";
 import "./results.css";
+import Loading from "../components/Loading.jsx";
 
 const CURRENT = "condor.boards.current";
 const fmt = (v, d = 1) => (v == null || !Number.isFinite(v) ? "—" : v.toLocaleString("es-CO", { maximumFractionDigits: d }));
@@ -184,7 +185,7 @@ export default function Dashboards({ api, profile, courses, assignments, models 
     update({ ...board, filters: f });
   };
 
-  if (!loaded) return <p className="caption">Cargando tableros…</p>;
+  if (!loaded) return <Loading label="Cargando tableros…" />;
 
   if (!board) {
     return (
@@ -346,7 +347,7 @@ function Tile({ tile, board, table, loading, edit, dragging, onDragStart, onDrag
         )}
       </header>
       <div className="db-tile-body">
-        {loading || !table ? <p className="caption">Cargando…</p> : <TileBody tile={tile} rows={rows} table={table} />}
+        {loading || !table ? <Loading label="Cargando…" /> : <TileBody tile={tile} rows={rows} table={table} />}
       </div>
       <span className="caption db-tile-sub">{sub}</span>
       {edit && <span className="db-resize" onPointerDown={onResize} title="Arrastra para cambiar el tamaño" aria-hidden="true" />}

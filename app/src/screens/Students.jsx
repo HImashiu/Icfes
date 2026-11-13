@@ -12,6 +12,7 @@ import {
 import { SWATCHES } from "../lib/workspaceStore.js";
 import { bulkActions, profilePanels, rosterColumns, scoring, sorted } from "../lib/workspaceSlots.js";
 import { Bars, Kpi } from "./Dashboard.jsx";
+import Loading from "../components/Loading.jsx";
 
 const PAGE = 60;
 const TABS = [["list", "Lista"], ["queue", "Seguimiento"], ["groups", "Grupos"], ["statuses", "Estados"]];
@@ -104,7 +105,7 @@ export default function Students({ api, profile, courses, assignments, guard, se
     say(`Seguimiento de ${e.name} cerrado.`);
   });
 
-  if (!data || !ws) return <p className="caption">Cargando estudiantes…</p>;
+  if (!data || !ws) return <Loading label="Cargando estudiantes…" />;
 
   const open = openKey ? roster.find((e) => e.key === openKey) : null;
   if (open) {
@@ -712,7 +713,7 @@ export function StudentProfile({ api, userId, student: s, ws, store, guard, say,
           <textarea rows={3} aria-label="Nueva nota" maxLength={4000} placeholder="Ej.: Habló con el acudiente; acordamos entregar el simulacro el lunes." value={draft} onChange={(e) => setDraft(e.target.value)} />
           <div className="report-actions"><button type="submit" className="primary" disabled={!draft.trim()}>Guardar nota</button></div>
         </form>
-        {notes === null ? <span className="caption">Cargando notas…</span> : notes.length === 0 ? <span className="caption">Sin notas todavía.</span> : (
+        {notes === null ? <Loading label="Cargando notas…" /> : notes.length === 0 ? <span className="caption">Sin notas todavía.</span> : (
           <ul className="b-list">
             {notes.map((n) => (
               <li key={n.id} className="ws-note">

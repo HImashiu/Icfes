@@ -19,6 +19,7 @@ import { holdRows, loadQuestionControl } from "../lib/questionControl.js";
 import { UseBadge, UseHistory } from "../components/QuestionUse.jsx";
 import { splitWeeks, weekDates } from "../lib/teacherTime.js";
 import "./teacher/time.css";
+import Loading from "../components/Loading.jsx";
 
 const isoDay = (d) => d.toISOString().slice(0, 10);
 const WEEK_CHOICES = [1, 2, 3, 4, 6, 8];
@@ -312,7 +313,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
       {weak && (
         <p className="notice">Lo más flojo del curso en este cuadernillo: {weak.slice(0, 3).map((c) => `${c.competencia} (${c.pct} %)`).join(", ")}. Filtré por esas competencias.</p>
       )}
-      {loading && <p className="caption">Cargando preguntas…</p>}
+      {loading && <Loading label="Cargando preguntas…" />}
       <ul className="b-list">
         {filtered.slice(0, limitShown).map((it) => {
           const on = picked.includes(it.key);

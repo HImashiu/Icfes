@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import FigureBlock from "../components/FigureBlock.jsx";
 import { authHeaders } from "../lib/data.js";
+import Loading from "../components/Loading.jsx";
 
 const base = import.meta.env.BASE_URL;
 
@@ -18,7 +19,7 @@ export default function FigureCheck() {
     <main className="frame figure-check">
       <h1>Figuras nuevas del motor</h1>
       {error && <p className="notice error">No se pudo cargar: {error}</p>}
-      {figures === null && !error && <p className="muted">Cargando…</p>}
+      {figures === null && !error && <Loading label="Cargando…" />}
       {(figures ?? []).map((f) => (
         <section key={f.id} className="card check-item">
           <span className="label">{f.label}</span>

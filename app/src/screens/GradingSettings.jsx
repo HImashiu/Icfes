@@ -8,6 +8,7 @@ import { FORMULA_VARS, MODEL_KINDS, describeModel, formatValue, gradeMany, itemF
 import { classLabel, groupOf } from "../lib/teaching.js";
 import Gradebook from "./Gradebook.jsx";
 import "./results.css";
+import Loading from "../components/Loading.jsx";
 
 const AREAS = ["Lectura crítica", "Matemáticas", "Ciencias naturales", "Sociales y ciudadanas", "Inglés"];
 // Invented students for when there are no deliveries yet: the same share right everywhere, nudged a little per area.
@@ -360,7 +361,7 @@ function RealPreview({ api, fetchExam, profile, target, assignments, courses, mo
           <Select aria-label="Actividad de ejemplo" value={chosen?.id ?? ""} onChange={setPick}
             options={pool.slice(0, 60).map((a) => ({ value: a.id, label: `${a.title}${courses.find((c) => c.id === a.course_id) ? ` · ${groupOf(courses.find((c) => c.id === a.course_id)).name}` : ""}` }))} />
         )}
-        {data === "loading" && <span className="caption">Cargando entregas…</span>}
+        {data === "loading" && <Loading label="Cargando entregas…" />}
         {!real && data !== "loading" && <span className="caption">{chosen ? "Esta actividad aún no tiene entregas: se muestran estudiantes inventados." : "Sin actividades todavía: se muestran estudiantes inventados."}</span>}
         {shadowed && <p className="notice">«{chosen.title}» tiene su propia calificación ({describeModel(next.model).split(" · ")[0]}), así que guardar aquí no la cambia. La columna «Con este método» muestra cómo quedaría si la usara.</p>}
         <div className="gw-sum">
