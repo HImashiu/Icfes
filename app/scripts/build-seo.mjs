@@ -41,7 +41,7 @@ const AREAS = [
   },
   {
     slug: "ciencias-naturales", name: "Ciencias naturales", color: "#5ED3B4", count: 8,
-    title: "Preguntas ICFES de Ciencias naturales con respuestas",
+    title: "Preguntas ICFES Ciencias naturales con respuestas",
     desc: "Preguntas reales de Ciencias naturales del Saber 11 publicadas por el ICFES, con su respuesta. Biología, química, física y ciencia, tecnología y sociedad.",
     intro: [
       "Ciencias naturales tiene unas 58 preguntas, entre la Sesión 1 y la Sesión 2. Cubre biología, química y física, y también ciencia, tecnología y sociedad.",
@@ -204,8 +204,16 @@ export const ogName = (path) => path.replace(/\/$/, "").replace(/\//g, "--");
 let SITE_DIR = "";
 const ogImagePath = (path) => existsSync(join(SITE_DIR, "img", "og", `${ogName(path)}.png`)) ? `img/og/${ogName(path)}.png` : "img/og.png";
 
-function page({ siteUrl, path, title, desc, body, crumbs, jsonLd, katex, script, type = "website" }) {
+// Titles: at most 60 characters so Google shows them whole. " | Cóndor" is added only when it still fits.
+const SUFFIX = " | Cóndor";
+export const fitTitle = (title) => {
+  const base = title.endsWith(SUFFIX) ? title.slice(0, -SUFFIX.length) : title;
+  return (base + SUFFIX).length <= 60 ? base + SUFFIX : base;
+};
+
+function page({ siteUrl, path, title: rawTitle, desc, body, crumbs, jsonLd, katex, script, type = "website" }) {
   const url = siteUrl + path;
+  const title = fitTitle(rawTitle);
   const up = "../".repeat(path.split("/").filter(Boolean).length);
   const crumbLd = {
     "@type": "BreadcrumbList",
@@ -234,9 +242,8 @@ function page({ siteUrl, path, title, desc, body, crumbs, jsonLd, katex, script,
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content="${esc(title)}" />
   <meta name="twitter:card" content="summary_large_image" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet" />
+  <link rel="preload" href="${up}fonts/bricolage-grotesque-normal-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="${up}fonts/figtree-normal-latin.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="${up}site.css" />
   <link rel="stylesheet" href="${up}landing.css" />
   <link rel="stylesheet" href="${up}guide.css" />
@@ -263,6 +270,7 @@ function page({ siteUrl, path, title, desc, body, crumbs, jsonLd, katex, script,
   <main id="contenido">
     <nav class="crumbs wrap narrow" aria-label="Ruta"><a href="${up}">Inicio</a>${crumbs.map((c, i) => i === crumbs.length - 1 ? ` <span aria-hidden="true">›</span> <span aria-current="page">${esc(c.name)}</span>` : ` <span aria-hidden="true">›</span> <a href="${up}${c.path}">${esc(c.name)}</a>`).join("")}</nav>
 ${guideBody(body)}
+<!--RELATED-->
   </main>
   <footer class="foot">
     <div class="wrap foot-row">
@@ -280,7 +288,7 @@ ${guideBody(body)}
         <a href="${up}resultados-icfes/">Cómo leer tus resultados</a>
         <a href="${up}glosario-icfes/">Glosario ICFES</a>
         <a href="${up}blog/">Blog</a>
-        <a href="${up}privacidad.html">Privacidad y términos</a>
+        <a href="${up}privacidad">Privacidad y términos</a>
       </nav>
     </div>
   </footer>
@@ -289,6 +297,36 @@ ${guideBody(body)}
 </body>
 </html>
 `;
+}
+
+// "Sigue con": every search page links to 3 siblings (the next ones in its folder, so each sibling gets 3 links back),
+// its parent hub and 2 evergreen guides. Run after all pages are written (scripts/build-site.mjs), so pages made by
+// any build-seo-*.mjs script are linked without extra work. Anchors are each page's h1.
+const EVERGREEN = ["preguntas-icfes/", "simulacro-icfes/", "examenes-icfes-anteriores/", "calculadora-puntaje-icfes/", "competencias-icfes/", "niveles-de-desempeno-icfes/", "como-prepararse-para-el-icfes/", "resultados-icfes/", "glosario-icfes/", "blog/"];
+export function injectRelated(out, paths) {
+  const h1 = new Map();
+  for (const p of paths) {
+    const html = readFileSync(join(out, p, "index.html"), "utf8");
+    const m = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/);
+    h1.set(p, (m ? m[1] : p).replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim());
+  }
+  const parentOf = (p) => p.split("/").filter(Boolean).slice(0, -1).join("/") + "/";
+  const groups = new Map();
+  for (const p of [...paths].sort()) { const k = parentOf(p); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(p); }
+  paths.forEach((p, n) => {
+    const sib = groups.get(parentOf(p));
+    const i = sib.indexOf(p);
+    const picks = [];
+    for (let k = 1; k < sib.length && picks.length < 3; k++) picks.push(sib[(i + k) % sib.length]);
+    const parent = parentOf(p);
+    if (parent !== "/" && h1.has(parent) && !picks.includes(parent)) picks.push(parent);
+    const ever = EVERGREEN.filter((e) => e !== p && e !== parent && !picks.includes(e) && h1.has(e));
+    for (let k = 0; k < 2 && ever.length; k++) picks.push(ever[(n + k * 5) % ever.length]);
+    const up = "../".repeat(p.split("/").filter(Boolean).length);
+    const links = [...new Set(picks)].map((q) => `<li><a href="${up}${q}">${esc(h1.get(q))}</a></li>`).join("");
+    const f = join(out, p, "index.html");
+    writeFileSync(f, readFileSync(f, "utf8").replace("<!--RELATED-->", `<section class="section related" aria-labelledby="sigue"><div class="wrap narrow"><h2 id="sigue">Sigue con</h2><ul class="rel">${links}</ul></div></section>`));
+  });
 }
 
 // Every guide page opens with the landing's look: the squared grid with doodles and the owl, which looks at the pointer.
@@ -343,7 +381,7 @@ ${qs}
 ${cta("../../", `¿Quieres más preguntas de ${esc(area.name)}?`)}
 <section class="wrap narrow more"><p>Otras áreas: ${others}.</p><p>¿Vas a presentar el examen completo? Mira cómo es el <a href="../../simulacro-icfes/">simulacro ICFES</a>, calcula tu puntaje con la <a href="../../calculadora-puntaje-icfes/">calculadora ICFES</a> o sigue el <a href="../../como-prepararse-para-el-icfes/">plan de estudio de 8 semanas</a>.</p></section>`;
     write(path, page({
-      siteUrl, path, title: `${area.title} · Saber 11 | Cóndor`, desc: area.desc, body, katex: qs.includes('class="katex'),
+      siteUrl, path, title: area.title, desc: area.desc, body, katex: qs.includes('class="katex'),
       crumbs: [{ name: "Preguntas ICFES", path: "preguntas-icfes/" }, { name: area.name, path }],
       jsonLd: [{ "@type": "LearningResource", name: area.title, description: area.desc, inLanguage: "es-CO", url: siteUrl + path, educationalLevel: "Grado 11", learningResourceType: "Practice questions", isAccessibleForFree: true, about: { "@type": "Thing", name: `Saber 11 · ${area.name}` }, publisher: { "@type": "Organization", name: "Cóndor", url: siteUrl }, citation: "ICFES, Saber 11, cuadernillos publicados" }],
     }));
@@ -360,7 +398,7 @@ ${cta("../../", `¿Quieres más preguntas de ${esc(area.name)}?`)}
 </div></section>
 ${cta("../", "Practica con más de 4.000 preguntas")}`;
     write(path, page({
-      siteUrl, path, title: "Preguntas tipo ICFES con respuestas por área · Saber 11 | Cóndor",
+      siteUrl, path, title: "Preguntas tipo ICFES con respuestas por área",
       desc: "Preguntas reales del Saber 11 con respuestas: Matemáticas, Lectura crítica, Sociales y ciudadanas, Ciencias naturales e Inglés. Tomadas de cuadernillos publicados por el ICFES.",
       body, crumbs: [{ name: "Preguntas ICFES", path }],
       jsonLd: [{ "@type": "CollectionPage", name: "Preguntas tipo ICFES por área", url: siteUrl + path, inLanguage: "es-CO", hasPart: AREAS.map((a) => ({ "@type": "LearningResource", name: a.title, url: `${siteUrl}preguntas-icfes/${a.slug}/` })) }],
@@ -409,7 +447,7 @@ ${cta("../", "Practica con más de 4.000 preguntas")}`;
 </section>
 ${cta("../", "Empieza tu simulacro ahora")}`;
     write(path, page({
-      siteUrl, path, title: "Simulacro ICFES gratis 2026 · Saber 11 con puntaje de 0 a 500 | Cóndor",
+      siteUrl, path, title: "Simulacro ICFES 2026 gratis, con puntaje de 0 a 500",
       desc: "Simulacro ICFES gratis con preguntas reales del Saber 11: dos sesiones, tiempo del examen y puntaje estimado de 0 a 500. Matemáticas, Lectura crítica, Sociales, Ciencias e Inglés.",
       body, crumbs: [{ name: "Simulacro ICFES", path }],
       jsonLd: [faqLd(faq), { "@type": "WebPage", name: "Simulacro ICFES gratis", url: siteUrl + path, inLanguage: "es-CO", about: { "@type": "Thing", name: "Examen Saber 11" } }],
@@ -502,7 +540,7 @@ function buildScorePages({ siteUrl, write, saber11, national }) {
 </section>
 ${cta("../", "Descubre tu puntaje con un simulacro")}`;
     write(path, page({
-      siteUrl, path, title: "Calculadora del puntaje ICFES 2026: global de 0 a 500 y percentil | Cóndor",
+      siteUrl, path, title: "Calculadora puntaje ICFES 2026: global y percentil",
       desc: "Calcula tu puntaje global del ICFES (Saber 11) de 0 a 500 con la fórmula oficial, tu nivel de desempeño por prueba y en qué percentil del país quedas. Gratis.",
       body, crumbs: [{ name: "Calculadora de puntaje", path }], script: "calc.js",
       jsonLd: [faqLd(faq), { "@type": "WebApplication", name: "Calculadora del puntaje ICFES", url: siteUrl + path, applicationCategory: "EducationalApplication", operatingSystem: "Web", inLanguage: "es-CO", isAccessibleForFree: true, offers: { "@type": "Offer", price: "0", priceCurrency: "COP" } }],
@@ -533,7 +571,7 @@ ${cta("../", "Descubre tu puntaje con un simulacro")}`;
 </section>
 ${cta("../", "Mide tu nivel en cada prueba")}`;
     write(path, page({
-      siteUrl, path, title: "Niveles de desempeño ICFES Saber 11: rangos de puntaje por prueba | Cóndor",
+      siteUrl, path, title: "Niveles de desempeño ICFES: rangos por prueba",
       desc: "Rangos de puntaje de los niveles de desempeño 1 a 4 del ICFES en Lectura crítica, Matemáticas, Sociales y Ciencias, y los niveles de Inglés Pre A1, A1, A2 y B1.",
       body, crumbs: [{ name: "Niveles de desempeño", path }],
       jsonLd: [faqLd(faq), { "@type": "Article", headline: "Niveles de desempeño del ICFES (Saber 11)", inLanguage: "es-CO", url: siteUrl + path, publisher: { "@type": "Organization", name: "Cóndor", url: siteUrl } }],
@@ -588,7 +626,7 @@ function buildGuidePage({ siteUrl, write }) {
 </section>
 ${cta("../", "Empieza con un simulacro de diagnóstico")}`;
   write(path, page({
-    siteUrl, path, title: "Cómo prepararse para el ICFES: plan de estudio de 8 semanas | Cóndor",
+    siteUrl, path, title: "Cómo prepararse para el ICFES: plan de 8 semanas",
     desc: "Plan de estudio para el ICFES Saber 11: simulacros de diagnóstico, qué repasar en cada prueba, manejo del tiempo y qué llevar el día del examen.",
     body, crumbs: [{ name: "Cómo prepararse", path }],
     jsonLd: [faqLd(faq), { "@type": "Article", headline: "Cómo prepararse para el ICFES: plan de 8 semanas", inLanguage: "es-CO", url: siteUrl + path, publisher: { "@type": "Organization", name: "Cóndor", url: siteUrl } }],
@@ -637,7 +675,7 @@ function buildSchoolsPage({ siteUrl, write }) {
 </section>
 <section class="section"><div class="wrap narrow"><div class="card price reveal"><div><h2>Muéstrale Cóndor a tu colegio</h2><p>Te hacemos una demostración con tus cursos y tus docentes. Gratis durante la etapa de demostración.</p></div><a class="btn btn-primary" href="../#colegios">Pedir una demostración</a></div></div></section>`;
   write(path, page({
-    siteUrl, path, title: "Preicfes para colegios: plataforma de simulacros ICFES por curso | Cóndor",
+    siteUrl, path, title: "Preicfes para colegios: simulacros ICFES por curso",
     desc: "Plataforma preicfes para colegios: simulacros Saber 11 en línea o en papel, resultados por curso y competencia en formato ICFES, alertas de estudiantes y juego en vivo.",
     body, crumbs: [{ name: "Para colegios", path }],
     jsonLd: [faqLd(faq), { "@type": "Service", name: "Cóndor para colegios", serviceType: "Preparación Saber 11 (preicfes) para colegios", areaServed: { "@type": "Country", name: "Colombia" }, provider: { "@id": `${siteUrl}#org` }, url: siteUrl + path, inLanguage: "es-CO" }],
@@ -672,7 +710,7 @@ function buildTrialPage({ siteUrl, write }) {
 </section>
 <section class="section"><div class="wrap narrow"><div class="card price reveal"><div><h2>¿Todavía no tienes código?</h2><p>Pide una demostración para tu colegio y te lo enviamos.</p></div><a class="btn btn-primary" href="../#colegios">Pedir una demostración</a></div></div></section>`;
   write(path, page({
-    siteUrl, path, title: "Entrar a Cóndor para docentes con código de prueba | Cóndor",
+    siteUrl, path, title: "Entrar como docente con código de prueba",
     desc: "Entra a la plataforma de docentes de Cóndor con tu código de prueba: cursos, tareas, simulacros en línea y en papel, y alertas por estudiante.",
     body, crumbs: [{ name: "Docentes", path }],
     jsonLd: [faqLd(faq), { "@type": "WebPage", name: "Entrar con código de prueba", url: siteUrl + path, inLanguage: "es-CO" }],
