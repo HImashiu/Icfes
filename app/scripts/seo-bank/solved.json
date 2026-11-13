@@ -1,7 +1,9 @@
 {
  "rejected": {
   "ICFES-2019-1_1ra-86": "Key doubt: as transcribed, the table shows individual 2 tasting sugar at 10 mM (option C), but the blue dot (S11-B_1ra q119) says D (15 mM). Check the scan before publishing.",
-  "ICFES-2020-1B_1ra-101": "The stem asks about measuring milk with no context on the page (it depends on a recipe or text not attached to the question)."
+  "ICFES-2020-1B_1ra-101": "The stem asks about measuring milk with no context on the page (it depends on a recipe or text not attached to the question).",
+  "ICFES-2019-1_1ra-33": "Key doubt: Claude solves C, the blue dot of the copied S11 item says A.",
+  "ICFES-2020-1B_2da-65": "Milk measuring question: depends on context not attached to the question."
  },
  "questions": {
   "ICFES-2019-1_1ra-9": {
@@ -1141,6 +1143,1106 @@
     "La persona dice «No puedo comerme un sándwich frío. ¡Es horrible!». Está dando una opinión, y la respuesta natural es mostrar acuerdo: «I agree» (Estoy de acuerdo). Opción B, la clave oficial.",
     "«I hope so» (Eso espero) se usa con deseos sobre el futuro. «I am not» (Yo no) necesitaría una frase como «I am hungry» para tener sentido.",
     "Repasa las respuestas cortas de opinión: «I agree», «Me too», «Me neither», «I don't think so». Son frecuentes en la parte 3."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2019-1_1ra-10": {
+   "exam": "icfes-2019-1",
+   "areaName": "Matemáticas",
+   "key": "B",
+   "basis": "punto",
+   "origin": "S11-L_1ra-7",
+   "group": null,
+   "batch": 2,
+   "titulo": "Interpretación errónea de una tabla de libros",
+   "slug": "interpretacion-erronea-tabla-de-libros",
+   "tema": "Estadística: lectura de tablas",
+   "competencia": "Interpretación y representación",
+   "corta": "Celeste leyó 8 libros de poesía y Eduardo 9: decir que Celeste leyó más es la interpretación errónea.",
+   "expl": [
+    "La pregunta pide la interpretación errónea, así que hay que revisar cada opción con la tabla. A: Javier leyó 5 de poesía y Eduardo 9; es cierto que Javier leyó menos. B: Celeste leyó 8 de poesía y Eduardo 9; Celeste leyó menos, no más. Esa es la falsa. C: los tres leyeron más ficción que poesía (7 > 5, 16 > 8, 15 > 9). D: el mínimo de la tabla es 5, así que todos leyeron al menos 5 de cada género. La respuesta es B.",
+    "Ojo con la palabra «errónea» en negrilla: tres opciones son verdaderas y sirven de trampa si lees rápido.",
+    "En preguntas de «cuál es falsa», marca V o F al lado de cada opción con el dato de la tabla. Así no dependes de la memoria."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2019-1_2da-25": {
+   "exam": "icfes-2019-1",
+   "areaName": "Matemáticas",
+   "key": "D",
+   "basis": "punto",
+   "origin": "S11-E_1ra-8",
+   "group": null,
+   "batch": 2,
+   "titulo": "Variables necesarias: ganancia por paletas",
+   "slug": "variables-necesarias-ganancia-paletas",
+   "tema": "Expresiones algebraicas",
+   "competencia": "Formulación y ejecución",
+   "corta": "Paletas vendidas = x + 3z y cada una deja $200 de ganancia; solo hace falta conocer x y z.",
+   "expl": [
+    "El sábado se vendieron x paletas y el domingo 3z paletas, así que en total fueron x + 3z. La ganancia por paleta ya es un dato: $200. La ganancia total por paletas es 200 × (x + 3z). Para calcularla basta con conocer x y z: opción D.",
+    "R y Q son los precios de venta, pero la pregunta es por la ganancia, que ya está dada por unidad. Q además es el precio de los conos, que no entran en el cálculo. Por eso A, B y C sobran o se equivocan de variable.",
+    "Escribe la expresión del valor que te piden antes de mirar las opciones. Las variables que aparecen en ella son las que necesitas."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2019-1_1ra-43": {
+   "exam": "icfes-2019-1",
+   "areaName": "Lectura crítica",
+   "key": "C",
+   "basis": "punto",
+   "origin": "S11-L_1ra-49",
+   "group": "ICFES-2019-1_1ra-g43-46",
+   "batch": 2,
+   "titulo": "Fahrenheit 451: quién habla y a quién",
+   "slug": "fahrenheit-451-quien-habla-y-a-quien",
+   "tema": "Enunciador y destinatario",
+   "competencia": "Identificar y entender los contenidos locales que conforman un texto",
+   "corta": "El que habla le dice «Serenidad, Montag»: el discurso va dirigido a Montag y lo pronuncia otro de los guardianes.",
+   "expl": [
+    "El texto le habla a alguien en segunda persona y lo nombra: «Serenidad, Montag». Así que el destinatario es Montag, no un público general. Quien habla defiende quemar los libros para que la gente sea feliz y no se preocupe: es uno de los encargados de mantener esa «felicidad», no Montag mismo. Por eso la respuesta es C.",
+    "La A confunde al autor de la novela (Ray Bradbury) con el personaje que habla. La B y la D dicen que el discurso va dirigido a quienes valoran la filosofía, cuando el texto se dirige a Montag por su nombre.",
+    "En un fragmento narrativo, el autor del libro casi nunca es quien habla. Busca los vocativos (nombres seguidos de coma) para saber a quién se dirige el discurso."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2019-1_2da-3": {
+   "exam": "icfes-2019-1",
+   "areaName": "Sociales y ciudadanas",
+   "key": "B",
+   "basis": "punto",
+   "origin": "S11-G1_2da-17",
+   "group": null,
+   "batch": 2,
+   "titulo": "Decisión del director: desventaja para la escuela",
+   "slug": "decision-del-director-desventaja-escuela",
+   "tema": "Análisis de decisiones",
+   "competencia": "Pensamiento reflexivo y sistémico",
+   "corta": "Si un docente se va un mes, el otro queda solo con 74 estudiantes: todos reciben menos atención.",
+   "expl": [
+    "La escuela tiene dos docentes para 74 estudiantes. El director decide enviar al docente A un mes a capacitarse, y el otro debe encargarse de todas las clases. La consecuencia más directa es que durante ese mes los estudiantes recibirán menos atención, porque solo habrá un docente para todos. Opción B.",
+    "La A supone que el docente A no quiere capacitarse, pero el texto dice que él propuso la capacitación. La C y la D describen lo que pasaría si el niño no se quedara en la escuela, y la decisión es justamente que se quede.",
+    "Para la desventaja de una decisión, piensa en quiénes se ven afectados por lo que cambia. Aquí lo que cambia es que se va un docente."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2019-1_2da-11": {
+   "exam": "icfes-2019-1",
+   "areaName": "Sociales y ciudadanas",
+   "key": "B",
+   "basis": "punto",
+   "origin": "S11-G1_2da-6",
+   "group": null,
+   "batch": 2,
+   "titulo": "Minería ilegal: lo que tienen en común dos regiones",
+   "slug": "mineria-ilegal-debil-presencia-estatal",
+   "tema": "Problemas ambientales y Estado",
+   "competencia": "Pensamiento reflexivo y sistémico",
+   "corta": "En las dos regiones falta el Estado: escasa presencia de autoridades en una y falta de instituciones de control en la otra.",
+   "expl": [
+    "En la primera región hay «escasa presencia de autoridades estatales». En la segunda, el Ejército no tiene recursos, hay posible corrupción y «no hay instituciones que puedan controlar» la extracción. Lo que se repite en ambas es la débil presencia del Estado: opción B.",
+    "La A contradice el texto: en las dos hay minería, así que sí hay yacimientos. La C habla de poca vocación agrícola, pero el texto dice que se reemplazaron zonas agrícolas porque la minería es más lucrativa. La D solo vale para la segunda región, donde están los actores armados.",
+    "En preguntas de semejanzas, marca qué dice el texto de cada caso y quédate solo con lo que aparece en los dos."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2019-1_2da-61": {
+   "exam": "icfes-2019-1",
+   "areaName": "Ciencias naturales",
+   "key": "B",
+   "basis": "punto",
+   "origin": "S11-E_2da-67",
+   "group": null,
+   "batch": 2,
+   "titulo": "Hipótesis: dulces que se disuelven en líquidos",
+   "slug": "poner-a-prueba-hipotesis-dulces-disolucion",
+   "tema": "Hipótesis y evidencia",
+   "competencia": "Indagación",
+   "corta": "La hipótesis decía que el dulce se disuelve igual en las tres sustancias, y solo se disolvió completamente en agua: es falsa.",
+   "expl": [
+    "El estudiante supuso que el dulce se disuelve completamente en el mismo tiempo en alcohol, agua y aceite. Después del mismo tiempo, en agua se disolvió por completo, en alcohol poco y en aceite nada. Los datos muestran que en el agua se disuelve más rápido que en las otras, así que la hipótesis es falsa: opción B.",
+    "La A y la C dicen que es verdadera, lo que contradice la tabla. La D dice que es falsa, pero da una razón que el experimento no probó: nadie usó una mezcla de alcohol y aceite.",
+    "Para evaluar una hipótesis, compara lo que predecía con lo que se observó. La razón correcta tiene que salir de los datos del experimento, no de algo que se podría hacer después."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2019-1_1ra-92": {
+   "exam": "icfes-2019-1",
+   "areaName": "Ciencias naturales",
+   "key": "A",
+   "basis": "punto",
+   "origin": "S11-G1_2da-55",
+   "group": null,
+   "batch": 2,
+   "titulo": "Pregunta que responden las ciencias naturales",
+   "slug": "pregunta-que-responden-las-ciencias-naturales",
+   "tema": "Preguntas científicas",
+   "competencia": "Indagación",
+   "corta": "Solo la A se puede responder con experimentos sobre la planta y el hongo; las otras son preguntas económicas o sociales.",
+   "expl": [
+    "Una pregunta de las ciencias naturales se responde observando y experimentando con fenómenos naturales. La A pregunta si modificar unos genes hará que la planta produzca sustancias tóxicas que eviten la infección del hongo: eso se puede probar en un laboratorio. Respuesta A.",
+    "La B pregunta por beneficios económicos, la C por el desarrollo social y cultural, y la D por otros negocios. Son preguntas válidas, pero las responden la economía o las ciencias sociales.",
+    "Si una pregunta habla de dinero, cultura, negocios u opiniones, no es de ciencias naturales. Busca la que hable de organismos, sustancias o procesos que se puedan medir."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2019-1_2da-88": {
+   "exam": "icfes-2019-1",
+   "areaName": "Inglés",
+   "key": "C",
+   "basis": "resuelta",
+   "origin": null,
+   "group": "ICFES-2019-1_2da-g86-93",
+   "batch": 2,
+   "titulo": "Inglés: gerundio como sujeto de la oración",
+   "slug": "ingles-gerundio-como-sujeto-meeting",
+   "tema": "Gramática en contexto (texto con espacios)",
+   "competencia": "Inglés",
+   "corta": "Una acción que funciona como sujeto de la oración va en -ing: «Meeting their friends … is important».",
+   "expl": [
+    "La oración es «___ their friends in these places is important for them». El espacio es el sujeto de «is»: la acción de encontrarse con amigos es importante. Cuando un verbo hace de sujeto, en inglés va en -ing (gerundio): «Meeting». Opción C.",
+    "«Met» es pasado y «Meet» es la forma base; ninguna de las dos puede ser el sujeto de «is» al comienzo de la oración.",
+    "Si el espacio está al inicio de la oración y después viene «is» o «was», casi siempre va un verbo en -ing: «Swimming is fun», «Reading helps»."
+   ],
+   "checked": "2026-11-13: resuelta dos veces por Claude, mismo resultado"
+  },
+  "ICFES-2019-1_2da-94": {
+   "exam": "icfes-2019-1",
+   "areaName": "Inglés",
+   "key": "C",
+   "basis": "resuelta",
+   "origin": null,
+   "group": "ICFES-2019-1_2da-g94-100",
+   "batch": 2,
+   "titulo": "Inglés: ¿cuándo voló el primer avión?",
+   "slug": "ingles-cuando-volo-el-primer-avion",
+   "tema": "Comprensión de lectura (información literal)",
+   "competencia": "Inglés",
+   "corta": "El texto dice que en 1848 John Hartman hizo un avión pequeño que hizo vuelos cortos: es el primer avión que voló.",
+   "expl": [
+    "El texto menciona varias fechas. En 1738 los Irwin hicieron volar un globo, no un avión. En 1848 John Hartman hizo «a small plane that was able to make short flights», un avión pequeño que logró vuelos cortos. En 1890 Samuel Secrest no pudo volar. Así que el primer avión que voló, según el texto, fue el de 1848: opción C.",
+    "La B es la trampa: 1738 es la fecha más antigua, pero corresponde a un globo («balloon»). La A es el año del intento fallido de Secrest.",
+    "En preguntas de fechas, subraya cada año del texto y escribe al lado qué pasó. Fíjate en la palabra exacta que pide la pregunta (plane, no balloon)."
+   ],
+   "checked": "2026-11-13: resuelta dos veces por Claude, mismo resultado"
+  },
+  "ICFES-2020-2A-3": {
+   "exam": "icfes-2020-calendario-a",
+   "areaName": "Matemáticas",
+   "key": "C",
+   "basis": "resuelta",
+   "origin": null,
+   "group": null,
+   "batch": 2,
+   "titulo": "Función a trozos: continuidad en x = 2",
+   "slug": "funcion-a-trozos-continuidad",
+   "tema": "Funciones a trozos",
+   "competencia": "Formulación y ejecución",
+   "corta": "4(2) − 6 = 2 y 2² − 2 = 2: los dos trozos dan 2, así que los resultados son iguales.",
+   "expl": [
+    "Paso 1: en 4x − 6 con x = 2 queda 4 × 2 − 6 = 8 − 6 = 2. Paso 2: en x² − x con x = 2 queda 4 − 2 = 2. Paso 3: los dos resultados valen 2, son iguales. Opción C.",
+    "Que los dos trozos den el mismo valor en el punto donde se unen indica que la gráfica no salta en x = 2: la función es continua ahí.",
+    "La D es una trampa de vocabulario: dos números siempre se pueden comparar. Cuando un problema te da pasos, hazlos uno por uno y anota cada resultado."
+   ],
+   "checked": "2026-11-13: resuelta dos veces por Claude, mismo resultado"
+  },
+  "ICFES-2020-2A-16": {
+   "exam": "icfes-2020-calendario-a",
+   "areaName": "Matemáticas",
+   "key": "B",
+   "basis": "resuelta",
+   "origin": null,
+   "group": null,
+   "batch": 2,
+   "titulo": "Proporciones: comida para gatos pequeños y grandes",
+   "slug": "proporciones-comida-para-gatos",
+   "tema": "Multiplicación y comparación",
+   "competencia": "Formulación y ejecución",
+   "corta": "30 gatos pequeños × 20 g = 600 g y 10 grandes × 60 g = 600 g: los dos grupos comen lo mismo.",
+   "expl": [
+    "Paso 1: 30 gatos pequeños × 20 gramos = 600 gramos al día. Paso 2: 10 gatos grandes × 60 gramos = 600 gramos al día. Paso 3: los dos grupos consumen 600 gramos, la misma cantidad. Opción B.",
+    "La A sale de comparar solo el número de gatos (30 es el triple de 10). La C compara solo las porciones individuales (60 − 20 = 40). Las dos olvidan multiplicar.",
+    "Hay tres veces más gatos pequeños, pero cada grande come el triple: los dos efectos se cancelan. Antes de comparar grupos, calcula el total de cada uno."
+   ],
+   "checked": "2026-11-13: resuelta dos veces por Claude, mismo resultado"
+  },
+  "ICFES-2020-2A-41": {
+   "exam": "icfes-2020-calendario-a",
+   "areaName": "Lectura crítica",
+   "key": "D",
+   "basis": "punto",
+   "origin": "S11-N_1ra-53",
+   "group": "ICFES-2020-2A-g40-42",
+   "batch": 2,
+   "titulo": "Estado paternalista: por qué no regular lo privado",
+   "slug": "estado-paternalista-regular-lo-privado",
+   "tema": "Tesis y argumentos",
+   "competencia": "Comprender cómo se articulan las partes de un texto para darle un sentido global",
+   "corta": "El autor critica a los «ipsedixistas», que convierten sus prejuicios en leyes: regular lo privado lleva a imponer prejuicios.",
+   "expl": [
+    "El autor dice que quienes promueven el Estado paternalista quieren «usar el poder estatal para promover una forma de vida particular: la suya», y cita a Bentham, que llamaba «ipsedixistas» a quienes convierten sus prejuicios personales en decretos o leyes. Su razón para que el Estado no regule el comportamiento privado es esa: termina imponiendo los prejuicios de unos pocos. Opción D.",
+    "La A suena parecida, pero el autor no discute de quién es la responsabilidad de las buenas costumbres. La B y la C hablan de eficiencia del gasto o de que lo prohibido se vuelve llamativo, ideas que el texto no plantea como su razón principal.",
+    "Cuando la pregunta dice «según el autor», busca la frase donde el autor da su razón con sus propias palabras o con una cita que respalda."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2020-2A-48": {
+   "exam": "icfes-2020-calendario-a",
+   "areaName": "Lectura crítica",
+   "key": "C",
+   "basis": "punto",
+   "origin": "S11-A_1ra-27",
+   "group": "ICFES-2020-2A-g47-48",
+   "batch": 2,
+   "titulo": "Función de un enunciado: ejemplificar",
+   "slug": "funcion-de-un-enunciado-ejemplificar",
+   "tema": "Relaciones entre las partes del texto",
+   "competencia": "Comprender cómo se articulan las partes de un texto para darle un sentido global",
+   "corta": "«Este asesino toca bien la flauta…» da ejemplos de la frase anterior: «Los hombres más opacos emiten algún resplandor».",
+   "expl": [
+    "Justo antes del enunciado, el narrador afirma: «Los hombres más opacos emiten algún resplandor». Luego da tres casos: un asesino que toca bien la flauta, un contramaestre cruel que quizá es buen hijo y un idiota que compartiría su último pan. Cada caso muestra a una persona «opaca» con algo bueno. El enunciado ejemplifica la afirmación que lo precede: opción C.",
+    "La A dice que argumenta en contra de lo que sigue, pero lo que sigue («pocos hay que no puedan enseñarnos alguna cosa») va en la misma dirección. La D exagera: son ejemplos, no la tesis del texto.",
+    "Para saber la función de una frase, léela junto con la oración de antes y la de después. Si da casos concretos de una idea general, es un ejemplo."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2020-2A-63": {
+   "exam": "icfes-2020-calendario-a",
+   "areaName": "Sociales y ciudadanas",
+   "key": "C",
+   "basis": "punto",
+   "origin": "S11-M_1ra-73",
+   "group": null,
+   "batch": 2,
+   "titulo": "Papa criolla modificada: obstáculo para venderla",
+   "slug": "papa-criolla-modificada-obstaculo",
+   "tema": "Economía y consumo",
+   "competencia": "Pensamiento reflexivo y sistémico",
+   "corta": "Si la papa modificada cuesta mucho más que la tradicional, menos personas la comprarán: ese es el obstáculo.",
+   "expl": [
+    "La pregunta pide un factor que frene la difusión de la papa criolla modificada frente a la tradicional. Un precio de venta mucho más alto haría que las familias siguieran comprando la papa de siempre, sobre todo las que más necesitan los micronutrientes. Opción C.",
+    "La A y la B describen ventajas de la papa modificada (resistencia a plagas, se cultiva en cualquier clima), que ayudarían a difundirla. La D dice que la tradicional es más cara de producir, lo que también favorecería a la modificada.",
+    "Cuando te pidan un obstáculo, descarta todas las opciones que sean ventajas. Lo que queda suele ser un costo o una barrera para quien compra."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2020-2A-59": {
+   "exam": "icfes-2020-calendario-a",
+   "areaName": "Sociales y ciudadanas",
+   "key": "D",
+   "basis": "punto",
+   "origin": "S11-B_1ra-91",
+   "group": "ICFES-2020-2A-g58-60",
+   "batch": 2,
+   "titulo": "Colombia y Sudáfrica: conflictos parecidos",
+   "slug": "colombia-y-sudafrica-semejanza-conflictos",
+   "tema": "Conflictos comparados",
+   "competencia": "Interpretación y análisis de perspectivas",
+   "corta": "El texto muestra en ambos países violencia muy grande y prolongada: la semejanza es la magnitud y duración.",
+   "expl": [
+    "El texto dice que Sudáfrica tuvo un conflicto racial con asesinatos, ataques y masacres, y que en Colombia la guerra política ha causado cientos de miles de muertes entre 1958 y 2012. Lo que comparten, según la lectura, es que fueron conflictos de gran magnitud y larga duración. Opción D.",
+    "La B solo vale para Sudáfrica y además al revés: allí la minoría blanca gobernaba. La C, el narcotráfico, no se menciona para Sudáfrica. La A no sirve como semejanza de los conflictos, porque el texto cuenta la negociación sudafricana, no la colombiana.",
+    "En comparaciones, el texto suele decir primero las diferencias. La semejanza es lo que queda cuando quitas lo que solo aplica a un país."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2020-2A-119": {
+   "exam": "icfes-2020-calendario-a",
+   "areaName": "Ciencias naturales",
+   "key": "B",
+   "basis": "punto",
+   "origin": "S11-E_2da-54",
+   "group": "ICFES-2020-2A-g119-121",
+   "batch": 2,
+   "titulo": "Coltán y polímero de aluminio: conclusión válida",
+   "slug": "coltan-y-polimero-de-aluminio-conclusion",
+   "tema": "Conclusiones a partir de datos",
+   "competencia": "Indagación",
+   "corta": "La tabla muestra que el polímero de aluminio tiene mejor conductividad y no daña el ambiente: puede sustituir al coltán.",
+   "expl": [
+    "Según la tabla, el polímero de aluminio tiene muy alta conductividad, no pierde capacidad con el voltaje y es amigable con el ambiente, mientras que el tantalio y el niobio dañan el ambiente y vienen en su mayoría de la minería ilegal. Con esos datos se puede concluir que la explotación del coltán podría detenerse porque existe un sustituto con mejores ventajas: opción B.",
+    "La A contradice la tabla, que dice que el voltaje del tantalio y el niobio es reducido. La C usa una idea que no está en los datos. La D acierta en que el polímero es caro, pero da una razón falsa: la resistencia a la corrosión aparece como ventaja del tantalio, no del polímero.",
+    "Una conclusión válida solo usa lo que dicen los datos. Revisa cada parte de la opción contra la tabla, incluida la razón después del «porque»."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2020-2A-110": {
+   "exam": "icfes-2020-calendario-a",
+   "areaName": "Ciencias naturales",
+   "key": "B",
+   "basis": "resuelta",
+   "origin": null,
+   "group": null,
+   "batch": 2,
+   "titulo": "Por qué se flota más en un lago: densidad",
+   "slug": "por-que-se-flota-mas-en-un-lago-densidad",
+   "tema": "Densidad y flotación",
+   "competencia": "Explicación de fenómenos",
+   "corta": "El agua del lago tiene color, olor y sabor: lleva sustancias disueltas que la hacen más densa, y en un líquido más denso se flota mejor.",
+   "expl": [
+    "Un cuerpo flota con más facilidad cuanto más denso es el líquido. El estudiante nota que el agua del lago es amarillenta, huele fuerte y tiene un sabor particular: señales de que lleva sustancias disueltas, como sales. Esas sustancias aumentan la densidad del agua. La hipótesis más probable es la B.",
+    "La A contradice el texto, que dice que el lago tiene 4 metros de profundidad. La C es falsa: en agua pura uno se hunde más fácil que en agua salada. La D inventa una regla que no existe.",
+    "Es el mismo efecto del mar Muerto: el agua con mucha sal es más densa y empuja más hacia arriba. Usa las pistas del texto (color, olor, sabor) como evidencia."
+   ],
+   "checked": "2026-11-13: resuelta dos veces por Claude, mismo resultado"
+  },
+  "ICFES-2020-2A-158": {
+   "exam": "icfes-2020-calendario-a",
+   "areaName": "Inglés",
+   "key": "D",
+   "basis": "resuelta",
+   "origin": null,
+   "group": "ICFES-2020-2A-g155-164",
+   "batch": 2,
+   "titulo": "Inglés: «people of your same age»",
+   "slug": "ingles-completar-texto-same-age",
+   "tema": "Vocabulario en contexto (texto con espacios)",
+   "competencia": "Inglés",
+   "corta": "La expresión natural es «people of your same age and sex»: personas de tu misma edad y sexo.",
+   "expl": [
+    "La frase dice que las horas de sueño que necesitas pueden ser distintas a las de otra persona, «even if they are people of your same ___ and sex». Lo que se compara junto con el sexo es la edad: «age». Opción D.",
+    "«Period», «date» y «time» tienen que ver con el tiempo, pero ninguna describe una característica de una persona como el sexo.",
+    "En los textos con espacios, lee la frase completa: la palabra que va al lado («and sex») te dice de qué tipo debe ser la que falta."
+   ],
+   "checked": "2026-11-13: resuelta dos veces por Claude, mismo resultado"
+  },
+  "ICFES-2020-1B_1ra-2": {
+   "exam": "icfes-2020-calendario-b",
+   "areaName": "Matemáticas",
+   "key": "C",
+   "basis": "punto",
+   "origin": "S11-G1_1ra-24",
+   "group": null,
+   "batch": 2,
+   "titulo": "Moda (valores dominantes) en una tabla",
+   "slug": "moda-valores-dominantes-en-una-tabla",
+   "tema": "Estadística: moda",
+   "competencia": "Interpretación y representación",
+   "corta": "La estatura 1,28 y la edad 11 aparecen dos veces; en el peso ningún dato se repite.",
+   "expl": [
+    "Según el procedimiento, un valor dominante debe aparecer al menos dos veces. Peso: 22, 26, 29, 35 y 41, ninguno se repite, así que no tiene valores dominantes. Estatura: 1,28 aparece dos veces. Edad: 11 aparece dos veces. Se pueden determinar para edad y estatura: opción C.",
+    "La A olvida la estatura repetida. La B y la D incluyen el peso, que no tiene datos repetidos.",
+    "Lo que el problema llama «valores dominantes» es la moda. Si ningún dato se repite, el conjunto no tiene moda."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2020-1B_1ra-13": {
+   "exam": "icfes-2020-calendario-b",
+   "areaName": "Matemáticas",
+   "key": "B",
+   "basis": "punto",
+   "origin": "S11-G1_1ra-4",
+   "group": null,
+   "batch": 2,
+   "titulo": "Promedio y rango: qué producto se vende menos",
+   "slug": "promedio-y-rango-producto-que-se-vende-menos",
+   "tema": "Estadística: promedio y rango",
+   "competencia": "Interpretación y representación",
+   "corta": "La pregunta es por el promedio, no por el rango: el promedio más bajo es el del pandebono, 20.",
+   "expl": [
+    "La tabla trae dos columnas: el promedio de ventas y el rango. La pregunta pide el producto que, en promedio, se vende menos, así que solo se usa la columna del promedio: café 30, buñuelo 24, pandebono 20 y pandeyuca 32. El menor es el pandebono: opción B.",
+    "La trampa está en la columna del rango: el café tiene el rango más pequeño (18), pero el rango mide qué tanto varían las ventas, no cuánto se vende.",
+    "Antes de buscar en una tabla, subraya en la pregunta la palabra que te dice qué columna usar."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2020-1B_1ra-37": {
+   "exam": "icfes-2020-calendario-b",
+   "areaName": "Lectura crítica",
+   "key": "D",
+   "basis": "punto",
+   "origin": "S11-L_1ra-51",
+   "group": "ICFES-2020-1B_1ra-g34-37",
+   "batch": 2,
+   "titulo": "Fahrenheit 451: dos aspectos de una cuestión",
+   "slug": "fahrenheit-451-dos-aspectos-preocupaciones",
+   "tema": "Información explícita",
+   "competencia": "Identificar y entender los contenidos locales que conforman un texto",
+   "corta": "El texto dice: «no le enseñes dos aspectos de una misma cuestión, para preocuparle»: conocerlos trae preocupaciones.",
+   "expl": [
+    "El fragmento lo dice de forma directa: «Si no quieres que un hombre se sienta políticamente desgraciado, no le enseñes dos aspectos de una misma cuestión, para preocuparle». Para quien habla, conocer dos puntos de vista sobre un tema es fuente de preocupación. Opción D.",
+    "La B y la C dicen lo contrario: serenidad y felicidad son lo que el personaje quiere conseguir evitando que la gente conozca dos aspectos. La A, paradojas, no aparece en el texto.",
+    "Cuando la pregunta empieza con «de acuerdo con el texto», la respuesta está escrita casi igual en el fragmento. Búscala antes de razonar."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2020-1B_1ra-40": {
+   "exam": "icfes-2020-calendario-b",
+   "areaName": "Lectura crítica",
+   "key": "B",
+   "basis": "punto",
+   "origin": "S11-G1_1ra-27",
+   "group": "ICFES-2020-1B_1ra-g38-40",
+   "batch": 2,
+   "titulo": "Evaluar una síntesis: el arte de conversar",
+   "slug": "evaluar-sintesis-el-arte-de-conversar",
+   "tema": "Evaluar resúmenes",
+   "competencia": "Reflexionar a partir de un texto y evaluar su contenido",
+   "corta": "La síntesis recoge lo esencial: el buen conversador dirige sin hablar de sí y usa anécdotas, como la de la vaca.",
+   "expl": [
+    "La autora dice que el buen conversador maneja la tertulia como un director de orquesta, habla poco de sí mismo y usa anécdotas, que son «la sal de la conversación», como la de don Pepe Sierra y la vaca. La síntesis propuesta recoge esas ideas centrales y la importancia de las anécdotas, así que es completa: opción B.",
+    "La A pide reproducir la anécdota, pero una síntesis no tiene que copiar los ejemplos. La C y la D se fijan en si usa las mismas palabras, y una buena síntesis justamente dice lo mismo con palabras propias.",
+    "Una síntesis es buena si conserva la tesis y las razones principales, aunque cambie las palabras y deje por fuera los detalles."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2020-1B_1ra-61": {
+   "exam": "icfes-2020-calendario-b",
+   "areaName": "Sociales y ciudadanas",
+   "key": "C",
+   "basis": "punto",
+   "origin": "S11-G1_1ra-87",
+   "group": null,
+   "batch": 2,
+   "titulo": "Cumbre de la Tierra 1992: evaluar una afirmación",
+   "slug": "cumbre-de-la-tierra-1992-evaluar-afirmacion",
+   "tema": "Organismos internacionales y ambiente",
+   "competencia": "Interpretación y análisis de perspectivas",
+   "corta": "La cumbre produjo tres tratados internacionales para proteger el ambiente: llamarla el evento ambiental más importante del siglo es acertado.",
+   "expl": [
+    "Según el texto, en la Cumbre de la Tierra se firmaron tres tratados (cambio climático, biodiversidad y desertificación) que buscan reducir el impacto humano y conservar los ecosistemas. Que haya llevado a acuerdos entre muchos países con acciones conjuntas por el ambiente justifica la calificación de los ambientalistas: opción C.",
+    "La A dice «acertada» pero da una razón débil: que siga apareciendo en una página web no prueba su importancia. La B y la D dicen «equivocada» con razones que no la desmienten: el clima y la biodiversidad sí son temas ambientales.",
+    "Cuando evalúes una afirmación, revisa que la razón de la opción se relacione con lo que se afirma. Una opción puede acertar en «sí» o «no» y fallar en el porqué."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2020-1B_1ra-67": {
+   "exam": "icfes-2020-calendario-b",
+   "areaName": "Sociales y ciudadanas",
+   "key": "A",
+   "basis": "punto",
+   "origin": "S11-G1_2da-13",
+   "group": null,
+   "batch": 2,
+   "titulo": "Derecho de asociación sindical",
+   "slug": "derecho-de-asociacion-sindical",
+   "tema": "Derechos laborales en la Constitución",
+   "competencia": "Pensamiento social",
+   "corta": "Despedir a los trabajadores por tener un sindicato viola su derecho a asociarse, protegido por la Constitución.",
+   "expl": [
+    "La Constitución de 1991 reconoce el derecho de los trabajadores a constituir sindicatos y a presentar peticiones sin intervención del Estado ni represalias del empleador. La empresa amenazó y luego despidió solo a quienes pertenecían al sindicato. Con eso se vulneró el derecho de asociación sindical: opción A.",
+    "La B y la D presentan el despido como algo legítimo, y no lo es: no hubo ninguna falta, solo el ejercicio de un derecho. La C habla de protocolos para sancionar a trabajadores que «amenacen» a la empresa, algo que la Constitución no establece.",
+    "Fíjate en quiénes fueron despedidos: solo los sindicalizados. Cuando una sanción cae solo sobre quienes ejercen un derecho, el problema es la vulneración de ese derecho."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2020-1B_1ra-90": {
+   "exam": "icfes-2020-calendario-b",
+   "areaName": "Ciencias naturales",
+   "key": "D",
+   "basis": "punto",
+   "origin": "S11-G1_1ra-94",
+   "group": null,
+   "batch": 2,
+   "titulo": "Estados de la materia a 200 °C",
+   "slug": "estados-de-la-materia-a-200-grados",
+   "tema": "Cambios de estado",
+   "competencia": "Uso comprensivo del conocimiento científico",
+   "corta": "A 200 °C la plata sigue sólida (funde a 962 °C) y el mercurio sigue líquido (hierve a 357 °C).",
+   "expl": [
+    "Una sustancia es gas si la temperatura supera su punto de ebullición. A 200 °C: la plata no ha llegado a su punto de fusión (962 °C), así que sigue sólida. El mercurio ya está fundido pero no hierve hasta 357 °C, así que sigue líquido. El acetaldehído hierve a 21 °C y el agua a 100 °C: los dos ya son gas. Quedan en el recipiente la plata y el mercurio: opción D.",
+    "La A y la B incluyen el agua, que a 200 °C ya hirvió. La C incluye el acetaldehído, que hierve apenas a 21 °C.",
+    "Para cada sustancia compara la temperatura con sus dos puntos: por debajo del de fusión es sólido, entre los dos es líquido y por encima del de ebullición es gas."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2020-1B_2da-87": {
+   "exam": "icfes-2020-calendario-b",
+   "areaName": "Inglés",
+   "key": "C",
+   "basis": "resuelta",
+   "origin": null,
+   "group": "ICFES-2020-1B_2da-g86-93",
+   "batch": 2,
+   "titulo": "Inglés: pasado simple («Fast food became popular»)",
+   "slug": "ingles-pasado-simple-became-popular",
+   "tema": "Gramática en contexto (texto con espacios)",
+   "competencia": "Inglés",
+   "corta": "«in the 1950s» marca un hecho terminado en el pasado: va el pasado simple, «became».",
+   "expl": [
+    "La oración dice «Fast food ___ popular in the United States in the 1950s». La fecha indica un hecho que ocurrió y terminó en el pasado, así que se usa el pasado simple: «became» (se volvió). Opción C.",
+    "«Becoming» necesita un auxiliar antes (was becoming) y «become» es la forma base o el participio; ninguno funciona solo con un sujeto y una fecha pasada.",
+    "Busca las marcas de tiempo cerca del espacio: «in 1950», «yesterday», «ago» piden pasado simple; «since» o «for» suelen pedir have/has + participio."
+   ],
+   "checked": "2026-11-13: resuelta dos veces por Claude, mismo resultado"
+  },
+  "ICFES-2020-1B_2da-104": {
+   "exam": "icfes-2020-calendario-b",
+   "areaName": "Inglés",
+   "key": "A",
+   "basis": "resuelta",
+   "origin": null,
+   "group": "ICFES-2020-1B_2da-g101-105",
+   "batch": 2,
+   "titulo": "Inglés: qué dice la nutricionista sobre fitness",
+   "slug": "ingles-que-dice-la-nutricionista-fitness",
+   "tema": "Comprensión de lectura (parafraseo)",
+   "competencia": "Inglés",
+   "corta": "Jackson dice que el cuerpo se acostumbra al ejercicio y rinde mejor cada vez: el desempeño mejora con el hábito.",
+   "expl": [
+    "Anna Jackson explica que «fitness is when your body gets used to exercise»: si levantas un peso, tu cuerpo se fortalece y la próxima vez lo maneja mejor. Es decir, el rendimiento mejora a medida que el ejercicio se vuelve costumbre. Opción A.",
+    "La B dice que levantar más peso trae menos enfermedades, pero Jackson habla de fuerza, no de enfermedades. La C y la D mezclan palabras del texto (environmental, diet) que ella usa para definir la salud, no el fitness.",
+    "En inglés, la respuesta correcta casi siempre es una paráfrasis: dice lo mismo con otras palabras. Desconfía de las opciones que copian palabras sueltas del texto."
+   ],
+   "checked": "2026-11-13: resuelta dos veces por Claude, mismo resultado"
+  },
+  "ICFES-2018-1_1ra-13": {
+   "exam": "icfes-2018-1",
+   "areaName": "Matemáticas",
+   "key": "D",
+   "basis": "punto",
+   "origin": "S11-E_1ra-17",
+   "group": null,
+   "batch": 2,
+   "titulo": "Autos eléctricos: filtrar una tabla con condiciones",
+   "slug": "autos-electricos-filtrar-tabla-condiciones",
+   "tema": "Estadística: lectura de tablas",
+   "competencia": "Interpretación y representación",
+   "corta": "Con 90.000 euros y al menos 110 km/h quedan las marcas 6 y 7; la 6 tiene más autonomía (160 km).",
+   "expl": [
+    "Primero filtra por velocidad: al menos 110 km/h cumplen las marcas 2 (112), 6 (126), 7 (130), 8 (210) y 9 (170). Luego por precio, hasta 90.000 euros: la 2 y la 8 cuestan 99.000 y la 9 cuesta 297.000, así que salen. Quedan la 6 (160 km de autonomía) y la 7 (120 km). La de mayor autonomía es la marca 6: opción D.",
+    "La B (marca 8) tiene la mayor autonomía de toda la tabla, pero cuesta más que el presupuesto. La A (marca 10) no llega a 110 km/h.",
+    "Con varias condiciones, aplica una a la vez y tacha las filas que no cumplen. Solo al final compara lo que se pide."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2018-1_2da-42": {
+   "exam": "icfes-2018-1",
+   "areaName": "Matemáticas",
+   "key": "B",
+   "basis": "punto",
+   "origin": "S11-K1_1ra-14",
+   "group": null,
+   "batch": 2,
+   "titulo": "Duplicar cada semana: asistencia esperada",
+   "slug": "duplicar-cada-semana-asistencia-esperada",
+   "tema": "Patrones y potencias de 2",
+   "competencia": "Argumentación",
+   "corta": "Duplicando desde 8: 16, 32, 64, 128. El tercer fin de semana fueron 28 y faltaron 4.",
+   "expl": [
+    "Si la asistencia se duplica cada fin de semana empezando en 8, la secuencia esperada es 8, 16, 32, 64 y 128. Comparando con el registro (8, 16, 28, 64, 128), solo falla el tercer fin de semana: hubo 28 en vez de 32. Con 4 participantes más se habría cumplido. Opción B.",
+    "Las opciones A y C cambian el segundo fin de semana, que ya cumple (16 es el doble de 8). La D cambia el cuarto, que también cumple (64).",
+    "Escribe la secuencia ideal debajo de la real y compara fila por fila. La diferencia te da la respuesta sin cálculos extra."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2018-1_1ra-49": {
+   "exam": "icfes-2018-1",
+   "areaName": "Lectura crítica",
+   "key": "D",
+   "basis": "punto",
+   "origin": "S11-E_1ra-39",
+   "group": "ICFES-2018-1_1ra-g49-53",
+   "batch": 2,
+   "titulo": "Ensayo sobre la lucidez: el discurso del ministro",
+   "slug": "ensayo-sobre-la-lucidez-discurso-ministro",
+   "tema": "Información explícita",
+   "competencia": "Identificar y entender los contenidos locales que conforman un texto",
+   "corta": "El ministro dice que la votación «confirma, agravándola, la tendencia verificada el pasado domingo».",
+   "expl": [
+    "En el discurso, el primer ministro dice que el resultado (83 % de votos en blanco) «confirma, agravándola, la tendencia verificada el pasado domingo». Lo grave para él es que los resultados corroboran lo que ya se había visto días atrás. Opción D.",
+    "La A dice lo contrario: el gobierno anuncia una investigación de las causas. La B tampoco sirve, porque los resultados son «desconcertantes» y nadie conoce sus causas. La C contradice al ministro, que dice que la legitimidad del gobierno no está en duda.",
+    "En textos largos, busca el verbo clave de la pregunta (aquí: por qué es grave) y luego la frase del texto con una idea equivalente."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2018-1_1ra-59": {
+   "exam": "icfes-2018-1",
+   "areaName": "Lectura crítica",
+   "key": "D",
+   "basis": "punto",
+   "origin": "S11-G_1ra-45",
+   "group": "ICFES-2018-1_1ra-g58-61",
+   "batch": 2,
+   "titulo": "Descartes: el sueño y la vigilia",
+   "slug": "descartes-sueno-y-vigilia",
+   "tema": "Argumentación filosófica",
+   "competencia": "Comprender cómo se articulan las partes de un texto para darle un sentido global",
+   "corta": "Descartes parte de que lo que vive en sueños se parece tanto a lo que vive despierto que no hay señales seguras para distinguirlos.",
+   "expl": [
+    "Descartes recuerda que muchas veces soñó que estaba junto al fuego, vestido, cuando en realidad estaba en la cama, y que en sueños fue engañado por ilusiones semejantes a lo que vive despierto. De ahí concluye que no hay indicios concluyentes para distinguir el sueño de la vigilia. La premisa es que las vivencias del sueño y de la vigilia son muy parecidas: opción D.",
+    "La B contradice la conclusión de Descartes. La A cambia la idea: él no dice que soñemos despiertos. La C habla de reflexionar poco, algo que el texto no plantea.",
+    "Una premisa es la razón que lleva a la conclusión. Pregúntate: ¿por qué Descartes dice que no puede distinguir? La respuesta a ese «por qué» es la premisa."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2018-1_2da-7": {
+   "exam": "icfes-2018-1",
+   "areaName": "Sociales y ciudadanas",
+   "key": "D",
+   "basis": "punto",
+   "origin": "S11-K1_1ra-88",
+   "group": null,
+   "batch": 2,
+   "titulo": "Funciones de los partidos políticos",
+   "slug": "funciones-de-los-partidos-politicos",
+   "tema": "Partidos y participación política",
+   "competencia": "Pensamiento social",
+   "corta": "Recaudar dinero público para el Estado es tarea de entidades estatales como la DIAN, no de los partidos.",
+   "expl": [
+    "Los partidos políticos representan intereses de la sociedad, recogen y promueven las ideas de sus miembros y sirven de puente entre los ciudadanos y el poder. Recaudar impuestos o dinero público para el Estado no es una función de los partidos: le corresponde al Estado mismo, por ejemplo a la DIAN. Por eso la que NO es una función es la D.",
+    "La A, la B y la C sí son funciones de los partidos, así que son la trampa si no lees el NO de la pregunta.",
+    "Asocia cada institución con su papel: los partidos representan y proponen, el Congreso legisla, el Gobierno ejecuta y entidades como la DIAN recaudan."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2018-1_2da-12": {
+   "exam": "icfes-2018-1",
+   "areaName": "Sociales y ciudadanas",
+   "key": "C",
+   "basis": "punto",
+   "origin": "S11-K1_1ra-91",
+   "group": null,
+   "batch": 2,
+   "titulo": "Prohibición del burka en Francia: el conflicto",
+   "slug": "prohibicion-del-burka-en-francia-conflicto",
+   "tema": "Diversidad cultural y derechos",
+   "competencia": "Interpretación y análisis de perspectivas",
+   "corta": "El gobierno ve el burka como opresión y las mujeres lo ven como parte de su cultura: el choque nace de esa diferencia de valores.",
+   "expl": [
+    "El gobierno francés y la mayoría de los franceses dicen que el burka es un símbolo de opresión. Las mujeres afectadas dicen que lo usan voluntariamente, como parte de su cultura, y que la ley ataca sus libertades. El conflicto se origina en que el gobierno no comprende el valor que el burka tiene en la cultura islámica y en el efecto de la ley sobre la identidad de estas mujeres: opción C.",
+    "La A habla de falta de interés y de tolerancia, cuando el gobierno sí se pronunció y la ley es lo contrario de tolerar. La B y la D culpan a las mujeres o a la población sin recoger las dos posiciones del texto.",
+    "En conflictos culturales, la respuesta correcta suele recoger las dos posturas: lo que piensa cada parte y por qué choca con la otra."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2018-1_2da-63": {
+   "exam": "icfes-2018-1",
+   "areaName": "Ciencias naturales",
+   "key": "D",
+   "basis": "punto",
+   "origin": "S11-K1_1ra-113",
+   "group": null,
+   "batch": 2,
+   "titulo": "Dispersión de semillas por aves migratorias",
+   "slug": "dispersion-de-semillas-por-aves-migratorias",
+   "tema": "Ecología: dispersión de semillas",
+   "competencia": "Explicación de fenómenos",
+   "corta": "Las semillas pasan intactas por el tracto digestivo de las aves y caen con el excremento en el trópico.",
+   "expl": [
+    "El texto da la pista clave: las semillas no se destruyen en la digestión, salen intactas. Las aves comen los frutos cerca de los polos, migran al trópico y durante el viaje expulsan las semillas con el excremento. Así las plantas aparecen en ecosistemas tropicales lejos de su hábitat. Opción D.",
+    "La A propone otro medio de transporte (ríos y mares) que el texto no menciona. La B habla de otras plantas que comen las aves y no explica cómo llegan estas. La C habla de hojas y flores, que no germinan como una semilla.",
+    "Cuando el texto incluye un dato de investigación («los investigadores detectaron que…»), casi siempre es la clave de la respuesta."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2018-1_1ra-108": {
+   "exam": "icfes-2018-1",
+   "areaName": "Ciencias naturales",
+   "key": "C",
+   "basis": "punto",
+   "origin": "S11-A_1ra-118",
+   "group": null,
+   "batch": 2,
+   "titulo": "Estequiometría: combustión del propano",
+   "slug": "estequiometria-combustion-del-propano",
+   "tema": "Estequiometría",
+   "competencia": "Uso comprensivo del conocimiento científico",
+   "corta": "1 mol de propano produce 4 mol de agua; para 8 mol de agua se necesitan 2 mol de propano.",
+   "expl": [
+    "La ecuación balanceada es C₃H₈ + 5 O₂ → 3 CO₂ + 4 H₂O. Por cada mol de propano se forman 4 moles de agua. Si se formaron 8 moles de agua, reaccionó el doble de propano: 2 moles. Opción C.",
+    "La A y la D usan la relación entre O₂ y agua con números que no salen de la ecuación. La B inventa un coeficiente (11 moles de C₃H₈) que no aparece.",
+    "Usa la proporción entre las dos sustancias que pide la pregunta: aquí propano y agua, 1 : 4. Si el agua se duplica (de 4 a 8), el propano también (de 1 a 2)."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2018-1_2da-95": {
+   "exam": "icfes-2018-1",
+   "areaName": "Inglés",
+   "key": "A",
+   "basis": "resuelta",
+   "origin": null,
+   "group": "ICFES-2018-1_2da-g95-102",
+   "batch": 2,
+   "titulo": "Inglés: adverbio («served quickly»)",
+   "slug": "ingles-adverbio-served-quickly",
+   "tema": "Gramática en contexto (texto con espacios)",
+   "competencia": "Inglés",
+   "corta": "Para decir cómo se sirven las comidas se usa un adverbio: «quickly».",
+   "expl": [
+    "La frase es «restaurants that serve cheap meals ___ in paper bags or boxes». El espacio dice cómo se sirven las comidas, así que va un adverbio de modo: «quickly» (rápidamente). Opción A.",
+    "«Quicker» y «quickest» son comparativo y superlativo del adjetivo «quick»; necesitarían una comparación (than…, the…) que la frase no tiene.",
+    "Muchos adverbios de modo terminan en -ly: quickly, slowly, carefully. Si el espacio describe cómo se hace una acción, busca la forma en -ly."
+   ],
+   "checked": "2026-11-13: resuelta dos veces por Claude, mismo resultado"
+  },
+  "ICFES-2018-1_2da-104": {
+   "exam": "icfes-2018-1",
+   "areaName": "Inglés",
+   "key": "A",
+   "basis": "resuelta",
+   "origin": null,
+   "group": "ICFES-2018-1_2da-g103-109",
+   "batch": 2,
+   "titulo": "Inglés: dónde viven la mayoría de delfines rosados",
+   "slug": "ingles-donde-viven-delfines-rosados",
+   "tema": "Comprensión de lectura (información literal)",
+   "competencia": "Inglés",
+   "corta": "El texto dice que el delfín rosado vive en el Amazonas y también en el Orinoco y el Madeira «in smaller numbers».",
+   "expl": [
+    "La oración clave es: «Although the pink dolphin lives in the Amazon River, it can also be found in the Orinoco and Madeira Rivers in smaller numbers». Si en el Orinoco y el Madeira hay menos, la mayoría está en el río Amazonas. Opción A.",
+    "El Orinoco y el Madeira sí aparecen en el texto, pero con la expresión «in smaller numbers» (en menor cantidad), que los descarta.",
+    "Expresiones como «in smaller numbers», «mostly» o «only a few» te dicen dónde está la mayoría. Fíjate en ellas."
+   ],
+   "checked": "2026-11-13: resuelta dos veces por Claude, mismo resultado"
+  },
+  "ICFES-2018-2_2da-34": {
+   "exam": "icfes-2018-2",
+   "areaName": "Matemáticas",
+   "key": "D",
+   "basis": "punto",
+   "origin": "S11-E_1ra-1",
+   "group": null,
+   "batch": 2,
+   "titulo": "Cambio de divisas: error en un procedimiento",
+   "slug": "cambio-de-divisas-error-en-procedimiento",
+   "tema": "Razones y tasas de cambio",
+   "competencia": "Argumentación",
+   "corta": "Para comprar dólares con los pesos sobrantes se divide entre el precio de venta, 2.850, no entre 2.700.",
+   "expl": [
+    "Al llegar, el turista vende sus dólares y la casa de cambio se los compra a 2.700 pesos cada uno: el paso 1 está bien. El paso 2 resta lo que gastó, también bien. Al final quiere volver a tener dólares, así que la casa de cambio se los vende a 2.850 pesos cada uno. Hay que dividir entre 2.850, no entre 2.700. El error está en el paso 3: opción D.",
+    "La A y la C cambian el paso 2, que está bien. La B propone restar 2.700, una operación que no convierte pesos en dólares.",
+    "En las casas de cambio el precio de compra y el de venta son distintos. Piensa siempre desde la casa de cambio: compra barato y vende caro."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2018-2_2da-48": {
+   "exam": "icfes-2018-2",
+   "areaName": "Matemáticas",
+   "key": "B",
+   "basis": "punto",
+   "origin": "S11-B_2da-40",
+   "group": null,
+   "batch": 2,
+   "titulo": "Comparar tarifas: falta información",
+   "slug": "comparar-tarifas-falta-informacion",
+   "tema": "Funciones lineales y comparación",
+   "competencia": "Argumentación",
+   "corta": "Sin saber cuántas horas de transporte y de almacenamiento habrá, no se puede saber qué compañía cobra menos.",
+   "expl": [
+    "X cobra $4.000 por hora de transporte y $2.000 por hora de almacenamiento. W cobra $3.500 por cualquier hora. Si casi todo el tiempo es transporte, W sale más barata; si casi todo es almacenamiento, X sale más barata. Sin conocer los tiempos no se puede decidir: opción B.",
+    "La A y la C comparan solo una tarifa o suman tarifas sin tiempos, como si $7.000 fuera un precio total. La D dice que son equivalentes, pero no lo son: según los tiempos, una es más barata que la otra.",
+    "Cuando el costo depende de cantidades que no te dan, prueba dos casos extremos. Si en cada caso gana una opción distinta, la información no alcanza."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2018-2_2da-3": {
+   "exam": "icfes-2018-2",
+   "areaName": "Sociales y ciudadanas",
+   "key": "C",
+   "basis": "punto",
+   "origin": "S11-E_2da-22",
+   "group": null,
+   "batch": 2,
+   "titulo": "Ley 1429 de 2010: qué NO tuvo en cuenta",
+   "slug": "ley-1429-de-2010-que-no-tuvo-en-cuenta",
+   "tema": "Políticas públicas de empleo",
+   "competencia": "Interpretación y análisis de perspectivas",
+   "corta": "La ley da beneficios por contratar ciertos grupos, pero no busca reducir la brecha entre salarios bajos y salarios altos.",
+   "expl": [
+    "La Ley 1429 da beneficios tributarios a empresas que contraten jóvenes, mujeres mayores de 40, personas desplazadas o en reintegración y trabajadores con salarios bajos. Eso muestra que tuvo en cuenta la edad y el género (A), el estímulo a la empresa privada (B) y el desplazamiento por el conflicto (D). Lo que no aparece es reducir las brechas salariales entre quienes ganan poco y quienes ganan mucho: opción C.",
+    "La pregunta tiene un NO: A, B y D son aspectos que sí se ven en los artículos de la ley.",
+    "Con un NO, empareja cada opción con un dato del texto. La que no tenga pareja es la respuesta."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2018-2_2da-16": {
+   "exam": "icfes-2018-2",
+   "areaName": "Sociales y ciudadanas",
+   "key": "D",
+   "basis": "punto",
+   "origin": "S11-B_1ra-82",
+   "group": null,
+   "batch": 2,
+   "titulo": "Educación inclusiva: presidente y periodista",
+   "slug": "educacion-inclusiva-presidente-y-periodista",
+   "tema": "Relación entre argumentos",
+   "competencia": "Interpretación y análisis de perspectivas",
+   "corta": "El presidente presenta una escuela especial como inclusión; la periodista dice que inclusión es estudiar en la educación regular. Se contradicen.",
+   "expl": [
+    "El presidente inaugura una escuela solo para niños con discapacidad y dice que su gobierno le apuesta a la educación inclusiva. La periodista responde que, según la ONU, inclusión significa acabar con la segregación, y que las escuelas especiales son una excusa para no incluir a los niños en la educación regular. Los dos tienen visiones distintas de qué es la educación inclusiva: opción D.",
+    "La A y la C dicen que se complementan, pero la periodista critica al presidente. La B dice que discrepan sobre qué es un niño con discapacidad, cuando en eso están de acuerdo; discrepan sobre cómo educarlo.",
+    "Para saber si dos argumentos se contradicen, identifica el punto exacto en que no están de acuerdo. Las opciones incorrectas suelen poner el desacuerdo en otro tema."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2018-2_2da-64": {
+   "exam": "icfes-2018-2",
+   "areaName": "Ciencias naturales",
+   "key": "B",
+   "basis": "punto",
+   "origin": "S11-B_1ra-100",
+   "group": null,
+   "batch": 2,
+   "titulo": "Menú con más calorías: un alimento por tipo",
+   "slug": "menu-con-mas-calorias-un-alimento-por-tipo",
+   "tema": "Nutrición y energía",
+   "competencia": "Uso comprensivo del conocimiento científico",
+   "corta": "El más calórico de cada grupo: leche entera (490), cerdo (375), nueces (600) y alcachofas (50).",
+   "expl": [
+    "El menú debe tener un alimento de cada tipo y la mayor cantidad de calorías. Del grupo de lácteos, la leche entera (490); de cárnicos, el cerdo (375); de frutos secos, las nueces (600); y de verduras, las alcachofas (50). Esa combinación es la B.",
+    "La C pone dos frutos secos y ninguna verdura ni carne, así que no cumple «un alimento por cada tipo». La A y la D eligen alimentos con menos calorías dentro de cada grupo.",
+    "Revisa primero la condición (uno por tipo) y descarta las opciones que no la cumplen; después compara solo las que quedan."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2018-2_2da-74": {
+   "exam": "icfes-2018-2",
+   "areaName": "Ciencias naturales",
+   "key": "C",
+   "basis": "punto",
+   "origin": "S11-A_2da-68",
+   "group": null,
+   "batch": 2,
+   "titulo": "Unidades de precipitación, temperatura y luz",
+   "slug": "unidades-de-medida-precipitacion-temperatura",
+   "tema": "Magnitudes y unidades",
+   "competencia": "Indagación",
+   "corta": "La lluvia se mide en milímetros, la temperatura en grados centígrados y la luz solar en horas.",
+   "expl": [
+    "La precipitación se registra en milímetros (la altura que alcanzaría el agua caída sobre una superficie plana), la temperatura en grados centígrados (°C) y la cantidad de luz solar al día, como su nombre lo dice, en horas. Esa combinación es la C.",
+    "Las otras opciones intercambian las unidades: temperatura en milímetros, luz en grados o precipitación en horas no tienen sentido físico.",
+    "Asocia cada magnitud con su unidad: longitud en m o mm, temperatura en °C, tiempo en h o s, masa en kg o g, volumen en L o mL."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2018-2_2da-96": {
+   "exam": "icfes-2018-2",
+   "areaName": "Inglés",
+   "key": "B",
+   "basis": "resuelta",
+   "origin": null,
+   "group": "ICFES-2018-2_2da-g95-99",
+   "batch": 2,
+   "titulo": "Inglés: responder «I always go swimming…»",
+   "slug": "ingles-conversacion-so-do-i",
+   "tema": "Conversaciones cortas (parte 3)",
+   "competencia": "Inglés",
+   "corta": "Para decir «yo también» ante una costumbre en presente se responde «So do I!».",
+   "expl": [
+    "«I always go swimming before I go to work» significa «Siempre voy a nadar antes de ir a trabajar». La respuesta natural es decir que tú haces lo mismo: «So do I!» (¡Yo también!). Opción B.",
+    "«I feel fine!» responde a cómo te sientes. «I'd like it!» respondería a una oferta o invitación, y aquí nadie está invitando.",
+    "Aprende la fórmula: «So do I» (yo también, en presente), «So did I» (en pasado), «Neither do I» (yo tampoco). El auxiliar sigue el tiempo de la frase original."
+   ],
+   "checked": "2026-11-13: resuelta dos veces por Claude, mismo resultado"
+  },
+  "ICFES-2018-2_2da-102": {
+   "exam": "icfes-2018-2",
+   "areaName": "Inglés",
+   "key": "C",
+   "basis": "resuelta",
+   "origin": null,
+   "group": "ICFES-2018-2_2da-g100-107",
+   "batch": 2,
+   "titulo": "Inglés: «all kinds of music»",
+   "slug": "ingles-completar-texto-all-kinds",
+   "tema": "Gramática en contexto (texto con espacios)",
+   "competencia": "Inglés",
+   "corta": "Con un sustantivo en plural y sin número fijo se dice «all kinds»; «every» va con singular y «both» solo con dos.",
+   "expl": [
+    "La frase es «He says ___ kinds of music can affect our learning and our health». «Kinds» está en plural y se refiere a todos los tipos de música, sin un número fijo. Lo correcto es «all kinds of music». Opción C.",
+    "«Every» se usa con sustantivos en singular (every kind). «Both» significa «los dos» y solo sirve cuando se habla de exactamente dos cosas.",
+    "Recuerda: every + singular, all + plural, both + dos cosas. Mira si el sustantivo que sigue al espacio termina en -s."
+   ],
+   "checked": "2026-11-13: resuelta dos veces por Claude, mismo resultado"
+  },
+  "ICFES-2014-7": {
+   "exam": "icfes-2014",
+   "areaName": "Matemáticas",
+   "key": "D",
+   "basis": "oficial",
+   "origin": null,
+   "group": null,
+   "batch": 2,
+   "titulo": "Tabla de doble entrada: porcentajes por género",
+   "slug": "tabla-de-doble-entrada-porcentajes-genero",
+   "tema": "Porcentajes y tablas de contingencia",
+   "competencia": "Interpretación y representación",
+   "corta": "60 mujeres (12 en bus, 48 a pie) y 40 hombres (24 en bus, 16 a pie): es la tabla D.",
+   "expl": [
+    "Son 100 empleados. El 60 % son mujeres: 60 mujeres y 40 hombres. El 20 % de las mujeres va en bus: 12, y las otras 48 caminan. El 40 % de los hombres camina: 16, y los otros 24 van en bus. La tabla con hombres 24 en bus y 16 caminando, y mujeres 12 en bus y 48 caminando es la D, la clave oficial.",
+    "La A usa los porcentajes como si fueran cantidades. La B tiene las mujeres bien, pero los hombres suman 50 y deberían ser 40. La C pone 0 hombres en bus.",
+    "Cuando los porcentajes son «de las mujeres» o «de los hombres», calcula sobre el tamaño de ese grupo, no sobre el total. Al final verifica que cada columna sume lo que debe."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2014-23": {
+   "exam": "icfes-2014",
+   "areaName": "Matemáticas",
+   "key": "D",
+   "basis": "oficial",
+   "origin": null,
+   "group": null,
+   "batch": 2,
+   "titulo": "Potencias de 10: decibeles e intensidad",
+   "slug": "potencias-de-10-decibeles-intensidad",
+   "tema": "Potencias",
+   "competencia": "Interpretación y representación",
+   "corta": "10³ = I / I₀ significa que I es 1.000 veces I₀.",
+   "expl": [
+    "La expresión dice que el cociente I ÷ I₀ vale 10³. Como 10³ = 1.000, la intensidad I es mil veces la intensidad mínima I₀. Opción D, la clave oficial.",
+    "La A invierte el cociente (sería I₀ respecto a I). La B y la C confunden el exponente 3 con el resultado: tres veces o un tercio no es lo mismo que 10 elevado a la 3.",
+    "Un cociente A ÷ B = k se lee «A es k veces B». Y recuerda: 10² = 100, 10³ = 1.000, 10⁶ = un millón."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2014-52": {
+   "exam": "icfes-2014",
+   "areaName": "Sociales y ciudadanas",
+   "key": "B",
+   "basis": "oficial",
+   "origin": null,
+   "group": null,
+   "batch": 2,
+   "titulo": "Migración del centro a la periferia de las ciudades",
+   "slug": "migracion-del-centro-a-la-periferia",
+   "tema": "Geografía urbana",
+   "competencia": "Pensamiento reflexivo y sistémico",
+   "corta": "Familias de ingresos medios y altos salen del centro a barrios periféricos buscando más tranquilidad y calidad de vida.",
+   "expl": [
+    "El enunciado da una pista clave: quienes se van del centro son familias de ingresos medios y altos. Ellas pueden elegir dónde vivir y suelen buscar barrios más tranquilos, con menos ruido, contaminación y congestión. La causa principal es la búsqueda de mejor calidad de vida: opción B, la clave oficial.",
+    "La D habla de vivienda barata, que explicaría una migración de familias de bajos ingresos, no de ingresos medios y altos. La A y la C no explican bien por qué solo se van quienes tienen más recursos.",
+    "Fíjate en quién hace el cambio. Si son personas con más recursos, la causa suele ser una preferencia (calidad de vida), no una necesidad económica."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2014-61": {
+   "exam": "icfes-2014",
+   "areaName": "Sociales y ciudadanas",
+   "key": "C",
+   "basis": "oficial",
+   "origin": null,
+   "group": null,
+   "batch": 2,
+   "titulo": "Replicar un programa de negocios en otras ciudades",
+   "slug": "replicar-programa-de-negocios-otras-ciudades",
+   "tema": "Contexto regional y economía",
+   "competencia": "Pensamiento reflexivo y sistémico",
+   "corta": "Copiar los mismos negocios y porcentajes de Bogotá no sirve si en Riohacha, Leticia, Arauca o Florencia la gente demanda otras cosas.",
+   "expl": [
+    "El programa quiere repetir en cuatro ciudades muy distintas a Bogotá exactamente los mismos tipos de negocio y en los mismos porcentajes. Un negocio funciona si hay quien compre, y lo que la población necesita y demanda puede ser muy distinto en cada ciudad. Por eso el modelo probablemente no es pertinente: opción C, la clave oficial.",
+    "La A y la D hacen generalizaciones sobre los jóvenes de esas ciudades que el texto no apoya. La B no tiene sustento: el programa ya funcionó cinco años.",
+    "Desconfía de las opciones que atribuyen a toda una población una característica negativa. El ICFES suele marcar esas generalizaciones como incorrectas."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2014-86": {
+   "exam": "icfes-2014",
+   "areaName": "Ciencias naturales",
+   "key": "C",
+   "basis": "oficial",
+   "origin": null,
+   "group": null,
+   "batch": 2,
+   "titulo": "Calor y masa: calentar el doble de agua",
+   "slug": "calor-y-masa-calentar-el-doble-de-agua",
+   "tema": "Calor y temperatura",
+   "competencia": "Explicación de fenómenos",
+   "corta": "La misma estufa en el mismo tiempo da el mismo calor; repartido en el doble de agua, sube la mitad: 1 °C, hasta 16 °C.",
+   "expl": [
+    "Con un litro, en un minuto la temperatura subió 2 °C (de 15 a 17 °C). La estufa entrega la misma energía en el mismo tiempo. Si esa energía se reparte en el doble de agua, la temperatura sube la mitad: 1 °C. El agua quedaría a 16 °C. Opción C, la clave oficial.",
+    "La A (19 °C) supone que el doble de agua se calienta el doble. La B supone que la cantidad de agua no importa. La D supone que no se calienta.",
+    "Con la misma cantidad de calor, el aumento de temperatura es inversamente proporcional a la masa: doble masa, la mitad del aumento."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2014-112": {
+   "exam": "icfes-2014",
+   "areaName": "Inglés",
+   "key": "C",
+   "basis": "oficial",
+   "origin": null,
+   "group": "ICFES-2014-g110-114",
+   "batch": 2,
+   "titulo": "Inglés: «These Ethiopian wolves» (plural)",
+   "slug": "ingles-demostrativos-these-wolves",
+   "tema": "Gramática en contexto (texto con espacios)",
+   "competencia": "Inglés",
+   "corta": "«Wolves» está en plural, así que el demostrativo va en plural: «These».",
+   "expl": [
+    "La oración es «___ Ethiopian wolves are more similar to grey wolves…». El sustantivo «wolves» y el verbo «are» están en plural, así que el demostrativo también debe ir en plural: «These» (estos). Opción C, la clave oficial.",
+    "«This» y «That» son singulares: irían con «wolf» e «is».",
+    "Demostrativos en inglés: this/these para lo cercano (singular/plural) y that/those para lo lejano. Mira si el sustantivo termina en -s o es un plural irregular como wolves, children o men."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2014-115": {
+   "exam": "icfes-2014",
+   "areaName": "Inglés",
+   "key": "C",
+   "basis": "oficial",
+   "origin": null,
+   "group": "ICFES-2014-g115-119",
+   "batch": 2,
+   "titulo": "Inglés: de dónde era el pintor",
+   "slug": "ingles-de-donde-era-el-pintor",
+   "tema": "Comprensión de lectura (información literal)",
+   "competencia": "Inglés",
+   "corta": "El texto dice que en el programa de televisión español aparecía «a French man who was painting»: el pintor era francés.",
+   "expl": [
+    "La autora cuenta que vio «a Spanish television show with a French man who was painting a beautiful countryside». El programa era español, pero el pintor era un hombre francés. Opción C, la clave oficial.",
+    "La A es el país de la autora (Irlanda), no del pintor. La B es el país del programa de televisión. Las dos son trampas que usan nacionalidades que sí aparecen en el texto.",
+    "Cuando un texto menciona varias nacionalidades, subraya a quién corresponde cada una. La pregunta suele apuntar a la que se confunde con más facilidad."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2019-1_1ra-39": {
+   "exam": "icfes-2019-1",
+   "areaName": "Lectura crítica",
+   "key": "D",
+   "basis": "punto",
+   "origin": "S11-L_1ra-35",
+   "group": "ICFES-2019-1_1ra-g39-40",
+   "batch": 2,
+   "titulo": "El principito: lo que el narrador vivió",
+   "slug": "el-principito-lo-que-el-narrador-vivio",
+   "tema": "Narrador y punto de vista",
+   "competencia": "Identificar y entender los contenidos locales que conforman un texto",
+   "corta": "El narrador cuenta en primera persona su avería en el Sahara: son hechos que vivió.",
+   "expl": [
+    "El texto empieza con «Así he vivido» y sigue en primera persona: «mi aeroplano sufrió una seria avería», «dormí sobre la arena», «oí una simpática vocecita». El narrador cuenta algo que le pasó a él, hace seis años. Por eso los eventos forman parte de algo que vivió: opción D.",
+    "La A (desea) y la B (predice) apuntan al futuro, pero todos los verbos están en pasado. La C (leyó) no tiene apoyo: nada indica que el narrador cuente un libro ajeno; la referencia bibliográfica es del examen, no del narrador.",
+    "Fíjate en la persona y el tiempo de los verbos. Primera persona en pasado casi siempre significa que el narrador relata su propia experiencia."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2020-1B_1ra-91": {
+   "exam": "icfes-2020-calendario-b",
+   "areaName": "Ciencias naturales",
+   "key": "B",
+   "basis": "punto",
+   "origin": "S11-L_1ra-103",
+   "group": null,
+   "batch": 2,
+   "titulo": "Choque y movimiento rectilíneo uniforme",
+   "slug": "choque-y-movimiento-rectilineo-uniforme",
+   "tema": "Momentum y leyes de Newton",
+   "competencia": "Explicación de fenómenos",
+   "corta": "Si después del choque no actúan fuerzas externas, cada cuerpo sigue con velocidad constante en línea recta.",
+   "expl": [
+    "Un cuerpo se mueve con velocidad constante, en línea recta, cuando la fuerza neta sobre él es cero (primera ley de Newton). Que el momentum total se conserve también indica que no hay fuerzas externas actuando sobre el sistema. Así que después del choque los cuerpos siguen en movimiento rectilíneo uniforme porque no hay fuerzas externas: opción B.",
+    "La A y la D hablan del movimiento antes del choque, que no determina cómo se mueven después. La C es contradictoria: si hubiera una fuerza de atracción, los cuerpos se acelerarían y el movimiento ya no sería uniforme.",
+    "Movimiento rectilíneo uniforme = fuerza neta cero. Cuando veas esa expresión en una pregunta de física, piensa primero en la primera ley de Newton."
+   ],
+   "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
+  },
+  "ICFES-2014-93": {
+   "exam": "icfes-2014",
+   "areaName": "Ciencias naturales",
+   "key": "D",
+   "basis": "oficial",
+   "origin": null,
+   "group": null,
+   "batch": 2,
+   "titulo": "Detección de almidón con lugol: el control",
+   "slug": "deteccion-de-almidon-con-lugol-control",
+   "tema": "Diseño experimental: controles",
+   "competencia": "Indagación",
+   "corta": "El experimento 4 tiene lugol y almidón puro, sin papa: muestra qué color da el almidón y sirve de referencia.",
+   "expl": [
+    "Para saber si la papa tiene almidón hay que comparar su color con el que da el almidón cuando reacciona con el lugol. El experimento 4 no tiene papa, pero sí lugol y una solución de almidón al 10 %. Su función es mostrar el color esperado cuando hay almidón, un control positivo. Opción D, la clave oficial.",
+    "La A no aplica: la solución ya viene preparada, el experimento no la vuelve soluble. La B es cierta pero no es lo que distingue al experimento 4: el lugol también está en el 1 y el 2. La C no se puede afirmar, porque la tabla no dice cuánto almidón tiene la papa.",
+    "En preguntas de diseño experimental, compara cada experimento con los demás y pregunta qué le falta o qué le sobra. Ahí está su función."
    ],
    "checked": "2026-11-13: resuelta por Claude, coincide con la clave"
   }
