@@ -26,6 +26,25 @@ export function readQuickExam() {
   }
 }
 
+// A shared question («¿Cuál marcarías?» from a friend) adds ?cuadernillo=<slug>&pregunta=<number>: that question opens
+// first, then four more mixed ones, so whoever opens the link is answering within seconds.
+const QUESTION = "condor:quick-question";
+export function readQuickQuestion() {
+  if (typeof window === "undefined") return null;
+  try {
+    const n = new URLSearchParams(window.location.search).get("pregunta");
+    if (n && /^[0-9]{1,3}$/.test(n)) sessionStorage.setItem(QUESTION, n);
+    return sessionStorage.getItem(QUESTION);
+  } catch {
+    return null;
+  }
+}
+
+// The link a student sends a friend for one question. fuente feeds the Uso page's «De dónde llegan».
+export function questionShareLink(slug, number, origin = window.location.origin) {
+  return `${origin}/app/?empezar=1&cuadernillo=${encodeURIComponent(slug)}&pregunta=${encodeURIComponent(number)}&fuente=wa-pregunta`;
+}
+
 // An area card on the landing («Matemáticas · 970+ preguntas») adds ?area=<slug>: the first practice is five questions
 // of that test. Returns the test id of lib/saber11.js (ma, lc, sc, cn, in).
 const AREA = "condor:quick-area";
@@ -42,13 +61,14 @@ export function readQuickArea() {
 }
 
 export function clearQuickStart() {
-  try { sessionStorage.removeItem(KEY); sessionStorage.removeItem(EXAM); sessionStorage.removeItem(AREA); } catch { /* blocked */ }
+  try { sessionStorage.removeItem(KEY); sessionStorage.removeItem(EXAM); sessionStorage.removeItem(AREA); sessionStorage.removeItem(QUESTION); } catch { /* blocked */ }
   try {
     const q = new URLSearchParams(window.location.search);
-    const had = q.has("empezar") || q.has("cuadernillo") || q.has("area");
+    const had = q.has("empezar") || q.has("cuadernillo") || q.has("area") || q.has("pregunta");
     q.delete("empezar");
     q.delete("cuadernillo");
     q.delete("area");
+    q.delete("pregunta");
     if (had || window.location.hash === "#empezar") {
       const search = q.toString();
       history.replaceState(null, "", window.location.pathname + (search ? `?${search}` : "") + (window.location.hash === "#empezar" ? "" : window.location.hash));

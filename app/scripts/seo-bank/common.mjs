@@ -60,7 +60,7 @@ export function fitsPublic(dataDir, b, q) {
   if (!Array.isArray(q.options) || q.options.length < 3 || q.options.some((o) => !String(o.text_md ?? "").trim() || o.figure)) return false;
   if (!String(q.stem_md ?? "").trim()) return false;
   // "Teniendo en cuenta la información anterior…" with nothing before it: the context lives in a picture or another item.
-  if (!q.group_id && !plain(q.stimulus_md) && /\banterior(es)?\b|\bla tabla\b|\bel texto\b/i.test(plain(q.stem_md))) return false;
+  if (!q.group_id && !plain(q.stimulus_md) && /\banterior(es)?\b|\bla tabla\b|\bel texto\b|\bambas fuentes\b|\bla gr[aá]fica\b|\bel gr[aá]fico\b|\bla imagen\b/i.test(plain(q.stem_md))) return false;
   const g = q.group_id ? b.groups.get(q.group_id) : null;
   const text = [g?.passage_md, q.stimulus_md, q.stem_md, ...q.options.map((o) => o.text_md)].join(" ");
   if (PICTURE.test(text) || NEEDS_PICTURE.test(text)) return false;

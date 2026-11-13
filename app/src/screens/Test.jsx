@@ -15,6 +15,7 @@ import { xpFor } from "../lib/xp.js";
 import { addTime } from "../lib/studentRun.js";
 import { useProctor } from "../lib/proctor.js";
 import { buzz, confetti, play } from "../lib/motion.js";
+import { questionShareLink } from "../lib/quickStart.js";
 
 // +10 XP per correct practice answer, double in the weakest area.
 const PRAISE = ["¡Correcto!", "¡Muy bien!", "¡Excelente!", "¡Así se hace!", "¡Bien pensado!"];
@@ -29,7 +30,20 @@ function centerIn(pane, el) {
 
 // The answering screen. Shows only the progress, the timer or mode, the flag, the question,
 // the options and the map: no streak or XP chart here.
-export default function Test({ title, examLabel, questions, attempt, answerKey, onReveal = null, onChange, onSubmit, onExit, figures, enrich, enrichMeta, onProctorEvent }) {
+// The WhatsApp message for one question. When the question is plain text (no figure, formula or shared reading),
+// it travels whole in the chat so the friend can answer right there; the link brings the answer and the explanation.
+function shareText(q, link) {
+  const plain = (md) => plainText(md ?? "").replace(/\s+/g, " ").trim();
+  const opts = (q.options ?? []).map((o) => `${o.letter}) ${plain(o.text_md)}`);
+  const body = [plain(q.stimulus_md), plain(q.stem_md)].filter(Boolean).join("\n\n");
+  const raw = [q.stimulus_md, q.stem_md, ...(q.options ?? []).map((o) => o.text_md)].join(" ");
+  const fits = !q.group && !(q.traced?.length) && !/\$|<img|<table|<svg/.test(raw) && body.length + opts.join("").length < 700 && opts.length > 1;
+  return fits
+    ? `¿Cuál marcarías tú? Esta salió en el ICFES:\n\n${body}\n\n${opts.join("\n")}\n\nRespuesta y explicación: ${link}`
+    : `¿Cuál marcarías tú? Esta pregunta salió en el ICFES: ${link}`;
+}
+
+export default function Test({ title, examLabel, questions, attempt, answerKey, onReveal = null, onChange, onSubmit, onExit, figures, enrich, enrichMeta, onProctorEvent, shareSlug = null }) {
   const [now, setNow] = useState(() => Date.now());
   const [sheetOpen, setSheetOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -305,6 +319,12 @@ export default function Test({ title, examLabel, questions, attempt, answerKey, 
         <span>{verdict === "neutral" ? "Esta pregunta todavía no tiene clave." : right ? `+${xpFor(q.section, attempt.xpFactor ?? 1)} XP · clave preliminar` : explained ? "Mira la explicación abajo · clave preliminar" : "Clave preliminar, no oficial"}</span>
       </div>
       {cheer && <span className="verdict-run"><Icon name="flame" size={16} /> {cheer}</span>}
+      {shareSlug && verdict !== "neutral" && (
+        <a className="verdict-share" target="_blank" rel="noopener noreferrer"
+          href={`https://wa.me/?text=${encodeURIComponent(shareText(q, questionShareLink(shareSlug, q.key)))}`}>
+          <Icon name="chat" size={16} /> Mándasela a alguien
+        </a>
+      )}
     </div>
   );
 

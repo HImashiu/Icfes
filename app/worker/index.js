@@ -275,10 +275,59 @@ export function canonicalRedirect(request, url) {
 const LIMITED_PAGES = [/^\/pregunta-icfes\//, /^\/examenes-icfes-anteriores\/[^/]+\/[^/]+\//, /^\/preguntas-icfes\/[^/]+\/[^/]+\//];
 export const isLimitedPage = (path) => LIMITED_PAGES.some((r) => r.test(path));
 
+// Crawler log: one line per request from a search engine or other known bot (no address kept), read back with
+// tools/crawl-report.mjs through Workers Logs. Shows what Google and Bing actually crawl, how often, and the status codes.
+const BOTS = [
+  ["Googlebot", /Googlebot|Google-InspectionTool|GoogleOther|Storebot-Google|AdsBot-Google/i], ["Bingbot", /bingbot|BingPreview|msnbot/i],
+  ["Applebot", /Applebot/i], ["DuckDuckBot", /DuckDuck/i], ["YandexBot", /Yandex/i], ["Baiduspider", /Baiduspider/i],
+  ["Facebook", /facebookexternalhit|meta-externalagent|facebookcatalog/i], ["WhatsApp", /WhatsApp/i], ["Twitterbot", /Twitterbot/i],
+  ["AhrefsBot", /AhrefsBot/i], ["SemrushBot", /SemrushBot/i], ["AI", /GPTBot|ChatGPT|OAI-SearchBot|ClaudeBot|Claude-|anthropic|PerplexityBot|CCBot|Bytespider|Amazonbot/i],
+  ["OtherBot", /bot\b|crawler|spider|slurp/i],
+];
+export function botOf(request) {
+  const ua = request.headers.get("User-Agent") || "";
+  const hit = BOTS.find(([, re]) => re.test(ua));
+  const verified = request.cf?.verifiedBotCategory || "";
+  if (!hit && !verified) return null;
+  return { bot: hit ? hit[0] : "Verified", verified };
+}
+
+// IndexNow (Bing, Yandex, Seznam, Naver; Google ignores it): after a deploy, scripts/deploy-site.sh POSTs to /__indexnow
+// and the worker submits the pages that changed in that build (site-dist/indexnow.json). The key file is /<key>.txt.
+export const INDEXNOW_KEY = "c0nd0r7f3a9b41d28e6c5aa0b9e4d1f2";
+async function indexNow(request, env) {
+  if (request.method !== "POST") return json(405, { error: "post_only" });
+  if (!(await underLimit(env.INDEXNOW_RATE, "indexnow"))) return json(429, { error: "too_many_requests" });
+  const res = await env.ASSETS.fetch(new Request(new URL("/indexnow.json", request.url), { method: "GET" }));
+  if (!res.ok) return json(404, { error: "no_list" });
+  const { urls = [] } = await res.json();
+  const urlList = urls.filter((u) => typeof u === "string" && u.startsWith(`https://${HOME_HOST}/`)).slice(0, 10000);
+  if (!urlList.length) return json(200, { submitted: 0 });
+  // Bing's endpoint first (it shares with the other IndexNow engines); the generic one answered 429 to new keys.
+  const body = JSON.stringify({ host: HOME_HOST, key: INDEXNOW_KEY, keyLocation: `https://${HOME_HOST}/${INDEXNOW_KEY}.txt`, urlList });
+  const results = {};
+  for (const endpoint of ["https://www.bing.com/indexnow", "https://yandex.com/indexnow"]) {
+    try {
+      const r = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json; charset=utf-8" }, body });
+      results[new URL(endpoint).hostname] = r.status;
+    } catch { results[new URL(endpoint).hostname] = "error"; }
+  }
+  return json(200, { submitted: urlList.length, ...results });
+}
+
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
+    const res = await handle(request, env);
+    const who = botOf(request);
+    if (who) console.log(JSON.stringify({ crawl: 1, ...who, path: new URL(request.url).pathname, status: res.status, method: request.method }));
+    return res;
+  },
+};
+
+async function handle(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
+    if (path === "/__indexnow") return indexNow(request, env);
     const moved = canonicalRedirect(request, url);
     if (moved) return moved;
     if (isLimitedPage(path) && !request.cf?.verifiedBotCategory) {
@@ -325,5 +374,4 @@ export default {
     out.headers.set("Cache-Control", "private, max-age=3600");
     out.headers.set("Vary", "Authorization");
     return out;
-  },
-};
+}

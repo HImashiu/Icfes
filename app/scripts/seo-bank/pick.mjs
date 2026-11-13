@@ -28,6 +28,9 @@ for (const id of Object.keys(solved)) {
   const q = b?.exam.questions.find((x) => x.number === Number(m[2]));
   if (q) solvedSigs.add(sig(b, q));
 }
+// MATCH=<regex> [AREA=<area>]: only questions whose text matches (for topic pages), up to perPage per exam and area.
+const MATCH = process.env.MATCH ? new RegExp(process.env.MATCH, "i") : null;
+const textOf = (b, q) => plain([q.group_id ? b.groups.get(q.group_id)?.passage_md : "", q.stimulus_md, q.stem_md, ...q.options.map((o) => o.text_md)].filter(Boolean).join(" "));
 const rank = { oficial: 0, punto: 1, resuelta: 2 };
 const out = [];
 for (const ex of PAST_EXAMS.filter((x) => process.env.ALL || !["icfes-2015-2018", "icfes-2021-lectura-critica"].includes(x.slug))) {
@@ -37,12 +40,14 @@ for (const ex of PAST_EXAMS.filter((x) => process.env.ALL || !["icfes-2015-2018"
   const onlyReading = areas.size === 1;
   for (const it of onlyReading ? pickGroup(ctx, booklets[0]) : pickSamples(ctx, booklets, 6)) samples.add(idOf(it.b, it.q));
   for (const area of AREO(areas)) {
+    if (process.env.AREA && area !== process.env.AREA) continue;
     const reading = area === "Lectura crítica" || area === "Inglés";
-    const have = Object.values(solved).filter((s) => s.exam === ex.slug && s.areaName === area).length;
+    const have = MATCH ? 0 : Object.values(solved).filter((s) => s.exam === ex.slug && s.areaName === area).length;
     const cands = [];
     for (const b of booklets) for (const q of b.exam.questions) {
       if (q.section !== area || samples.has(idOf(b, q)) || taken.has(idOf(b, q)) || !fitsPublic(dataDir, b, q)) continue;
       const kb = keyBasis(dataDir, b, q);
+      if (MATCH && !MATCH.test(textOf(b, q))) continue;
       if (kb.origin && takenOrigins.has(kb.origin)) continue;
       if (solvedSigs.has(sig(b, q))) continue;
       cands.push({ b, q, kb, score: rank[kb.basis] * 10 + (q.group_id && !reading ? 5 : 0) });

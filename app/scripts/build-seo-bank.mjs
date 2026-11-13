@@ -13,8 +13,9 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PAST_EXAMS } from "./build-seo-exams.mjs";
 import { AREA_SLUG, PUBLIC_CAP, fitsPublic, keyBasis, loadPastBooklet, plain, sessionOf } from "./seo-bank/common.mjs";
+import { buildTopicPages, liveTopics } from "./build-seo-topics.mjs";
 
-export const PUBLISHED_BATCH = 3;
+export const PUBLISHED_BATCH = 4;
 const here = dirname(fileURLToPath(import.meta.url));
 const PER_PAGE = 20;
 // Exams that get one page per test. The 2015-2018 guide questions and the 2021 Lectura crítica booklet are not full exams.
@@ -66,7 +67,8 @@ export function bankLinks(dataDir) {
     if (!examAreas.has(k)) examAreas.set(k, { exam: it.s.exam, examName: examOf(it.s.exam).name, area: it.area, areaSlug: it.areaSlug, path: `examenes-icfes-anteriores/${it.s.exam}/${it.areaSlug}/` });
   }
   const areas = [...new Set(items.map((it) => it.area))];
-  return { items, examAreas: [...examAreas.values()], areas };
+  const topics = liveTopics(items).map(({ area, name, slug, path, items: its }) => ({ area, name, slug, path, count: its.length }));
+  return { items, examAreas: [...examAreas.values()], areas, topics };
 }
 
 // A description cut at a word, at most 158 characters.
@@ -126,7 +128,7 @@ const quizLd = (it, siteUrl) => ({
 // Three questions to go on with: same topic first, then same competency, then the same test.
 function similar(items, it, n = 3) {
   const same = items.filter((x) => x !== it && x.area === it.area);
-  const score = (x) => (x.s.tema === it.s.tema ? 0 : x.s.competencia === it.s.competencia ? 1 : 2);
+  const score = (x) => (x.s.tema === it.s.tema ? 0 : x.s.topico && x.s.topico === it.s.topico ? 1 : x.s.competencia === it.s.competencia ? 2 : 3);
   const start = same.findIndex((x) => items.indexOf(x) > items.indexOf(it));
   const rotated = start < 0 ? same : [...same.slice(start), ...same.slice(0, start)];
   return rotated.map((x, i) => [x, score(x), i]).sort((a, b) => a[1] - b[1] || a[2] - b[2]).slice(0, n).map((x) => x[0]);
@@ -135,7 +137,8 @@ function similar(items, it, n = 3) {
 const appArea = (up, slug, booklet) => `${up}app/?empezar=1${booklet ? `&amp;cuadernillo=${encodeURIComponent(booklet)}` : ""}&amp;area=${slug}`;
 
 export function buildBankPages(ctx) {
-  const { items, examAreas } = bankLinks(ctx.dataDir);
+  const { items, examAreas, topics } = bankLinks(ctx.dataDir);
+  const topicOf = (it) => topics.find((t) => t.slug === it.s.topico && t.area === it.area);
   if (!items.length) return [];
   const pages = [];
   const write = (path, html) => { ctx.write(path, html); pages.push(path); };
@@ -167,7 +170,7 @@ ${card}
   <div class="tbl"><table><tbody>
     <tr><th>Prueba</th><td><a href="${up}preguntas-icfes/${it.areaSlug}/">${ctx.esc(it.area)}</a></td></tr>
     ${it.area !== "Inglés" ? `<tr><th>Competencia</th><td>${ctx.esc(it.s.competencia)}</td></tr>` : ""}
-    <tr><th>Tema</th><td>${ctx.esc(it.s.tema)}</td></tr>
+    <tr><th>Tema</th><td>${topicOf(it) ? `<a href="${up}${topicOf(it).path}">${ctx.esc(it.s.tema)}</a>` : ctx.esc(it.s.tema)}</td></tr>
     <tr><th>Examen</th><td>${ea ? `<a href="${up}${ea}">${ctx.esc(it.area)} del ${ctx.esc(ex.name)}</a>` : `<a href="${up}examenes-icfes-anteriores/${ex.slug}/">${ctx.esc(ex.name)}</a>`}, ${sessionOf(it.b.name).toLowerCase()}</td></tr>
   </tbody></table></div>
   <h2>Sigue practicando</h2>
@@ -211,6 +214,7 @@ ${ctx.cta(up, `Practica más preguntas de ${ctx.esc(it.area)}`).replace(`href="$
     ${chunk.map((x) => `<li><a href="${up}${x.path}"><b>${ctx.esc(x.s.titulo)}</b></a> <span>· ${ctx.esc(x.s.tema)} · ${ctx.esc(examOf(x.s.exam).name)}</span></li>`).join("\n    ")}
   </ul>
   ${pager}
+  ${topics.some((t) => t.area === area) ? `<h2>${ctx.esc(area)} por tema</h2>\n  <p class="prose">${topics.filter((t) => t.area === area).map((t) => `<a href="${up}${t.path}">${ctx.esc(t.name)}</a>`).join(" · ")}</p>` : ""}
   ${exams.length ? `<h2>${ctx.esc(area)} por examen</h2>\n  <p class="prose">${exams.map((x) => `<a href="${up}${x.path}">${ctx.esc(area)} del ${ctx.esc(examOf(x.exam).name)}</a>`).join(" · ")}</p>` : ""}
   <p class="prose">También: <a href="${up}preguntas-icfes/${slug}/">preguntas de ${ctx.esc(area)} para responder</a>, el <a href="${up}simulacro-icfes/${slug}/">mini simulacro de ${ctx.esc(area)}</a> y <a href="${up}pregunta-icfes/">todas las preguntas resueltas</a>.</p>
 </section>
@@ -305,6 +309,9 @@ ${ctx.cta(up, `Presenta ${ctx.esc(ea.area)} del ${ctx.esc(ex.name)} completo`).r
         about: { "@type": "Thing", name: `Saber 11 · ${ea.area}` }, citation: `ICFES, Saber 11, ${ex.name}`, hasPart: shown.map((it) => questionLd(it, ctx.siteUrl, false)) }],
     }));
   }
+
+  // ---- topic pages (preguntas-icfes/<area>/<topic>/)
+  buildTopicPages({ ...ctx, write }, items, { cardHtml, questionLd, appArea, examOf, clip });
 
   checkCap(ctx.out);
   return pages;

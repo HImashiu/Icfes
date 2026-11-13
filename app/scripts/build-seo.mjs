@@ -13,6 +13,8 @@ import { buildExamPages } from "./build-seo-exams.mjs";
 import { buildEmbedPages } from "./build-seo-embeds.mjs";
 import { buildScoreUniversityPages } from "./build-seo-scores.mjs";
 import { buildTramitePages } from "./build-seo-tramites.mjs";
+import { buildEstructuraPages } from "./build-seo-estructura.mjs";
+import { buildBecasPages } from "./build-seo-becas.mjs";
 import { bankLinks, buildBankPages } from "./build-seo-bank.mjs";
 
 const AREAS = [
@@ -206,7 +208,15 @@ const rebase = (html, up) => html.replace(/(src|href)="(?!https?:|#|\/|data:)([^
 // Share image of a page (scripts/build-og.mjs draws one per page; falls back to img/og.png if it cannot).
 export const ogName = (path) => path.replace(/\/$/, "").replace(/\//g, "--");
 let SITE_DIR = "";
-const ogImagePath = (path) => existsSync(join(SITE_DIR, "img", "og", `${ogName(path)}.png`)) ? `img/og/${ogName(path)}.png` : "img/og.png";
+// A page without its own image uses its nearest parent's (a solved question shows its area's card, not the generic one).
+const ogImagePath = (path) => {
+  // Solved questions (pregunta-icfes/<area>/...) share their area's card from preguntas-icfes/<area>/.
+  for (let parts = path.replace(/^pregunta-icfes\//, "preguntas-icfes/").split("/").filter(Boolean); parts.length; parts.pop()) {
+    const name = ogName(parts.join("/") + "/");
+    if (existsSync(join(SITE_DIR, "img", "og", `${name}.png`))) return `img/og/${name}.png`;
+  }
+  return "img/og.png";
+};
 
 // Titles: at most 60 characters so Google shows them whole. " | Cóndor" is added only when it still fits.
 const SUFFIX = " | Cóndor";
@@ -274,6 +284,7 @@ function page({ siteUrl, path, title: rawTitle, desc, body, crumbs, jsonLd, kate
   <main id="contenido">
     <nav class="crumbs wrap narrow" aria-label="Ruta"><a href="${up}">Inicio</a>${crumbs.map((c, i) => i === crumbs.length - 1 ? ` <span aria-hidden="true">›</span> <span aria-current="page">${esc(c.name)}</span>` : ` <span aria-hidden="true">›</span> <a href="${up}${c.path}">${esc(c.name)}</a>`).join("")}</nav>
 ${guideBody(body)}
+<!--UPDATED-->
 <!--RELATED-->
   </main>
   <footer class="foot">
@@ -284,7 +295,11 @@ ${guideBody(body)}
         <a href="${up}simulacro-icfes/">Simulacro ICFES gratis</a>
         <a href="${up}examenes-icfes-anteriores/">Exámenes ICFES anteriores</a>
         <a href="${up}preguntas-icfes/">Preguntas por área</a>
+        <a href="${up}pregunta-icfes/">Preguntas resueltas</a>
         <a href="${up}calculadora-puntaje-icfes/">Calculadora de puntaje</a>
+        <a href="${up}puntaje-icfes/">Puntaje para la universidad</a>
+        <a href="${up}que-es-el-saber-11/">Qué es el Saber 11</a>
+        <a href="${up}fechas-icfes-2027/">Fechas ICFES 2027</a>
         <a href="${up}niveles-de-desempeno-icfes/">Niveles de desempeño</a>
         <a href="${up}preicfes-para-colegios/">Para colegios</a>
         <a href="${up}como-prepararse-para-el-icfes/">Cómo prepararse</a>
@@ -318,6 +333,20 @@ export function injectRelated(out, paths) {
   const parentOf = (p) => p.split("/").filter(Boolean).slice(0, -1).join("/") + "/";
   const groups = new Map();
   for (const p of [...paths].sort()) { const k = parentOf(p); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(p); }
+  // Topic clusters: every page about one area (its questions, simulacro, solved questions, competencias, blog post) also
+  // links across families to the rest of that area's cluster, so each area hub gets links from all its spokes.
+  const AREA_SLUGS = ["matematicas", "lectura-critica", "sociales-y-ciudadanas", "ciencias-naturales", "ingles"];
+  const BLOG_OF = { "lectura-critica": "blog/como-mejorar-en-lectura-critica-icfes/", ingles: "blog/errores-comunes-ingles-icfes/" };
+  const clusterOf = (a) => [`preguntas-icfes/${a}/`, `simulacro-icfes/${a}/`, `pregunta-icfes/${a}/`, BLOG_OF[a]].filter((q) => q && h1.has(q));
+  const areaOf = (p) => {
+    const seg = p.split("/").find((x) => AREA_SLUGS.includes(x));
+    if (seg) return seg;
+    if (p.startsWith("competencias-icfes/") || p.startsWith("blog/")) {
+      const m = readFileSync(join(out, p, "index.html"), "utf8").match(/(?:preguntas|simulacro)-icfes\/(matematicas|lectura-critica|sociales-y-ciudadanas|ciencias-naturales|ingles)\//);
+      return m?.[1] ?? null;
+    }
+    return null;
+  };
   paths.forEach((p, n) => {
     const sib = groups.get(parentOf(p));
     const i = sib.indexOf(p);
@@ -325,8 +354,11 @@ export function injectRelated(out, paths) {
     for (let k = 1; k < sib.length && picks.length < 3; k++) picks.push(sib[(i + k) % sib.length]);
     const parent = parentOf(p);
     if (parent !== "/" && h1.has(parent) && !picks.includes(parent)) picks.push(parent);
+    const area = areaOf(p);
+    const cluster = area ? clusterOf(area).filter((q) => q !== p && !picks.includes(q)) : [];
+    for (let k = 0; k < 2 && k < cluster.length; k++) picks.push(cluster[(n + k) % cluster.length]);
     const ever = EVERGREEN.filter((e) => e !== p && e !== parent && !picks.includes(e) && h1.has(e));
-    for (let k = 0; k < 2 && ever.length; k++) picks.push(ever[(n + k * 5) % ever.length]);
+    for (let k = 0; k < (cluster.length ? 1 : 2) && ever.length; k++) picks.push(ever[(n + k * 5) % ever.length]);
     const up = "../".repeat(p.split("/").filter(Boolean).length);
     const links = [...new Set(picks)].map((q) => `<li><a href="${up}${q}">${esc(h1.get(q))}</a></li>`).join("");
     const f = join(out, p, "index.html");
@@ -369,6 +401,10 @@ export async function buildSeoPages({ appRoot, out, siteUrl, dataDir, renderRich
   const solvedLink = (up, area) => bank_.areas.includes(area.name)
     ? ` Mira también las <a href="${up}pregunta-icfes/${area.slug}/">preguntas de ${esc(area.name)} resueltas y explicadas</a>${bank_.examAreas.some((x) => x.area === area.name) ? `, o ${esc(area.name)} por examen: ${bank_.examAreas.filter((x) => x.area === area.name).map((x) => `<a href="${up}${x.path}">${esc(x.examName)}</a>`).join(", ")}` : ""}.`
     : "";
+  const topicLinks = (up, area) => {
+    const ts = bank_.topics.filter((t) => t.area === area.name);
+    return ts.length ? `\n  <p class="prose">Por tema, con preguntas resueltas: ${ts.map((t) => `<a href="${up}${t.path}">${esc(t.name)}</a>`).join(" · ")}.</p>` : "";
+  };
 
   // One page per area.
   for (const area of AREAS) {
@@ -383,7 +419,7 @@ export async function buildSeoPages({ appRoot, out, siteUrl, dataDir, renderRich
   <span class="tag" style="background:${area.color}">${esc(area.name)}</span>
   <h1>${esc(area.title)}</h1>
   ${area.intro.map((p) => `<p class="prose">${p}</p>`).join("\n  ")}
-  <p class="prose">Abajo tienes ${items.length} preguntas reales de cuadernillos que publicó el ICFES. Toca una opción para ver si acertaste.</p>
+  <p class="prose">Abajo tienes ${items.length} preguntas reales de cuadernillos que publicó el ICFES. Toca una opción para ver si acertaste.</p>${topicLinks("../../", area)}
 </div></section>
 <section class="qlist wrap narrow" aria-label="Preguntas de ${esc(area.name)}">
 ${qs}
@@ -484,11 +520,13 @@ ${cta("../", "Empieza tu simulacro ahora")}`;
   });
 
   // Calculator embed, school badge and percentile table for other sites (link-building assets).
-  if (saber11 && national) buildEmbedPages({ siteUrl, out, write, page, esc, faqBlock, faqLd, cta, saber11, national });
+  if (saber11 && national) buildEmbedPages({ siteUrl, out, write, page, esc, faqBlock, faqLd, cta, saber11, national, dataDir, renderRich, AREAS });
 
   // Puntaje ICFES por universidad y carrera, and the Saber 11 paperwork pages (inscripción, citación, fechas…).
   buildScoreUniversityPages({ siteUrl, write, page, esc, faqBlock, faqLd, cta });
   buildTramitePages({ siteUrl, write, page, esc, faqBlock, faqLd, cta });
+  buildEstructuraPages({ siteUrl, write, page, esc, faqBlock, faqLd, cta });
+  buildBecasPages({ siteUrl, write, page, esc, faqBlock, faqLd, cta });
 
   // KaTeX stylesheet and fonts for the math on the question pages.
   if (usesKatex) {
