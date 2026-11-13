@@ -210,6 +210,6 @@ export function studentEvents({ subjects, assignments = [], attempts = [], now =
 export function teacherLabel(s, { independent = false } = {}) {
   if (s.teacher) return s.teacher;
   if (s.courseTeacher) return `Docente del curso: ${s.courseTeacher}`;
-  if (independent) return s.kind === "general" ? "Tareas de tu clase" : "Práctica por tu cuenta";
+  if (independent) return s.kind === "general" ? "Tareas de tu clase" : "Profesor Cóndor";
   return s.kind === "general" ? "Tareas de tu curso" : "Sin docente asignado aún";
 }

@@ -60,6 +60,9 @@ import { drawPractice, randomSeed } from "./lib/practiceDraw.js";
 import { resolveModel, xpFactor } from "./lib/grading.js";
 import { attemptForAssignment, attemptRow, attemptsLeft, kindMode, questionsForAttempt, revealAllowed } from "./lib/assignments.js";
 import { testOf } from "./lib/saber11.js";
+import { bankItems } from "./lib/bank.js";
+import { daysUntil, loadGoal } from "./lib/goal.js";
+import { bookletsFor, condorDay, condorKeys, condorTaskRows } from "./lib/condorTeacher.js";
 
 // Screens where the public-demo notice shows (never inside an exam, a live game or the school tools).
 const LAUNCH_VIEWS = new Set(["home", "subjects", "setup", "progress", "profile", "login", "history", "results"]);
@@ -404,7 +407,7 @@ export default function App() {
     const qs = questionsForAttempt(sel.exam, { scope: "all", keys });
     clearAttempt(slug, "custom");
     setAttempt({
-      slug, scope: "all", keys, custom: { label: opts.label || "Práctica a medida" }, mode,
+      slug, scope: "all", keys, custom: { label: opts.label || "Práctica a medida", ...(opts.condor ? { condor: opts.condor.id, kind: opts.condor.kind, area: opts.condor.area ?? null } : {}) }, mode,
       durationSec: mode === "timed" ? (opts.perQuestionSec ? opts.perQuestionSec * qs.length : timedSeconds(qs)) : null,
       startedAt: Date.now(), answers: {}, flags: {}, checked: {}, xp: 0, current: 0, submittedAt: null, auto: false,
     });
@@ -569,7 +572,32 @@ export default function App() {
     if (keys.length) startKeys(selected.slug, keys, { label: FIRST_PRACTICE, mode: "practice" });
   }, [quickStart, quickExam, quickArea, quickQuestion, exams, signedIn, selected, opening, attempt, consents]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Profesor Cóndor's tasks (students with no teacher, lib/condorTeacher.js). A review brings its own keys; an area or
+  // a mix draws them from the booklet already open when it can (no extra download against the bank limits), else from
+  // the one answered least. A simulacro goes to the usual setup. Practice questions count against today's allowance.
+  const startCondor = async (a) => {
+    const t = a.condor;
+    if (!t || t.kind === "preview") return;
+    if (t.kind === "simulacro") { setPreset({ scope: "all", mode: "timed" }); return setView("setup"); }
+    const left = await readQuota();
+    if (left.remaining <= 0) return setOpenError("Hoy ya usaste tus preguntas de práctica. Cóndor te deja la tarea lista para mañana.");
+    const count = Math.min(t.count ?? 10, left.remaining);
+    const opts = { label: a.title, mode: t.mode, condor: t };
+    if (t.kind === "review") return startKeys(t.slug, t.keys.slice(0, count), opts);
+    const history = loadHistory();
+    const slugs = bookletsFor(t, studentExams, history, selected?.slug ?? null).slice(0, 2);
+    for (const slug of slugs) {
+      const sel = selected?.slug === slug ? selected : await openExam(slug, null, true);
+      if (!sel) continue;
+      const items = bankItems(withoutHidden(sel.exam, hidden, slug), { enrich: sel.enrich, key: sel.key, notes: sel.notes });
+      const keys = condorKeys(t, items, history, slug, { graded: sel.serverGraded, count });
+      if (keys.length) return startKeys(slug, keys, opts);
+    }
+    setOpenError("Ya respondiste casi todas las preguntas de esta área en tus cuadernillos. Prueba un simulacro o el repaso de errores.");
+  };
+
   const startAssigned = async (a) => {
+    if (a.condor) return startCondor(a);
     if (a.delivery === "paper") return; // answered on the printed sheet, never in the app
     const sel = await openExam(a.exam_slug, a.question_keys);
     if (!sel) return;
@@ -590,6 +618,7 @@ export default function App() {
   // A delivered assignment opens on its own results (latest attempt), read-only: the report, the review of every
   // question and, if the teacher allows it, the right answers. Nothing is recorded again.
   const openAssignedResult = async (a) => {
+    if (a.condor) { const e = loadHistory().find((h) => h.id === a.historyId); if (e) openFromHistory(e); return; }
     const rows = assigned.attempts.filter((x) => x.assignment_id === a.id && x.submitted_at)
       .sort((x, y) => new Date(x.submitted_at) - new Date(y.submitted_at));
     const r = rows[rows.length - 1];
@@ -728,6 +757,17 @@ export default function App() {
   const questions = selected && attempt ? questionsForAttempt(selected.exam, attempt) : [];
   // What a student may pick for free practice: booklets the school hid are not offered.
   const studentExams = hidden ? (exams ?? []).filter((e) => !hidden.slugs.has(e.slug)) : exams ?? [];
+  // Profesor Cóndor: only for a student no teacher has tasks for (no classes, no assignments). Recomputed when the
+  // student comes back to a screen that shows tasks, so a finished practice is ticked off.
+  const condorOn = signedIn && auth.profile?.role === "student" && !(myClasses?.length) && !assigned.assignments.length;
+  // (Not a hook: the screens above return early. Only computed on Inicio and Materias, and cheap.)
+  const condor = (() => {
+    if (!condorOn || !["home", "subjects"].includes(view)) return null;
+    const history = loadHistory();
+    const goal = loadGoal();
+    const day = condorDay({ goal, history, exams: studentExams, daysLeft: daysUntil(goal.examDate), preferSlug: selected?.slug ?? null });
+    return { ...day, goal, rows: condorTaskRows(day, history) };
+  })();
   const practiceExam = selected ? withoutHidden(selected.exam, hidden, selected.slug) : null;
   // Answers of an assigned attempt can be held back by the teacher (until the assignment closes, or for good).
   const assignedOf = attempt?.assignmentId ? assigned.assignments.find((a) => a.id === attempt.assignmentId) : null;
@@ -802,6 +842,7 @@ export default function App() {
           signedOut={auth.status === "signed-out" || auth.status === "guest"}
           assigned={signedIn ? assigned : null}
           onStartAssigned={startAssigned}
+          condor={condor}
           realName={studentName}
           independent={signedIn && !auth.profile?.school_id}
           onLive={auth.status !== "demo" && auth.status !== "loading" ? () => { setLiveCode(""); setView("liveJoin"); } : null}
@@ -912,7 +953,7 @@ export default function App() {
       {view === "profile" && <Profile teacherCodeError={teacherCodeError} theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} onReports={() => setView("reports")} onLogin={() => setView("login")}
         assigned={signedIn ? assigned : null} classes={myClasses} course={course} onGo={go}
         extra={signedIn && !demoEnabled ? <GrowthProfile profile={auth.profile} /> : null} />}
-      {view === "subjects" && <Subjects independent={signedIn && !auth.profile?.school_id} onOpenAssigned={openAssignedResult} announcements={signedIn ? announcements : []} assigned={signedIn ? assigned : null} classes={myClasses} course={course} tab={subjectTab} subjectId={subjectId}
+      {view === "subjects" && <Subjects condor={condor} onGoal={() => go("profile")} independent={signedIn && !auth.profile?.school_id} onOpenAssigned={openAssignedResult} announcements={signedIn ? announcements : []} assigned={signedIn ? assigned : null} classes={myClasses} course={course} tab={subjectTab} subjectId={subjectId}
         onTab={(t) => { setSubjectTab(t); setSubjectId(null); }} onOpenSubject={setSubjectId} onBack={() => setSubjectId(null)}
         onStartAssigned={startAssigned} onPracticeArea={practiceArea} onLogin={() => setView("login")} />}
       {view === "progress" && <Progress tab={progressTab} onTab={setProgressTab} assigned={signedIn ? assigned : null} classes={myClasses}
