@@ -10,6 +10,7 @@ import { basename, dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { buildContentPages } from "./build-seo-content.mjs";
 import { buildExamPages } from "./build-seo-exams.mjs";
+import { buildEmbedPages } from "./build-seo-embeds.mjs";
 
 const AREAS = [
   {
@@ -429,6 +430,9 @@ ${cta("../", "Empieza tu simulacro ahora")}`;
     siteUrl, write, page, esc, faqBlock, faqLd, cta, renderRich, AREAS, dataDir, markKatex: () => { usesKatex = true; }, PICTURE, NEEDS_PICTURE,
   });
 
+  // Calculator embed, school badge and percentile table for other sites (link-building assets).
+  if (saber11 && national) buildEmbedPages({ siteUrl, out, write, page, esc, faqBlock, faqLd, cta, saber11, national });
+
   // KaTeX stylesheet and fonts for the math on the question pages.
   if (usesKatex) {
     const k = join(appRoot, "node_modules", "katex", "dist");
@@ -497,6 +501,7 @@ function buildScorePages({ siteUrl, write, saber11, national }) {
   <p class="prose">Y por prueba (puntaje de 0 a 100):</p>
   <div class="tbl"><table><thead><tr><th>Prueba</th><th>Mediana</th><th>Mejor que el 75 %</th><th>Mejor que el 90 %</th></tr></thead><tbody>${areaPct}</tbody></table></div>
   <p class="prose">Mira qué significa cada rango en <a href="../niveles-de-desempeno-icfes/">niveles de desempeño del ICFES</a>, o mide tu puntaje real con un <a href="../simulacro-icfes/">simulacro ICFES completo</a>.</p>
+  <p class="prose">La tabla completa, con más percentiles y un CSV para descargar, está en <a href="../datos/percentiles-saber-11/">percentiles del Saber 11</a>. ¿Tienes la página de un colegio o un blog? <a href="../insertar/">Pon esta calculadora en tu página</a>.</p>
   <h2>Preguntas frecuentes</h2>
   ${faqBlock(faq)}
 </section>
@@ -527,7 +532,7 @@ ${cta("../", "Descubre tu puntaje con un simulacro")}`;
 <section class="wrap narrow guide-body">
   ${tables}
   <p class="prose">Hasta 2024, Inglés usaba otros niveles: A- (0 a 47), A1 (48 a 57), A2 (58 a 67), B1 (68 a 78) y B+ (79 a 100).</p>
-  <p class="prose">¿Quieres saber en qué nivel estás? Usa la <a href="../calculadora-puntaje-icfes/">calculadora del puntaje ICFES</a> o haz un <a href="../simulacro-icfes/">simulacro gratis</a>.</p>
+  <p class="prose">¿Quieres saber en qué nivel estás? Usa la <a href="../calculadora-puntaje-icfes/">calculadora del puntaje ICFES</a> o haz un <a href="../simulacro-icfes/">simulacro gratis</a>. Para comparar con el país, mira los <a href="../datos/percentiles-saber-11/">percentiles del Saber 11</a> por prueba.</p>
   <h2>Preguntas frecuentes</h2>
   ${faqBlock(faq)}
 </section>
@@ -632,6 +637,7 @@ function buildSchoolsPage({ siteUrl, write }) {
   </tbody></table></div>
   <h2>Prueba con tu código de docente</h2>
   <p class="prose">Si ya recibiste un código de prueba, entra a la plataforma de docentes en un par de minutos. <a href="../prueba-docente/">Cómo entrar con tu código</a>.</p>
+  <p class="prose">Si tu colegio ya practica con Cóndor, puedes poner el sello y la calculadora del puntaje en la página del colegio: <a href="../insertar/">recursos para tu página</a>.</p>
   <h2>Preguntas frecuentes</h2>
   ${faqBlock(faq)}
 </section>
