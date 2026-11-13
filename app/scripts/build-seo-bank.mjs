@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 import { PAST_EXAMS } from "./build-seo-exams.mjs";
 import { AREA_SLUG, PUBLIC_CAP, fitsPublic, keyBasis, loadPastBooklet, plain, sessionOf } from "./seo-bank/common.mjs";
 
-export const PUBLISHED_BATCH = 1;
+export const PUBLISHED_BATCH = 3;
 const here = dirname(fileURLToPath(import.meta.url));
 const PER_PAGE = 20;
 // Exams that get one page per test. The 2015-2018 guide questions and the 2021 Lectura crítica booklet are not full exams.
@@ -78,7 +78,8 @@ const basisNote = (kb, exName) => kb.basis === "oficial" ? "Clave oficial public
 const sourceLine = (it) => `Fuente: ICFES, Saber 11, ${examOf(it.s.exam).name}, ${sessionOf(it.b.name).toLowerCase()}, pregunta ${it.q.number}`;
 
 function cardHtml(ctx, it, { full, up }) {
-  const r = ctx.renderRich;
+  // Justified text leaves wide gaps on phones: the pages read left-aligned.
+  const r = (md) => ctx.renderRich(md).replace(/text-align:\s*justify;?/g, "");
   const color = ctx.AREAS.find((a) => a.name === it.area)?.color ?? "#9AA";
   const g = it.group;
   const passage = g ? `<div class="paper passage"><p class="paper-label">Texto · ${ctx.esc(examOf(it.s.exam).name)}</p>${g.directions ? `<p class="paper-dir">${ctx.esc(g.directions)}</p>` : ""}${r(g.passage_md)}</div>` : "";
