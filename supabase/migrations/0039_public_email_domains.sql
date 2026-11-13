@@ -15,7 +15,7 @@ returns boolean language sql immutable as $$
   select lower(coalesce(p_domain, '')) in (
     'gmail.com', 'googlemail.com', 'hotmail.com', 'hotmail.es', 'outlook.com', 'outlook.es', 'live.com', 'live.com.mx',
     'msn.com', 'yahoo.com', 'yahoo.es', 'yahoo.com.co', 'ymail.com', 'icloud.com', 'me.com', 'mac.com', 'aol.com',
-    'proton.me', 'protonmail.com', 'gmx.com', 'mail.com', 'zoho.com');
+    'proton.me', 'protonmail.com', 'gmx.com', 'mail.com', 'zoho.com', 'une.net.co', 'etb.net.co', 'live.com.co');
 $$;
 
 create or replace function public.schools_no_public_domains() returns trigger
