@@ -29,6 +29,37 @@ document.documentElement.classList.add("js");
     });
   });
 
+  // Landing: hero stickers follow the pointer a little and drift with the scroll; a "how it works" card shrinks and
+  // dims while the next one slides over it. One rAF per frame, only while something moved.
+  var hero = document.querySelector(".hero");
+  var cards = [].slice.call(document.querySelectorAll(".stack .sc"));
+  if (!reduce && (hero || cards.length)) {
+    var queued = false;
+    var frame = function () {
+      queued = false;
+      if (hero) hero.style.setProperty("--sy", Math.min(window.scrollY, 1200));
+      for (var i = 0; i < cards.length - 1; i++) {
+        var a = cards[i].getBoundingClientRect(), b = cards[i + 1].getBoundingClientRect();
+        // 0 while the next card is a full card-height away, 1 once it has reached its own resting place.
+        var gap = b.top - a.top, rest = parseFloat(getComputedStyle(cards[i + 1]).top) - parseFloat(getComputedStyle(cards[i]).top);
+        if (isNaN(rest)) { cards[i].style.setProperty("--p", "0"); continue; }
+        var p = 1 - (gap - rest) / Math.max(1, a.height);
+        cards[i].style.setProperty("--p", Math.max(0, Math.min(1, p)).toFixed(3));
+      }
+    };
+    var ask = function () { if (!queued) { queued = true; requestAnimationFrame(frame); } };
+    window.addEventListener("scroll", ask, { passive: true });
+    window.addEventListener("resize", ask);
+    ask();
+    if (hero && window.matchMedia("(pointer: fine)").matches) {
+      hero.addEventListener("pointermove", function (e) {
+        var r = hero.getBoundingClientRect();
+        hero.style.setProperty("--mx", ((e.clientX - r.left) / r.width - 0.5).toFixed(3));
+        hero.style.setProperty("--my", ((e.clientY - r.top) / r.height - 0.5).toFixed(3));
+      });
+    }
+  }
+
   // Count the hero numbers up once.
   var fmt = function (n) { return n.toLocaleString("es-CO"); };
   document.querySelectorAll("[data-count]").forEach(function (el) {
