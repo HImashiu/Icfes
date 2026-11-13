@@ -16,6 +16,7 @@ import { StudentAnnouncements } from "../components/Announcements.jsx";
 import { activeAnnouncements } from "../lib/announcements.js";
 import { daysUntil, loadGoal, xpToday } from "../lib/goal.js";
 import { weekPlan } from "../lib/studyPlan.js";
+import { mergeTasks } from "../lib/condorTeacher.js";
 import { practiceInsights, studentEvents, studentSubjects, studentTasks, teacherLabel, MIN_AREA_ANSWERS } from "../lib/student.js";
 import { areaShort, classLabel, contextColor, areaOf } from "../lib/teaching.js";
 import { isOpenNow, whenLabel } from "../lib/live.js";
@@ -25,7 +26,7 @@ const DAYS = ["L", "M", "X", "J", "V", "S", "D"];
 // Inicio: the next thing to do, today's goal, this week's tasks, each subject with its teacher, the countdown to the
 // exam, the month and the student's own progress. Progress is measured against the student's goal and past self,
 // never against classmates. Before the first practice everything starts at zero (no invented numbers on the public site).
-export default function Home({ exam, slug, resumable, onContinue, onPractice, onFirstPractice = null, onSetup, xpSession, assigned, classes, course, onStartAssigned, onLive, realName, independent = false, signedOut, onGo, onOpenSubject, exams = [], onStartSession, liveGames = [], onJoinGame = null, announcements = [], extra = null }) {
+export default function Home({ exam, slug, resumable, onContinue, onPractice, onFirstPractice = null, onSetup, xpSession, assigned, classes, course, onStartAssigned, onLive, realName, independent = false, signedOut, onGo, onOpenSubject, exams = [], onStartSession, liveGames = [], onJoinGame = null, announcements = [], extra = null, condor = null }) {
   const now = Date.now();
   const todayIndex = (new Date().getDay() + 6) % 7;
   const history = useMemo(() => loadHistory(), []);
@@ -39,10 +40,13 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
   // Only areas with enough first tries behind them (student.js MIN_AREA_ANSWERS): repeats never raise it.
   const mastery = real ? ins.areas.filter((a) => a.enough).map((a) => [a.name, a.pct]).reverse() : [];
   const subjects = useMemo(() => (assigned ? studentSubjects({ classes, assignments: assigned.assignments, attempts: assigned.attempts, now }) : []), [assigned, classes]); // eslint-disable-line react-hooks/exhaustive-deps
-  const tasks = useMemo(() => (assigned ? studentTasks({ subjects, assignments: assigned.assignments, attempts: assigned.attempts, now }) : []), [subjects, assigned]); // eslint-disable-line react-hooks/exhaustive-deps
+  const teacherTasks = useMemo(() => (assigned ? studentTasks({ subjects, assignments: assigned.assignments, attempts: assigned.attempts, now }) : []), [subjects, assigned]); // eslint-disable-line react-hooks/exhaustive-deps
+  // A student with no teacher gets Profesor Cóndor's tasks (lib/condorTeacher.js) in the same list.
+  const tasks = condor ? mergeTasks(teacherTasks, condor.rows) : teacherTasks;
   const events = useMemo(() => (assigned ? studentEvents({ subjects, assignments: assigned.assignments, attempts: assigned.attempts, now }) : []), [subjects, assigned]); // eslint-disable-line react-hooks/exhaustive-deps
   const pending = tasks.filter((t) => t.status === "pending");
-  const next = pending[0];
+  // Before the very first practice the short first round leads (activation); Cóndor's tasks follow it.
+  const next = !real && onFirstPractice ? pending.find((t) => !t.a.condor) : pending[0];
   const misses = slug ? pendingMisses(history, slug) : [];
   const today = xpToday(history, now) + (xpSession ?? 0);
   const goalPct = Math.min(1, today / goal.dailyXp);
@@ -126,16 +130,17 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
       <div className="sh-grid">
         <div className="sh-col">
           <StudentAnnouncements rows={activeAnnouncements(announcements)} limit={3} subjectOf={(id) => subjects.find((x) => x.courseIds.includes(id)) ?? null} />
-          {assigned && independent && !tasks.length && !classes?.length ? null : assigned ? (
+          {assigned && independent && !tasks.length && !classes?.length && !condor ? null : assigned ? (
             <div className="card sh-card" data-tour="s-tasks">
               <div className="section-head">
-                <span className="label">Tus tareas</span>
+                <span className="label">{condor ? "Tus tareas de hoy" : "Tus tareas"}</span>
+                {condor && <span className="caption sh-condor-by"><Mascot size={18} /> {"Profesor Cóndor"}</span>}
                 <button type="button" className="link" onClick={() => onGo?.("tasks")}>Ver todas ({tasks.length})</button>
               </div>
               {pending.length ? pending.slice(0, 4).map((t) => <TaskRow key={t.a.id} t={t} onStart={onStartAssigned} now={now} />) : (
                 <div className="sh-allclear">
                   <Mascot size={52} pose="happy" />
-                  <div><strong>Estás al día</strong><span className="caption">{tasks.length ? "No tienes tareas pendientes. Buen momento para practicar tu área más floja." : "Cuando tus docentes asignen tareas, aparecen aquí con su fecha de cierre."}</span></div>
+                  <div><strong>{condor?.rest ? "Hoy descansas" : "Estás al día"}</strong><span className="caption">{condor ? (condor.rest ? "Profesor Cóndor no te deja tareas hoy: repasa tus notas y descansa." : "Terminaste las tareas de Cóndor de hoy. Mañana te deja las siguientes.") : tasks.length ? "No tienes tareas pendientes. Buen momento para practicar tu área más floja." : "Cuando tus docentes asignen tareas, aparecen aquí con su fecha de cierre."}</span></div>
                 </div>
               )}
             </div>

@@ -25,8 +25,8 @@ export default function TaskRow({ t, onStart, onOpen, now = Date.now(), showSubj
   const color = subject?.color ?? "var(--accent)";
   const urgent = status === "pending" && a.due_at && new Date(a.due_at) - now < 2 * 864e5;
   const meta = [
-    a.delivery === "paper" ? `${kindLabel(a.kind)} en papel` : kindLabel(a.kind),
-    a.question_keys ? `${a.question_keys.length} preguntas` : null,
+    a.delivery === "paper" ? `${kindLabel(a.kind)} en papel` : a.kindLabel ?? kindLabel(a.kind),
+    a.question_count ? `${a.question_count} preguntas` : a.question_keys ? `${a.question_keys.length} preguntas` : null,
     a.kind === "exam" && a.time_limit_min ? `${a.time_limit_min} min` : null,
   ].filter(Boolean).join(" · ");
   return (
@@ -37,6 +37,7 @@ export default function TaskRow({ t, onStart, onOpen, now = Date.now(), showSubj
         <span className="caption">
           {showSubject && subject ? <><b className="task-subject">{subject.name}</b>{subject.teacher ? ` · ${subject.teacher}` : ""} · </> : null}{meta}
         </span>
+        {t.why && <span className="caption task-why">{t.why}</span>}
       </span>
       <span className="task-side">
         {status === "pending" && <span className={urgent ? "task-pill hot" : "task-pill"}>{dueText(a.due_at, now)}</span>}
@@ -51,7 +52,7 @@ export default function TaskRow({ t, onStart, onOpen, now = Date.now(), showSubj
         )}
       </span>
       {status === "pending" && onStart && <button type="button" className="primary small task-go" onClick={() => onStart(a)}>Empezar</button>}
-      {status === "delivered" && onOpen && (
+      {status === "delivered" && onOpen && (!a.condor || a.historyId) && (
         <button type="button" className="secondary small task-go" onClick={() => onOpen(a)}>Ver resultado</button>
       )}
       {status === "delivered" && onStart && left > 0 && t.state === "active" && (
