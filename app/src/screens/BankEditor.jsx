@@ -94,7 +94,7 @@ export default function BankEditor({ api, profile, exams, fetchExam, guard, setN
       <header className="t-head">
         <div>
           <h1>Banco de preguntas</h1>
-          <span className="caption">Corrige o adapta cualquier pregunta, o elige varias y conviértelas en diapositivas, hoja de trabajo, quiz, examen o práctica. Tu colegio ve la versión editada; el banco compartido no cambia y puedes volver a la original.</span>
+          <span className="caption">Corrige una pregunta para tu colegio o elige varias y conviértelas en clase, quiz o examen.</span>
         </div>
       </header>
       <div className="card t-card">
@@ -118,7 +118,7 @@ export default function BankEditor({ api, profile, exams, fetchExam, guard, setN
         {bundle && (
           <div className={chosen.size ? "bk-use on" : "bk-use"} role="region" aria-label="Usar las preguntas elegidas">
             <label className="check-row"><input type="checkbox" checked={pageAll} onChange={choosePage} /><span>{pageAll ? "Quitar esta página" : "Elegir esta página"}</span></label>
-            {chosen.size === 0 ? <span className="caption">Elige preguntas para convertirlas en diapositivas, una hoja de trabajo, un quiz, un examen o una práctica.</span> : (
+            {chosen.size === 0 ? <span className="caption">Marca preguntas para usarlas.</span> : (
               <>
                 <strong>{chosen.size} {chosen.size === 1 ? "elegida" : "elegidas"}</strong>
                 <span className="bk-use-btns">

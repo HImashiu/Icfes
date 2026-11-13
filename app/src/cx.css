@@ -298,3 +298,83 @@
 @media (max-width: 767px) {
   #root .bottom-nav .nav-item span { display: block; font-size: 10.5px; font-weight: 700; }
 }
+
+/* ===== Part 3 · Components in the landing's language (Juan 2026-11-13: «the layout is new but the elements weren't changed») ===== */
+/* Field labels: sentence case in the display face, not tracked uppercase. Kickers on cards keep .label. */
+#root .field > .label, #root label > .label:first-child, #root .field > span.label {
+  font: 800 14px/1.2 var(--cx-display); text-transform: none; letter-spacing: 0; color: var(--text); margin-bottom: 2px; }
+/* Text fields and selects: soft pills with a bottom lip, lime ring on focus. */
+#root :where(input:not([type="checkbox"], [type="radio"], [type="file"], [type="range"], [type="color"]), select), #root .ui-select {
+  border-radius: 999px; border: 1.5px solid var(--line); background-color: var(--surface); min-height: 48px;
+  box-shadow: 0 3px 0 var(--line); font-weight: 600; transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s var(--cx-ease); }
+#root :where(textarea) { border-radius: 20px; border: 1.5px solid var(--line); background-color: var(--surface); box-shadow: 0 3px 0 var(--line); padding: 12px 16px; }
+#root :where(input:not([type="checkbox"], [type="radio"], [type="file"]), textarea, select):focus, #root .ui-select.open {
+  border-color: var(--accent); box-shadow: 0 3px 0 var(--accent-shadow), 0 0 0 4px var(--accent-soft); }
+#root .ui-chevron { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); transform: rotate(90deg); }
+#root .ui-select.open .ui-chevron { background: var(--accent); color: var(--cx-ink); transform: rotate(-90deg); }
+#root .ui-pop { border-radius: 20px; border: 1.5px solid var(--line); box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45); }
+#root .ui-option { border-radius: 12px; font-weight: 600; }
+#root .ui-option.selected { background: var(--accent); color: var(--cx-ink); }
+/* Text actions («Editar», «Uso», «+1 semana», «Vaciar»): small pill buttons, never underlined links. */
+#root .link { text-decoration: none; min-height: 36px; padding: 6px 14px; border-radius: 999px; border: 1.5px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+  color: var(--accent-ink); background: color-mix(in srgb, var(--accent) 9%, transparent); font-weight: 800; font-size: 13.5px; align-items: center; gap: 6px;
+  transition: background-color 0.15s, transform 0.15s var(--cx-spring); }
+#root .link:hover:not(:disabled) { background: var(--accent); color: var(--cx-ink); }
+#root .link:active:not(:disabled) { transform: translateY(2px); }
+/* Links inside running text stay inline. */
+#root p .link, #root .caption .link, #root .tl-crumb .link, #root .t-exit, #root .lp-legal .link { border: 0; background: none; padding: 0; min-height: 0; border-radius: 0; text-decoration: underline; text-underline-offset: 3px; display: inline; }
+/* Chips and pills: chunky, lime when on. */
+#root .chip { min-height: 40px; border: 1.5px solid var(--line); box-shadow: 0 3px 0 var(--line); font-weight: 700; transition: transform 0.15s var(--cx-spring), background-color 0.15s; }
+#root .chip:active { transform: translateY(2px); box-shadow: none; }
+#root .chip.on { background: var(--accent); color: var(--cx-ink); border: 1.5px solid var(--cx-ink); box-shadow: 0 3px 0 var(--accent-shadow); }
+#root .badge { border-radius: 999px; font-weight: 800; padding: 4px 10px; }
+/* Segmented controls and tab strips: the current one is a lime tile. */
+#root .segmented:not(.demo-banner *) { border-radius: 999px; padding: 5px; border: 1.5px solid var(--line); background: var(--surface); }
+#root .seg:not(.demo-banner *) { border-radius: 999px; font-weight: 800; }
+#root .seg.active:not(.demo-banner *) { background: var(--accent); color: var(--cx-ink); box-shadow: 0 3px 0 var(--accent-shadow); }
+/* Checkboxes and radios: rounder squares with an ink tick on lime. */
+#root input[type="checkbox"], #root input[type="radio"] { width: 24px; height: 24px; border-radius: 8px; border: 2px solid color-mix(in srgb, var(--text-2) 55%, var(--line)); background: var(--surface); }
+#root input[type="radio"] { border-radius: 50%; }
+#root input[type="checkbox"]:checked, #root input[type="radio"]:checked { background: var(--accent); border-color: var(--cx-ink); box-shadow: 0 2px 0 var(--accent-shadow); }
+#root .check-row { align-items: center; font-weight: 700; }
+/* List rows: each one a soft card instead of a ruled line. */
+#root .b-list { gap: 8px; }
+#root .b-row, #root .ws-q-row, #root .ws-g-row { border: 1.5px solid var(--line); border-bottom-width: 1.5px; border-radius: 18px; background: var(--surface); padding: 12px 14px; box-shadow: 0 3px 0 var(--line); }
+#root .b-row.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+#root .ws-q-row.overdue { border-color: color-mix(in srgb, var(--bad) 60%, var(--line)); box-shadow: 0 3px 0 color-mix(in srgb, var(--bad) 45%, transparent); }
+#root .ws-due { display: inline-flex; width: max-content; padding: 4px 10px; border-radius: 999px; background: var(--surface-2); font-weight: 800; font-size: 12.5px; }
+#root .ws-due.hot { background: color-mix(in srgb, var(--bad) 22%, transparent); color: var(--bad); }
+#root .cx-course-chip { display: inline-flex; width: max-content; margin-top: 4px; padding: 3px 10px; border-radius: 999px; background: var(--surface-2); color: var(--text-2); font-weight: 700; font-size: 12.5px; }
+/* Help text: shorter measure, softer; card titles in the display face. */
+#root .t-card > strong:first-child, #root .section-head h2, #root .card > h2:first-child { font: 800 19px/1.1 var(--cx-display); text-transform: uppercase; letter-spacing: -0.005em; }
+#root .t-card > .caption, #root .screen-head .caption { max-width: 62ch; font-size: 14px; line-height: 1.45; }
+#root .screen-head h1 { margin-bottom: 4px; }
+/* «Usar las elegidas» bar in the bank: a dashed lime box that turns solid when something is picked. */
+#root .bk-use { border: 1.5px dashed color-mix(in srgb, var(--accent) 50%, var(--line)); border-radius: 18px; background: transparent; }
+#root .bk-use.on { border-style: solid; border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+/* Empty states: centred, owl-sized icon in a lime circle. */
+#root .empty-state { display: grid; justify-items: center; text-align: center; gap: 8px; padding: 18px; border: 1.5px dashed var(--line); border-radius: 20px; }
+#root .empty-state > svg { width: 52px; height: 52px; padding: 12px; border-radius: 50%; background: var(--accent); color: var(--cx-ink); }
+/* Phone: bank filters as one compact block; the bar never truncates labels and never covers the last row. */
+@media (max-width: 640px) {
+  #root .bank-filters { grid-template-columns: 1fr 1fr; gap: 10px; }
+  #root .bank-filters > .field:first-child { grid-column: 1 / -1; }
+  #root .ws-q-row { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  #root .ws-q-actions { display: flex; gap: 8px; align-items: center; }
+}
+@media (max-width: 800px) {
+  #root .tl-bottom { grid-auto-flow: row; grid-template-columns: 1fr 1fr 60px 1fr 1fr 1fr; grid-auto-columns: unset; }
+  #root .tl-bottom button { font-size: 10px; letter-spacing: -0.01em; padding: 6px 0; }
+  #root .tl-bottom button span { overflow: visible; text-overflow: clip; }
+  #root .tl-bottom button.on { padding: 6px 2px; }
+  #root .t-main { padding-bottom: 120px; }
+  #root .home, #root .subjects { padding-bottom: 110px; }
+}
+@media (max-width: 640px) {
+  #root .b-row { grid-template-columns: auto minmax(0, 1fr) !important; }
+  #root .b-row > span:last-child { grid-column: 2; display: flex; gap: 8px; }
+}
+/* Inputs that live inside their own chrome (search boxes with an icon) keep that chrome; the wrapper becomes the pill. */
+#root .ws-search { border-radius: 999px; border-width: 1.5px; box-shadow: 0 3px 0 var(--line); }
+#root .ws-search:focus-within { box-shadow: 0 3px 0 var(--accent-shadow), 0 0 0 4px var(--accent-soft); }
+#root .ws-search input, #root .rd-search input, #root .db-boards > form > input { border: 0 !important; box-shadow: none !important; background: transparent !important; border-radius: 0; min-height: 44px; padding: 0; min-width: 0; width: 100%; }

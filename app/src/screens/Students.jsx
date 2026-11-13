@@ -290,7 +290,7 @@ export default function Students({ api, profile, courses, assignments, guard, se
                         </button>
                         {e.followUp && <span className={e.followUp.due && e.followUp.due <= isoDay() ? "ws-follow hot" : "ws-follow"} title={e.followUp.reason}><Icon name="flag" size={12} /> {e.followUp.due ? shortDate(e.followUp.due) : "Seguimiento"}</span>}
                       </td>
-                      <td className="ws-wrap" data-l="Espacios">{e.courseIds.map(courseName).join(", ")}</td>
+                      <td className="ws-wrap" data-l="Espacios">{courseSummary(e.courseIds, courseName)}</td>
                       <td data-l="Estado" className={e.status ? "" : "m-hide"}><StatusChip status={e.status} /></td>
                       <td className={e.groups.length ? "ws-wrap" : "ws-wrap m-hide"} data-l="Grupos">{e.groups.length ? e.groups.map((g) => groupById.get(g)).filter(Boolean).map((g) => <span key={g.id} className="ws-group" style={{ "--gc": g.color }}>{g.name}</span>) : <span className="caption">—</span>}</td>
                       <td data-l="Entregas">{e.done}/{e.assigned}{e.late > 0 && <span className="badge pending"> {e.late} sin entregar</span>}</td>
@@ -360,14 +360,14 @@ function FollowUpQueue({ queue, onOpen, onFollowUp, onClose, store, persist, say
     <div className="d-two ws-queue">
       <section className="card t-card">
         <strong>Cola de seguimiento</strong>
-        <span className="caption">Estudiantes que marcaste para revisar, primero los vencidos. Al cerrar uno queda una nota en su perfil.</span>
+        <span className="caption">Primero los vencidos. Al marcar «Hecho» queda una nota en su perfil.</span>
         {queue.queue.length === 0 && <div className="empty-state"><Icon name="check" size={28} /><p>Nadie en seguimiento. Marca estudiantes desde la lista, su perfil o las sugerencias.</p></div>}
         <ul className="b-list">
           {queue.queue.map((e) => (
             <li key={e.key} className={`ws-q-row${e.overdue ? " overdue" : e.dueToday ? " today" : ""}`}>
               <button type="button" className="ws-name" onClick={() => onOpen(e.key)}>
                 <span className="avatar sm" aria-hidden="true">{initials(e.name)}</span>
-                <span><strong>{e.name}</strong><span className="caption">{e.courseIds.map(courseName).join(", ")}</span></span>
+                <span><strong>{e.name}</strong><span className="cx-course-chip">{courseSummary(e.courseIds, courseName)}</span></span>
               </button>
               <span className="b-text">{e.followUp.reason || e.alerts[0]?.reason || "Sin motivo escrito."}</span>
               <span className={e.overdue ? "ws-due hot" : "ws-due"}>{e.followUp.due ? (e.overdue ? `Vencido · ${shortDate(e.followUp.due)}` : e.dueToday ? "Hoy" : shortDate(e.followUp.due)) : "Sin fecha"}</span>
@@ -388,7 +388,7 @@ function FollowUpQueue({ queue, onOpen, onFollowUp, onClose, store, persist, say
             <li key={e.key} className="ws-q-row">
               <button type="button" className="ws-name" onClick={() => onOpen(e.key)}>
                 <span className="avatar sm" aria-hidden="true">{initials(e.name)}</span>
-                <span><strong>{e.name}</strong><span className="caption">{e.courseIds.map(courseName).join(", ")}</span></span>
+                <span><strong>{e.name}</strong><span className="cx-course-chip">{courseSummary(e.courseIds, courseName)}</span></span>
               </button>
               <span className="b-text">{e.alerts[0]?.reason}</span>
               <span />
@@ -735,3 +735,13 @@ export function StudentProfile({ api, userId, student: s, ws, store, guard, say,
   );
 }
 
+
+// «Sociales 11 C, Lectura crítica 11 C, …» -> «11 C · 6 materias»: one short chip instead of a comma list.
+function courseSummary(ids, courseName) {
+  const names = ids.map(courseName).filter(Boolean);
+  if (names.length <= 1) return names[0] ?? "";
+  const tail = (n) => (n.match(/(\d{1,2}\s?[A-Z°ºa-z]{0,3})\s*$/) ?? [])[1]?.trim();
+  const t = tail(names[0]);
+  if (t && names.every((n) => tail(n) === t)) return `${t} · ${names.length} materias`;
+  return `${names[0]} y ${names.length - 1} más`;
+}
