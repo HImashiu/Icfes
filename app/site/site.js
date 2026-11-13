@@ -16,6 +16,19 @@ document.documentElement.classList.add("js");
     items.forEach(function (el) { el.classList.add("in"); });
   }
 
+  // Landing: the doubt cookies flip to their answer; the moving shapes stand still for reduced motion; only one big
+  // word is open at a time.
+  document.querySelectorAll(".cookie").forEach(function (c) {
+    c.addEventListener("click", function () { c.setAttribute("aria-pressed", c.getAttribute("aria-pressed") === "true" ? "false" : "true"); });
+  });
+  if (reduce) document.querySelectorAll("svg.blobs").forEach(function (s) { if (s.pauseAnimations) s.pauseAnimations(); });
+  var words = document.querySelectorAll(".word");
+  words.forEach(function (d) {
+    d.addEventListener("toggle", function () {
+      if (d.open) words.forEach(function (o) { if (o !== d) o.open = false; });
+    });
+  });
+
   // Count the hero numbers up once.
   var fmt = function (n) { return n.toLocaleString("es-CO"); };
   document.querySelectorAll("[data-count]").forEach(function (el) {

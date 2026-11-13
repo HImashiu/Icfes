@@ -35,8 +35,9 @@
   <!--SITE_VERIFICATION-->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,500;1,6..72,600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="site.css" />
+  <link rel="stylesheet" href="landing.css" />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -87,51 +88,88 @@
   </script>
   <!--ANALYTICS-->
 </head>
-<body>
+<body class="landing">
   <a class="skip" href="#contenido">Saltar al contenido</a>
 
-  <header class="top">
-    <div class="code-bar">
-      <div class="wrap code-bar-row">
-        <span class="code-bar-text"><b>¿Tu colegio te envió un código de prueba?</b> Actívalo en un minuto.</span>
-        <a class="btn btn-primary btn-sm" href="app/#docente">Activar prueba gratuita</a>
-      </div>
+  <div class="code-bar">
+    <div class="wrap code-bar-row">
+      <span class="code-bar-text"><b>¿Tu colegio te envió un código de prueba?</b> Actívalo en un minuto.</span>
+      <a class="btn btn-primary btn-sm" href="app/#docente">Activar prueba gratuita</a>
     </div>
+  </div>
+  <header class="top">
     <div class="wrap top-row">
       <a class="brand" href="./" aria-label="Cóndor, inicio">
         <img src="img/condor-mark.svg" alt="" width="34" height="34" />
         <svg class="wordmark" viewBox="-4 -74 337.8 78" height="26" width="113" aria-hidden="true"><path fill="currentColor" d="M30.3 1.1Q22.0 1.1 15.850000000000001 -2.0Q9.700000000000001 -5.1000000000000005 6.300000000000001 -10.950000000000001Q2.9000000000000004 -16.8 2.9000000000000004 -24.700000000000003Q2.9000000000000004 -30.700000000000003 4.800000000000001 -35.45Q6.7 -40.2 10.35 -43.5Q14.0 -46.800000000000004 19.05 -48.550000000000004Q24.1 -50.300000000000004 30.3 -50.300000000000004Q33.2 -50.300000000000004 36.400000000000006 -49.75Q39.6 -49.2 43.0 -47.7Q45.400000000000006 -46.800000000000004 46.35000000000001 -44.95Q47.300000000000004 -43.1 47.150000000000006 -41.0Q47.0 -38.900000000000006 45.95 -37.2Q44.900000000000006 -35.5 43.050000000000004 -34.900000000000006Q41.2 -34.300000000000004 38.900000000000006 -35.4Q37.300000000000004 -36.2 35.550000000000004 -36.55Q33.800000000000004 -36.9 32.2 -36.9Q29.5 -36.9 27.450000000000003 -36.1Q25.400000000000002 -35.300000000000004 24.0 -33.75Q22.6 -32.2 21.85 -29.900000000000002Q21.1 -27.6 21.1 -24.700000000000003Q21.1 -18.900000000000002 24.0 -15.600000000000001Q26.900000000000002 -12.3 32.2 -12.3Q33.800000000000004 -12.3 35.5 -12.65Q37.2 -13.0 38.900000000000006 -13.8Q41.2 -14.9 43.0 -14.25Q44.800000000000004 -13.600000000000001 45.900000000000006 -11.900000000000002Q47.0 -10.200000000000001 47.1 -8.15Q47.2 -6.1000000000000005 46.2 -4.25Q45.2 -2.4000000000000004 42.800000000000004 -1.5Q39.5 0.0 36.35 0.55Q33.2 1.1 30.3 1.1Z"/><path fill="currentColor" transform="translate(47.40 0)" d="M30.1 1.1Q21.900000000000002 1.1 15.8 -2.0Q9.700000000000001 -5.1000000000000005 6.300000000000001 -10.9Q2.9000000000000004 -16.7 2.9000000000000004 -24.6Q2.9000000000000004 -30.6 4.800000000000001 -35.35Q6.7 -40.1 10.3 -43.45Q13.9 -46.800000000000004 18.900000000000002 -48.550000000000004Q23.900000000000002 -50.300000000000004 30.1 -50.300000000000004Q38.300000000000004 -50.300000000000004 44.400000000000006 -47.2Q50.5 -44.1 53.85 -38.35Q57.2 -32.6 57.2 -24.6Q57.2 -18.7 55.300000000000004 -13.899999999999999Q53.400000000000006 -9.1 49.85000000000001 -5.75Q46.300000000000004 -2.4000000000000004 41.25 -0.6500000000000001Q36.2 1.1 30.1 1.1ZM30.1 -12.0Q32.800000000000004 -12.0 34.900000000000006 -13.350000000000001Q37.0 -14.700000000000001 38.150000000000006 -17.450000000000003Q39.300000000000004 -20.200000000000003 39.300000000000004 -24.6Q39.300000000000004 -31.3 36.7 -34.25Q34.1 -37.2 30.1 -37.2Q27.400000000000002 -37.2 25.300000000000004 -35.900000000000006Q23.200000000000003 -34.6 22.0 -31.85Q20.8 -29.1 20.8 -24.6Q20.8 -18.0 23.4 -15.0Q26.0 -12.0 30.1 -12.0Z"/><circle fill="currentColor" cx="81.5" cy="-26.6" r="8.5"/><path fill="#2b5f2e" d="M58.2 -57.9 L96.7 -57.9 L97.4 -46.0 Q77.5 -51.2 57.5 -46.0Z"/><path fill="#377b3a" d="M45.5 -59.3 L77.5 -49.8 L109.5 -59.3 L109.5 -55.9 L77.5 -46.4 L45.5 -55.9Z"/><path fill="#4b9e3c" d="M45.5 -59.3 L77.5 -68.8 L109.5 -59.3 L77.5 -49.8Z"/><path fill="none" stroke="#fab131" stroke-width="2.80" stroke-linecap="round" stroke-linejoin="round" d="M77.5 -59.3 L105.0 -56.3 L105.0 -44.4"/><path fill="#fab131" d="M102.6 -45.2 L107.4 -45.2 L110.3 -37.2 Q105.0 -34.0 99.7 -37.2Z"/><ellipse fill="#fab131" cx="77.5" cy="-59.3" rx="4.2" ry="3.1"/><path fill="currentColor" d="M120.60000000000001 0.9Q116.4 0.9 114.10000000000001 -1.4000000000000001Q111.80000000000001 -3.7 111.80000000000001 -8.1V-41.2Q111.80000000000001 -45.5 114.05000000000001 -47.8Q116.30000000000001 -50.1 120.50000000000001 -50.1Q124.70000000000002 -50.1 126.90000000000002 -47.8Q129.10000000000002 -45.5 129.10000000000002 -41.2V-36.5L128.0 -40.6Q130.4 -45.300000000000004 134.85000000000002 -47.800000000000004Q139.3 -50.300000000000004 145.0 -50.300000000000004Q150.9 -50.300000000000004 154.7 -48.050000000000004Q158.5 -45.800000000000004 160.4 -41.050000000000004Q162.3 -36.300000000000004 162.3 -29.1V-8.1Q162.3 -3.7 160.0 -1.4000000000000001Q157.70000000000002 0.9 153.4 0.9Q149.10000000000002 0.9 146.8 -1.4000000000000001Q144.5 -3.7 144.5 -8.1V-28.400000000000002Q144.5 -32.9 142.95 -34.8Q141.4 -36.7 138.4 -36.7Q134.4 -36.7 132.0 -34.150000000000006Q129.60000000000002 -31.6 129.60000000000002 -27.3V-8.1Q129.60000000000002 0.9 120.60000000000001 0.9Z"/><path fill="currentColor" d="M190.60000000000002 1.1Q184.3 1.1 179.45000000000002 -2.0Q174.60000000000002 -5.1000000000000005 171.85000000000002 -10.9Q169.10000000000002 -16.7 169.10000000000002 -24.6Q169.10000000000002 -32.7 171.85000000000002 -38.400000000000006Q174.60000000000002 -44.1 179.45000000000002 -47.2Q184.3 -50.300000000000004 190.60000000000002 -50.300000000000004Q196.10000000000002 -50.300000000000004 200.50000000000003 -47.7Q204.90000000000003 -45.1 206.40000000000003 -41.0H205.3V-62.400000000000006Q205.3 -66.8 207.60000000000002 -69.1Q209.90000000000003 -71.4 214.20000000000002 -71.4Q218.40000000000003 -71.4 220.75000000000003 -69.1Q223.10000000000002 -66.8 223.10000000000002 -62.400000000000006V-8.1Q223.10000000000002 -3.7 220.85000000000002 -1.4000000000000001Q218.60000000000002 0.9 214.3 0.9Q210.10000000000002 0.9 207.8 -1.4000000000000001Q205.50000000000003 -3.7 205.50000000000003 -8.1V-13.8L206.60000000000002 -8.9Q205.20000000000002 -4.4 200.75 -1.6500000000000001Q196.3 1.1 190.60000000000002 1.1ZM196.3 -12.0Q199.00000000000003 -12.0 201.10000000000002 -13.350000000000001Q203.20000000000002 -14.700000000000001 204.35000000000002 -17.450000000000003Q205.50000000000003 -20.200000000000003 205.50000000000003 -24.6Q205.50000000000003 -31.3 202.90000000000003 -34.25Q200.3 -37.2 196.3 -37.2Q193.60000000000002 -37.2 191.50000000000003 -35.900000000000006Q189.40000000000003 -34.6 188.20000000000005 -31.85Q187.00000000000003 -29.1 187.00000000000003 -24.6Q187.00000000000003 -18.0 189.60000000000002 -15.0Q192.20000000000002 -12.0 196.3 -12.0Z"/><path fill="currentColor" transform="translate(227.20 0)" d="M30.1 1.1Q21.900000000000002 1.1 15.8 -2.0Q9.700000000000001 -5.1000000000000005 6.300000000000001 -10.9Q2.9000000000000004 -16.7 2.9000000000000004 -24.6Q2.9000000000000004 -30.6 4.800000000000001 -35.35Q6.7 -40.1 10.3 -43.45Q13.9 -46.800000000000004 18.900000000000002 -48.550000000000004Q23.900000000000002 -50.300000000000004 30.1 -50.300000000000004Q38.300000000000004 -50.300000000000004 44.400000000000006 -47.2Q50.5 -44.1 53.85 -38.35Q57.2 -32.6 57.2 -24.6Q57.2 -18.7 55.300000000000004 -13.899999999999999Q53.400000000000006 -9.1 49.85000000000001 -5.75Q46.300000000000004 -2.4000000000000004 41.25 -0.6500000000000001Q36.2 1.1 30.1 1.1ZM30.1 -12.0Q32.800000000000004 -12.0 34.900000000000006 -13.350000000000001Q37.0 -14.700000000000001 38.150000000000006 -17.450000000000003Q39.300000000000004 -20.200000000000003 39.300000000000004 -24.6Q39.300000000000004 -31.3 36.7 -34.25Q34.1 -37.2 30.1 -37.2Q27.400000000000002 -37.2 25.300000000000004 -35.900000000000006Q23.200000000000003 -34.6 22.0 -31.85Q20.8 -29.1 20.8 -24.6Q20.8 -18.0 23.4 -15.0Q26.0 -12.0 30.1 -12.0Z"/><circle fill="currentColor" cx="261.2" cy="-26.6" r="8.5"/><path fill="currentColor" d="M300.70000000000005 0.9Q296.3 0.9 293.95000000000005 -1.4000000000000001Q291.6 -3.7 291.6 -8.1V-41.2Q291.6 -45.5 293.85 -47.8Q296.1 -50.1 300.3 -50.1Q304.50000000000006 -50.1 306.70000000000005 -47.8Q308.90000000000003 -45.5 308.90000000000003 -41.2V-37.1H307.90000000000003Q308.90000000000003 -43.1 313.05000000000007 -46.6Q317.20000000000005 -50.1 323.40000000000003 -50.300000000000004Q326.30000000000007 -50.400000000000006 327.75000000000006 -48.85000000000001Q329.20000000000005 -47.300000000000004 329.30000000000007 -43.1Q329.30000000000007 -39.5 327.80000000000007 -37.400000000000006Q326.30000000000007 -35.300000000000004 322.1 -34.9L319.8 -34.7Q314.50000000000006 -34.2 312.1 -31.75Q309.70000000000005 -29.3 309.70000000000005 -24.5V-8.1Q309.70000000000005 -3.7 307.40000000000003 -1.4000000000000001Q305.1 0.9 300.70000000000005 0.9Z"/></svg>
       </a>
-      <nav class="top-nav" aria-label="Secciones">
-        <a href="#estudiantes">Estudiantes</a>
+      <nav class="top-pill" aria-label="Secciones">
+        <a href="#como-funciona">Cómo funciona</a>
+        <a href="#examenes">Exámenes</a>
         <a href="#colegios">Colegios</a>
-        <a href="simulacro-icfes/">Simulacro</a>
-        <a href="preguntas-icfes/">Preguntas</a>
         <a href="#precios">Precios</a>
+        <a href="#preguntas">Preguntas</a>
       </nav>
-      <a class="btn btn-primary btn-sm" href="app/?empezar=1">Practicar gratis</a>
+      <a class="btn btn-go btn-sm" href="app/?empezar=1">Practicar gratis <span class="go" aria-hidden="true"></span></a>
     </div>
   </header>
 
   <main id="contenido">
-    <section class="hero">
-      <div class="wrap hero-grid">
-        <div class="hero-copy">
-          <span class="tag rise" style="--d:0">Demo gratuita</span>
-          <h1 class="rise" style="--d:1">Prepárate para el Saber 11</h1>
-          <p class="lead rise" style="--d:2">Más de 4.000 preguntas del ICFES, simulacros con tiempo y tu puntaje de 0 a 500. Entras con tu cuenta de Google.</p>
-          <div class="cta-row rise" style="--d:3">
-            <a class="btn btn-primary" href="app/?empezar=1">Empezar a practicar</a>
-            <a class="btn btn-ghost" href="preicfes-para-colegios/">Para colegios</a>
-          </div>
-          <div class="pills rise" style="--d:4" aria-label="El banco de preguntas en cifras">
-            <span class="stat"><b data-count="4300" data-suffix="+">4.300+</b> preguntas</span>
-            <span class="stat"><b data-count="18">18</b> cuadernillos</span>
-            <span class="stat"><b data-count="5">5</b> áreas</span>
-          </div>
+    <!-- 1 · Hero: the headline with the owl in it and the five areas fanned out like stickers. -->
+    <section class="hero dots">
+      <div class="wrap hero-in">
+        <span class="badge rise" style="--d:0"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Gratis · Saber 11</span>
+        <h1 class="mega" aria-label="Practica el Saber 11 con preguntas del ICFES">
+          <span class="ln rise" style="--d:1" aria-hidden="true">Practica el</span>
+          <span class="ln rise" style="--d:2" aria-hidden="true"><span class="h-owl"><!--OWL_FULL:owl-bob--></span>Saber 11</span>
+          <span class="ln rise" style="--d:3" aria-hidden="true"><em class="script">con preguntas</em> <span class="stk stk-lime">del ICFES</span></span>
+        </h1>
+        <p class="lead rise" style="--d:4">Más de 4.300 preguntas de cuadernillos que publicó el ICFES, simulacros con tiempo y tu puntaje de 0 a 500. Entras con tu cuenta de Google y en segundos estás respondiendo.</p>
+        <div class="cta-row rise" style="--d:5">
+          <a class="btn btn-go" href="app/?empezar=1">Empezar a practicar <span class="go" aria-hidden="true"></span></a>
+          <a class="btn btn-ghost" href="preicfes-para-colegios/">Soy docente</a>
         </div>
+      </div>
+      <div class="fan" aria-label="Preguntas por área">
+        <a class="fan-card" href="preguntas-icfes/matematicas/" style="--c:#FFB547;--r:-9deg;--y:18px;--i:0">
+          <span class="fan-art"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 14h12M16 8v12M28 14h12M10 34l10-10M10 24l10 10M28 30h12M34 25v.01M34 35v.01"/></svg></span>
+          <span class="fan-label"><b>Matemáticas</b><small>970+ preguntas</small></span>
+        </a>
+        <a class="fan-card" href="preguntas-icfes/lectura-critica/" style="--c:#8AB4FF;--r:-4deg;--y:4px;--i:1">
+          <span class="fan-art"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 13c-4-3-10-4-16-3v24c6-1 12 0 16 3 4-3 10-4 16-3V10c-6-1-12 0-16 3zM24 13v24"/></svg></span>
+          <span class="fan-label"><b>Lectura crítica</b><small>680+ preguntas</small></span>
+        </a>
+        <a class="fan-card" href="preguntas-icfes/sociales-y-ciudadanas/" style="--c:#F59EC4;--r:1deg;--y:0px;--i:2">
+          <span class="fan-art"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="15"/><path d="M9 24h30M24 9c5 5 5 25 0 30M24 9c-5 5-5 25 0 30"/></svg></span>
+          <span class="fan-label"><b>Sociales y ciudadanas</b><small>830+ preguntas</small></span>
+        </a>
+        <a class="fan-card" href="preguntas-icfes/ciencias-naturales/" style="--c:#5ED3B4;--r:5deg;--y:6px;--i:3">
+          <span class="fan-art"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M19 8h10M21 8v11L11 36c-1 2 0 4 3 4h20c3 0 4-2 3-4L27 19V8M15 30h18"/></svg></span>
+          <span class="fan-label"><b>Ciencias naturales</b><small>970+ preguntas</small></span>
+        </a>
+        <a class="fan-card" href="preguntas-icfes/ingles/" style="--c:#C79BFF;--r:10deg;--y:20px;--i:4">
+          <span class="fan-art"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 12h32v20H22l-8 7v-7H8z"/><path d="M16 27l4-10 4 10M17.5 23.5h5M29 17v10M29 22c0-3 6-3 6 0v5"/></svg></span>
+          <span class="fan-label"><b>Inglés</b><small>840+ preguntas</small></span>
+        </a>
+      </div>
+    </section>
 
-        <div class="try rise" style="--d:2">
+    <div class="scallop" style="--from:var(--bg);--to:var(--cream)" aria-hidden="true"></div>
+
+    <!-- 2 · Try one: the app's question card, the owl peeking over it. -->
+    <section class="try-sec cream dots-dark" id="pruebala">
+      <div class="wrap try-grid">
+        <div class="try-copy reveal">
+          <span class="stk stk-ink stk-sm" style="--t:-3deg">Pruébala aquí</span>
+          <h2 class="big"><span class="nw">¿La resuelves</span> en <span class="stk stk-ink">10 segundos?</span></h2>
+          <p class="sub">Una pregunta real del cuadernillo S11-B. Toca una opción, como en la app.</p>
+          <ol class="steps-3">
+            <li><b>1</b>Respondes</li>
+            <li><b>2</b>Ves si acertaste y por qué</li>
+            <li><b>3</b>Sigues con 5 preguntas más</li>
+          </ol>
+        </div>
+        <div class="try reveal">
           <div class="peek" id="peek" aria-hidden="true">
             <div class="peek-head"><!--OWL_PEEK--></div>
           </div>
@@ -170,83 +208,224 @@
       </div>
     </section>
 
-    <section class="areas wrap" aria-label="Preguntas por área">
-      <a class="area reveal" href="preguntas-icfes/matematicas/" style="--c:#FFB547"><span class="dot"></span><b>Matemáticas</b><span>970+</span></a>
-      <a class="area reveal" href="preguntas-icfes/lectura-critica/" style="--c:#8AB4FF"><span class="dot"></span><b>Lectura crítica</b><span>680+</span></a>
-      <a class="area reveal" href="preguntas-icfes/sociales-y-ciudadanas/" style="--c:#F59EC4"><span class="dot"></span><b>Sociales y ciudadanas</b><span>830+</span></a>
-      <a class="area reveal" href="preguntas-icfes/ciencias-naturales/" style="--c:#5ED3B4"><span class="dot"></span><b>Ciencias naturales</b><span>970+</span></a>
-      <a class="area reveal" href="preguntas-icfes/ingles/" style="--c:#C79BFF"><span class="dot"></span><b>Inglés</b><span>840+</span></a>
-    </section>
+    <!-- 3 · A tilted band of the five tests. -->
+    <div class="band" aria-hidden="true">
+      <div class="band-track">
+        <span>Matemáticas</span><i>✱</i><span>Lectura crítica</span><i>✱</i><span>Sociales y ciudadanas</span><i>✱</i><span>Ciencias naturales</span><i>✱</i><span>Inglés</span><i>✱</i>
+        <span>Matemáticas</span><i>✱</i><span>Lectura crítica</span><i>✱</i><span>Sociales y ciudadanas</span><i>✱</i><span>Ciencias naturales</span><i>✱</i><span>Inglés</span><i>✱</i>
+      </div>
+    </div>
 
-    <section id="estudiantes" class="section">
-      <div class="wrap split">
-        <div class="reveal">
-          <h2>Practica como el día del examen</h2>
-          <ul class="checks">
-            <li><b>Simulacros completos</b> con Sesión 1 y Sesión 2 y el tiempo real.</li>
-            <li><b>Puntaje de 0 a 500</b> con los pesos, niveles y percentiles del ICFES. Es un estimado.</li>
-            <li><b>Repaso de errores</b> hasta que aciertes cada pregunta.</li>
-            <li><b>Meta diaria y cuenta regresiva</b> a la fecha de tu examen.</li>
-            <li><b>Sin rankings.</b> Te comparas con tu meta, no con tus compañeros.</li>
-          </ul>
-          <a class="btn btn-primary" href="app/?empezar=1">Probar ahora</a>
+    <!-- 4 · What Cóndor is, in four big words over moving shapes. -->
+    <section class="manifest" aria-labelledby="asi-es">
+      <svg class="blobs" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+        <path fill="#C8F04A">
+          <animate attributeName="d" dur="16s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1"
+            values="M180 120 L470 60 L560 260 L520 520 L300 640 L120 470 Z;M240 80 L520 150 L600 330 L430 600 L200 560 L90 330 Z;M150 200 L420 90 L640 220 L560 470 L330 690 L170 520 Z;M180 120 L470 60 L560 260 L520 520 L300 640 L120 470 Z"/>
+          <animate attributeName="fill" dur="24s" repeatCount="indefinite" values="#C8F04A;#FFB547;#F59EC4;#C8F04A"/>
+        </path>
+        <path fill="#8AB4FF">
+          <animate attributeName="d" dur="19s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1"
+            values="M760 180 L1090 120 L1160 420 L1010 720 L700 650 L640 380 Z;M700 120 L1010 220 L1180 520 L940 760 L660 610 L720 330 Z;M800 90 L1140 260 L1080 560 L860 700 L620 560 L690 280 Z;M760 180 L1090 120 L1160 420 L1010 720 L700 650 L640 380 Z"/>
+          <animate attributeName="fill" dur="27s" repeatCount="indefinite" values="#8AB4FF;#C79BFF;#5ED3B4;#8AB4FF"/>
+        </path>
+      </svg>
+      <div class="wrap manifest-in">
+        <p class="kicker reveal" id="asi-es">Así es Cóndor</p>
+        <div class="words">
+          <details class="word reveal"><summary><span>Gratis</span><i class="plus" aria-hidden="true"></i></summary><p>Practicar con las preguntas del ICFES es gratis y lo seguirá siendo. Solo entras con tu cuenta de Google.</p></details>
+          <details class="word reveal"><summary><span>Real</span><i class="plus" aria-hidden="true"></i></summary><p>Preguntas de cuadernillos que publicó el ICFES, cada una con su fuente. Tu puntaje usa los pesos, niveles y percentiles oficiales; es un estimado.</p></details>
+          <details class="word reveal"><summary><span>Sin rankings</span><i class="plus" aria-hidden="true"></i></summary><p>Te comparas con tu meta, no con tus compañeros. Nadie ve una tabla de posiciones.</p></details>
+          <details class="word reveal"><summary><span>A tu ritmo</span><i class="plus" aria-hidden="true"></i></summary><p>Cinco preguntas en el bus o un simulacro completo con el tiempo real. Sigues donde ibas, en el celular o en el computador.</p></details>
         </div>
-        <div class="phones reveal">
-          <img class="phone p1" src="img/app-inicio.webp" width="390" height="760" loading="lazy" alt="Inicio de Cóndor en un celular: tareas pendientes, meta diaria y juegos en vivo." />
-          <img class="phone p2" src="img/app-pregunta.webp" width="390" height="760" loading="lazy" alt="Una pregunta de Lectura crítica en Cóndor, con el enunciado y sus opciones." />
-        </div>
+        <a class="btn btn-ink reveal" href="app/?empezar=1">Empezar gratis</a>
       </div>
     </section>
 
-    <section id="colegios" class="section">
+    <!-- 5 · How it works: cards that stack as you scroll, each with its tab. -->
+    <section class="how dots" id="como-funciona">
       <div class="wrap">
-        <div class="school reveal">
-          <div class="school-copy">
-            <h2>Para colegios</h2>
-            <ul class="checks">
-              <li><b>Tareas y simulacros por curso,</b> en línea o en papel con cuadernillo impreso.</li>
-              <li><b>Resultados por estudiante, área y competencia,</b> con alertas de quién necesita apoyo.</li>
-              <li><b>Juego en vivo en clase</b> desde el celular de cada estudiante.</li>
-              <li><b>Control de preguntas</b> para que un grupo no vea dos veces la misma.</li>
-              <li><b>Ingreso con la cuenta del colegio</b> de Google.</li>
-            </ul>
-            <p class="school-trial"><a class="btn btn-primary" href="app/#docente">Activar prueba gratuita con mi código</a> <a class="btn btn-ghost btn-sm" href="prueba-docente/">Cómo funciona</a></p>
-          </div>
-          <img class="school-shot" src="img/app-docente.webp" width="1280" height="800" loading="lazy" alt="Panel del docente en Cóndor con actividades, alertas y anuncios." />
-          <form class="card form" id="form-colegio" novalidate>
-            <strong>Pide una demostración para tu colegio</strong>
-            <div class="form-grid">
-              <label>Nombre<input name="nombre" autocomplete="name" required maxlength="120" /></label>
-              <label>Colegio y ciudad<input name="colegio" required maxlength="160" /></label>
-              <label class="span-2">Correo o celular<input name="contacto" required maxlength="160" autocomplete="email" /></label>
+        <div class="sec-head reveal">
+          <span class="stk stk-pink stk-sm" style="--t:-4deg">Cómo funciona</span>
+          <h2 class="big">Así vas a <span class="stk stk-lime">subir</span><br />tu puntaje</h2>
+        </div>
+        <div class="stack">
+          <article class="sc" style="--k:0;--sc:#2B5F2E">
+            <span class="sc-tab"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg>Simulacros</span>
+            <div class="sc-body">
+              <div class="sc-copy">
+                <h3>Simulacros como el día del examen</h3>
+                <ul class="ast">
+                  <li>Sesión 1 y Sesión 2 con el tiempo real</li>
+                  <li>Puntaje de 0 a 500 y por cada prueba</li>
+                  <li>Nivel de desempeño y percentil nacional, estimados</li>
+                </ul>
+              </div>
+              <div class="sc-art">
+                <img src="img/app-pregunta.webp" width="390" height="760" loading="lazy" alt="Una pregunta de Lectura crítica en Cóndor, con el enunciado y sus opciones." />
+                <svg class="sticker s-bolt" viewBox="0 0 48 48" aria-hidden="true"><path d="M27 3 9 27h13l-3 18 20-26H25z"/></svg>
+              </div>
             </div>
-            <button class="btn btn-primary" type="submit">Pedir una demostración</button>
-            <p class="form-msg" role="status" aria-live="polite"></p>
-          </form>
+          </article>
+          <article class="sc" style="--k:1;--sc:#377B3A">
+            <span class="sc-tab"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v4h4"/></svg>Repaso</span>
+            <div class="sc-body">
+              <div class="sc-copy">
+                <h3>Repasa hasta acertar</h3>
+                <ul class="ast">
+                  <li>Tus errores vuelven hasta que los domines</li>
+                  <li>Pistas que te ayudan sin regalarte la respuesta</li>
+                  <li>Ves cuánto tiempo gastas en cada pregunta</li>
+                </ul>
+              </div>
+              <div class="sc-art">
+                <img src="img/app-inicio.webp" width="390" height="760" loading="lazy" alt="Inicio de Cóndor en un celular: tareas pendientes, meta diaria y juegos en vivo." />
+                <span class="sticker s-owl"><!--OWL_FULL:owl-wave--></span>
+              </div>
+            </div>
+          </article>
+          <article class="sc" style="--k:2;--sc:#4B9E3C">
+            <span class="sc-tab"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>Tu meta</span>
+            <div class="sc-body">
+              <div class="sc-copy">
+                <h3>Tu meta, no la de otros</h3>
+                <ul class="ast">
+                  <li>Meta diaria de XP y tu racha de días</li>
+                  <li>Cuenta regresiva a la fecha de tu examen</li>
+                  <li>Sin rankings ni comparaciones con nadie</li>
+                </ul>
+                <a class="btn btn-go" href="app/?empezar=1">Probar ahora <span class="go" aria-hidden="true"></span></a>
+              </div>
+              <div class="sc-art sc-goal" aria-hidden="true">
+                <div class="goal">
+                  <svg class="ring" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50"/><circle class="ring-on" cx="60" cy="60" r="50" pathLength="100"/></svg>
+                  <div class="goal-n"><b>40</b><span>de 50 XP</span></div>
+                </div>
+                <div class="goal-chips">
+                  <span class="chip"><svg viewBox="0 0 24 24"><path d="M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-5 3-6 0 2 1 3 2 3 0-4-1-6 1-9z"/></svg>6 días seguidos</span>
+                  <span class="chip"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Faltan 120 días</span>
+                </div>
+                <svg class="sticker s-cap" viewBox="0 0 48 48"><path d="M24 8 3 18l21 10 21-10z"/><path d="M11 22v10c4 4 22 4 26 0V22"/><path d="M42 19v12"/></svg>
+              </div>
+            </div>
+          </article>
         </div>
       </div>
     </section>
 
-    <section id="precios" class="section">
+    <!-- 6 · Common doubts, as cookies that flip to the answer. -->
+    <section class="doubts" aria-labelledby="te-suena">
       <div class="wrap">
-        <div class="card price reveal">
-          <div>
-            <h2>Gratis mientras estamos en demostración</h2>
-            <p>Cuando fijemos los precios, quienes se registren aquí tendrán un descuento de lanzamiento. Las preguntas del ICFES seguirán siendo gratis.</p>
+        <h2 class="big center reveal" id="te-suena">¿Te <em class="script">suena</em> esto?</h2>
+        <p class="sub center reveal">Lo que más nos dicen los estudiantes antes del Saber 11. Toca cada una.</p>
+        <div class="cookies">
+          <button type="button" class="cookie reveal" style="--c:#FFB547;--t:-6deg" aria-pressed="false">
+            <span class="cookie-in"><span class="cookie-f"><q>No sé por dónde empezar.</q></span><span class="cookie-b">Empieza con 5 preguntas mezcladas y mira en qué prueba vas flojo.</span></span>
+          </button>
+          <button type="button" class="cookie reveal" style="--c:#8AB4FF;--t:4deg" aria-pressed="false">
+            <span class="cookie-in"><span class="cookie-f"><q>Lectura crítica me cuesta.</q></span><span class="cookie-b">Más de 680 preguntas de lectura del ICFES, con repaso de errores.</span></span>
+          </button>
+          <button type="button" class="cookie reveal" style="--c:#F59EC4;--t:-3deg" aria-pressed="false">
+            <span class="cookie-in"><span class="cookie-f"><q>En el examen no me alcanza el tiempo.</q></span><span class="cookie-b">Simulacros con el tiempo real y tu tiempo en cada pregunta.</span></span>
+          </button>
+          <button type="button" class="cookie reveal" style="--c:#5ED3B4;--t:7deg" aria-pressed="false">
+            <span class="cookie-in"><span class="cookie-f"><q>No sé cuánto sacaría hoy.</q></span><span class="cookie-b">Un simulacro te da tu puntaje estimado de 0 a 500.</span></span>
+          </button>
+        </div>
+        <p class="center reveal"><a class="btn btn-go" href="app/?empezar=1">Empezar a practicar <span class="go" aria-hidden="true"></span></a></p>
+      </div>
+    </section>
+
+    <!-- 7 · Past exams as rows of pills. -->
+    <section class="exams" id="examenes">
+      <div class="wrap">
+        <h2 class="big center reveal">Exámenes <span class="stk stk-ink">anteriores</span></h2>
+        <p class="sub center reveal">Presenta un Saber 11 que ya salió, con sus preguntas y respuestas.</p>
+        <ul class="rows">
+          <li class="row reveal"><span class="pill p-date">2019</span><span class="pill p-where">Calendario B<small>Primer semestre</small></span><span class="pill p-kind" style="--k:#C79BFF">Sesiones 1 y 2</span><a class="pill p-name" href="examenes-icfes-anteriores/icfes-2019-1/">ICFES 2019-1</a><a class="pill p-go" href="app/?empezar=1&amp;cuadernillo=ICFES-2019-1_1ra">Presentar</a></li>
+          <li class="row reveal"><span class="pill p-date">2020</span><span class="pill p-where">Calendario A<small>Segundo semestre</small></span><span class="pill p-kind" style="--k:#C8F04A">Completo</span><a class="pill p-name" href="examenes-icfes-anteriores/icfes-2020-calendario-a/">ICFES 2020 A</a><a class="pill p-go" href="app/?empezar=1&amp;cuadernillo=ICFES-2020-2A">Presentar</a></li>
+          <li class="row reveal"><span class="pill p-date">2020</span><span class="pill p-where">Calendario B<small>Primer semestre</small></span><span class="pill p-kind" style="--k:#C79BFF">Sesiones 1 y 2</span><a class="pill p-name" href="examenes-icfes-anteriores/icfes-2020-calendario-b/">ICFES 2020 B</a><a class="pill p-go" href="app/?empezar=1&amp;cuadernillo=ICFES-2020-1B_1ra">Presentar</a></li>
+          <li class="row reveal"><span class="pill p-date">2018</span><span class="pill p-where">Calendario B<small>Primer semestre</small></span><span class="pill p-kind" style="--k:#C79BFF">Sesiones 1 y 2</span><a class="pill p-name" href="examenes-icfes-anteriores/icfes-2018-1/">ICFES 2018-1</a><a class="pill p-go" href="app/?empezar=1&amp;cuadernillo=ICFES-2018-1_1ra">Presentar</a></li>
+          <li class="row reveal"><span class="pill p-date">2018</span><span class="pill p-where">Calendario A<small>Segundo semestre</small></span><span class="pill p-kind" style="--k:#FFB547">Sesión 2</span><a class="pill p-name" href="examenes-icfes-anteriores/icfes-2018-2/">ICFES 2018-2</a><a class="pill p-go" href="app/?empezar=1&amp;cuadernillo=ICFES-2018-2_2da">Presentar</a></li>
+          <li class="row reveal"><span class="pill p-date">2021</span><span class="pill p-where">Una prueba<small>Primer semestre</small></span><span class="pill p-kind" style="--k:#F6F3EA">Lectura crítica</span><a class="pill p-name" href="examenes-icfes-anteriores/icfes-2021-lectura-critica/">ICFES 2021 LC</a><a class="pill p-go" href="app/?empezar=1&amp;cuadernillo=ICFES-2021-1-LC">Presentar</a></li>
+        </ul>
+        <p class="center reveal"><a class="ulink" href="examenes-icfes-anteriores/">Ver todos los exámenes anteriores</a></p>
+      </div>
+    </section>
+
+    <!-- 8 · Schools: a dark green panel with a blob, the trial-code button and the demo form. -->
+    <section id="colegios" class="schools">
+      <div class="wrap">
+        <div class="panel reveal">
+          <svg class="panel-blob" viewBox="0 0 600 400" preserveAspectRatio="none" aria-hidden="true"><path d="M0 400 C40 260 120 210 210 230 C300 250 330 120 430 110 C520 100 560 190 600 160 L600 400 Z"/></svg>
+          <span class="stk stk-pink stk-sm panel-tag" style="--t:-5deg">Para colegios</span>
+          <div class="panel-grid">
+            <div class="panel-copy">
+              <h2 class="big light"><em class="script">para</em> docentes, coordinadores <em class="script">y</em> colegios</h2>
+              <ul class="checks">
+                <li><b>Tareas y simulacros por curso,</b> en línea o en papel con cuadernillo impreso.</li>
+                <li><b>Resultados por estudiante, área y competencia,</b> con alertas de quién necesita apoyo.</li>
+                <li><b>Juego en vivo en clase</b> desde el celular de cada estudiante.</li>
+                <li><b>Control de preguntas</b> para que un grupo no vea dos veces la misma.</li>
+                <li><b>Ingreso con la cuenta del colegio</b> de Google.</li>
+              </ul>
+              <p class="school-trial"><a class="btn btn-go" href="app/#docente">Activar prueba con mi código <span class="go" aria-hidden="true"></span></a> <a class="btn btn-ghost btn-sm" href="prueba-docente/">Cómo funciona</a></p>
+            </div>
+            <div class="panel-side">
+              <img class="school-shot" src="img/app-docente.webp" width="1280" height="800" loading="lazy" alt="Panel del docente en Cóndor con actividades, alertas y anuncios." />
+              <form class="card form" id="form-colegio" novalidate>
+                <strong>Pide una demostración para tu colegio</strong>
+                <div class="form-grid">
+                  <label>Nombre<input name="nombre" autocomplete="name" required maxlength="120" /></label>
+                  <label>Colegio y ciudad<input name="colegio" required maxlength="160" /></label>
+                  <label class="span-2">Correo o celular<input name="contacto" required maxlength="160" autocomplete="email" /></label>
+                </div>
+                <button class="btn btn-primary" type="submit">Pedir una demostración</button>
+                <p class="form-msg" role="status" aria-live="polite"></p>
+              </form>
+            </div>
           </div>
-          <form class="form form-inline" id="form-lista" novalidate>
-            <label class="sr" for="lista-correo">Correo electrónico</label>
-            <input id="lista-correo" name="correo" type="email" inputmode="email" autocomplete="email" placeholder="tu@correo.com" required maxlength="200" />
-            <button class="btn btn-primary" type="submit">Quiero el descuento</button>
-            <p class="form-msg" role="status" aria-live="polite"></p>
-          </form>
         </div>
       </div>
     </section>
 
-    <section id="preguntas" class="section">
-      <div class="wrap narrow">
-        <h2 class="reveal">Preguntas frecuentes</h2>
+    <!-- 9 · Price: one scalloped card. -->
+    <section id="precios" class="price-sec">
+      <div class="wrap price-grid">
+        <div class="reveal">
+          <h2 class="big">Sube de <span class="stk stk-lime">nivel</span></h2>
+          <p class="sub">Durante la demostración todo es gratis. Cuando fijemos los precios, quienes se registren aquí tendrán un descuento de lanzamiento. Las preguntas del ICFES seguirán siendo gratis.</p>
+        </div>
+        <div class="ticket reveal">
+          <div class="ticket-in">
+            <span class="ticket-kicker">Demostración</span>
+            <p class="ticket-price">Gratis</p>
+            <ul class="checks checks-sm">
+              <li>Todas las preguntas y simulacros</li>
+              <li>Puntaje de 0 a 500 y repaso de errores</li>
+              <li>Meta diaria y cuenta regresiva</li>
+            </ul>
+            <form class="form form-inline" id="form-lista" novalidate>
+              <label class="sr" for="lista-correo">Correo electrónico</label>
+              <input id="lista-correo" name="correo" type="email" inputmode="email" autocomplete="email" placeholder="tu@correo.com" required maxlength="200" />
+              <button class="btn btn-primary" type="submit">Quiero el descuento</button>
+              <p class="form-msg" role="status" aria-live="polite"></p>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="scallop" style="--from:var(--bg);--to:var(--cream)" aria-hidden="true"></div>
+
+    <!-- 10 · FAQ with the owl waving. -->
+    <section id="preguntas" class="faq-sec cream dots-dark">
+      <div class="wrap faq-grid">
+        <div class="faq-side reveal">
+          <span class="stk stk-ink stk-sm" style="--t:-4deg">Preguntas</span>
+          <h2 class="big">Antes de <span class="stk stk-ink">empezar</span></h2>
+          <span class="faq-owl"><!--OWL_FULL:owl-wave--></span>
+        </div>
         <div class="faq reveal">
           <details><summary>¿Cóndor es del ICFES?</summary><p>No. Cóndor es una plataforma independiente y no está afiliada al ICFES. Usamos preguntas de cuadernillos que el ICFES publicó, y cada una indica su fuente.</p></details>
           <details><summary>¿Necesito una cuenta para practicar?</summary><p>Sí, entras con tu cuenta de Google, la que ya usas. Es gratis y tarda unos segundos. Si tu colegio usa Cóndor, entra con el correo del colegio: ahí ves tus tareas y tu docente ve cómo vas.</p></details>
@@ -254,6 +433,19 @@
           <details><summary>¿Cuánto cuesta?</summary><p>Durante la demostración es gratis. Si te registras en la lista, tendrás un descuento cuando abramos los precios.</p></details>
           <details><summary>¿Encontré un error en una pregunta, qué hago?</summary><p>Toca <b>Marcar para revisar</b> debajo de la pregunta y cuéntanos qué está mal. Lo corregimos.</p></details>
           <details><summary>¿Qué hacen con mis datos?</summary><p>Para practicar entras con Google: guardamos tu nombre, tu correo y qué preguntas respondes, para guardar tu avance y mejorar Cóndor. No hay rankings ni publicidad. Si nos dejas tu correo o un comentario, lo usamos solo para responderte. Lee la <a href="privacidad.html">política de privacidad</a>.</p></details>
+        </div>
+      </div>
+
+      <!-- 11 · Last call, inside a wavy blob with stickers around it. -->
+      <div class="final">
+        <svg class="final-blob" viewBox="0 0 1200 520" preserveAspectRatio="none" aria-hidden="true"><path d="M0 520 L0 250 C60 240 90 150 170 150 C250 150 270 70 380 70 C470 70 500 20 600 20 C700 20 730 70 820 70 C930 70 950 150 1030 150 C1110 150 1140 240 1200 250 L1200 520 Z"/></svg>
+        <svg class="sticker f1" viewBox="0 0 48 48" aria-hidden="true"><path d="M27 3 9 27h13l-3 18 20-26H25z"/></svg>
+        <svg class="sticker f2" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 8 3 18l21 10 21-10z"/><path d="M11 22v10c4 4 22 4 26 0V22"/><path d="M42 19v12"/></svg>
+        <svg class="sticker f3" viewBox="0 0 48 48" aria-hidden="true"><path d="M33 6l9 9-23 23-11 2 2-11z"/><path d="M28 11l9 9"/></svg>
+        <svg class="sticker f4" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 4l5.6 12.4L43 18l-10 9.2L35.8 41 24 34.2 12.2 41 15 27.2 5 18l13.4-1.6z"/></svg>
+        <div class="final-in reveal">
+          <h2 class="big light">Tu puntaje <em class="script">empieza</em><br /><span class="stk stk-lime">hoy</span></h2>
+          <a class="btn btn-go" href="app/?empezar=1">Empezar a practicar <span class="go" aria-hidden="true"></span></a>
         </div>
       </div>
     </section>
@@ -267,6 +459,7 @@
       <nav aria-label="Legal">
         <a href="simulacro-icfes/">Simulacro ICFES gratis</a>
         <a href="preguntas-icfes/">Preguntas por área</a>
+        <a href="examenes-icfes-anteriores/">Exámenes anteriores</a>
         <a href="calculadora-puntaje-icfes/">Calculadora de puntaje</a>
         <a href="como-prepararse-para-el-icfes/">Cómo prepararse</a>
         <a href="preicfes-para-colegios/">Preicfes para colegios</a>
