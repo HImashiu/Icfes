@@ -52,10 +52,10 @@ export function scanReceipt({ assignment, course, count, average }) {
 }
 
 // A new assignment (one or several classes).
-export function assignmentReceipt({ assignment, classes = 1 }) {
+export function assignmentReceipt({ assignment, classes = 1, weeks = 1 }) {
   return {
     kind: "assign",
-    title: classes > 1 ? `Asignada a ${classes} clases` : "Actividad asignada",
+    title: weeks > 1 ? `Rutina de ${weeks} semanas programada${classes > 1 ? ` en ${classes} clases` : ""}` : classes > 1 ? `Asignada a ${classes} clases` : "Actividad asignada",
     detail: [assignment.title, classes > 1 ? null : courseName(assignment)].filter(Boolean).join(" · "),
     where: [
       { label: "La página de la actividad", detail: "Entregas, papel, resultados y calificación", route: { section: "actividad", id: assignment.id } },

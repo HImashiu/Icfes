@@ -108,6 +108,13 @@ export function createApi(client) {
       if (r.error && /delivery/.test(r.error.message ?? "")) throw new Error("Para guardar si una actividad es en papel hace falta correr la migración 0023 en Supabase.");
       unwrap(r);
     },
+    // Dates and status of one activity (extend, reopen, reschedule). The worker reads due_at on every request, so the
+    // new dates apply at once to grading and to what students see.
+    async updateAssignment(id, patch) {
+      const allowed = ["title", "opens_at", "due_at", "status"];
+      const clean = Object.fromEntries(Object.entries(patch).filter(([k]) => allowed.includes(k)));
+      return unwrap(await client.from("assignments").update(clean).eq("id", id).select().single());
+    },
     async setAssignmentStatus(id, status) {
       unwrap(await client.from("assignments").update({ status }).eq("id", id));
     },
