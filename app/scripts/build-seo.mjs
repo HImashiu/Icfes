@@ -510,7 +510,7 @@ ${cta("../", "Empieza tu simulacro ahora")}`;
   });
 
   // Calculator embed, school badge and percentile table for other sites (link-building assets).
-  if (saber11 && national) buildEmbedPages({ siteUrl, out, write, page, esc, faqBlock, faqLd, cta, saber11, national });
+  if (saber11 && national) buildEmbedPages({ siteUrl, out, write, page, esc, faqBlock, faqLd, cta, saber11, national, dataDir, renderRich, AREAS });
 
   // Puntaje ICFES por universidad y carrera, and the Saber 11 paperwork pages (inscripción, citación, fechas…).
   buildScoreUniversityPages({ siteUrl, write, page, esc, faqBlock, faqLd, cta });
