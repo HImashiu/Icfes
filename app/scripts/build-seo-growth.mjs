@@ -159,9 +159,11 @@ export async function buildGrowthPages(ctx) {
   <span class="tag">Herramientas</span>
   <h1>Herramientas gratis para preparar el ICFES</h1>
   <p class="prose">Calculadoras, un diagnóstico de 20 preguntas reales, tu plan de estudio, la cuenta regresiva al examen y hojas de fórmulas. Todo funciona en el celular y sin crear cuenta.</p>
+  <p class="caption" data-proof hidden></p>
 </div></section>
 <section class="wrap narrow guide-body g-tool">
   <div class="areas">${GROWTH_TOOLS.map((t) => `<a class="area" href="${up}${t.path}" style="--c:#C8F04A"><span class="dot"></span><b>${esc(t.name)}</b><span>${esc(t.short)}</span></a>`).join("")}</div>
+  <section hidden><h2>Lo que dicen quienes practican</h2><div class="g-quotes" data-testimonials hidden></div></section>
   <h2>Más para tu preparación</h2>
   <p class="prose">También tienes la <a href="${up}calculadora-puntaje-icfes/">calculadora del puntaje ICFES</a>, el <a href="${up}puntaje-icfes/">puntaje que pide cada universidad</a>, los <a href="${up}examenes-icfes-anteriores/">exámenes ICFES anteriores</a> completos y las <a href="${up}formulas-icfes/matematicas/">fórmulas de matemáticas</a> para imprimir. ¿Quieres ver qué viene en Cóndor? Vota en <a href="${up}que-viene/">lo que viene</a>, o mira las <a href="${up}novedades/">novedades</a>.</p>
   <p class="prose">¿Das clases o tienes una academia? Mira el <a href="${up}aliados/">programa de aliados</a>. ¿Coordinas el Saber 11 en un colegio? Arma la <a href="${up}propuesta-colegios/">propuesta para tu colegio</a>.</p>
@@ -191,6 +193,7 @@ ${cta(up, "Practica con preguntas reales")}`;
   <span class="tag">Diagnóstico</span>
   <h1>Diagnóstico ICFES: ¿cuánto sacarías hoy?</h1>
   <p class="prose" id="g-diag-intro">Responde ${items.length} preguntas reales del Saber 11, cuatro por prueba, y te mostramos tu <b>puntaje global estimado</b> con su rango, tu resultado por prueba y por dónde empezar. Toma unos 25 minutos.</p>
+  <p class="caption" data-proof hidden></p>
   <div class="cta-row"><a class="btn btn-primary" href="#g-quiz" data-ev="diag:start" data-no-cta>Empezar el diagnóstico</a><a class="btn btn-ghost" href="curso/">Hacerlo con mi curso</a></div>
 </div></section>
 <section class="wrap narrow g-tool g-quiz" id="g-quiz" data-tool="diagnostico" data-no-sticky>

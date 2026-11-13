@@ -1,3 +1,4 @@
+import { noteAuthStart } from "../lib/growth/app.js";
 import { useEffect, useRef, useState } from "react";
 import Mascot from "../components/Mascot.jsx";
 import { claimMessage, pendingTeacherCode, rememberTeacherCode, useAuth } from "../lib/auth.jsx";
@@ -19,6 +20,7 @@ export default function Login({ onBack, gate = false }) {
   const googleAsTeacher = () => {
     rememberTeacherCode(code);
     if (!window.location.hash.startsWith("#docente")) window.location.hash = "#docente/hoy";
+    noteAuthStart();
     return auth.signInWithGoogle();
   };
 
@@ -41,6 +43,7 @@ export default function Login({ onBack, gate = false }) {
     if (!quick || embedded || teacher || auth.status !== "signed-out" || authLanding?.error || authLanding?.arrived) return;
     try { if (sessionStorage.getItem(AUTO) === "1") return; sessionStorage.setItem(AUTO, "1"); } catch { return; }
     setGoing(true);
+    noteAuthStart();
     Promise.resolve(auth.signInWithGoogle()).catch(() => setGoing(false));
   }, [quick, auth.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -105,8 +108,8 @@ export default function Login({ onBack, gate = false }) {
           <>
             <strong>{going ? "Te llevamos a Google…" : "Practica gratis con tu cuenta de Google"}</strong>
             <span className="caption">Un toque y empiezas con tu primera pregunta. Tu avance queda guardado. Si tu colegio usa Cóndor, entra con el correo del colegio.</span>
-            <button type="button" className="primary big" onClick={auth.signInWithGoogle}>Continuar con Google</button>
-            {microsoftEnabled && <button type="button" className="secondary big" onClick={auth.signInWithMicrosoft}>Continuar con Microsoft</button>}
+            <button type="button" className="primary big" onClick={() => { noteAuthStart(); auth.signInWithGoogle(); }}>Continuar con Google</button>
+            {microsoftEnabled && <button type="button" className="secondary big" onClick={() => { noteAuthStart(); auth.signInWithMicrosoft(); }}>Continuar con Microsoft</button>}
           </>
         ) : (
           <>

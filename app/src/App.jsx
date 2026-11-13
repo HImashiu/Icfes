@@ -48,6 +48,13 @@ import { orderQuestions } from "./lib/order.js";
 import { answerChanges, logAnswer, trackVisit } from "./lib/usage.js";
 import { clearQuickStart, readQuickArea, readQuickExam, readQuickQuestion, readQuickStart } from "./lib/quickStart.js";
 import AdminUsage from "./screens/AdminUsage.jsx";
+import AdminGrowth from "./screens/AdminGrowth.jsx";
+import GrowthHome from "./screens/growth/GrowthHome.jsx";
+import GrowthProfile from "./screens/growth/GrowthProfile.jsx";
+import GrowthSurvey from "./screens/growth/GrowthSurvey.jsx";
+import Parche from "./screens/growth/Parche.jsx";
+import { noteConsent, notePracticeDone, onSignedIn, registerServiceWorker } from "./lib/growth/app.js";
+import { noteAnswered } from "./lib/growth/events.js";
 import { localQuota, spendLocal } from "./lib/practiceQuota.js";
 import { drawPractice, randomSeed } from "./lib/practiceDraw.js";
 import { resolveModel, xpFactor } from "./lib/grading.js";
@@ -144,6 +151,9 @@ export default function App() {
   const quickAreaTried = useRef(false);
   // The owner's «Uso» page (#admin/uso): only accounts in app_admins get data (migration 0037).
   const [adminPage, setAdminPage] = useState(() => typeof window !== "undefined" && window.location.hash.startsWith("#admin"));
+  // Growth pages by address (docs/growth/LEDGER.md): #admin/crecimiento (control room), #parche[/código] (study groups).
+  const [hashNow, setHashNow] = useState(() => (typeof window !== "undefined" ? window.location.hash : ""));
+  useEffect(() => { const on = () => setHashNow(window.location.hash); window.addEventListener("hashchange", on); return () => window.removeEventListener("hashchange", on); }, []);
   useEffect(() => {
     const on = () => setAdminPage(window.location.hash.startsWith("#admin"));
     window.addEventListener("hashchange", on);
@@ -313,13 +323,23 @@ export default function App() {
     if (attempt && !attempt.readOnly) saveAttempt(attempt.slug, storeScope(attempt), attempt);
   }, [attempt]);
 
+  // Growth funnel: a finished practice or simulacro (once per attempt).
+  const doneSent = useRef(new Set());
+  useEffect(() => {
+    if (view !== "results" || !attempt?.submittedAt || attempt.readOnly || demoEnabled || doneSent.current.has(attempt.startedAt)) return;
+    doneSent.current.add(attempt.startedAt);
+    notePracticeDone({ mode: attempt.mode, n: Object.keys(attempt.answers ?? {}).length });
+  }, [view, attempt]);
+
   // Usage statistics (migration 0037): this visit, and every question answered with an account.
-  useEffect(() => { if (!demoEnabled) trackVisit("app"); }, []);
-  useEffect(() => { if (signedIn && !demoEnabled) trackVisit("signin"); }, [signedIn]);
+  useEffect(() => { if (!demoEnabled) { trackVisit("app"); registerServiceWorker(); } }, []);
+  useEffect(() => { if (signedIn && !demoEnabled) { trackVisit("signin"); onSignedIn(auth.profile); } }, [signedIn]); // eslint-disable-line react-hooks/exhaustive-deps
   const answersSeen = useRef(new Map());
   useEffect(() => {
     if (!signedIn || demoEnabled || !attempt || attempt.readOnly || !selected || selected.slug !== attempt.slug) return;
-    for (const row of answerChanges(attempt, questionsForAttempt(selected.exam, attempt), selected.key, answersSeen.current)) logAnswer(row);
+    const rows = answerChanges(attempt, questionsForAttempt(selected.exam, attempt), selected.key, answersSeen.current);
+    for (const row of rows) logAnswer(row);
+    if (rows.length) noteAnswered(rows.length);
   }, [signedIn, attempt, selected]);
 
   // Second chance: the questions this student missed before and has not answered right since.
@@ -662,10 +682,15 @@ export default function App() {
         onSignOut={auth.signOut}
         onAccept={async () => {
           await auth.api.acceptConsent(auth.profile.id, "terms", CONSENT_VERSION);
+          noteConsent();
           setConsents([...(consents ?? []), { kind: "terms", version: CONSENT_VERSION }]);
         }}
       />
     );
+  }
+  if (adminPage && signedIn && !demoEnabled && hashNow.startsWith("#admin/crecimiento")) return <AdminGrowth onExit={() => { history.replaceState(null, "", window.location.pathname); setAdminPage(false); }} />;
+  if (hashNow.startsWith("#parche") && signedIn && !demoEnabled) {
+    return <main className="app"><Parche profile={auth.profile} code={(hashNow.split("/")[1] || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 6) || null} onExit={() => { history.replaceState(null, "", window.location.pathname); setHashNow(""); }} /></main>;
   }
   if (adminPage && signedIn && !demoEnabled) return <AdminUsage onExit={() => { history.replaceState(null, "", window.location.pathname); setAdminPage(false); }} />;
   if (exams === null) return <main className="frame"><p className="muted">Cargando…</p></main>;
@@ -748,6 +773,7 @@ export default function App() {
           onLive={auth.status !== "demo" && auth.status !== "loading" ? () => { setLiveCode(""); setView("liveJoin"); } : null}
           liveGames={liveGames}
           onJoinGame={demoEnabled ? null : joinGame}
+          extra={demoEnabled ? null : <><GrowthHome signedIn={signedIn} onSetup={(p) => { setPreset(p); setView("setup"); }} onGo={go} />{signedIn && <GrowthSurvey profile={auth.profile} />}</>}
         />
       )}
 
@@ -845,7 +871,8 @@ export default function App() {
         onPracticeMissed={(slug, keys) => { setLive(null); startKeys(slug, keys, { label: "Las que fallé en vivo" }); }} />}
 
       {view === "profile" && <Profile teacherCodeError={teacherCodeError} theme={theme} onTheme={setTheme} onTeacher={() => setView("teacher")} onReports={() => setView("reports")} onLogin={() => setView("login")}
-        assigned={signedIn ? assigned : null} classes={myClasses} course={course} onGo={go} />}
+        assigned={signedIn ? assigned : null} classes={myClasses} course={course} onGo={go}
+        extra={signedIn && !demoEnabled ? <GrowthProfile profile={auth.profile} /> : null} />}
       {view === "subjects" && <Subjects independent={signedIn && !auth.profile?.school_id} onOpenAssigned={openAssignedResult} announcements={signedIn ? announcements : []} assigned={signedIn ? assigned : null} classes={myClasses} course={course} tab={subjectTab} subjectId={subjectId}
         onTab={(t) => { setSubjectTab(t); setSubjectId(null); }} onOpenSubject={setSubjectId} onBack={() => setSubjectId(null)}
         onStartAssigned={startAssigned} onPracticeArea={practiceArea} onLogin={() => setView("login")} />}
