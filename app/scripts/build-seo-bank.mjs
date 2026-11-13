@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 import { PAST_EXAMS } from "./build-seo-exams.mjs";
 import { AREA_SLUG, PUBLIC_CAP, fitsPublic, keyBasis, loadPastBooklet, plain, sessionOf } from "./seo-bank/common.mjs";
 
-export const PUBLISHED_BATCH = 2;
+export const PUBLISHED_BATCH = 3;
 const here = dirname(fileURLToPath(import.meta.url));
 const PER_PAGE = 20;
 // Exams that get one page per test. The 2015-2018 guide questions and the 2021 Lectura crítica booklet are not full exams.
