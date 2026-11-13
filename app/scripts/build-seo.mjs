@@ -14,6 +14,7 @@ import { buildEmbedPages } from "./build-seo-embeds.mjs";
 import { buildScoreUniversityPages } from "./build-seo-scores.mjs";
 import { buildTramitePages } from "./build-seo-tramites.mjs";
 import { buildEstructuraPages } from "./build-seo-estructura.mjs";
+import { buildBecasPages } from "./build-seo-becas.mjs";
 import { bankLinks, buildBankPages } from "./build-seo-bank.mjs";
 
 const AREAS = [
@@ -525,6 +526,7 @@ ${cta("../", "Empieza tu simulacro ahora")}`;
   buildScoreUniversityPages({ siteUrl, write, page, esc, faqBlock, faqLd, cta });
   buildTramitePages({ siteUrl, write, page, esc, faqBlock, faqLd, cta });
   buildEstructuraPages({ siteUrl, write, page, esc, faqBlock, faqLd, cta });
+  buildBecasPages({ siteUrl, write, page, esc, faqBlock, faqLd, cta });
 
   // KaTeX stylesheet and fonts for the math on the question pages.
   if (usesKatex) {
