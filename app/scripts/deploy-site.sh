@@ -3,7 +3,7 @@
 #   cd app && npm run deploy
 # Needs: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID; app/.env.local with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY;
 # exam data in $ICFES_DATA_DIR (default /mnt/project-files/icfes/data). Optional at build: CF_ANALYTICS_TOKEN,
-# GA_MEASUREMENT_ID, GOOGLE_SITE_VERIFICATION. SKIP_BUILD=1 redeploys the existing site-dist as it is.
+# GA_MEASUREMENT_ID, GOOGLE_SITE_VERIFICATION, INDEXNOW_ALL=1. SKIP_BUILD=1 redeploys the existing site-dist as it is.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 : "${CLOUDFLARE_API_TOKEN:?set CLOUDFLARE_API_TOKEN}"
@@ -25,3 +25,8 @@ SUPA_KEY="${VITE_SUPABASE_ANON_KEY:-$(envval VITE_SUPABASE_ANON_KEY)}"
 : "${SUPA_URL:?VITE_SUPABASE_URL missing}"
 : "${SUPA_KEY:?VITE_SUPABASE_ANON_KEY missing}"
 npx wrangler deploy --var "SUPABASE_URL:$SUPA_URL" --var "SUPABASE_ANON_KEY:$SUPA_KEY"
+# IndexNow (Bing and friends): the worker submits the pages that changed in this build (site-dist/indexnow.json).
+# Build with INDEXNOW_ALL=1 to submit every page. A failure here never fails the deploy.
+sleep 5
+curl -sS -m 30 -X POST "https://condor.juandabarrios12.workers.dev/__indexnow" || echo "IndexNow ping failed (deploy is fine)"
+echo

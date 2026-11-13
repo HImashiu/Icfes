@@ -1,5 +1,6 @@
 // Cloudflare Worker that serves the public site (landing at /, app at /app/) as static assets.
-// worker/index.js runs only for /app/exams/* and lets signed-in accounts download the question files.
+// worker/index.js runs for pages (redirect to condoricfes.com, page limit, crawler log, /__indexnow) and for
+// /app/exams/*, where it lets signed-in accounts download the question files.
 // Security headers for every page come from site-dist/_headers (written by scripts/build-site.mjs).
 // Deploy with `npm run deploy` (scripts/deploy-site.sh): build, shrink figures, then `wrangler deploy`.
 // Needs CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in the environment.
@@ -26,8 +27,12 @@
   "ratelimits": [
     { "name": "EXAM_IP_RATE", "namespace_id": "4101", "simple": { "limit": 120, "period": 60 } },
     { "name": "EXAM_USER_RATE", "namespace_id": "4102", "simple": { "limit": 60, "period": 60 } },
-    { "name": "PAGE_IP_RATE", "namespace_id": "4103", "simple": { "limit": 60, "period": 60 } }
+    { "name": "PAGE_IP_RATE", "namespace_id": "4103", "simple": { "limit": 60, "period": 60 } },
+    { "name": "INDEXNOW_RATE", "namespace_id": "4104", "simple": { "limit": 2, "period": 60 } }
   ],
+  // Workers Logs keep only the crawler lines the worker writes (tools/crawl-report.mjs reads them; 3 days on the free
+  // plan). No per-request invocation logs and no query strings, so visitors' requests are not stored.
+  "observability": { "enabled": true, "head_sampling_rate": 1, "redact_query_string": true, "logs": { "enabled": true, "invocation_logs": false } },
   "assets": {
     "directory": "./site-dist",
     "binding": "ASSETS",

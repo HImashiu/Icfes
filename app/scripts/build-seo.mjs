@@ -206,7 +206,15 @@ const rebase = (html, up) => html.replace(/(src|href)="(?!https?:|#|\/|data:)([^
 // Share image of a page (scripts/build-og.mjs draws one per page; falls back to img/og.png if it cannot).
 export const ogName = (path) => path.replace(/\/$/, "").replace(/\//g, "--");
 let SITE_DIR = "";
-const ogImagePath = (path) => existsSync(join(SITE_DIR, "img", "og", `${ogName(path)}.png`)) ? `img/og/${ogName(path)}.png` : "img/og.png";
+// A page without its own image uses its nearest parent's (a solved question shows its area's card, not the generic one).
+const ogImagePath = (path) => {
+  // Solved questions (pregunta-icfes/<area>/...) share their area's card from preguntas-icfes/<area>/.
+  for (let parts = path.replace(/^pregunta-icfes\//, "preguntas-icfes/").split("/").filter(Boolean); parts.length; parts.pop()) {
+    const name = ogName(parts.join("/") + "/");
+    if (existsSync(join(SITE_DIR, "img", "og", `${name}.png`))) return `img/og/${name}.png`;
+  }
+  return "img/og.png";
+};
 
 // Titles: at most 60 characters so Google shows them whole. " | Cóndor" is added only when it still fits.
 const SUFFIX = " | Cóndor";
@@ -274,6 +282,7 @@ function page({ siteUrl, path, title: rawTitle, desc, body, crumbs, jsonLd, kate
   <main id="contenido">
     <nav class="crumbs wrap narrow" aria-label="Ruta"><a href="${up}">Inicio</a>${crumbs.map((c, i) => i === crumbs.length - 1 ? ` <span aria-hidden="true">›</span> <span aria-current="page">${esc(c.name)}</span>` : ` <span aria-hidden="true">›</span> <a href="${up}${c.path}">${esc(c.name)}</a>`).join("")}</nav>
 ${guideBody(body)}
+<!--UPDATED-->
 <!--RELATED-->
   </main>
   <footer class="foot">
@@ -318,6 +327,20 @@ export function injectRelated(out, paths) {
   const parentOf = (p) => p.split("/").filter(Boolean).slice(0, -1).join("/") + "/";
   const groups = new Map();
   for (const p of [...paths].sort()) { const k = parentOf(p); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(p); }
+  // Topic clusters: every page about one area (its questions, simulacro, solved questions, competencias, blog post) also
+  // links across families to the rest of that area's cluster, so each area hub gets links from all its spokes.
+  const AREA_SLUGS = ["matematicas", "lectura-critica", "sociales-y-ciudadanas", "ciencias-naturales", "ingles"];
+  const BLOG_OF = { "lectura-critica": "blog/como-mejorar-en-lectura-critica-icfes/", ingles: "blog/errores-comunes-ingles-icfes/" };
+  const clusterOf = (a) => [`preguntas-icfes/${a}/`, `simulacro-icfes/${a}/`, `pregunta-icfes/${a}/`, BLOG_OF[a]].filter((q) => q && h1.has(q));
+  const areaOf = (p) => {
+    const seg = p.split("/").find((x) => AREA_SLUGS.includes(x));
+    if (seg) return seg;
+    if (p.startsWith("competencias-icfes/") || p.startsWith("blog/")) {
+      const m = readFileSync(join(out, p, "index.html"), "utf8").match(/(?:preguntas|simulacro)-icfes\/(matematicas|lectura-critica|sociales-y-ciudadanas|ciencias-naturales|ingles)\//);
+      return m?.[1] ?? null;
+    }
+    return null;
+  };
   paths.forEach((p, n) => {
     const sib = groups.get(parentOf(p));
     const i = sib.indexOf(p);
@@ -325,8 +348,11 @@ export function injectRelated(out, paths) {
     for (let k = 1; k < sib.length && picks.length < 3; k++) picks.push(sib[(i + k) % sib.length]);
     const parent = parentOf(p);
     if (parent !== "/" && h1.has(parent) && !picks.includes(parent)) picks.push(parent);
+    const area = areaOf(p);
+    const cluster = area ? clusterOf(area).filter((q) => q !== p && !picks.includes(q)) : [];
+    for (let k = 0; k < 2 && k < cluster.length; k++) picks.push(cluster[(n + k) % cluster.length]);
     const ever = EVERGREEN.filter((e) => e !== p && e !== parent && !picks.includes(e) && h1.has(e));
-    for (let k = 0; k < 2 && ever.length; k++) picks.push(ever[(n + k * 5) % ever.length]);
+    for (let k = 0; k < (cluster.length ? 1 : 2) && ever.length; k++) picks.push(ever[(n + k * 5) % ever.length]);
     const up = "../".repeat(p.split("/").filter(Boolean).length);
     const links = [...new Set(picks)].map((q) => `<li><a href="${up}${q}">${esc(h1.get(q))}</a></li>`).join("");
     const f = join(out, p, "index.html");

@@ -1,6 +1,6 @@
 // Search: one address (condoricfes.com) for public pages, and a per-address limit on pages that show bank questions.
 import { describe, expect, it, vi } from "vitest";
-import worker, { isLimitedPage } from "../worker/index.js";
+import worker, { isLimitedPage, botOf, INDEXNOW_KEY } from "../worker/index.js";
 
 const env = (ok = true) => ({
   ASSETS: { fetch: vi.fn(async () => new Response("<html></html>", { status: 200 })) },
@@ -49,5 +49,44 @@ describe("worker: page rate limit", () => {
     expect((await worker.fetch(get(path), env(false))).status).toBe(429);
     expect((await worker.fetch(get(path, {}, { verifiedBotCategory: "Search Engine Crawler" }), env(false))).status).toBe(200);
     expect((await worker.fetch(get(path), env(true))).status).toBe(200);
+  });
+});
+
+describe("worker: crawler log", () => {
+  it("names search engines and other bots, and ignores people", () => {
+    expect(botOf(get("https://condoricfes.com/", { "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" }))?.bot).toBe("Googlebot");
+    expect(botOf(get("https://condoricfes.com/", { "User-Agent": "Mozilla/5.0 (compatible; bingbot/2.0)" }))?.bot).toBe("Bingbot");
+    expect(botOf(get("https://condoricfes.com/", { "User-Agent": "WhatsApp/2.23" }))?.bot).toBe("WhatsApp");
+    expect(botOf(get("https://condoricfes.com/", { "User-Agent": "Mozilla/5.0 (iPhone) Safari/604.1" }))).toBeNull();
+    expect(botOf(get("https://condoricfes.com/", { "User-Agent": "x" }, { verifiedBotCategory: "Search Engine Crawler" }))).toEqual({ bot: "Verified", verified: "Search Engine Crawler" });
+  });
+  it("logs one line per bot request with path and status, never the address", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    await worker.fetch(get("https://condoricfes.com/simulacro-icfes/", { "User-Agent": "Googlebot/2.1", "CF-Connecting-IP": "1.2.3.4" }), env());
+    await worker.fetch(get("https://condoricfes.com/simulacro-icfes/", { "User-Agent": "Mozilla/5.0 Safari" }), env());
+    expect(log).toHaveBeenCalledTimes(1);
+    const line = JSON.parse(log.mock.calls[0][0]);
+    expect(line).toMatchObject({ crawl: 1, bot: "Googlebot", path: "/simulacro-icfes/", status: 200 });
+    expect(JSON.stringify(line)).not.toContain("1.2.3.4");
+    log.mockRestore();
+  });
+});
+
+describe("worker: IndexNow", () => {
+  const listEnv = (urls, ok = true) => ({
+    ASSETS: { fetch: vi.fn(async () => new Response(JSON.stringify({ urls }), { status: 200 })) },
+    INDEXNOW_RATE: { limit: vi.fn(async () => ({ success: ok })) },
+  });
+  it("submits only this site's changed pages, with the key", async () => {
+    const sent = vi.spyOn(globalThis, "fetch").mockImplementation(async () => new Response("", { status: 202 }));
+    const res = await worker.fetch(new Request("https://condor.juandabarrios12.workers.dev/__indexnow", { method: "POST" }), listEnv(["https://condoricfes.com/a/", "https://evil.example/x"]));
+    expect(await res.json()).toEqual({ submitted: 1, indexnow: 202 });
+    const body = JSON.parse(sent.mock.calls[0][1].body);
+    expect(body).toMatchObject({ host: "condoricfes.com", key: INDEXNOW_KEY, urlList: ["https://condoricfes.com/a/"] });
+    sent.mockRestore();
+  });
+  it("refuses GET and repeated calls", async () => {
+    expect((await worker.fetch(get("https://condoricfes.com/__indexnow"), listEnv([]))).status).toBe(405);
+    expect((await worker.fetch(new Request("https://condoricfes.com/__indexnow", { method: "POST" }), listEnv([], false))).status).toBe(429);
   });
 });

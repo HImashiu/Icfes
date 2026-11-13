@@ -103,3 +103,6 @@
   .guide .paper th { font-size: 12px; hyphens: auto; -webkit-hyphens: auto; }
   .guide .qcard .paper { padding: 14px 12px; }
 }
+
+/* "Actualizado el ..." under the content (scripts/build-site.mjs, from the sitemap's lastmod). */
+.guide .updated p { margin: 0; padding: 0 0 18px; color: #3E4A42; font-size: 14px; font-weight: 600; }
