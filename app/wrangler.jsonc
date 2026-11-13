@@ -27,6 +27,8 @@
   // VAPID_PUBLIC (node scripts/vapid-keys.mjs prints both) and PUSH_CRON_TOKEN (growth_secrets.push_cron, migration 0050).
   "triggers": { "crons": ["5 * * * *"] },
   // Burst limits for the exam files (worker/index.js). Cloudflare counts per location; periods can be 10 or 60 s.
+  // Posts about the ICFES found by the radar worker (radar/wrangler.jsonc), read by /app/api/radar.
+  "kv_namespaces": [{ "binding": "RADAR", "id": "ea44ce92cbce4cda88bb9d8c08dda578" }],
   "ratelimits": [
     { "name": "EXAM_IP_RATE", "namespace_id": "4101", "simple": { "limit": 120, "period": 60 } },
     { "name": "EXAM_USER_RATE", "namespace_id": "4102", "simple": { "limit": 60, "period": 60 } },

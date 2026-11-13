@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { adminDashboard, adminPeople, adminPerson, adminTeachers, amAdmin, missingFunction } from "../lib/usage.js";
 import { DateField, Select } from "../components/Controls.jsx";
 import AdminUsage from "./AdminUsage.jsx";
+import Radar from "./Radar.jsx";
 import "./founder.css";
 
 // The founder's dashboard (#admin). Only accounts in app_admins get data: every number comes from admin_dashboard(),
@@ -9,7 +10,7 @@ import "./founder.css";
 // the protection; the functions are. Until 0040 runs, the older «Uso» page (0037) is shown instead.
 //
 // Routes: #admin (Resumen) · #admin/adquisicion · #admin/retencion · #admin/personas · #admin/colegios ·
-//         #admin/persona/<id>. The old #admin/uso opens Resumen.
+//         #admin/posts (Radar.jsx) · #admin/persona/<id>. The old #admin/uso opens Resumen.
 
 const TABS = [
   ["resumen", "Resumen"],
@@ -17,6 +18,7 @@ const TABS = [
   ["retencion", "Retención"],
   ["personas", "Personas"],
   ["colegios", "Colegios"],
+  ["posts", "Posts"],
 ];
 const PERIODS = [["1", "Hoy"], ["7", "7 días"], ["30", "30 días"], ["90", "90 días"], ["custom", "Fechas"]];
 const ROLE = { student: "Estudiante", teacher: "Docente", school_admin: "Coordinación" };
@@ -161,7 +163,7 @@ export default function Founder({ onExit }) {
         ))}
       </nav>
 
-      {route.tab !== "persona" && (
+      {route.tab !== "persona" && route.tab !== "posts" && (
         <section className="fd-filters" aria-label="Filtros">
           <div className="segmented fd-period" role="radiogroup" aria-label="Periodo">
             {PERIODS.map(([p, label]) => (
@@ -183,8 +185,9 @@ export default function Founder({ onExit }) {
       )}
 
       {error && <p className="notice error" role="alert">{error === "not_admin" ? "Tu cuenta no está en app_admins." : error}</p>}
-      {!data && !error && <p className="muted">Cargando…</p>}
+      {!data && !error && route.tab !== "posts" && <p className="muted">Cargando…</p>}
 
+      {route.tab === "posts" && <Radar />}
       {data && route.tab === "resumen" && <Overview data={data} people={filteredPeople} openPeople={openPeople} setChannel={setChannel} />}
       {data && route.tab === "adquisicion" && <Acquisition data={data} setChannel={setChannel} />}
       {data && route.tab === "retencion" && <Retention data={data} openPeople={openPeople} />}
