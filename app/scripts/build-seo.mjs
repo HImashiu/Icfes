@@ -7,6 +7,7 @@
 // Only a handful per area: the full bank, review and scoring stay in the app.
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { buildContentPages } from "./build-seo-content.mjs";
 import { buildExamPages } from "./build-seo-exams.mjs";
 
@@ -185,6 +186,7 @@ function questionHtml({ b, q, passage, groupSize }, area, renderRich) {
 
 // The landing page's logo (mark + wordmark) and icon links, so every page carries the same brand.
 let BRAND = null;
+let OWL = ""; // Juan's owl (scripts/owl-svg.mjs), waving in the head of every guide page
 function brandBits(appRoot) {
   if (BRAND) return BRAND;
   const html = readFileSync(join(appRoot, "site", "index.html"), "utf8");
@@ -236,29 +238,31 @@ function page({ siteUrl, path, title, desc, body, crumbs, jsonLd, katex, script,
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="${up}site.css" />
+  <link rel="stylesheet" href="${up}landing.css" />
+  <link rel="stylesheet" href="${up}guide.css" />
   ${katex ? `<link rel="stylesheet" href="${up}katex/katex.min.css" />` : ""}
   <script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script>
   <!--ANALYTICS-->
 </head>
-<body class="guide">
+<body class="landing guide">
   <a class="skip" href="#contenido">Saltar al contenido</a>
   <header class="top">
     <div class="wrap top-row">
       <a class="brand" href="${up}" aria-label="Cóndor, inicio">${rebase(BRAND.header, up)}</a>
-      <nav class="top-nav" aria-label="Secciones">
+      <nav class="top-pill" aria-label="Secciones">
         <a href="${up}simulacro-icfes/">Simulacro</a>
         <a href="${up}preguntas-icfes/">Preguntas</a>
-        <a href="${up}examenes-icfes-anteriores/">Exámenes anteriores</a>
+        <a href="${up}examenes-icfes-anteriores/">Exámenes</a>
         <a href="${up}calculadora-puntaje-icfes/">Calculadora</a>
-        <a href="${up}como-prepararse-para-el-icfes/">Cómo prepararse</a>
+        <a href="${up}como-prepararse-para-el-icfes/">Guía</a>
         <a href="${up}preicfes-para-colegios/">Colegios</a>
       </nav>
-      <a class="btn btn-primary btn-sm" href="${up}app/?empezar=1">Practicar gratis</a>
+      <a class="btn btn-go btn-sm" href="${up}app/?empezar=1">Practicar gratis <span class="go" aria-hidden="true"></span></a>
     </div>
   </header>
   <main id="contenido">
     <nav class="crumbs wrap narrow" aria-label="Ruta"><a href="${up}">Inicio</a>${crumbs.map((c, i) => i === crumbs.length - 1 ? ` <span aria-hidden="true">›</span> <span aria-current="page">${esc(c.name)}</span>` : ` <span aria-hidden="true">›</span> <a href="${up}${c.path}">${esc(c.name)}</a>`).join("")}</nav>
-${body}
+${guideBody(body)}
   </main>
   <footer class="foot">
     <div class="wrap foot-row">
@@ -287,6 +291,17 @@ ${body}
 `;
 }
 
+// Every guide page opens with the landing's look: the squared grid with doodles and the owl, which looks at the pointer.
+function guideBody(body) {
+  const open = '<section class="section guide-head">';
+  const i = body.indexOf(open);
+  if (i < 0) return body;
+  const end = body.indexOf("</section>", i) + "</section>".length;
+  return body.slice(0, i)
+    + `<section class="section guide-head dots"><span class="gh-owl" aria-hidden="true">${OWL}</span>` + body.slice(i + open.length, end)
+    + `\n<div class="scallop" style="--from:var(--bg);--to:var(--cream)" aria-hidden="true"></div>` + body.slice(end);
+}
+
 const areaLinks = (up) => `<div class="areas">${AREAS.map((a) => `<a class="area" href="${up}preguntas-icfes/${a.slug}/" style="--c:${a.color}"><span class="dot"></span><b>${esc(a.name)}</b><span>Ver preguntas</span></a>`).join("")}</div>`;
 
 const cta = (up, text) => `<section class="section"><div class="wrap narrow"><div class="card price reveal"><div><h2>${text}</h2><p>En la app tienes los 18 cuadernillos completos, simulacros con tiempo, tu puntaje de 0 a 500 y el repaso de tus errores.</p></div><a class="btn btn-primary" href="${up}app/?empezar=1">Empezar a practicar</a></div></div></section>`;
@@ -298,6 +313,7 @@ const faqLd = (items) => ({ "@type": "FAQPage", mainEntity: items.map(([q, a]) =
 
 export async function buildSeoPages({ appRoot, out, siteUrl, dataDir, renderRich, saber11, national }) {
   brandBits(appRoot);
+  OWL = (await (await import(pathToFileURL(join(appRoot, "scripts", "owl-svg.mjs")).href)).owlBuilders(appRoot)).owlFull("owl-wave");
   SITE_DIR = join(appRoot, "site");
   if (!existsSync(dataDir)) { console.warn(`[build-seo] ${dataDir} not found: question pages skipped.`); return []; }
   const bank = loadBank(dataDir);

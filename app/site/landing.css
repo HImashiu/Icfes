@@ -489,3 +489,26 @@ svg.blobs { translate: calc(var(--mx, 0) * 30px) calc(var(--my, 0) * 30px); tran
 @media (prefers-reduced-motion: reduce) { .cb-ticket { animation: none; } }
 /* Phone: the badge is gone, so give the two hero stickers their own strip above the headline. */
 @media (max-width: 600px) { .hero .mega { margin-top: 46px; } .hs1 { top: 14px; left: 6%; } .hs2 { top: 10px; right: 6%; } }
+
+/* Hero count. */
+.lead-num { color: var(--accent); font-weight: 800; }
+
+/* "Más para prepararte": the plan's guides and tools as big tilted tiles. */
+.more-sec { padding: 110px 0 120px; }
+.more-sec .sub { max-width: 46ch; margin: 14px auto 0; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 18px; margin-top: 52px; }
+.tile { position: relative; display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 16px; align-items: center; padding: 22px 64px 22px 22px; border-radius: 24px; background: var(--c); color: var(--ink); text-decoration: none; border: 3px solid var(--ink); box-shadow: 0 6px 0 var(--ink); rotate: var(--t); transform: perspective(700px) rotateX(var(--ty, 0deg)) rotateY(var(--tx, 0deg)); transition: rotate 0.5s var(--ease), translate 0.5s var(--ease), box-shadow 0.5s var(--ease), transform 0.35s ease-out; }
+.tile:hover, .tile:focus-visible { rotate: 0deg; translate: 0 -6px; box-shadow: 0 12px 0 var(--ink); }
+.tile:active { translate: 0 2px; box-shadow: 0 2px 0 var(--ink); }
+.tile-ico { grid-row: span 2; display: grid; place-items: center; width: 62px; height: 62px; border-radius: 18px; background: var(--ink); }
+.tile-ico svg { width: 36px; height: 36px; fill: none; stroke: var(--c); stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.5s var(--ease); }
+.tile:hover .tile-ico svg { transform: rotate(-8deg) scale(1.1); }
+.tile b { font: 800 clamp(20px, 2vw, 24px)/1.05 var(--display); text-transform: uppercase; letter-spacing: -0.01em; align-self: end; }
+.tile small { font-size: 14.5px; font-weight: 600; opacity: 0.8; align-self: start; margin-top: 4px; }
+.tile-go { position: absolute; right: 18px; top: 50%; width: 34px; height: 34px; margin-top: -17px; border-radius: 50%; background: var(--ink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23C8F04A' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h13M13 6l6 6-6 6'/%3E%3C/svg%3E") center / 16px no-repeat; transition: transform 0.4s var(--ease); }
+.tile:hover .tile-go { transform: translateX(4px); }
+.js .tiles .reveal:not(.in) { transform: perspective(700px); opacity: 0; }
+.js .tiles .reveal.in { animation: card-in 0.9s var(--ease) backwards; }
+.tiles .reveal:nth-child(2) { animation-delay: 70ms; } .tiles .reveal:nth-child(3) { animation-delay: 140ms; } .tiles .reveal:nth-child(4) { animation-delay: 210ms; } .tiles .reveal:nth-child(5) { animation-delay: 280ms; } .tiles .reveal:nth-child(6) { animation-delay: 350ms; }
+@media (max-width: 600px) { .more-sec { padding: 80px 0 90px; } .tile { padding: 16px 56px 16px 16px; column-gap: 12px; } .tile-ico { width: 50px; height: 50px; border-radius: 14px; } .tile-ico svg { width: 28px; height: 28px; } }
+@media (prefers-reduced-motion: reduce) { .js .tiles .reveal.in { animation: none; } .js .tiles .reveal:not(.in) { opacity: 1; } }

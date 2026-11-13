@@ -239,7 +239,7 @@ document.documentElement.classList.add("js");
 
   if (fine && !reduce) {
     // Cards tilt toward the pointer and catch a shine.
-    [].forEach.call(document.querySelectorAll(".fan-card, .cookie, .ticket"), function (el) {
+    [].forEach.call(document.querySelectorAll(".fan-card, .cookie, .ticket, .tile"), function (el) {
       on(el, "pointermove", function (e) {
         var p = rel(el, e);
         el.style.setProperty("--tx", ((p.x - 0.5) * 16).toFixed(2) + "deg");
