@@ -303,11 +303,16 @@ async function indexNow(request, env) {
   const { urls = [] } = await res.json();
   const urlList = urls.filter((u) => typeof u === "string" && u.startsWith(`https://${HOME_HOST}/`)).slice(0, 10000);
   if (!urlList.length) return json(200, { submitted: 0 });
-  const r = await fetch("https://api.indexnow.org/indexnow", {
-    method: "POST", headers: { "Content-Type": "application/json; charset=utf-8" },
-    body: JSON.stringify({ host: HOME_HOST, key: INDEXNOW_KEY, keyLocation: `https://${HOME_HOST}/${INDEXNOW_KEY}.txt`, urlList }),
-  });
-  return json(200, { submitted: urlList.length, indexnow: r.status });
+  // Bing's endpoint first (it shares with the other IndexNow engines); the generic one answered 429 to new keys.
+  const body = JSON.stringify({ host: HOME_HOST, key: INDEXNOW_KEY, keyLocation: `https://${HOME_HOST}/${INDEXNOW_KEY}.txt`, urlList });
+  const results = {};
+  for (const endpoint of ["https://www.bing.com/indexnow", "https://yandex.com/indexnow"]) {
+    try {
+      const r = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json; charset=utf-8" }, body });
+      results[new URL(endpoint).hostname] = r.status;
+    } catch { results[new URL(endpoint).hostname] = "error"; }
+  }
+  return json(200, { submitted: urlList.length, ...results });
 }
 
 export default {
