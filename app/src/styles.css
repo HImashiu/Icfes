@@ -1277,6 +1277,11 @@ button.card:active:not(:disabled), .mode-card:active, .chip:active, .answer-cell
   display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 999px; font-weight: 800; font-size: 13px;
   background: var(--flame); color: #0D110F !important; animation: pop-in 0.45s cubic-bezier(0.3, 0.7, 0.4, 1.5) 0.15s backwards;
 }
+.verdict-share {
+  display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; font-weight: 800; font-size: 13px;
+  text-decoration: none; color: var(--text); background: var(--surface); border: 1.5px solid var(--line); white-space: nowrap;
+}
+.verdict-share:hover { border-color: var(--accent); }
 .test-bottom { flex-wrap: wrap; transition: background-color 0.25s, border-color 0.25s; }
 .test-bottom.verdict-ok { background: color-mix(in srgb, var(--ok) 18%, var(--bg)); border-top-color: var(--ok); }
 .test-bottom.verdict-bad { background: color-mix(in srgb, var(--bad) 18%, var(--bg)); border-top-color: var(--bad); }
