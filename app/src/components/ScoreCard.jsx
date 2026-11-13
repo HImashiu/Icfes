@@ -2,6 +2,7 @@ import { useState } from "react";
 import Icon from "./Icon.jsx";
 import Saber11Report from "./Saber11Report.jsx";
 import CountUp from "./CountUp.jsx";
+import Mascot from "./Mascot.jsx";
 import { areaColor } from "../lib/brand.js";
 import { nextSession } from "../lib/simulacro.js";
 import { areaShort } from "../lib/teaching.js";
@@ -19,7 +20,7 @@ export default function ScoreCard({ summary, target, exams = [], onStartSession,
   const next = nextSession(open, exams) ?? (!latest ? firstSession(exams) : null);
   const [report, setReport] = useState(false);
   return (
-    <div className={compact ? "card score-card compact" : "card score-card"}>
+    <div className={`card score-card${compact ? " compact" : ""}${latest ? "" : " cx-empty"}`}>
       <div className="score-main">
         <div className="score-head">
           <span className="label">{latest ? `Tu último simulacro completo · ${latest.code}` : "Puntaje Saber 11 por simulacro"}</span>
@@ -35,7 +36,7 @@ export default function ScoreCard({ summary, target, exams = [], onStartSession,
             </>
           ) : (
             <>
-              <span className="score-big muted">—<small>/500</small></span>
+              <span className="cx-score-empty"><Mascot pose="thinking" size={64} /><strong className="cx-mega">Tu puntaje <span className="cx-script">de</span> 0 a 500</strong></span>
               <span className="caption">El puntaje se calcula con el examen completo: Sesión 1 y Sesión 2 del mismo cuadernillo, como el día del Saber 11.</span>
             </>
           )}

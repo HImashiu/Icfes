@@ -4,6 +4,8 @@ import Gate from "./Gate.jsx";
 import QuestionReview from "./screens/QuestionReview.jsx";
 import { AuthProvider } from "./lib/auth.jsx";
 import "./styles.css";
+import "./cx.css";
+import Backdrop from "./components/Backdrop.jsx";
 
 // Question review (screens/QuestionReview.jsx): the student's view of one question, for checking the bank. It is
 // never in a school build: it needs the dev server (exam files read straight from public/exams, no account) or
@@ -12,6 +14,7 @@ const reviewOpen = (import.meta.env.DEV || import.meta.env.VITE_QUESTION_REVIEW 
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
+    <Backdrop />
     {reviewOpen ? <QuestionReview /> : (
       <AuthProvider>
         <Gate />

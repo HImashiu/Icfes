@@ -113,10 +113,23 @@ export default function Login({ onBack, gate = false }) {
   }
 
   return (
-    <section className={gate ? "profile signin-gate" : "profile"}>
-      <header className="screen-head"><h1>{gate ? "Ingresa a Cóndor" : "Ingresar"}</h1></header>
+    <section className={gate ? "profile signin-gate cx-gate" : "profile"}>
+      {gate ? (
+        <div className="cx-gate-hero">
+          <h1 className="cx-mega">Entra <span className="cx-script">y</span><br />practica <span className="cx-stk">ya</span></h1>
+          <p className="cx-lead">Un toque con tu cuenta de Google y estás en tu primera pregunta del ICFES. Tu avance queda guardado.</p>
+          <div className="cx-gate-owl">
+            <Mascot pose="happy" size={132} />
+            <span className="cx-pills">
+              <span className="cx-pill">+4.000 preguntas de cuadernillos del ICFES</span>
+              <span className="cx-pill">Tu puntaje de 0 a 500 en cada simulacro</span>
+            </span>
+          </div>
+        </div>
+      ) : <header className="screen-head"><h1>Ingresar</h1></header>}
+      <div className="cx-gate-side">
       <div className="card login-card">
-        <Mascot size={64} />
+        {!gate && <Mascot size={64} />}
         <div className="segmented login-who" role="radiogroup" aria-label="Entro como">
           <button type="button" role="radio" aria-checked={!teacher} className={!teacher ? "seg active" : "seg"} onClick={() => setTeacher(false)}>Soy estudiante</button>
           <button type="button" role="radio" aria-checked={teacher} className={teacher ? "seg active" : "seg"} onClick={() => setTeacher(true)}>Soy docente</button>
@@ -148,6 +161,7 @@ export default function Login({ onBack, gate = false }) {
         <span className="caption">Al continuar aceptas los términos y la <a href="../privacidad.html">política de privacidad</a>. Resultados con clave preliminar, no oficial.</span>
       </div>
       {gate ? <a className="link" href="../">Volver a la página principal</a> : <button type="button" className="link" onClick={onBack}>Volver</button>}
+      </div>
     </section>
   );
 }

@@ -1,0 +1,245 @@
+/* Cóndor app in the landing's language (2026-11-13 redesign, canvas https://claude.ai/artifact/TsMKzJnXKrLKTHwu7haAs4).
+   Loaded after styles.css. New classes use the cx- prefix. Overrides are scoped under #root so screen CSS loaded later
+   (results.css, study.css…) cannot undo them. Grounds, stickers, chunky buttons and tokens come from app/site/landing.css. */
+:root {
+  --doodles-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='560' height='560' viewBox='0 0 560 560'%3E%3Cg fill='none' stroke='%23C8F04A' stroke-opacity='0.13' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath transform='translate%2873 33%29 rotate%28-22%29 scale%281.11%29' d='M-17 0a17 17 0 1 0 34 0a17 17 0 1 0-34 0 M-17 0h34 M0-17c7 7 7 27 0 34 M0-17c-7 7-7 27 0 34'/%3E%3Ctext transform='translate%28173 70%29 rotate%28-8%29' fill='%23C8F04A' fill-opacity='0.13' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='26' text-anchor='middle' dominant-baseline='middle'%3E%25%3C/text%3E%3Cpath transform='translate%28264 42%29 rotate%28-10%29 scale%280.80%29' d='M-20 0c5-12 10-12 15 0s10 12 15 0 10-12 15 0'/%3E%3Ctext transform='translate%28370 64%29 rotate%28-4%29' fill='%23C8F04A' fill-opacity='0.13' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='25' text-anchor='middle' dominant-baseline='middle'%3E%E2%88%9Ax%3C/text%3E%3Cpath transform='translate%28526 34%29 rotate%28-12%29 scale%281.07%29' d='M-18 10c6-18 22-22 34-14 M10-10l6 6-8 4'/%3E%3Ctext transform='translate%2857 144%29 rotate%283%29' fill='%23C8F04A' fill-opacity='0.13' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='21' text-anchor='middle' dominant-baseline='middle'%3Ex%C2%B2%3C/text%3E%3Cpath transform='translate%28148 157%29 rotate%28-21%29 scale%280.81%29' d='M-15 0l10 10 20-20'/%3E%3Ctext transform='translate%28290 153%29 rotate%2820%29' fill='%23C8F04A' fill-opacity='0.13' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='21' text-anchor='middle' dominant-baseline='middle'%3E%C3%B7%3C/text%3E%3Cpath transform='translate%28386 179%29 rotate%28-4%29 scale%281.00%29' d='M-18-12h36v20h-18l-9 8v-8h-9Z'/%3E%3Ctext transform='translate%28488 177%29 rotate%28-8%29' fill='%23C8F04A' fill-opacity='0.13' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='23' text-anchor='middle' dominant-baseline='middle'%3E%CF%80%3C/text%3E%3Cpath transform='translate%2831 275%29 rotate%2820%29 scale%280.85%29' d='M-6-18h12 M-4-18v12l-12 20c-1 3 0 4 3 4h26c3 0 4-1 3-4L4-6v-12 M-11 8h22'/%3E%3Ctext transform='translate%28179 255%29 rotate%28-2%29' fill='%23C8F04A' fill-opacity='0.13' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='25' text-anchor='middle' dominant-baseline='middle'%3E%C2%BF%3F%3C/text%3E%3Cpath transform='translate%28289 264%29 rotate%280%29 scale%281.14%29' d='M-19 0c0-5 9-8 19-8s19 3 19 8-9 8-19 8-19-3-19-8Z M-9.5-16.5c4-2.5 11 4 16 12.5s6 17.6 2 20-11-4-16-12.5-6-17.6-2-20Z M9.5-16.5c-4-2.5-11 4-16 12.5s-6 17.6-2 20 11-4 16-12.5 6-17.6 2-20Z'/%3E%3Ctext transform='translate%28406 276%29 rotate%28-6%29' fill='%23C8F04A' fill-opacity='0.13' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='24' text-anchor='middle' dominant-baseline='middle'%3E%E2%88%91%3C/text%3E%3Cpath transform='translate%28529 254%29 rotate%2817%29 scale%281.14%29' d='M0-12c-5-4-12-4-18-3v26c6-1 13-1 18 3 5-4 12-4 18-3v-26c-6-1-13-1-18 3Z M0-12v26'/%3E%3Ctext transform='translate%2861 418%29 rotate%28-23%29' fill='%23C8F04A' fill-opacity='0.13' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='22' text-anchor='middle' dominant-baseline='middle'%3EABC%3C/text%3E%3Cpath transform='translate%28194 397%29 rotate%284%29 scale%280.81%29' d='M-16 16l4-12 20-20 8 8-20 20Z M4-12l8 8'/%3E%3Ctext transform='translate%28262 389%29 rotate%28-24%29' fill='%23C8F04A' fill-opacity='0.13' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='26' text-anchor='middle' dominant-baseline='middle'%3EAa%3C/text%3E%3Cpath transform='translate%28409 386%29 rotate%28-20%29 scale%280.87%29' d='M-16 16v-12 M-5 16v-24 M6 16v-8 M17 16v-30 M-20 16h40'/%3E%3Ctext transform='translate%28511 367%29 rotate%28-6%29' fill='%23C8F04A' fill-opacity='0.13' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='26' text-anchor='middle' dominant-baseline='middle'%3Ey=mx+b%3C/text%3E%3Cpath transform='translate%2837 509%29 rotate%2816%29 scale%280.85%29' d='M-16 0a16 16 0 1 0 32 0a16 16 0 1 0-32 0 M0 0h16'/%3E%3Ctext transform='translate%28162 511%29 rotate%28-9%29' fill='%23C8F04A' fill-opacity='0.13' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='22' text-anchor='middle' dominant-baseline='middle'%3E%E2%89%88%3C/text%3E%3Cpath transform='translate%28286 516%29 rotate%28-16%29 scale%281.02%29' d='M-18 14L0-17L18 14Z M-6 14v-6h6'/%3E%3Ctext transform='translate%28395 514%29 rotate%28-5%29' fill='%23C8F04A' fill-opacity='0.13' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='25' text-anchor='middle' dominant-baseline='middle'%3E%3F%3C/text%3E%3Cpath transform='translate%28482 480%29 rotate%28-19%29 scale%280.98%29' d='M3-19-12 3h10l-3 16 15-22H0Z'/%3E%3C/g%3E%3C/svg%3E");
+  --doodles-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='560' height='560' viewBox='0 0 560 560'%3E%3Cg fill='none' stroke='%232B5F2E' stroke-opacity='0.16' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath transform='translate%2873 33%29 rotate%28-22%29 scale%281.11%29' d='M-17 0a17 17 0 1 0 34 0a17 17 0 1 0-34 0 M-17 0h34 M0-17c7 7 7 27 0 34 M0-17c-7 7-7 27 0 34'/%3E%3Ctext transform='translate%28173 70%29 rotate%28-8%29' fill='%232B5F2E' fill-opacity='0.16' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='26' text-anchor='middle' dominant-baseline='middle'%3E%25%3C/text%3E%3Cpath transform='translate%28264 42%29 rotate%28-10%29 scale%280.80%29' d='M-20 0c5-12 10-12 15 0s10 12 15 0 10-12 15 0'/%3E%3Ctext transform='translate%28370 64%29 rotate%28-4%29' fill='%232B5F2E' fill-opacity='0.16' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='25' text-anchor='middle' dominant-baseline='middle'%3E%E2%88%9Ax%3C/text%3E%3Cpath transform='translate%28526 34%29 rotate%28-12%29 scale%281.07%29' d='M-18 10c6-18 22-22 34-14 M10-10l6 6-8 4'/%3E%3Ctext transform='translate%2857 144%29 rotate%283%29' fill='%232B5F2E' fill-opacity='0.16' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='21' text-anchor='middle' dominant-baseline='middle'%3Ex%C2%B2%3C/text%3E%3Cpath transform='translate%28148 157%29 rotate%28-21%29 scale%280.81%29' d='M-15 0l10 10 20-20'/%3E%3Ctext transform='translate%28290 153%29 rotate%2820%29' fill='%232B5F2E' fill-opacity='0.16' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='21' text-anchor='middle' dominant-baseline='middle'%3E%C3%B7%3C/text%3E%3Cpath transform='translate%28386 179%29 rotate%28-4%29 scale%281.00%29' d='M-18-12h36v20h-18l-9 8v-8h-9Z'/%3E%3Ctext transform='translate%28488 177%29 rotate%28-8%29' fill='%232B5F2E' fill-opacity='0.16' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='23' text-anchor='middle' dominant-baseline='middle'%3E%CF%80%3C/text%3E%3Cpath transform='translate%2831 275%29 rotate%2820%29 scale%280.85%29' d='M-6-18h12 M-4-18v12l-12 20c-1 3 0 4 3 4h26c3 0 4-1 3-4L4-6v-12 M-11 8h22'/%3E%3Ctext transform='translate%28179 255%29 rotate%28-2%29' fill='%232B5F2E' fill-opacity='0.16' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='25' text-anchor='middle' dominant-baseline='middle'%3E%C2%BF%3F%3C/text%3E%3Cpath transform='translate%28289 264%29 rotate%280%29 scale%281.14%29' d='M-19 0c0-5 9-8 19-8s19 3 19 8-9 8-19 8-19-3-19-8Z M-9.5-16.5c4-2.5 11 4 16 12.5s6 17.6 2 20-11-4-16-12.5-6-17.6-2-20Z M9.5-16.5c-4-2.5-11 4-16 12.5s-6 17.6-2 20 11-4 16-12.5 6-17.6 2-20Z'/%3E%3Ctext transform='translate%28406 276%29 rotate%28-6%29' fill='%232B5F2E' fill-opacity='0.16' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='24' text-anchor='middle' dominant-baseline='middle'%3E%E2%88%91%3C/text%3E%3Cpath transform='translate%28529 254%29 rotate%2817%29 scale%281.14%29' d='M0-12c-5-4-12-4-18-3v26c6-1 13-1 18 3 5-4 12-4 18-3v-26c-6-1-13-1-18 3Z M0-12v26'/%3E%3Ctext transform='translate%2861 418%29 rotate%28-23%29' fill='%232B5F2E' fill-opacity='0.16' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='22' text-anchor='middle' dominant-baseline='middle'%3EABC%3C/text%3E%3Cpath transform='translate%28194 397%29 rotate%284%29 scale%280.81%29' d='M-16 16l4-12 20-20 8 8-20 20Z M4-12l8 8'/%3E%3Ctext transform='translate%28262 389%29 rotate%28-24%29' fill='%232B5F2E' fill-opacity='0.16' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='26' text-anchor='middle' dominant-baseline='middle'%3EAa%3C/text%3E%3Cpath transform='translate%28409 386%29 rotate%28-20%29 scale%280.87%29' d='M-16 16v-12 M-5 16v-24 M6 16v-8 M17 16v-30 M-20 16h40'/%3E%3Ctext transform='translate%28511 367%29 rotate%28-6%29' fill='%232B5F2E' fill-opacity='0.16' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='26' text-anchor='middle' dominant-baseline='middle'%3Ey=mx+b%3C/text%3E%3Cpath transform='translate%2837 509%29 rotate%2816%29 scale%280.85%29' d='M-16 0a16 16 0 1 0 32 0a16 16 0 1 0-32 0 M0 0h16'/%3E%3Ctext transform='translate%28162 511%29 rotate%28-9%29' fill='%232B5F2E' fill-opacity='0.16' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='22' text-anchor='middle' dominant-baseline='middle'%3E%E2%89%88%3C/text%3E%3Cpath transform='translate%28286 516%29 rotate%28-16%29 scale%281.02%29' d='M-18 14L0-17L18 14Z M-6 14v-6h6'/%3E%3Ctext transform='translate%28395 514%29 rotate%28-5%29' fill='%232B5F2E' fill-opacity='0.16' stroke='none' font-family='Georgia,serif' font-style='italic' font-size='25' text-anchor='middle' dominant-baseline='middle'%3E%3F%3C/text%3E%3Cpath transform='translate%28482 480%29 rotate%28-19%29 scale%280.98%29' d='M3-19-12 3h10l-3 16 15-22H0Z'/%3E%3C/g%3E%3C/svg%3E");
+  --cx-cream: #F6F3EA;
+  --cx-ink: #0D110F;
+  --cx-g1: #2B5F2E;
+  --cx-g2: #377B3A;
+  --cx-g3: #4B9E3C;
+  --cx-gold: #FAB131;
+  --cx-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --cx-spring: cubic-bezier(0.34, 1.16, 0.5, 1);
+  --cx-grid: rgba(242, 245, 239, 0.045);
+  --cx-grid-lit: rgba(200, 240, 74, 0.22);
+  --cx-doodles: var(--doodles-dark);
+  --cx-display: "Bricolage Grotesque", Figtree, sans-serif;
+}
+:root[data-theme="light"] { --cx-grid: rgba(43, 95, 46, 0.08); --cx-grid-lit: rgba(55, 123, 58, 0.3); --cx-doodles: var(--doodles-light); }
+@media (prefers-color-scheme: light) { :root:not([data-theme]) { --cx-grid: rgba(43, 95, 46, 0.08); --cx-grid-lit: rgba(55, 123, 58, 0.3); --cx-doodles: var(--doodles-light); } }
+
+/* 1 · The ground: notebook squares, two layers of drifting doodles (parallax) and squares that light up under the
+   pointer. Fixed behind everything (z-index -1 over the body's colour). */
+.cx-ground { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+  background-image: linear-gradient(var(--cx-grid) 1px, transparent 1px), linear-gradient(90deg, var(--cx-grid) 1px, transparent 1px);
+  background-size: 28px 28px; background-position: center top; }
+.cx-doodles { position: absolute; left: -560px; top: -560px; right: 0; bottom: 0; background: var(--cx-doodles) 0 0 / 560px 560px; will-change: transform; }
+.cx-far { opacity: 0.55; background-size: 380px 380px; animation: cx-drift-far 140s linear infinite; left: -380px; top: -380px; }
+.cx-near { animation: cx-drift 80s linear infinite; }
+@keyframes cx-drift { to { transform: translate(560px, 560px); } }
+@keyframes cx-drift-far { to { transform: translate(-380px, 380px); } }
+.cx-lit { position: absolute; inset: 0; opacity: 0; transition: opacity 0.5s var(--cx-ease);
+  background-image: linear-gradient(var(--cx-grid-lit) 1px, transparent 1px), linear-gradient(90deg, var(--cx-grid-lit) 1px, transparent 1px);
+  background-size: 28px 28px; background-position: center top;
+  -webkit-mask: radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%), #000, transparent 70%);
+  mask: radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%), #000, transparent 70%); }
+.cx-ground.lit .cx-lit { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .cx-doodles { animation: none; } .cx-lit { display: none; } }
+@media print { .cx-ground { display: none; } }
+/* Surfaces that painted the page colour now let the ground show through. */
+#root .tl-top { background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px); }
+
+/* 2 · Type: huge uppercase display titles, the serif italic accent and tilted sticker words. */
+.cx-mega { font-family: var(--cx-display); font-weight: 800; text-transform: uppercase; letter-spacing: -0.018em; line-height: 0.94; margin: 0; }
+.cx-script { font-family: Newsreader, Georgia, serif; font-style: italic; font-weight: 600; text-transform: none; letter-spacing: -0.02em; color: var(--accent-ink); }
+.cx-stk { --t: -3deg; display: inline-block; padding: 0.04em 0.24em 0.1em; border-radius: 0.16em; background: var(--accent); color: var(--cx-ink);
+  transform: rotate(var(--t)); box-shadow: 0 0 0 0.06em var(--cx-cream), 0 0.1em 0 0.06em rgba(0, 0, 0, 0.25); line-height: 1; transition: transform 0.35s var(--cx-spring); }
+.cx-stk:hover { transform: rotate(calc(var(--t) * -1)) scale(1.04); }
+.cx-lead { font-size: clamp(16px, 1.6vw, 20px); line-height: 1.5; color: var(--text-2); max-width: 44ch; margin: 0; }
+.cx-pills { display: flex; flex-direction: column; gap: 8px; }
+.cx-pill { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; background: var(--surface); border: 1.5px solid var(--line); font-weight: 700; font-size: 14px; }
+#root .screen-head h1, #root .td-hello h1, #root .results-hero h1, #root .home-head .greet strong {
+  font-family: var(--cx-display); font-weight: 800; text-transform: uppercase; letter-spacing: -0.015em; line-height: 0.96; }
+#root .screen-head h1 { font-size: clamp(26px, 3.4vw, 44px); }
+#root .home-head .greet strong { font-size: clamp(26px, 3.6vw, 46px); }
+#root .td-hello h1 { font-size: clamp(28px, 3.6vw, 50px); margin: 4px 0 6px; }
+#root .home-head .greet strong::after { content: "hoy"; display: inline-block; margin-left: 0.3em; padding: 0.04em 0.24em 0.1em; border-radius: 0.16em;
+  background: var(--accent); color: var(--cx-ink); transform: rotate(-3deg); font-size: 0.62em; vertical-align: 0.22em;
+  box-shadow: 0 0 0 0.07em var(--cx-cream), 0 0.1em 0 0.07em rgba(0, 0, 0, 0.25); }
+
+/* 3 · Buttons: the landing's chunky lime with an ink edge; secondaries lift on a soft shadow. */
+#root .primary:not(:disabled) { border: 2px solid var(--cx-ink); box-shadow: 0 4px 0 var(--cx-ink); font-weight: 800; transition: transform 0.12s var(--cx-ease), box-shadow 0.12s var(--cx-ease), filter 0.15s; }
+#root .primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 5px 0 var(--cx-ink); }
+#root .primary:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 0 0 var(--cx-ink); }
+#root .secondary:not(:disabled) { box-shadow: 0 3px 0 var(--line); font-weight: 800; transition: transform 0.12s var(--cx-ease), box-shadow 0.12s, border-color 0.15s; }
+#root .secondary:hover:not(:disabled) { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+#root .secondary:active:not(:disabled) { transform: translateY(3px); box-shadow: none; }
+
+/* 4 · Cards: rounder; hover lifts a little like the landing's cards. */
+#root .card { border-radius: 22px; }
+#root button.card, #root .assign-card, #root .sh-subject, #root .td-kpi { transition: transform 0.25s var(--cx-spring), box-shadow 0.25s var(--cx-ease), border-color 0.15s; }
+#root button.card:hover, #root .assign-card:hover, #root .td-kpi:hover { transform: translateY(-2px); }
+
+/* 5 · Notices that never cover anything: the example-data bar is a pill at the top of the page, in the flow. */
+#root .demo-banner { position: relative; left: auto; bottom: auto !important; transform: none; margin: 8px auto; width: max-content; max-width: calc(100% - 24px);
+  pointer-events: auto; box-shadow: 0 0 0 2px var(--cx-ink), 0 3px 0 2px rgba(0, 0, 0, 0.3); z-index: 20; padding: 4px 6px 4px 14px; font-weight: 700; }
+#root .demo-banner .demo-off { border: 0; border-radius: 999px; background: var(--cx-ink); color: var(--cx-gold); font-weight: 800; padding: 4px 12px; font-size: 12px; }
+#root .app:has(> .teacher) .demo-banner, #root .demo-banner:has(+ .teacher) { margin: 0 auto; }
+/* The beta note: one slim line instead of a tall box. */
+#root .beta-note { align-items: center; padding: 6px 8px 6px 12px; border-radius: 999px; font-size: 13px; border-width: 1.5px; margin-bottom: 0; }
+#root .beta-note p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#root .beta-note .icon-btn { width: 30px; height: 30px; }
+#root .beta-pill { border-color: var(--accent); background: transparent; color: var(--accent-ink); }
+
+/* 6 · Navigation. Student: the active item is a lime tile; on a phone the bar floats as a rounded pill. */
+#root .nav-item.active { background: var(--accent); color: var(--cx-ink); box-shadow: 0 3px 0 var(--accent-shadow); }
+#root .nav-item.active svg { color: var(--cx-ink); }
+#root .t-nav { border-radius: 14px; font-weight: 700; transition: background-color 0.15s, transform 0.2s var(--cx-spring); }
+#root .t-nav:hover { transform: translateX(2px); }
+#root .t-nav.active { background: var(--accent); color: var(--cx-ink); box-shadow: 0 3px 0 var(--accent-shadow); }
+@media (max-width: 767px) {
+  #root .bottom-nav { left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); border-radius: 24px; border: 1.5px solid var(--line); background: var(--surface); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45); padding: 6px; }
+  #root .bottom-nav .nav-item { border-radius: 16px; }
+}
+/* Teacher: «Colegio» is one entry (its five tabs live on its page) and «Ayuda» folds tutorial, every function and the example data. */
+#root .cx-help { display: grid; gap: 2px; }
+#root .cx-help > .t-nav:not(.cx-help-btn) { display: none; }
+#root .cx-help.open > .t-nav:not(.cx-help-btn) { display: flex; padding-left: 22px; font-size: 14px; }
+#root .cx-help-btn { border: 1.5px solid var(--line); }
+#root .cx-help-btn > svg { margin-left: auto; transition: transform 0.25s var(--cx-spring); }
+#root .cx-help.open .cx-help-btn > svg { transform: rotate(90deg); }
+#root .cx-help-q { width: 20px; height: 20px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); font-weight: 800; font-size: 12px; }
+#root .cx-help-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cx-gold); flex: none; }
+#root .tl.rail .cx-help-btn > svg, #root .tl.rail .cx-help-dot { display: none; }
+/* Teacher on a phone: a floating pill with the round «+» for a new activity in the middle. */
+.cx-fab { display: none; }
+@media (max-width: 800px) {
+  #root .tl-bottom { left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); border-radius: 24px; border: 1.5px solid var(--line); background: var(--surface); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45); padding: 6px 4px; align-items: center; }
+  #root .tl-bottom button.on { color: var(--accent-ink); }
+  #root .tl-bottom .cx-fab { display: grid; place-items: center; justify-self: center; width: 54px; height: 54px; min-height: 0; margin-top: -26px; border-radius: 18px; background: var(--accent); color: var(--cx-ink);
+    border: 2px solid var(--cx-ink); box-shadow: 0 4px 0 var(--accent-shadow); transform: rotate(-4deg); transition: transform 0.25s var(--cx-spring); }
+  #root .tl-bottom .cx-fab:active { transform: rotate(-4deg) translateY(3px); box-shadow: none; }
+  #root .tl { padding-bottom: 92px; }
+}
+
+/* 7 · Student home. The next task is a big owl-green card; subjects are the landing's coloured cards, slightly tilted. */
+#root .sh-hero { background: var(--cx-g2); border: 0; color: #F2F5EF; border-radius: 28px; padding: 22px 24px; box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.2); }
+#root .sh-hero .label { color: var(--accent); }
+#root .sh-hero .caption { color: #DDEBD5; }
+#root .sh-hero-text strong { font-family: var(--cx-display); font-weight: 800; text-transform: uppercase; font-size: clamp(22px, 2.6vw, 36px); line-height: 0.98; letter-spacing: -0.01em; }
+#root .sh-subject { background: var(--c); color: var(--cx-ink); border: 0; border-radius: 20px; box-shadow: 0 5px 0 rgba(0, 0, 0, 0.28); }
+#root .sh-subject:nth-child(odd) { transform: rotate(-1.2deg); }
+#root .sh-subject:nth-child(even) { transform: rotate(1deg); }
+#root .sh-subject:hover { transform: rotate(0) translateY(-3px); }
+#root .sh-subject .caption, #root .sh-subject span { color: color-mix(in srgb, var(--cx-ink) 78%, transparent); }
+#root .sh-subject .sh-due { color: var(--cx-ink); font-weight: 800; }
+#root .sh-subject .td-spark > span { background: color-mix(in srgb, var(--cx-ink) 30%, transparent) !important; }
+#root .sh-subject-top b { font-size: 26px; }
+
+/* 8 · The question. Options never justify (the booklets' text-align:justify opened gaps between words on a phone). */
+#root .option [style*="text-align:justify"], #root .option [style*="text-align: justify"] { text-align: left !important; }
+#root .option { text-align: left; border-radius: 16px; transition: transform 0.12s var(--cx-ease), box-shadow 0.12s, border-color 0.15s, background-color 0.15s; }
+#root .option:hover:not(:disabled) { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); }
+#root .letter-tile { border-radius: 10px; font-weight: 800; }
+
+/* 9 · The verdict: a solid sheet that slides up, green or coral, with the owl and ink text (Duolingo-like). */
+#root .test-bottom.verdict-ok, #root .test-bottom.verdict-bad { border-top: 0; border-radius: 26px 26px 0 0; color: var(--cx-ink); }
+#root .test-bottom.verdict-ok { background: var(--ok); }
+#root .test-bottom.verdict-bad { background: var(--bad); }
+#root .test-bottom.verdict-ok .verdict strong, #root .test-bottom.verdict-bad .verdict strong { color: var(--cx-ink); font-size: clamp(22px, 3vw, 28px); text-transform: uppercase; letter-spacing: -0.01em; }
+#root .test-bottom.verdict-ok .verdict span, #root .test-bottom.verdict-bad .verdict span { color: var(--cx-ink); font-weight: 600; }
+#root .test-bottom.verdict-ok .primary, #root .test-bottom.verdict-bad .primary { background: var(--cx-ink); color: var(--accent); border-color: var(--cx-ink); box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35); }
+#root .test-bottom.verdict-ok .submit-link, #root .test-bottom.verdict-bad .submit-link, #root .test-bottom.verdict-ok .secondary, #root .test-bottom.verdict-bad .secondary { color: var(--cx-ink); border-color: var(--cx-ink); }
+#root .verdict-owl .mascot { width: 64px; height: 64px; }
+#root .verdict-owl { animation: cx-hop 0.6s var(--cx-spring); }
+#root .verdict-share { background: rgba(255, 255, 255, 0.35); border-color: transparent; color: var(--cx-ink); }
+#root .verdict-run { background: var(--cx-ink); color: var(--cx-gold) !important; }
+@keyframes cx-hop { 0% { transform: translateY(18px) scale(0.8); opacity: 0; } 60% { transform: translateY(-6px) scale(1.05); opacity: 1; } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) { #root .verdict-owl { animation: none; } }
+
+/* 10 · Results: a celebration card on cream paper with the score on a sticker. */
+#root .results-hero { background: var(--cx-cream); color: var(--cx-ink); border: 0; border-radius: 28px;
+  background-image: linear-gradient(rgba(43, 95, 46, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(43, 95, 46, 0.08) 1px, transparent 1px); background-size: 28px 28px; }
+#root .results-hero .caption, #root .results-hero .label { color: #4C5650; }
+#root .results-hero .stat { background: #fff; border: 0; color: var(--cx-ink); box-shadow: 0 4px 0 #E2DCCB; }
+#root .results-hero .stat:first-child .display { display: inline-block; background: var(--accent); color: var(--cx-ink); padding: 2px 12px 6px; border-radius: 12px; transform: rotate(-3deg);
+  box-shadow: 0 0 0 3px var(--cx-ink), 0 6px 0 3px rgba(0, 0, 0, 0.2); }
+#root .results-hero .stat .display { color: var(--cx-ink); }
+#root .results-hero .mascot { animation: cx-hop 0.7s var(--cx-spring); }
+
+/* 11 · Teacher «Hoy»: an owl-green hero and the four numbers on one cream ticket with dashed seams. */
+#root .td-hero { background: var(--cx-g2); border: 0; color: #F2F5EF; border-radius: 28px; }
+#root .td-hero .caption, #root .td-hello p { color: #DDEBD5; }
+#root .td-hero .secondary { color: #F2F5EF; border-color: rgba(255, 255, 255, 0.35); box-shadow: 0 3px 0 rgba(0, 0, 0, 0.25); }
+#root .td-kpis { gap: 0; background: var(--cx-cream); border-radius: 22px; padding: 6px;
+  background-image: linear-gradient(rgba(43, 95, 46, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(43, 95, 46, 0.08) 1px, transparent 1px); background-size: 28px 28px; }
+#root .td-kpi { background: transparent; border: 0; border-radius: 16px; color: var(--cx-ink); box-shadow: none; }
+#root .td-kpi + .td-kpi { border-left: 2.5px dashed #CFC8B4; border-radius: 0 16px 16px 0; }
+#root .td-kpi:hover { background: rgba(255, 255, 255, 0.6); transform: none; }
+#root .td-kpi .label, #root .td-kpi .caption { color: #4C5650; }
+#root .td-kpi-row strong { font-size: clamp(28px, 3vw, 42px); font-weight: 800; color: var(--cx-ink); }
+@media (max-width: 1100px) { #root .td-kpi:nth-child(3) { border-left: 0; } #root .td-kpi:nth-child(n+3) { border-top: 2.5px dashed #CFC8B4; border-radius: 0; } }
+
+/* 12 · Activity rows read like the landing's exam pills: fully rounded, the icon in a circle, lime on hover. */
+#root .assign-card { border-radius: 999px; padding-left: 8px; }
+#root .assign-card .assign-icon { border-radius: 50%; }
+#root .assign-card:hover { border-color: var(--accent); }
+@media (max-width: 640px) { #root .assign-card { border-radius: 22px; } }
+
+/* 13 · The sign-in gate: a hero like the landing's, with the choice beside it. */
+#root .cx-gate { max-width: 1180px; margin: 0 auto; min-height: calc(100vh - 32px); display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 48px; align-items: center; padding: 24px; }
+#root .cx-gate-hero { display: grid; gap: 18px; }
+#root .cx-gate-hero .cx-mega { font-size: clamp(54px, 8vw, 104px); }
+#root .cx-gate-owl { display: flex; align-items: center; gap: 16px; }
+#root .cx-gate-side { display: grid; gap: 12px; justify-items: start; }
+#root .cx-gate .login-card { width: 100%; border-radius: 26px; padding: 24px; gap: 14px; box-shadow: 0 6px 0 rgba(0, 0, 0, 0.25); }
+#root .cx-gate .login-who { padding: 5px; border-radius: 18px; }
+#root .cx-gate .login-who .seg { min-height: 54px; border-radius: 14px; font: 800 17px var(--cx-display); text-transform: uppercase; letter-spacing: -0.01em; }
+#root .cx-gate .login-who .seg.active { background: var(--accent); color: var(--cx-ink); box-shadow: 0 3px 0 var(--accent-shadow); border-color: transparent; }
+#root .cx-gate .login-card > strong { font: 800 22px/1.1 var(--cx-display); }
+#root .cx-gate .primary.big { width: 100%; }
+@media (max-width: 860px) {
+  #root .cx-gate { grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 12px 0; min-height: 0; }
+  #root .cx-gate-hero .cx-mega { font-size: clamp(44px, 13vw, 64px); }
+  #root .cx-gate-owl .mascot { width: 84px; height: 84px; }
+  #root .cx-gate-hero .cx-lead { font-size: 16px; }
+  #root .cx-gate .cx-pill { font-size: 12.5px; padding: 6px 11px; }
+}
+
+/* 14 · Owl empty states and section heads. */
+#root .empty-state .mascot, #root .empty-card .mascot { animation: cx-hop 0.7s var(--cx-spring); }
+#root .section-head > .label { font-family: var(--cx-display); letter-spacing: 0.02em; }
+
+/* 15 · Motion: screens arrive softly (no popping springs). */
+#root .home, #root .t-main > *, #root .results, #root .profile { animation: cx-rise 0.45s var(--cx-ease) both; }
+@keyframes cx-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { #root .home, #root .t-main > *, #root .results, #root .profile, #root .results-hero .mascot { animation: none; } }
+
+/* Fixes after the first look in the demo. */
+#root .cx-help.open > .t-nav:not(.cx-help-btn) { padding-left: 12px; }
+#root .td-kpis .td-pill { background: var(--cx-g2); color: #fff; }
+#root .td-kpis .td-pill.warn { background: #B33A2A; color: #fff; }
+/* Materias: each subject is a coloured card, the landing's area cards. */
+#root .sj-card { background: var(--c); color: var(--cx-ink); border: 0; border-radius: 22px; box-shadow: 0 5px 0 rgba(0, 0, 0, 0.28); }
+#root .sj-card:nth-child(odd) { transform: rotate(-1deg); }
+#root .sj-card:nth-child(even) { transform: rotate(1deg); }
+#root .sj-card:hover { transform: rotate(0) translateY(-3px); }
+#root .sj-card .sj-band { display: none; }
+#root .sj-card .caption, #root .sj-card b, #root .sj-card strong { color: var(--cx-ink); }
+#root .sj-card .sh-due { color: var(--cx-ink); font-weight: 800; background: rgba(255, 255, 255, 0.45); border-radius: 999px; padding: 2px 8px; }
+#root .sj-card .sj-avatar { background: var(--cx-ink); color: var(--c); }
+#root .sj-card .sj-spark > span { background: var(--cx-ink) !important; opacity: 0.3 !important; }
+#root .sj-card .sj-head strong { font-family: var(--cx-display); font-weight: 800; text-transform: uppercase; font-size: 20px; line-height: 1; }
+#root .sj-card .sj-avg b { font-family: var(--cx-display); font-size: 26px; }
+/* The score card before the first complete simulacro: owl and a headline, not «— /500». */
+#root .cx-score-empty { display: flex; align-items: center; gap: 12px; }
+#root .cx-score-empty .cx-mega { font-size: clamp(24px, 2.6vw, 34px); }
+#root .score-card.cx-empty .score-note { display: none; }
+/* Student header on a phone: the name on its own line, the pills after it. */
+@media (max-width: 600px) {
+  #root .home-head { flex-wrap: wrap; row-gap: 4px; }
+  #root .home-head .greet { flex: 1 1 calc(100% - 60px); }
+  #root .home-head .greet strong { font-size: 30px; }
+  #root .home-head .greet strong::after { display: none; }
+  #root .home-head .avatar { order: 0; }
+}
+#root .beta-note { min-width: 0; max-width: 100%; }
+#root .beta-note p { min-width: 0; }
+/* Teacher phone bar: icons only, the current section keeps its label; the «+» sits in the middle. */
+@media (max-width: 800px) {
+  #root .tl-bottom button:not(.on):not(.cx-fab) span { display: none; }
+  #root .tl-bottom button.on { background: var(--accent); color: var(--cx-ink); border-radius: 16px; box-shadow: 0 3px 0 var(--accent-shadow); }
+  #root .td-hello h1 { font-size: 30px; }
+}

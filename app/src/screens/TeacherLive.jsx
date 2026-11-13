@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Logo from "../components/Logo.jsx";
 import Wordmark from "../components/Wordmark.jsx";
 import { assignmentState, scorePct, whoOf } from "../lib/assignments.js";
@@ -227,6 +227,8 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
   const openAssignment = (id, memberId) => { setFocusMember(memberId ?? null); go({ section: "actividad", id, tab: "resultados" }); };
 
   // The sidebar folds down to an icon rail and back; the choice is remembered on this device.
+  // Tutorial, every function and the example data live under one «Ayuda» entry (open while the example is on).
+  const [help, setHelp] = useState(() => demoEnabled);
   const [rail, setRail] = useState(() => { try { return localStorage.getItem("condor.teacher.rail") === "1"; } catch { return false; } });
   const toggleRail = () => setRail((v) => { try { localStorage.setItem("condor.teacher.rail", v ? "0" : "1"); } catch { /* storage blocked */ } return !v; });
   const r = route.section === "colegio" && !admin ? normalize({ section: "hoy" }) : route;
@@ -251,15 +253,11 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
               <Icon name={n.icon} size={18} strokeWidth={2.4} /><span>{n.label}</span>
             </button>
           ))}
-          {admin && <span className="t-group">Colegio</span>}
-          {admin && ADMIN_NAV.map((n, k) => {
-            const on = r.section === "colegio" && r.tab === n.tab;
-            return (
-              <button key={n.tab} data-tour={k === 0 ? "nav-colegio" : undefined} type="button" className={on ? "t-nav active" : "t-nav"} aria-current={on ? "page" : undefined} title={rail ? n.label : undefined} onClick={() => go({ section: "colegio", tab: n.tab })}>
-                <Icon name={n.icon} size={18} strokeWidth={2.4} /><span>{n.label}</span>
-              </button>
-            );
-          })}
+          {admin && (
+            <button type="button" data-tour="nav-colegio" className={r.section === "colegio" ? "t-nav active cx-colegio" : "t-nav cx-colegio"} aria-current={r.section === "colegio" ? "page" : undefined} title={rail ? "Colegio" : undefined} onClick={() => go({ section: "colegio" })}>
+              <Icon name="school" size={18} strokeWidth={2.4} /><span>Colegio</span>
+            </button>
+          )}
         </nav>
         {trial && (
           <div className={trialDays <= 3 ? "t-trial soon" : "t-trial"} title={trialLine}>
@@ -267,7 +265,10 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
             <span className="caption">{trialLine}</span>
           </div>
         )}
-        <div className="t-help" data-tour="side-help">
+        <div className={help ? "t-help cx-help open" : "t-help cx-help"} data-tour="side-help">
+          <button type="button" className="t-nav cx-help-btn" aria-expanded={help} onClick={() => setHelp(!help)} title={rail ? "Ayuda" : undefined}>
+            <span className="cx-help-q" aria-hidden="true">?</span><span>Ayuda</span>{demoEnabled && <i className="cx-help-dot" aria-label="Datos de ejemplo encendidos" />}<Icon name="right" size={14} strokeWidth={3} />
+          </button>
           <button type="button" className="t-nav" onClick={() => setTour({ id: teacherTourId(r) ?? "hoy" })} title={rail ? "Tutorial de esta sección" : undefined}>
             <Icon name="play" size={18} strokeWidth={2.4} /><span>Tutorial de esta sección</span>
           </button>
@@ -423,11 +424,16 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
       </main>
 
       <nav className="tl-bottom" aria-label="Secciones">
-        {NAV.map((n) => (
+        {NAV.map((n, i) => (<Fragment key={n.section}>
+          {i === 2 && (
+            <button type="button" className="cx-fab" aria-label="Crear una actividad" onClick={() => go({ section: "actividades", tab: "nueva" })}>
+              <Icon name="plus" size={26} strokeWidth={3} />
+            </button>
+          )}
           <button key={n.section} data-tour={`nav-${n.section}`} type="button" className={current === n.section ? "on" : ""} aria-current={current === n.section ? "page" : undefined} title={rail ? n.label : undefined} onClick={() => go({ section: n.section })}>
             <Icon name={n.icon} size={21} /><span>{n.label}</span>
           </button>
-        ))}
+        </Fragment>))}
         {admin && (
           <button type="button" data-tour="nav-colegio" className={current === "colegio" ? "on" : ""} onClick={() => go({ section: "colegio" })}>
             <Icon name="shield" size={21} /><span>Colegio</span>
