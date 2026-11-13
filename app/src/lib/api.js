@@ -35,6 +35,14 @@ export function createApi(client) {
       const rows = unwrap(await client.rpc("my_trial"));
       return (Array.isArray(rows) ? rows[0] : rows) ?? null;
     },
+    // Migration 0038: a teacher with no code opens their own trial workspace (school + city) and becomes its first teacher.
+    async startTeacherTrial({ schoolName, city, fullName }) {
+      return unwrap(await client.rpc("start_teacher_trial", { p_school_name: schoolName, p_city: city || null, p_full_name: fullName || null }));
+    },
+    // Migration 0038: a colleague who came from an invitation link records who invited them (best effort).
+    async noteTrialInviter(inviterId) {
+      return unwrap(await client.rpc("note_trial_inviter", { p_inviter: inviterId }));
+    },
     async teacherCode() {
       return unwrap(await client.rpc("school_teacher_code"));
     },
