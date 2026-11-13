@@ -97,10 +97,25 @@ const mixedKeys = (exam, n = 10) => {
   return exam.sections.flatMap((s) => [...s.questions].sort(() => Math.random() - 0.5).slice(0, per).map((q) => q.key)).slice(0, n);
 };
 
+// A first practice (or «5 preguntas más») should feel quick: one question per area, drawn from the shorter half of
+// each area (no long reading passage as the very first question). `skip`: keys already answered in this run of firsts.
+const textLength = (q) => [q.stimulus_md, q.group?.passage_md, q.group?.stimulus_md, q.stem_md, ...(q.options ?? []).map((o) => o.text_md)]
+  .reduce((n, t) => n + (typeof t === "string" ? t.replace(/<[^>]+>/g, "").length : 0), 0);
+const quickKeys = (exam, n = 5, skip = new Set()) => {
+  const picks = exam.sections.map((s) => {
+    const pool = s.questions.filter((q) => !skip.has(q.key)).sort((a, b) => textLength(a) - textLength(b));
+    const short = pool.slice(0, Math.max(1, Math.ceil(pool.length / 2)));
+    return short.length ? short[Math.floor(Math.random() * short.length)] : null;
+  }).filter(Boolean);
+  // Shortest first: the first answer comes within seconds; the long reading passage comes last.
+  return picks.sort((a, b) => textLength(a) - textLength(b)).slice(0, n).map((q) => q.key);
+};
+
 const storeScope = (a) => (a.assignmentId ? `asg-${a.assignmentId}` : a.repechaje ? "repechaje" : a.custom ? "custom" : a.scope);
 
 const STUDENT_SIDE = "condor:student-side";
 const FIRST_PRACTICE = "Primera práctica";
+const MORE_PRACTICE = "5 preguntas más";
 // Screens that cannot show anything without an open booklet.
 const BOOKLET_VIEWS = new Set(["setup", "custom", "test", "results", "review"]);
 
@@ -165,6 +180,8 @@ export default function App() {
     if (!tourScreen || auth.status === "loading" || tourSeen("estudiante", tourUid, tourScreen)) return undefined;
     // The first practice from the landing goes straight to the question: no tutorial on top of it.
     if (quickStart || attempt?.custom?.label === FIRST_PRACTICE) return undefined;
+    // Before the first practice is finished nothing else gets in the way: tutorials start after it.
+    if (auth.status === "ready" && loadHistory().length === 0) return undefined;
     const t = setTimeout(() => setStudentTourOpen((cur) => cur ?? tourScreen), 700);
     return () => clearTimeout(t);
   }, [tourScreen, tourUid, auth.status, quickStart, attempt?.custom?.label]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -288,9 +305,22 @@ export default function App() {
     if (auth.status === "ready") {
       let pending = false;
       try { pending = sessionStorage.getItem("icfes-login-pending") === "1"; sessionStorage.removeItem("icfes-login-pending"); } catch { /* blocked */ }
-      if (pending && view === "home" && !quickStart) setView("profile");
+      // Students land on a first practice (no history yet in this browser) or on Inicio; staff on their profile.
+      if (pending && view === "home" && !quickStart) {
+        if (auth.profile?.role !== "student") setView("profile");
+        else if (loadHistory().length === 0) setQuickStart(true);
+      }
     }
   }, [auth.status]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // A new account was just created on Ingresar: a student with no practice yet goes straight to a first practice
+  // (teachers are taken to their panel by the effect above).
+  const justClaimed = useRef(false);
+  useEffect(() => {
+    if (!justClaimed.current || auth.status !== "ready") return;
+    justClaimed.current = false;
+    if (auth.profile?.role === "student" && loadHistory().length === 0) setQuickStart(true);
+  }, [auth.status, auth.profile]);
 
   // Open the first exam once the index is known, preferring one that has Inglés (the 1ra booklets have none).
   useEffect(() => {
@@ -496,7 +526,7 @@ export default function App() {
         if (pool.length) { openExam(pool[Math.floor(Math.random() * pool.length)].slug); return; }
       }
       const sec = withoutHidden(selected.exam, hidden, selected.slug).sections.find((s) => testOf(s.name)?.id === quickArea);
-      const areaKeys = sec ? [...sec.questions].sort(() => Math.random() - 0.5).slice(0, 5).map((q) => q.key) : [];
+      const areaKeys = sec ? [...sec.questions].sort((a, b) => textLength(a) - textLength(b)).slice(0, Math.max(5, Math.ceil(sec.questions.length / 2))).sort(() => Math.random() - 0.5).slice(0, 5).map((q) => q.key) : [];
       if (areaKeys.length) {
         setQuickStart(false);
         clearQuickStart();
@@ -507,7 +537,7 @@ export default function App() {
     setQuickStart(false);
     clearQuickStart();
     if (selected.slug === TEACHER_SLUG) return;
-    const keys = mixedKeys(withoutHidden(selected.exam, hidden, selected.slug), 5);
+    const keys = quickKeys(withoutHidden(selected.exam, hidden, selected.slug), 5);
     if (keys.length) startKeys(selected.slug, keys, { label: FIRST_PRACTICE, mode: "practice" });
   }, [quickStart, quickExam, quickArea, exams, signedIn, selected, opening, attempt, consents]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -726,6 +756,10 @@ export default function App() {
             if (saved) resume(saved);
           }}
           onPractice={() => { setPreset(null); setView("setup"); }}
+          onFirstPractice={selected && selected.slug !== TEACHER_SLUG ? () => {
+            const keys = quickKeys(withoutHidden(selected.exam, hidden, selected.slug), 5);
+            if (keys.length) startKeys(selected.slug, keys, { label: FIRST_PRACTICE, mode: "practice" });
+          } : null}
           onSetup={(p) => { setPreset(p); setView("setup"); }}
           onGo={go}
           course={course}
@@ -801,7 +835,12 @@ export default function App() {
           onHome={goHome}
           locked={locked}
           lockedNote={attempt?.reveal === "after_close" ? "Tu docente mostrará las respuestas cuando cierre la asignación." : undefined}
-          onRetry={attempt.assignmentId ? retryAssigned : attempt.repechaje ? null : attempt.custom ? () => startKeys(attempt.slug, attempt.keys, { label: attempt.custom.label, mode: attempt.mode }) : () => startAttempt(attempt.scope, attempt.mode, attempt.order)}
+          retryLabel={[FIRST_PRACTICE, MORE_PRACTICE].includes(attempt.custom?.label) ? "Sigue con 5 más" : null}
+          onRetry={attempt.assignmentId ? retryAssigned : attempt.repechaje ? null : [FIRST_PRACTICE, MORE_PRACTICE].includes(attempt.custom?.label) ? () => {
+            const exam = withoutHidden(selected.exam, hidden, selected.slug);
+            const keys = quickKeys(exam, 5, new Set(attempt.keys ?? []));
+            if (keys.length) startKeys(selected.slug, keys, { label: MORE_PRACTICE, mode: "practice" });
+          } : attempt.custom ? () => startKeys(attempt.slug, attempt.keys, { label: attempt.custom.label, mode: attempt.mode }) : () => startAttempt(attempt.scope, attempt.mode, attempt.order)}
           onReviewTimes={(n) => { setReviewStart(n); setView("review"); }}
           exams={studentExams}
           onStartSession={startSession}
@@ -845,7 +884,7 @@ export default function App() {
         fetchExam={fetchExam} onPracticeKeys={startKeys} onGoal={() => go("profile")}
         onSimulacro={() => { setPreset({ scope: "all", mode: "timed" }); setView("setup"); }}
         onMix={() => selected && startKeys(selected.slug, mixedKeys(selected.exam), { label: "Mezcla de áreas", mode: "timed", perQuestionSec: 120 })} />}
-      {view === "login" && <Login onBack={() => setView(quickStart ? "home" : "profile")} />}
+      {view === "login" && <Login onBack={() => { justClaimed.current = true; setView("home"); }} />}
       {view === "history" && <History onBack={() => setView("home")} onNew={() => setView("setup")} onOpen={openFromHistory} />}
       {view === "reports" && <Reports onBack={() => setView("profile")} onPractice={() => setView("setup")} onOpen={openFromReport} />}
       {view === "teacher" && (rootAuth.status === "ready" && rootAuth.profile.role !== "student"
