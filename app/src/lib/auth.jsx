@@ -28,6 +28,22 @@ export function rememberTeacherCode(code) {
 export function forgetTeacherCode() {
   try { sessionStorage.removeItem(CODE_KEY); } catch { /* storage blocked */ }
 }
+// A colleague's invitation link (?codigo=…&de=<their id>): who invited, recorded once this account is a teacher.
+const INVITER_KEY = "condor:teacher-inviter";
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export function pendingInviter() {
+  try {
+    const fromUrl = new URLSearchParams(window.location.search).get("de");
+    if (fromUrl && UUID.test(fromUrl)) sessionStorage.setItem(INVITER_KEY, fromUrl.toLowerCase());
+    return sessionStorage.getItem(INVITER_KEY) || "";
+  } catch { return ""; }
+}
+function noteInviter(apiRef) {
+  const id = pendingInviter();
+  if (!id) return;
+  try { sessionStorage.removeItem(INVITER_KEY); } catch { /* storage blocked */ }
+  Promise.resolve().then(() => apiRef?.noteTrialInviter?.(id)).catch(() => {});
+}
 
 const realApi = supabase ? createApi(supabase) : null;
 // Demo mode (?demo=1) swaps in an in-memory school; the real backend is never touched.
@@ -36,12 +52,16 @@ let api = demoEnabled ? null : realApi;
 // Maps the database's error codes to something a person can act on.
 export function claimMessage(err) {
   const m = String(err?.message ?? "");
-  if (m.includes("school_not_found")) return "Para entrar como docente usa el correo de tu colegio o pide una invitación a la coordinación. Si eres estudiante, deja vacío el código.";
+  if (m.includes("school_not_found")) return "Ese código no existe. Revísalo, o déjalo vacío para crear tu propio espacio de prueba. Si eres estudiante, deja vacío el código.";
   if (m.includes("bad_teacher_code")) return "Ese código de docente no es correcto.";
   if (m.includes("trial_code_full")) return "Este código de prueba ya tiene el máximo de docentes. Pide uno nuevo a Cóndor.";
   if (m.includes("trial_code_expired")) return "Ese código de prueba venció. Pide uno nuevo a Cóndor.";
   if (m.includes("student_in_school")) return "Esta cuenta es de estudiante de un colegio. Entra con otra cuenta de Google para usar el código de docente.";
-  if (m.includes("redeem_teacher_code") || (m.includes("function") && m.includes("does not exist"))) return "Esta opción todavía no está activa. Escríbenos y te ayudamos a entrar como docente.";
+  if (m.includes("school_uses_condor")) return "Tu colegio ya usa Cóndor con ese correo. Pide el código de docente a la coordinación, o entra con tu correo personal para crear tu propio espacio de prueba.";
+  if (m.includes("school_name_required")) return "Escribe el nombre de tu colegio.";
+  if (m.includes("self_trial_used")) return "Esta cuenta ya abrió un espacio de prueba. Entra con ella para seguir, o escríbenos si necesitas otro.";
+  if (m.includes("self_trial_busy")) return "Hoy se abrieron muchos espacios de prueba. Inténtalo mañana o escríbenos y te damos un código.";
+  if (m.includes("start_teacher_trial") || m.includes("redeem_teacher_code") || (m.includes("function") && m.includes("does not exist"))) return "Esta opción todavía no está activa. Escríbenos y te ayudamos a entrar como docente.";
   return "No se pudo completar el ingreso. Inténtalo de nuevo.";
 }
 
@@ -117,11 +137,20 @@ export function AuthProvider({ children }) {
       claim: async ({ teacherCode, fullName }) => {
         const profile = await api.claimProfile({ teacherCode, fullName });
         forgetTeacherCode();
+        if (teacherCode && profile?.role !== "student") noteInviter(api);
         setState((s) => ({ ...s, status: "ready", profile, error: null }));
       },
       // An account that already exists (a student) becomes a teacher with a code (migration 0035).
       redeemTeacherCode: async (code) => {
         const profile = await api.redeemTeacherCode(code);
+        forgetTeacherCode();
+        noteInviter(api);
+        setState((s) => ({ ...s, status: "ready", profile, error: null }));
+        return profile;
+      },
+      // No code: the teacher opens their own trial workspace (migration 0038), as a first visit or from a student account.
+      startTrial: async ({ schoolName, city, fullName }) => {
+        const profile = await api.startTeacherTrial({ schoolName, city, fullName });
         forgetTeacherCode();
         setState((s) => ({ ...s, status: "ready", profile, error: null }));
         return profile;

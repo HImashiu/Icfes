@@ -857,7 +857,7 @@ export default function App() {
         : rootAuth.status === "ready" && !demoEnabled ? (
           <main className="frame tc-page">
             <h1>Panel docente</h1>
-            <p className="caption">Tu cuenta es de estudiante. Si eres docente, escribe tu código para abrir el panel.</p>
+            <p className="caption">Tu cuenta es de estudiante. Si eres docente, crea tu espacio o escribe el código de tu colegio.</p>
             <TeacherCode open error={teacherCodeError} onDone={() => setView("teacher")} />
             <button type="button" className="link" onClick={() => { if (window.location.hash.startsWith("#docente")) history.replaceState(null, "", window.location.pathname + window.location.search); setView("home"); }}>Volver a la app de estudiante</button>
           </main>

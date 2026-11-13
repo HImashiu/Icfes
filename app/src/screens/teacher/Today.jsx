@@ -12,6 +12,7 @@ import { areaColor } from "../../lib/brand.js";
 import { areaShort, contextColor } from "../../lib/teaching.js";
 import { FirstSteps } from "./Onboarding.jsx";
 import { BetaNote } from "../../components/Beta.jsx";
+import TeacherSpread from "./TeacherSpread.jsx";
 
 const greeting = (now = new Date()) => (now.getHours() < 12 ? "Buenos días" : now.getHours() < 19 ? "Buenas tardes" : "Buenas noches");
 const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
@@ -63,6 +64,7 @@ export default function Today({ api, profile, courses, readOnlyIds = [], assignm
           </div>
         </div>
         <FirstSteps steps={steps} go={go} onTour={onTour} />
+        <TeacherSpread api={api} profile={profile} />
       </div>
     );
   }
@@ -96,6 +98,8 @@ export default function Today({ api, profile, courses, readOnlyIds = [], assignm
           <FirstSteps steps={steps} go={go} onTour={onTour} />
         </section>
       )}
+
+      <TeacherSpread api={api} profile={profile} stats={{ students: m.students, activities: assignments.length, avgPct: k.avgPct }} />
 
       <div className="td-kpis">
         <button type="button" className="td-kpi card" onClick={() => go({ section: "actividades", tab: "lista" })}>

@@ -2211,6 +2211,14 @@ button.rc-dest:hover { border-color: var(--accent); }
 .td-card { display: grid; gap: 8px; }
 .td-card h2 { margin: 0; font-size: 17px; }
 .td-card .section-head { margin-bottom: 2px; }
+/* Hoy › Trae a tus colegas (trial schools, TeacherSpread.jsx) */
+.ts-spread .section-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.ts-spread .ts-later { margin-left: auto; font-size: 13px; }
+.ts-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ts-row .btn-like { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+.ts-coord { display: grid; gap: 8px; padding-top: 10px; margin-top: 4px; border-top: 1px dashed var(--line, rgba(0,0,0,.12)); }
+.ts-coord > div:first-child { display: grid; gap: 2px; }
+@media (max-width: 520px) { .ts-row .btn-like, .ts-row button { flex: 1 1 100%; justify-content: center; } }
 .td-task { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
 .td-task:first-of-type { border-top: 0; }
 .td-tile { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; flex: none; border: 1px solid var(--line); }
