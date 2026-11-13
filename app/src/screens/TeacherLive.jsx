@@ -229,6 +229,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
   // The sidebar folds down to an icon rail and back; the choice is remembered on this device.
   // Tutorial, every function and the example data live under one «Ayuda» entry (open while the example is on).
   const [help, setHelp] = useState(() => demoEnabled);
+  const [more, setMore] = useState(false);
   const [rail, setRail] = useState(() => { try { return localStorage.getItem("condor.teacher.rail") === "1"; } catch { return false; } });
   const toggleRail = () => setRail((v) => { try { localStorage.setItem("condor.teacher.rail", v ? "0" : "1"); } catch { /* storage blocked */ } return !v; });
   const r = route.section === "colegio" && !admin ? normalize({ section: "hoy" }) : route;
@@ -424,7 +425,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
       </main>
 
       <nav className="tl-bottom" aria-label="Secciones">
-        {NAV.map((n, i) => (<Fragment key={n.section}>
+        {NAV.slice(0, 4).map((n, i) => (<Fragment key={n.section}>
           {i === 2 && (
             <button type="button" className="cx-fab" aria-label="Crear una actividad" onClick={() => go({ section: "actividades", tab: "nueva" })}>
               <Icon name="plus" size={26} strokeWidth={3} />
@@ -434,12 +435,33 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
             <Icon name={n.icon} size={21} /><span>{n.label}</span>
           </button>
         </Fragment>))}
-        {admin && (
-          <button type="button" data-tour="nav-colegio" className={current === "colegio" ? "on" : ""} onClick={() => go({ section: "colegio" })}>
-            <Icon name="shield" size={21} /><span>Colegio</span>
-          </button>
-        )}
+        {/* Biblioteca, Colegio, Cuenta and Ayuda don't fit on a phone bar: they live in the «Más» sheet. */}
+        <button type="button" data-tour="nav-mas" className={["biblioteca", "colegio", "cuenta"].includes(current) || more ? "on" : ""} aria-expanded={more} onClick={() => setMore(!more)}>
+          <Icon name="grid" size={21} /><span>Más</span>
+        </button>
       </nav>
+      {more && (
+        <div className="cx-sheet-wrap" onClick={() => setMore(false)}>
+          <div className="cx-sheet" role="dialog" aria-label="Más secciones" onClick={(e) => e.stopPropagation()}>
+            <span className="cx-sheet-grip" aria-hidden="true" />
+            <div className="cx-sheet-me"><strong>{profile.full_name || profile.email}</strong><span className="caption">{admin ? "Coordinación" : "Docente"}{trial ? ` · Prueba gratis · ${trialLine}` : ""}</span></div>
+            {[
+              { to: { section: "biblioteca" }, icon: "school", label: "Biblioteca", sub: "Banco, mis preguntas, control" },
+              admin && { to: { section: "colegio" }, icon: "shield", label: "Colegio", sub: "Cursos, docentes, calificación" },
+              { to: { section: "cuenta" }, icon: "user", label: "Mi cuenta", sub: "Perfil, permisos, sesiones" },
+            ].filter(Boolean).map((x) => (
+              <button key={x.label} type="button" className={current === x.to.section ? "cx-sheet-row on" : "cx-sheet-row"} onClick={() => { setMore(false); go(x.to); }}>
+                <Icon name={x.icon} size={19} /><span><b>{x.label}</b><small>{x.sub}</small></span>
+              </button>
+            ))}
+            <div className="cx-sheet-pair">
+              <button type="button" className="secondary" onClick={() => { setMore(false); go({ section: "actividades", tab: "vivo" }); }}><Icon name="bolt" size={16} /> Juego en vivo</button>
+              <button type="button" className="secondary" onClick={() => { setMore(false); setTour({ id: teacherTourId(r) ?? "hoy" }); }}><Icon name="play" size={16} /> Tutorial</button>
+            </div>
+            <ExampleDataSwitch className="tl-menu-switch" />
+          </div>
+        </div>
+      )}
 
       {tour && loaded && (() => {
         const ctx = {

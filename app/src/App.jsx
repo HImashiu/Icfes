@@ -28,6 +28,7 @@ import DemoBanner from "./demo/DemoBanner.jsx";
 import TeacherCode from "./components/TeacherCode.jsx";
 import LaunchNotice from "./components/LaunchNotice.jsx";
 import Consent from "./screens/Consent.jsx";
+import Mascot from "./components/Mascot.jsx";
 import FamilyReport from "./screens/FamilyReport.jsx";
 import { tokenFromHash } from "./lib/family.js";
 import { applyOverrides } from "./lib/overrides.js";
@@ -72,16 +73,43 @@ class ScreenBoundary extends Component {
     if (!this.state.failed) return this.props.children;
     return (
       <main className="frame">
-        <div className="card" style={{ display: "grid", gap: 12, justifyItems: "start" }}>
-          <strong>Algo salió mal en esta pantalla</strong>
-          <span className="caption">Tu avance está guardado en este dispositivo.</span>
-          <button type="button" className="primary" onClick={this.props.onHome}>Volver al inicio</button>
+        <div className="card cx-state">
+          <Mascot pose="thinking" size={88} />
+          <strong>No pudimos mostrar esta pantalla</strong>
+          <span className="caption">Lo que ya respondiste está guardado en este dispositivo. Puede ser la conexión: prueba otra vez.</span>
+          <div className="cx-state-actions">
+            <button type="button" className="primary" onClick={() => this.setState({ failed: false })}>Intentar otra vez</button>
+            <button type="button" className="secondary" onClick={this.props.onHome}>Volver al inicio</button>
+          </div>
         </div>
       </main>
     );
   }
 }
 
+
+// While something loads: the shape of a screen in grey, never a lone «Cargando…».
+function Loading() {
+  return (
+    <div className="cx-skel" role="status" aria-label="Cargando">
+      <i style={{ width: "38%", height: 30 }} /><i style={{ width: "62%" }} />
+      <div className="cx-skel-card"><i style={{ width: "40%" }} /><i style={{ width: "86%", height: 22 }} /><i style={{ width: "70%" }} /></div>
+      <div className="cx-skel-card"><i style={{ width: "30%" }} /><i style={{ width: "100%", height: 70 }} /></div>
+    </div>
+  );
+}
+
+// When the device loses the connection a slim strip says so; it goes away when the signal comes back.
+function OfflineStrip() {
+  const [off, setOff] = useState(() => typeof navigator !== "undefined" && navigator.onLine === false);
+  useEffect(() => {
+    const on = () => setOff(false), down = () => setOff(true);
+    window.addEventListener("online", on); window.addEventListener("offline", down);
+    return () => { window.removeEventListener("online", on); window.removeEventListener("offline", down); };
+  }, []);
+  if (!off) return null;
+  return <p className="cx-offline" role="status">Sin conexión. Puedes seguir respondiendo; antes de entregar espera a que vuelva la señal.</p>;
+}
 
 // The student's unfinished attempt for this exam, across the whole exam and each area.
 function findResumable(slug, exam) {
@@ -704,7 +732,7 @@ export default function App() {
   if (familyToken && auth.api) return <FamilyReport api={auth.api} token={familyToken} />;
   // Internal review of every figure spec (not in the student navigation).
   if (typeof window !== "undefined" && window.location.hash === "#revision-figuras") return <FigureReview />;
-  if (signedIn && consents === null) return <main className="frame"><p className="muted">Cargando…</p></main>;
+  if (signedIn && consents === null) return <main className="frame"><Loading /></main>;
   if (signedIn && needsTerms(consents)) {
     return (
       <Consent
@@ -771,6 +799,7 @@ export default function App() {
     <div className={view === "test" || view === "teacher" ? "app wide" : "app"}>
       <ScreenBoundary key={view} onHome={goHome}>
       {!demoEnabled && auth.status !== "ready" && LAUNCH_VIEWS.has(view) && <LaunchNotice />}
+      <OfflineStrip />
       {loadError && <p className="notice error">{loadError}</p>}
       {openError && <p className="notice error">{openError}</p>}
       {((opening && !openingQuiet) || (!selected && BOOKLET_VIEWS.has(view))) && (
