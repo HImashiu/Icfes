@@ -106,9 +106,18 @@
 @media (max-width: 800px) {
   #root .tl-bottom { left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); border-radius: 24px; border: 1.5px solid var(--line); background: var(--surface); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45); padding: 6px 4px; align-items: center; }
   #root .tl-bottom button.on { color: var(--accent-ink); }
-  #root .tl-bottom .cx-fab { display: grid; place-items: center; justify-self: center; width: 54px; height: 54px; min-height: 0; margin-top: -26px; border-radius: 18px; background: var(--accent); color: var(--cx-ink);
-    border: 2px solid var(--cx-ink); box-shadow: 0 4px 0 var(--accent-shadow); transform: rotate(-4deg); transition: transform 0.25s var(--cx-spring); }
-  #root .tl-bottom .cx-fab:active { transform: rotate(-4deg) translateY(3px); box-shadow: none; }
+  /* «Crear» sits in the bar like the other entries: a lime square with its label. Open, the + turns into a × and
+     the bar stays above the dimmed page, so the same button closes what it opened. */
+  #root .tl-bottom .cx-fab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 46px; padding: 2px 0; border: 0; background: transparent;
+    color: var(--text); font-size: 10.5px; font-weight: 800; cursor: pointer; }
+  #root .tl-bottom .cx-fab .cx-fab-ico { display: grid; place-items: center; width: 44px; height: 30px; border-radius: 11px; background: var(--accent); color: var(--cx-ink);
+    box-shadow: 0 3px 0 var(--accent-shadow); transition: transform 0.28s var(--cx-spring), background-color 0.2s, box-shadow 0.2s; }
+  #root .tl-bottom .cx-fab .cx-fab-ico svg { transition: transform 0.32s var(--cx-spring); }
+  #root .tl-bottom .cx-fab:active .cx-fab-ico { transform: translateY(3px); box-shadow: none; }
+  #root .tl-bottom .cx-fab.open .cx-fab-ico { background: var(--cx-ink); color: var(--accent); box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35); }
+  #root .tl-bottom .cx-fab.open .cx-fab-ico svg { transform: rotate(135deg); }
+  /* One «+» on a phone: the bar's. The top bar's copy stays mounted (it owns the menu) but is not shown. */
+  #root .tl-new-wrap .tl-new { display: none; }
   #root .tl { padding-bottom: 92px; }
 }
 
@@ -398,6 +407,19 @@
 .na-item.na-kind .na-ico { background: var(--cx-ink); color: var(--k); width: 34px; height: 34px; border-radius: 12px; }
 .na-tarea { --k: #C8F04A; } .na-practica { --k: #5ED3B4; } .na-quiz { --k: #8AB4FF; } .na-simulacro { --k: #FFB547; } .na-papel { --k: #F59EC4; }
 .na-sep { grid-column: 1 / -1; height: auto; background: none; margin: 6px 4px 0; }
+/* Phone: the sheet rises out of «Crear» as a card above the bar, its cards popping in one after another. */
+@media (max-width: 800px) {
+  body.na-open #root .tl-bottom { z-index: 720; }
+  body.na-open .na-sheet { left: 8px; right: 8px; bottom: calc(84px + env(safe-area-inset-bottom)); max-height: calc(100dvh - 120px); border-radius: 24px; padding-bottom: 10px;
+    transform-origin: 50% 100%; animation: na-rise 0.34s var(--cx-spring, cubic-bezier(0.34, 1.56, 0.64, 1)); }
+  .na-sheet .na-item { animation: na-pop 0.36s var(--cx-spring, cubic-bezier(0.34, 1.56, 0.64, 1)) both; animation-delay: calc(var(--i, 0) * 35ms + 60ms); }
+  .na-sheet.leaving { animation: na-sink 0.19s ease-in forwards; }
+  .na-sheet-wrap.leaving .na-backdrop { opacity: 0 !important; transition: opacity 0.19s; }
+}
+@keyframes na-rise { from { opacity: 0; transform: translateY(40px) scale(0.6); } to { opacity: 1; transform: none; } }
+@keyframes na-sink { to { opacity: 0; transform: translateY(40px) scale(0.6); } }
+@keyframes na-pop { from { opacity: 0; transform: translateY(14px) scale(0.92); } }
+@media (prefers-reduced-motion: reduce) { .na-sheet, .na-sheet .na-item, .na-sheet.leaving { animation: none !important; } }
 .na-sep span { font: 800 12px var(--cx-display); text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-2); }
 .na-item:not(.na-kind) { grid-column: 1 / -1; border: 1.5px solid var(--line); border-radius: 16px; background: var(--surface-2); }
 .na-item:not(.na-kind) .na-ico { border-radius: 50%; }

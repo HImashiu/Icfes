@@ -160,7 +160,7 @@ export function NewActivityMenu({ go, disabled, onLive }) {
   const [drag, setDrag] = useState(0); // phone: how far the sheet is pulled down
   const root = useRef(null);
   const menu = useRef(null);
-  const phone = () => typeof window !== "undefined" && window.matchMedia?.("(max-width: 767px)").matches;
+  const phone = () => typeof window !== "undefined" && window.matchMedia?.("(max-width: 800px)").matches;
   // Desktop: aligned to the button's right edge, kept inside the window, scrolls when taller than the space below.
   const place = () => {
     if (phone()) { setBox(null); return; }
@@ -171,11 +171,19 @@ export function NewActivityMenu({ go, disabled, onLive }) {
     const top = r.bottom + 8;
     setBox({ left, top, width: w, maxHeight: Math.max(200, window.innerHeight - top - 12) });
   };
+  // Closing plays the sheet's way out first (phone), so the tap visibly does something.
+  const [leaving, setLeaving] = useState(false);
+  const close = () => {
+    if (!open || leaving) return;
+    if (!phone() || box) { setOpen(false); return; }
+    setLeaving(true);
+    setTimeout(() => { setLeaving(false); setOpen(false); }, 190);
+  };
   useLayoutEffect(() => { if (open) place(); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!open) return undefined;
-    const away = (e) => { if (!root.current?.contains(e.target) && !menu.current?.contains(e.target)) setOpen(false); };
-    const esc = (e) => { if (e.key === "Escape") setOpen(false); };
+    const away = (e) => { if (!root.current?.contains(e.target) && !menu.current?.contains(e.target) && !e.target.closest?.(".cx-fab")) close(); };
+    const esc = (e) => { if (e.key === "Escape") close(); };
     const re = () => place();
     document.addEventListener("pointerdown", away);
     document.addEventListener("keydown", esc);
@@ -188,14 +196,20 @@ export function NewActivityMenu({ go, disabled, onLive }) {
       window.removeEventListener("resize", re); window.removeEventListener("scroll", re, true);
       document.body.style.overflow = body;
     };
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, leaving, box]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!open) setDrag(0); }, [open]);
+  // The phone bar's «+» turns into a × while the sheet is open (and the bar stays above the dimmed page).
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("condor:new-activity-state", { detail: { open: open && !leaving } }));
+    document.body.classList.toggle("na-open", open && !leaving && !box);
+    return () => document.body.classList.remove("na-open");
+  }, [open, leaving, box]);
   // The phone bar's round «+» opens this same menu, so both «+» lead to the same choice.
   useEffect(() => {
-    const ask = () => { if (!disabled) setOpen(true); };
+    const ask = () => { if (disabled) return; if (open) close(); else setOpen(true); };
     window.addEventListener("condor:new-activity", ask);
     return () => window.removeEventListener("condor:new-activity", ask);
-  }, [disabled]);
+  }, [disabled, open, leaving, box]); // eslint-disable-line react-hooks/exhaustive-deps
   const pick = (to) => { setOpen(false); if (to.tab === "vivo") onLive?.(); go(to); };
   // Phone: pull the sheet down from its handle (or from the list when it is scrolled to the top) to close it.
   const startDrag = (e) => {
@@ -203,22 +217,22 @@ export function NewActivityMenu({ go, disabled, onLive }) {
     const y0 = e.clientY;
     let dy = 0;
     const move = (ev) => { dy = Math.max(0, ev.clientY - y0); setDrag(dy); };
-    const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); window.removeEventListener("pointercancel", up); if (dy > 90) setOpen(false); else setDrag(0); };
+    const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); window.removeEventListener("pointercancel", up); if (dy > 90) close(); else setDrag(0); };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", up);
   };
   const items = (
     <>
-      {Object.entries(PRESETS).map(([id, p]) => (
-        <button key={id} type="button" role="menuitem" className={`na-item na-kind na-${id}`} onClick={() => pick({ section: "actividades", tab: "nueva", preset: id })}>
+      {Object.entries(PRESETS).map(([id, p], i) => (
+        <button key={id} type="button" role="menuitem" style={{ "--i": i }} className={`na-item na-kind na-${id}`} onClick={() => pick({ section: "actividades", tab: "nueva", preset: id })}>
           <span className="na-ico" aria-hidden="true"><Icon name={p.icon} size={18} /></span>
           <span><strong>{p.label}</strong><span className="caption">{p.note}</span></span>
         </button>
       ))}
       <span className="na-sep" aria-hidden="true"><span>También</span></span>
-      {EXTRA.map((x) => (
-        <button key={x.id} type="button" role="menuitem" className="na-item" onClick={() => pick(x.to)}>
+      {EXTRA.map((x, i) => (
+        <button key={x.id} type="button" role="menuitem" style={{ "--i": i + 6 }} className="na-item" onClick={() => pick(x.to)}>
           <span className="na-ico" aria-hidden="true"><Icon name={x.icon} size={18} /></span>
           <span><strong>{x.label}</strong><span className="caption">{x.note}</span></span>
         </button>
@@ -234,12 +248,12 @@ export function NewActivityMenu({ go, disabled, onLive }) {
         box ? (
           <div ref={menu} className="na-menu" role="menu" aria-label="Qué quieres crear" style={box}>{items}</div>
         ) : (
-          <div className="na-sheet-wrap">
-            <div className="na-backdrop" onClick={() => setOpen(false)} style={{ opacity: Math.max(0, 1 - drag / 300) }} />
-            <div ref={menu} className="na-sheet" role="menu" aria-label="Qué quieres crear" onPointerDown={startDrag}
+          <div className={leaving ? "na-sheet-wrap leaving" : "na-sheet-wrap"}>
+            <div className="na-backdrop" onClick={close} style={{ opacity: Math.max(0, 1 - drag / 300) }} />
+            <div ref={menu} className={leaving ? "na-sheet leaving" : "na-sheet"} role="menu" aria-label="Qué quieres crear" onPointerDown={startDrag}
               style={drag ? { transform: `translateY(${drag}px)`, transition: "none" } : undefined}>
               <div className="na-grab" aria-hidden="true" />
-              <div className="na-sheet-head"><strong>¿Qué vas <em>a crear?</em></strong><button type="button" className="icon-btn" aria-label="Cerrar" onClick={() => setOpen(false)}><Icon name="x" size={18} /></button></div>
+              <div className="na-sheet-head"><strong>¿Qué vas <em>a crear?</em></strong><button type="button" className="icon-btn" aria-label="Cerrar" onClick={close}><Icon name="x" size={18} /></button></div>
               <div className="na-list">{items}</div>
             </div>
           </div>

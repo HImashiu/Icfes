@@ -231,6 +231,13 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
   // Tutorial, every function and the example data live under one «Ayuda» entry (open while the example is on).
   const [help, setHelp] = useState(() => demoEnabled);
   const [more, setMore] = useState(false);
+  // The phone bar's «Crear» shows whether its sheet is open (the sheet lives in NewActivityMenu).
+  const [fabOpen, setFabOpen] = useState(false);
+  useEffect(() => {
+    const on = (e) => setFabOpen(Boolean(e.detail?.open));
+    window.addEventListener("condor:new-activity-state", on);
+    return () => window.removeEventListener("condor:new-activity-state", on);
+  }, []);
   const [rail, setRail] = useState(() => { try { return localStorage.getItem("condor.teacher.rail") === "1"; } catch { return false; } });
   const toggleRail = () => setRail((v) => { try { localStorage.setItem("condor.teacher.rail", v ? "0" : "1"); } catch { /* storage blocked */ } return !v; });
   const r = route.section === "colegio" && !admin ? normalize({ section: "hoy" }) : route;
@@ -428,8 +435,8 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
       <nav className="tl-bottom" aria-label="Secciones">
         {NAV.slice(0, 4).map((n, i) => (<Fragment key={n.section}>
           {i === 2 && (
-            <button type="button" className="cx-fab" aria-label="Crear una actividad" onClick={() => window.dispatchEvent(new Event("condor:new-activity"))}>
-              <Icon name="plus" size={26} strokeWidth={3} />
+            <button type="button" className={fabOpen ? "cx-fab open" : "cx-fab"} aria-label={fabOpen ? "Cerrar el menú Crear" : "Crear una actividad"} aria-expanded={fabOpen} onClick={() => window.dispatchEvent(new Event("condor:new-activity"))}>
+              <span className="cx-fab-ico"><Icon name="plus" size={22} strokeWidth={3.2} /></span><span>Crear</span>
             </button>
           )}
           <button key={n.section} data-tour={`nav-${n.section}`} type="button" className={current === n.section ? "on" : ""} aria-current={current === n.section ? "page" : undefined} title={rail ? n.label : undefined} onClick={() => go({ section: n.section })}>
