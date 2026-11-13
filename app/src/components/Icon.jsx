@@ -83,6 +83,7 @@ const ICONS = {
   plus: { d: "M12 5v14M5 12h14" },
   bell: { fill: "M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z", d: "M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 21h4" },
   panel: { fill: "M4 5h6v14H4z", d: "M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM10 4v16" },
+  menu: { d: "M4 7h16M4 12h16M4 17h16" },
   grid: { d: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" },
   filter: { d: "M4 6h16M7 12h10M10 18h4" },
   lock: { fill: "M5 11h14v10H5z", d: "M5 11h14v10H5zM8 11V7a4 4 0 0 1 8 0v4" },

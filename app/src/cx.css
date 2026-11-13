@@ -55,9 +55,7 @@
 #root .screen-head h1 { font-size: clamp(26px, 3.4vw, 44px); }
 #root .home-head .greet strong { font-size: clamp(26px, 3.6vw, 46px); }
 #root .td-hello h1 { font-size: clamp(28px, 3.6vw, 50px); margin: 4px 0 6px; }
-#root .home-head .greet strong::after { content: "hoy"; display: inline-block; margin-left: 0.3em; padding: 0.04em 0.24em 0.1em; border-radius: 0.16em;
-  background: var(--accent); color: var(--cx-ink); transform: rotate(-3deg); font-size: 0.62em; vertical-align: 0.22em;
-  box-shadow: 0 0 0 0.07em var(--cx-cream), 0 0.1em 0 0.07em rgba(0, 0, 0, 0.25); }
+
 
 /* 3 · Buttons: the landing's chunky lime with an ink edge; secondaries lift on a soft shadow. */
 #root .primary:not(:disabled) { border: 2px solid var(--cx-ink); box-shadow: 0 4px 0 var(--cx-ink); font-weight: 800; transition: transform 0.12s var(--cx-ease), box-shadow 0.12s var(--cx-ease), filter 0.15s; }
@@ -232,14 +230,12 @@
   #root .home-head { flex-wrap: wrap; row-gap: 4px; }
   #root .home-head .greet { flex: 1 1 calc(100% - 60px); }
   #root .home-head .greet strong { font-size: 30px; }
-  #root .home-head .greet strong::after { display: none; }
   #root .home-head .avatar { order: 0; }
 }
 #root .beta-note { min-width: 0; max-width: 100%; }
 #root .beta-note p { min-width: 0; }
 /* Teacher phone bar: icons only, the current section keeps its label; the «+» sits in the middle. */
 @media (max-width: 800px) {
-  #root .tl-bottom button:not(.on):not(.cx-fab) span { display: none; }
   #root .tl-bottom button.on { background: var(--accent); color: var(--cx-ink); border-radius: 16px; box-shadow: 0 3px 0 var(--accent-shadow); }
   #root .td-hello h1 { font-size: 30px; }
 }
@@ -285,3 +281,20 @@
 #root .cx-load-text b { font: 800 15px/1 var(--cx-display); text-transform: uppercase; letter-spacing: 0.01em; }
 #root .cx-load .cx-load-bar { width: 160px; height: 6px; }
 @media (prefers-reduced-motion: reduce) { .cx-load-bar i { animation: none; left: 0; width: 100%; opacity: 0.5; } }
+
+/* Titles with the landing's accent line: serif italic word + tilted lime sticker («hoy hay 14 cosas», «esto es lo de hoy»). */
+#root .cx-sub { display: block; margin-top: 0.08em; font-size: 0.86em; }
+#root .cx-sub .cx-script { color: var(--accent); font-size: 1.05em; }
+#root .td-hero .cx-sub .cx-script { color: var(--accent); }
+#root .cx-sub .cx-stk { --t: -3deg; }
+@media (max-width: 600px) { #root .home-head .greet strong .cx-sub { font-size: 0.8em; } }
+/* Phone bars like the first design: every item keeps its label, the current one is a lime tile, «+» rises above. */
+@media (max-width: 800px) {
+  #root .tl-bottom { padding: 6px 4px; align-items: center; }
+  #root .tl-bottom button { font-size: 10.5px; font-weight: 700; gap: 3px; padding: 6px 2px; }
+  #root .tl-bottom button span { display: block; }
+  #root .tl-bottom button.on { padding: 6px 4px; }
+}
+@media (max-width: 767px) {
+  #root .bottom-nav .nav-item span { display: block; font-size: 10.5px; font-weight: 700; }
+}

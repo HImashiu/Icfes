@@ -438,7 +438,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
         </Fragment>))}
         {/* Biblioteca, Colegio, Cuenta and Ayuda don't fit on a phone bar: they live in the «Más» sheet. */}
         <button type="button" data-tour="nav-mas" className={["biblioteca", "colegio", "cuenta"].includes(current) || more ? "on" : ""} aria-expanded={more} onClick={() => setMore(!more)}>
-          <Icon name="grid" size={21} /><span>Más</span>
+          <Icon name="menu" size={21} /><span>Más</span>
         </button>
       </nav>
       {more && (

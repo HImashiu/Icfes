@@ -75,7 +75,7 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
         <div className="avatar" aria-hidden="true">{realName ? realName[0] : <Icon name="user" size={22} />}</div>
         <div className="greet">
           <span className="caption">{course ? `Curso ${course}` : realName ? (independent ? "Práctica personal" : "Tu colegio") : "Sin cuenta"}</span>
-          <strong>{realName ? `Hola, ${realName}` : "Hola"}</strong>
+          <strong>{realName ? `Hola, ${realName}` : "Hola"}<span className="cx-sub"><span className="cx-script">esto es</span> <span className="cx-stk">lo de hoy</span></span></strong>
         </div>
         {onLive && (
           <button type="button" className="tl-live sh-live" data-tour="s-live" onClick={onLive} aria-label="Juego en vivo">
