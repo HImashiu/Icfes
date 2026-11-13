@@ -23,6 +23,9 @@
     { "pattern": "condoricfes.com", "custom_domain": true },
     { "pattern": "www.condoricfes.com", "custom_domain": true }
   ],
+  // Hourly: the day's practice reminders by Web Push (worker/growth.js). Needs the secrets VAPID_PRIVATE_JWK,
+  // VAPID_PUBLIC (node scripts/vapid-keys.mjs prints both) and PUSH_CRON_TOKEN (growth_secrets.push_cron, migration 0050).
+  "triggers": { "crons": ["5 * * * *"] },
   // Burst limits for the exam files (worker/index.js). Cloudflare counts per location; periods can be 10 or 60 s.
   "ratelimits": [
     { "name": "EXAM_IP_RATE", "namespace_id": "4101", "simple": { "limit": 120, "period": 60 } },
