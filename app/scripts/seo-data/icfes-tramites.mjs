@@ -42,11 +42,16 @@ export const CAL_2027 = {
   A: null,
 };
 
+// Questions per session from the ICFES "Guía de orientación Saber 11.º 2026" (figura 1, cuadernillo estándar): each
+// session lasts 4 h 30 min and includes 12 questions of the clima escolar questionnaire (read 2026-11-13).
 export const EXAM_DAY = {
+  guideUrl: "https://www.icfes.gov.co/wp-content/uploads/2025/11/guia-orientacion-saber-11-2026-26-noviembre.pdf",
+  duration: "4 horas y 30 minutos",
+  climaPerSession: 12,
   start: "7:00 a. m.",
   arriveBefore: "15 minutos",
-  session1: { questions: 131, tests: "Matemáticas, Lectura crítica, Sociales y ciudadanas y Ciencias naturales" },
-  session2: { start: "1:30 p. m.", questions: 147, tests: "Matemáticas, Sociales y ciudadanas, Ciencias naturales e Inglés" },
+  session1: { questions: 143, tests: "Matemáticas, Lectura crítica, Sociales y ciudadanas y Ciencias naturales" },
+  session2: { start: "1:30 p. m.", questions: 159, tests: "Matemáticas, Sociales y ciudadanas, Ciencias naturales e Inglés" },
   bring: ["Lápiz número 2", "Borrador", "Tajalápiz", "Tu documento de identidad"],
   ids: [
     "Cédula de ciudadanía, física o digital",

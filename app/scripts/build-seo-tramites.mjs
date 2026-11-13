@@ -66,7 +66,7 @@ ${cta(up, ctaText)}`;
     main: `<h2>Qué evalúa</h2>
   <p class="prose">Tiene cinco pruebas, todas de selección múltiple: <a href="${up}preguntas-icfes/lectura-critica/">Lectura crítica</a>, <a href="${up}preguntas-icfes/matematicas/">Matemáticas</a>, <a href="${up}preguntas-icfes/sociales-y-ciudadanas/">Sociales y ciudadanas</a>, <a href="${up}preguntas-icfes/ciencias-naturales/">Ciencias naturales</a> e <a href="${up}preguntas-icfes/ingles/">Inglés</a>. No mide si memorizaste datos sino si sabes usar lo que aprendiste: leer con criterio, razonar con números, interpretar situaciones. Mira <a href="${up}competencias-icfes/">qué competencias evalúa cada prueba</a>.</p>
   <h2>Cómo es el día del examen</h2>
-  <p class="prose">Se presenta en un solo día, en dos sesiones. Según el ICFES, en 2026 la primera sesión empezó a las ${EXAM_DAY.start} con ${EXAM_DAY.session1.questions} preguntas de ${EXAM_DAY.session1.tests}; la segunda empezó a la ${EXAM_DAY.session2.start} con ${EXAM_DAY.session2.questions} preguntas de ${EXAM_DAY.session2.tests}. Lo que debes llevar está en la guía de la <a href="${up}citacion-icfes/">citación ICFES</a>.</p>
+  <p class="prose">Se presenta en un solo día, en dos sesiones de ${EXAM_DAY.duration} cada una. Según la ${ext(EXAM_DAY.guideUrl, "guía de orientación del Saber 11 2026")}, la primera sesión tiene ${EXAM_DAY.session1.questions} preguntas (${EXAM_DAY.session1.tests}) y la segunda ${EXAM_DAY.session2.questions} (${EXAM_DAY.session2.tests}); en cada sesión, ${EXAM_DAY.climaPerSession} son de un cuestionario de clima escolar. En 2026 la primera sesión empezó a las ${EXAM_DAY.start} y la segunda a la ${EXAM_DAY.session2.start}. Lo que debes llevar está en la guía de la <a href="${up}citacion-icfes/">citación ICFES</a>.</p>
   <h2>Cómo se califica</h2>
   <p class="prose">Cada prueba tiene un puntaje de 0 a 100 y un nivel de desempeño. El puntaje global va de 0 a 500: Lectura crítica, Matemáticas, Sociales y Ciencias pesan 3 cada una e Inglés pesa 1; se suman, se dividen entre 13 y se multiplican por 5. Pruébalo con la <a href="${up}calculadora-puntaje-icfes/">calculadora del puntaje ICFES</a> y mira los <a href="${up}niveles-de-desempeno-icfes/">niveles de desempeño</a>.</p>
   <h2>Cuándo se presenta</h2>
@@ -77,11 +77,11 @@ ${cta(up, ctaText)}`;
   <p class="prose">Las universidades públicas que admiten con el Saber 11 calculan un puntaje ponderado con tus cinco pruebas. Mira cuánto pide cada una en <a href="${up}puntaje-icfes/">puntaje ICFES para entrar a la universidad</a>.</p>`,
     faq: [
       ["¿El ICFES y el Saber 11 son lo mismo?", "El ICFES es la entidad que hace los exámenes de Estado; el Saber 11 es el examen de grado once. Por costumbre mucha gente llama «el ICFES» al Saber 11."],
-      ["¿Cuántas preguntas tiene el Saber 11?", `Según el ICFES, en 2026 la primera sesión tuvo ${EXAM_DAY.session1.questions} preguntas y la segunda ${EXAM_DAY.session2.questions}.`],
+      ["¿Cuántas preguntas tiene el Saber 11?", `Según la guía de orientación 2026 del ICFES, la primera sesión tiene ${EXAM_DAY.session1.questions} preguntas y la segunda ${EXAM_DAY.session2.questions}, con ${EXAM_DAY.duration} cada una. En cada sesión, ${EXAM_DAY.climaPerSession} preguntas son de un cuestionario de clima escolar.`],
       ["¿Cuál es el puntaje máximo?", "500 en el global y 100 en cada prueba."],
       ["¿Cómo me preparo?", "Con preguntas reales de exámenes publicados y simulacros con tiempo. Empieza por un simulacro para saber dónde estás y repasa la prueba que más pesa para la carrera que quieres."],
     ],
-    sources: [OFFICIAL.saber11, OFFICIAL.reporte],
+    sources: [OFFICIAL.saber11, OFFICIAL.reporte, EXAM_DAY.guideUrl],
     ctaText: "Prueba el Saber 11 antes del día del examen",
   });
 
@@ -222,7 +222,7 @@ ${cta(up, ctaText)}`;
       : `<div class="card" style="padding:18px 20px;margin:8px 0 18px"><p class="prose" style="margin:0"><b>Estado al ${d(CHECKED)}:</b> el ICFES todavía no ha publicado en icfes.gov.co el calendario del Saber 11 para 2027. Cuando lo publique, actualizamos esta página con las fechas oficiales. Mientras tanto, abajo están las fechas de 2026 como referencia.</p></div>`;
     emit({
       path: "fechas-icfes-2027/",
-      title: "Fechas ICFES 2027: calendario del Saber 11",
+      title: "Fechas ICFES 2027: calendario B y A del Saber 11",
       desc: has2027 ? "Fechas oficiales del ICFES Saber 11 2027: inscripción, citación, examen y resultados para calendario A y B." : "Fechas del ICFES Saber 11 2027: estado del calendario oficial y las fechas de 2026 como referencia para inscripción, examen y resultados.",
       tag: "Fechas 2027", h1: "Fechas ICFES 2027 (Saber 11)",
       intro: "Cuándo es la inscripción, la citación, el examen y los resultados del Saber 11 en 2027, para calendario A y calendario B, según lo que publica el ICFES.",
@@ -230,6 +230,8 @@ ${cta(up, ctaText)}`;
   <h2>Calendario 2026 como referencia</h2>
   <p class="prose">El ICFES suele repetir el patrón cada año: calendario B presenta en marzo y calendario A entre julio y agosto, y el registro abre varios meses antes.</p>
   ${calTable(CAL_2026, cal2026Caption)}
+  <h2>Calendario B 2027</h2>
+  <p class="prose">Si tu colegio es de calendario B, tu Saber 11 es el primero del año. En 2026 el examen de calendario B fue el ${d(CAL_2026.B.exam, true)} y el registro ordinario cerró el ${d(CAL_2026.B.ordinaryUntil)}, así que para 2027 la inscripción se mueve entre diciembre y enero. Cuando el ICFES publique las fechas oficiales, aparecen arriba.</p>
   <h2>Qué hacer mientras tanto</h2>
   <ul class="checks">
     <li>Si eres de <b>calendario B</b>, tu examen sería alrededor de marzo de 2027: en 2026 el registro ordinario cerró el ${d(CAL_2026.B.ordinaryUntil)}. Pregunta en tu colegio por la inscripción.</li>
@@ -241,6 +243,7 @@ ${cta(up, ctaText)}`;
   <p class="prose">Las admisiones también tienen calendario: por ejemplo, la UIS publica resultados para 2027-1 el 25 de noviembre de 2026. Mira las de cada universidad en <a href="${up}puntaje-icfes/">puntaje ICFES para entrar a la universidad</a>.</p>`,
       faq: [
         ["¿Cuándo es el ICFES 2027?", has2027 ? "Mira la tabla de arriba: son las fechas que publicó el ICFES." : `El ICFES aún no publica el calendario 2027 (revisado el ${d(CHECKED)}). En 2026 calendario B presentó el ${d(CAL_2026.B.exam)} y calendario A el ${d(CAL_2026.A.exam)}.`],
+        ["¿Cuándo es el ICFES calendario B 2027?", has2027 && CAL_2027.B ? `El ${d(CAL_2027.B.exam, true)}, según el ICFES.` : `El ICFES aún no lo publica (revisado el ${d(CHECKED)}). Como referencia, en 2026 calendario B presentó el ${d(CAL_2026.B.exam)} y el registro ordinario cerró el ${d(CAL_2026.B.ordinaryUntil)}.`],
         ["¿Cuándo salen los resultados del ICFES?", `En 2026 salieron el ${d(CAL_2026.B.results)} para calendario B y el ${d(CAL_2026.A.results)} para calendario A, unos dos meses después del examen.`],
         ["¿Cuándo se inscribe uno al ICFES?", `Varios meses antes del examen. En 2026, calendario A tuvo registro ordinario hasta el ${d(CAL_2026.A.ordinaryUntil)} y extraordinario del ${d(CAL_2026.A.extra[0])} al ${d(CAL_2026.A.extra[1])}.`],
       ],
