@@ -101,3 +101,21 @@
 #root .bq-modal { z-index: 80; padding: 12px 10px calc(12px + env(safe-area-inset-bottom)); }
 #root .bq-modal .b-modal-card > .section-head { position: sticky; top: -12px; z-index: 2; margin: -16px -16px 0; padding: 12px 16px; background: var(--bg); border-bottom: 1.5px solid var(--line); border-radius: 16px 16px 0 0; flex-wrap: wrap; gap: 8px; }
 #root .bq-modal .b-modal-card > .section-head > span { display: inline-flex; gap: 8px; align-items: center; }
+
+/* What is being made, and the two steps (phone: tabs; wide screen: both columns side by side). */
+#root .bq-intro { display: flex; align-items: center; gap: 12px; }
+#root .bq-intro > div { display: grid; gap: 2px; min-width: 0; }
+#root .bq-intro strong { font: 800 22px/1.1 var(--cx-display, inherit); text-transform: uppercase; letter-spacing: -0.01em; }
+#root .bq-intro .caption { font-size: 13px; }
+#root .bq-steps .seg { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+#root .bq-n { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; font-size: 11.5px; font-weight: 900; background: var(--surface-2); color: var(--text-2); flex: none; }
+#root .bq-steps .seg.active .bq-n { background: var(--cx-ink, #111); color: var(--accent); }
+#root .bq-next { display: none; }
+@media (max-width: 900px) {
+  #root .bq-steps { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+  #root .bq-next { display: inline-flex; align-items: center; justify-content: center; gap: 6px; position: fixed; left: 16px; right: 16px; bottom: calc(86px + env(safe-area-inset-bottom)); z-index: 25;
+    min-height: 46px; border-radius: 999px; font-weight: 800; box-shadow: 0 4px 0 var(--accent-shadow), 0 10px 24px rgba(0, 0, 0, 0.35); animation: bq-in 0.3s var(--cx-spring, ease-out); }
+  #root .builder { padding-bottom: 56px; }
+}
+@media (min-width: 801px) and (max-width: 900px) { #root .bq-next { bottom: 16px; } }
+@keyframes bq-in { from { opacity: 0; transform: translateY(16px) scale(0.95); } }

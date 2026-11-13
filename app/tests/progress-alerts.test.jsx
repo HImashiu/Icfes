@@ -158,7 +158,7 @@ describe("question bank into teaching material", () => {
     fireEvent.click(screen.getByLabelText("Elegir la pregunta 1"));
     expect(screen.getByText("2 elegidas")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /Quiz/ }));
-    expect(await screen.findByRole("tab", { name: "Tu asignación (2)" })).toBeTruthy();
+    expect(await screen.findByRole("tab", { name: /Preguntas \(2\)/ })).toBeTruthy();
     expect(window.location.hash).toBe("#docente/actividades/nueva/quiz");
     expect(screen.getByLabelText(/Permitir pistas/).checked).toBe(false);
     expect(screen.getAllByRole("button", { name: /^1\. Pregunta 1/ })[0]).toBeTruthy();

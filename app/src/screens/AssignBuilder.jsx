@@ -329,7 +329,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
         {toggleChip(mates, "Traer las del mismo texto", "Al elegir una pregunta de un texto compartido se agregan las demás de ese texto", () => setMates(!mates))}
         {toggleChip(fresh, anyUse ? "Solo sin usar en el colegio" : "Solo nuevas para estos estudiantes", anyUse ? "Oculta las preguntas que el colegio ya usó" : "Oculta las preguntas que estos cursos ya vieron", () => setFresh(!fresh))}
       </div>
-      {!lesson && !live && courseIds.length === 0 && fresh && <p className="caption bq-hint">Elige los cursos en «Tu asignación» y el banco marca lo que ya vieron.</p>}
+      {!lesson && !live && courseIds.length === 0 && fresh && <p className="caption bq-hint">En el paso 2 eliges los cursos, y el banco oculta lo que ya vieron.</p>}
       <div className="b-actions bq-actions" data-tour="ab-auto">
         <p className="caption bq-count" aria-live="polite">
           <strong>{filtered.length}</strong> de {items.length} preguntas
@@ -589,12 +589,29 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
   );
 
   const open = preview ? byKey.get(preview) : null;
+  // What is being made and the two steps, so whoever arrives from «Crear» knows where they are and what comes next.
+  const what = lesson ? "Clase para proyectar" : live ? "Juego en vivo" : preset?.label ?? (paper ? "Simulacro en papel" : KINDS.find((k) => k.id === kind)?.label ?? "Actividad");
+  const step2 = lesson ? "Tu clase" : live ? "Tu sala" : "Para quién y cuándo";
+  const toStep = (p) => { setPanel(p); try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch { /* jsdom */ } };
   return (
     <div className="builder">
-      <div className="segmented small b-tabs" role="tablist">
-        <button type="button" role="tab" aria-selected={panel === "bank"} className={panel === "bank" ? "seg active" : "seg"} onClick={() => setPanel("bank")}>Banco</button>
-        <button type="button" role="tab" aria-selected={panel === "mine"} className={panel === "mine" ? "seg active" : "seg"} onClick={() => setPanel("mine")}>{lesson ? "Tu clase" : "Tu asignación"} ({picked.length})</button>
+      <header className="bq-intro">
+        <div>
+          <strong>{lesson || live ? what : `Nueva ${what.charAt(0).toLowerCase()}${what.slice(1)}`}</strong>
+          <span className="caption">{preset?.note ? `${preset.note}. ` : ""}Elige las preguntas y luego {lesson ? "dale un título" : live ? "abre la sala" : "a qué cursos va y las fechas"}.</span>
+        </div>
+      </header>
+      <div className="segmented small b-tabs bq-steps" role="tablist" aria-label="Pasos">
+        <button type="button" role="tab" aria-selected={panel === "bank"} className={panel === "bank" ? "seg active" : "seg"} onClick={() => toStep("bank")}><span className="bq-n">1</span>Preguntas{picked.length ? ` (${picked.length})` : ""}</button>
+        <button type="button" role="tab" aria-selected={panel === "mine"} className={panel === "mine" ? "seg active" : "seg"} onClick={() => toStep("mine")}><span className="bq-n">2</span>{step2}</button>
       </div>
+      {panel === "bank" && picked.length > 0 && createPortal(
+        // Portaled to #root: inside the animated page a fixed button would stick to the page, not the screen.
+        <button type="button" className="primary bq-next" onClick={() => toStep("mine")}>
+          {picked.length} {picked.length === 1 ? "elegida" : "elegidas"} · Siguiente <Icon name="right" size={16} strokeWidth={3} />
+        </button>,
+        document.getElementById("root") ?? document.body,
+      )}
       <div className={`b-grid show-${panel}`}>{bank}{mine}</div>
       {printing && bundle && <QuestionsPrint bundle={bundle} keys={picked} title={title.trim()} onClose={() => setPrinting(false)} />}
       {open && bundle && createPortal(

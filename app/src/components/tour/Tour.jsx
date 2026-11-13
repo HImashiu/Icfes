@@ -79,7 +79,8 @@ export default function Tour({ steps, label = "Tutorial", navigate = null, onClo
     const look = () => {
       const el = findTarget(step.target);
       if (el || !step.target || tries > 15) {
-        el?.scrollIntoView?.({ block: "center", inline: "nearest" });
+        // A target taller than the screen (the whole question bank) is shown from its top, not from its middle.
+        el?.scrollIntoView?.({ block: el.getBoundingClientRect?.().height > window.innerHeight * 0.7 ? "start" : "center", inline: "nearest" });
         place();
         timer = setTimeout(place, 80);
         return;
