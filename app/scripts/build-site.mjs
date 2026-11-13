@@ -100,7 +100,7 @@ globalThis.document = dom.window.document;
 const { createServer } = await import("vite");
 const vite = await createServer({ root: appRoot, configFile: false, logLevel: "error", appType: "custom", server: { middlewareMode: true, hmr: false } });
 const { renderRich } = await vite.ssrLoadModule("/src/lib/render.js");
-const { buildSeoPages } = await import(pathToFileURL(join(here, "build-seo.mjs")).href);
+const { buildSeoPages, injectRelated } = await import(pathToFileURL(join(here, "build-seo.mjs")).href);
 const dataDir = env.ICFES_DATA_DIR || "/mnt/project-files/icfes/data";
 const saber11 = await vite.ssrLoadModule("/src/lib/saber11.js");
 const national = JSON.parse(readFileSync(join(appRoot, "src", "lib", "saber11-national-2022.json"), "utf8"));
@@ -110,10 +110,22 @@ for (const p of seoPages) {
   const f = join(out, p, "index.html");
   writeFileSync(f, fill(readFileSync(f, "utf8")));
 }
-// Sitemap from the pages that exist, with today's date.
+// "Sigue con" links on every search page (after all of them exist, so new families are linked too).
+injectRelated(out, seoPages);
+// Sitemap from the pages that exist. lastmod is the day a page's content last changed (scripts/seo-lastmod.json keeps
+// a hash per page; commit it after a deploy), so Google can trust it instead of seeing every page "changed" daily.
 const today = new Date().toISOString().slice(0, 10);
-const urls = [["", "1.0"], ...seoPages.map((p) => [p, p.split("/").filter(Boolean).length === 1 ? "0.9" : "0.8"]), ["privacidad.html", "0.3"]];
-writeFileSync(join(out, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(([p, pr]) => `  <url><loc>${siteUrl}${p}</loc><lastmod>${today}</lastmod><priority>${pr}</priority></url>`).join("\n")}\n</urlset>\n`);
+const urls = [["", "1.0"], ...seoPages.map((p) => [p, p.split("/").filter(Boolean).length === 1 ? "0.9" : "0.8"]), ["privacidad", "0.3"]];
+const lastmodFile = join(here, "seo-lastmod.json");
+const lastmod = existsSync(lastmodFile) ? JSON.parse(readFileSync(lastmodFile, "utf8")) : {};
+for (const [p] of urls) {
+  const f = p === "" || p.endsWith("/") ? join(out, p, "index.html") : join(out, `${p}.html`);
+  const main = (readFileSync(f, "utf8").match(/<main[^>]*>([\s\S]*)<\/main>|<body[^>]*>([\s\S]*)<\/body>/) ?? [""])[0];
+  const hash = createHash("sha1").update(main).digest("hex").slice(0, 16);
+  if (lastmod[p]?.hash !== hash) lastmod[p] = { hash, date: today };
+}
+writeFileSync(lastmodFile, JSON.stringify(Object.fromEntries(Object.entries(lastmod).sort()), null, 1) + "\n");
+writeFileSync(join(out, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(([p, pr]) => `  <url><loc>${siteUrl}${p}</loc><lastmod>${lastmod[p].date}</lastmod><priority>${pr}</priority></url>`).join("\n")}\n</urlset>\n`);
 console.log(`[build-site] ${seoPages.length} search pages: ${seoPages.join(", ")}`);
 
 // The app gets the same analytics as the landing page.
@@ -212,3 +224,11 @@ writeFileSync(join(out, "_headers"), `/*
   Cross-Origin-Opener-Policy: same-origin-allow-popups
 `);
 console.log(`[build-site] site-dist ready: landing + app/ (site URL ${siteUrl})`);
+
+// Search checks on the finished site (titles, h1, canonical, JSON-LD, orphan pages): errors stop the build.
+const { checkSeo } = await import(pathToFileURL(join(here, "check-seo.mjs")).href);
+const seo = checkSeo(out);
+for (const w of seo.warns) console.warn(`[check-seo] warn: ${w}`);
+for (const e of seo.errors) console.error(`[check-seo] ERROR: ${e}`);
+console.log(`[check-seo] ${seo.pages} pages, ${seo.errors.length} errors, ${seo.warns.length} warnings`);
+if (seo.errors.length) process.exit(1);

@@ -195,7 +195,7 @@ ${qs}
 ${ctx.cta(up, `Presenta el ${ctx.esc(ex.name)} completo gratis`)}`;
     ctx.write(path, ctx.page({
       siteUrl: ctx.siteUrl, path,
-      title: `${ex.name} con respuestas: preguntas reales y simulacro gratis | Cóndor`,
+      title: `${ex.name} con respuestas y simulacro gratis`.length <= 60 ? `${ex.name} con respuestas y simulacro gratis` : `${ex.name} con respuestas y simulacro`,
       desc: `${ex.name}: ${total} preguntas reales del Saber 11 para resolver en línea, con respuestas, cronómetro y puntaje de 0 a 500. Gratis, sin descargar el PDF.`,
       body, katex: qs.includes('class="katex'),
       crumbs: [{ name: "Exámenes ICFES anteriores", path: "examenes-icfes-anteriores/" }, { name: ex.name, path }],
@@ -231,7 +231,7 @@ ${ctx.cta(up, `Presenta el ${ctx.esc(ex.name)} completo gratis`)}`;
 ${ctx.cta("../", "Presenta un examen ICFES completo gratis")}`;
     ctx.write(path, ctx.page({
       siteUrl: ctx.siteUrl, path,
-      title: "Exámenes ICFES anteriores con respuestas (2014-2021) · Saber 11 gratis | Cóndor",
+      title: "Exámenes ICFES anteriores con respuestas (2014-2021)",
       desc: "Exámenes ICFES de años anteriores (2014, 2018, 2019, 2020, 2021) con respuestas, para resolver en línea gratis con cronómetro y puntaje de 0 a 500.",
       body, crumbs: [{ name: "Exámenes ICFES anteriores", path }],
       jsonLd: [ctx.faqLd(faq), { "@type": "CollectionPage", name: "Exámenes ICFES anteriores", url: ctx.siteUrl + path, inLanguage: "es-CO", hasPart: built.map(({ ex }) => ({ "@type": "Quiz", name: ex.name, url: `${ctx.siteUrl}examenes-icfes-anteriores/${ex.slug}/` })) }],
