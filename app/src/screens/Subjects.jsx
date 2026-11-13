@@ -8,6 +8,8 @@ import { activeAnnouncements } from "../lib/announcements.js";
 import { loadHistory } from "../lib/local.js";
 import { practiceInsights, studentSubjects, studentTasks, teacherLabel } from "../lib/student.js";
 import { areaShort, contextColor } from "../lib/teaching.js";
+import { mergeTasks } from "../lib/condorTeacher.js";
+import { daysUntil } from "../lib/goal.js";
 
 const FILTERS = [
   { id: "all", label: "Todas" },
@@ -20,10 +22,12 @@ const initials = (name) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w)
 
 // Materias: one card per subject (with its teacher) and every task of every subject, with filters. A subject opens
 // its own page. `tab` is "materias" or "tareas"; `subjectId` opens one subject.
-export default function Subjects({ announcements = [], independent = false, assigned, classes, course, tab, subjectId, onTab, onOpenSubject, onBack, onStartAssigned, onOpenAssigned, onPracticeArea, onLogin }) {
+export default function Subjects({ condor = null, onGoal, announcements = [], independent = false, assigned, classes, course, tab, subjectId, onTab, onOpenSubject, onBack, onStartAssigned, onOpenAssigned, onPracticeArea, onLogin }) {
   const now = Date.now();
   const subjects = useMemo(() => (assigned ? studentSubjects({ classes, assignments: assigned.assignments, attempts: assigned.attempts, now }) : []), [assigned, classes]); // eslint-disable-line react-hooks/exhaustive-deps
-  const tasks = useMemo(() => (assigned ? studentTasks({ subjects, assignments: assigned.assignments, attempts: assigned.attempts, now }) : []), [subjects, assigned]); // eslint-disable-line react-hooks/exhaustive-deps
+  const teacherTasks = useMemo(() => (assigned ? studentTasks({ subjects, assignments: assigned.assignments, attempts: assigned.attempts, now }) : []), [subjects, assigned]); // eslint-disable-line react-hooks/exhaustive-deps
+  // A student with no teacher: Profesor Cóndor's tasks join the list (lib/condorTeacher.js).
+  const tasks = condor ? mergeTasks(teacherTasks, condor.rows) : teacherTasks;
   const ins = useMemo(() => practiceInsights(loadHistory(), now), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!assigned) {
@@ -41,7 +45,7 @@ export default function Subjects({ announcements = [], independent = false, assi
 
   // Tasks only exist when a teacher has the student in a class. Without any (a student practising on their own, or
   // one whose school hasn't added them yet) the page is just the subjects: no Tareas tab, no course tile.
-  const hasClass = Boolean(classes?.length) || tasks.length > 0;
+  const hasClass = Boolean(classes?.length) || tasks.length > 0 || Boolean(condor);
   const subject = subjectId ? subjects.find((s) => s.id === subjectId) : null;
   if (subject) return <SubjectPage independent={independent} announcements={activeAnnouncements(announcements, { courseIds: subject.courseIds })} subject={subject} tasks={tasks.filter((t) => t.subject?.id === subject.id)} ins={ins} now={now} onBack={onBack} onStartAssigned={onStartAssigned} onOpenAssigned={onOpenAssigned} onPracticeArea={onPracticeArea} />;
 
@@ -56,7 +60,7 @@ export default function Subjects({ announcements = [], independent = false, assi
         <button type="button" role="tab" aria-selected={tab === "tareas"} className={tab === "tareas" ? "seg active" : "seg"} onClick={() => onTab("tareas")}>Tareas <span className="muted">{tasks.filter((t) => t.status === "pending").length} pendientes</span></button>
       </div>}
       {hasClass && tab === "tareas"
-        ? <TaskList tasks={tasks} subjects={subjects} now={now} onStartAssigned={onStartAssigned} onOpenAssigned={onOpenAssigned} />
+        ? <TaskList condor={condor} onGoal={onGoal} tasks={tasks} subjects={subjects} now={now} onStartAssigned={onStartAssigned} onOpenAssigned={onOpenAssigned} />
         : <SubjectGrid subjects={subjects} tasks={tasks} course={course} independent={independent} hasClass={hasClass} ins={ins} now={now} onOpenSubject={onOpenSubject} onTasks={() => onTab("tareas")} />}
     </section>
   );
@@ -118,7 +122,7 @@ function CourseCard({ tasks, course, now, onTasks }) {
   );
 }
 
-function TaskList({ tasks, subjects, now, onStartAssigned, onOpenAssigned }) {
+function TaskList({ condor, onGoal, tasks, subjects, now, onStartAssigned, onOpenAssigned }) {
   const [filter, setFilter] = useState("all");
   const [subject, setSubject] = useState("");
   const shown = tasks.filter((t) => (filter === "all" || t.status === filter || (filter === "pending" && (t.status === "scheduled" || t.status === "paper"))) && (!subject || t.subject?.id === subject));
@@ -127,6 +131,7 @@ function TaskList({ tasks, subjects, now, onStartAssigned, onOpenAssigned }) {
   const lastScored = done.find((t) => t.pct != null);
   return (
     <>
+      {condor && <CondorCard condor={condor} now={now} onGoal={onGoal} />}
       <div className="sj-summary">
         <span className="card"><b>{tasks.filter((t) => t.status === "pending").length}</b><span className="caption">pendientes</span></span>
         <span className="card"><b>{done.length}</b><span className="caption">entregadas</span></span>
@@ -149,6 +154,41 @@ function TaskList({ tasks, subjects, now, onStartAssigned, onOpenAssigned }) {
         </div>
       ))}
     </>
+  );
+}
+
+// Who Profesor Cóndor is and how it decides, in one card above the list: the goal it plans for, the phase, and the
+// rules in plain words (no model behind it, the same answers always give the same tasks).
+function CondorCard({ condor, now, onGoal }) {
+  const [open, setOpen] = useState(false);
+  const left = daysUntil(condor.goal.examDate, now);
+  const weak = condor.needs.filter((n) => n.gap != null && n.gap > 0).sort((a, b) => b.gap - a.gap)[0];
+  const diag = condor.needs.filter((n) => n.diagnostic);
+  return (
+    <div className="card condor-card">
+      <Mascot size={64} pose="happy" idle />
+      <div className="condor-main">
+        <span className="label">Profesor Cóndor</span>
+        <strong>{condor.rest ? "Hoy descansas: no hay tareas nuevas." : `Hoy te dejo ${condor.tasks.length} ${condor.tasks.length === 1 ? "tarea" : "tareas"}.`}</strong>
+        <span className="caption">
+          {`Meta: ${condor.goal.target} puntos · ${condor.perDay} preguntas al día`}
+          {left == null ? " · sin fecha de examen" : left >= 0 ? ` · faltan ${left} ${left === 1 ? "día" : "días"} (${condor.label.toLowerCase()})` : ""}
+        </span>
+        {open && (
+          <ul className="condor-rules caption">
+            <li>{diag.length ? `Primero mido ${diag.map((n) => areaShort(n.name)).join(", ")}: necesito al menos 10 respuestas tuyas en cada área.` : weak ? `Tu área con más distancia a la meta es ${areaShort(weak.name)} (${weak.pct} %, la meta pide ${weak.goalPct} %): aparece más días.` : "Vas cerca de tu meta en todas las áreas: subo el nivel de las preguntas."}</li>
+            <li>Las preguntas nuevas van a tu nivel: si aciertas poco, empiezo por las fáciles; si aciertas mucho, por las difíciles.</li>
+            <li>Cada pregunta que fallas vuelve a los 1, 3, 7 y 14 días hasta que la aciertes cuatro veces.</li>
+            <li>{condor.help}</li>
+            <li>Las tareas usan tus preguntas de práctica del día. Lo que no hagas hoy no se acumula.</li>
+          </ul>
+        )}
+        <span className="condor-actions">
+          <button type="button" className="link" onClick={() => setOpen((v) => !v)}>{open ? "Ocultar" : "Cómo decido tus tareas"}</button>
+          {onGoal && <button type="button" className="link" onClick={onGoal}>Cambiar mi meta</button>}
+        </span>
+      </div>
+    </div>
   );
 }
 
