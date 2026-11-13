@@ -293,7 +293,11 @@ ${guideBody(body)}
         <a href="${up}simulacro-icfes/">Simulacro ICFES gratis</a>
         <a href="${up}examenes-icfes-anteriores/">Exámenes ICFES anteriores</a>
         <a href="${up}preguntas-icfes/">Preguntas por área</a>
+        <a href="${up}pregunta-icfes/">Preguntas resueltas</a>
         <a href="${up}calculadora-puntaje-icfes/">Calculadora de puntaje</a>
+        <a href="${up}puntaje-icfes/">Puntaje para la universidad</a>
+        <a href="${up}que-es-el-saber-11/">Qué es el Saber 11</a>
+        <a href="${up}fechas-icfes-2027/">Fechas ICFES 2027</a>
         <a href="${up}niveles-de-desempeno-icfes/">Niveles de desempeño</a>
         <a href="${up}preicfes-para-colegios/">Para colegios</a>
         <a href="${up}como-prepararse-para-el-icfes/">Cómo prepararse</a>
