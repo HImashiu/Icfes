@@ -5,7 +5,7 @@
   "first": "2026-11-13"
  },
  "aliados/": {
-  "hash": "e8f5f076af7eb491",
+  "hash": "54903b78753398c5",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
@@ -15,27 +15,32 @@
   "first": "2026-11-13"
  },
  "becas-icfes/": {
-  "hash": "0417af2813121e82",
+  "hash": "854026d58d11a315",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "becas-icfes/beca-merito-rosario/": {
-  "hash": "454fa2b3d4b70c19",
+  "hash": "429d0f63c594d1ae",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "becas-icfes/icetex/": {
-  "hash": "9d8979b9b7e7f078",
+  "hash": "3dcccf7f4da81b84",
+  "date": "2026-11-13",
+  "first": "2026-11-13"
+ },
+ "becas-icfes/jovenes-a-la-e/": {
+  "hash": "18641d15e1990253",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "becas-icfes/matricula-cero/": {
-  "hash": "3a25cd9ea216a7aa",
+  "hash": "7a2ef5f802410ad1",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "becas-icfes/quiero-estudiar-uniandes/": {
-  "hash": "2438131c5d8ccdd2",
+  "hash": "3c3ca8aaa070409f",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
@@ -140,12 +145,12 @@
   "first": "2026-11-13"
  },
  "cuantas-preguntas-acertar-icfes/": {
-  "hash": "f691888ac6f5ac46",
+  "hash": "151d1f2de5de3208",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "cuanto-falta-para-el-icfes/": {
-  "hash": "cce25cb7b0788387",
+  "hash": "89d8ee5d1fcf31eb",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
@@ -155,12 +160,12 @@
   "first": "2026-11-13"
  },
  "diagnostico-icfes/": {
-  "hash": "8865cfab34182f43",
+  "hash": "6a3002b9661e40e9",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "diagnostico-icfes/curso/": {
-  "hash": "7e0e291c73310e76",
+  "hash": "ffc95bf2b514b949",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
@@ -365,22 +370,22 @@
   "first": "2026-11-13"
  },
  "formulas-icfes/": {
-  "hash": "f6f94d571ff8f02a",
+  "hash": "17ddf7627a26db24",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "formulas-icfes/fisica/": {
-  "hash": "41823abd1d971af3",
+  "hash": "8202ab5d8a7d2325",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "formulas-icfes/matematicas/": {
-  "hash": "46558a436374620c",
+  "hash": "fc8b3c989683b713",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "formulas-icfes/quimica/": {
-  "hash": "8df756398a99c661",
+  "hash": "fc8b45a33dfe2b8f",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
@@ -390,7 +395,7 @@
   "first": "2026-11-13"
  },
  "herramientas-icfes/": {
-  "hash": "99e85c106b9be798",
+  "hash": "1d0d91c662236de9",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
@@ -410,7 +415,7 @@
   "first": "2026-11-13"
  },
  "novedades/": {
-  "hash": "e983614c1443c991",
+  "hash": "a7b425ca3da353ba",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
@@ -420,7 +425,7 @@
   "first": "2026-11-13"
  },
  "plan-de-estudio-icfes/": {
-  "hash": "93c112bbd418af18",
+  "hash": "f5075a8d73595e4f",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
@@ -1500,7 +1505,7 @@
   "first": "2026-11-13"
  },
  "propuesta-colegios/": {
-  "hash": "7d06acd29a54fe3a",
+  "hash": "e39bb3aedb63bf48",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
@@ -1645,7 +1650,7 @@
   "first": "2026-11-13"
  },
  "que-viene/": {
-  "hash": "dfe2332529700bb5",
+  "hash": "27e737fc18e10bb1",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
@@ -1655,7 +1660,7 @@
   "first": "2026-11-13"
  },
  "reto-icfes/": {
-  "hash": "de3f979c954b54a3",
+  "hash": "6489b2da80c686c4",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
@@ -1695,7 +1700,7 @@
   "first": "2026-11-13"
  },
  "simulacro-nacional/": {
-  "hash": "9611d371734b5f95",
+  "hash": "5654f25661f4a4d3",
   "date": "2026-11-13",
   "first": "2026-11-13"
  }
