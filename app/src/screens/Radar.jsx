@@ -1,6 +1,7 @@
 import Loading from "../components/Loading.jsx";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { authHeaders } from "../lib/data.js";
+import { bluesky, mastodon, merge, reddit } from "../../radar/index.js";
 
 // #admin/posts: new public posts about the ICFES / Saber 11 from any account, newest first, with link and thumbnail,
 // so the founder can open each one and comment by hand. The radar worker (radar/index.js) collects them every 30
@@ -75,6 +76,21 @@ export default function Radar() {
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.error === "not_admin" ? "Tu cuenta no está en app_admins." : body.error === "sign_in_required" ? "Inicia sesión de nuevo." : `Error ${res.status}`);
       setData(body);
+      // Reddit and Bluesky refuse the radar worker (Cloudflare addresses), so this browser asks them too, read-only.
+      const live = { reddit, bluesky, mastodon };
+      const got = await Promise.allSettled(Object.values(live).map((fn) => fn({})));
+      const fresh = [];
+      const browserStatus = {};
+      Object.keys(live).forEach((k, i) => {
+        const r = got[i];
+        if (r.status === "fulfilled") { fresh.push(...r.value); browserStatus[k] = { ok: true, found: r.value.length, browser: true }; }
+        else browserStatus[k] = { ok: false, error: String(r.reason?.message ?? r.reason).slice(0, 120), browser: true };
+      });
+      setData((d) => ({
+        ...d,
+        posts: merge(d?.posts ?? [], fresh).list,
+        state: { ...(d?.state ?? {}), status: { ...(d?.state?.status ?? {}), ...Object.fromEntries(Object.entries(browserStatus).filter(([k, v]) => v.ok || !d?.state?.status?.[k]?.ok)) } },
+      }));
     } catch (e) {
       setError(e.message);
     } finally {
@@ -123,7 +139,7 @@ export default function Radar() {
             {Object.entries(NETS).map(([k, n]) => {
               const s = status[k];
               if (!s) return null;
-              const txt = s.ok ? `${s.found} encontrados` : s.skipped ? `apagado: ${s.skipped}` : `falló: ${s.error}`;
+              const txt = s.ok ? `${s.found} encontrados${s.browser ? " (desde tu navegador)" : ""}` : s.skipped ? `apagado: ${s.skipped}` : `falló: ${s.error}`;
               return <li key={k} className={s.ok ? "ok" : "off"} title={txt} aria-label={`${n.label}: ${txt}`}><b>{n.label}</b> {s.ok ? "✓" : s.skipped ? "—" : "✕"} <span>{txt}</span></li>;
             })}
           </ul>

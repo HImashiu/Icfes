@@ -26,8 +26,13 @@ const clean = (s, n = 400) => String(s ?? "").replace(/<[^>]+>/g, " ").replace(/
 const httpsOrNull = (u) => (typeof u === "string" && /^https:\/\//.test(u) ? u.replace(/&amp;/g, "&") : null);
 const iso = (d) => { const t = Date.parse(d); return Number.isFinite(t) ? new Date(t).toISOString() : null; };
 
+// The panel (src/screens/Radar.jsx) also runs reddit(), bluesky() and mastodon() in the founder's own browser, because
+// Reddit and Bluesky refuse searches from Cloudflare's addresses. There, no custom headers (they would force a CORS
+// preflight that Reddit refuses).
+const inBrowser = typeof document !== "undefined";
 async function getJson(url, init = {}) {
-  const res = await fetch(url, { ...init, headers: { "User-Agent": UA, Accept: "application/json", ...(init.headers ?? {}) } });
+  const headers = inBrowser ? init.headers ?? {} : { "User-Agent": UA, Accept: "application/json", ...(init.headers ?? {}) };
+  const res = await fetch(url, { ...init, headers });
   if (!res.ok) throw new Error(`${res.status} ${new URL(url).hostname}`);
   return res.json();
 }
@@ -46,8 +51,17 @@ export async function reddit(env) {
     headers.Authorization = `Bearer ${tok.access_token}`;
   }
   const out = [];
+  // Without OAuth, www.reddit.com answered 403 to the Worker (2026-11-13); old.reddit.com is tried next.
+  const hosts = headers.Authorization ? [base] : [base, "https://old.reddit.com"];
+  const listing = async (q) => {
+    let last;
+    for (const h of hosts) {
+      try { return await getJson(`${h}/search.json?q=${encodeURIComponent(q)}&sort=new&t=month&limit=50&raw_json=1`, { headers }); } catch (e) { last = e; }
+    }
+    throw last;
+  };
   for (const q of ["icfes", '"saber 11"']) {
-    const data = await getJson(`${base}/search.json?q=${encodeURIComponent(q)}&sort=new&t=month&limit=50&raw_json=1`, { headers });
+    const data = await listing(q);
     for (const { data: p } of data?.data?.children ?? []) {
       if (p.over_18) continue;
       const thumb = httpsOrNull(p.preview?.images?.[0]?.resolutions?.slice(-1)[0]?.url) || httpsOrNull(p.thumbnail);
@@ -141,20 +155,36 @@ export function parseRss(xml) {
   for (const m of xml.matchAll(/<item>([\s\S]*?)<\/item>/g)) {
     const tag = (t) => (m[1].match(new RegExp(`<${t}[^>]*>([\\s\\S]*?)<\\/${t}>`)) ?? [])[1] ?? "";
     const un = (s) => s.replace(/^<!\[CDATA\[|\]\]>$/g, "");
-    items.push({ title: clean(un(tag("title")), 220), link: clean(un(tag("link")), 600), at: iso(un(tag("pubDate"))), source: clean(un(tag("source")), 80) });
+    const image = (m[1].match(/<News:Image>([^<]+)<\/News:Image>/i) ?? [])[1];
+    items.push({ title: clean(un(tag("title")), 220), link: clean(un(tag("link")), 600), at: iso(un(tag("pubDate"))), source: clean(un(tag("source")) || un(tag("News:Source")), 80), ...(image ? { image: httpsOrNull(clean(image, 600)) } : {}) });
   }
   return items;
+}
+
+// Google News answered 503 to the Worker (2026-11-13); Bing News RSS is the fallback.
+const NEWS_FEEDS = [
+  (q) => `https://news.google.com/rss/search?q=${encodeURIComponent(`${q} when:7d`)}&hl=es-419&gl=CO&ceid=CO:es-419`,
+  (q) => `https://www.bing.com/news/search?q=${encodeURIComponent(q)}&format=rss&cc=CO&setlang=es`,
+];
+async function newsFeed(q) {
+  let last;
+  for (const url of NEWS_FEEDS) {
+    try {
+      const res = await fetch(url(q), { headers: { "User-Agent": UA } });
+      if (res.ok) return res.text();
+      last = new Error(`${res.status} ${new URL(url(q)).hostname}`);
+    } catch (e) { last = e; }
+  }
+  throw last;
 }
 
 export async function news() {
   const out = [];
   for (const q of ["icfes", '"saber 11"']) {
-    const res = await fetch(`https://news.google.com/rss/search?q=${encodeURIComponent(`${q} when:7d`)}&hl=es-419&gl=CO&ceid=CO:es-419`, { headers: { "User-Agent": UA } });
-    if (!res.ok) throw new Error(`${res.status} news.google.com`);
-    for (const it of parseRss(await res.text())) {
+    for (const it of parseRss(await newsFeed(q))) {
       if (!/^https:\/\//.test(it.link)) continue;
       const title = it.source && it.title.endsWith(` - ${it.source}`) ? it.title.slice(0, -(it.source.length + 3)) : it.title;
-      out.push({ id: `news:${it.link.slice(-90)}`, net: "news", url: it.link, title, text: "", author: it.source || "Noticias", where: it.source || "", thumb: null, at: it.at, comments: null });
+      out.push({ id: `news:${it.link.slice(-90)}`, net: "news", url: it.link, title, text: "", author: it.source || "Noticias", where: it.source || "", thumb: it.image ?? null, at: it.at, comments: null });
     }
   }
   return out;
