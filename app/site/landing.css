@@ -349,3 +349,71 @@
 @media (prefers-reduced-motion: reduce) { .dots::before, .dots-dark::before { animation: none; } .hero-stk { transform: rotate(var(--r)); } }
 .sc-copy, .sc-art { opacity: calc(1 - var(--p) * 1.6); }
 @media (max-width: 600px) { .hs1 { top: 18px; left: 5%; } .hs2 { top: 14px; right: 5%; } .hero-stk { width: 46px; height: 46px; } }
+
+/* ---------- Things to play with (site.js adds the behaviour; without it the page is the same, just still). ---------- */
+
+/* Badge bolt: the app's rounded bolt, same as the XP pill in the app. */
+.badge { padding-left: 12px; }
+.badge svg { stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; transition: transform 0.4s var(--spring); }
+.badge:hover svg { transform: rotate(-14deg) scale(1.2); }
+.xp svg { stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
+
+/* Words that try on other typefaces. The box keeps its line height so nothing below jumps. */
+.shuffle { display: inline-flex; align-items: center; justify-content: center; height: 1em; line-height: 1; vertical-align: middle; }
+.shuffle-in { display: inline-block; white-space: nowrap; }
+.shuffle.landed .shuffle-in { animation: land 0.5s var(--spring); }
+@keyframes land { 0% { transform: scale(1.16) rotate(-3deg); } 100% { transform: none; } }
+.stk .shuffle { height: auto; }
+
+/* Lit grid: the squares under the pointer light up. */
+.dots::after, .dots-dark::after { content: ""; position: absolute; z-index: -1; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.3s;
+  background-image: linear-gradient(rgba(200, 240, 74, 0.5) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(200, 240, 74, 0.5) 1.5px, transparent 1.5px);
+  background-size: 28px 28px; background-position: center top;
+  -webkit-mask: radial-gradient(240px circle at var(--px, -999px) var(--py, -999px), #000 0%, transparent 72%);
+  mask: radial-gradient(240px circle at var(--px, -999px) var(--py, -999px), #000 0%, transparent 72%); }
+.dots-dark::after { background-image: linear-gradient(rgba(55, 123, 58, 0.45) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(55, 123, 58, 0.45) 1.5px, transparent 1.5px); }
+.lit::after { opacity: 1; }
+
+/* The owls look at the pointer. */
+.ow.tracking .ow-pupils { animation: none; transform: translate(calc(var(--ex, 0) * 34px), calc(var(--ey, 0) * 24px)); transition: transform 0.12s ease-out; }
+
+/* Stickers you can pick up and drop anywhere. */
+.js .hero-stk { z-index: 2; }
+.js .hero-stk, .js .final .sticker { pointer-events: auto; cursor: grab; touch-action: none; transition: transform 0.25s ease-out, scale 0.3s var(--spring); }
+.js .hero-stk.held, .js .final .sticker.held { cursor: grabbing; z-index: 6; scale: 1.18; transition: transform 0.25s ease-out, scale 0.2s; }
+.js .hero-stk.dropped, .js .final .sticker.dropped { animation: drop 0.45s var(--spring); }
+@keyframes drop { 0% { scale: 1.18; } 45% { scale: 0.9; } 100% { scale: 1; } }
+
+/* Cards tilt toward the pointer and catch a shine. */
+.fan-card:hover, .fan-card:focus-visible { transform: perspective(700px) translateY(-14px) rotateX(var(--ty, 0deg)) rotateY(var(--tx, 0deg)) scale(1.05); }
+.fan-card::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity 0.25s; background: radial-gradient(circle at var(--gx, 50%) var(--gy, 0%), rgba(255, 255, 255, 0.45), transparent 55%); }
+.fan-card:hover::after { opacity: 1; }
+.cookie:hover { transform: perspective(800px) rotateX(var(--ty, 0deg)) rotateY(var(--tx, 0deg)) scale(1.04); }
+.ticket:hover { transform: perspective(900px) rotateX(calc(var(--ty, 0deg) * 0.5)) rotateY(calc(var(--tx, 0deg) * 0.5)); }
+.ticket { position: relative; }
+.ticket::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.3s; background: radial-gradient(circle at var(--gx, 50%) var(--gy, 0%), rgba(255, 255, 255, 0.16), transparent 50%); }
+.ticket:hover::after { opacity: 1; }
+
+/* Buttons lean toward the pointer. */
+.btn-go, .btn-ink, .p-go { translate: var(--bx, 0px) var(--by, 0px); }
+.btn.mag { transition: transform 0.06s, box-shadow 0.06s, background 0.15s, border-color 0.15s, translate 0.25s var(--spring); }
+
+/* Past-exam rows: the pills hop one after another. */
+.row .pill { transition: transform 0.35s var(--spring), background 0.2s; }
+.row:hover .pill { transform: translateY(-4px); }
+.row:hover .pill:nth-child(2) { transition-delay: 0.03s; }
+.row:hover .pill:nth-child(3) { transition-delay: 0.06s; }
+.row:hover .pill:nth-child(4) { transition-delay: 0.09s; }
+.row:hover .p-go { transform: translateY(-4px) scale(1.05) rotate(-2deg); transition-delay: 0.12s; }
+.p-go.mag { transition: transform 0.35s var(--spring), background 0.2s, translate 0.25s var(--spring); }
+
+/* Morphing blobs drift a little with the pointer. */
+svg.blobs { translate: calc(var(--mx, 0) * 30px) calc(var(--my, 0) * 30px); transition: translate 0.6s ease-out; }
+
+/* Scroll progress on the header. */
+.landing .top::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--accent); transform-origin: 0 50%; transform: scaleX(var(--sp, 0)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ow.tracking .ow-pupils { transform: none; }
+  svg.blobs { translate: none; }
+}
