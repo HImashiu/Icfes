@@ -90,3 +90,27 @@ export const ROSARIO = {
   ],
   excluded: ["Licenciatura en Filosofía", "Licenciatura en Ciencias Sociales", "Ingeniería Biomédica"],
 };
+
+// Agencia Atenea (Bogotá), Jóvenes a la E, sixth convocatoria (2027-1).
+export const JOVENES_E = {
+  base: "https://agenciaatenea.gov.co",
+  privadas: "https://agenciaatenea.gov.co/convocatorias/convocatoria-jovenes-la-e-6-educacion-superior-en-instituciones-privadas",
+  publicas: "https://agenciaatenea.gov.co/convocatorias/convocatoria-jovenes-la-e-6-educacion-superior-en-instituciones-publicas",
+  cronograma: "https://agenciaatenea.gov.co/sites/default/files/convocatorias/2026-10/261016_cronograma-je6_priv_0.pdf",
+  faq: "https://agenciaatenea.gov.co/sites/default/files/convocatorias/2026-11/preguntas_frecuentes_je6.pdf",
+  lineamiento: "https://agenciaatenea.gov.co/sites/default/files/2026-11/l57_ep-lineamiento_operativo_aspirantes_sexta_convocatoria_je_v2.pdf",
+  privOpen: "2026-11-12",
+  privClose: "2026-11-18",
+  pubOpen: "2026-11-07",
+  pubClose: "2026-11-13",
+  // Admisión General (private IES) schedule, cronograma v1 of 2026-10-16.
+  cal: [
+    ["Inscripciones en SICORE", "2026-11-12", "2026-11-18"],
+    ["Verificación de requisitos y asignación de cupos", "2026-11-19", "2026-12-15"],
+    ["Publicación de resultados", "2026-12-29"],
+    ["Reclamaciones", "2026-12-29", "2026-12-30"],
+    ["Firma de la carta de compromiso", "2026-12-29", "2027-01-12"],
+    ["Actualización de la lista de espera", "2027-01-12"],
+    ["Formalización del beneficio con la institución", "2027-01-04", "2027-01-29"],
+  ],
+};

@@ -6,8 +6,9 @@
 //   becas-icfes/matricula-cero/            Política de Gratuidad "Puedo Estudiar": who qualifies (no ICFES minimum)
 //   becas-icfes/quiero-estudiar-uniandes/  Uniandes Quiero Estudiar: 380 / 400 global, coverage, commitment
 //   becas-icfes/beca-merito-rosario/       Rosario Beca Mérito Pruebas de Estado: ranking by the average of 4 tests, no fixed minimum
+//   becas-icfes/jovenes-a-la-e/            Bogotá (Agencia Atenea) Jóvenes a la E, sixth convocatoria: requirements, Saber 11 role, dates
 // Called from build-seo.mjs with the shared helpers. Reuses the score calculator (site/calc-u.js).
-import { ANDRES_BELLO, CHECKED, GRATUIDAD, ICETEX, QUIERO_ESTUDIAR, ROSARIO } from "./seo-data/becas.mjs";
+import { ANDRES_BELLO, CHECKED, GRATUIDAD, ICETEX, JOVENES_E, QUIERO_ESTUDIAR, ROSARIO } from "./seo-data/becas.mjs";
 import { STYLE, calcForm, gRow, legendFor } from "./build-seo-scores.mjs";
 
 const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
@@ -19,6 +20,7 @@ const PAGES = [
   { path: "becas-icfes/matricula-cero/", short: "Matrícula cero (Puedo Estudiar)" },
   { path: "becas-icfes/quiero-estudiar-uniandes/", short: "Quiero Estudiar de los Andes" },
   { path: "becas-icfes/beca-merito-rosario/", short: "Beca Mérito del Rosario por Saber 11" },
+  { path: "becas-icfes/jovenes-a-la-e/", short: "Jóvenes a la E (Bogotá)" },
 ];
 
 export function buildBecasPages({ siteUrl, write, page, esc, faqBlock, faqLd, cta }) {
@@ -190,6 +192,47 @@ ${cta(up, ctaText)}`;
     });
   }
 
+  // ---------------------------------------------------------------- Jóvenes a la E (Bogotá)
+  {
+    const path = "becas-icfes/jovenes-a-la-e/";
+    const up = "../../";
+    const j = JOVENES_E;
+    const span = (a, b) => (!b ? d(a) : a.slice(0, 7) === b.slice(0, 7) ? `${Number(a.slice(8))} al ${d(b)}` : `${d(a)} al ${d(b)}`);
+    const desc = `Jóvenes a la E 2027-1 (Bogotá): inscripción para universidades privadas hasta el ${d(j.privClose)}, requisitos, papel del Saber 11 y fechas.`;
+    const faq = [
+      ["¿Jóvenes a la E pide un puntaje ICFES mínimo?", "Atenea no fija un mínimo general: asigna los cupos con un sistema de puntos que incluye el Saber 11, el Sisbén y condiciones de vulnerabilidad. Pero algunas instituciones sí piden un puntaje mínimo del Saber 11 para ciertos programas, y si no lo cumples ese programa no aparece en SICORE."],
+      ["¿Hasta cuándo son las inscripciones?", `Para la línea de Admisión General (universidades privadas), del ${span(j.privOpen, j.privClose)}, hasta las 11:59 p. m., en la plataforma SICORE de Atenea. La línea de instituciones públicas cerró el ${d(j.pubClose)}.`],
+      ["¿Cuándo salen los resultados?", `Según el cronograma de Atenea, el ${d(j.cal[2][1])}. Los elegibles firman la carta de compromiso hasta el ${d(j.cal[4][2])}.`],
+      ["¿Tengo que haber presentado el ICFES en Bogotá?", "Sí. Debes haber presentado el Saber 11 o las pruebas ICFES en Bogotá y ser bachiller de un colegio de Bogotá (o haber validado el bachillerato con el ICFES en Bogotá)."],
+      ["¿Hay que devolver la plata?", "No es un crédito. A cambio, los beneficiarios hacen 32 horas de retribución social a la ciudad por cada periodo cursado."],
+      ["¿Puedo pedir Medicina?", "Sí, pero Atenea financia un solo cupo de Medicina en esta línea: se asigna al aspirante con el mejor puntaje del Saber 11 que la elija como primera opción. No puedes poner Medicina como primera y segunda opción a la vez."],
+    ];
+    const main = `<div class="card" style="padding:18px 20px;margin:8px 0 18px"><p class="prose" style="margin:0"><b>Estado al ${d(CHECKED)}:</b> la línea de Admisión General (universidades privadas) recibe inscripciones del ${span(j.privOpen, j.privClose)} en ${ext(j.privadas, "la página de la convocatoria")}. La línea de instituciones públicas cerró el ${d(j.pubClose)}.</p></div>
+  <h2>Qué da</h2>
+  <ul class="checks"><li><b>Universidades privadas (Admisión General):</b> Atenea paga la matrícula completa de cada periodo directamente a la institución, y el beneficiario recibe un apoyo de hasta un salario mínimo por periodo cursado.</li><li><b>Instituciones públicas:</b> para admitidos a 2027-1 en la Nacional, la Distrital, la Pedagógica, la ETITC y técnicos laborales del SENA en Bogotá, un apoyo de sostenimiento de hasta un salario mínimo por periodo, apoyos en especie como transporte y bienestar. Atenea espera asignar más de 1.490 beneficios en esa línea.</li><li>No es un crédito: a cambio haces 32 horas de retribución social por periodo.</li></ul>
+  <h2>Requisitos (Admisión General)</h2>
+  <ul class="uni-facts"><li>Ser bachiller, o estar en grado 11 y graduarte a más tardar en diciembre de 2026, de un colegio de Bogotá (o haber validado el bachillerato con el ICFES en Bogotá).</li><li>Haber presentado el Saber 11 o las pruebas ICFES en Bogotá.</li><li>Tener máximo 28 años al cierre de la inscripción.</li><li>No haber sido beneficiario de Jóvenes a la E, del FEST ni de otros fondos de educación superior del Distrito (con algunas excepciones).</li><li>No estar cursando un programa de educación superior en 2026.</li></ul>
+  <h2>Qué pesa el Saber 11</h2>
+  <p class="prose">Atenea ordena a los aspirantes con un sistema de puntos que valora la situación personal, económica y académica: ser mujer o persona trans, ser víctima del conflicto, tener discapacidad, vivir en zona rural, el grupo del Sisbén, los <b>resultados del Saber 11</b> y la participación en programas como La U en tu Colegio. Si hay empate en los cupos, el primer criterio es el <b>puntaje global del Saber 11</b>, de mayor a menor.</p>
+  <p class="prose">Además, algunas instituciones fijan un puntaje mínimo del Saber 11: si no lo alcanzas, sus programas no se habilitan en SICORE. El ${ext(j.lineamiento, "lineamiento operativo (PDF)")} trae la tabla por institución. Para Medicina, Atenea financia un solo cupo, que va al mejor Saber 11 entre quienes la ponen como primera opción.</p>
+  <p class="prose">Calcula tu global en la <a href="${up}calculadora-puntaje-icfes/">calculadora del puntaje ICFES</a>.</p>
+  <h2>Fechas de la sexta convocatoria</h2>
+  <div class="tbl"><table><thead><tr><th>Etapa</th><th>Fecha</th></tr></thead><tbody>${j.cal.map(([k, a, b]) => `<tr><td>${esc(k)}</td><td>${span(a, b)}</td></tr>`).join("")}</tbody></table></div>
+  <p class="prose">Fuente: ${ext(j.cronograma, "cronograma de la convocatoria (PDF)")}. Atenea aclara que las fechas pueden ajustarse por razones operativas.</p>
+  <h2>Talentos Excepcionales</h2>
+  <p class="prose">Es otra línea, cerrada y por preselección. Su sublínea de capacidades excepcionales es para quienes quedaron en el percentil 100 del Saber 11 de julio de 2026 presentado en Bogotá.</p>
+  ${others(path, up)}
+  ${sources([["Atenea, Jóvenes a la E 6: instituciones privadas", j.privadas], ["Atenea, Jóvenes a la E 6: instituciones públicas", j.publicas], ["Atenea, cronograma de la sexta convocatoria (PDF)", j.cronograma], ["Atenea, preguntas frecuentes de la línea de Admisión General (PDF)", j.faq], ["Atenea, lineamiento operativo para aspirantes (PDF)", j.lineamiento]])}
+  ${disclaimer("la Agencia Atenea ni a la Alcaldía de Bogotá")}`;
+    emit({
+      path, title: "Jóvenes a la E 2027-1: requisitos, ICFES y fechas", desc, tag: "Bogotá", crumb: "Jóvenes a la E",
+      h1: "Jóvenes a la E 2027-1: requisitos y fechas",
+      intro: `Jóvenes a la E es el programa de la Agencia Atenea de Bogotá que paga la matrícula en universidades privadas o da apoyo de sostenimiento en las públicas. La inscripción para privadas va hasta el ${d(j.privClose)}.`,
+      main, faq, ctaText: "Sube tu Saber 11 para sumar puntos",
+      ld: [art(path, "Jóvenes a la E 2027-1: requisitos y fechas", desc, [j.privadas, j.publicas, j.cronograma, j.faq, j.lineamiento])],
+    });
+  }
+
   // ---------------------------------------------------------------- hub
   {
     const path = "becas-icfes/";
@@ -198,6 +241,7 @@ ${cta(up, ctaText)}`;
       [`<a href="icetex/">Crédito Tú Eliges</a>`, "ICETEX", "Global mínimo según el municipio donde presentaste (230 en las grandes capitales)", "Formularios 2027-1 hasta el 4 de diciembre de 2026"],
       [`<a href="matricula-cero/">Matrícula cero (Puedo Estudiar)</a>`, "Ministerio de Educación", "No pide puntaje: necesitas ser admitido en una institución pública", "Vigente; la valida tu institución"],
       [`<a href="beca-merito-rosario/">Beca Mérito URosario Pruebas de Estado</a>`, "Universidad del Rosario", "Los mejores promedios de Lectura crítica, Matemáticas, Sociales y Ciencias entre los admitidos; sin mínimo fijo", "Ciclo 2027-1 asignado en octubre de 2026"],
+      [`<a href="jovenes-a-la-e/">Jóvenes a la E</a>`, "Agencia Atenea (Bogotá)", "Saber 11 presentado en Bogotá; suma puntos y desempata. Algunas instituciones piden mínimo", "Privadas: inscripción hasta el 18 de noviembre de 2026"],
       [`<a href="quiero-estudiar-uniandes/">Quiero Estudiar</a>`, "Universidad de los Andes", `Global de ${QUIERO_ESTUDIAR.minGlobal} o más (${QUIERO_ESTUDIAR.minGlobalMed} para Medicina)`, "Convocatoria 2027-10 cerrada el 8 de noviembre de 2026"],
       ["Distinción Andrés Bello", "Ministerio de Educación", "Los puntajes más altos del país en cada prueba del núcleo común", "No hay postulación: se otorga con los resultados"],
     ];
@@ -219,7 +263,7 @@ ${cta(up, ctaText)}`;
   <p class="prose">Antes de la beca está la admisión. Univalle, la UIS y la de Caldas te ordenan por un puntaje ponderado por programa; la del Magdalena y la del Atlántico, por el global; la Nacional y la de Antioquia tienen examen propio. Mira cada una en <a href="${up}puntaje-icfes/">puntaje ICFES para entrar a la universidad</a>, por ejemplo <a href="${up}puntaje-icfes/carreras/medicina/">cuánto piden para Medicina</a>.</p>
   <h2>Cómo subir el puntaje</h2>
   <p class="prose">Lectura crítica, Matemáticas, Sociales y Ciencias valen tres veces más que Inglés en el global. Mide dónde estás con un <a href="${up}simulacro-icfes/">simulacro ICFES</a>, practica con <a href="${up}preguntas-icfes/">preguntas ICFES por área</a> y revisa las <a href="${up}fechas-icfes-2027/">fechas del ICFES 2027</a>.</p>
-  ${sources([["ICETEX, mérito mínimo por municipio (PDF)", ICETEX.pdf], ["ICETEX, calendario de pregrado", ICETEX.calendarUrl], ["Ministerio de Educación, Política de Gratuidad «Puedo Estudiar»", GRATUIDAD.url], ["Ministerio de Educación, Distinción Andrés Bello", ANDRES_BELLO.url], ["Universidad de los Andes, Quiero Estudiar", QUIERO_ESTUDIAR.url], ["Universidad del Rosario, Becas Mérito URosario Pruebas de Estado", ROSARIO.url]])}
+  ${sources([["ICETEX, mérito mínimo por municipio (PDF)", ICETEX.pdf], ["ICETEX, calendario de pregrado", ICETEX.calendarUrl], ["Ministerio de Educación, Política de Gratuidad «Puedo Estudiar»", GRATUIDAD.url], ["Ministerio de Educación, Distinción Andrés Bello", ANDRES_BELLO.url], ["Universidad de los Andes, Quiero Estudiar", QUIERO_ESTUDIAR.url], ["Universidad del Rosario, Becas Mérito URosario Pruebas de Estado", ROSARIO.url], ["Agencia Atenea, Jóvenes a la E 6 (instituciones privadas)", JOVENES_E.privadas]])}
   ${disclaimer("el ICETEX, el Ministerio de Educación ni ninguna universidad")}`;
     emit({
       path, title: "Becas con el puntaje ICFES 2027: requisitos y fechas", desc, tag: "Becas",
