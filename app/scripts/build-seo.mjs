@@ -11,6 +11,8 @@ import { pathToFileURL } from "node:url";
 import { buildContentPages } from "./build-seo-content.mjs";
 import { buildExamPages } from "./build-seo-exams.mjs";
 import { buildEmbedPages } from "./build-seo-embeds.mjs";
+import { buildScoreUniversityPages } from "./build-seo-scores.mjs";
+import { buildTramitePages } from "./build-seo-tramites.mjs";
 
 const AREAS = [
   {
@@ -472,6 +474,10 @@ ${cta("../", "Empieza tu simulacro ahora")}`;
   // Calculator embed, school badge and percentile table for other sites (link-building assets).
   if (saber11 && national) buildEmbedPages({ siteUrl, out, write, page, esc, faqBlock, faqLd, cta, saber11, national });
 
+  // Puntaje ICFES por universidad y carrera, and the Saber 11 paperwork pages (inscripción, citación, fechas…).
+  buildScoreUniversityPages({ siteUrl, write, page, esc, faqBlock, faqLd, cta });
+  buildTramitePages({ siteUrl, write, page, esc, faqBlock, faqLd, cta });
+
   // KaTeX stylesheet and fonts for the math on the question pages.
   if (usesKatex) {
     const k = join(appRoot, "node_modules", "katex", "dist");
@@ -540,6 +546,7 @@ function buildScorePages({ siteUrl, write, saber11, national }) {
   <p class="prose">Y por prueba (puntaje de 0 a 100):</p>
   <div class="tbl"><table><thead><tr><th>Prueba</th><th>Mediana</th><th>Mejor que el 75 %</th><th>Mejor que el 90 %</th></tr></thead><tbody>${areaPct}</tbody></table></div>
   <p class="prose">Mira qué significa cada rango en <a href="../niveles-de-desempeno-icfes/">niveles de desempeño del ICFES</a>, o mide tu puntaje real con un <a href="../simulacro-icfes/">simulacro ICFES completo</a>.</p>
+  <p class="prose">¿Te alcanza para la carrera que quieres? Mira el <a href="../puntaje-icfes/">puntaje ICFES que pide cada universidad</a>, con los pesos de cada prueba y los últimos cortes.</p>
   <p class="prose">La tabla completa, con más percentiles y un CSV para descargar, está en <a href="../datos/percentiles-saber-11/">percentiles del Saber 11</a>. ¿Tienes la página de un colegio o un blog? <a href="../insertar/">Pon esta calculadora en tu página</a>.</p>
   <h2>Preguntas frecuentes</h2>
   ${faqBlock(faq)}

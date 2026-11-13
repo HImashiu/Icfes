@@ -4,7 +4,7 @@
   "date": "2026-11-13"
  },
  "blog/": {
-  "hash": "93067e3f3f1bd348",
+  "hash": "0e0d96be2f22b67a",
   "date": "2026-11-13"
  },
  "blog/como-mejorar-en-lectura-critica-icfes/": {
@@ -16,15 +16,23 @@
   "date": "2026-11-13"
  },
  "calculadora-puntaje-icfes/": {
-  "hash": "f18f49b33466b0d4",
+  "hash": "6fcef1fbe826a592",
+  "date": "2026-11-13"
+ },
+ "certificado-icfes/": {
+  "hash": "403f7993f0ab6689",
+  "date": "2026-11-13"
+ },
+ "citacion-icfes/": {
+  "hash": "22f0e16fa6458f55",
   "date": "2026-11-13"
  },
  "como-prepararse-para-el-icfes/": {
-  "hash": "0a6007e4ad38d443",
+  "hash": "236b9c269fad1bc8",
   "date": "2026-11-13"
  },
  "competencias-icfes/": {
-  "hash": "c476d70eb3371fbb",
+  "hash": "4d914a9f24471161",
   "date": "2026-11-13"
  },
  "competencias-icfes/argumentacion/": {
@@ -80,7 +88,7 @@
   "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/": {
-  "hash": "a1d238b9a494a43d",
+  "hash": "0dbbc344c8bf63f7",
   "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2014/": {
@@ -115,20 +123,32 @@
   "hash": "401125220a537170",
   "date": "2026-11-13"
  },
+ "fechas-icfes-2027/": {
+  "hash": "4def38171b5f0a80",
+  "date": "2026-11-13"
+ },
  "glosario-icfes/": {
-  "hash": "8469024f533b9220",
+  "hash": "4801ec88d3af36c5",
+  "date": "2026-11-13"
+ },
+ "inscripcion-icfes/": {
+  "hash": "d626efb382244ba4",
   "date": "2026-11-13"
  },
  "insertar/": {
-  "hash": "5111b30df22925e0",
+  "hash": "003cbde4b522430c",
   "date": "2026-11-13"
  },
  "niveles-de-desempeno-icfes/": {
-  "hash": "55b1e934fdfc8fd1",
+  "hash": "02ff94d566d71113",
+  "date": "2026-11-13"
+ },
+ "numero-de-registro-icfes/": {
+  "hash": "3e6f8cb2ddbd050c",
   "date": "2026-11-13"
  },
  "preguntas-icfes/": {
-  "hash": "b7dbc21870f34e67",
+  "hash": "51bab95d7bb45305",
   "date": "2026-11-13"
  },
  "preguntas-icfes/ciencias-naturales/": {
@@ -152,7 +172,7 @@
   "date": "2026-11-13"
  },
  "preicfes-para-colegios/": {
-  "hash": "d38eaa25984175e3",
+  "hash": "e2ed801bb2215691",
   "date": "2026-11-13"
  },
  "privacidad": {
@@ -160,15 +180,99 @@
   "date": "2026-11-13"
  },
  "prueba-docente/": {
-  "hash": "b32e89cf2d099db8",
+  "hash": "3a670dd006166eff",
+  "date": "2026-11-13"
+ },
+ "puntaje-icfes/": {
+  "hash": "5536d1bafca6b0cb",
+  "date": "2026-11-13"
+ },
+ "puntaje-icfes/carreras/biologia/": {
+  "hash": "35fb5fd0655eac0e",
+  "date": "2026-11-13"
+ },
+ "puntaje-icfes/carreras/derecho/": {
+  "hash": "420c2df2663936a0",
+  "date": "2026-11-13"
+ },
+ "puntaje-icfes/carreras/economia/": {
+  "hash": "acbac4c32ecc5805",
+  "date": "2026-11-13"
+ },
+ "puntaje-icfes/carreras/enfermeria/": {
+  "hash": "292198937fc1deb6",
+  "date": "2026-11-13"
+ },
+ "puntaje-icfes/carreras/fisioterapia/": {
+  "hash": "2c06d0dd5f612a1a",
+  "date": "2026-11-13"
+ },
+ "puntaje-icfes/carreras/ingenieria-civil/": {
+  "hash": "557743f54fece6c4",
+  "date": "2026-11-13"
+ },
+ "puntaje-icfes/carreras/ingenieria-de-sistemas/": {
+  "hash": "2bfee29cc8f1264f",
+  "date": "2026-11-13"
+ },
+ "puntaje-icfes/carreras/ingenieria-electronica/": {
+  "hash": "9c062e8e86396ba1",
+  "date": "2026-11-13"
+ },
+ "puntaje-icfes/carreras/ingenieria-industrial/": {
+  "hash": "09d9500697863809",
+  "date": "2026-11-13"
+ },
+ "puntaje-icfes/carreras/ingenieria-mecanica/": {
+  "hash": "f18b6ce2ef6b13b5",
+  "date": "2026-11-13"
+ },
+ "puntaje-icfes/carreras/medicina/": {
+  "hash": "de5aa47f960b7894",
+  "date": "2026-11-13"
+ },
+ "puntaje-icfes/carreras/quimica/": {
+  "hash": "93ffec6d46ca5077",
+  "date": "2026-11-13"
+ },
+ "puntaje-icfes/carreras/trabajo-social/": {
+  "hash": "0b4edbc97397868d",
+  "date": "2026-11-13"
+ },
+ "puntaje-icfes/uis/": {
+  "hash": "4cf02cdf1c4c1622",
+  "date": "2026-11-13"
+ },
+ "puntaje-icfes/univalle/": {
+  "hash": "d2241937f45b4fdf",
+  "date": "2026-11-13"
+ },
+ "puntaje-icfes/universidad-de-antioquia/": {
+  "hash": "f79bd372bb90a061",
+  "date": "2026-11-13"
+ },
+ "puntaje-icfes/universidad-de-caldas/": {
+  "hash": "0ffba6c16ffe0924",
+  "date": "2026-11-13"
+ },
+ "puntaje-icfes/universidad-nacional/": {
+  "hash": "52171de83f5caf95",
+  "date": "2026-11-13"
+ },
+ "puntaje-icfes/utp/": {
+  "hash": "a1160cf9b3fb0aa4",
+  "date": "2026-11-13"
+ },
+ "que-es-el-saber-11/": {
+  "hash": "42d473c375197e0a",
   "date": "2026-11-13"
  },
  "resultados-icfes/": {
-  "hash": "0e03384fd576afbc",
+  "hash": "62eaeb0e59a7f4b0",
   "date": "2026-11-13"
  },
  "simulacro-icfes/": {
-  "hash": "6e545c87b2c32916",
+  "hash": "53920f78bc0cfe66",
   "date": "2026-11-13"
  },
  "simulacro-icfes/ciencias-naturales/": {

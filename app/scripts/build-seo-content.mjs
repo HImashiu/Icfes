@@ -347,12 +347,13 @@ function buildResults(ctx) {
 <section class="wrap narrow guide-body">
   <h2>Qué trae el reporte</h2>
   <div class="tbl"><table><thead><tr><th>Dato</th><th>Qué significa</th></tr></thead><tbody>${rows.map(([a, b]) => `<tr><td><b>${a}</b></td><td>${b}</td></tr>`).join("")}</tbody></table></div>
+  <p class="prose">El reporte también trae tu <a href="../numero-de-registro-icfes/">número de registro</a>, que te piden muchas universidades. Si necesitas una copia para legalizar o apostillar, mira el <a href="../certificado-icfes/">certificado del ICFES</a>.</p>
   <h2>Cómo se relacionan</h2>
   <p class="prose">El puntaje global sale de los cinco puntajes por prueba: <b>(3 × Lectura crítica + 3 × Matemáticas + 3 × Sociales + 3 × Ciencias + 1 × Inglés) ÷ 13 × 5</b>. Por eso un punto en Matemáticas mueve el global tres veces más que un punto en Inglés. Compruébalo con la <a href="../calculadora-puntaje-icfes/">calculadora del puntaje ICFES</a>.</p>
   <p class="prose">El nivel de desempeño depende del rango en que cae tu puntaje de cada prueba. Mira los rangos en <a href="../niveles-de-desempeno-icfes/">niveles de desempeño del ICFES</a>.</p>
   <h2>Qué hacer con tu resultado</h2>
   <ul class="checks">
-    <li><b>Si vas a la universidad:</b> revisa el puntaje y las pruebas que pondera el programa que te interesa en su convocatoria oficial.</li>
+    <li><b>Si vas a la universidad:</b> revisa el puntaje y las pruebas que pondera el programa que te interesa en su convocatoria oficial. Tenemos los pesos y cortes de varias públicas en <a href="../puntaje-icfes/">puntaje ICFES para entrar a la universidad</a>.</li>
     <li><b>Si vas a repetir el examen:</b> empieza por la prueba con el percentil más bajo entre las cuatro que pesan 3; ahí está la mayor ganancia.</li>
     <li><b>Si eres docente:</b> compara los niveles de desempeño del curso por prueba para decidir qué competencias reforzar.</li>
   </ul>
