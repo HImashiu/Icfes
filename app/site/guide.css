@@ -82,3 +82,11 @@
 .guide .rel { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
 .guide .rel a { display: flex; align-items: center; min-height: 56px; height: 100%; padding: 10px 16px; border-radius: 16px; background: #fff; color: var(--ink); border: 2px solid var(--ink); box-shadow: 0 3px 0 var(--ink); font-weight: 700; line-height: 1.25; text-decoration: none; transition: translate 0.3s var(--ease), box-shadow 0.3s var(--ease); }
 .guide .rel a:hover { translate: 0 -2px; box-shadow: 0 5px 0 var(--ink); }
+
+/* Phones: tables inside question cards shrink so the last column stays on screen (still scrolls if it must). */
+@media (max-width: 560px) {
+  .guide .tbl { padding: 2px 8px; }
+  .guide .tbl table { font-size: 13px; }
+  .guide .tbl th { font-size: 11px; letter-spacing: 0.02em; }
+  .guide .tbl th, .guide .tbl td { padding: 7px 5px; }
+}
