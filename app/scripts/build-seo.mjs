@@ -8,6 +8,7 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { buildContentPages } from "./build-seo-content.mjs";
+import { buildExamPages } from "./build-seo-exams.mjs";
 
 const AREAS = [
   {
@@ -247,6 +248,7 @@ function page({ siteUrl, path, title, desc, body, crumbs, jsonLd, katex, script,
       <nav class="top-nav" aria-label="Secciones">
         <a href="${up}simulacro-icfes/">Simulacro</a>
         <a href="${up}preguntas-icfes/">Preguntas</a>
+        <a href="${up}examenes-icfes-anteriores/">Exámenes anteriores</a>
         <a href="${up}calculadora-puntaje-icfes/">Calculadora</a>
         <a href="${up}como-prepararse-para-el-icfes/">Cómo prepararse</a>
         <a href="${up}preicfes-para-colegios/">Colegios</a>
@@ -264,6 +266,7 @@ ${body}
       <p>Plataforma independiente, no afiliada al ICFES. Fuente de las preguntas: ICFES, Saber 11.</p>
       <nav aria-label="Más">
         <a href="${up}simulacro-icfes/">Simulacro ICFES gratis</a>
+        <a href="${up}examenes-icfes-anteriores/">Exámenes ICFES anteriores</a>
         <a href="${up}preguntas-icfes/">Preguntas por área</a>
         <a href="${up}calculadora-puntaje-icfes/">Calculadora de puntaje</a>
         <a href="${up}niveles-de-desempeno-icfes/">Niveles de desempeño</a>
@@ -382,6 +385,8 @@ ${cta("../", "Practica con más de 4.000 preguntas")}`;
   <h2>Mini simulacro por área</h2>
   <p class="prose">¿Quieres probar una sola prueba primero? Cada mini simulacro tiene preguntas reales y te dice cuántas acertaste.</p>
   <div class="areas">${AREAS.map((a) => `<a class="area" href="${a.slug}/" style="--c:${a.color}"><span class="dot"></span><b>${esc(a.name)}</b><span>Mini simulacro</span></a>`).join("")}</div>
+  <h2>Exámenes ICFES anteriores completos</h2>
+  <p class="prose">Presenta un examen real de otro año, completo y con tiempo: <a href="../examenes-icfes-anteriores/icfes-2019-1/">ICFES 2019-1</a>, <a href="../examenes-icfes-anteriores/icfes-2020-calendario-a/">ICFES 2020 calendario A</a>, <a href="../examenes-icfes-anteriores/icfes-2020-calendario-b/">ICFES 2020 calendario B</a> y <a href="../examenes-icfes-anteriores/">todos los exámenes anteriores</a>.</p>
   <p class="prose">También puedes ver <a href="../preguntas-icfes/">preguntas por área con respuestas</a> y <a href="../competencias-icfes/">las competencias que evalúa cada prueba</a>.</p>
   <h2>Preguntas frecuentes</h2>
   ${faqBlock(faq)}
@@ -402,6 +407,10 @@ ${cta("../", "Empieza tu simulacro ahora")}`;
   buildContentPages({
     siteUrl, write, page, esc, faqBlock, faqLd, cta, questionHtml, usable: (b, q, a) => usable(b, q, a, true), renderRich, AREAS, dataDir, used, bank,
     markKatex: () => { usesKatex = true; }, PICTURE, NEEDS_PICTURE,
+  });
+
+  buildExamPages({
+    siteUrl, write, page, esc, faqBlock, faqLd, cta, renderRich, AREAS, dataDir, markKatex: () => { usesKatex = true; }, PICTURE, NEEDS_PICTURE,
   });
 
   // KaTeX stylesheet and fonts for the math on the question pages.

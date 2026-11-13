@@ -73,6 +73,16 @@ document.documentElement.classList.add("js");
     var share = ok / qs.length;
     box.querySelector("strong").textContent = "Acertaste " + ok + " de " + qs.length;
     box.querySelector("span").textContent = share === 1 ? "¡Perfecto! Mide tu nivel con un simulacro completo." : share >= 0.6 ? "Vas bien. Repasa las que fallaste y prueba el simulacro completo." : "Repasa las respuestas de arriba y sigue practicando: así se sube el puntaje.";
+    if (!box.querySelector(".share-wa")) {
+      var wa = document.createElement("a");
+      wa.className = "btn btn-ghost btn-sm share-wa";
+      wa.target = "_blank";
+      wa.rel = "noopener";
+      wa.textContent = "Compartir por WhatsApp";
+      var page = location.origin + location.pathname + "?fuente=wa-mini";
+      wa.href = "https://wa.me/?text=" + encodeURIComponent("Preguntas reales del ICFES para practicar gratis, con respuestas: " + page);
+      box.appendChild(wa);
+    }
     box.hidden = false;
     box.scrollIntoView({ behavior: "smooth", block: "center" });
   }

@@ -15,6 +15,13 @@ import { areaColor, fmtInt, fmtPct } from "../lib/brand.js";
 import { fmtSec, timeSummary } from "../lib/timing.js";
 import { missedKeys, rightKeys } from "../lib/repechaje.js";
 
+// Students bring their classmates: a WhatsApp message with the site (and their own simulacro score, if any).
+const shareLink = (global) => {
+  const url = `${typeof window !== "undefined" ? window.location.origin : "https://condoricfes.com"}/?fuente=wa-resultado`;
+  const lead = global != null ? `Saqué ${Math.round(global)}/500 en un simulacro del ICFES con preguntas reales.` : "Estoy practicando para el ICFES con preguntas reales de exámenes anteriores.";
+  return `https://wa.me/?text=${encodeURIComponent(`${lead} Es gratis, con puntaje de 0 a 500 y corrección al instante: ${url}`)}`;
+};
+
 // Resultados: celebrating mascot, three stats, per-area bars, the preliminary-key notice and the next steps.
 // Phone: each area folds to one line; the areas with errors start open. Desktop shows every area.
 // The title follows the score, so 1 of 25 is not "¡Buen trabajo!".
@@ -195,6 +202,12 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
             <span className="caption">de {fmtInt(score.total)} preguntas</span>
           </div>
         </div>
+        {delivered && !attempt.readOnly && (
+          <div className="share-row">
+            <span className="caption">¿Tu curso también presenta el ICFES? Practicar en Cóndor es gratis.</span>
+            <a className="secondary small" href={shareLink(sim?.complete ? sim.global : null)} target="_blank" rel="noreferrer">Compartir por WhatsApp</a>
+          </div>
+        )}
       </div>
 
       <div className="card area-card">

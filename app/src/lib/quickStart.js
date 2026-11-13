@@ -13,12 +13,26 @@ export function readQuickStart() {
   }
 }
 
+// A past-exam page («Presentar el ICFES 2019-1») adds ?cuadernillo=<slug>: that booklet opens in Nuevo simulacro.
+const EXAM = "condor:quick-exam";
+export function readQuickExam() {
+  if (typeof window === "undefined") return null;
+  try {
+    const slug = new URLSearchParams(window.location.search).get("cuadernillo");
+    if (slug && /^[A-Za-z0-9_-]{2,60}$/.test(slug)) sessionStorage.setItem(EXAM, slug);
+    return sessionStorage.getItem(EXAM);
+  } catch {
+    return null;
+  }
+}
+
 export function clearQuickStart() {
-  try { sessionStorage.removeItem(KEY); } catch { /* blocked */ }
+  try { sessionStorage.removeItem(KEY); sessionStorage.removeItem(EXAM); } catch { /* blocked */ }
   try {
     const q = new URLSearchParams(window.location.search);
-    const had = q.has("empezar");
+    const had = q.has("empezar") || q.has("cuadernillo");
     q.delete("empezar");
+    q.delete("cuadernillo");
     if (had || window.location.hash === "#empezar") {
       const search = q.toString();
       history.replaceState(null, "", window.location.pathname + (search ? `?${search}` : "") + (window.location.hash === "#empezar" ? "" : window.location.hash));

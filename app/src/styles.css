@@ -3289,3 +3289,7 @@ body.spl-open { overflow: hidden; }
   .au-users li { grid-template-columns: 1fr 1fr; }
   .au-u-who { grid-column: 1 / -1; }
 }
+
+/* Results: invite classmates over WhatsApp */
+.share-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding-top: 4px; }
+.share-row a.secondary { display: inline-flex; align-items: center; text-decoration: none; }
