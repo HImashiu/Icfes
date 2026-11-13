@@ -13,6 +13,7 @@ import { buildExamPages } from "./build-seo-exams.mjs";
 import { buildEmbedPages } from "./build-seo-embeds.mjs";
 import { buildScoreUniversityPages } from "./build-seo-scores.mjs";
 import { buildTramitePages } from "./build-seo-tramites.mjs";
+import { buildEstructuraPages } from "./build-seo-estructura.mjs";
 import { bankLinks, buildBankPages } from "./build-seo-bank.mjs";
 
 const AREAS = [
@@ -519,6 +520,7 @@ ${cta("../", "Empieza tu simulacro ahora")}`;
   // Puntaje ICFES por universidad y carrera, and the Saber 11 paperwork pages (inscripción, citación, fechas…).
   buildScoreUniversityPages({ siteUrl, write, page, esc, faqBlock, faqLd, cta });
   buildTramitePages({ siteUrl, write, page, esc, faqBlock, faqLd, cta });
+  buildEstructuraPages({ siteUrl, write, page, esc, faqBlock, faqLd, cta });
 
   // KaTeX stylesheet and fonts for the math on the question pages.
   if (usesKatex) {
