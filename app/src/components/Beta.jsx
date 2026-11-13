@@ -27,9 +27,9 @@ export function BetaNote({ who = "student" }) {
   return (
     <div className="beta-note" role="note">
       <Icon name="flag" size={18} strokeWidth={2.6} />
-      <p><b>Versión beta.</b> Muchas preguntas todavía pueden tener errores de formato. {who === "teacher"
-        ? "Si ves uno, corrígelo para tu colegio en Biblioteca › Banco de preguntas, o avísanos con «Reportar un error» desde la vista de estudiante."
-        : "Si ves uno, toca «Reportar un error» debajo de la pregunta y lo corregimos."}</p>
+      <p><b>Versión beta.</b> {who === "teacher"
+        ? "Algunas preguntas todavía pueden tener errores de formato. Si ves uno, corrígelo para tu colegio en Biblioteca › Banco de preguntas, o avísanos con «Reportar un error» desde la vista de estudiante."
+        : "Si ves un error en una pregunta, toca «Reportar un error» y lo corregimos."}</p>
       <button type="button" className="icon-btn" aria-label="Cerrar el aviso" onClick={close}><Icon name="x" size={16} /></button>
     </div>
   );

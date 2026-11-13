@@ -23,10 +23,17 @@ export function visitorId() {
   }
 }
 
+// Crawlers and headless browsers (Googlebot renders pages with JavaScript) are not visitors.
+export const isBot = () => {
+  try {
+    return Boolean(navigator.webdriver) || /bot|crawl|spider|slurp|headless|lighthouse|pagespeed|preview|facebookexternalhit|whatsapp|bingpreview|ahrefs|semrush|mj12/i.test(navigator.userAgent || "");
+  } catch { return false; }
+};
+
 const sent = new Set();
 // event: 'app' (opened /app/) or 'signin' (has an account). Once per page load each.
 export function trackVisit(event) {
-  if (!supabase || sent.has(event)) return;
+  if (!supabase || sent.has(event) || isBot()) return;
   const id = visitorId();
   if (!id) return;
   sent.add(event);
