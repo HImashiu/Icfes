@@ -11,6 +11,7 @@ import { pathToFileURL } from "node:url";
 import { buildContentPages } from "./build-seo-content.mjs";
 import { buildExamPages } from "./build-seo-exams.mjs";
 import { buildEmbedPages } from "./build-seo-embeds.mjs";
+import { bankLinks, buildBankPages } from "./build-seo-bank.mjs";
 
 const AREAS = [
   {
@@ -361,6 +362,11 @@ export async function buildSeoPages({ appRoot, out, siteUrl, dataDir, renderRich
   const write = (path, html) => { mkdirSync(join(out, path), { recursive: true }); writeFileSync(join(out, path, "index.html"), html); pages.push(path); };
   let usesKatex = false;
   const used = new Set(); // questions already on a page, so no page repeats another one's questions
+  // Solved-question and exam-by-area pages (build-seo-bank.mjs), known up front so the pages built before them link to them.
+  const bank_ = bankLinks(dataDir);
+  const solvedLink = (up, area) => bank_.areas.includes(area.name)
+    ? ` Mira también las <a href="${up}pregunta-icfes/${area.slug}/">preguntas de ${esc(area.name)} resueltas y explicadas</a>${bank_.examAreas.some((x) => x.area === area.name) ? `, o ${esc(area.name)} por examen: ${bank_.examAreas.filter((x) => x.area === area.name).map((x) => `<a href="${up}${x.path}">${esc(x.examName)}</a>`).join(", ")}` : ""}.`
+    : "";
 
   // One page per area.
   for (const area of AREAS) {
@@ -381,7 +387,7 @@ export async function buildSeoPages({ appRoot, out, siteUrl, dataDir, renderRich
 ${qs}
 </section>
 ${cta("../../", `¿Quieres más preguntas de ${esc(area.name)}?`)}
-<section class="wrap narrow more"><p>Otras áreas: ${others}.</p><p>¿Vas a presentar el examen completo? Mira cómo es el <a href="../../simulacro-icfes/">simulacro ICFES</a>, calcula tu puntaje con la <a href="../../calculadora-puntaje-icfes/">calculadora ICFES</a> o sigue el <a href="../../como-prepararse-para-el-icfes/">plan de estudio de 8 semanas</a>.</p></section>`;
+<section class="wrap narrow more"><p>Otras áreas: ${others}.${solvedLink("../../", area)}</p><p>¿Vas a presentar el examen completo? Mira cómo es el <a href="../../simulacro-icfes/">simulacro ICFES</a>, calcula tu puntaje con la <a href="../../calculadora-puntaje-icfes/">calculadora ICFES</a> o sigue el <a href="../../como-prepararse-para-el-icfes/">plan de estudio de 8 semanas</a>.</p></section>`;
     write(path, page({
       siteUrl, path, title: area.title, desc: area.desc, body, katex: qs.includes('class="katex'),
       crumbs: [{ name: "Preguntas ICFES", path: "preguntas-icfes/" }, { name: area.name, path }],
@@ -396,7 +402,8 @@ ${cta("../../", `¿Quieres más preguntas de ${esc(area.name)}?`)}
   <h1>Preguntas tipo ICFES con respuestas, por área</h1>
   <p class="prose">Estas son preguntas reales del examen Saber 11, tomadas de los cuadernillos que el ICFES publicó, con la respuesta de cada una. Elige un área para practicar.</p>
   ${areaLinks("../")}
-  <p class="prose">El examen tiene cinco pruebas: Matemáticas, Lectura crítica, Sociales y ciudadanas, Ciencias naturales e Inglés. Se presenta en dos sesiones el mismo día. Si quieres practicar con el examen completo y con tiempo, haz un <a href="../simulacro-icfes/">simulacro ICFES gratis</a>.</p>
+  <p class="prose">El examen tiene cinco pruebas: Matemáticas, Lectura crítica, Sociales y ciudadanas, Ciencias naturales e Inglés. Se presenta en dos sesiones el mismo día. Si quieres practicar con el examen completo y con tiempo, haz un <a href="../simulacro-icfes/">simulacro ICFES gratis</a>.</p>${bank_.items.length ? `
+  <p class="prose">¿Quieres entender cada respuesta? Mira las <a href="../pregunta-icfes/">preguntas ICFES resueltas y explicadas</a>, con el porqué de cada opción.</p>` : ""}
 </div></section>
 ${cta("../", "Practica con más de 4.000 preguntas")}`;
     write(path, page({
@@ -467,6 +474,11 @@ ${cta("../", "Empieza tu simulacro ahora")}`;
 
   buildExamPages({
     siteUrl, write, page, esc, faqBlock, faqLd, cta, renderRich, AREAS, dataDir, markKatex: () => { usesKatex = true; }, PICTURE, NEEDS_PICTURE,
+    examAreaLinks: (slug) => bank_.examAreas.filter((x) => x.exam === slug),
+  });
+
+  buildBankPages({
+    siteUrl, write, page, esc, faqBlock, faqLd, cta, renderRich, AREAS, dataDir, out, markKatex: () => { usesKatex = true; },
   });
 
   // Calculator embed, school badge and percentile table for other sites (link-building assets).

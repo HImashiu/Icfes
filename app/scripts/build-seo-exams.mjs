@@ -45,7 +45,7 @@ const AREA_ORDER = ["Matemáticas", "Lectura crítica", "Sociales y ciudadanas",
 const sessionOf = (name) => (/_1ra$/.test(name) ? "Sesión 1" : /_2da$/.test(name) ? "Sesión 2" : "Cuadernillo único");
 const plain = (s) => String(s ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
-function loadBooklet(dataDir, name) {
+export function loadBooklet(dataDir, name) {
   const file = join(dataDir, `${name}.golden.json`);
   const keysDir = join(dirname(dataDir), "answer-keys");
   if (!existsSync(file) || !existsSync(join(keysDir, `${name}.key.json`))) return null;
@@ -57,7 +57,7 @@ function loadBooklet(dataDir, name) {
 }
 
 // A key we are willing to print: high confidence, and official when the booklet came with one.
-function keyOf(b, q) {
+export function keyOf(b, q) {
   const key = b.answers[String(q.number)];
   const s = b.side[String(q.number)];
   if (!key || !s || s.confidence !== "high" || (s.answer && s.answer !== key)) return null;
@@ -74,7 +74,7 @@ function fits(ctx, b, q) {
 }
 
 // New items first (text written for this exam, not copied from another booklet), one area at a time.
-function pickSamples(ctx, booklets, count) {
+export function pickSamples(ctx, booklets, count) {
   const fresh = (q) => !(q.provenance?.notes ?? []).some((n) => /copied from/i.test(n));
   const byArea = new Map();
   for (const b of booklets) {
@@ -99,7 +99,7 @@ function pickSamples(ctx, booklets, count) {
 }
 
 // A whole reading group (text + up to 3 questions) for exams that are only Lectura crítica.
-function pickGroup(ctx, b) {
+export function pickGroup(ctx, b) {
   for (const g of b.groups.values()) {
     const passage = String(g.passage_md ?? "");
     if (!passage.trim() || ctx.PICTURE.test(passage) || ctx.NEEDS_PICTURE.test(passage) || passage.length > 4200 || passage.length < 300) continue;
@@ -175,6 +175,7 @@ export function buildExamPages(ctx) {
 <section class="wrap narrow guide-body">
   <h2>Qué trae el ${ctx.esc(ex.name)}</h2>
   <div class="tbl"><table><thead>${head}</thead><tbody>${rows}</tbody></table></div>
+  ${(ctx.examAreaLinks?.(ex.slug) ?? []).length ? `<p class="prose">Preguntas resueltas por prueba: ${ctx.examAreaLinks(ex.slug).map((x) => `<a href="${x.areaSlug}/">${ctx.esc(x.area)} del ${ctx.esc(ex.name)}</a>`).join(" · ")}.</p>` : ""}
 </section>
 <section class="qlist wrap narrow mini" aria-label="Preguntas de muestra del ${ctx.esc(ex.name)}" data-total="${items.length}">
 ${qs}

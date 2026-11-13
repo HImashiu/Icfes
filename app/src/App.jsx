@@ -480,7 +480,9 @@ export default function App() {
       if (selected.slug !== quickExam && !quickExamTried.current) { quickExamTried.current = true; openExam(quickExam); return; }
       setQuickStart(false);
       clearQuickStart();
-      setPreset({ scope: "all", mode: "timed" });
+      // From a past exam's test page (…&area=<slug>): that test of the booklet, with time.
+      const areaName = quickArea ? selected.exam.sections.find((s) => testOf(s.name)?.id === quickArea)?.name : null;
+      setPreset({ scope: areaName ?? "all", mode: "timed" });
       setView("setup");
       return;
     }
