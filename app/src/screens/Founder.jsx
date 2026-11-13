@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { adminDashboard, adminPeople, adminPerson, amAdmin, missingFunction } from "../lib/usage.js";
+import { adminDashboard, adminPeople, adminPerson, adminTeachers, amAdmin, missingFunction } from "../lib/usage.js";
 import { DateField, Select } from "../components/Controls.jsx";
 import AdminUsage from "./AdminUsage.jsx";
 import "./founder.css";
 
 // The founder's dashboard (#admin). Only accounts in app_admins get data: every number comes from admin_dashboard(),
-// admin_people() and admin_person() (migration 0039), which check app_admins on the server. Hiding this page is not
-// the protection; the functions are. Until 0039 runs, the older «Uso» page (0037) is shown instead.
+// admin_people() and admin_person() (migration 0040), which check app_admins on the server. Hiding this page is not
+// the protection; the functions are. Until 0040 runs, the older «Uso» page (0037) is shown instead.
 //
 // Routes: #admin (Resumen) · #admin/adquisicion · #admin/retencion · #admin/personas · #admin/colegios ·
 //         #admin/persona/<id>. The old #admin/uso opens Resumen.
@@ -189,7 +189,7 @@ export default function Founder({ onExit }) {
       {data && route.tab === "adquisicion" && <Acquisition data={data} setChannel={setChannel} />}
       {data && route.tab === "retencion" && <Retention data={data} openPeople={openPeople} />}
       {route.tab === "personas" && <People people={filteredPeople} loading={people === null} status={peopleStatus} setStatus={setPeopleStatus} />}
-      {data && route.tab === "colegios" && <Schools data={data} people={filteredPeople} setSchool={(id) => { setSchool(id ?? "none"); go("resumen"); }} />}
+      {data && route.tab === "colegios" && <Schools data={data} range={range} stamp={stamp} people={filteredPeople} setSchool={(id) => { setSchool(id ?? "none"); go("resumen"); }} />}
       {route.tab === "persona" && <Person id={route.id} />}
     </main>
   );
@@ -442,7 +442,7 @@ function Acquisition({ data, setChannel }) {
       <div className="fd-two">
         <section className="card fd-card">
           <h2>Páginas más vistas</h2>
-          <span className="caption">Visitantes distintos que abrieron cada página en el periodo (desde que corre el SQL 0039).</span>
+          <span className="caption">Visitantes distintos que abrieron cada página en el periodo (desde que corre el SQL 0040).</span>
           <SimpleTable rows={data.pages ?? []} cols={[["path", "Página"], ["visitors", "Visitantes"], ["visitor_days", "Días-visita"]]} empty="Aún no hay datos por página." mono />
         </section>
         <section className="card fd-card">
@@ -650,12 +650,48 @@ function People({ people, loading, status, setStatus }) {
 }
 
 // ================================================================================================= Colegios
-function Schools({ data, people, setSchool }) {
+function Schools({ data, range, stamp, people, setSchool }) {
   const rows = data.schools ?? [];
+  const [tch, setTch] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    adminTeachers(range).then((t) => { if (alive) setTch(t); }, () => { if (alive) setTch(false); });
+    return () => { alive = false; };
+  }, [range, stamp]);
+  const tf = tch?.funnel ?? {};
+  const codes = tch?.codes ?? {};
   // Teachers ranked by students they reach: the people who can bring a whole school.
   const teachers = people.filter((p) => p.role !== "student").sort((a, b) => (b.reach ?? 0) - (a.reach ?? 0) || (b.teacher_actions ?? 0) - (a.teacher_actions ?? 0)).slice(0, 15);
   return (
     <div className="fd-body">
+      {tch && (
+        <section className="card fd-card">
+          <h2>Embudo docente</h2>
+          <span className="caption">De una visita con intención docente (páginas de colegios o docentes, enlaces con ?fuente= de docentes) a un colegio entero usando Cóndor. Los pasos 2 en adelante son las cuentas de docente creadas en el periodo.</span>
+          <Funnel steps={[
+            ["Visitas con intención docente", tf.visitors],
+            ["Cuentas de docente nuevas", tf.accounts, 0],
+            ["Entraron a un colegio o prueba", tf.in_school, 1],
+            ["Crearon un curso", tf.class, 2],
+            ["Crearon una actividad o juego", tf.activity, 3],
+            ["Tienen estudiantes en sus cursos", tf.students, 3],
+            ["Tienen un colega en su colegio", tf.colleague, 2],
+          ]} />
+          <div className="fd-reach">
+            <Stat label="Códigos de prueba enviados (total)" value={codes.issued} />
+            <Stat label="Códigos usados (total)" value={codes.redeemed} />
+            <Stat label="Usados en el periodo" value={codes.redeemed_period} />
+            {tch.has_invites && <Stat label="Pruebas abiertas solas" value={codes.self_period} />}
+            {tch.has_invites && <Stat label="Llegaron invitados por un colega" value={codes.invited_period} />}
+          </div>
+          {(tch.sources ?? []).length > 0 && (
+            <SimpleTable rows={tch.sources} cols={[["source", "Fuente docente"], ["visitors", "Visitas"], ["teachers", "Docentes"]]} empty="" />
+          )}
+          {(tch.inviters ?? []).length > 0 && (
+            <SimpleTable rows={tch.inviters.map((x) => ({ ...x, name: x.name || x.email }))} cols={[["name", "Quién invita"], ["n", "Colegas que entraron"]]} empty="" />
+          )}
+        </section>
+      )}
       <section className="card fd-card">
         <h2>Colegios</h2>
         <span className="caption">Cuentas por colegio, actividad de esta semana y lo que hicieron en el periodo. Toca uno para filtrar el panel.</span>
@@ -833,7 +869,7 @@ function Person({ id }) {
             {(d.pages ?? []).slice(0, 15).map((v) => (
               <li key={v.day}><b>{dayLabel(v.day)}</b><span className="caption">{nf(v.views)} vistas</span><span className="fd-mono caption">{(v.paths ?? []).filter(Boolean).slice(0, 6).join("  ")}</span></li>
             ))}
-            {(d.pages ?? []).length === 0 && <li className="caption">Sin visitas registradas por día (empezaron con el SQL 0039).</li>}
+            {(d.pages ?? []).length === 0 && <li className="caption">Sin visitas registradas por día (empezaron con el SQL 0040).</li>}
           </ul>
           <span className="caption">{(d.visits ?? []).length} navegador(es) vinculados a esta cuenta.</span>
         </section>

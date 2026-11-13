@@ -142,7 +142,7 @@ export default function App() {
   const [quickArea] = useState(() => readQuickArea());
   const [quickQuestion] = useState(() => readQuickQuestion());
   const quickAreaTried = useRef(false);
-  // The founder's dashboard (#admin, #admin/personas…): only accounts in app_admins get data (migrations 0037, 0039).
+  // The founder's dashboard (#admin, #admin/personas…): only accounts in app_admins get data (migrations 0037, 0040).
   const [adminPage, setAdminPage] = useState(() => typeof window !== "undefined" && window.location.hash.startsWith("#admin"));
   useEffect(() => {
     const on = () => setAdminPage(window.location.hash.startsWith("#admin"));

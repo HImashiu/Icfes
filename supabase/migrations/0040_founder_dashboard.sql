@@ -1,13 +1,13 @@
--- 0039 · The founder's dashboard (#admin): growth, engagement, retention, acquisition and every account's activity.
+-- 0040 · The founder's dashboard (#admin): growth, engagement, retention, acquisition and every account's activity.
 -- 1) site_visit_days: one row per browser per day (Bogotá) with the pages it opened that day, where that day's visit
 --    came from and the kind of device. track_visit() fills it; nothing else writes it. Still no IP and no name.
 --    site_visitors.device keeps the first device seen.
 -- 2) source_channel(): groups raw sources (google.com, wa-resultado, l.instagram.com…) into channels.
 -- 3) founder_accounts / founder_activity: helper views (one row per account / per account and active day).
--- 4) admin_dashboard(), admin_people(), admin_person(): the page's data. Each one starts by checking app_admins
+-- 4) admin_dashboard(), admin_people(), admin_person(), admin_teachers(): the page's data. Each one starts by checking app_admins
 --    (migration 0037) on the server, so a non-admin gets an error, never data. admin_person() writes who looked at
 --    whom in admin_access_log.
--- Runs after 0037 (and does not depend on 0039). Re-runnable (no data is lost on a second run).
+-- Runs after 0037. Does not need 0038 or 0039; admin_teachers() reads 0038's columns when they exist. Re-runnable.
 
 -- ---------------------------------------------------------------------------------------------------------------------
 -- 1) Visits per day
@@ -503,6 +503,87 @@ begin
 end $$;
 revoke all on function public.admin_people() from public, anon;
 grant execute on function public.admin_people() to authenticated;
+
+-- The teacher funnel: from a visit with teacher intent to a whole school using Cóndor. p_from..p_to as in
+-- admin_dashboard. Uses 0038's columns (trial_codes.source, trial_redemptions.invited_by) when they exist.
+create or replace function public.admin_teachers(p_from date default null, p_to date default null)
+returns json
+language plpgsql volatile security definer set search_path = public set jit = off as $$
+declare
+  v_to date := least(coalesce(p_to, (now() at time zone 'America/Bogota')::date), (now() at time zone 'America/Bogota')::date);
+  v_from date;
+  v_invited int;
+  v_self int;
+  v_invites json := '[]'::json;
+  v_has38 boolean := exists (select 1 from information_schema.columns
+                              where table_schema = 'public' and table_name = 'trial_redemptions' and column_name = 'invited_by');
+begin
+  if not exists (select 1 from app_admins where user_id = auth.uid()) then raise exception 'not_admin'; end if;
+  v_from := greatest(coalesce(p_from, v_to - 29), v_to - 365);
+  if v_from > v_to then v_from := v_to; end if;
+
+  create temp table if not exists _tch (user_id uuid primary key, school_id uuid, created_day date) on commit drop;
+  truncate _tch;
+  insert into _tch select id, school_id, (created_at at time zone 'America/Bogota')::date from profiles where role <> 'student';
+
+  create temp table if not exists _tvis (visitor_id uuid primary key, user_id uuid, source text) on commit drop;
+  truncate _tvis;
+  insert into _tvis
+  select v.visitor_id, v.user_id, v.source from site_visitors v
+   where (v.first_seen at time zone 'America/Bogota')::date between v_from and v_to
+     and (v.source ~ '(docente|colegio|profe|seo-imprimir|seo-banco|^correo)'
+          or coalesce(v.first_path, '') ~ '(docente|colegio|profesor)'
+          or exists (select 1 from site_visit_days d, unnest(d.paths) pth
+                      where d.visitor_id = v.visitor_id and pth ~ '(docente|colegio|profesor)'));
+
+  if v_has38 then
+    execute 'select count(*) from trial_redemptions where invited_by is not null and (redeemed_at at time zone ''America/Bogota'')::date between $1 and $2'
+      into v_invited using v_from, v_to;
+    execute 'select count(*) from trial_codes where source = ''self'' and (created_at at time zone ''America/Bogota'')::date between $1 and $2'
+      into v_self using v_from, v_to;
+    execute 'select coalesce(json_agg(x order by x.n desc), ''[]''::json) from (
+               select p.full_name as name, p.email, count(*) as n from trial_redemptions r join profiles p on p.id = r.invited_by
+                where r.invited_by is not null group by 1, 2 order by 3 desc limit 10) x' into v_invites;
+  end if;
+
+  return json_build_object(
+    'from', v_from, 'to', v_to, 'has_invites', v_has38,
+    'funnel', json_build_object(
+      'visitors', (select count(*) from _tvis),
+      'visitor_accounts', (select count(*) from _tvis v join _tch t on t.user_id = v.user_id),
+      'accounts', (select count(*) from _tch where created_day between v_from and v_to),
+      'in_school', (select count(*) from _tch where created_day between v_from and v_to and school_id is not null),
+      'class', (select count(*) from _tch t where t.created_day between v_from and v_to and (
+                  exists (select 1 from courses c where c.created_by = t.user_id)
+                  or exists (select 1 from course_members m where m.profile_id = t.user_id and m.role = 'teacher'))),
+      'activity', (select count(*) from _tch t where t.created_day between v_from and v_to and (
+                     exists (select 1 from assignments a where a.created_by = t.user_id)
+                     or exists (select 1 from live_sessions l where l.host_id = t.user_id))),
+      'students', (select count(*) from _tch t where t.created_day between v_from and v_to and exists (
+                     select 1 from courses c join course_members m on m.course_id = c.id and m.role = 'student'
+                      where c.created_by = t.user_id
+                         or c.id in (select course_id from course_members x where x.profile_id = t.user_id and x.role = 'teacher'))),
+      'colleague', (select count(*) from _tch t where t.created_day between v_from and v_to and t.school_id is not null
+                      and exists (select 1 from _tch o where o.school_id = t.school_id and o.user_id <> t.user_id))
+    ),
+    'codes', json_build_object(
+      'issued', (select count(*) from trial_codes),
+      'issued_period', (select count(*) from trial_codes where (created_at at time zone 'America/Bogota')::date between v_from and v_to),
+      'self_period', v_self,
+      'redeemed', (select count(*) from trial_redemptions),
+      'redeemed_period', (select count(*) from trial_redemptions where (redeemed_at at time zone 'America/Bogota')::date between v_from and v_to),
+      'invited_period', v_invited
+    ),
+    'sources', coalesce((
+      select json_agg(x order by x.visitors desc) from (
+        select coalesce(v.source, '(directo)') as source, count(*) as visitors,
+               count(*) filter (where t.user_id is not null) as teachers
+          from _tvis v left join _tch t on t.user_id = v.user_id group by 1 order by 2 desc limit 20) x), '[]'::json),
+    'inviters', v_invites
+  );
+end $$;
+revoke all on function public.admin_teachers(date, date) from public, anon;
+grant execute on function public.admin_teachers(date, date) to authenticated;
 
 -- One person in detail. Logged in admin_access_log.
 create or replace function public.admin_person(p_user uuid)

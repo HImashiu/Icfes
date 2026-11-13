@@ -31,7 +31,7 @@ export function trackVisit(event) {
   if (!id) return;
   sent.add(event);
   const args = { p_visitor: id, p_event: event, p_path: window.location.pathname, p_source: sourceOf() };
-  // p_device arrives with migration 0039; before it runs the server only knows the 4-argument call.
+  // p_device arrives with migration 0040; before it runs the server only knows the 4-argument call.
   supabase.rpc("track_visit", { ...args, p_device: deviceKind() }).then(
     ({ error }) => { if (error) supabase.rpc("track_visit", args).then(() => {}, () => {}); },
     () => {},
@@ -131,7 +131,7 @@ export async function amAdmin() {
   const { data, error } = await supabase.rpc("am_admin");
   return !error && data === true;
 }
-// The founder's dashboard (migration 0039). Dates are 'YYYY-MM-DD' (Bogotá days); filters null = all.
+// The founder's dashboard (migration 0040). Dates are 'YYYY-MM-DD' (Bogotá days); filters null = all.
 export async function adminDashboard({ from, to, role = null, channel = null, school = null }) {
   const { data, error } = await supabase.rpc("admin_dashboard", { p_from: from, p_to: to, p_role: role, p_channel: channel, p_school: school });
   if (error) throw new Error(error.message);
@@ -147,7 +147,12 @@ export async function adminPerson(id) {
   if (error) throw new Error(error.message);
   return data;
 }
-// True when the error says migration 0039 has not run yet (the function does not exist).
+export async function adminTeachers({ from, to }) {
+  const { data, error } = await supabase.rpc("admin_teachers", { p_from: from, p_to: to });
+  if (error) throw new Error(error.message);
+  return data;
+}
+// True when the error says migration 0040 has not run yet (the function does not exist).
 export const missingFunction = (message) => /could not find the function|does not exist|schema cache|PGRST202/i.test(message ?? "");
 
 export async function adminUsage(days = 30) {

@@ -483,7 +483,7 @@ document.documentElement.classList.add("js");
     if (!id || tracked[event] || !configured) return;
     tracked[event] = true;
     var args = { p_visitor: id, p_event: event, p_path: location.pathname, p_source: sourceOf() };
-    // p_device arrives with migration 0039; before it runs, the 4-argument call still works.
+    // p_device arrives with migration 0040; before it runs, the 4-argument call still works.
     post("rpc/track_visit", Object.assign({ p_device: deviceKind() }, args)).catch(function () {
       post("rpc/track_visit", args).catch(function () {});
     });
