@@ -3,6 +3,8 @@
    a louder layout: huge display type, tilted "sticker" words, fanned cards, scalloped edges, moving flat shapes,
    cards that stack while you scroll, cookies that flip and exam rows made of pills. No rankings anywhere. */
 .landing {
+  --spring: cubic-bezier(0.34, 1.16, 0.5, 1); /* the app's spring overshoots 40 %: here only a touch, so nothing pops */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --cream: #F6F3EA;
   --ink: #0D110F;
   --g1: #2B5F2E;
@@ -79,7 +81,7 @@
 .hero-in { display: grid; justify-items: center; }
 .badge { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px 7px 10px; border-radius: 999px; background: var(--surface); border: 1.5px solid var(--line); font-weight: 800; font-size: 14px; color: var(--text); }
 .badge svg { width: 18px; height: 18px; fill: var(--accent); }
-.h-owl { display: inline-block; width: 1em; height: 1em; margin: -0.1em -0.06em -0.06em 0; }
+.h-owl { display: inline-block; width: 1.18em; height: 1.18em; margin: -0.2em -0.04em -0.14em 0; }
 .h-owl .ow { width: 100%; height: 100%; overflow: visible; }
 .hero .lead { margin: 0 auto; max-width: 52ch; text-align: center; }
 .hero .cta-row { justify-content: center; margin: 24px 0 0; }
@@ -104,9 +106,9 @@
 
 /* Fanned area cards: they deal out from a stack on load, straighten and lift on hover. */
 .fan { display: flex; justify-content: center; gap: 0; margin: 56px auto 0; padding: 0 16px 8px; max-width: 1180px; }
-.fan-card { --w: 210px; position: relative; flex: 0 0 var(--w); margin: 0 -8px; display: grid; grid-template-rows: 1fr auto; height: 270px; border-radius: 22px; background: var(--c); color: var(--ink); text-decoration: none; overflow: hidden; border: 3px solid var(--ink); box-shadow: 0 14px 30px rgba(0, 0, 0, 0.4); transform: translateY(var(--y)) rotate(var(--r)); animation: deal 0.9s var(--spring) both; animation-delay: calc(0.45s + var(--i) * 0.08s); transition: transform 0.35s var(--spring), box-shadow 0.35s; z-index: 1; }
-.fan-card:hover, .fan-card:focus-visible { transform: translateY(-14px) rotate(0) scale(1.05); z-index: 3; box-shadow: 0 24px 40px rgba(0, 0, 0, 0.5); }
-.fan-card:active { transform: translateY(-8px) rotate(0) scale(1.02); }
+.fan-card { --w: 210px; position: relative; flex: 0 0 var(--w); margin: 0 -8px; display: grid; grid-template-rows: 1fr auto; height: 270px; border-radius: 22px; background: var(--c); color: var(--ink); text-decoration: none; overflow: hidden; border: 3px solid var(--ink); box-shadow: 0 14px 30px rgba(0, 0, 0, 0.4); translate: 0 var(--y); rotate: var(--r); transform: perspective(700px) rotateX(var(--ty, 0deg)) rotateY(var(--tx, 0deg)); animation: deal 1.1s var(--ease) backwards; animation-delay: calc(0.35s + var(--i) * 0.09s); transition: translate 0.55s var(--ease), rotate 0.55s var(--ease), scale 0.55s var(--ease), transform 0.35s ease-out, box-shadow 0.55s var(--ease); z-index: 1; }
+.fan-card:hover, .fan-card:focus-visible { translate: 0 -14px; rotate: 0deg; scale: 1.05; z-index: 3; box-shadow: 0 24px 40px rgba(0, 0, 0, 0.5); }
+.fan-card:active { translate: 0 -8px; scale: 1.02; }
 .fan-art { display: grid; place-items: center; }
 .fan-art svg { width: 84px; height: 84px; fill: none; stroke: var(--ink); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.4s var(--spring); }
 .fan-card:hover .fan-art svg { transform: scale(1.12) rotate(-6deg); }
@@ -114,7 +116,7 @@
 .fan-label::before { content: ""; position: absolute; left: 0; right: 0; top: -12px; height: 13px; background: radial-gradient(circle at 50% 0, transparent 9.5px, var(--cream) 10px) 0 0 / 22px 13px repeat-x; }
 .fan-label b { font: 800 18px/1.15 var(--display); }
 .fan-label small { font-weight: 700; font-size: 14px; color: #4C5650; }
-@keyframes deal { from { transform: translateY(80px) rotate(0) scale(0.85); opacity: 0; } }
+@keyframes deal { from { translate: 0 60px; rotate: 0deg; scale: 0.94; opacity: 0; } }
 @media (max-width: 1100px) { .fan-card { --w: 176px; height: 240px; } .fan-art svg { width: 70px; height: 70px; } }
 @media (max-width: 860px) {
   .fan { justify-content: flex-start; overflow-x: auto; scroll-snap-type: x mandatory; padding: 30px 16px 26px; margin-top: 26px; scrollbar-width: none; }
@@ -203,9 +205,10 @@
 .doubts { padding: 110px 0 100px; background: var(--g1) linear-gradient(rgba(242, 245, 239, 0.05) 1px, transparent 1px) center top / 28px 28px; }
 .doubts .big { color: #F2F5EF; }
 .doubts .sub { color: rgba(242, 245, 239, 0.8); }
-.cookies { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 42vw), 1fr)); gap: 14px; margin: 48px 0 40px; justify-items: center; }
-.cookie { --c: #FFB547; width: 100%; max-width: 280px; aspect-ratio: 1; border: 0; padding: 0; background: none; cursor: pointer; perspective: 900px; transform: rotate(var(--t)); transition: transform 0.4s var(--spring); }
-.cookie:hover { transform: rotate(0) scale(1.04); }
+.cookies { display: grid; grid-template-columns: repeat(2, minmax(0, 280px)); justify-content: center; gap: 14px; margin: 48px 0 40px; justify-items: center; }
+@media (min-width: 1040px) { .cookies { grid-template-columns: repeat(4, minmax(0, 260px)); gap: 18px; } }
+.cookie { --c: #FFB547; width: 100%; max-width: 280px; aspect-ratio: 1; border: 0; padding: 0; background: none; cursor: pointer; perspective: 900px; rotate: var(--t); transform: perspective(800px) rotateX(var(--ty, 0deg)) rotateY(var(--tx, 0deg)); transition: rotate 0.6s var(--ease), scale 0.6s var(--ease), transform 0.35s ease-out, opacity 0.6s ease-out; }
+.cookie:hover { rotate: 0deg; scale: 1.04; }
 .cookie-in { position: relative; display: block; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.7s var(--spring); }
 .cookie[aria-pressed="true"] .cookie-in { transform: rotateY(180deg); }
 .cookie-f, .cookie-b { position: absolute; inset: 0; display: grid; place-items: center; padding: 22%; text-align: center; backface-visibility: hidden; -webkit-backface-visibility: hidden; -webkit-mask: var(--scallop) center / 100% 100% no-repeat; mask: var(--scallop) center / 100% 100% no-repeat; }
@@ -266,8 +269,8 @@
 .price-sec { padding: 60px 0 110px; }
 .price-grid { display: grid; gap: 40px; align-items: center; }
 @media (min-width: 960px) { .price-grid { grid-template-columns: 1fr 1fr; gap: 64px; } }
-.ticket { --r: 12px; padding: calc(2 * var(--r)); background: var(--g2); -webkit-mask: linear-gradient(#000 0 0) no-repeat 50% / calc(100% - 2 * var(--r)) calc(100% - 2 * var(--r)), radial-gradient(farthest-side, #000 97%, #0000) 0 0 / calc(2 * var(--r)) calc(2 * var(--r)) round; mask: linear-gradient(#000 0 0) no-repeat 50% / calc(100% - 2 * var(--r)) calc(100% - 2 * var(--r)), radial-gradient(farthest-side, #000 97%, #0000) 0 0 / calc(2 * var(--r)) calc(2 * var(--r)) round; transform: rotate(-1.5deg); transition: transform 0.4s var(--spring); }
-.ticket:hover { transform: rotate(0); }
+.ticket { --r: 12px; padding: calc(2 * var(--r)); background: var(--g2); -webkit-mask: linear-gradient(#000 0 0) no-repeat 50% / calc(100% - 2 * var(--r)) calc(100% - 2 * var(--r)), radial-gradient(farthest-side, #000 97%, #0000) 0 0 / calc(2 * var(--r)) calc(2 * var(--r)) round; mask: linear-gradient(#000 0 0) no-repeat 50% / calc(100% - 2 * var(--r)) calc(100% - 2 * var(--r)), radial-gradient(farthest-side, #000 97%, #0000) 0 0 / calc(2 * var(--r)) calc(2 * var(--r)) round; rotate: -1.5deg; transform: perspective(900px) rotateX(calc(var(--ty, 0deg) * 0.5)) rotateY(calc(var(--tx, 0deg) * 0.5)); transition: rotate 0.6s var(--ease), transform 0.35s ease-out, opacity 0.6s ease-out; }
+.ticket:hover { rotate: 0deg; }
 .ticket-in { padding: 18px 14px 6px; color: #F2F5EF; }
 .ticket-kicker { font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; font-size: 14px; opacity: 0.8; }
 .ticket-price { font: 800 clamp(64px, 9vw, 104px)/0.9 var(--display); text-transform: uppercase; letter-spacing: -0.04em; margin: 8px 0 22px; color: var(--accent); }
@@ -305,18 +308,24 @@
 @media (min-width: 960px) { .landing .foot-row { grid-template-columns: auto 1fr; } .landing .foot nav { grid-column: 1 / -1; } }
 
 /* Sticker words pop in when their section shows. */
-.js .reveal:not(.in) .stk { transform: rotate(var(--t)) scale(0.4); opacity: 0; }
-.reveal .stk { transition: transform 0.55s var(--spring) 0.25s, opacity 0.3s 0.25s; }
-.js .cookies .reveal:not(.in) { transform: rotate(var(--t)) scale(0.6); }
-.cookies .reveal:nth-child(2) { transition-delay: 80ms; }
-.cookies .reveal:nth-child(3) { transition-delay: 160ms; }
-.cookies .reveal:nth-child(4) { transition-delay: 240ms; }
+.js .reveal:not(.in) .stk { opacity: 0; }
+.js .reveal.in .stk { animation: stk-in 0.8s var(--ease) 0.2s backwards; }
+@keyframes stk-in { from { opacity: 0; scale: 0.82; } }
+/* Cookies come in with an animation (not a transition), so hovering them later has no delay. */
+.js .cookies .reveal:not(.in) { transform: perspective(800px); opacity: 0; }
+.js .cookies .reveal.in { animation: card-in 0.9s var(--ease) backwards; }
+.cookies .reveal:nth-child(2) { animation-delay: 90ms; }
+.cookies .reveal:nth-child(3) { animation-delay: 180ms; }
+.cookies .reveal:nth-child(4) { animation-delay: 270ms; }
+@keyframes card-in { from { opacity: 0; translate: 0 36px; scale: 0.94; } }
 .js .rows .reveal:not(.in) { transform: translateX(-40px); }
 
 @media (prefers-reduced-motion: reduce) {
   .band-track { animation: none; }
   .fan-card { animation: none; }
-  .js .reveal:not(.in) .stk { transform: rotate(var(--t)); opacity: 1; }
+  .js .reveal:not(.in) .stk { opacity: 1; }
+  .js .reveal.in .stk, .js .cookies .reveal.in { animation: none; }
+  .js .cookies .reveal:not(.in) { opacity: 1; }
 }
 .sc-art.sc-goal { height: auto; min-height: 300px; padding: 26px 0; }
 @media (max-width: 899px) { .sc-art.sc-goal { min-height: 0; } .goal { width: 140px; height: 140px; } .goal-n b { font-size: 42px; } }
@@ -374,8 +383,47 @@
 .dots-dark::after { background-image: linear-gradient(rgba(55, 123, 58, 0.45) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(55, 123, 58, 0.45) 1.5px, transparent 1.5px); }
 .lit::after { opacity: 1; }
 
-/* The owls look at the pointer. */
-.ow.tracking .ow-pupils { animation: none; transform: translate(calc(var(--ex, 0) * 34px), calc(var(--ey, 0) * 24px)); transition: transform 0.12s ease-out; }
+/* The owls look at the pointer (or at your finger): pupils to the edge of the eye, head turns and tilts toward it.
+   translate/rotate are separate properties, so they add to whatever the head is already doing. */
+.ow.tracking .ow-pupils { animation: none; transform: translate(calc(var(--ex, 0) * 40px), calc(var(--ey, 0) * 36px)); transition: transform 0.1s ease-out; }
+.ow .ow-head { transition: translate 0.35s cubic-bezier(0.3, 0.7, 0.4, 1.2), rotate 0.35s cubic-bezier(0.3, 0.7, 0.4, 1.2); }
+.peek:not(.think):not(.happy) svg.tracking .pk-pupils { animation: none; transform: translate(calc(var(--ex, 0) * 40px), calc(var(--ey, 0) * 36px)); transition: transform 0.1s ease-out; }
+.ow.tracking .ow-head { translate: calc(var(--ex, 0) * 26px) calc(var(--ey, 0) * 14px); rotate: calc(var(--ex, 0) * 8deg); }
+
+/* Owl poses, the same ones as the "Búho de Cóndor" animation: happy (hover), party (tap/click), think, flap.
+   site.js puts one class on the svg for a moment, then takes it off. */
+.ow-cheek { transform-box: fill-box; transform-origin: center; }
+.ow.pose-happy .ow-open, .ow.pose-party .ow-open { opacity: 0; }
+.ow.pose-happy .ow-happy, .ow.pose-party .ow-happy { opacity: 1; animation: owl-eye-pop 0.35s var(--spring) backwards; transform-box: fill-box; transform-origin: center; }
+.ow.pose-happy .ow-cheek, .ow.pose-party .ow-cheek { animation: owl-cheek 0.5s var(--spring) 0.1s both; }
+.ow.pose-happy .ow-all { animation: owl-hop 0.75s cubic-bezier(0.3, 0.7, 0.4, 1) backwards; }
+.ow.pose-happy .ow-wing-l { animation: owl-flap-l 0.19s ease-in-out 0.12s 4 alternate; }
+.ow.pose-happy .ow-wing-r { animation: owl-flap-r 0.19s ease-in-out 0.12s 4 alternate; }
+.ow.pose-happy .ow-tassel, .ow.pose-flap .ow-tassel { animation: owl-swing 1.3s ease-out 0.1s; }
+.ow.pose-party .ow-all { animation: owl-hop 0.75s cubic-bezier(0.3, 0.7, 0.4, 1) 0.1s 2 backwards, owl-wiggle 0.7s ease-in-out 1.6s; }
+.ow.pose-party .ow-wing-l { animation: owl-flap-l 0.17s ease-in-out 0.15s 10 alternate; }
+.ow.pose-party .ow-wing-r { animation: owl-flap-r 0.17s ease-in-out 0.15s 10 alternate; }
+.ow.pose-party .ow-tassel { animation: owl-swing 1.3s ease-out 0.15s 2; }
+.ow.pose-think .ow-head { animation: owl-tilt 1.6s var(--spring) forwards; }
+.ow.pose-think .ow-pupils { animation: owl-glance 1.6s ease-out forwards; }
+.ow.pose-think .ow-tassel { animation: owl-tassel-tilt 1.6s ease-out forwards; }
+.ow.pose-think .ow-wing-r { animation: owl-tap 0.36s ease-in-out 0.5s 2; }
+.ow.pose-flap .ow-wing-l { animation: owl-flap-l 0.16s ease-in-out 6 alternate; }
+.ow.pose-flap .ow-wing-r { animation: owl-flap-r 0.16s ease-in-out 6 alternate; }
+.ow.pose-flap .ow-all { animation: owl-lift 1s cubic-bezier(0.3, 0.7, 0.4, 1); }
+.h-owl, .faq-owl, .s-owl { cursor: pointer; }
+@keyframes owl-hop { 0%, 100% { transform: translateY(0) scale(1, 1); } 18% { transform: translateY(0) scale(1.07, 0.92); } 45% { transform: translateY(-140px) scale(0.96, 1.05); } 75% { transform: translateY(0) scale(1.05, 0.95); } 88% { transform: translateY(-14px) scale(0.99, 1.01); } }
+@keyframes owl-lift { 0%, 100% { transform: translateY(0); } 40%, 60% { transform: translateY(-60px); } }
+@keyframes owl-flap-l { from { transform: rotate(0); } to { transform: rotate(32deg); } }
+@keyframes owl-flap-r { from { transform: rotate(0); } to { transform: rotate(-32deg); } }
+@keyframes owl-swing { 0%, 100% { transform: rotate(0); } 18% { transform: rotate(-28deg); } 40% { transform: rotate(18deg); } 62% { transform: rotate(-9deg); } 82% { transform: rotate(4deg); } }
+@keyframes owl-wiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-5deg); } 75% { transform: rotate(5deg); } }
+@keyframes owl-eye-pop { from { transform: scale(0.4); } to { transform: scale(1); } }
+@keyframes owl-cheek { 0% { transform: scale(1); } 50% { transform: scale(1.35); } 100% { transform: scale(1.12); } }
+@keyframes owl-tilt { 0% { transform: rotate(0); } 30% { transform: rotate(-8deg); } 55% { transform: rotate(-4.5deg); } 75% { transform: rotate(-7deg); } 100% { transform: rotate(-6deg); } }
+@keyframes owl-glance { 0%, 15% { transform: translate(0, 0); } 45%, 100% { transform: translate(-16px, -26px); } }
+@keyframes owl-tassel-tilt { 0% { transform: rotate(0); } 35% { transform: rotate(16deg); } 65% { transform: rotate(4deg); } 100% { transform: rotate(9deg); } }
+@keyframes owl-tap { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-22deg); } }
 
 /* Stickers you can pick up and drop anywhere. */
 .js .hero-stk { z-index: 2; }
@@ -385,11 +433,8 @@
 @keyframes drop { 0% { scale: 1.18; } 45% { scale: 0.9; } 100% { scale: 1; } }
 
 /* Cards tilt toward the pointer and catch a shine. */
-.fan-card:hover, .fan-card:focus-visible { transform: perspective(700px) translateY(-14px) rotateX(var(--ty, 0deg)) rotateY(var(--tx, 0deg)) scale(1.05); }
 .fan-card::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity 0.25s; background: radial-gradient(circle at var(--gx, 50%) var(--gy, 0%), rgba(255, 255, 255, 0.45), transparent 55%); }
 .fan-card:hover::after { opacity: 1; }
-.cookie:hover { transform: perspective(800px) rotateX(var(--ty, 0deg)) rotateY(var(--tx, 0deg)) scale(1.04); }
-.ticket:hover { transform: perspective(900px) rotateX(calc(var(--ty, 0deg) * 0.5)) rotateY(calc(var(--tx, 0deg) * 0.5)); }
 .ticket { position: relative; }
 .ticket::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.3s; background: radial-gradient(circle at var(--gx, 50%) var(--gy, 0%), rgba(255, 255, 255, 0.16), transparent 50%); }
 .ticket:hover::after { opacity: 1; }
@@ -417,3 +462,30 @@ svg.blobs { translate: calc(var(--mx, 0) * 30px) calc(var(--my, 0) * 30px); tran
   .ow.tracking .ow-pupils { transform: none; }
   svg.blobs { translate: none; }
 }
+
+/* Top banner for schools with a trial code: a lime strip with a ticket, scalloped like the price ticket below. */
+.landing .code-bar { position: relative; z-index: 31; background: var(--accent); color: var(--ink); border-bottom: 0; }
+.landing .code-bar::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 7px; pointer-events: none;
+  background: radial-gradient(circle at 7px 0, var(--accent) 6.5px, transparent 7px) 0 0 / 14px 7px repeat-x; }
+.landing .code-bar-row { min-height: 46px; gap: 12px; padding-top: 6px; padding-bottom: 6px; }
+.landing .code-bar-text { font: 600 14.5px/1.3 var(--ui); color: var(--ink); }
+.landing .code-bar-text b { color: var(--ink); font-weight: 800; }
+.cb-ticket { flex: none; display: grid; place-items: center; width: 34px; height: 26px; animation: cb-wiggle 7s ease-in-out 2s infinite; }
+.cb-ticket svg { width: 100%; height: 100%; fill: var(--ink); }
+.cb-ticket .cb-perf { fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-dasharray: 2 2.2; stroke-linecap: round; }
+@keyframes cb-wiggle { 0%, 88%, 100% { transform: rotate(0); } 91% { transform: rotate(-12deg); } 94% { transform: rotate(9deg); } 97% { transform: rotate(-4deg); } }
+.cb-go { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 6px 0 14px; border-radius: 999px; background: var(--ink); color: var(--accent); font: 800 13.5px/1 var(--ui); text-decoration: none; white-space: nowrap; transition: background 0.2s, translate 0.3s var(--ease); }
+.cb-go:hover { background: #1d2420; translate: 0 -1px; }
+.cb-arrow { width: 24px; height: 24px; border-radius: 50%; background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230D110F' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h13M13 6l6 6-6 6'/%3E%3C/svg%3E") center / 14px no-repeat; transition: transform 0.3s var(--ease); }
+.cb-go:hover .cb-arrow { transform: translateX(3px); }
+@media (max-width: 560px) {
+  .landing .code-bar-row { justify-content: space-between; gap: 10px; }
+  .landing .code-bar-text { font-size: 13px; }
+  .landing .code-bar-text b { display: inline; }
+  .cb-more { display: none; }
+  .cb-ticket { width: 28px; height: 22px; }
+  .cb-go { font-size: 12.5px; height: 32px; padding-left: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .cb-ticket { animation: none; } }
+/* Phone: the badge is gone, so give the two hero stickers their own strip above the headline. */
+@media (max-width: 600px) { .hero .mega { margin-top: 46px; } .hs1 { top: 14px; left: 6%; } .hs2 { top: 10px; right: 6%; } }

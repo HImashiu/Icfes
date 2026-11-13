@@ -1,6 +1,6 @@
 // Inline SVGs of Juan's owl (src/components/owlArt.js) for the static site, so the site's CSS can move its parts.
 //   owlPeek()       head only, cut under the eyes: peeks over the sample question card
-//   owlFull(cls)    the whole owl, parts classed for CSS poses (ow-wing-l/-r, ow-head, ow-eyes, ow-pupils, ow-happy, ow-tassel)
+//   owlFull(cls)    the whole owl, parts classed for CSS poses (ow-wing-l/-r, ow-head, ow-cheek, ow-eyes, ow-pupils, ow-happy, ow-tassel)
 import { pathToFileURL } from "node:url";
 import { join } from "node:path";
 
@@ -29,7 +29,7 @@ export async function owlBuilders(appRoot) {
       + `<path d="${P.base}" fill="${C.wing}"/><path d="${P.panelL}" fill="${C.robe}"/><path d="${P.panelR}" fill="${C.robe}"/><path d="${P.bib}" fill="${C.white}"/>`
       + `<g class="ow-head" ${at(458, 790)}>`
       + `<path d="${P.board}" fill="${C.board}"/><path d="${P.hood}" fill="${C.hood}"/><path d="${P.face}" fill="${C.face}"/>`
-      + E.blush.map((e) => ell(e, C.blush)).join("")
+      + E.blush.map((e) => ell(e, C.blush).replace("<ellipse ", `<ellipse class="ow-cheek" ${at(e.cx, e.cy)} `)).join("")
       + `<g class="ow-eyes" ${at(458, 532)}><g class="ow-open">${E.eyes.map((e) => ell(e, C.eye)).join("")}<g class="ow-pupils"><path d="${P.pupilL}" fill="${C.pupil}"/><path d="${P.pupilR}" fill="${C.pupil}"/></g></g>`
       + `<g class="ow-happy">${E.eyes.map(arc).join("")}</g></g>`
       + `<path d="${P.beak}" fill="${C.beak}"/><path d="${P.crown}" fill="${C.crown}"/>`

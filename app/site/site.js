@@ -163,22 +163,57 @@ document.documentElement.classList.add("js");
     });
   }
 
-  // The owls look at the pointer.
+  // The owls: they look at the pointer (or where you tap), get happy when you point at them, celebrate when you tap
+  // them, and now and then do something on their own (think, flap, hop), like the "Búho de Cóndor" animation.
   var owls = [].slice.call(document.querySelectorAll("svg.ow"));
-  if (fine && owls.length && !reduce) {
-    var eyeQ = false, ex = 0, ey = 0;
+  var lookers = owls.concat([].slice.call(document.querySelectorAll(".peek-head svg")));
+  if (owls.length && !reduce) {
+    var eyeQ = false, ex = 0, ey = 0, eyeIdle = 0;
+    var inView = function (o) { var r = o.getBoundingClientRect(); return r.width && r.bottom > 0 && r.top < window.innerHeight ? r : null; };
     var look = function () {
       eyeQ = false;
-      owls.forEach(function (o) {
-        var r = o.getBoundingClientRect();
-        if (r.bottom < 0 || r.top > window.innerHeight || !r.width) return;
-        var dx = ex - (r.left + r.width / 2), dy = ey - (r.top + r.height * 0.42), d = Math.sqrt(dx * dx + dy * dy) + 140;
+      lookers.forEach(function (o) {
+        var r = inView(o);
+        if (!r) return;
+        var dx = ex - (r.left + r.width / 2), dy = ey - (r.top + r.height * 0.42);
+        var d = Math.sqrt(dx * dx + dy * dy) + Math.max(60, r.width * 0.6);
         o.style.setProperty("--ex", (dx / d).toFixed(3));
         o.style.setProperty("--ey", (dy / d).toFixed(3));
         o.classList.add("tracking");
       });
     };
-    on(window, "pointermove", function (e) { ex = e.clientX; ey = e.clientY; if (!eyeQ) { eyeQ = true; requestAnimationFrame(look); } }, { passive: true });
+    var aim = function (x, y, ms) {
+      ex = x; ey = y;
+      if (!eyeQ) { eyeQ = true; requestAnimationFrame(look); }
+      clearTimeout(eyeIdle);
+      // Back to looking around on their own after a while without the pointer.
+      eyeIdle = setTimeout(function () { lookers.forEach(function (o) { o.classList.remove("tracking"); }); }, ms);
+    };
+    on(window, "pointermove", function (e) { if (e.pointerType === "mouse" || e.pointerType === "pen") aim(e.clientX, e.clientY, 4000); }, { passive: true });
+    on(window, "pointerdown", function (e) { aim(e.clientX, e.clientY, 2200); }, { passive: true });
+    on(document, "mouseleave", function () { clearTimeout(eyeIdle); lookers.forEach(function (o) { o.classList.remove("tracking"); }); });
+
+    var POSE_MS = { "pose-happy": 1100, "pose-party": 2400, "pose-think": 1900, "pose-flap": 1100 };
+    var pose = function (o, name) {
+      if (o._pose) return;
+      o._pose = name; o.classList.add(name);
+      setTimeout(function () { o.classList.remove(name); o._pose = null; }, POSE_MS[name]);
+    };
+    owls.forEach(function (o) {
+      var box = o.parentElement;
+      if (fine) on(box, "pointerenter", function () { pose(o, "pose-happy"); });
+      on(box, "click", function () { o.classList.remove("pose-happy"); o._pose = null; pose(o, "pose-party"); });
+    });
+    // The hero owl cheers when you point at the main button.
+    var heroOwl = document.querySelector(".h-owl svg.ow");
+    if (heroOwl && fine) [].forEach.call(document.querySelectorAll(".hero .btn-go"), function (b) { on(b, "pointerenter", function () { pose(heroOwl, "pose-happy"); }); });
+    // Now and then an owl on screen does something on its own.
+    var IDLE = ["pose-think", "pose-flap", "pose-happy", "pose-think"];
+    setInterval(function () {
+      if (document.hidden) return;
+      var vis = owls.filter(function (o) { return inView(o) && !o._pose; });
+      if (vis.length) pose(vis[Math.floor(Math.random() * vis.length)], IDLE[Math.floor(Math.random() * IDLE.length)]);
+    }, 6500);
   }
 
   // Stickers you can pick up and drop anywhere (mouse or finger).
