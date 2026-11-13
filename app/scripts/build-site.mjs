@@ -239,7 +239,7 @@ const csp = [
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob: https:",
   "media-src 'self' data: blob:",
-  `connect-src 'self' data: blob: ${supa.origin} wss://${supa.host} https://cloudflareinsights.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com`,
+  `connect-src 'self' data: blob: ${supa.origin} wss://${supa.host} https://cloudflareinsights.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://www.reddit.com https://old.reddit.com https://public.api.bsky.app https://mastodon.social https://mstdn.social https://mastodon.online`,
   "worker-src 'self' blob:",
   "frame-src 'none'",
   "frame-ancestors 'none'",

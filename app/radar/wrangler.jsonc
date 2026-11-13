@@ -1,0 +1,18 @@
+// Cóndor radar (radar/index.js): every 30 minutes, reads new public posts about the ICFES and keeps them in KV.
+// Separate from the site's worker on purpose: deploying it never touches condoricfes.com.
+//   cd app && npx wrangler deploy -c radar/wrangler.jsonc
+// Optional secrets (npx wrangler secret put NAME -c radar/wrangler.jsonc): YOUTUBE_API_KEY, BSKY_HANDLE,
+// BSKY_APP_PASSWORD, REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET.
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "condor-radar",
+  "main": "./index.js",
+  "compatibility_date": "2026-11-07",
+  "workers_dev": false,
+  "preview_urls": false,
+  "keep_vars": true,
+  "triggers": { "crons": ["*/30 * * * *"] },
+  // Same namespace the site's worker binds as RADAR (wrangler.jsonc) to serve /app/api/radar.
+  "kv_namespaces": [{ "binding": "RADAR", "id": "ea44ce92cbce4cda88bb9d8c08dda578" }],
+  "observability": { "enabled": true, "logs": { "enabled": true, "invocation_logs": false } }
+}
