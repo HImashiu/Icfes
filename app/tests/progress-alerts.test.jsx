@@ -161,7 +161,7 @@ describe("question bank into teaching material", () => {
     expect(await screen.findByRole("tab", { name: "Tu asignación (2)" })).toBeTruthy();
     expect(window.location.hash).toBe("#docente/actividades/nueva/quiz");
     expect(screen.getByLabelText(/Permitir pistas/).checked).toBe(false);
-    expect(screen.getByText(/1\. Pregunta 1/)).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: /^1\. Pregunta 1/ })[0]).toBeTruthy();
   });
 
   it("turns chosen questions into slides: a class saved and opened in Clases para proyectar", async () => {

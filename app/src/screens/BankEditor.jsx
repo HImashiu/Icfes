@@ -11,6 +11,9 @@ import Icon from "../components/Icon.jsx";
 import QuestionsPrint from "../components/QuestionsPrint.jsx";
 import "./builder/builder.css";
 import Loading from "../components/Loading.jsx";
+import BankSnippet from "../components/BankSnippet.jsx";
+import { snippet } from "../lib/bank.js";
+import "./teacher/bank.css";
 
 const plain = (h) => String(h ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 const PAGE = 30;
@@ -137,30 +140,32 @@ export default function BankEditor({ api, profile, exams, fetchExam, guard, setN
           {shown.slice(page * PAGE, page * PAGE + PAGE).map((q) => {
             const v = byKey.get(q.key);
             return (
-              <li key={q.key} className={chosen.has(q.key) ? "b-row on" : "b-row"} style={{ gridTemplateColumns: "auto 1fr auto" }}>
-                <input type="checkbox" aria-label={`Elegir la pregunta ${q.number}`} checked={chosen.has(q.key)} onChange={() => toggleChosen(q.key)} />
-                <div className="b-body">
-                  <strong><span className="dot" style={{ background: areaColor(q.section) }} /> N.° {q.number} · {q.section}</strong>
-                  <span className="b-text">{plain(q.stem_md || q.stimulus_md).slice(0, 160)}</span>
-                  {(() => {
-                    const hold = holdOf(qc?.holds ?? [], slug, q.key);
-                    const n = index.get(q.key)?.length ?? 0;
-                    if (!v && !n && !hold) return null;
-                    return (
-                      <span className="chips-row">
-                        {v && <span className="badge pending">Versión de tu colegio</span>}
-                        <UseBadge count={n} />
-                        {hold?.reserve && <span className="qu-badge warn">Reservada para simulacro</span>}
-                        {hold?.hide && !hold.reserve && <span className="qu-badge info">Oculta de la práctica</span>}
-                      </span>
-                    );
-                  })()}
+              <li key={q.key} className={chosen.has(q.key) ? "b-row bq-row bq-row-acts on" : "b-row bq-row bq-row-acts"} style={{ "--area": areaColor(q.section) }}>
+                <label className="bq-pick">
+                  <input type="checkbox" aria-label={`Elegir la pregunta ${q.number}`} checked={chosen.has(q.key)} onChange={() => toggleChosen(q.key)} />
+                  <span className="b-body">
+                    <span className="bq-title"><strong>{q.number}</strong><span className="bq-area">{q.section}</span></span>
+                    <BankSnippet text={snippet(q.stem_md || q.stimulus_md || q.group?.stimulus_md, 170)} />
+                    {(() => {
+                      const hold = holdOf(qc?.holds ?? [], slug, q.key);
+                      const n = index.get(q.key)?.length ?? 0;
+                      if (!v && !n && !hold) return null;
+                      return (
+                        <span className="chips-row bq-tags">
+                          {v && <span className="badge pending">Versión de tu colegio</span>}
+                          <UseBadge count={n} />
+                          {hold?.reserve && <span className="qu-badge warn">Reservada para simulacro</span>}
+                          {hold?.hide && !hold.reserve && <span className="qu-badge info">Oculta de la práctica</span>}
+                        </span>
+                      );
+                    })()}
+                  </span>
+                </label>
+                <div className="bq-acts">
+                  <button type="button" className="bq-see" onClick={() => setWork({ q, draft: draftFromBank(q, bundle.key.get(q.key), v) })}>Editar</button>
+                  <button type="button" className="bq-see" onClick={() => setUsage(q)}>Uso</button>
+                  {v && <button type="button" className="bq-see" onClick={() => restore(q)}>Volver a la original</button>}
                 </div>
-                <span>
-                  <button type="button" className="link" onClick={() => setWork({ q, draft: draftFromBank(q, bundle.key.get(q.key), v) })}>Editar</button>
-                  {" "}<button type="button" className="link" onClick={() => setUsage(q)}>Uso</button>
-                  {v && <>{" "}<button type="button" className="link" onClick={() => restore(q)}>Volver a la original</button></>}
-                </span>
               </li>
             );
           })}

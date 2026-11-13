@@ -1,0 +1,103 @@
+/* The question bank (Nueva actividad › Banco and Biblioteca › Banco): dense rows that fit a phone, formulas drawn,
+   filters folded on a phone. Prefix bq-. Every rule is under #root so it wins over the shared cx.css card rules. */
+
+/* Exam text in a row: formulas and bold drawn inline, clamped to a few lines. */
+#root .bq-rich p { display: inline; margin: 0; }
+#root .bq-rich br { display: none; }
+#root .bq-rich .katex { font-size: 1.12em; }
+#root .bq-rich .katex-display { display: inline; margin: 0; }
+#root .bq-rich table, #root .bq-rich img { display: none; }
+
+#root .bq { display: grid; gap: 10px; }
+#root .bq-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+#root .bq-head > strong { font: 800 18px/1.1 var(--cx-display, inherit); }
+#root .bq-head > :last-child { flex: 0 1 280px; min-width: 0; }
+#root .bq-search { display: flex; gap: 8px; align-items: center; }
+#root .bq-search input { flex: 1; min-width: 0; min-height: 42px; }
+#root .bq-search .chip { flex: none; min-height: 42px; display: inline-flex; align-items: center; gap: 6px; }
+
+#root .bq .chips-row { gap: 6px; }
+#root .bq .chip { min-height: 34px; padding: 0 12px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+#root .bq .chip .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+#root .bq .chip .muted { font-weight: 600; }
+#root .bq .chip.on .muted { color: inherit; opacity: 0.7; }
+#root .bq-filters { display: grid; gap: 8px; padding: 10px; border: 1.5px dashed var(--line); border-radius: 16px; }
+#root .bq-filters .b-facet .label { font-size: 11.5px; }
+#root .bq-filters .chip { min-height: 30px; font-size: 12.5px; padding: 3px 10px; text-align: left; line-height: 1.2; }
+
+/* Switches as pills with a tick: one line on a wide screen, wrapping on a phone. */
+#root .bq-switches { display: flex; flex-wrap: wrap; gap: 6px; }
+#root .bq .bq-switch { padding: 0 10px; font-size: 12.5px; gap: 6px; background: var(--surface); color: var(--text-2); }
+#root .bq .bq-switch.on { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); color: var(--text); border-color: var(--accent); box-shadow: 0 3px 0 color-mix(in srgb, var(--accent) 45%, var(--line)); }
+#root .bq-tick { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 5px; border: 1.5px solid var(--line); flex: none; }
+#root .bq-switch.on .bq-tick { background: var(--accent); border-color: var(--accent); color: var(--cx-ink, #111); }
+#root .bq-hint { margin: -4px 0 0; font-size: 12.5px; }
+
+#root .bq-actions { display: grid; gap: 8px; }
+#root .bq-count { margin: 0; font-size: 13px; }
+#root .bq-count strong { color: var(--text); }
+#root .bq-count .link { font-size: 13px; padding: 0; min-height: 0; }
+#root .bq-btns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+#root .bq-btns .secondary.small { min-height: 40px; padding: 0 14px; }
+#root .bq-auto { display: inline-flex; gap: 0; align-items: stretch; }
+#root .bq-auto input[inputmode="numeric"] { width: 52px; min-height: 40px; padding: 0; text-align: center; border-radius: 999px 0 0 999px; border-right-width: 0; font-weight: 800; }
+#root .bq-auto .secondary.small { border-radius: 0 999px 999px 0; }
+
+/* One question: [check] number · area / context / text / tags, and «Ver» at the top right, inside the card. */
+#root .bq-list { gap: 8px; }
+#root .b-list > .bq-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: start; padding: 10px 10px 10px 12px;
+  border-left: 5px solid var(--area, var(--line)); }
+#root .b-list > .bq-row.on { border-left-color: var(--area, var(--accent)); }
+#root .bq-pick { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; align-items: start; cursor: pointer; min-width: 0; margin: 0; font-weight: inherit; }
+#root .bq-pick > input { margin: 1px 0 0; width: 22px; height: 22px; }
+#root .bq-row.qu-blocked .bq-pick { cursor: not-allowed; }
+#root .bq-row .b-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; width: 100%; }
+#root .bq-row .b-body > * { max-width: 100%; min-width: 0; }
+#root .bq-title { display: flex; align-items: baseline; gap: 6px; line-height: 1.2; min-width: 0; }
+#root .bq-title strong { font-size: 15px; }
+#root .bq-area { font-size: 12.5px; font-weight: 700; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#root .bq-area::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--area); margin-right: 5px; vertical-align: 1px; }
+#root .bq-ctx { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; font-size: 12.5px; color: var(--text-2); font-style: italic; }
+#root .bq-row .b-text { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 13.5px; line-height: 1.4; color: var(--text); overflow-wrap: anywhere; }
+#root .bq-tags { gap: 4px; margin-top: 2px; }
+#root .bq-tags:empty { display: none; }
+#root .bq-tags .badge, #root .bq-tags .qu-badge { font-size: 11px; padding: 2px 8px; font-weight: 700; max-width: 100%; white-space: normal; line-height: 1.3; }
+#root .bq-meta { font-size: 12px; color: var(--text-2); line-height: 1.3; }
+#root .bq-see { flex: none; min-height: 32px; min-width: 0; padding: 0 12px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface-2); color: var(--text); font-weight: 800; font-size: 13px; cursor: pointer; }
+#root .bq-see:hover { border-color: var(--accent); }
+
+/* The chosen list: one line per question, the formula drawn. */
+#root .bq-one { display: inline; }
+#root .b-name .bq-one { white-space: nowrap; }
+
+@media (max-width: 640px) {
+  #root .bq { padding: 12px; gap: 8px; }
+  #root .bq-head > :last-child { flex: 1 1 100%; }
+  #root .bq-btns > * { flex: 1 1 auto; }
+  #root .bq-auto .secondary.small { flex: 1; padding: 0 10px; }
+  #root .b-list > .bq-row { padding: 9px 8px 9px 10px; }
+  #root .bq-see { padding: 0 10px; }
+}
+
+/* Courses in «Tu asignación»: pills grouped by grade. The real checkbox stays (keyboard, screen readers) but is hidden. */
+#root .bq-courses { display: grid; gap: 8px; }
+#root .bq-grade { display: grid; gap: 4px; }
+#root .bq-grade .caption { font-size: 11.5px; font-weight: 700; }
+#root .bq-courses .chips-row { gap: 6px; }
+#root .bq-course { min-height: 32px; padding: 0 11px; font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; position: relative; }
+#root .bq-course > input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+#root .bq-course:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Biblioteca › Banco: the row's actions (Editar, Uso, Volver a la original) under the text, inside the card. */
+#root .b-list > .bq-row.bq-row-acts { grid-template-columns: minmax(0, 1fr) !important; row-gap: 6px; }
+#root .b-list > .bq-row-acts > .bq-acts { grid-column: 1; display: flex; flex-wrap: wrap; gap: 6px; padding-left: 32px; }
+#root .bq > p.caption, #root .bq > .caption { margin: 0; }
+
+/* Phone: the Banco / Tu asignación switch really hides the other panel (.bq sets display above). */
+@media (max-width: 900px) {
+  #root .b-grid.show-mine .b-bank.bq { display: none; }
+}
+/* «Ver»: above every bar, with Agregar / Cerrar always in reach at the top of the card. */
+#root .bq-modal { z-index: 80; padding: 12px 10px calc(12px + env(safe-area-inset-bottom)); }
+#root .bq-modal .b-modal-card > .section-head { position: sticky; top: -12px; z-index: 2; margin: -16px -16px 0; padding: 12px 16px; background: var(--bg); border-bottom: 1.5px solid var(--line); border-radius: 16px 16px 0 0; flex-wrap: wrap; gap: 8px; }
+#root .bq-modal .b-modal-card > .section-head > span { display: inline-flex; gap: 8px; align-items: center; }

@@ -8,6 +8,32 @@ const plain = (html) =>
     .replace(/\s+/g, " ")
     .trim();
 
+// A short piece of exam text for a list row: figure and example tokens become words, and the cut never falls inside
+// a $…$ formula (half a formula shows as raw LaTeX). The result still holds $…$ and **bold**, for renderRich.
+const DOLLAR = /(?<!\\)\$/g;
+export function snippet(raw, max = 140) {
+  const text = plain(raw)
+    .replace(/\[\[figura:[^\]]*\]\]/g, "(figura)")
+    .replace(/\[\[ejemplo:[A-Za-z]?\|([^\]]*)\]\]/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (text.length <= max) return text;
+  let cut = text.lastIndexOf(" ", max);
+  if (cut < max * 0.6) cut = max;
+  const opened = (text.slice(0, cut).match(DOLLAR) ?? []).length % 2 === 1;
+  if (opened) {
+    // Inside a formula: end after it when it closes soon, else before it.
+    DOLLAR.lastIndex = cut;
+    const close = DOLLAR.exec(text);
+    if (close && close.index - cut < 80) cut = close.index + 1;
+    else cut = text.slice(0, cut).search(/(?<!\\)\$[^$]*$/);
+  }
+  let out = text.slice(0, cut).replace(/[\s,;:]+$/, "");
+  // A bold mark cut in half would show its asterisks.
+  if ((out.match(/\*\*/g) ?? []).length % 2 === 1) out = out.replace(/\*\*(?!.*\*\*)/, "");
+  return `${out}…`;
+}
+
 export const DIFFICULTY_LABEL = { 1: "Muy fácil", 2: "Fácil", 3: "Media", 4: "Difícil", 5: "Muy difícil" };
 
 // enrich: { "<number>": { competencia, componente, tema, dificultad, nivel_desempeno } } or null.
@@ -18,6 +44,8 @@ export function bankItems(exam, { enrich, key, notes } = {}) {
   return exam.questions.map((q) => {
     const e = enrich?.[String(q.number)] ?? null;
     const stem = plain(q.stem_md) || plain(q.stimulus_md) || plain(q.group?.stimulus_md);
+    // The passage or table the question leans on, when the stem alone says little ("Según la tabla, es correcto…").
+    const ctx = q.stem_md ? (q.stimulus_md || q.group?.stimulus_md) : (q.stimulus_md ? q.group?.stimulus_md : null);
     return {
       key: q.key,
       number: q.number,
@@ -32,7 +60,8 @@ export function bankItems(exam, { enrich, key, notes } = {}) {
       hasKey: Boolean(key?.get(q.key)),
       keyDoubt: notes?.get(q.key)?.confidence === "low" || e?.hidden === true,
       text: `${stem} ${plain(q.group?.stimulus_md)} ${e?.tema ?? ""} ${e?.competencia ?? ""}`.toLowerCase(),
-      preview: stem.length > 140 ? `${stem.slice(0, 140)}…` : stem,
+      preview: snippet(q.stem_md || q.stimulus_md || q.group?.stimulus_md, 160),
+      context: ctx ? snippet(ctx, 110) : "",
       question: q,
     };
   });

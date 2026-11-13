@@ -52,3 +52,18 @@ describe("autopsy", () => {
     expect(autopsy({ A: 0, B: 0 }, ["B"], null).rightPct).toBeNull();
   });
 });
+
+describe("snippet (bank row text)", () => {
+  it("never cuts a $…$ formula in half and keeps money literal", async () => {
+    const { snippet } = await import("../src/lib/bank.js");
+    const s = snippet("La probabilidad es de $\\frac{3}{5} + \\frac{1}{5} = \\frac{4}{5}$. Este valor corresponde a la razón entre dos números", 34);
+    expect((s.match(/\$/g) ?? []).length % 2).toBe(0);
+    expect(s).toContain("$\\frac{3}{5} + \\frac{1}{5} = \\frac{4}{5}$");
+    expect(snippet("Vale $200.000 pesos", 140)).toBe("Vale $200.000 pesos");
+  });
+  it("turns figure tokens into a word and drops a half bold mark", async () => {
+    const { snippet } = await import("../src/lib/bank.js");
+    expect(snippet("Mira [[figura:a1]] aquí", 140)).toBe("Mira (figura) aquí");
+    expect(snippet("El procedimiento anterior **NO** se puede usar cuando la clase supera lo previsto", 30)).not.toMatch(/\*\*/);
+  });
+});

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import QuestionView from "../components/QuestionView.jsx";
 import QuestionsPrint from "../components/QuestionsPrint.jsx";
 import Icon from "../components/Icon.jsx";
@@ -19,7 +20,9 @@ import { holdRows, loadQuestionControl } from "../lib/questionControl.js";
 import { UseBadge, UseHistory } from "../components/QuestionUse.jsx";
 import { splitWeeks, weekDates } from "../lib/teacherTime.js";
 import "./teacher/time.css";
+import "./teacher/bank.css";
 import Loading from "../components/Loading.jsx";
+import BankSnippet from "../components/BankSnippet.jsx";
 
 const isoDay = (d) => d.toISOString().slice(0, 10);
 const WEEK_CHOICES = [1, 2, 3, 4, 6, 8];
@@ -72,6 +75,8 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
   const [preview, setPreview] = useState(null);
   const [panel, setPanel] = useState(seed?.keys?.length ? "mine" : "bank");
   const [autoCount, setAutoCount] = useState("10");
+  // Competencia, componente and dificultad chips stay folded behind «Filtros» until asked for (they are long lists).
+  const [showMore, setShowMore] = useState(false);
   const [weak, setWeak] = useState(null);
   const [msg, setMsg] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -280,61 +285,94 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
     </div>
   );
 
+  const moreFilters = filter.competencias.length + filter.componentes.length + filter.difficulty.length;
+  const toggleChip = (on, label, title, onClick) => (
+    <button type="button" className={on ? "chip bq-switch on" : "chip bq-switch"} aria-pressed={on} title={title} onClick={onClick}>
+      <span className="bq-tick" aria-hidden="true">{on && <Icon name="check" size={12} strokeWidth={3.2} />}</span>{label}
+    </button>
+  );
   const bank = (
-    <section className="card t-card b-bank" aria-label="Banco de preguntas" data-tour="ab-bank">
-      <div className="section-head"><strong>Banco de preguntas</strong>
+    <section className="card t-card b-bank bq" aria-label="Banco de preguntas" data-tour="ab-bank">
+      <div className="bq-head">
+        <strong>Banco de preguntas</strong>
         <Select aria-label="Cuadernillo" value={slug} disabled={Boolean(lesson?.slug)} onChange={(v) => changeExam(v)}>
           {ready.map((x) => <option key={x.slug} value={x.slug}>{x.title ?? x.slug}</option>)}
         </Select>
       </div>
-      <input type="search" placeholder="Buscar por palabra, tema o competencia" aria-label="Buscar preguntas" value={filter.text} onChange={(e) => set("text", e.target.value)} />
-      {chips("areas", areaFacet, "Área")}
-      {chips("competencias", compFacet, "Competencia")}
-      {chips("componentes", compoFacet, "Componente")}
-      {chips("difficulty", diffFacet, "Dificultad (estimada con IA)")}
-      {!tagged && !loading && bundle && <p className="caption">Este cuadernillo todavía no tiene competencias ni dificultad generadas; puedes filtrar por área.</p>}
-      <div className="b-toggles">
-        <label><input type="checkbox" checked={filter.onlyKeyed} onChange={(e) => set("onlyKeyed", e.target.checked)} /> Solo con clave</label>
-        <label><input type="checkbox" checked={mates} onChange={(e) => setMates(e.target.checked)} /> Traer las preguntas del mismo texto</label>
-        <label><input type="checkbox" checked={fresh} onChange={(e) => setFresh(e.target.checked)} /> {anyUse ? "Solo preguntas sin usar en el colegio" : "Solo preguntas nuevas para estos estudiantes"}</label>
-        {!lesson && !live && courseIds.length === 0 && <span className="caption">Elige los cursos en «Tu asignación» y el banco marca lo que ya vieron.</span>}
-        {nFilters > 0 && <button type="button" className="link" onClick={() => { setFilter(EMPTY_FILTER); setWeak(null); }}>Quitar filtros ({nFilters})</button>}
+      <div className="bq-search">
+        <input type="search" placeholder="Buscar palabra, tema o competencia" aria-label="Buscar preguntas" value={filter.text} onChange={(e) => set("text", e.target.value)} />
+        {tagged && (
+          <button type="button" className={moreFilters ? "chip on bq-more" : "chip bq-more"} aria-expanded={showMore} onClick={() => setShowMore(!showMore)}>
+            <Icon name="sliders" size={14} strokeWidth={2.6} /> Filtros{moreFilters ? ` (${moreFilters})` : ""}
+          </button>
+        )}
       </div>
-      <div className="b-actions" data-tour="ab-auto">
-        <span className="caption" aria-live="polite">{filtered.length} de {items.length} preguntas</span>
-        {hiddenStale > 0 && <button type="button" className="link" onClick={() => setFresh(false)}>{hiddenStale} ya usadas, ocultas</button>}
-        <button type="button" className="secondary" disabled={filtered.length === 0} onClick={() => add(filtered.map((i) => i.key))}>Agregar las {filtered.length}</button>
-        <span className="b-auto">
-          <input aria-label="Cantidad automática" inputMode="numeric" value={autoCount} onChange={(e) => setAutoCount(e.target.value.replace(/\D/g, ""))} />
-          <button type="button" className="secondary" disabled={filtered.length === 0 || !autoCount} onClick={autoFill}>Elegir automáticamente</button>
-        </span>
-        {courses.length > 0 && tagged && <button type="button" className="secondary" disabled={!bundle} onClick={findWeak}>Según lo que el curso falla</button>}
+      {areaFacet.length > 0 && (
+        <div className="chips-row bq-areas" role="group" aria-label="Área">
+          {areaFacet.map(([v, n]) => (
+            <button key={v} type="button" className={filter.areas.includes(v) ? "chip on" : "chip"} aria-pressed={filter.areas.includes(v)} onClick={() => toggleIn("areas", v)}>
+              <span className="dot" style={{ background: areaColor(v) }} aria-hidden="true" />{v} <span className="muted">{n}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      {showMore && tagged && (
+        <div className="bq-filters">
+          {chips("competencias", compFacet, "Competencia")}
+          {chips("componentes", compoFacet, "Componente")}
+          {chips("difficulty", diffFacet, "Dificultad (estimada con IA)")}
+        </div>
+      )}
+      {!tagged && !loading && bundle && <p className="caption">Este cuadernillo todavía no tiene competencias ni dificultad generadas; puedes filtrar por área.</p>}
+      <div className="chips-row b-toggles bq-switches" role="group" aria-label="Opciones del banco">
+        {toggleChip(filter.onlyKeyed, "Solo con clave", "Solo preguntas que tienen clave de respuesta", () => set("onlyKeyed", !filter.onlyKeyed))}
+        {toggleChip(mates, "Traer las del mismo texto", "Al elegir una pregunta de un texto compartido se agregan las demás de ese texto", () => setMates(!mates))}
+        {toggleChip(fresh, anyUse ? "Solo sin usar en el colegio" : "Solo nuevas para estos estudiantes", anyUse ? "Oculta las preguntas que el colegio ya usó" : "Oculta las preguntas que estos cursos ya vieron", () => setFresh(!fresh))}
+      </div>
+      {!lesson && !live && courseIds.length === 0 && fresh && <p className="caption bq-hint">Elige los cursos en «Tu asignación» y el banco marca lo que ya vieron.</p>}
+      <div className="b-actions bq-actions" data-tour="ab-auto">
+        <p className="caption bq-count" aria-live="polite">
+          <strong>{filtered.length}</strong> de {items.length} preguntas
+          {hiddenStale > 0 && <> · <button type="button" className="link" onClick={() => setFresh(false)}>{hiddenStale} ya usadas, ocultas</button></>}
+          {nFilters > 0 && <> · <button type="button" className="link" onClick={() => { setFilter(EMPTY_FILTER); setWeak(null); }}>Quitar filtros ({nFilters})</button></>}
+        </p>
+        <div className="bq-btns">
+          <span className="b-auto bq-auto">
+            <input aria-label="Cantidad automática" inputMode="numeric" value={autoCount} onChange={(e) => setAutoCount(e.target.value.replace(/\D/g, "").slice(0, 3))} />
+            <button type="button" className="secondary small" disabled={filtered.length === 0 || !autoCount} onClick={autoFill}>Elegir automáticamente</button>
+          </span>
+          <button type="button" className="secondary small" disabled={filtered.length === 0} onClick={() => add(filtered.map((i) => i.key))}>Agregar las {filtered.length}</button>
+          {courses.length > 0 && tagged && <button type="button" className="secondary small" disabled={!bundle} onClick={findWeak}>Según lo que el curso falla</button>}
+        </div>
       </div>
       {weak && (
         <p className="notice">Lo más flojo del curso en este cuadernillo: {weak.slice(0, 3).map((c) => `${c.competencia} (${c.pct} %)`).join(", ")}. Filtré por esas competencias.</p>
       )}
       {loading && <Loading label="Cargando preguntas…" />}
-      <ul className="b-list">
+      <ul className="b-list bq-list">
         {filtered.slice(0, limitShown).map((it) => {
           const on = picked.includes(it.key);
           const ck = checks.get(it.key);
+          const lock = ck?.level === "block" && !on;
           return (
-            <li key={it.key} className={`b-row${on ? " on" : ""}${ck?.level === "block" ? " qu-blocked" : ""}`}>
-              <input type="checkbox" checked={on} disabled={ck?.level === "block" && !on} onChange={() => toggle(it.key)} aria-label={`Elegir pregunta ${it.number}`} />
-              <span className="assign-tile" style={{ background: areaColor(it.section) }} aria-hidden="true" />
-              <div className="b-body">
-                <strong>{it.number}. <span className="muted">{it.section}</span></strong>
-                <span className="b-text">{it.preview || "(sin texto)"}</span>
-                <span className="chips-row">
-                  {it.competencia && <span className="badge pending">{it.competencia}</span>}
-                  {it.dificultad && <span className="badge pending">{DIFFICULTY_LABEL[it.dificultad]}</span>}
-                  {it.groupSize > 1 && <span className="badge pending">Texto compartido · {it.groupSize}</span>}
-                  {!it.hasKey && <span className="badge pending">Sin clave</span>}
-                  {it.keyDoubt && <span className="badge pending">Clave en duda</span>}
-                  <UseBadge check={ck} count={index.get(it.key)?.length ?? 0} />
+            <li key={it.key} className={`b-row bq-row${on ? " on" : ""}${ck?.level === "block" ? " qu-blocked" : ""}`} style={{ "--area": areaColor(it.section) }}>
+              <label className="bq-pick">
+                <input type="checkbox" checked={on} disabled={lock} onChange={() => toggle(it.key)} aria-label={`Elegir pregunta ${it.number}`} />
+                <span className="b-body">
+                  <span className="bq-title"><strong>{it.number}</strong><span className="bq-area">{it.section}</span></span>
+                  {it.context && <BankSnippet text={it.context} className="bq-ctx" />}
+                  <BankSnippet text={it.preview || "(sin texto)"} />
+                  {(it.competencia || it.dificultad || it.groupSize > 1) && (
+                    <span className="bq-meta">{[it.competencia, it.dificultad && DIFFICULTY_LABEL[it.dificultad], it.groupSize > 1 && `Texto compartido · ${it.groupSize}`].filter(Boolean).join(" · ")}</span>
+                  )}
+                  <span className="chips-row bq-tags">
+                    {!it.hasKey && <span className="badge pending">Sin clave</span>}
+                    {it.keyDoubt && <span className="badge pending">Clave en duda</span>}
+                    <UseBadge check={ck} count={index.get(it.key)?.length ?? 0} />
+                  </span>
                 </span>
-              </div>
-              <button type="button" className="link" onClick={() => setPreview(it.key)}>Ver</button>
+              </label>
+              <button type="button" className="bq-see" aria-label={`Ver pregunta ${it.number}`} onClick={() => setPreview(it.key)}>Ver</button>
             </li>
           );
         })}
@@ -366,7 +404,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
               <span className="b-num">{i + 1}</span>
               <button type="button" className="link b-name" onClick={() => setPreview(k)}>
                 {["block", "warn"].includes(checks.get(k)?.level) && <span className={`qu-dot ${checks.get(k).level}`} title={checks.get(k).reasons.join(" · ")} aria-label={checks.get(k).level === "block" ? "No permitida" : "Ya usada"} />}
-                {it ? `${it.number}. ${it.preview || it.section}` : k}
+                {it ? <><strong>{it.number}.</strong> <BankSnippet text={it.preview || it.section} className="bq-one" /></> : k}
               </button>
               <span className="b-move">
                 <button type="button" className="b-btn" aria-label={`Subir pregunta ${it?.number}`} disabled={i === 0} onClick={() => setPicked(moveKey(picked, i, -1))}>↑</button>
@@ -428,9 +466,19 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
         </>
       ) : (
         <>
-      <fieldset className="field"><legend className="label">Cursos</legend>
-        {courses.map((c) => (
-          <label key={c.id} className="b-check"><input type="checkbox" checked={courseIds.includes(c.id)} onChange={() => setCourseIds(courseIds.includes(c.id) ? courseIds.filter((x) => x !== c.id) : [...courseIds, c.id])} /> {c.name}{c.grade ? ` · Grado ${c.grade}` : ""}</label>
+      <fieldset className="field bq-courses"><legend className="label">Cursos{courseIds.length ? ` · ${courseIds.length} elegido${courseIds.length === 1 ? "" : "s"}` : ""}</legend>
+        {/* Grouped by grade as compact pills: a school with 25 classes fits in a few lines instead of a long list. */}
+        {[...new Set(courses.map((c) => c.grade ?? ""))].map((g) => (
+          <div key={g} className="bq-grade">
+            {g !== "" && courses.some((c) => (c.grade ?? "") !== g) && <span className="caption">Grado {g}</span>}
+            <span className="chips-row">
+              {courses.filter((c) => (c.grade ?? "") === g).map((c) => (
+                <label key={c.id} className={courseIds.includes(c.id) ? "chip bq-course on" : "chip bq-course"}>
+                  <input type="checkbox" checked={courseIds.includes(c.id)} onChange={() => setCourseIds(courseIds.includes(c.id) ? courseIds.filter((x) => x !== c.id) : [...courseIds, c.id])} /> {c.name}{c.grade && !courses.some((o) => (o.grade ?? "") !== (c.grade ?? "")) ? ` · Grado ${c.grade}` : ""}
+                </label>
+              ))}
+            </span>
+          </div>
         ))}
       </fieldset>
       <fieldset className="field b-delivery" data-tour="ab-delivery"><legend className="label">Cómo la resuelven</legend>
@@ -549,8 +597,9 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
       </div>
       <div className={`b-grid show-${panel}`}>{bank}{mine}</div>
       {printing && bundle && <QuestionsPrint bundle={bundle} keys={picked} title={title.trim()} onClose={() => setPrinting(false)} />}
-      {open && bundle && (
-        <div className="b-modal" role="dialog" aria-modal="true" aria-label={`Pregunta ${open.number}`}>
+      {open && bundle && createPortal(
+        // Portaled to #root so the page's stacking context cannot put the top bar or the phone bar over it.
+        <div className="b-modal bq-modal" role="dialog" aria-modal="true" aria-label={`Pregunta ${open.number}`} onClick={(e) => e.target === e.currentTarget && setPreview(null)}>
           <div className="b-modal-card">
             <div className="section-head">
               <strong>Pregunta {open.number} · {open.section}</strong>
@@ -567,7 +616,8 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
             <AiAnalysis row={bundle.enrich?.[String(open.number)]} correctLetter={bundle.key?.get(open.key) ?? null} meta={bundle.enrichMeta} />
             <p className="caption">La clave marcada es preliminar, no oficial.</p>
           </div>
-        </div>
+        </div>,
+        document.getElementById("root") ?? document.body,
       )}
     </div>
   );

@@ -379,23 +379,7 @@
 #root .ws-search:focus-within { box-shadow: 0 3px 0 var(--accent-shadow), 0 0 0 4px var(--accent-soft); }
 #root .ws-search input, #root .rd-search input, #root .db-boards > form > input { border: 0 !important; box-shadow: none !important; background: transparent !important; border-radius: 0; min-height: 44px; padding: 0; min-width: 0; width: 100%; }
 
-/* Question picker in «Nueva actividad»: toggles as tidy rows, the auto-pick as one compact line, rows that fit a phone. */
-#root .b-toggles { display: grid; gap: 10px; }
-#root .b-toggles > label { display: flex; align-items: center; gap: 10px; font-weight: 700; line-height: 1.25; }
-#root .b-toggles > label > input { flex: none; }
-#root .b-actions { gap: 10px; }
-#root .b-actions .secondary { min-height: 44px; }
-#root .b-auto { gap: 8px; }
-#root .b-auto input[inputmode="numeric"] { width: 64px; min-height: 44px; padding: 0; text-align: center; }
-#root .b-row .assign-tile { width: 6px; border-radius: 99px; }
-#root .b-row > .link { align-self: center; padding: 6px 12px; }
-@media (max-width: 640px) {
-  #root .b-actions { display: grid; grid-template-columns: minmax(0, 1fr); }
-  #root .b-actions > .secondary, #root .b-auto { width: 100%; }
-  #root .b-auto > .secondary { flex: 1; }
-  #root .b-row:not(.bk-rows *) { grid-template-columns: 24px 6px minmax(0, 1fr); row-gap: 8px; }
-  #root .b-row:not(.bk-rows *) > .link { grid-column: 3; justify-self: start; }
-}
+/* Question picker in «Nueva actividad»: see screens/teacher/bank.css. */
 
 /* «¿Qué vas a crear?»: the five kinds as coloured cards (the landing's area cards), the rest as compact rows.
    The menu is portaled to <body>, so these rules are not under #root. */

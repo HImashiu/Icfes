@@ -2321,6 +2321,10 @@ button.rc-dest:hover { border-color: var(--accent); }
   .tl-back { display: inline-flex; align-items: center; gap: 4px; border: 0; background: transparent; color: var(--text-2); font-weight: 700; padding: 0; min-height: 28px; justify-self: start; }
   .seg-tabs { max-width: none; }
   .seg-tabs > button { min-height: 36px; font-size: 12.5px; padding: 0 4px; }
+  /* Tabs take the width their words need (no "Refuer…"); on a very narrow phone the row slides sideways. */
+  .seg-tabs.tl-tabs { display: flex; overflow-x: auto; scrollbar-width: none; }
+  .seg-tabs.tl-tabs::-webkit-scrollbar { display: none; }
+  .seg-tabs.tl-tabs > button { flex: 1 0 auto; padding: 0 6px; overflow: visible; text-overflow: clip; }
   .tl-bottom { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: var(--side); border-top: 1px solid var(--line); padding: 6px 2px calc(8px + env(safe-area-inset-bottom)); }
   .tl-bottom button { display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 46px; border: 0; background: transparent; color: var(--text-2); font-size: 10.5px; font-weight: 600; min-width: 0; }
   .tl-bottom button span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
