@@ -400,6 +400,10 @@ export async function buildSeoPages({ appRoot, out, siteUrl, dataDir, renderRich
   const solvedLink = (up, area) => bank_.areas.includes(area.name)
     ? ` Mira también las <a href="${up}pregunta-icfes/${area.slug}/">preguntas de ${esc(area.name)} resueltas y explicadas</a>${bank_.examAreas.some((x) => x.area === area.name) ? `, o ${esc(area.name)} por examen: ${bank_.examAreas.filter((x) => x.area === area.name).map((x) => `<a href="${up}${x.path}">${esc(x.examName)}</a>`).join(", ")}` : ""}.`
     : "";
+  const topicLinks = (up, area) => {
+    const ts = bank_.topics.filter((t) => t.area === area.name);
+    return ts.length ? `\n  <p class="prose">Por tema, con preguntas resueltas: ${ts.map((t) => `<a href="${up}${t.path}">${esc(t.name)}</a>`).join(" · ")}.</p>` : "";
+  };
 
   // One page per area.
   for (const area of AREAS) {
@@ -414,7 +418,7 @@ export async function buildSeoPages({ appRoot, out, siteUrl, dataDir, renderRich
   <span class="tag" style="background:${area.color}">${esc(area.name)}</span>
   <h1>${esc(area.title)}</h1>
   ${area.intro.map((p) => `<p class="prose">${p}</p>`).join("\n  ")}
-  <p class="prose">Abajo tienes ${items.length} preguntas reales de cuadernillos que publicó el ICFES. Toca una opción para ver si acertaste.</p>
+  <p class="prose">Abajo tienes ${items.length} preguntas reales de cuadernillos que publicó el ICFES. Toca una opción para ver si acertaste.</p>${topicLinks("../../", area)}
 </div></section>
 <section class="qlist wrap narrow" aria-label="Preguntas de ${esc(area.name)}">
 ${qs}

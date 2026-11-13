@@ -37,3 +37,19 @@ describe("solved.json", () => {
     }
   });
 });
+
+describe("topic pages", async () => {
+  const { TOPICS } = await import("../scripts/seo-bank/topics.mjs");
+  it("have short titles, unique slugs, full content, and every solved question has a known topic", () => {
+    const keys = new Set();
+    for (const t of TOPICS) {
+      expect(`${t.title} | Cóndor`.length, t.slug).toBeLessThanOrEqual(60);
+      expect(t.slug).toMatch(/^[a-z0-9-]+$/);
+      expect(keys.has(`${t.area}/${t.slug}`), t.slug).toBe(false);
+      keys.add(`${t.area}/${t.slug}`);
+      expect(t.desc.length, t.slug).toBeLessThanOrEqual(160);
+      expect(t.ideas.length >= 3 && t.errores.length >= 2 && t.faq.length >= 2, t.slug).toBe(true);
+    }
+    for (const [id, s] of entries) expect(keys.has(`${s.areaName}/${s.topico}`), id).toBe(true);
+  });
+});
