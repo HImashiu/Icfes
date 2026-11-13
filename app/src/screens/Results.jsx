@@ -14,6 +14,7 @@ import { WEAKEST_AREA } from "../data/mock.js";
 import { areaColor, fmtInt, fmtPct } from "../lib/brand.js";
 import { fmtSec, timeSummary } from "../lib/timing.js";
 import { missedKeys, rightKeys } from "../lib/repechaje.js";
+import { shareResultCard } from "../lib/shareCard.js";
 
 // Students bring their classmates: a WhatsApp message with the site (and their own simulacro score, if any).
 const shareLink = (global) => {
@@ -110,6 +111,23 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [delivered, attempt.startedAt]);
+  // A picture of this result for WhatsApp estados and stories: the student's own score only, never a ranking.
+  const shareImage = () => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://condoricfes.com";
+    const full = sim?.complete && sim.global != null;
+    shareResultCard({
+      kicker: full ? "Mi simulacro ICFES" : "Hoy practiqué",
+      big: full ? String(Math.round(sim.global)) : `${score.correct}/${outOf}`,
+      unit: full ? "de 500" : "preguntas bien",
+      line: title,
+      areas: score.perArea.map((a) => {
+        const base = attempt.mode === "timed" ? a.total : a.answered;
+        return { name: a.name, pct: base ? (a.correct / base) * 100 : null };
+      }),
+      url: "condoricfes.com",
+      link: `${origin}/?fuente=img-resultado`,
+    }, `${import.meta.env.BASE_URL}brand/favicon.svg`).catch(() => {});
+  };
   // A good result is celebrated once: confetti over the hero and a short fanfare.
   const heroRef = useRef(null);
   useEffect(() => {
@@ -205,7 +223,10 @@ export default function Results({ title, questions, attempt, answerKey, keyStatu
         {delivered && !attempt.readOnly && (
           <div className="share-row">
             <span className="caption">¿Tu curso también presenta el ICFES? Compárteles Cóndor.</span>
-            <a className="secondary small" href={shareLink(sim?.complete ? sim.global : null)} target="_blank" rel="noreferrer">Compartir por WhatsApp</a>
+            <span className="share-btns">
+              {pct !== null && <button type="button" className="secondary small" onClick={shareImage}>Compartir imagen</button>}
+              <a className="secondary small" href={shareLink(sim?.complete ? sim.global : null)} target="_blank" rel="noreferrer">Compartir por WhatsApp</a>
+            </span>
           </div>
         )}
       </div>
