@@ -428,7 +428,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
       <nav className="tl-bottom" aria-label="Secciones">
         {NAV.slice(0, 4).map((n, i) => (<Fragment key={n.section}>
           {i === 2 && (
-            <button type="button" className="cx-fab" aria-label="Crear una actividad" onClick={() => go({ section: "actividades", tab: "nueva" })}>
+            <button type="button" className="cx-fab" aria-label="Crear una actividad" onClick={() => window.dispatchEvent(new Event("condor:new-activity"))}>
               <Icon name="plus" size={26} strokeWidth={3} />
             </button>
           )}

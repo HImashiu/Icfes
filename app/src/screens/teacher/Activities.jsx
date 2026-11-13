@@ -190,6 +190,12 @@ export function NewActivityMenu({ go, disabled, onLive }) {
     };
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!open) setDrag(0); }, [open]);
+  // The phone bar's round «+» opens this same menu, so both «+» lead to the same choice.
+  useEffect(() => {
+    const ask = () => { if (!disabled) setOpen(true); };
+    window.addEventListener("condor:new-activity", ask);
+    return () => window.removeEventListener("condor:new-activity", ask);
+  }, [disabled]);
   const pick = (to) => { setOpen(false); if (to.tab === "vivo") onLive?.(); go(to); };
   // Phone: pull the sheet down from its handle (or from the list when it is scrolled to the top) to close it.
   const startDrag = (e) => {
@@ -205,12 +211,12 @@ export function NewActivityMenu({ go, disabled, onLive }) {
   const items = (
     <>
       {Object.entries(PRESETS).map(([id, p]) => (
-        <button key={id} type="button" role="menuitem" className="na-item" onClick={() => pick({ section: "actividades", tab: "nueva", preset: id })}>
+        <button key={id} type="button" role="menuitem" className={`na-item na-kind na-${id}`} onClick={() => pick({ section: "actividades", tab: "nueva", preset: id })}>
           <span className="na-ico" aria-hidden="true"><Icon name={p.icon} size={18} /></span>
           <span><strong>{p.label}</strong><span className="caption">{p.note}</span></span>
         </button>
       ))}
-      <span className="na-sep" aria-hidden="true" />
+      <span className="na-sep" aria-hidden="true"><span>También</span></span>
       {EXTRA.map((x) => (
         <button key={x.id} type="button" role="menuitem" className="na-item" onClick={() => pick(x.to)}>
           <span className="na-ico" aria-hidden="true"><Icon name={x.icon} size={18} /></span>
@@ -233,7 +239,7 @@ export function NewActivityMenu({ go, disabled, onLive }) {
             <div ref={menu} className="na-sheet" role="menu" aria-label="Qué quieres crear" onPointerDown={startDrag}
               style={drag ? { transform: `translateY(${drag}px)`, transition: "none" } : undefined}>
               <div className="na-grab" aria-hidden="true" />
-              <div className="na-sheet-head"><strong>Nueva actividad</strong><button type="button" className="icon-btn" aria-label="Cerrar" onClick={() => setOpen(false)}><Icon name="x" size={18} /></button></div>
+              <div className="na-sheet-head"><strong>¿Qué vas <em>a crear?</em></strong><button type="button" className="icon-btn" aria-label="Cerrar" onClick={() => setOpen(false)}><Icon name="x" size={18} /></button></div>
               <div className="na-list">{items}</div>
             </div>
           </div>

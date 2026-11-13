@@ -133,7 +133,7 @@ export default function BankEditor({ api, profile, exams, fetchExam, guard, setN
         )}
         {printing && bundle && <QuestionsPrint bundle={bundle} keys={chosenKeys} title={`${examTitle} · hoja de trabajo`} onClose={() => setPrinting(false)} />}
         {!bundle && <Loading label="Cargando preguntas…" />}
-        <ul className="b-list">
+        <ul className="b-list bk-rows">
           {shown.slice(page * PAGE, page * PAGE + PAGE).map((q) => {
             const v = byKey.get(q.key);
             return (
