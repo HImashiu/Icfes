@@ -4,6 +4,31 @@
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
+ "becas-icfes/": {
+  "hash": "2ec790043cac59cc",
+  "date": "2026-11-13",
+  "first": "2026-11-13"
+ },
+ "becas-icfes/beca-merito-rosario/": {
+  "hash": "5f7ba1e9276ab82f",
+  "date": "2026-11-13",
+  "first": "2026-11-13"
+ },
+ "becas-icfes/icetex/": {
+  "hash": "85db9e8e866c8dd4",
+  "date": "2026-11-13",
+  "first": "2026-11-13"
+ },
+ "becas-icfes/matricula-cero/": {
+  "hash": "b9069b061f748058",
+  "date": "2026-11-13",
+  "first": "2026-11-13"
+ },
+ "becas-icfes/quiero-estudiar-uniandes/": {
+  "hash": "0312b033e2ff8cee",
+  "date": "2026-11-13",
+  "first": "2026-11-13"
+ },
  "blog/": {
   "hash": "cf83638c20aa2b5d",
   "date": "2026-11-13",
@@ -25,12 +50,12 @@
   "first": "2026-11-13"
  },
  "certificado-icfes/": {
-  "hash": "a49b51c1be194651",
+  "hash": "9ba3fd8dc10ad028",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "citacion-icfes/": {
-  "hash": "af0e4ec944f6cea5",
+  "hash": "aa9f76eef5dab27e",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
@@ -110,7 +135,7 @@
   "first": "2026-11-13"
  },
  "estructura-examen-icfes/": {
-  "hash": "8d17ae2beb44093d",
+  "hash": "4de3b4697d2b096a",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
@@ -305,7 +330,7 @@
   "first": "2026-11-13"
  },
  "fechas-icfes-2027/": {
-  "hash": "ea2f9eb91b61e90b",
+  "hash": "2a231e1c123995a9",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
@@ -315,12 +340,12 @@
   "first": "2026-11-13"
  },
  "inscripcion-icfes/": {
-  "hash": "724d81f390ee5a2c",
+  "hash": "8fed95cd2528b04c",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "insertar/": {
-  "hash": "7b521928cb63ff22",
+  "hash": "ff1e127beb6a8da2",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
@@ -330,7 +355,7 @@
   "first": "2026-11-13"
  },
  "numero-de-registro-icfes/": {
-  "hash": "cc19936fcb0de533",
+  "hash": "82332739f3d78e56",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
@@ -1415,117 +1440,147 @@
   "first": "2026-11-13"
  },
  "puntaje-icfes/": {
-  "hash": "676af3aadab57370",
+  "hash": "2d081a7f88871761",
+  "date": "2026-11-13",
+  "first": "2026-11-13"
+ },
+ "puntaje-icfes/carreras/administracion-de-empresas/": {
+  "hash": "a18c762c2df82074",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "puntaje-icfes/carreras/biologia/": {
-  "hash": "f3aa7743cfccef16",
+  "hash": "1d698d76e8bed416",
+  "date": "2026-11-13",
+  "first": "2026-11-13"
+ },
+ "puntaje-icfes/carreras/contaduria-publica/": {
+  "hash": "6ce83fc380a41d46",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "puntaje-icfes/carreras/derecho/": {
-  "hash": "c55437b16e2f875c",
+  "hash": "4cb81d72c028a025",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "puntaje-icfes/carreras/economia/": {
-  "hash": "bccaa9456f8bf135",
+  "hash": "c56daddd9aaea783",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "puntaje-icfes/carreras/enfermeria/": {
-  "hash": "d806ea75790d0bcb",
+  "hash": "2ef7699b53ca3807",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "puntaje-icfes/carreras/fisioterapia/": {
-  "hash": "ba5206941d7a155b",
+  "hash": "8afeab8751995695",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "puntaje-icfes/carreras/ingenieria-civil/": {
-  "hash": "126ea84f3261a48b",
+  "hash": "fd9e7049b2f6919c",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "puntaje-icfes/carreras/ingenieria-de-sistemas/": {
-  "hash": "3804a842acbceb9b",
+  "hash": "b239eb5198243d2b",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "puntaje-icfes/carreras/ingenieria-electronica/": {
-  "hash": "f194cc21d319e965",
+  "hash": "8d42e7305de0015f",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "puntaje-icfes/carreras/ingenieria-industrial/": {
-  "hash": "65a01340b9e61f43",
+  "hash": "fd0910edbdd32d42",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "puntaje-icfes/carreras/ingenieria-mecanica/": {
-  "hash": "efda45633d566651",
+  "hash": "ccf6b7fe4c33dd86",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "puntaje-icfes/carreras/medicina/": {
-  "hash": "bd535f76321ec514",
+  "hash": "177589e08bee036a",
+  "date": "2026-11-13",
+  "first": "2026-11-13"
+ },
+ "puntaje-icfes/carreras/odontologia/": {
+  "hash": "37980d28de565dcf",
+  "date": "2026-11-13",
+  "first": "2026-11-13"
+ },
+ "puntaje-icfes/carreras/psicologia/": {
+  "hash": "9771b7a8e88e4045",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "puntaje-icfes/carreras/quimica/": {
-  "hash": "6f99072ef1490732",
+  "hash": "6e7d1bccb1c90bbc",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "puntaje-icfes/carreras/trabajo-social/": {
-  "hash": "591d2a4e4e977a28",
+  "hash": "a0818e47db30d6d4",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "puntaje-icfes/uis/": {
-  "hash": "f0a66fe7d18db293",
+  "hash": "1170e7d8e76168da",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "puntaje-icfes/univalle/": {
-  "hash": "2a40f30f24f3c3a6",
+  "hash": "18d1dbd3af9a44da",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "puntaje-icfes/universidad-de-antioquia/": {
-  "hash": "e947d0012d752fee",
+  "hash": "5b89873d6237f189",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "puntaje-icfes/universidad-de-caldas/": {
-  "hash": "5d130a0525c75e4d",
+  "hash": "87024a35338ff0e1",
+  "date": "2026-11-13",
+  "first": "2026-11-13"
+ },
+ "puntaje-icfes/universidad-del-atlantico/": {
+  "hash": "df7888201fc3ea59",
+  "date": "2026-11-13",
+  "first": "2026-11-13"
+ },
+ "puntaje-icfes/universidad-del-magdalena/": {
+  "hash": "def8b470169722f4",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "puntaje-icfes/universidad-nacional/": {
-  "hash": "9058afeda2e8c24f",
+  "hash": "83e7f21bd45c6b6d",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "puntaje-icfes/utp/": {
-  "hash": "e458d5ecc2998643",
+  "hash": "cd459622e6c91809",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "que-es-el-saber-11/": {
-  "hash": "8aaa4e95a4b19996",
+  "hash": "3241e8161227db87",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "resultados-icfes/": {
-  "hash": "115d3ff356869e0a",
+  "hash": "8145e65fa1db1e34",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },
  "simulacro-icfes/": {
-  "hash": "5d6466cb9b147e8d",
+  "hash": "f05a4e84acf7ab76",
   "date": "2026-11-13",
   "first": "2026-11-13"
  },

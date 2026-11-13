@@ -254,8 +254,13 @@ writeFileSync(join(out, "_headers"), `/*
   ! X-Frame-Options
   ! Content-Security-Policy
   Content-Security-Policy: ${csp.replace("frame-ancestors 'none'", "frame-ancestors *")}
+
+/insertar/pregunta-del-dia/*
+  ! X-Frame-Options
+  ! Content-Security-Policy
+  Content-Security-Policy: ${csp.replace("frame-ancestors 'none'", "frame-ancestors *")}
 `);
-// /insertar/calculadora/ is the score calculator other sites put in an iframe (scripts/build-seo-embeds.mjs): no
+// /insertar/calculadora/ and /insertar/pregunta-del-dia/ are widgets other sites put in an iframe (build-seo-embeds.mjs): no
 // forms or sign-in there, so it may be framed by anyone. Every other page keeps frame-ancestors 'none' and DENY.
 console.log(`[build-site] site-dist ready: landing + app/ (site URL ${siteUrl})`);
 
