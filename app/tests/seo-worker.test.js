@@ -80,7 +80,7 @@ describe("worker: IndexNow", () => {
   it("submits only this site's changed pages, with the key", async () => {
     const sent = vi.spyOn(globalThis, "fetch").mockImplementation(async () => new Response("", { status: 202 }));
     const res = await worker.fetch(new Request("https://condor.juandabarrios12.workers.dev/__indexnow", { method: "POST" }), listEnv(["https://condoricfes.com/a/", "https://evil.example/x"]));
-    expect(await res.json()).toEqual({ submitted: 1, indexnow: 202 });
+    expect(await res.json()).toEqual({ submitted: 1, "www.bing.com": 202, "yandex.com": 202 });
     const body = JSON.parse(sent.mock.calls[0][1].body);
     expect(body).toMatchObject({ host: "condoricfes.com", key: INDEXNOW_KEY, urlList: ["https://condoricfes.com/a/"] });
     sent.mockRestore();

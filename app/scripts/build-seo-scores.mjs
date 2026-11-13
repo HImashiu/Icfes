@@ -25,7 +25,7 @@ const topTests = (w) => { const max = Math.max(...ORDER.map((k) => w[k])); retur
 const joinY = (a) => a.length < 2 ? a.join("") : `${a.slice(0, -1).join(", ")} y ${a[a.length - 1]}`;
 
 // Inline styles for the calculator rows (the shared stylesheets are owned by the foundation thread).
-const STYLE = `<style>
+export const STYLE = `<style>
 .ucalc-tab td.you{font-weight:800;white-space:nowrap}
 #ucalc .calc-in span{color:#0D110F}
 #ucalc .calc-in input{background:#fff;color:#0D110F;border-color:#0D110F}
@@ -46,14 +46,23 @@ const STYLE = `<style>
 
 const weightsText = (w) => [...ORDER.filter((k) => w[k] > 0).map((k) => `${TESTS.find((t) => t.id === k).short} ${w[k]}`), ...(w.pe ? [`Prueba propia ${w.pe}`] : [])].join(" · ");
 
-function calcForm(esc, min) {
+export function calcForm(esc, min, gmin, { kind, note } = {}) {
   const inputs = TESTS.map((t) => `<label class="calc-in"><span>${esc(t.name)}</span><input type="number" inputmode="numeric" min="0" max="100" step="1" name="${t.id}" placeholder="0 a 100" /></label>`).join("");
-  return `<form class="card calc" id="ucalc" novalidate${min ? ` data-min="${min}"` : ""}>
+  return `<form class="card calc" id="ucalc" novalidate${min ? ` data-min="${min}"` : ""}${gmin ? ` data-gmin="${gmin}"` : ""}${kind ? ` data-kind="${kind}"` : ""}>
     <div class="calc-grid">${inputs}</div>
-    <p class="source" id="ucalc-note" aria-live="polite">Escribe tus cinco puntajes de 0 a 100 y la tabla calcula tu ponderado en cada programa.</p>
+    <p class="source" id="ucalc-note" aria-live="polite">${esc(note || "Escribe tus cinco puntajes de 0 a 100 y la tabla calcula tu ponderado en cada programa.")}</p>
   </form>`;
 }
-const legend = `<div class="ucalc-legend"><span><i style="background:#C8F04A"></i>Igual o por encima del último corte</span><span><i style="background:#FFE8A3"></i>A menos de 3 puntos del corte</span></div>`;
+export const legendFor = (near) => `<div class="ucalc-legend"><span><i style="background:#C8F04A"></i>Igual o por encima del último corte</span><span><i style="background:#FFE8A3"></i>A menos de ${near} puntos del corte</span></div>`;
+const legend = legendFor(3);
+const legendG = legendFor(15);
+const globalOf = (s) => Math.round(5 * (3 * (s.lc + s.ma + s.sc + s.cn) + s.in) / 13);
+
+// One row compared on the global score (0-500). cuts: [value or null per period].
+export function gRow(esc, { label, cuts, sub }) {
+  const latestCut = cuts.find((c) => c != null);
+  return `<tr data-g${latestCut != null ? ` data-cut="${latestCut}"` : ""}><td>${label}${sub ? `<small>${esc(sub)}</small>` : ""}</td>${cuts.map((c) => `<td>${c == null ? "–" : c}</td>`).join("")}<td class="you">–</td></tr>`;
+}
 
 // One row of a calculator table. cuts: [value or null per period].
 function calcRow(esc, { label, w, cuts, sub }) {
@@ -127,6 +136,48 @@ export function buildScoreUniversityPages({ siteUrl, write, page, esc, faqBlock,
       faq.push(["¿Cómo calculo mi puntaje ponderado?", `Multiplica el puntaje de cada prueba (de 0 a 100) por el peso que el programa le da, suma y divide entre 100. Ejemplo para ${ex.name}: ${exLine}, dividido entre 100, da ${dec(exScore)}.`]);
       faq.push(["¿Este cálculo es oficial?", `No. Cóndor usa los pesos y cortes publicados por la ${u.name} (consultados el ${longDate(CHECKED)}), pero la admisión la decide la universidad y los cortes cambian cada semestre.`]);
       ld.push(datasetLd(u, path, desc));
+    } else if (u.mode === "global") {
+      const periods = u.periods || [];
+      const globals = u.globals || [];
+      const cuts = (p) => periods.map((pe) => p.cut?.[pe] ?? null);
+      const latest = (p) => cuts(p).find((c) => c != null);
+      const rows = globals.length
+        ? globals.map((p) => gRow(esc, { label: progLink(p), cuts: cuts(p) })).join("")
+        : gRow(esc, { label: "Todos los programas", cuts: [], sub: "La universidad no publica un corte actual" });
+      const head = `<tr><th>Programa</th>${periods.map((pe) => `<th>${esc(u.cutLabel)} ${pe}</th>`).join("")}<th>Tu global</th></tr>`;
+      const sorted = [...globals].filter((p) => p.cut?.[periods[0]] != null).sort((x, y) => y.cut[periods[0]] - x.cut[periods[0]]);
+      const exG = globalOf(EXAMPLE);
+      const art = u.slug === "universidad-del-magdalena" ? "la Universidad del Magdalena" : "la Universidad del Atlántico";
+      h1 = `Puntaje ICFES para entrar a ${art}`;
+      title = u.slug === "universidad-del-magdalena" ? "Puntaje ICFES Unimagdalena: últimos admitidos" : "Puntaje ICFES Uniatlántico 2027: cómo se entra";
+      intro = sorted.length
+        ? `${u.name.replace("Universidad", "La Universidad")} admite con el puntaje global del Saber 11. Aquí está el global del último admitido en cada programa en sus últimos semestres, y una calculadora de tu global.`
+        : `${u.name.replace("Universidad", "La Universidad")} admite con el puntaje global del Saber 11, sin puntaje mínimo. Aquí está cómo funciona su admisión 2027-1, las pruebas específicas y las fechas.`;
+      desc = sorted.length
+        ? `Puntaje global ICFES del último admitido a ${u.short} por programa (${periods[0]}): ${sorted[0].name} ${sorted[0].cut[periods[0]]}. Mínimo ${u.gmin} para inscribirte.`
+        : `${u.short} admite por puntaje global del Saber 11 y ya no pide mínimo. Pruebas de Medicina y Bellas Artes, fechas 2027-1 y calculadora.`;
+      main = `${STYLE}
+  <h2>Cómo usa el ICFES ${art}</h2>
+  ${u.how.map((p) => `<p class="prose">${esc(p)}</p>`).join("\n  ")}
+  <h2>Calcula tu puntaje global</h2>
+  ${calcForm(esc, 0, u.gmin, { note: "Escribe tus cinco puntajes de 0 a 100 y la tabla calcula tu puntaje global." })}
+  ${sorted.length ? legendG : ""}
+  <div class="tbl"><table class="ucalc-tab"><thead>${head}</thead><tbody>${rows}</tbody></table></div>
+  <p class="prose">El puntaje global va de 0 a 500: 5 × (3 × Lectura crítica + 3 × Matemáticas + 3 × Sociales + 3 × Ciencias naturales + Inglés) ÷ 13. Con ${EXAMPLE.lc}, ${EXAMPLE.ma}, ${EXAMPLE.sc}, ${EXAMPLE.cn} y ${EXAMPLE.in} el global es <b>${exG}</b>.</p>
+  <h2>Fechas y datos útiles</h2>
+  <ul class="uni-facts">${u.facts.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>`;
+      if (sorted.length) {
+        const top = sorted[0], low = sorted[sorted.length - 1];
+        faq.push([`¿Cuánto puntaje ICFES necesito para entrar a ${u.short}?`, `Necesitas al menos ${u.gmin} de puntaje global para inscribirte. Para quedar admitido depende del programa: en ${periods[0]} el último admitido por cupo regular a ${top.name} tuvo ${top.cut[periods[0]]} y a ${low.name} ${low.cut[periods[0]]}.`]);
+        const med = globals.find((p) => p.career === "medicina");
+        if (med) faq.push([`¿Con cuánto puntaje se entra a Medicina en ${u.short}?`, `El último admitido por cupo regular tuvo ${periods.filter((pe) => med.cut[pe] != null).map((pe) => `${med.cut[pe]} en ${pe}`).join(", ")} (puntaje global sobre 500).`]);
+        if (u.slug === "universidad-del-magdalena") faq.push(["¿Qué pasa si entro con 250 o menos?", "Desde el Acuerdo Académico 14 de 2025, quien es admitido con un global de 250 o menos cursa primero un Semestre de Nivelación Académica y empieza el programa el semestre siguiente."]);
+      } else {
+        faq.push([`¿Cuál es el puntaje mínimo para entrar a ${u.short}?`, "Para 2027-1 no hay puntaje mínimo para inscribirte. Compites con tu puntaje global del Saber 11 contra los demás inscritos del programa."]);
+        faq.push([`¿Cómo es la prueba de Medicina en ${u.short}?`, "Convocan al doble del cupo por orden de puntaje global. Presentan una prueba psicotécnica y una entrevista, que valen el 20 % del puntaje; el otro 80 % sale del Saber 11."]);
+      }
+      faq.push(["¿Este cálculo es oficial?", `No. Cóndor usa las reglas y puntajes que publica ${art} (consultados el ${longDate(CHECKED)}); la admisión la decide la universidad y los puntajes cambian cada semestre.`]);
+      ld.push({ ...datasetLd(u, path, desc), name: `Puntaje global del Saber 11 para entrar a ${art}` });
     } else if (u.ranges) {
       const r = u.ranges;
       h1 = "Puntaje ICFES para entrar a la UTP";
@@ -184,13 +235,13 @@ export function buildScoreUniversityPages({ siteUrl, write, page, esc, faqBlock,
 <section class="wrap narrow guide-body">
   ${main}
   ${sourcesBlock(esc, u.sources)}
-  <p class="prose">Mira cómo piden el ICFES otras universidades en <a href="../">puntaje ICFES para entrar a la universidad</a>, o mide tus puntajes por prueba con un <a href="${up}simulacro-icfes/">simulacro ICFES</a>.</p>
+  <p class="prose">Mira cómo piden el ICFES otras universidades en <a href="../">puntaje ICFES para entrar a la universidad</a>, las <a href="${up}becas-icfes/">becas y créditos con el puntaje ICFES</a>, o mide tus puntajes por prueba con un <a href="${up}simulacro-icfes/">simulacro ICFES</a>.</p>
   <h2>Preguntas frecuentes</h2>
   ${faqBlock(faq)}
 </section>
 ${cta(up, "Sube el puntaje que te pide la universidad")}`;
     write(path, page({
-      siteUrl, path, title, desc, body, script: u.mode === "saber11" && u.programs.length ? "calc-u.js" : undefined,
+      siteUrl, path, title, desc, body, script: (u.mode === "saber11" && u.programs.length) || u.mode === "global" ? "calc-u.js" : undefined,
       crumbs: [{ name: "Puntaje ICFES por universidad", path: "puntaje-icfes/" }, { name: u.name, path }],
       jsonLd: [faqLd(faq), ...ld],
     }));
@@ -200,7 +251,7 @@ ${cta(up, "Sube el puntaje que te pide la universidad")}`;
   for (const c of CAREERS) {
     const path = `puntaje-icfes/carreras/${c.slug}/`;
     const up = "../../../";
-    const rows = [], unis = [], ranges = [];
+    const rows = [], unis = [], ranges = [], gRows = [];
     for (const u of UNIVERSITIES) {
       for (const p of u.programs || []) {
         if (p.career !== c.slug) continue;
@@ -211,6 +262,12 @@ ${cta(up, "Sube el puntaje que te pide la universidad")}`;
         unis.push(u);
       }
       for (const p of u.ranges?.programs || []) if (p.career === c.slug) { ranges.push({ u, p, period: u.ranges.period }); unis.push(u); }
+      for (const p of u.globals || []) {
+        if (p.career !== c.slug) continue;
+        const cutPe = (u.periods || []).find((pe) => p.cut?.[pe] != null);
+        gRows.push({ u, p, cut: cutPe ? p.cut[cutPe] : null, cutPe });
+        unis.push(u);
+      }
     }
     const tableRows = rows.map(({ u, p, cut, cutPe }) => calcRow(esc, { label: `<a href="${uniUrl(u, up)}">${esc(u.short)}</a>`, w: p.w, cuts: [cut], sub: [p.name !== c.name ? p.name : "", cut != null ? `Corte ${cutPe}` : "Sin corte publicado"].filter(Boolean).join(". ") }));
     const notes = rows.filter(({ p }) => p.note).map(({ u, p }) => `<li><b>${esc(u.short)}:</b> ${esc(p.note)}</li>`).join("");
@@ -218,11 +275,11 @@ ${cta(up, "Sube el puntaje que te pide la universidad")}`;
     const withCut = rows.filter((r) => r.cut != null);
     const medRange = ranges[0];
     const h1 = `Puntaje ICFES para estudiar ${c.name}`;
-    const title = `Puntaje ICFES para ${c.name}: pesos y cortes`;
-    const desc = `${c.name} en ${joinY([...new Set(unis.map((u) => u.short))])}: cuánto pesa cada prueba del ICFES${withCut.length ? ", último corte" : ""} y calculadora de tu ponderado.`;
+    const title = `Puntaje ICFES para ${c.name}: pesos y cortes`.length > 60 ? `Puntaje ICFES para ${c.name}` : `Puntaje ICFES para ${c.name}: pesos y cortes`;
+    const desc = `${c.name} en ${joinY([...new Set(unis.map((u) => u.short))])}: cuánto pesa cada prueba del ICFES${withCut.length || gRows.length ? ", último corte" : ""} y calculadora de tu ponderado.`;
     const faq = [
       [`¿Qué prueba del ICFES pesa más para ${c.name}?`, `Depende de la universidad: ${heaviest.join("; ")}.`],
-      ...(withCut.length ? [[`¿Cuánto puntaje necesito para ${c.name}?`, `No hay un número fijo. Como referencia, ${withCut.map((r) => `en ${r.u.short} el último corte publicado (${r.cutPe}) fue ${dec(r.cut)} sobre 100, ponderado`).join("; ")}.${medRange ? ` En la UTP el último admitido de ${medRange.period} tuvo ${medRange.p.ris[1]} (Risaralda) y ${medRange.p.fuera[1]} (fuera de Risaralda).` : ""}`]] : []),
+      ...(withCut.length || gRows.length ? [[`¿Cuánto puntaje necesito para ${c.name}?`, `No hay un número fijo. Como referencia, ${[...withCut.map((r) => `en ${r.u.short} el último corte publicado (${r.cutPe}) fue ${dec(r.cut)} sobre 100, ponderado`), ...gRows.filter((r) => r.cut != null).map((r) => `en ${r.u.short} el último admitido de ${r.cutPe} tuvo ${r.cut} de puntaje global, sobre 500`)].join("; ")}.${medRange ? ` En la UTP el último admitido de ${medRange.period} tuvo ${medRange.p.ris[1]} (Risaralda) y ${medRange.p.fuera[1]} (fuera de Risaralda).` : ""}`]] : []),
       [`¿Y en la Nacional o la Universidad de Antioquia?`, `Esas dos universidades no admiten por puntaje ICFES en su proceso regular: cada una tiene su propio examen de admisión.`],
     ];
     const body = `<section class="section guide-head"><div class="wrap narrow">
@@ -241,6 +298,10 @@ ${cta(up, "Sube el puntaje que te pide la universidad")}`;
   ${ranges.length ? `<h2>${esc(c.name)} en la UTP</h2>
   <p class="prose">La UTP no publica sus pesos por programa, pero sí el rango de puntajes de sus admitidos:</p>
   <div class="tbl"><table><thead><tr><th>Programa</th><th>Risaralda: menor admitido</th><th>Fuera: menor admitido</th></tr></thead><tbody>${ranges.map(({ p, period }) => `<tr><td><a href="${up}puntaje-icfes/utp/">${esc(p.name)}</a> (${period})</td><td>${p.ris[1]}</td><td>${p.fuera[1]}</td></tr>`).join("")}</tbody></table></div>` : ""}
+  ${gRows.length ? `<h2>${esc(c.name)} donde cuenta el puntaje global</h2>
+  <p class="prose">${joinY([...new Set(gRows.map((r) => r.u.name))].map(esc))} no pondera por prueba: ordena a los inscritos por el puntaje global del Saber 11, de 0 a 500. La calculadora de arriba también te da tu global.</p>
+  ${gRows.some((r) => r.cut != null) ? legendG : ""}
+  <div class="tbl"><table class="ucalc-tab"><thead><tr><th>Universidad</th><th>Último admitido</th><th>Tu global</th></tr></thead><tbody>${gRows.map(({ u, p, cut, cutPe }) => gRow(esc, { label: `<a href="${uniUrl(u, up)}">${esc(u.short)}</a>`, cuts: [cut], sub: [p.name !== c.name ? p.name : "", cut != null ? `Puntaje global, ${cutPe}` : "Sin corte publicado"].filter(Boolean).join(". ") })).join("")}</tbody></table></div>` : ""}
   <h2>Qué prueba pesa más</h2>
   <p class="prose">${esc(heaviest.map((s) => s[0].toUpperCase() + s.slice(1)).join(". "))}. Si te falta puntaje, empieza por la prueba que más pesa en la universidad que quieres: practica con <a href="${up}preguntas-icfes/">preguntas ICFES por área</a>.</p>
   <h2>En la Nacional y en la de Antioquia</h2>
@@ -262,14 +323,15 @@ ${cta(up, `Prepárate para entrar a ${esc(c.name)}`)}`;
     const path = "puntaje-icfes/";
     const up = "../";
     const uniRows = UNIVERSITIES.map((u) => {
-      const how = u.mode === "exam" ? "Examen propio (no usa el puntaje ICFES)" : u.ranges ? "Saber 11 ponderado; publica rangos de admitidos" : u.periods?.length ? "Saber 11 ponderado; publica línea de corte" : `Saber 11 ponderado${u.min ? `; mínimo ${u.min} por prueba` : "; sin mínimo"}`;
+      const how = u.mode === "exam" ? "Examen propio (no usa el puntaje ICFES)" : u.mode === "global" ? `Puntaje global del Saber 11${u.gmin ? `; mínimo ${u.gmin}` : "; sin mínimo"}${u.globals?.length ? "; publica últimos admitidos" : ""}` : u.ranges ? "Saber 11 ponderado; publica rangos de admitidos" : u.periods?.length ? "Saber 11 ponderado; publica línea de corte" : `Saber 11 ponderado${u.min ? `; mínimo ${u.min} por prueba` : "; sin mínimo"}`;
       return `<tr><td><a href="${u.slug}/">${esc(u.name)}</a></td><td>${esc(u.city.split(",")[0])}</td><td>${esc(how)}</td></tr>`;
     }).join("");
     const careerTiles = `<div class="areas">${CAREERS.map((c) => `<a class="area" href="carreras/${c.slug}/" style="--c:#C8F04A"><span class="dot"></span><b>${esc(c.name)}</b><span>Pesos y cortes</span></a>`).join("")}</div>`;
     const faq = [
       ["¿Cuánto puntaje ICFES necesito para entrar a una universidad pública?", "No hay un número único. Las que usan el Saber 11 te ordenan por un puntaje ponderado según el programa, y el corte depende de cuántos se inscriben ese semestre. Algunas, como la Nacional y la de Antioquia, no usan el puntaje ICFES: tienen examen propio."],
       ["¿Qué es el puntaje ponderado?", "Es tu puntaje calculado con los pesos que el programa le da a cada prueba. Por ejemplo, para Medicina en Univalle Ciencias naturales pesa 30 % e Inglés 10 %. Se multiplica cada puntaje por su peso, se suma y se divide entre 100."],
-      ["¿Sirve el puntaje global para entrar a la universidad?", "Sirve como referencia, pero la mayoría de las públicas que usan el Saber 11 miran el ponderado del programa, no el global. Dos estudiantes con el mismo global pueden tener ponderados muy distintos."],
+      ["¿Sirve el puntaje global para entrar a la universidad?", "Depende de la universidad. La del Magdalena y la del Atlántico ordenan a los inscritos por el puntaje global. Univalle, la UIS o la de Caldas miran el ponderado del programa, y dos estudiantes con el mismo global pueden tener ponderados muy distintos."],
+      ["¿Hay becas por puntaje ICFES?", "Sí, aunque pocas dependen solo del puntaje. El crédito Tú Eliges del ICETEX pide un puntaje global mínimo según el municipio donde presentaste, y becas como Quiero Estudiar de los Andes exigen 380 o más. Las reúne la página de becas con el puntaje ICFES."],
       ["¿De dónde salen estos datos?", `De los sitios y documentos oficiales de cada universidad, consultados el ${longDate(CHECKED)}. Cada página enlaza sus fuentes. Cóndor no está afiliado a ninguna universidad ni al ICFES.`],
     ];
     const body = `<section class="section guide-head"><div class="wrap narrow">
@@ -283,15 +345,17 @@ ${cta(up, `Prepárate para entrar a ${esc(c.name)}`)}`;
   <h2>Por carrera</h2>
   ${careerTiles}
   <h2>Cómo usan el ICFES las universidades</h2>
-  <p class="prose">Tu reporte del Saber 11 trae un puntaje de 0 a 100 en cada prueba y un global de 0 a 500. Las universidades que admiten con el ICFES no suelen mirar el global: cada programa le da un peso a cada prueba. Para Derecho pesa más Lectura crítica; para ingenierías, Matemáticas; para salud, Ciencias naturales. Con esos pesos calculan tu <b>puntaje ponderado</b>, te ordenan con los demás inscritos y llenan los cupos de mayor a menor.</p>
+  <p class="prose">Tu reporte del Saber 11 trae un puntaje de 0 a 100 en cada prueba y un global de 0 a 500. Algunas universidades, como la del Magdalena y la del Atlántico, te ordenan por el global. Muchas otras no lo miran: cada programa le da un peso a cada prueba. Para Derecho pesa más Lectura crítica; para ingenierías, Matemáticas; para salud, Ciencias naturales. Con esos pesos calculan tu <b>puntaje ponderado</b>, te ordenan con los demás inscritos y llenan los cupos de mayor a menor.</p>
   <p class="prose">Por eso el corte cambia cada semestre: es el puntaje del último admitido. Los cortes de esta página son una referencia, no una garantía.</p>
   <p class="prose">¿Aún no tienes tus puntajes? Estímalos con un <a href="${up}simulacro-icfes/">simulacro ICFES</a> o calcula el global en la <a href="${up}calculadora-puntaje-icfes/">calculadora del puntaje ICFES</a>. Si ya presentaste, aprende a <a href="${up}resultados-icfes/">leer tus resultados</a>.</p>
+  <h2>Becas y créditos con el puntaje ICFES</h2>
+  <p class="prose">Tu puntaje también cuenta para pagar la carrera: el ICETEX pide un mínimo según tu municipio y algunas universidades privadas tienen becas para puntajes altos. Mira los requisitos y fechas en <a href="${up}becas-icfes/">becas con el puntaje ICFES</a>.</p>
   <h2>Preguntas frecuentes</h2>
   ${faqBlock(faq)}
 </section>
 ${cta(up, "Practica para el puntaje que necesitas")}`;
     write(path, page({
-      siteUrl, path, title: "Puntaje ICFES para entrar a la universidad 2026", desc: "Cuánto puntaje ICFES pide cada universidad pública: pesos por prueba, últimos cortes de Univalle, UIS, Caldas y UTP, y cómo entrar a la Nacional y la UdeA.",
+      siteUrl, path, title: "Puntaje ICFES para entrar a la universidad 2026", desc: "Cuánto puntaje ICFES pide cada universidad pública: pesos por prueba y últimos cortes de Univalle, UIS, Caldas, UTP y Unimagdalena, y cómo entrar a la Nacional.",
       body, crumbs: [{ name: "Puntaje ICFES por universidad", path }],
       jsonLd: [faqLd(faq), { "@type": "CollectionPage", name: "Puntaje ICFES para entrar a la universidad", url: siteUrl + path, inLanguage: "es-CO", dateModified: CHECKED, hasPart: [...UNIVERSITIES.map((u) => ({ "@type": "WebPage", name: u.name, url: `${siteUrl}puntaje-icfes/${u.slug}/` })), ...CAREERS.map((c) => ({ "@type": "WebPage", name: `Puntaje ICFES para ${c.name}`, url: `${siteUrl}puntaje-icfes/carreras/${c.slug}/` }))] }],
     }));

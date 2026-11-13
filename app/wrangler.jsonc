@@ -38,7 +38,7 @@
     "binding": "ASSETS",
     // Pages go through the worker (redirect to condoricfes.com, page rate limit); static files do not.
     // Negative patterns win over positive ones, so /app/exams/* and /app/api/* still run the worker.
-    "run_worker_first": ["/*", "!/app/assets/*", "!/app/brand/*", "!/brand/*", "!/img/*", "!/katex/*", "!/fonts/*", "!/site.css", "!/landing.css", "!/guide.css", "!/site.js", "!/calc.js", "!/calc-u.js", "!/favicon.ico", "!/app/manifest.webmanifest"],
+    "run_worker_first": ["/*", "!/app/assets/*", "!/app/brand/*", "!/brand/*", "!/img/*", "!/katex/*", "!/fonts/*", "!/site.css", "!/landing.css", "!/guide.css", "!/site.js", "!/calc.js", "!/calc-u.js", "!/pdd.js", "!/favicon.ico", "!/app/manifest.webmanifest"],
     // /privacidad.html -> /privacidad and /app -> /app/, as the dashboard upload already did
     "html_handling": "auto-trailing-slash",
     // The app routes with #hashes, so no SPA fallback is needed; unknown paths get the site's 404 page

@@ -4,10 +4,16 @@
 //                           on the other site's page (a link inside an iframe does not count for that page).
 //   insertar/calculadora/   the score calculator alone, small enough for an iframe (noindex, canonical = calculator).
 //                           Needs its own frame headers in _headers (the rest of the site stays frame-ancestors 'none').
+//   insertar/pregunta-del-dia/   one solved ICFES question a day for iframes (noindex), drawn from the questions the
+//                           solved-question pages already show (build-seo-bank.mjs), so nothing new goes public.
 //   datos/percentiles-saber-11/  national percentiles per test and global, from the ICFES open data, with a CSV.
 // Called from build-seo.mjs. The badge image is public/brand/sello-condor.png (drawn once from the landing's styles).
+import { createHash } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { bankLinks } from "./build-seo-bank.mjs";
+import { PAST_EXAMS } from "./build-seo-exams.mjs";
+import { sessionOf } from "./seo-bank/common.mjs";
 
 const PCTS = [10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 95, 99];
 
@@ -26,7 +32,32 @@ const fmtN = (n) => n.toLocaleString("es-CO");
 // A snippet as the reader will paste it: shown escaped inside <pre>, copied by the button from data-copy.
 const snippet = (esc, id, code) => `<div class="snip"><pre id="${id}"><code>${esc(code)}</code></pre><button type="button" class="btn btn-ghost btn-sm" data-copy="${id}">Copiar código</button></div>`;
 
-export function buildEmbedPages({ siteUrl, out, write, page, esc, faqBlock, faqLd, cta, saber11, national }) {
+// Questions for the daily embed: short, no passage, no math, table or picture (the frame has no KaTeX and little room).
+function dailyQuestions({ dataDir, renderRich, siteUrl, AREAS }) {
+  let items = [];
+  try { items = bankLinks(dataDir).items; } catch (e) { console.warn(`[build-seo-embeds] no solved questions: ${e.message}`); return []; }
+  const r = (md) => renderRich(md ?? "").replace(/text-align:\s*justify;?/g, "");
+  const out = [];
+  for (const it of items) {
+    if (it.group) continue;
+    const stim = it.q.stimulus_md && String(it.q.stimulus_md).replace(/<[^>]+>/g, " ").trim() !== String(it.q.stem_md).replace(/<[^>]+>/g, " ").trim() ? r(it.q.stimulus_md) : "";
+    const html = `${stim}<div class="stem">${r(it.q.stem_md)}</div>`;
+    const opts = it.q.options.map((o) => ({ l: o.letter, h: r(o.text_md) }));
+    const all = html + opts.map((o) => o.h).join("");
+    if (/katex|<img|<table|<svg|<figure/i.test(all)) continue;
+    if (all.replace(/<[^>]+>/g, "").length > 900) continue;
+    out.push({
+      id: it.id, area: it.area, c: AREAS.find((a) => a.name === it.area)?.color ?? "#9AA",
+      label: it.s.titulo, html, opts, key: it.s.key, corta: it.s.corta, src: `Fuente: ICFES, Saber 11, ${PAST_EXAMS.find((x) => x.slug === it.s.exam)?.name ?? it.s.exam}, ${sessionOf(it.b.name).toLowerCase()}, pregunta ${it.q.number}`,
+      url: `${siteUrl}${it.path}?fuente=pregunta-del-dia`,
+    });
+  }
+  // A fixed shuffle so consecutive days change area; the same build always gives the same order.
+  const h = (id) => createHash("sha1").update(id).digest("hex");
+  return out.sort((a, b) => h(a.id).localeCompare(h(b.id)));
+}
+
+export function buildEmbedPages({ siteUrl, out, write, page, esc, faqBlock, faqLd, cta, saber11, national, dataDir, renderRich, AREAS }) {
   const urls = [];
   const { TESTS, NATIONAL_SOURCE } = saber11;
   const cols = [{ id: "global", name: "Global (0 a 500)" }, ...TESTS.map((t) => ({ id: t.id, name: t.name }))];
@@ -137,16 +168,70 @@ ${cta("../../", "Mide en qué percentil estás con un simulacro")}`;
     // Not in the sitemap: it is a frame, not a page to rank.
   }
 
+  // ------------------------------------------------------------ question of the day for iframes
+  const daily = dataDir && renderRich ? dailyQuestions({ dataDir, renderRich, siteUrl, AREAS }) : [];
+  if (daily.length) {
+    const path = "insertar/pregunta-del-dia/";
+    mkdirSync(join(out, path), { recursive: true });
+    writeFileSync(join(out, path, "index.html"), `<!doctype html>
+<html lang="es-CO">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pregunta ICFES del día · Cóndor</title>
+  <meta name="robots" content="noindex, follow" />
+  <link rel="canonical" href="${siteUrl}pregunta-icfes/" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Figtree:wght@500;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *{box-sizing:border-box}html,body{margin:0}
+    body{font:500 15px/1.45 Figtree,system-ui,sans-serif;color:#0D110F;background:#F6F3EA;padding:14px}
+    .box{border:2px solid #0D110F;border-radius:18px;background:#fff;padding:14px;max-width:640px;margin:0 auto}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 8px}
+    h1{font:800 18px/1.1 "Bricolage Grotesque",system-ui,sans-serif;text-transform:uppercase;margin:0}
+    h1 span{display:inline-block;background:#C8F04A;border:2px solid #0D110F;border-radius:8px;padding:0 6px;transform:rotate(-2deg)}
+    .area{font-size:12px;font-weight:800;display:inline-flex;align-items:center;gap:6px}
+    .area i{width:10px;height:10px;border-radius:50%;background:var(--c);border:1.5px solid #0D110F}
+    .q{background:#F6F3EA;border-radius:12px;padding:10px 12px;margin:0 0 10px}.q p{margin:0 0 6px}.q p:last-child{margin:0}
+    ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+    button.o{all:unset;box-sizing:border-box;display:flex;gap:10px;align-items:flex-start;width:100%;border:2px solid #0D110F;border-radius:12px;padding:8px 10px;cursor:pointer;background:#fff}
+    button.o:hover{background:#FAFFE8}button.o:focus-visible{outline:3px solid #C8F04A}
+    button.o b{flex:none;width:24px;height:24px;border-radius:7px;background:#0D110F;color:#C8F04A;display:grid;place-items:center;font-size:13px}
+    button.o p{margin:0}
+    button.o.ok{background:#E3F8B4}button.o.no{background:#FDE2DD}button.o[aria-disabled]{cursor:default}
+    .res{margin:10px 0 0;font-size:14px}.res:empty{display:none}
+    .res a,.foot a{color:#0D110F;font-weight:800}
+    .foot{margin:10px 0 0;font-size:12px;color:#444;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="top"><h1>Pregunta <span>ICFES</span> del día</h1><span class="area" id="pdd-area"><i></i><em></em></span></div>
+    <div class="q" id="pdd-q"></div>
+    <ul id="pdd-opts" aria-label="Opciones"></ul>
+    <p class="res" id="pdd-res" aria-live="polite"></p>
+    <p class="foot"><span id="pdd-src">Fuente: ICFES, Saber 11.</span><a href="${siteUrl}pregunta-icfes/?fuente=pregunta-del-dia" target="_blank" rel="noopener">Más preguntas en Cóndor ↗</a></p>
+  </div>
+  <script type="application/json" id="pdd-data">${JSON.stringify(daily).replace(/</g, "\\u003c")}</script>
+  <script src="../../pdd.js" defer></script>
+</body>
+</html>
+`);
+  }
+
   // ------------------------------------------------------------ "Para tu página"
   {
     const path = "insertar/";
     const calcCode = `<iframe src="${siteUrl}insertar/calculadora/" title="Calculadora del puntaje ICFES" width="100%" height="520" style="border:0;max-width:640px" loading="lazy"></iframe>
 <p style="font-size:14px">Calculadora del <a href="${siteUrl}calculadora-puntaje-icfes/">puntaje ICFES</a> hecha por Cóndor.</p>`;
+    const pddCode = `<iframe src="${siteUrl}insertar/pregunta-del-dia/" title="Pregunta ICFES del día" width="100%" height="560" style="border:0;max-width:640px" loading="lazy"></iframe>
+<p style="font-size:14px">Más <a href="${siteUrl}pregunta-icfes/">preguntas ICFES resueltas</a> en Cóndor.</p>`;
     const badgeCode = `<a href="${siteUrl}?fuente=sello" title="Practicamos el Saber 11 con Cóndor"><img src="${siteUrl}brand/sello-condor.png" alt="Practicamos el Saber 11 con Cóndor" width="200" height="64" /></a>`;
     const linkCode = `<a href="${siteUrl}examenes-icfes-anteriores/">Exámenes ICFES anteriores para resolver en línea</a> (Cóndor)`;
     const faq = [
       ["¿Tiene costo?", "No. Puedes insertar la calculadora, el sello y la tabla en tu página sin pagar nada y sin crear cuenta."],
-      ["¿Se ve bien en celular?", "Sí. La calculadora se ajusta al ancho de tu página. Si queda cortada, sube el alto del iframe (height) a 600."],
+      ["¿Se ve bien en celular?", "Sí. La calculadora y la pregunta del día se ajustan al ancho de tu página. Si algo queda cortado, sube el alto del iframe (height) a 650."],
       ["¿Recogen datos de mis visitantes?", "La calculadora no guarda nada de lo que escriben: el cálculo se hace en el navegador de cada persona."],
       ["Mi colegio usa Cóndor, ¿dónde va el sello?", "Donde tengan la información de la prueba Saber 11 o los recursos para estudiantes. Lo ven las familias y los estudiantes nuevos."],
     ];
@@ -160,7 +245,10 @@ ${cta("../../", "Mide en qué percentil estás con un simulacro")}`;
   <h2>Calculadora del puntaje ICFES</h2>
   <p class="prose">Tus estudiantes escriben sus puntajes de 0 a 100 y ven su global de 0 a 500, su nivel en cada prueba y su percentil en el país. Funciona en celular. <a href="calculadora/" target="_blank" rel="noopener">Mira cómo se ve</a>.</p>
   ${snippet(esc, "snip-calc", calcCode)}
-  <h2>Sello «Practicamos con Cóndor»</h2>
+${daily.length ? `  <h2>Pregunta ICFES del día</h2>
+  <p class="prose">Cada día una pregunta real de un examen que publicó el ICFES, de un área distinta. El estudiante elige su respuesta y ve si acertó, con una explicación corta. <a href="pregunta-del-dia/" target="_blank" rel="noopener">Mira cómo se ve</a>.</p>
+  ${snippet(esc, "snip-pdd", pddCode)}
+` : ""}  <h2>Sello «Practicamos con Cóndor»</h2>
   <p class="prose">Para los colegios que preparan el Saber 11 con Cóndor. Va en la página de la prueba o de recursos para estudiantes.</p>
   <p class="sello-ej"><img src="../brand/sello-condor.png" alt="Practicamos el Saber 11 con Cóndor" width="200" height="64" /></p>
   ${snippet(esc, "snip-sello", badgeCode)}
@@ -175,8 +263,8 @@ ${cta("../../", "Mide en qué percentil estás con un simulacro")}`;
 </section>
 ${cta("../", "Prueba un simulacro antes de recomendarlo")}`;
     write(path, page({
-      siteUrl, path, title: "Calculadora ICFES y sello para tu página | Cóndor",
-      desc: "Inserta gratis la calculadora del puntaje ICFES, la tabla de percentiles del Saber 11 o el sello de Cóndor en la página de tu colegio o tu blog.",
+      siteUrl, path, title: "Calculadora ICFES y pregunta del día para tu página | Cóndor",
+      desc: "Inserta gratis la calculadora del puntaje ICFES, una pregunta ICFES del día, la tabla de percentiles o el sello de Cóndor en la página de tu colegio.",
       body, crumbs: [{ name: "Para tu página", path }], script: "insertar.js",
       jsonLd: [faqLd(faq), { "@type": "WebPage", name: "Calculadora ICFES y sello para tu página", url: siteUrl + path, inLanguage: "es-CO" }],
     }));

@@ -13,6 +13,8 @@ import { buildExamPages } from "./build-seo-exams.mjs";
 import { buildEmbedPages } from "./build-seo-embeds.mjs";
 import { buildScoreUniversityPages } from "./build-seo-scores.mjs";
 import { buildTramitePages } from "./build-seo-tramites.mjs";
+import { buildEstructuraPages } from "./build-seo-estructura.mjs";
+import { buildBecasPages } from "./build-seo-becas.mjs";
 import { bankLinks, buildBankPages } from "./build-seo-bank.mjs";
 import { buildTeacherPages, teacherApp } from "./build-seo-docentes.mjs";
 
@@ -294,7 +296,11 @@ ${guideBody(body)}
         <a href="${up}simulacro-icfes/">Simulacro ICFES gratis</a>
         <a href="${up}examenes-icfes-anteriores/">Exámenes ICFES anteriores</a>
         <a href="${up}preguntas-icfes/">Preguntas por área</a>
+        <a href="${up}pregunta-icfes/">Preguntas resueltas</a>
         <a href="${up}calculadora-puntaje-icfes/">Calculadora de puntaje</a>
+        <a href="${up}puntaje-icfes/">Puntaje para la universidad</a>
+        <a href="${up}que-es-el-saber-11/">Qué es el Saber 11</a>
+        <a href="${up}fechas-icfes-2027/">Fechas ICFES 2027</a>
         <a href="${up}niveles-de-desempeno-icfes/">Niveles de desempeño</a>
         <a href="${up}preicfes-para-colegios/">Para colegios</a>
         <a href="${up}como-prepararse-para-el-icfes/">Cómo prepararse</a>
@@ -396,6 +402,10 @@ export async function buildSeoPages({ appRoot, out, siteUrl, dataDir, renderRich
   const solvedLink = (up, area) => bank_.areas.includes(area.name)
     ? ` Mira también las <a href="${up}pregunta-icfes/${area.slug}/">preguntas de ${esc(area.name)} resueltas y explicadas</a>${bank_.examAreas.some((x) => x.area === area.name) ? `, o ${esc(area.name)} por examen: ${bank_.examAreas.filter((x) => x.area === area.name).map((x) => `<a href="${up}${x.path}">${esc(x.examName)}</a>`).join(", ")}` : ""}.`
     : "";
+  const topicLinks = (up, area) => {
+    const ts = bank_.topics.filter((t) => t.area === area.name);
+    return ts.length ? `\n  <p class="prose">Por tema, con preguntas resueltas: ${ts.map((t) => `<a href="${up}${t.path}">${esc(t.name)}</a>`).join(" · ")}.</p>` : "";
+  };
 
   // One page per area.
   for (const area of AREAS) {
@@ -410,7 +420,7 @@ export async function buildSeoPages({ appRoot, out, siteUrl, dataDir, renderRich
   <span class="tag" style="background:${area.color}">${esc(area.name)}</span>
   <h1>${esc(area.title)}</h1>
   ${area.intro.map((p) => `<p class="prose">${p}</p>`).join("\n  ")}
-  <p class="prose">Abajo tienes ${items.length} preguntas reales de cuadernillos que publicó el ICFES. Toca una opción para ver si acertaste.</p>
+  <p class="prose">Abajo tienes ${items.length} preguntas reales de cuadernillos que publicó el ICFES. Toca una opción para ver si acertaste.</p>${topicLinks("../../", area)}
 </div></section>
 <section class="qlist wrap narrow" aria-label="Preguntas de ${esc(area.name)}">
 ${qs}
@@ -513,11 +523,13 @@ ${cta("../", "Empieza tu simulacro ahora")}`;
   });
 
   // Calculator embed, school badge and percentile table for other sites (link-building assets).
-  if (saber11 && national) buildEmbedPages({ siteUrl, out, write, page, esc, faqBlock, faqLd, cta, saber11, national });
+  if (saber11 && national) buildEmbedPages({ siteUrl, out, write, page, esc, faqBlock, faqLd, cta, saber11, national, dataDir, renderRich, AREAS });
 
   // Puntaje ICFES por universidad y carrera, and the Saber 11 paperwork pages (inscripción, citación, fechas…).
   buildScoreUniversityPages({ siteUrl, write, page, esc, faqBlock, faqLd, cta });
   buildTramitePages({ siteUrl, write, page, esc, faqBlock, faqLd, cta });
+  buildEstructuraPages({ siteUrl, write, page, esc, faqBlock, faqLd, cta });
+  buildBecasPages({ siteUrl, write, page, esc, faqBlock, faqLd, cta });
 
   // KaTeX stylesheet and fonts for the math on the question pages.
   if (usesKatex) {
