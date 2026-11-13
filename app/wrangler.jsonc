@@ -1,5 +1,6 @@
 // Cloudflare Worker that serves the public site (landing at /, app at /app/) as static assets.
-// worker/index.js runs only for /app/exams/* and lets signed-in accounts download the question files.
+// worker/index.js runs for pages (redirect to condoricfes.com, page limit, crawler log, /__indexnow) and for
+// /app/exams/*, where it lets signed-in accounts download the question files.
 // Security headers for every page come from site-dist/_headers (written by scripts/build-site.mjs).
 // Deploy with `npm run deploy` (scripts/deploy-site.sh): build, shrink figures, then `wrangler deploy`.
 // Needs CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in the environment.
@@ -16,8 +17,8 @@
   // GRADE_SECRET (grading on the server) is a secret: `npx wrangler secret put GRADE_SECRET`, same value as
   // private.grade_secret in the database (migration 0032).
   "vars": { "SUPABASE_URL": "", "SUPABASE_ANON_KEY": "", "ALLOW_GUESTS": "0" },
-  // Own domain (bought 2026-11-08, zone on this Cloudflare account). workers.dev stays on for old links and QR codes;
-  // every page's canonical points at condoricfes.com, so search engines index only the domain.
+  // Own domain (bought 2026-11-08, zone on this Cloudflare account). workers.dev stays on for old links and QR codes:
+  // the worker 301s its public pages (and www) to condoricfes.com, while /app/ keeps working on any host.
   "routes": [
     { "pattern": "condoricfes.com", "custom_domain": true },
     { "pattern": "www.condoricfes.com", "custom_domain": true }
@@ -25,12 +26,19 @@
   // Burst limits for the exam files (worker/index.js). Cloudflare counts per location; periods can be 10 or 60 s.
   "ratelimits": [
     { "name": "EXAM_IP_RATE", "namespace_id": "4101", "simple": { "limit": 120, "period": 60 } },
-    { "name": "EXAM_USER_RATE", "namespace_id": "4102", "simple": { "limit": 60, "period": 60 } }
+    { "name": "EXAM_USER_RATE", "namespace_id": "4102", "simple": { "limit": 60, "period": 60 } },
+    { "name": "PAGE_IP_RATE", "namespace_id": "4103", "simple": { "limit": 60, "period": 60 } },
+    { "name": "INDEXNOW_RATE", "namespace_id": "4104", "simple": { "limit": 2, "period": 60 } }
   ],
+  // Workers Logs keep only the crawler lines the worker writes (tools/crawl-report.mjs reads them; 3 days on the free
+  // plan). No per-request invocation logs and no query strings, so visitors' requests are not stored.
+  "observability": { "enabled": true, "head_sampling_rate": 1, "redact_query_string": true, "logs": { "enabled": true, "invocation_logs": false } },
   "assets": {
     "directory": "./site-dist",
     "binding": "ASSETS",
-    "run_worker_first": ["/app/exams/*", "/app/api/*"],
+    // Pages go through the worker (redirect to condoricfes.com, page rate limit); static files do not.
+    // Negative patterns win over positive ones, so /app/exams/* and /app/api/* still run the worker.
+    "run_worker_first": ["/*", "!/app/assets/*", "!/app/brand/*", "!/brand/*", "!/img/*", "!/katex/*", "!/fonts/*", "!/site.css", "!/landing.css", "!/guide.css", "!/site.js", "!/calc.js", "!/calc-u.js", "!/favicon.ico", "!/app/manifest.webmanifest"],
     // /privacidad.html -> /privacidad and /app -> /app/, as the dashboard upload already did
     "html_handling": "auto-trailing-slash",
     // The app routes with #hashes, so no SPA fallback is needed; unknown paths get the site's 404 page

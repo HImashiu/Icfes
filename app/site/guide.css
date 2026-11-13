@@ -25,7 +25,7 @@
 .guide-head .btn-ghost { border-color: rgba(242, 245, 239, 0.4); box-shadow: 0 4px 0 rgba(242, 245, 239, 0.25); }
 
 /* Content on cream: the same tokens, recoloured for paper. */
-.guide-body, .guide main > .section:not(.guide-head), .guide .qlist, .guide .more {
+.guide-body, .guide main > .section:not(.guide-head), .guide .qlist, .guide .more, .guide .calc {
   --text: #0D110F; --text-2: #3E4A42; --line: rgba(13, 17, 15, 0.16); --surface: #FFFFFF; --surface-2: #ECE7DA;
   color: var(--text);
 }
@@ -70,8 +70,39 @@
 
 /* Sample questions keep the app's paper card, with the landing's ink outline. */
 .guide .qcard { margin-bottom: 26px; }
+.guide .qcard .paper { overflow-x: auto; }
+
+/* Calculator: dark text and white inputs on the white card. */
+.guide .calc-in input { background: #fff; color: var(--ink); border-color: rgba(13, 17, 15, 0.28); }
+.guide .calc-in input::placeholder { color: #6B746D; }
+.guide .calc-big { background: var(--accent); border-color: var(--ink); box-shadow: 0 4px 0 var(--ink); }
+.guide .calc-big b { color: var(--ink); }
+.guide .calc-big span, .guide .calc-big small { color: rgba(13, 17, 15, 0.78); }
+.guide .calc-levels b { color: #2B5F2E; }
 .guide .ans { background: #EEF5D6; border: 2px solid var(--ink); }
 .guide .ans summary { color: var(--ink); }
 .guide .ans summary::marker { color: #2B5F2E; }
 @media (min-width: 720px) { .guide .areas { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } }
 .guide .areas .area:last-child:nth-child(odd) { grid-column: auto; }
+
+/* "Sigue con": related guides at the end of every search page (injectRelated in scripts/build-seo.mjs) */
+.guide .related { padding-top: 8px; padding-bottom: 40px; }
+.guide .related h2 { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; text-transform: uppercase; font-size: clamp(22px, 3vw, 30px); margin: 0 0 14px; }
+.guide .rel { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.guide .rel a { display: flex; align-items: center; min-height: 56px; height: 100%; padding: 10px 16px; border-radius: 16px; background: #fff; color: var(--ink); border: 2px solid var(--ink); box-shadow: 0 3px 0 var(--ink); font-weight: 700; line-height: 1.25; text-decoration: none; transition: translate 0.3s var(--ease), box-shadow 0.3s var(--ease); }
+.guide .rel a:hover { translate: 0 -2px; box-shadow: 0 5px 0 var(--ink); }
+
+/* Phones: tables inside question cards shrink so the last column stays on screen (still scrolls if it must). */
+@media (max-width: 560px) {
+  .guide .tbl { padding: 2px 8px; }
+  .guide .tbl table { font-size: 13px; }
+  .guide .tbl th { font-size: 11px; letter-spacing: 0.02em; }
+  .guide .tbl th, .guide .tbl td { padding: 7px 5px; }
+  .guide .paper table { font-size: 13px; }
+  .guide .paper th, .guide .paper td { padding: 5px 6px; }
+  .guide .paper th { font-size: 12px; hyphens: auto; -webkit-hyphens: auto; }
+  .guide .qcard .paper { padding: 14px 12px; }
+}
+
+/* "Actualizado el ..." under the content (scripts/build-site.mjs, from the sitemap's lastmod). */
+.guide .updated p { margin: 0; padding: 0 0 18px; color: #3E4A42; font-size: 14px; font-weight: 600; }
