@@ -3298,3 +3298,4 @@ body.spl-open { overflow: hidden; }
 /* Results: invite classmates over WhatsApp */
 .share-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding-top: 4px; }
 .share-row a.secondary { display: inline-flex; align-items: center; text-decoration: none; }
+.share-btns { display: inline-flex; flex-wrap: wrap; gap: 8px; }
