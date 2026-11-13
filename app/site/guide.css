@@ -100,4 +100,6 @@
   .guide .tbl th, .guide .tbl td { padding: 7px 5px; }
   .guide .paper table { font-size: 13px; }
   .guide .paper th, .guide .paper td { padding: 5px 6px; }
+  .guide .paper th { font-size: 12px; hyphens: auto; -webkit-hyphens: auto; }
+  .guide .qcard .paper { padding: 14px 12px; }
 }
