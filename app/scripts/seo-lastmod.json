@@ -1,1357 +1,1078 @@
 {
  "": {
-  "hash": "09f0890796b7202a",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
- },
- "banco-de-preguntas-icfes-docentes/": {
-  "hash": "c99df0c633118a12",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "9569e708f7a2a510",
+  "date": "2026-11-13"
  },
  "blog/": {
-  "hash": "600b5a2f13adab6e",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "0e0d96be2f22b67a",
+  "date": "2026-11-13"
  },
  "blog/como-mejorar-en-lectura-critica-icfes/": {
-  "hash": "0d4c326c314df437",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "91db7dcc4ba31324",
+  "date": "2026-11-13"
  },
  "blog/errores-comunes-ingles-icfes/": {
-  "hash": "ede09ad348d702b2",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "0eb7140558585e6c",
+  "date": "2026-11-13"
  },
  "calculadora-puntaje-icfes/": {
   "hash": "6fcef1fbe826a592",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "date": "2026-11-13"
  },
  "certificado-icfes/": {
-  "hash": "6e2fcf6eb17ea502",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "168470fb5cf829af",
+  "date": "2026-11-13"
  },
  "citacion-icfes/": {
-  "hash": "f88e23354ca96384",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "9e0bf89ecacd3246",
+  "date": "2026-11-13"
  },
  "como-prepararse-para-el-icfes/": {
   "hash": "236b9c269fad1bc8",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "date": "2026-11-13"
  },
  "competencias-icfes/": {
-  "hash": "13bfd807030ba1a7",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "4d914a9f24471161",
+  "date": "2026-11-13"
  },
  "competencias-icfes/argumentacion/": {
-  "hash": "b85067792ef634d1",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "89d45be2689b6249",
+  "date": "2026-11-13"
  },
  "competencias-icfes/articulacion-de-las-partes-de-un-texto/": {
-  "hash": "76d9c7f05b34dfa9",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "b0ffd9904ac2fa80",
+  "date": "2026-11-13"
  },
  "competencias-icfes/contenidos-locales-de-un-texto/": {
-  "hash": "cff49247686be7de",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "f87f10c204cf4353",
+  "date": "2026-11-13"
  },
  "competencias-icfes/explicacion-de-fenomenos/": {
-  "hash": "eff04911e1b38dbe",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "befbdade83ade718",
+  "date": "2026-11-13"
  },
  "competencias-icfes/formulacion-y-ejecucion/": {
-  "hash": "68fda3e366d83abf",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "341c35890d158f2f",
+  "date": "2026-11-13"
  },
  "competencias-icfes/indagacion/": {
-  "hash": "9982b29740c79785",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "d6bcf71ccfcc03c2",
+  "date": "2026-11-13"
  },
  "competencias-icfes/interpretacion-y-analisis-de-perspectivas/": {
-  "hash": "56dfa8797f7a01a0",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "768ab08133c5d562",
+  "date": "2026-11-13"
  },
  "competencias-icfes/interpretacion-y-representacion/": {
-  "hash": "b74efde319247d21",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "2ac80c071607d860",
+  "date": "2026-11-13"
  },
  "competencias-icfes/pensamiento-reflexivo-y-sistemico/": {
-  "hash": "6ec464407a21e008",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "3fb302fb7649dd7c",
+  "date": "2026-11-13"
  },
  "competencias-icfes/pensamiento-social/": {
-  "hash": "b1972165cced5b8a",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "0171dcb22c34e908",
+  "date": "2026-11-13"
  },
  "competencias-icfes/reflexionar-y-evaluar-un-texto/": {
-  "hash": "eab781e9e543d7c5",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "cc3d7e8dc6f1a984",
+  "date": "2026-11-13"
  },
  "competencias-icfes/uso-comprensivo-del-conocimiento-cientifico/": {
-  "hash": "d64af6ca9e7205cb",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "55868afb2c7634a3",
+  "date": "2026-11-13"
  },
  "datos/percentiles-saber-11/": {
-  "hash": "fd869489607d0505",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "2f7a6cf245fc950a",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/": {
-  "hash": "48235cd6adfa3a72",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "0dbbc344c8bf63f7",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2014/": {
-  "hash": "07b1a87aa6e7d9af",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "d0c5052b3bf970fd",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2014/ciencias-naturales/": {
-  "hash": "e9b5eeb68ef264f6",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "a9837dc619579cb3",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2014/ingles/": {
-  "hash": "00618551f69a614a",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "3f35368a1780935d",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2014/lectura-critica/": {
-  "hash": "79c6541c91c2840d",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "6ebcf5a9e51d2ca0",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2014/matematicas/": {
-  "hash": "44376c5a56373045",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "b4e90b91f72dd632",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2014/sociales-y-ciudadanas/": {
-  "hash": "8287f2c5c4118d4b",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "68eabf4202bd40b1",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2015-2018/": {
-  "hash": "d31b14abbe5d60ad",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "2d222c9cf5a20a3e",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2018-1/": {
-  "hash": "5ce6a14bffd4175c",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "46eafa663440d14e",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2018-1/ciencias-naturales/": {
-  "hash": "66ba3c3a0dbeda4c",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "bf2c896d3329378f",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2018-1/ingles/": {
-  "hash": "973036d750009b47",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "3b2c3d42ec5833e3",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2018-1/lectura-critica/": {
-  "hash": "90005e17b77757cd",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "040f15c3838e03b5",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2018-1/matematicas/": {
-  "hash": "497ea60d9e58841c",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "69b849ebe0aa2eb3",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2018-1/sociales-y-ciudadanas/": {
-  "hash": "6b78122174258438",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "11133597bc76cdff",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2018-2/": {
-  "hash": "afb2e4446de7b0a4",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "16be53b6fe36cb05",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2018-2/ciencias-naturales/": {
-  "hash": "360d91268bae8304",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "6e5e7a75a24f7485",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2018-2/ingles/": {
-  "hash": "53a13a0c81515cca",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "9139834f6c9f09b9",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2018-2/matematicas/": {
-  "hash": "b16e6204aca5d787",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "011eb53024ae6b24",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2018-2/sociales-y-ciudadanas/": {
-  "hash": "6b98593c005542f3",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "d805bc39842498eb",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2019-1/": {
-  "hash": "39a8c99230be6d2b",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "abadd16fcf34d336",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2019-1/ciencias-naturales/": {
-  "hash": "577021e455917889",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "52c8e8d1442672bc",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2019-1/ingles/": {
-  "hash": "fe0806fdc54fb5a8",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "1b65cae131ff165c",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2019-1/lectura-critica/": {
-  "hash": "b25485555afec879",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "3c753c76c0cc4f1a",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2019-1/matematicas/": {
-  "hash": "1f7917fca26ba135",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "2f16fb7a46c4c732",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2019-1/sociales-y-ciudadanas/": {
-  "hash": "79ce797b0940e43e",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "d62501a4464fb594",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2020-calendario-a/": {
-  "hash": "30b783665504334a",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "3dbf2b6ce6358e35",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2020-calendario-a/ciencias-naturales/": {
-  "hash": "9e74293489490af6",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "8e6102ea8b271357",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2020-calendario-a/ingles/": {
-  "hash": "89397de1779db658",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "c544fc52de6ef012",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2020-calendario-a/lectura-critica/": {
-  "hash": "e2f99f73340ac448",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "7cd7254bf053d45f",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2020-calendario-a/matematicas/": {
-  "hash": "97184b5c996c7454",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "4cdc8e0f92adf2dc",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2020-calendario-a/sociales-y-ciudadanas/": {
-  "hash": "92483ea7c492f484",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "06f3b9c8587c1f81",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2020-calendario-b/": {
-  "hash": "dec853f1884d07c9",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "ad6711f1664c38ad",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2020-calendario-b/ciencias-naturales/": {
-  "hash": "a6b019a3f43a70fd",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "755d4e8ae0a3f6fd",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2020-calendario-b/ingles/": {
-  "hash": "c6b2b67a2cf9b053",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "c5540f6090342db2",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2020-calendario-b/lectura-critica/": {
-  "hash": "cedcbd677c6fff23",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "03b2aa96b9cef202",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2020-calendario-b/matematicas/": {
-  "hash": "e00e2a6e106e1c8e",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "176d91a1042e2b8f",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2020-calendario-b/sociales-y-ciudadanas/": {
-  "hash": "34ab37157893d067",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "c6958250091c7e52",
+  "date": "2026-11-13"
  },
  "examenes-icfes-anteriores/icfes-2021-lectura-critica/": {
-  "hash": "d0670c006f21536b",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "4ed4011df088698b",
+  "date": "2026-11-13"
  },
  "fechas-icfes-2027/": {
-  "hash": "2297aa0fc4242bad",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "61b3d088150588fb",
+  "date": "2026-11-13"
  },
  "glosario-icfes/": {
-  "hash": "79d6566261e5f418",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "4801ec88d3af36c5",
+  "date": "2026-11-13"
  },
  "inscripcion-icfes/": {
-  "hash": "95ed86c5cccdb309",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "0c1639c79b46c6d9",
+  "date": "2026-11-13"
  },
  "insertar/": {
-  "hash": "a7eae907e64be2f5",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "63ec60a665125c9e",
+  "date": "2026-11-13"
  },
  "niveles-de-desempeno-icfes/": {
   "hash": "a438b499dc5dca47",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "date": "2026-11-13"
  },
  "numero-de-registro-icfes/": {
-  "hash": "e5ae3142ffaee1f7",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "db7a85d5c5c61f0f",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/": {
-  "hash": "59314e38288bd496",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "08d6a7c3f5132647",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/": {
-  "hash": "97b61e366bed5cd3",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "7eec867f7d981892",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/ardillas-y-cafe-corregir-el-experimento/": {
-  "hash": "89f078d61bb6e8ac",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "4a1ca8ff8dc9d97a",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/calor-y-masa-calentar-el-doble-de-agua/": {
-  "hash": "b1e9947c772ab6b3",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "089d379a10d5772a",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/choque-y-movimiento-rectilineo-uniforme/": {
-  "hash": "6ef7edf544d68844",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "851f5b25aad0cdc2",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/codigo-genetico-cuantos-aminoacidos/": {
-  "hash": "a9c43bdced45662b",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "7be3b3057a7401df",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/coltan-y-polimero-de-aluminio-conclusion/": {
-  "hash": "b749da9090a9fd56",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "5e0bddae01ac858e",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/concentracion-volumen-volumen-acidos/": {
-  "hash": "33a8a52b91d78d0e",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "313510b1162bf56a",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/confiabilidad-experimento-crecimiento-bacteriano/": {
-  "hash": "f8280b76d5e565dc",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "f908bc282e7e9999",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/configuracion-electronica-fluor-electrones/": {
-  "hash": "d8c2b8c179592d8e",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "36cb30d46773a8e2",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/confirmar-resultados-repetir-mediciones/": {
-  "hash": "e78d55e2878b18d4",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "61950d69953a481e",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/deteccion-de-almidon-con-lugol-control/": {
-  "hash": "86d301d1c8ce8afc",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "668bdc68e4d46e9d",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/dilatacion-termica-balones-que-se-encogen/": {
-  "hash": "d9cd75cdc48eb700",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "5f8775d05b25d783",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/dispersion-de-semillas-por-aves-migratorias/": {
-  "hash": "0db4a8206c1f9097",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "a235bf6f764324e7",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/electronegatividad-que-enlace-es-ionico/": {
-  "hash": "61451148d880f993",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "06bfb86e8582ee9e",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/estado-de-oxidacion-ion-aluminio/": {
-  "hash": "199debbcf02d01a0",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "266ca0f72a4d5f72",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/estados-de-la-materia-a-200-grados/": {
-  "hash": "151c11d0cf002c96",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "67116c15ddf1d244",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/estequiometria-combustion-del-propano/": {
-  "hash": "98c6020f6075c74f",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "b7f405a4b60fe9ba",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/extraccion-de-oro-problema-ambiental/": {
-  "hash": "e8ff33193c6e66b2",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "ea60644781e3dbbc",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/hipotesis-del-vino-mismos-pigmentos/": {
-  "hash": "71463dc919d67207",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "a72591c6a03b931e",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/interpretar-reaccion-quimica-moles-h2o2/": {
-  "hash": "095c79bebe71cc94",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "398f703d594aff5a",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/menu-con-mas-calorias-un-alimento-por-tipo/": {
-  "hash": "f477ce130648b157",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "e9453334e8bceadb",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/mutualismo-plantas-con-flor-y-polinizadores/": {
-  "hash": "a4386a9c5b07aca6",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "bfdd6bf3b109f8ac",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/pagina-2/": {
-  "hash": "bce599351cc39d07",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "34f405c5343df589",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/palma-africana-organismos-que-sobreviven/": {
-  "hash": "a942a8a61fb7c948",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "ba025443f9161dbf",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/palma-africana-perdida-de-biodiversidad/": {
-  "hash": "759982c1868e6dd9",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "827b740b787f87dd",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/pilas-y-metales-pesados-en-un-rio/": {
-  "hash": "02286ab7a8e9369f",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "e23f943908e46bc9",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/poner-a-prueba-hipotesis-dulces-disolucion/": {
-  "hash": "661d8df3c0eb7d0c",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "65780b7a04bf256e",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/por-que-el-h2o2-es-un-compuesto/": {
-  "hash": "03997b673842e43a",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "04eaf68d9da4a40e",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/por-que-se-flota-mas-en-un-lago-densidad/": {
-  "hash": "0fd08512a9f52604",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "71ab90f15004588f",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/pregunta-que-responden-las-ciencias-naturales/": {
-  "hash": "2f9f1318bba4f9c6",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "82957071cd2e5c7e",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/reactivo-limite-oxidacion-del-hierro/": {
-  "hash": "daeccf0b41af74d2",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "4deae9e3d31477d9",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/sal-y-punto-de-congelacion-del-agua/": {
-  "hash": "d7a9d581e04345e7",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "743ff3cc62d27a51",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/separacion-de-mezclas-agua-aceite-hierro/": {
-  "hash": "6a7e614f1fda0f07",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "bf465c96f564d70c",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/sustancias-puras-que-tienen-en-comun/": {
-  "hash": "6c92d2f86aa869c0",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "86d622c9e54c3269",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/titulos-de-una-tabla-distancia-y-volumen/": {
-  "hash": "11f621e51f8f1c10",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "9a8c937725ccf63b",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ciencias-naturales/unidades-de-medida-precipitacion-temperatura/": {
-  "hash": "836e90f3e7275f81",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "be3aaf132b82e5ea",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/": {
-  "hash": "f1d9502bd7c1ad33",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "02ab75be7f8c1575",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-adverbio-served-quickly/": {
-  "hash": "56dfd6d39cf89eb3",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "b2f1793f1cf3dddd",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-completar-texto-all-kinds/": {
-  "hash": "6fa77a907eefb949",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "52ffa1db2826189a",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-completar-texto-same-age/": {
-  "hash": "3e5ba3f59b7362f0",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "b07c7e74e4c1e2ed",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-completar-texto-were-using/": {
-  "hash": "e8be6b12844f0228",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "372bab96a245945d",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-conversacion-cold-sandwich/": {
-  "hash": "5691f60e95e4161a",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "3f1b43cc58d358d3",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-conversacion-go-to-the-beach/": {
-  "hash": "681110132b4c8050",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "6be16852f3b59297",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-conversacion-play-tennis/": {
-  "hash": "a57b0f6c605cd2bd",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "7d2a0496ae433ead",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-conversacion-so-do-i/": {
-  "hash": "954f81b76ce43b94",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "07f2a2f19279f691",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-conversacion-try-on-costume/": {
-  "hash": "df5714acf4849b43",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "23e2110f259f3751",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-cuando-volo-el-primer-avion/": {
-  "hash": "95c2356997c70894",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "5d9ec04415db5855",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-de-donde-era-el-pintor/": {
-  "hash": "b35561bd4f4cecb3",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "521a9f7cc1cb4a66",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-delfines-menos-listos-atlantico/": {
-  "hash": "58785c1910f9d3d5",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "38c6babdf6542681",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-demostrativos-these-wolves/": {
-  "hash": "a17fe8df860607eb",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "ef37b2e4f9132b69",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-donde-viven-delfines-rosados/": {
-  "hash": "be484bcda32534a9",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "60023dc19b1eacc7",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-gerundio-como-sujeto-meeting/": {
-  "hash": "2d18548e36cdcc1e",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "6d3426adb172f6cb",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-one-of-the-stories-says/": {
-  "hash": "47a3dcd038ba40a6",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "9997028db5684db3",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-pasado-simple-became-popular/": {
-  "hash": "7a7d4aa8332d4a89",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "e1754f2496edfc46",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-proposito-del-autor-viaje-bogota/": {
-  "hash": "8e615239a2330a96",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "21288199f1ad2222",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-proposito-viaje-de-jonathan/": {
-  "hash": "ee0e581aadae179f",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "941527eae4228c0e",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-que-dice-la-nutricionista-fitness/": {
-  "hash": "f29a98afdc6cf86a",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "a42695f8d13697f9",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-raise-sheep-criar-animales/": {
-  "hash": "9c6fabe4c1b88a1f",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "087abdda33dcea65",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-vestirse-para-el-exito/": {
-  "hash": "9c7609a1a6bad17e",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "c3d7a17390ebf5f4",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-vocabulario-casa-basement/": {
-  "hash": "b7048a04fd5ec8f8",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "53a9485a6bef3d79",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-vocabulario-cocina-cupboard/": {
-  "hash": "21cd117ef96daa58",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "6635c5ba997ad07c",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-vocabulario-comida-sopa-verduras/": {
-  "hash": "50e06dd44965ea68",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "735c4c0a6f26a55f",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-vocabulario-comida-soup/": {
-  "hash": "d707e22422547c75",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "0363155e91de2042",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-vocabulario-deportes-skates/": {
-  "hash": "99e2ab48b8affee3",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "0bb0225351834cf9",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/ingles-vocabulario-transporte-truck/": {
-  "hash": "9b893008b597cecb",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "ceec4399db4319d7",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/ingles/pagina-2/": {
-  "hash": "e2d275fa52bcedbc",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "b0ba2ea22571db42",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/": {
-  "hash": "fbd13114bb78186a",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "47744925b5e86f6a",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/adjetivo-que-describe-a-johnny/": {
-  "hash": "ce5685a5e74d7433",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "93067cbaaff5b371",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/analogia-dialogo-platon-torpedo/": {
-  "hash": "8c91cb7993d72617",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "14b71fdaab4d9a1c",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/anecdota-de-la-vaca-personajes/": {
-  "hash": "a9661ea69caf432a",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "5a6cd97f7cb5f6d9",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/anillo-de-giges-contradice-al-autor/": {
-  "hash": "8d142ce38d23f678",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "14fa7fcdf5de6dfb",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/conclusion-texto-ironico-mark-twain/": {
-  "hash": "4572a35ee617c56d",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "31a8b81e7e49b5e3",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/consejos-mark-twain-obedecer-y-mentir/": {
-  "hash": "7f97da34f183884e",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "744ae910881a69aa",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/descartes-sueno-y-vigilia/": {
-  "hash": "0e386087e40c408d",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "66a09f668c780721",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/el-origen-del-mal-orden-de-personajes/": {
-  "hash": "af846097ff0e9dfb",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "94ab27129755c67d",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/el-principito-lo-que-el-narrador-vivio/": {
-  "hash": "efd589259aed683a",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "f5361ebdf86716ed",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/ensayo-sobre-la-lucidez-discurso-ministro/": {
-  "hash": "442ddbc1be3f6a83",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "c8df008c4e147c67",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/estado-paternalista-regular-lo-privado/": {
-  "hash": "9be70dbfea54d56e",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "adafcbc71c25683c",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/evaluar-sintesis-el-arte-de-conversar/": {
-  "hash": "21a85bf134a2bb5f",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "2f3334cb40b7aa5e",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/fahrenheit-451-dos-aspectos-preocupaciones/": {
-  "hash": "e31456ce1f9a5e7a",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "b91d4f4a56d34702",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/fahrenheit-451-quien-habla-y-a-quien/": {
-  "hash": "70d24b435ef0f4b1",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "eae5acde61be325f",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/funcion-de-la-nota-de-pie-de-pagina/": {
-  "hash": "fb99c310fdde0be7",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "15e14b78b1136efa",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/funcion-de-un-enunciado-ejemplificar/": {
-  "hash": "6851b2a2caaa54ce",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "ce021299787c1e5c",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/pagina-2/": {
-  "hash": "0d8af5e4d8eee2c6",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "22d330d09798ffcf",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/personaje-femenino-la-noche-de-los-feos/": {
-  "hash": "ca1d96aa52bed9b0",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "de6fb32e240d4e2b",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/quien-es-el-narrador-salinger/": {
-  "hash": "fee233986e959d58",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "450f1e2bf13920f7",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/quien-es-simila-texto-de-las-orcas/": {
-  "hash": "d7810d6ef8ccfad4",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "8be8813bc2dc020c",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/resumir-fragmento-moral-universal/": {
-  "hash": "7d39e3da48fef26b",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "aa8ccc20757a8275",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/saramago-dios-como-problema/": {
-  "hash": "152777509256a0bb",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "0bba1deb50fdee86",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/sinonimo-en-contexto-vaticinado/": {
-  "hash": "0c2db2610b59b0bb",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "d6b826eced3be75c",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/lectura-critica/tema-principal-texto-avispa-sphex/": {
-  "hash": "7e7dfafbe34506dc",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "40bd550f7d425b4e",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/": {
-  "hash": "45b71e335497c921",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "b3ac20355b801d9d",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/autos-electricos-filtrar-tabla-condiciones/": {
-  "hash": "175c9ce8aabcec6f",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "3f5a37e2ca18908f",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/cambio-de-divisas-error-en-procedimiento/": {
-  "hash": "6032b7618798c27f",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "4d835df63f781b18",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/coeficiente-de-correlacion-datos-suficientes/": {
-  "hash": "a914058dcbc64907",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "239b3e384516cbb2",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/combinaciones-grupos-para-un-foro/": {
-  "hash": "fa7729a82e2bb3f2",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "dd6fb80fc4d80a63",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/combinaciones-o-permutaciones-deportes/": {
-  "hash": "64f51ced8ff21c21",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "29bb08389d4e31b4",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/combinaciones-pares-de-clientes/": {
-  "hash": "0ef7485a81959ff3",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "326a575819ed6ffa",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/comparar-tarifas-falta-informacion/": {
-  "hash": "be5a16fdfbc09d55",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "276d586fcf0abd47",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/compra-de-carne-porcentajes-del-dinero/": {
-  "hash": "cb0967bb4a141b7f",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "a6115979438b0e06",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/datos-de-una-tabla-que-no-se-puede-calcular/": {
-  "hash": "5f4bc71511830766",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "ef03273062b0ac1a",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/doble-cada-dia-monedas-alcancia/": {
-  "hash": "029f91c82d8c2563",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "451b4f06ad294dba",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/duplicar-cada-semana-asistencia-esperada/": {
-  "hash": "698c2488928fadc0",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "6ce99c5dc59430ba",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/fracciones-premio-tercer-puesto/": {
-  "hash": "54d52e5a9c3b0eb9",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "ffab0c5f1246e476",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/funcion-a-trozos-continuidad/": {
-  "hash": "a5561c34fd2dd27f",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "9b080aa7632a7d4d",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/funcion-cuadratica-maximo-satelite/": {
-  "hash": "e314e761d709b176",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "fa545169ae3f1086",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/futbol-que-se-puede-saber-para-clasificar/": {
-  "hash": "753b007f916e86d9",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "df861f4b630a6968",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/interpretacion-erronea-tabla-de-libros/": {
-  "hash": "b51503510f12acd4",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "bd4ed81b8fc4a5ef",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/margen-de-error-lapices-150-mm/": {
-  "hash": "e1a469f0d97af12f",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "0caf00bd525c11f0",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/moda-valores-dominantes-en-una-tabla/": {
-  "hash": "11712c63a431632a",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "92d9c231744c7f89",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/numeros-decimales-entre-dos-records/": {
-  "hash": "3b0d61ead7ca203d",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "ca014155ac7da42e",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/pagina-2/": {
-  "hash": "d9ca4f179f822c8d",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "14f7e62626008099",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/porcentajes-ahorro-con-descuento/": {
-  "hash": "365a431a3f5f1cda",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "f8c252d74725f5a4",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/porcentajes-del-sueldo-de-jaime/": {
-  "hash": "91e40e76bfba21aa",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "8d25a2fbfa7c05ba",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/potencias-de-10-decibeles-intensidad/": {
-  "hash": "321135cde5a7a10f",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "7b1efa4a81ffd6e8",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/probabilidad-condicional-error-del-profesor/": {
-  "hash": "4c3db4a2fd5faf44",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "acdc8b1d55ac4596",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/promedio-ponderado-por-que-reprobo/": {
-  "hash": "dedd5e09ff73cbc1",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "f23a74c3cfa74a2e",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/promedio-y-rango-producto-que-se-vende-menos/": {
-  "hash": "925f673e5a526941",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "534bfc373c969eaf",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/promedios-aumento-puntaje-cursos/": {
-  "hash": "077128cfcb2e60f4",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "e4ef7ed2279b22a2",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/proporciones-comida-para-gatos/": {
-  "hash": "64cc1c7f1efa61f2",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "ab6b10baadae17f4",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/rango-de-datos-puntajes-saber-11/": {
-  "hash": "a903fcc35745c4d3",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "0bc5a1e8a9abce3e",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/ruta-mas-corta-parque-q-hasta-r/": {
-  "hash": "5410e6ec9b456537",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "f819ece6c70bde3c",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/subsidio-de-vivienda-cuantas-veces-mas/": {
-  "hash": "6d3c6da9b239a2de",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "d688a20aa691d0be",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/sucesion-recursiva-valor-de-f3/": {
-  "hash": "ae79efbd4450e15f",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "9fff3d41144934e7",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/tabla-de-doble-entrada-porcentajes-genero/": {
-  "hash": "9c7fafb0b59e2028",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "76fce6d1a5e81667",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/turnos-de-fabrica-horas-nocturnas/": {
-  "hash": "e0a60e709e565c15",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "887ce3a45e882946",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/matematicas/variables-necesarias-ganancia-paletas/": {
-  "hash": "4e3ce200cfbb17b9",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "42c0495153f77f17",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/": {
-  "hash": "23b5b2ff40e7209c",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "8738c21243eefd0d",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/accion-de-tutela-cuando-se-presenta/": {
-  "hash": "e54e5f7b62c3f17c",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "0ef6c7525891b5e4",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/colombia-y-sudafrica-semejanza-conflictos/": {
-  "hash": "1859c900db6382f1",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "5667144b6aad90f4",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/conflicto-religion-y-politica-enciclica/": {
-  "hash": "f428e777101f7409",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "6465481a296c926e",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/constitucion-de-rionegro-federalismo/": {
-  "hash": "cf4eb0850deb4678",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "d5759ed7b1865f8e",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/corte-constitucional-alcohol-en-el-trabajo/": {
-  "hash": "2f6b2a0bd0c0c986",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "4c77d134ad86ffac",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/crisis-carcelaria-soluciones-complementarias/": {
-  "hash": "97c436656b040516",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "fa959001c1df29e0",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/cumbre-de-la-tierra-1992-evaluar-afirmacion/": {
-  "hash": "56cf25db0a0ef580",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "6d9ef5abcd8c90b2",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/decision-del-director-desventaja-escuela/": {
-  "hash": "5badd746a695bb3c",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "1292f30f0d010c65",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/declaracion-del-ministro-sobre-indigenas/": {
-  "hash": "db835a372e974b3f",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "3fdfd1d90c1e6e0d",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/derecho-de-asociacion-sindical/": {
-  "hash": "81a6d6af920f4cf7",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "9cdf436f016d6bf5",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/desarrollo-sostenible-caracteristica/": {
-  "hash": "4fedaa260bd42da4",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "cacb0f02f727015d",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/descentralizacion-plan-de-gaviria/": {
-  "hash": "69a45a09c7db4d79",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "b101c08f869165cd",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/discurso-tengo-un-sueno-derechos-civiles/": {
-  "hash": "1ac46445e531f774",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "e8878b27fd75db4e",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/educacion-inclusiva-presidente-y-periodista/": {
-  "hash": "ef05ecf7feb0aedf",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "773f73d116e23f9b",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/fuente-mas-fiable-consumo-de-drogas/": {
-  "hash": "c2d73c8ea18933eb",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "424499edec60941c",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/funciones-de-los-partidos-politicos/": {
-  "hash": "bcf3d8a7bd472612",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "09ba73463b33ff2e",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/gobernabilidad-que-fenomeno-la-afecta/": {
-  "hash": "d488000a0b5c5ea4",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "8d18edb9503aaa1b",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/la-violencia-anos-50-testimonio/": {
-  "hash": "c218c03f4cacd952",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "41561c11d84f12b8",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/ley-1429-de-2010-que-no-tuvo-en-cuenta/": {
-  "hash": "8ff3b603b8087664",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "a71f328284df2deb",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/migracion-del-centro-a-la-periferia/": {
-  "hash": "d037568acfbba028",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "08f7cd3adc59fd6e",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/mineria-ilegal-debil-presencia-estatal/": {
-  "hash": "5df1ebeb5942f402",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "c0b52594010d72a5",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/minorias-victimas-comunidad-plurietnica/": {
-  "hash": "ffb7978260c83253",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "6a2e9b0c57c90e0d",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/movilizaciones-lgbti-por-que-importan/": {
-  "hash": "f8b0c01561754dcb",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "2af9c48e6a9dbaa4",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/oleoducto-polemico-factor-del-conflicto/": {
-  "hash": "5edc0a05bfbcd0d5",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "1a790da76e3655ef",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/pagina-2/": {
-  "hash": "a24f78bb7595a2af",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "96c282734fb2243e",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/papa-criolla-modificada-obstaculo/": {
-  "hash": "0fca12e30a86f598",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "f5f9e966836966e2",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/pena-de-muerte-y-constitucion-de-1991/": {
-  "hash": "44ab29b71b9d0746",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "cb83fcc1b420d7ac",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/prohibicion-del-burka-en-francia-conflicto/": {
-  "hash": "0d38aa97b79c000b",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "f0d4debd1b58707d",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/proteccionismo-o-libre-mercado-mariano-ospina/": {
-  "hash": "daea06d6c241d557",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "c86b3114b7becb71",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/reconstruir-en-una-reserva-costo-economico/": {
-  "hash": "f93bb38a67a8c92d",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "6a604a88f44897db",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/reforma-tributaria-comparar-argumentos/": {
-  "hash": "22e41a8607743e2d",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "1990693032e3be28",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/replicar-programa-de-negocios-otras-ciudades/": {
-  "hash": "dc5af68866796821",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "6099b60bfcf2bbc0",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/representantes-estudiantiles-sin-elecciones/": {
-  "hash": "38fbbc5764edde14",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "977bfedf965001e3",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/revocatoria-del-mandato-argumento/": {
-  "hash": "13860d8a84b73066",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "16c0d882803b654c",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/situacion-que-protege-diversidad-cultural/": {
-  "hash": "5b26f1f4ebbef1e5",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "cc9d480155ec4d78",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/violencia-contra-la-mujer-consecuencias-postura/": {
-  "hash": "9ea950119344205e",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "cfe81b34f5b8dec0",
+  "date": "2026-11-13"
  },
  "pregunta-icfes/sociales-y-ciudadanas/voto-obligatorio-en-colombia-que-considerar/": {
-  "hash": "8bbc9a6d5044cf28",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "9c6c1c4b8e9be331",
+  "date": "2026-11-13"
  },
  "preguntas-icfes/": {
-  "hash": "a274445f11132ba3",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "29a2b5d9789efedd",
+  "date": "2026-11-13"
  },
  "preguntas-icfes/ciencias-naturales/": {
-  "hash": "6dfdede9181b4aca",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "f28d37c4024f6c07",
+  "date": "2026-11-13"
  },
  "preguntas-icfes/ingles/": {
-  "hash": "339efc1c533ab589",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "89b348da1c1cd68e",
+  "date": "2026-11-13"
  },
  "preguntas-icfes/lectura-critica/": {
-  "hash": "a96cb6c7eb615a68",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "d1afbbdeee15bf59",
+  "date": "2026-11-13"
  },
  "preguntas-icfes/matematicas/": {
-  "hash": "c33b947eb9578baf",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "5e2fb0e9747387a3",
+  "date": "2026-11-13"
  },
  "preguntas-icfes/sociales-y-ciudadanas/": {
-  "hash": "b23f4aaf32370472",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "1be21620aa6ecc5a",
+  "date": "2026-11-13"
  },
  "preicfes-para-colegios/": {
-  "hash": "1f9f13e5ffd669a1",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "e2ed801bb2215691",
+  "date": "2026-11-13"
  },
  "privacidad": {
   "hash": "87672ae1882a2f17",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "date": "2026-11-13"
  },
  "prueba-docente/": {
-  "hash": "95776090ac12b2b4",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "3a670dd006166eff",
+  "date": "2026-11-13"
  },
  "puntaje-icfes/": {
-  "hash": "28b7d418aacc5e76",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "c4027469bb4346b2",
+  "date": "2026-11-13"
  },
  "puntaje-icfes/carreras/biologia/": {
-  "hash": "8812c6a5b17799cc",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "28ef16be97bad6a0",
+  "date": "2026-11-13"
  },
  "puntaje-icfes/carreras/derecho/": {
-  "hash": "49c3014c5130444f",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "3cdf682c7d51c949",
+  "date": "2026-11-13"
  },
  "puntaje-icfes/carreras/economia/": {
-  "hash": "6b70174d69401a52",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "64acda207c4a02fe",
+  "date": "2026-11-13"
  },
  "puntaje-icfes/carreras/enfermeria/": {
-  "hash": "db391c11699fb515",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "36d8eaaa14dabbc7",
+  "date": "2026-11-13"
  },
  "puntaje-icfes/carreras/fisioterapia/": {
-  "hash": "ae2a37c876b3bf09",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "688698b7dcc0b06c",
+  "date": "2026-11-13"
  },
  "puntaje-icfes/carreras/ingenieria-civil/": {
-  "hash": "4c9b84b2b5220d6d",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "fea67c179dcee261",
+  "date": "2026-11-13"
  },
  "puntaje-icfes/carreras/ingenieria-de-sistemas/": {
-  "hash": "ae8b6f1308d4701f",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "516326e22a6357cc",
+  "date": "2026-11-13"
  },
  "puntaje-icfes/carreras/ingenieria-electronica/": {
-  "hash": "247f8c562d4f1658",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "751e29761c6f31ce",
+  "date": "2026-11-13"
  },
  "puntaje-icfes/carreras/ingenieria-industrial/": {
-  "hash": "76772e2ab4b2e2e6",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "3240b4b3d9314129",
+  "date": "2026-11-13"
  },
  "puntaje-icfes/carreras/ingenieria-mecanica/": {
-  "hash": "051b61d0ca5050cd",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "7ce63d6f5b67ac8b",
+  "date": "2026-11-13"
  },
  "puntaje-icfes/carreras/medicina/": {
-  "hash": "28395ac3645de47e",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "3360ffced6c39b50",
+  "date": "2026-11-13"
  },
  "puntaje-icfes/carreras/quimica/": {
-  "hash": "355ab0a8e9892091",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "b57523a29befffc5",
+  "date": "2026-11-13"
  },
  "puntaje-icfes/carreras/trabajo-social/": {
-  "hash": "913f1bdad9e3e2c1",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "b5560ec1947deac3",
+  "date": "2026-11-13"
  },
  "puntaje-icfes/uis/": {
-  "hash": "ad4e3625732a402f",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "c5b081fb8347803a",
+  "date": "2026-11-13"
  },
  "puntaje-icfes/univalle/": {
-  "hash": "47226fe6e9901e7e",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "6f0d3c86a6fbfdfb",
+  "date": "2026-11-13"
  },
  "puntaje-icfes/universidad-de-antioquia/": {
-  "hash": "fce2ab47632764d5",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "2816983f101f8650",
+  "date": "2026-11-13"
  },
  "puntaje-icfes/universidad-de-caldas/": {
-  "hash": "3261f89ea98647a4",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "fffe1ca8bd27e467",
+  "date": "2026-11-13"
  },
  "puntaje-icfes/universidad-nacional/": {
-  "hash": "7ecd48dbdf50d71e",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "5a9469302b48e2f4",
+  "date": "2026-11-13"
  },
  "puntaje-icfes/utp/": {
-  "hash": "06d5b36eb79cd081",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "323253d0f022c8f6",
+  "date": "2026-11-13"
  },
  "que-es-el-saber-11/": {
-  "hash": "b6a6cba76abf3569",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "a2a7e8cbf1030efc",
+  "date": "2026-11-13"
  },
  "resultados-icfes/": {
-  "hash": "b0fc1a07162b8eda",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
- },
- "simulacro-icfes-para-imprimir/": {
-  "hash": "ca32db9142c2a35a",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "62eaeb0e59a7f4b0",
+  "date": "2026-11-13"
  },
  "simulacro-icfes/": {
-  "hash": "22b2ce2ec9b18ad9",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "53920f78bc0cfe66",
+  "date": "2026-11-13"
  },
  "simulacro-icfes/ciencias-naturales/": {
-  "hash": "766c00a86bba35b0",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "5ad1780953afa3ca",
+  "date": "2026-11-13"
  },
  "simulacro-icfes/ingles/": {
-  "hash": "dc1c9a70a5fcaf79",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "12b4b62bdf6ef5b8",
+  "date": "2026-11-13"
  },
  "simulacro-icfes/lectura-critica/": {
-  "hash": "e369aa376f45cf9c",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "7040a8e6a4793e4c",
+  "date": "2026-11-13"
  },
  "simulacro-icfes/matematicas/": {
-  "hash": "b87c1818d2133157",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "5e7e5a5ea3b50a47",
+  "date": "2026-11-13"
  },
  "simulacro-icfes/sociales-y-ciudadanas/": {
-  "hash": "10ba842e8ca22624",
-  "date": "2026-11-13",
-  "first": "2026-11-13"
+  "hash": "dca90220aece4325",
+  "date": "2026-11-13"
  }
 }
