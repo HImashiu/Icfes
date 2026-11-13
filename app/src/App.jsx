@@ -47,7 +47,7 @@ import { hiddenFor, withoutHidden } from "./lib/questionUse.js";
 import { orderQuestions } from "./lib/order.js";
 import { answerChanges, logAnswer, trackVisit } from "./lib/usage.js";
 import { clearQuickStart, readQuickArea, readQuickExam, readQuickQuestion, readQuickStart } from "./lib/quickStart.js";
-import AdminUsage from "./screens/AdminUsage.jsx";
+import Founder from "./screens/Founder.jsx";
 import { localQuota, spendLocal } from "./lib/practiceQuota.js";
 import { drawPractice, randomSeed } from "./lib/practiceDraw.js";
 import { resolveModel, xpFactor } from "./lib/grading.js";
@@ -157,7 +157,7 @@ export default function App() {
   const [quickArea] = useState(() => readQuickArea());
   const [quickQuestion] = useState(() => readQuickQuestion());
   const quickAreaTried = useRef(false);
-  // The owner's «Uso» page (#admin/uso): only accounts in app_admins get data (migration 0037).
+  // The founder's dashboard (#admin, #admin/personas…): only accounts in app_admins get data (migrations 0037, 0040).
   const [adminPage, setAdminPage] = useState(() => typeof window !== "undefined" && window.location.hash.startsWith("#admin"));
   useEffect(() => {
     const on = () => setAdminPage(window.location.hash.startsWith("#admin"));
@@ -697,7 +697,7 @@ export default function App() {
       />
     );
   }
-  if (adminPage && signedIn && !demoEnabled) return <AdminUsage onExit={() => { history.replaceState(null, "", window.location.pathname); setAdminPage(false); }} />;
+  if (adminPage && signedIn && !demoEnabled) return <Founder onExit={() => { history.replaceState(null, "", window.location.pathname); setAdminPage(false); }} />;
   if (exams === null) return <main className="frame"><p className="muted">Cargando…</p></main>;
 
   const questions = selected && attempt ? questionsForAttempt(selected.exam, attempt) : [];

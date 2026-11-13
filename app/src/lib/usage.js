@@ -37,7 +37,24 @@ export function trackVisit(event) {
   const id = visitorId();
   if (!id) return;
   sent.add(event);
-  supabase.rpc("track_visit", { p_visitor: id, p_event: event, p_path: window.location.pathname, p_source: sourceOf() }).then(() => {}, () => {});
+  const args = { p_visitor: id, p_event: event, p_path: window.location.pathname, p_source: sourceOf() };
+  // p_device arrives with migration 0040; before it runs the server only knows the 4-argument call.
+  supabase.rpc("track_visit", { ...args, p_device: deviceKind() }).then(
+    ({ error }) => { if (error) supabase.rpc("track_visit", args).then(() => {}, () => {}); },
+    () => {},
+  );
+}
+
+// Phone, tablet or computer, from the screen and the browser's own hint. Nothing else about the device is sent.
+export function deviceKind() {
+  try {
+    const ua = navigator.userAgent || "";
+    if (/iPad|Tablet|PlayBook|Silk/i.test(ua) || (/Android/i.test(ua) && !/Mobile/i.test(ua))) return "tablet";
+    if (navigator.userAgentData?.mobile || /Mobi|iPhone|iPod|Android/i.test(ua)) return "movil";
+    return Math.min(window.screen?.width ?? 1200, window.screen?.height ?? 1200) < 600 ? "movil" : "computador";
+  } catch {
+    return null;
+  }
 }
 
 // Where the visit came from: ?utm_source=… or the other site that linked here (facebook.com, google.com…).
@@ -121,6 +138,30 @@ export async function amAdmin() {
   const { data, error } = await supabase.rpc("am_admin");
   return !error && data === true;
 }
+// The founder's dashboard (migration 0040). Dates are 'YYYY-MM-DD' (Bogotá days); filters null = all.
+export async function adminDashboard({ from, to, role = null, channel = null, school = null }) {
+  const { data, error } = await supabase.rpc("admin_dashboard", { p_from: from, p_to: to, p_role: role, p_channel: channel, p_school: school });
+  if (error) throw new Error(error.message);
+  return data;
+}
+export async function adminPeople() {
+  const { data, error } = await supabase.rpc("admin_people");
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+export async function adminPerson(id) {
+  const { data, error } = await supabase.rpc("admin_person", { p_user: id });
+  if (error) throw new Error(error.message);
+  return data;
+}
+export async function adminTeachers({ from, to }) {
+  const { data, error } = await supabase.rpc("admin_teachers", { p_from: from, p_to: to });
+  if (error) throw new Error(error.message);
+  return data;
+}
+// True when the error says migration 0040 has not run yet (the function does not exist).
+export const missingFunction = (message) => /could not find the function|does not exist|schema cache|PGRST202/i.test(message ?? "");
+
 export async function adminUsage(days = 30) {
   const { data, error } = await supabase.rpc("admin_usage", { p_days: days });
   if (error) throw new Error(error.message);

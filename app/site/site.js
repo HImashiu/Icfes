@@ -474,12 +474,25 @@ document.documentElement.classList.add("js");
       return Boolean(navigator.webdriver) || /bot|crawl|spider|slurp|headless|lighthouse|pagespeed|preview|facebookexternalhit|whatsapp|bingpreview|ahrefs|semrush|mj12/i.test(navigator.userAgent || "");
     } catch (e) { return false; }
   })();
+  // Phone, tablet or computer. Nothing else about the device is sent.
+  function deviceKind() {
+    try {
+      var ua = navigator.userAgent || "";
+      if (/iPad|Tablet|PlayBook|Silk/i.test(ua) || (/Android/i.test(ua) && !/Mobile/i.test(ua))) return "tablet";
+      if ((navigator.userAgentData && navigator.userAgentData.mobile) || /Mobi|iPhone|iPod|Android/i.test(ua)) return "movil";
+      return Math.min(screen.width || 1200, screen.height || 1200) < 600 ? "movil" : "computador";
+    } catch (e) { return null; }
+  }
   var tracked = {};
   window.condorTrack = function (event) {
     var id = visitorId();
     if (!id || tracked[event] || !configured || isBot) return;
     tracked[event] = true;
-    post("rpc/track_visit", { p_visitor: id, p_event: event, p_path: location.pathname, p_source: sourceOf() }).catch(function () {});
+    var args = { p_visitor: id, p_event: event, p_path: location.pathname, p_source: sourceOf() };
+    // p_device arrives with migration 0040; before it runs, the 4-argument call still works.
+    post("rpc/track_visit", Object.assign({ p_device: deviceKind() }, args)).catch(function () {
+      post("rpc/track_visit", args).catch(function () {});
+    });
   };
   window.condorTrack("view");
 
