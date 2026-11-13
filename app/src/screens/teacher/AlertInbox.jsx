@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Icon from "../../components/Icon.jsx";
 import { ALERT_KIND_LABEL, LIST_FILTER, groupAlerts, isGoodNews } from "../../lib/progressAlerts.js";
+import { openActivityTool } from "./ActivityTools.jsx";
 
 const ATTN_ICON = { closing: "clock", late: "flag", opens: "book", follow: "user", never: "users" };
 const ATTN_TILE = { closing: "var(--flame)", late: "var(--bad)", opens: "var(--ctx)", follow: "var(--surface)", never: "var(--surface)" };
@@ -80,6 +81,9 @@ export default function AlertInbox({ attention, alerts, hidden, contextName, go,
           <span className="td-tile" style={{ background: ATTN_TILE[a.kind], color: ATTN_TILE[a.kind] === "var(--surface)" ? "var(--text)" : "#0D110F" }} aria-hidden="true"><Icon name={ATTN_ICON[a.kind]} size={20} /></span>
           <span className="td-task-text"><strong>{a.title}</strong><span className="caption">{a.detail}</span></span>
           {a.tag && <span className={a.warn ? "td-pill warn" : "td-pill"}>{a.tag}</span>}
+          {(a.kind === "closing" && a.warn) || a.kind === "late" ? (
+            <button type="button" className="link ai-quick" onClick={() => { openActivityTool(a.route.id, a.kind === "late" ? "dates" : "remind"); go(a.route); }}>{a.kind === "late" ? "Reabrir" : "Recordar"}</button>
+          ) : null}
           <button type="button" className="secondary small" onClick={() => go(a.route)}>{a.action}</button>
         </div>
       ))}

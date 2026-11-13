@@ -2,6 +2,7 @@
 // model, and a final note built from the class's rule (weight per kind of activity, missing work, period). Pure.
 import { assignmentState, progressRows, questionsForAttempt } from "./assignments.js";
 import { formatValue, gradeMany, itemFromRow, normalizeModel, resolveModel, toScale } from "./grading.js";
+import { desempeno } from "./teacherTime.js";
 
 export const FINAL_KINDS = [
   { id: "task", label: "Prácticas" },
@@ -97,8 +98,9 @@ const csvCell = (v) => {
 };
 // For Excel or Sheets: one row per student, one column per activity, then the final note. sep "," (CSV) or "\t" (paste).
 export function gradebookTable(book, sep = ",") {
-  const head = ["Estudiante", "Correo", ...book.columns.map((c) => c.title), "Aciertos ponderados (%)", "Nota final", "Sin entregar"];
-  const lines = book.rows.map((r) => [r.name, r.email, ...book.columns.map((c) => (r.cells[c.id].done ? r.cells[c.id].display : r.cells[c.id].display)), r.finalPct ?? "", r.final?.display ?? "", r.missing]
+  const level = book.model?.kind === "scale" ? (r) => (r.final ? desempeno(r.final.value, book.model.scale) : "") : null;
+  const head = ["Estudiante", "Correo", ...book.columns.map((c) => c.title), "Aciertos ponderados (%)", "Nota final", ...(level ? ["Desempeño"] : []), "Sin entregar"];
+  const lines = book.rows.map((r) => [r.name, r.email, ...book.columns.map((c) => (r.cells[c.id].done ? r.cells[c.id].display : r.cells[c.id].display)), r.finalPct ?? "", r.final?.display ?? "", ...(level ? [level(r)] : []), r.missing]
     .map((v) => (sep === "," ? csvCell(v) : String(v ?? "").replace(/\t|\n/g, " "))).join(sep));
   return [head.map((v) => (sep === "," ? csvCell(v) : v)).join(sep), ...lines].join("\n");
 }

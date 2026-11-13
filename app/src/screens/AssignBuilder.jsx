@@ -17,8 +17,12 @@ import {
 import { checkKeys, holdOf, useIndex, verdict } from "../lib/questionUse.js";
 import { holdRows, loadQuestionControl } from "../lib/questionControl.js";
 import { UseBadge, UseHistory } from "../components/QuestionUse.jsx";
+import { splitWeeks, weekDates } from "../lib/teacherTime.js";
+import "./teacher/time.css";
 
 const isoDay = (d) => d.toISOString().slice(0, 10);
+const WEEK_CHOICES = [1, 2, 3, 4, 6, 8];
+const weekDay = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString("es-CO", { day: "numeric", month: "short" });
 const localDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 // The next quarter hour from now, at least 30 minutes away, as "HH:MM" (or the first slot of tomorrow).
 const nextSlot = (now = new Date()) => {
@@ -79,6 +83,8 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
   const [opens, setOpens] = useState(isoDay(new Date()));
   const [due, setDue] = useState(isoDay(new Date(Date.now() + 7 * 864e5)));
   const [limit, setLimit] = useState("");
+  // Weekly routine: the chosen questions split into this many weeks, one activity per week (1 = a single activity).
+  const [weeks, setWeeks] = useState(1);
   const [attempts, setAttempts] = useState(preset?.config?.attempts ? String(preset.config.attempts) : "");
   const [reveal, setReveal] = useState(preset?.config?.reveal ?? (preset?.delivery === "paper" ? "after_close" : "after_submit"));
   const [hints, setHints] = useState(preset?.config?.hints ?? true);
@@ -134,6 +140,14 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
   const hiddenStale = useMemo(() => (fresh ? filterItems(items, filter).filter((i) => stale(i.key)).length : 0), [items, filter, fresh, checks]); // eslint-disable-line react-hooks/exhaustive-deps
   const pickedCheck = useMemo(() => verdict(picked, checks), [picked, checks]);
   const summary = useMemo(() => summarize(picked, items), [picked, items]);
+  const routineAllowed = !lesson && !live && !paper && kind !== "exam";
+  const routineOn = routineAllowed && weeks > 1 && picked.length >= weeks;
+  const weekPlan = useMemo(() => {
+    if (!routineOn) return [];
+    const chunks = splitWeeks(picked, items, weeks);
+    const d = weekDates(opens, due, chunks.length);
+    return chunks.map((keys, i) => ({ keys, ...d[i] }));
+  }, [routineOn, picked, items, weeks, opens, due]);
   const byKey = useMemo(() => new Map(items.map((i) => [i.key, i])), [items]);
   const tagged = items.some((i) => i.competencia);
 
@@ -202,12 +216,17 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
       const kindLabel = paper ? (kind === "exam" ? "Simulacro en papel" : "Taller en papel") : KINDS.find((k) => k.id === kind).label;
       const auto = `${kindLabel} · ${areas.length === 1 ? areas[0] : "Varias áreas"} · ${picked.length} preguntas`;
       let last = null;
+      let first = null;
       const created = [];
-      for (const course_id of courseIds) {
+      // A weekly routine is one activity per week with its share of the questions; otherwise a single week.
+      const routine = routineOn ? splitWeeks(picked, items, weeks) : [picked];
+      const dates = routineOn ? weekDates(opens, due, routine.length) : [{ opens, due }];
+      for (const course_id of courseIds) for (const [w, keys] of routine.entries()) {
+        const base = title.trim() || (routineOn ? `Rutina · ${areas.length === 1 ? areas[0] : "Varias áreas"}` : auto);
         last = await api.createAssignment({
-          course_id, created_by: me.id, kind, title: title.trim() || auto, exam_slug: slug, scope: "all", question_keys: picked,
-          opens_at: new Date(`${opens}T00:00:00`).toISOString(),
-          due_at: due ? new Date(`${due}T23:59:00`).toISOString() : null,
+          course_id, created_by: me.id, kind, title: routineOn ? `${base} · semana ${w + 1} de ${routine.length}` : base, exam_slug: slug, scope: "all", question_keys: keys,
+          opens_at: new Date(`${dates[w].opens}T00:00:00`).toISOString(),
+          due_at: dates[w].due ? new Date(`${dates[w].due}T23:59:00`).toISOString() : null,
           time_limit_min: kind === "exam" && limit ? Number(limit) : null,
           max_attempts: attempts ? Number(attempts) : kind === "exam" ? 1 : null,
           reveal_policy: reveal, status: "active",
@@ -221,6 +240,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
           ...(defsOn && cleanGlossary(defs).length ? { allow_definitions: true, definitions: cleanGlossary(defs) } : {}),
         });
         created.push(last);
+        if (!first) first = last;
       }
       // A model chosen here belongs to each new assignment; it starts from the class's settings (scale, curves) with the chosen kind.
       if (grading && gradeKind) {
@@ -237,7 +257,7 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
           await api.saveHolds(holdRows({ schoolId: me.school_id, userId: me.id, slug, keys: picked, reserve: true, hide: true, label: last.title, until: last.due_at ?? null, assignmentId: last.id }));
         } catch { /* the activity is saved; the hold can be set later in Biblioteca › Control */ }
       }
-      onSaved(last, courseIds.length);
+      onSaved(routineOn ? first : last, courseIds.length, routine.length);
     }).finally(() => setBusy(false));
   };
 
@@ -429,6 +449,27 @@ export default function AssignBuilder({ api, courses, exams, fetchExam, guard, o
       <label className="field"><span className="label">Título (opcional)</span><input value={title} onChange={(e) => setTitle(e.target.value)} /></label>
       <label className="field"><span className="label">Abre</span><DateField value={opens} onChange={(v) => setOpens(v)} /></label>
       <label className="field"><span className="label">Fecha de entrega</span><DateField value={due} min={isoDay(new Date())} onChange={(v) => setDue(v)} /></label>
+      {routineAllowed && (
+        <div className="field wk" data-tour="ab-routine">
+          <div className="wk-head">
+            <span className="label">Rutina semanal · repartir en</span>
+            <div className="segmented small" role="radiogroup" aria-label="Repartir en semanas">
+              {WEEK_CHOICES.map((n) => (
+                <button key={n} type="button" role="radio" aria-checked={weeks === n} className={weeks === n ? "seg active" : "seg"} disabled={n > 1 && picked.length < n} onClick={() => setWeeks(n)}>{n === 1 ? "No" : n}</button>
+              ))}
+            </div>
+            <span className="caption">semanas</span>
+          </div>
+          <span className="caption">{routineOn
+            ? `Las ${picked.length} preguntas se reparten en ${weekPlan.length} actividades, una por semana, ya programadas: no tienes que volver a crearlas. Las de un mismo texto quedan juntas.`
+            : "Elige muchas preguntas (por ejemplo 40 con «Elegir automáticamente») y repártelas en varias semanas: queda programada una tarea por semana."}</span>
+          {routineOn && (
+            <ol className="wk-list">
+              {weekPlan.map((w, i) => <li key={i}><strong>Semana {i + 1} · {w.keys.length} {w.keys.length === 1 ? "pregunta" : "preguntas"}</strong><span className="caption">{weekDay(w.opens)}{w.due ? ` → ${weekDay(w.due)}` : ""}</span></li>)}
+            </ol>
+          )}
+        </div>
+      )}
       {kind === "exam" && !paper && (
         <label className="field"><span className="label">Tiempo en minutos (vacío = el estándar)</span>
           <input inputMode="numeric" value={limit} onChange={(e) => setLimit(e.target.value.replace(/\D/g, ""))} placeholder={summary.total ? `≈ ${summary.minutes}` : ""} /></label>

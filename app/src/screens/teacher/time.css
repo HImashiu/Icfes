@@ -1,0 +1,115 @@
+/* Tools that save the teacher time: activity chores (dates, reminders, reuse), progress on activity cards,
+   the weekly routine in Nueva actividad, desempeño in the planilla and printable report cards. */
+
+/* ---- Activity page: Gestionar ---- */
+.atl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0 0 12px; }
+.atl-btn { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 8px 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); text-align: left; cursor: pointer; font: inherit; }
+.atl-btn:hover:not(:disabled) { border-color: var(--ctx, var(--accent)); }
+.atl-btn:disabled { opacity: .6; cursor: default; }
+.atl-btn > svg { flex: none; color: var(--ctx, var(--accent)); }
+.atl-btn > span { display: grid; gap: 1px; min-width: 0; }
+.atl-btn strong { font-size: 14px; }
+.atl-btn .caption { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.atl-form { display: grid; gap: 14px; align-content: start; }
+.atl-form .chips-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.atl-dates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.atl-who { display: grid; gap: 6px; }
+.atl-names { margin: 0; padding: 8px 12px 8px 28px; max-height: 180px; overflow: auto; columns: 2; column-gap: 24px; border-radius: 12px; background: var(--surface-2); font-size: 14px; }
+.atl-names li { break-inside: avoid; padding: 2px 0; }
+.atl-text { width: 100%; min-height: 110px; resize: vertical; font: inherit; font-size: 14px; line-height: 1.45; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); }
+.atl-classes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.atl-class { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; }
+.atl-class.on { border-color: var(--accent-shadow); background: var(--accent-soft); }
+.atl-class input { width: 18px; height: 18px; accent-color: var(--accent-shadow); flex: none; margin: 0; }
+.atl-class > span { display: grid; min-width: 0; }
+.atl-class .caption { font-size: 12px; }
+.atl-title input { width: 100%; }
+.atl-more { justify-self: start; margin-top: 6px; }
+a.button { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+
+/* ---- Activity cards: delivery at a glance ---- */
+.al-prog { display: grid; justify-items: end; gap: 3px; min-width: 96px; }
+.al-prog-row { display: flex; align-items: baseline; gap: 6px; font-size: 13px; white-space: nowrap; }
+.al-prog-row b { font-size: 14px; }
+.al-prog-row .low { color: var(--flame); }
+.al-prog-bar { width: 96px; height: 5px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+.al-prog-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--subj, var(--accent)); }
+
+.assign-card:has(.al-prog) { grid-template-columns: 44px minmax(0, 1fr) auto auto 20px; }
+
+/* ---- Nueva actividad: weekly routine ---- */
+.wk { display: grid; gap: 8px; padding: 10px 12px; border-radius: 14px; border: 1px dashed var(--line); }
+.wk-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.wk-head .segmented { flex-wrap: nowrap; }
+.wk-head .segmented .seg { min-width: 34px; padding-left: 10px; padding-right: 10px; }
+.wk-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; font-size: 13px; }
+.wk-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 4px 8px; border-radius: 8px; background: var(--surface-2); }
+.wk-list li .caption { white-space: nowrap; }
+
+/* ---- Planilla: desempeño ---- */
+.gb-level { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 99px; font-size: 11px; font-weight: 800; letter-spacing: .02em; background: var(--surface-2); color: var(--text-2); }
+.gb-level.l-Bajo { background: var(--bad-soft); color: var(--bad); }
+.gb-level.l-Alto, .gb-level.l-Superior { background: var(--ok-soft); color: var(--ok); }
+.gb-levels { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; }
+
+/* ---- Report cards (screen: editor; print: one page per student) ---- */
+.rc-edit { display: grid; gap: 10px; }
+.rc-period input { width: 100%; }
+.rc-row { display: grid; grid-template-columns: minmax(140px, 220px) minmax(0, 1fr); gap: 10px; align-items: start; padding: 8px 0; border-top: 1px solid var(--line); }
+.rc-row:first-child { border-top: 0; }
+.rc-row textarea { width: 100%; min-height: 54px; resize: vertical; font: inherit; font-size: 13px; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); }
+.rc-row .caption { display: block; font-size: 12px; }
+.rc-print { display: none; }
+@media print {
+  body.rc-printing > *:not(.rc-print-root) { display: none !important; }
+  body.rc-printing .rc-print-root { display: block !important; }
+  .rc-print-root .rc-print { display: block; }
+}
+.rc-print-root { display: none; }
+.rc-page { page-break-after: always; break-after: page; color: #111; background: #fff; font-family: "Figtree", system-ui, sans-serif; font-size: 11pt; padding: 0; }
+.rc-page:last-child { page-break-after: auto; break-after: auto; }
+.rc-page h1 { font-size: 16pt; margin: 0 0 2px; }
+.rc-page h2 { font-size: 11pt; margin: 12px 0 4px; text-transform: uppercase; letter-spacing: .05em; }
+.rc-page .rc-sub { color: #555; font-size: 10pt; }
+.rc-page header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; border-bottom: 2px solid #111; padding-bottom: 8px; }
+.rc-page .rc-logo { max-height: 48px; max-width: 120px; object-fit: contain; }
+.rc-big { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.rc-big > div { border: 1px solid #999; border-radius: 6px; padding: 6px 8px; }
+.rc-big b { display: block; font-size: 15pt; }
+.rc-big span { font-size: 9pt; color: #555; }
+.rc-page table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+.rc-page th, .rc-page td { border-bottom: 1px solid #ccc; padding: 3px 4px; text-align: left; }
+.rc-page td.r, .rc-page th.r { text-align: right; }
+.rc-page td.low { font-weight: 700; }
+.rc-bar { display: inline-block; height: 0; border-top: 7px solid #333; vertical-align: middle; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.rc-comment { min-height: 60px; border: 1px solid #999; border-radius: 6px; padding: 6px 8px; white-space: pre-wrap; }
+.rc-sign { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 34px; font-size: 9pt; color: #555; }
+.rc-sign span { border-top: 1px solid #333; padding-top: 3px; }
+.rc-note { font-size: 8pt; color: #666; margin-top: 10px; }
+
+@media (max-width: 767px) {
+  .atl { grid-template-columns: 1fr; gap: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .atl-btn { border: 0; border-radius: 0; border-top: 1px solid var(--line); min-height: 48px; }
+  .atl-btn:first-child { border-top: 0; }
+  .atl-dates { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .assign-card:has(.al-prog) { grid-template-columns: 40px minmax(0, 1fr) 18px; }
+  .assign-card .al-prog { grid-column: 2; grid-row: 2; justify-self: end; align-self: center; }
+  .al-prog { min-width: 64px; }
+  .al-prog-bar { width: 64px; }
+  .rc-row { grid-template-columns: 1fr; }
+}
+.gb-actions { flex-wrap: wrap; align-items: flex-end; }
+.gb-order { flex-direction: row; align-items: center; gap: 8px; margin-right: auto; display: flex; }
+.gb-order .label { margin: 0; }
+.gb-order .ui-select { min-width: 150px; }
+@media (max-width: 767px) {
+  .report-actions.gb-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .report-actions.gb-actions .gb-order { grid-column: 1 / -1; }
+  .report-actions.gb-actions .primary { grid-column: 1 / -1; }
+  .report-actions.gb-actions button { white-space: normal; }
+}
+.ai-quick { white-space: nowrap; font-size: 13px; }
+@media (max-width: 767px) {
+  .td-task:has(.ai-quick) .td-pill { display: none; }
+  .td-task .ai-quick { font-size: 12px; }
+}
