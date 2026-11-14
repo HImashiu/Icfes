@@ -423,3 +423,9 @@
 .na-sep span { font: 800 12px var(--cx-display); text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-2); }
 .na-item:not(.na-kind) { grid-column: 1 / -1; border: 1.5px solid var(--line); border-radius: 16px; background: var(--surface-2); }
 .na-item:not(.na-kind) .na-ico { border-radius: 50%; }
+
+/* Teacher Hoy hero: the «hoy hay N cosas» count sits on the date line (said once), the greeting stands alone. */
+#root .td-hero .td-date { display: flex; flex-wrap: wrap; align-items: center; column-gap: 10px; row-gap: 4px; }
+#root .td-hero .td-count { display: inline-flex; align-items: center; gap: 6px; font-size: 1.15rem; text-transform: none; letter-spacing: 0; }
+#root .td-hero .td-count .cx-script { color: var(--accent); font-size: 1.2em; }
+#root .td-hero .td-count .cx-stk { font-family: var(--cx-display, inherit); font-weight: 800; font-size: 0.9em; text-transform: uppercase; }

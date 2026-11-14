@@ -77,11 +77,11 @@ export default function Today({ api, profile, courses, readOnlyIds = [], assignm
     <div className="td" style={{ "--ctx": tint }}>
       <section className="td-hero card">
         <div className="td-hello">
-          <span className="caption">{cap(now.toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" }))} · {contextName}</span>
-          {(() => { const n = m.attention.length + groupAlerts(shownAlerts).filter((a) => a.severity >= 3).length; return (
-            <h1>{greeting(now)}, {firstName(profile)}<span className="cx-sub">{n ? <><span className="cx-script">hoy hay</span> <span className="cx-stk">{n} {n === 1 ? "cosa" : "cosas"}</span></> : <><span className="cx-script">todo</span> <span className="cx-stk">al día</span></>}</span></h1>
-          ); })()}
-          <p>{(() => { const n = m.attention.length + groupAlerts(shownAlerts).filter((a) => a.severity >= 3).length; return n ? `${n} ${n === 1 ? "cosa pide" : "cosas piden"} tu atención` : "Nada urgente hoy"; })()}{k.active ? ` · ${k.active} ${k.active === 1 ? "actividad abierta" : "actividades abiertas"}` : ""}{m.fresh.length ? ` · ${m.fresh.length} con resultados nuevos` : ""}.</p>
+          {(() => { const n = m.attention.length + groupAlerts(shownAlerts).filter((a) => a.severity >= 3).length; const extra = [k.active ? `${k.active} ${k.active === 1 ? "actividad abierta" : "actividades abiertas"}` : "", m.fresh.length ? `${m.fresh.length} con resultados nuevos` : ""].filter(Boolean).join(" · "); return (<>
+            <span className="caption td-date">{cap(now.toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" }))} · {contextName}<span className="td-count">{n ? <><span className="cx-script">hoy hay</span> <span className="cx-stk">{n} {n === 1 ? "cosa" : "cosas"}</span></> : <><span className="cx-script">todo</span> <span className="cx-stk">al día</span></>}</span></span>
+            <h1>{greeting(now)}, {firstName(profile)}</h1>
+            {extra && <p>{extra}.</p>}
+          </>); })()}
         </div>
         <div className="td-actions">
           <button type="button" className="primary" onClick={() => go({ section: "actividades", tab: "nueva" })}><Icon name="plus" size={18} strokeWidth={2.8} /> Nueva actividad</button>
