@@ -43,6 +43,10 @@ export function createApi(client) {
     async noteTrialInviter(inviterId) {
       return unwrap(await client.rpc("note_trial_inviter", { p_inviter: inviterId }));
     },
+    // Migration 0051: the teacher's invite code, level and progress (colleagues and their active students).
+    async myTeacherReferrals() {
+      return unwrap(await client.rpc("my_teacher_referrals"));
+    },
     async teacherCode() {
       return unwrap(await client.rpc("school_teacher_code"));
     },

@@ -15,7 +15,7 @@ export const TEACHER_PAGES = [
 export const teacherApp = (up, fuente) => `${up}app/?fuente=${encodeURIComponent(fuente)}#docente`;
 
 export function teacherCta(up, fuente, title = "Crea tu espacio docente") {
-  return `<section class="section"><div class="wrap narrow"><div class="card price reveal"><div><h2>${title}</h2><p>Entras con tu cuenta de Google, escribes el nombre de tu colegio y ya tienes tus cursos, el banco de preguntas y el estudio de impresión. Gratis durante la demostración, sin tarjeta.</p></div><a class="btn btn-primary" href="${teacherApp(up, fuente)}">Crear mi espacio docente</a></div></div></section>`;
+  return `<section class="section"><div class="wrap narrow"><div class="card price reveal"><div><h2>${title}</h2><p>Entras con tu cuenta de Google, escribes el nombre de tu colegio y ya tienes tus cursos, el banco de preguntas y el estudio de impresión.</p></div><a class="btn btn-primary" href="${teacherApp(up, fuente)}">Crear mi espacio docente</a></div></div></section>`;
 }
 
 export function buildTeacherPages({ siteUrl, write, page, faqBlock, faqLd }) {
@@ -73,7 +73,7 @@ ${teacherCta(up, fuente)}`;
     faq: [
       ["¿Puedo imprimir sin que los estudiantes tengan cuenta?", "Sí. El cuadernillo y la hoja de respuestas se imprimen desde tu espacio docente. Los estudiantes solo necesitan papel y lápiz; tú escaneas las hojas."],
       ["¿Las preguntas tienen clave?", "Sí. Las de cuadernillos con clave oficial usan la del ICFES. Las de cuadernillos publicados sin clave tienen una clave preliminar revisada por Cóndor, y así se indica."],
-      ["¿Cuánto cuesta?", "Durante la etapa de demostración es gratis para docentes, sin tarjeta."],
+      ["¿Necesito que el colegio lo apruebe?", "No. Entras con tu cuenta de Google y lo usas con tus propios cursos desde el primer día."],
       ["¿Funciona para grado 10?", "Sí. Puedes armar pruebas más cortas por área o competencia para ir preparando desde décimo."],
     ],
   });
@@ -99,11 +99,11 @@ ${teacherCta(up, fuente)}`;
   <h2>De dónde salen las preguntas</h2>
   <p class="prose">De cuadernillos de Saber 11 que el ICFES publicó en los últimos años. Cada pregunta indica el cuadernillo y el número. Puedes ver algunas resueltas en <a href="${up}preguntas-icfes/">preguntas ICFES por área</a> y en <a href="${up}examenes-icfes-anteriores/">exámenes ICFES anteriores</a>.</p>
   <h2>Para usarlo con tus colegas</h2>
-  <p class="prose">Cuando creas tu espacio, invitas a los docentes de tu colegio con un enlace. Cada uno ve sus cursos, y el banco y el control de preguntas repetidas quedan compartidos. Cuando coordinación lo adopta, ve todos los cursos del grado 11 en un solo panel.</p>`,
+  <p class="prose">Cuando creas tu espacio, invitas a los docentes de tu colegio con un enlace. Cada uno ve sus cursos, y el banco y el control de preguntas repetidas quedan compartidos.</p>`,
     faq: [
       ["¿Es el banco oficial del ICFES?", "No. Cóndor es independiente. Usa preguntas de cuadernillos que el ICFES publicó, siempre con su fuente."],
       ["¿Puedo descargar todas las preguntas?", "No de una vez: el banco se usa dentro de la plataforma, para armar talleres, quiz, diapositivas o simulacros para tus cursos."],
-      ["¿Cuánto cuesta?", "Durante la etapa de demostración es gratis para docentes, sin tarjeta."],
+      ["¿Necesito que el colegio lo apruebe?", "No. Entras con tu cuenta de Google y lo usas con tus propios cursos desde el primer día."],
       ["¿Mis estudiantes necesitan cuenta?", "Para responder en línea entran con su cuenta de Google. Para un taller o simulacro en papel no necesitan nada."],
     ],
   });

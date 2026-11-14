@@ -40,7 +40,7 @@ function hoySteps({ admin, name, first, intro = true }) {
       "Anuncios para tus estudiantes: escribir, Fijar, Desfijar y Borrar.",
       "Calendario del mes con lo que abre y cierra; toca una entrega para abrirla.",
       "Resultados nuevos: lo último que entró, en línea y en papel.",
-      "En un espacio de prueba: «Trae a tus colegas» (invitar por WhatsApp, correo o enlace) y «Enviar a coordinación», un resumen de lo que ya hiciste para llevar Cóndor a todo el colegio.",
+      "«Invita a otros profes»: comparte tu enlace por WhatsApp, correo o copiándolo. Cuando los estudiantes de los profes que invitas empiezan a practicar, subes de nivel y tus estudiantes reciben más preguntas al día.",
     ] },
     { id: "ctx", target: "context", title: "Materia y curso", text: "Elige una materia, un curso o un grupo y todo el panel se filtra a esa clase. Coordinación también ve «Todo el colegio». Las clases donde solo tienes permiso de ver aparecen como «Solo ves»." },
     { id: "nueva", target: "new", title: "Nueva actividad", text: "El botón principal: crea cualquier tipo de actividad desde cualquier sección.",

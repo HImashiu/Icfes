@@ -761,8 +761,8 @@ function buildTrialPage({ siteUrl, write }) {
   const go = teacherApp("../", "prueba-docente");
   const faq = [
     ["¿Necesito un código?", "No. Escribes el nombre de tu colegio y tu ciudad, y Cóndor crea tu espacio. Si tu colegio te dio un código, escríbelo y entras al espacio de tu colegio."],
-    ["¿Necesito pagar?", "No. Durante la etapa de demostración es gratis para docentes, sin tarjeta. Tu espacio de prueba dura 30 días; si necesitas más tiempo, escríbenos."],
-    ["¿Cómo entran mis colegas?", "Desde Hoy, en «Trae a tus colegas», les mandas un enlace por WhatsApp o correo. Entran al mismo espacio y cada uno ve sus cursos."],
+    ["¿Necesito que el colegio lo apruebe?", "No. Entras con tu cuenta de Google y trabajas con tus propios cursos desde el primer día. Si después otros profes de tu colegio se suman, comparten el mismo espacio."],
+    ["¿Cómo entran mis colegas?", "Desde Hoy, en «Invita a otros profes», les mandas un enlace por WhatsApp o correo. Los de tu colegio entran al mismo espacio y cada uno ve sus cursos; los de otros colegios crean el suyo."],
     ["¿Mis estudiantes necesitan código?", "No. Entran con su cuenta de Google. Si su correo es el del colegio, ven sus cursos y tareas; si no, practican de forma independiente. Para un simulacro en papel no necesitan cuenta."],
     ["¿Qué datos se guardan?", "Tu nombre, tu correo de Google y lo que se hace en la plataforma: cursos, tareas y resultados. Puedes leer más en la página de privacidad."],
   ];
@@ -781,14 +781,14 @@ function buildTrialPage({ siteUrl, write }) {
   </ol>
   <h2>Primeros pasos</h2>
   <p class="prose">Al entrar, un recorrido corto te muestra dónde está cada cosa. Crea un curso, agrega a tus estudiantes con su correo y asigna una actividad: un <a href="../simulacro-icfes-para-imprimir/">simulacro para imprimir</a>, un taller del <a href="../banco-de-preguntas-icfes-docentes/">banco de preguntas</a> o un juego en vivo. En Hoy ves quién necesita apoyo. ¿Quieres ver primero cómo se ve con datos? Activa «Datos de ejemplo» en el panel: muestra un colegio inventado sin tocar el tuyo.</p>
-  <h2>Trae a tu colegio</h2>
-  <p class="prose">Hasta 15 docentes del mismo colegio entran a tu espacio con el enlace que compartes desde Hoy. Cuando coordinación quiera verlo con todo el grado 11, le envías un resumen de lo que ya hiciste con un toque. Mira lo que incluye para el colegio en <a href="../preicfes-para-colegios/">preicfes para colegios</a>.</p>
+  <h2>Invita a otros profes</h2>
+  <p class="prose">Hasta 50 docentes de tu colegio entran a tu espacio con el enlace que compartes desde Hoy, y comparten el banco y el control de preguntas repetidas. También puedes invitar a profes de otros colegios con tu enlace personal: cuando sus estudiantes empiezan a practicar, subes de nivel (Aliado, Embajador, Fundador) y tus estudiantes reciben más preguntas al día.</p>
   <h2>Preguntas frecuentes</h2>
   ${faqBlock(faq)}
 </section>
-<section class="section"><div class="wrap narrow"><div class="card price reveal"><div><h2>Crea tu espacio docente</h2><p>Gratis durante la demostración, sin tarjeta. ¿Prefieres que te lo mostremos? Pide una demostración para tu colegio.</p></div><a class="btn btn-primary" href="${go}">Crear mi espacio docente</a></div></div></section>`;
+<section class="section"><div class="wrap narrow"><div class="card price reveal"><div><h2>Crea tu espacio docente</h2><p>Entras con tu Google y en unos minutos tienes un simulacro armado para tus cursos.</p></div><a class="btn btn-primary" href="${go}">Crear mi espacio docente</a></div></div></section>`;
   write(path, page({
-    siteUrl, path, title: "Prueba gratis para docentes: crea tu espacio",
+    siteUrl, path, title: "Cóndor para docentes: crea tu espacio",
     desc: "Crea tu espacio docente en Cóndor sin esperar un código: cursos, 4.000 preguntas ICFES, simulacros en línea y en papel, y resultados por estudiante.",
     body, crumbs: [{ name: "Docentes", path }],
     jsonLd: [faqLd(faq), { "@type": "WebPage", name: "Crea tu espacio docente", url: siteUrl + path, inLanguage: "es-CO" }],
