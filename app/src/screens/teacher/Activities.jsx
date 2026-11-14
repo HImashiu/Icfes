@@ -177,7 +177,7 @@ export function NewActivityMenu({ go, disabled, onLive }) {
     if (!open || leaving) return;
     if (!phone() || box) { setOpen(false); return; }
     setLeaving(true);
-    setTimeout(() => { setLeaving(false); setOpen(false); }, 190);
+    setTimeout(() => { setLeaving(false); setOpen(false); }, 230);
   };
   useLayoutEffect(() => { if (open) place(); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -201,7 +201,7 @@ export function NewActivityMenu({ go, disabled, onLive }) {
   // The phone bar's «+» turns into a × while the sheet is open (and the bar stays above the dimmed page).
   useEffect(() => {
     window.dispatchEvent(new CustomEvent("condor:new-activity-state", { detail: { open: open && !leaving } }));
-    document.body.classList.toggle("na-open", open && !leaving && !box);
+    document.body.classList.toggle("na-open", open && !box);
     return () => document.body.classList.remove("na-open");
   }, [open, leaving, box]);
   // The phone bar's round «+» opens this same menu, so both «+» lead to the same choice.

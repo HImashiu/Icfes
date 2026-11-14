@@ -413,8 +413,8 @@
   body.na-open .na-sheet { left: 8px; right: 8px; bottom: calc(84px + env(safe-area-inset-bottom)); max-height: calc(100dvh - 120px); border-radius: 24px; padding-bottom: 10px;
     transform-origin: 50% 100%; animation: na-rise 0.34s var(--cx-spring, cubic-bezier(0.34, 1.56, 0.64, 1)); }
   .na-sheet .na-item { animation: na-pop 0.36s var(--cx-spring, cubic-bezier(0.34, 1.56, 0.64, 1)) both; animation-delay: calc(var(--i, 0) * 35ms + 60ms); }
-  .na-sheet.leaving { animation: na-sink 0.19s ease-in forwards; }
-  .na-sheet-wrap.leaving .na-backdrop { opacity: 0 !important; transition: opacity 0.19s; }
+  body.na-open .na-sheet.leaving, .na-sheet.leaving { animation: na-sink 0.2s cubic-bezier(0.4, 0, 1, 1) forwards; pointer-events: none; }
+  .na-sheet-wrap.leaving .na-backdrop { opacity: 0 !important; transition: opacity 0.2s; }
 }
 @keyframes na-rise { from { opacity: 0; transform: translateY(40px) scale(0.6); } to { opacity: 1; transform: none; } }
 @keyframes na-sink { to { opacity: 0; transform: translateY(40px) scale(0.6); } }
