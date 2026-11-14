@@ -210,7 +210,7 @@
 #root .section-head > .label { font-family: var(--cx-display); letter-spacing: 0.02em; }
 
 /* 15 · Motion: screens arrive softly (no popping springs). */
-#root .home, #root .t-main > *, #root .results, #root .profile { animation: cx-rise 0.45s var(--cx-ease) both; }
+#root .home, #root .t-main > *, #root .results, #root .profile { animation: cx-rise 0.45s var(--cx-ease) backwards; /* backwards, not both: a filled transform would trap every position:fixed overlay (question editor, dialogs) inside the page */ }
 @keyframes cx-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { #root .home, #root .t-main > *, #root .results, #root .profile, #root .results-hero .mascot { animation: none; } }
 

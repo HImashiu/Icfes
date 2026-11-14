@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { confirmDialog, Select } from "../../components/Controls.jsx";
 import QuestionView from "../../components/QuestionView.jsx";
 import RichText from "../../components/RichText.jsx";
@@ -313,7 +314,8 @@ export default function Workspace({ api, profile, guard, initial, startAt = 0, o
     <FigureMenu figs={allFigs} onPick={putFigure} />
   );
 
-  return (
+  // Full-screen editor, portaled to #root so no animated page around it can shrink its position: fixed.
+  return createPortal(
     <div className="qb-work" data-tab={tab}>
       <header className="qb-top">
         <button type="button" className="secondary" onClick={() => close()}>← Mis preguntas</button>
@@ -502,7 +504,8 @@ export default function Workspace({ api, profile, guard, initial, startAt = 0, o
           </div>
         </Dialog>
       )}
-    </div>
+    </div>,
+    (typeof document !== "undefined" && document.getElementById("root")) || document.body,
   );
 }
 
