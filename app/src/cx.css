@@ -429,3 +429,27 @@
 #root .td-hero .td-count { display: inline-flex; align-items: center; gap: 6px; font-size: 1.15rem; text-transform: none; letter-spacing: 0; }
 #root .td-hero .td-count .cx-script { color: var(--accent); font-size: 1.2em; }
 #root .td-hero .td-count .cx-stk { font-family: var(--cx-display, inherit); font-weight: 800; font-size: 0.9em; text-transform: uppercase; }
+
+/* Class picker («Todo el colegio ▾»): portaled to <body>, so not under #root. A popover on a computer, a sheet on a phone. */
+.ctx-panel.cx-ctx { width: 380px; gap: 4px; padding: 14px; border: 1.5px solid var(--line); border-radius: 22px; background: var(--surface); box-shadow: 0 24px 60px rgba(0,0,0,.45); z-index: 61; animation: cx-fade .18s var(--cx-ease, ease); }
+.ctx-scrim { z-index: 60; }
+.cx-ctx .ctx-title { font-family: var(--cx-display); font-weight: 800; text-transform: uppercase; letter-spacing: -0.01em; font-size: 20px; color: var(--text); padding: 2px 4px 8px; }
+.cx-ctx .ctx-title em { font-family: Newsreader, Georgia, serif; font-style: italic; font-weight: 600; text-transform: none; color: var(--accent); font-size: 1.1em; }
+.cx-ctx .ctx-mode { margin: 0 0 6px; }
+.cx-ctx .ctx-group { gap: 2px; padding: 4px 0 6px; border-top: 1px dashed var(--line); }
+.cx-ctx .ctx-opt { min-height: 44px; padding: 0 10px; border-radius: 14px; font-weight: 800; font-size: 15px; gap: 10px; }
+.cx-ctx .ctx-opt .ctx-dot { width: 12px; height: 12px; border-radius: 4px; transform: rotate(-8deg); }
+.cx-ctx .ctx-opt:hover { background: var(--surface-2); }
+.cx-ctx .ctx-opt.on { background: var(--accent); color: var(--cx-ink, #0b1f12); }
+.cx-ctx .ctx-opt.on .ctx-meta { color: inherit; opacity: .7; }
+.cx-ctx .ctx-opt.on .ctx-dot { background: var(--cx-ink, #0b1f12) !important; }
+.cx-ctx .ctx-classes { padding: 2px 6px 2px 32px; gap: 6px; }
+.cx-ctx .ctx-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 34px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface-2); color: var(--text); font-weight: 800; font-size: 14px; box-shadow: none !important; transition: transform .12s; }
+.cx-ctx .ctx-chip:hover { transform: translateY(-1px); border-color: var(--accent); }
+.cx-ctx .ctx-chip.on { background: var(--accent); border-color: var(--accent); color: var(--cx-ink, #0b1f12); transform: rotate(-2deg); }
+.cx-ctx .ctx-note { padding: 8px 6px 0; }
+@media (max-width: 800px) {
+  .ctx-panel.cx-ctx { position: fixed; left: 0; right: 0; bottom: 0; top: auto; width: auto; max-height: 82vh; border-radius: 28px 28px 0 0; border-bottom: 0; padding: 10px 16px calc(18px + env(safe-area-inset-bottom)); animation: cx-rise .24s var(--cx-ease, ease); }
+  .cx-ctx .ctx-classes { padding-left: 32px; }
+}
+@keyframes cx-rise { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }

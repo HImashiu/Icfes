@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Icon from "./Icon.jsx";
 import { contextColor, contextLabel } from "../lib/teaching.js";
 
@@ -10,9 +11,23 @@ export default function ContextSwitcher({ contexts, value, onChange }) {
   const byCourse = groups.length > 1;
   const [mode, setMode] = useState(() => (value?.group ? "curso" : "materia"));
   const ref = useRef(null);
+  const panel = useRef(null);
+  // The panel lives in <body>: the top bar's blur would otherwise trap a fixed sheet inside the bar (it showed cut off behind the page).
+  const [at, setAt] = useState(null);
+  useLayoutEffect(() => {
+    if (!open) return undefined;
+    const place = () => {
+      const phone = window.matchMedia("(max-width: 800px)").matches;
+      const r = ref.current?.getBoundingClientRect();
+      setAt(phone || !r ? null : { top: r.bottom + 8, left: Math.max(12, Math.min(r.left, window.innerWidth - 392)) });
+    };
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [open]);
   useEffect(() => {
     if (!open) return undefined;
-    const down = (e) => { if (!ref.current?.contains(e.target)) setOpen(false); };
+    const down = (e) => { if (!ref.current?.contains(e.target) && !panel.current?.contains(e.target)) setOpen(false); };
     const key = (e) => { if (e.key === "Escape") setOpen(false); };
     document.addEventListener("pointerdown", down);
     document.addEventListener("keydown", key);
@@ -31,12 +46,12 @@ export default function ContextSwitcher({ contexts, value, onChange }) {
         <span className="ctx-label">{contextLabel(contexts, value)}</span>
         {!single && <Icon name="right" size={14} strokeWidth={3} className="ctx-caret" />}
       </button>
-      {open && (
+      {open && createPortal(
         <>
           <div className="ctx-scrim" aria-hidden="true" />
-          <div className="ctx-panel" role="listbox" aria-label="Materia y curso">
+          <div className="ctx-panel cx-ctx" ref={panel} role="listbox" aria-label="Materia y curso" style={at ? { position: "fixed", top: at.top, left: at.left } : undefined}>
             <span className="ctx-grab" aria-hidden="true" />
-            <strong className="ctx-title">¿Qué quieres ver?</strong>
+            <strong className="ctx-title">¿Qué quieres <em>ver?</em></strong>
             {byCourse && (
               <div className="cg-seg ctx-mode" role="tablist" aria-label="Organizar por">
                 <button type="button" role="tab" aria-selected={mode === "materia"} className={mode === "materia" ? "on" : ""} onClick={() => setMode("materia")}>Por materia</button>
@@ -56,7 +71,7 @@ export default function ContextSwitcher({ contexts, value, onChange }) {
                 <div className="ctx-classes">
                   {g.classes.map((c) => (
                     <button key={c.id} type="button" role="option" aria-selected={value?.courseId === c.id} className={value?.courseId === c.id ? "ctx-chip on" : "ctx-chip"} onClick={() => pick({ subject: c.area, courseId: c.id })} style={{ boxShadow: `inset 3px 0 0 ${c.color}` }}>
-                      {c.name}{c.readOnly && <span className="ctx-ro"> · solo ve</span>}
+                      {value?.courseId === c.id && <Icon name="check" size={13} strokeWidth={3.2} />}{c.name}{c.readOnly && <span className="ctx-ro"> · solo ve</span>}
                     </button>
                   ))}
                 </div>
@@ -71,7 +86,7 @@ export default function ContextSwitcher({ contexts, value, onChange }) {
                 <div className="ctx-classes">
                   {s.classes.map((c) => (
                     <button key={c.id} type="button" role="option" aria-selected={value?.courseId === c.id} className={value?.courseId === c.id ? "ctx-chip on" : "ctx-chip"} onClick={() => pick({ subject: s.key, courseId: c.id })} title={c.full}>
-                      {c.name}{c.readOnly && <span className="ctx-ro"> · solo ve</span>}
+                      {value?.courseId === c.id && <Icon name="check" size={13} strokeWidth={3.2} />}{c.name}{c.readOnly && <span className="ctx-ro"> · solo ve</span>}
                     </button>
                   ))}
                 </div>
@@ -79,7 +94,8 @@ export default function ContextSwitcher({ contexts, value, onChange }) {
             ))}
             {!contexts.admin && <span className="caption ctx-note">Solo ves tus materias. Coordinación asigna las clases.</span>}
           </div>
-        </>
+        </>,
+        document.body,
       )}
     </div>
   );
