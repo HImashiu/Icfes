@@ -58,3 +58,39 @@ export default function Mascot({ pose = "normal", size = 96, idle = false }) {
     </svg>
   );
 }
+
+// The owl peeking over an edge (the green greeting cards): only his head shows above the line, his wings hang over it
+// like hands, and he rises from behind it when the card appears. Same drawing, same parts, same colours.
+// The bottom of the svg is the edge: place it so that line sits on the top of whatever he hides behind.
+const EDGE = 790;
+const hand = (x, flip) => `translate(${x} ${EDGE - 34}) rotate(${flip ? -8 : 8}) scale(${flip ? -0.62 : 0.62} 0.62) translate(-130 -900)`;
+export function OwlPeek({ width = 104, happy = false, className = "", style }) {
+  return (
+    <svg className={`mascot owl owl-peek ${happy ? "pose-happy" : ""} ${className}`} width={width} height={(width * 900) / 1000} viewBox={`-40 -40 1000 900`}
+      style={style} role="img" aria-label={`${MASCOT_NAME}, la mascota`}>
+      <defs><clipPath id="owl-peek-edge"><rect x="-400" y="-400" width="1800" height={EDGE + 400} /></clipPath></defs>
+      <g clipPath="url(#owl-peek-edge)">
+        <g className="o-rise">
+          <g className="o-head" style={at(458, 790)}>
+            <path className="o-board" d={P.board} fill={C.board} />
+            <path d={P.hood} fill={C.hood} />
+            <path d={P.face} fill={C.face} />
+            <g className="o-blush">
+              {EL.blush.map((e, i) => <Ell key={i} e={e} fill={C.blush} className="o-cheek" />)}
+            </g>
+            <Eye white={EL.eyes[0]} pupil={P.pupilL} />
+            <Eye white={EL.eyes[1]} pupil={P.pupilR} />
+            <path className="o-beak" d={P.beak} fill={C.beak} />
+            <path className="o-crown" d={P.crown} fill={C.crown} />
+            <g className="o-tassel" style={at(849, 140)}>
+              <path d={P.cord} fill={C.tassel} />
+              <path d={P.bell} fill={C.tassel} />
+            </g>
+          </g>
+        </g>
+      </g>
+      <path className="o-hand o-hand-l" d={P.wingL} fill={C.wing} transform={hand(236, false)} />
+      <path className="o-hand o-hand-r" d={P.wingL} fill={C.wing} transform={hand(680, true)} />
+    </svg>
+  );
+}

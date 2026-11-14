@@ -16,25 +16,26 @@ const api = (extra = {}) => ({
 const auth = (a, role = "teacher") => ({ api: a, profile: { id: "t1", school_id: "s1", role, full_name: "Lina Pérez", email: "lina@c.co" } });
 
 describe("teacher onboarding", () => {
-  it("opens the Hoy tutorial on the first visit only, and it can be replayed", async () => {
-    render(<TeacherLive auth={auth(api())} exams={[]} fetchExam={vi.fn()} onExit={() => {}} />);
-    expect(await screen.findByRole("heading", { name: "¡Hola, Lina!" }, { timeout: 3000 })).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Ahora no" }));
-    expect(tourSeen("docente", "t1", "hoy")).toBe(true);
-    expect(screen.queryByRole("heading", { name: "¡Hola, Lina!" })).toBeNull();
-    cleanup();
+  it("never opens a guide by itself; «?» opens Ayuda and a function takes you to its screen", async () => {
     render(<TeacherLive auth={auth(api())} exams={[]} fetchExam={vi.fn()} onExit={() => {}} />);
     await screen.findAllByText("Crea tu clase");
-    await new Promise((r) => setTimeout(r, 600));
-    expect(screen.queryByRole("heading", { name: "¡Hola, Lina!" })).toBeNull();
-    fireEvent.click(screen.getAllByRole("button", { name: /Tutorial de esta sección/ })[0]);
-    expect(await screen.findByRole("heading", { name: "¡Hola, Lina!" })).toBeTruthy();
+    await new Promise((r) => setTimeout(r, 800));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    fireEvent.click(screen.getAllByRole("button", { name: "Ayuda: todas las funciones" })[0]);
+    expect(await screen.findByRole("heading", { name: "¿Qué quieres ver?" })).toBeTruthy();
+    expect(screen.getByText("Estás aquí")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Tableros" }));
+    expect(await screen.findByText(/Guía · Resultados · \d+ de \d+/)).toBeTruthy();
+    await waitFor(() => expect(window.location.hash).toContain("resultados"));
+    fireEvent.click(screen.getByRole("button", { name: "Cerrar el tutorial" }));
+    expect(tourSeen("docente", "t1", "resultados")).toBe(true);
+    expect(screen.queryByRole("heading", { name: "¿Qué quieres ver?" })).toBeNull();
   });
 
-  it("walks every step of Hoy and ends on the first steps with the example-data switch off", async () => {
+  it("walks every step of Hoy on request and ends on the first steps with the example-data switch off", async () => {
     render(<TeacherLive auth={auth(api(), "school_admin")} exams={[]} fetchExam={vi.fn()} onExit={() => {}} />);
-    await screen.findByRole("heading", { name: "¡Hola, Lina!" }, { timeout: 3000 });
-    fireEvent.click(screen.getByRole("button", { name: "Empezar" }));
+    fireEvent.click((await screen.findAllByRole("button", { name: /Ver el tutorial otra vez/ }, { timeout: 3000 }))[0]);
+    await screen.findByRole("heading", { name: "¡Hola, Lina!" });
     const titles = [];
     for (let i = 0; i < 15; i++) {
       const done = screen.queryByRole("button", { name: "Entendido" });
@@ -50,11 +51,15 @@ describe("teacher onboarding", () => {
     expect(tourSeen("docente", "t1", "hoy")).toBe(true);
   });
 
-  it("each section opens its own tutorial the first time", async () => {
-    markTourSeen("docente", "t1", "hoy");
+  it("Ayuda finds a function by any word of its guide", async () => {
     window.location.hash = "#docente/resultados/resumen";
     render(<TeacherLive auth={auth(api())} exams={[]} fetchExam={vi.fn()} onExit={() => {}} />);
-    expect(await screen.findByText("Tutorial · Resultados · 1 de 5", {}, { timeout: 3000 })).toBeTruthy();
+    await new Promise((r) => setTimeout(r, 800));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    fireEvent.click(screen.getAllByRole("button", { name: "Ayuda: todas las funciones" })[0]);
+    fireEvent.change(await screen.findByRole("searchbox", { name: "Buscar una función" }), { target: { value: "grafica tablero" } });
+    expect(screen.getByRole("button", { name: "Tableros" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Banco de preguntas" })).toBeNull();
   });
 
   it("a new school sees first steps, not invented data, and the trial's days and seats", async () => {

@@ -69,7 +69,7 @@ export default function BookletStudio({ api = null, bundle, questions, title, co
   const [reverseBacks, setReverseBacks] = useState(false);
   const [error, setError] = useState(null);
   // The first time a teacher opens the print studio, its tutorial walks through it (replay with «?»).
-  const [tour, setTour] = useState(() => !tourSeen("docente", null, "estudio"));
+  const [tour, setTour] = useState(false); // opens from «?» only, never by itself
   const [notice, setNotice] = useState(null);
   const [stats, setStats] = useState({});
   const [schoolId, setSchoolId] = useState(null);

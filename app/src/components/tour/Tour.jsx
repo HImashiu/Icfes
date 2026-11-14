@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Icon from "../Icon.jsx";
-import Mascot from "../Mascot.jsx";
+import { OwlPeek } from "../Mascot.jsx";
 import "./tour.css";
 
 // A guided tutorial: a card that walks through the real screen, step by step. A step can move the app first
@@ -116,10 +116,11 @@ export default function Tour({ steps, label = "Tutorial", navigate = null, onClo
   return createPortal(
     <div className={hole ? "ob-tour" : "ob-tour dim"} role="dialog" aria-modal="true" aria-labelledby="ob-title">
       {hole && <div className="ob-hole" style={hole} aria-hidden="true" />}
+      {step.owl && pos && <OwlPeek key={`owl-${step.id}`} className="ob-owl" width={88} happy={step.owl === "happy" || step.owl === "celebrating"}
+        style={{ left: pos.left + pos.w - 112, top: pos.top - 76 }} />}
       <div ref={card} tabIndex={-1} key={step.id} className={`ob-card ${pos?.side ?? "center"} ${step.final ? "final" : ""} ${step.owl ? "owl" : ""}`}
         style={pos ? { left: pos.left, top: pos.top, width: pos.w } : { visibility: "hidden" }}>
         <button type="button" className="icon-btn ob-x" aria-label="Cerrar el tutorial" onClick={() => finish(false)}><Icon name="x" size={16} /></button>
-        {step.owl && <Mascot pose={step.owl} size={step.final ? 60 : 72} />}
         <span className="caption ob-count">{label}{count > 1 ? ` · ${i + 1} de ${count}` : ""}</span>
         <h2 id="ob-title">{step.title}</h2>
         {step.text && <p>{step.text}</p>}
@@ -135,9 +136,9 @@ export default function Tour({ steps, label = "Tutorial", navigate = null, onClo
         <div className="ob-foot">
           {count > 1 && count <= 12 && <span className="ob-dots" aria-hidden="true">{steps.map((st, k) => <span key={st.id} className={k === i ? "on" : k < i ? "past" : ""} />)}</span>}
           {count > 12 && <span className="ob-bar" aria-hidden="true"><span style={{ width: `${((i + 1) / count) * 100}%` }} /></span>}
-          {i === 0 && !last && <button type="button" className="link" onClick={() => finish(false)}>Ahora no</button>}
+          {i === 0 && !last && <button type="button" className="link" onClick={() => finish(false)}>Cerrar</button>}
           {i > 0 && <button type="button" className="secondary" onClick={() => setI(i - 1)}>Atrás</button>}
-          <button type="button" className="primary" onClick={nextStep}>{last ? "Entendido" : i === 0 ? "Empezar" : "Siguiente"}</button>
+          <button type="button" className="primary" onClick={nextStep}>{last ? "Entendido" : "Siguiente"}</button>
         </div>
       </div>
     </div>,
@@ -146,7 +147,7 @@ export default function Tour({ steps, label = "Tutorial", navigate = null, onClo
 }
 
 // The "?" next to a screen's title: replays that screen's tutorial.
-export function TourButton({ onClick, label = "Tutorial de esta sección", className = "" }) {
+export function TourButton({ onClick, label = "Ayuda", className = "" }) {
   return (
     <button type="button" className={`ob-help ${className}`} onClick={onClick} aria-label={label} title={label} data-tour="help">
       <span aria-hidden="true">?</span>

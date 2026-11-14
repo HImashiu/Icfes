@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Icon from "../../components/Icon.jsx";
-import Mascot from "../../components/Mascot.jsx";
+import Mascot, { OwlPeek } from "../../components/Mascot.jsx";
 import { TeacherAnnouncements } from "../../components/Announcements.jsx";
 import MonthCalendar from "../../components/MonthCalendar.jsx";
 import { buildRoster, weeklySummary } from "../../lib/workspace.js";
@@ -122,7 +122,7 @@ export default function Today({ api, profile, courses, readOnlyIds = [], assignm
           <button type="button" className="secondary" onClick={() => go({ section: "biblioteca", tab: "clases" })}><Icon name="play" size={18} /> Proyectar clase</button>
           <button type="button" className="secondary" onClick={() => go({ section: "actividades", tab: "vivo" })}><Icon name="bolt" size={18} /> Juego en vivo</button>
         </div>
-        <Mascot pose={m.attention.length ? "normal" : "happy"} idle size={84} />
+        <OwlPeek className="td-peek" happy={!m.attention.length} />
       </section>
 
       <BetaNote who="teacher" />

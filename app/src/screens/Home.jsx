@@ -2,7 +2,7 @@ import { BetaNote } from "../components/Beta.jsx";
 import { TourButton } from "../components/tour/Tour.jsx";
 import { useMemo } from "react";
 import Icon from "../components/Icon.jsx";
-import Mascot from "../components/Mascot.jsx";
+import Mascot, { OwlPeek } from "../components/Mascot.jsx";
 import MonthCalendar from "../components/MonthCalendar.jsx";
 import TaskRow, { dueText } from "../components/TaskRow.jsx";
 import { areaColor, fmtInt } from "../lib/brand.js";
@@ -87,13 +87,13 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
           <span className="pill" title="Racha"><Icon name="flame" size={16} className="flame-ico" /><b className="flame-text">{streak}</b></span>
           <span className="pill" title="XP"><Icon name="bolt" size={16} className="accent-ico" /><b className="accent-text">{fmtInt(xp)}</b></span>
         </div>
-        <TourButton className="sh-head-help" label="Tutorial" onClick={() => window.dispatchEvent(new CustomEvent("condor:student-tour"))} />
+        <TourButton className="sh-head-help" label="Ayuda" onClick={() => window.dispatchEvent(new CustomEvent("condor:student-tour"))} />
       </header>
 
       <BetaNote />
       <div className="sh-top">
         <div className="sh-hero card" data-tour="s-hero">
-          <Mascot size={84} pose={ins.practicedToday ? "happy" : "normal"} idle />
+          <OwlPeek className="sh-peek" width={96} happy={ins.practicedToday} />
           <div className="sh-hero-text">
             <span className="label">{hero.kicker}</span>
             <strong>{hero.title}</strong>

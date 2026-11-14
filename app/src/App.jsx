@@ -42,7 +42,8 @@ import { GlossaryProvider } from "./components/Glossary.jsx";
 import { loadHistory } from "./lib/local.js";
 import { demoEnabled } from "./demo/mode.js";
 import Tour, { markTourSeen, tourSeen } from "./components/tour/Tour.jsx";
-import { studentTour, studentTourId } from "./lib/tours.jsx";
+import { studentFeatureIndex, studentTour, studentTourId, studentTourView } from "./lib/tours.jsx";
+import FeatureIndex from "./components/tour/FeatureIndex.jsx";
 import { pendingMisses, repechajeKeys } from "./lib/repechaje.js";
 import { hiddenFor, withoutHidden } from "./lib/questionUse.js";
 import { orderQuestions } from "./lib/order.js";
@@ -204,26 +205,18 @@ export default function App() {
     applyTheme(theme);
   }, [theme]);
 
-  // Student tutorials: each screen's opens by itself the first time (per account and device) and replays from «?».
-  const [studentTourOpen, setStudentTourOpen] = useState(null);
-  const tourScreen = studentTourId(view);
+  // Student guides: never open by themselves (Juan 2026-11-14). «?» opens the Ayuda list; a function there opens its
+  // screen and shows its guide at that step. A screen can still ask for its own guide by name (the simulacro's «?»).
+  const [studentTourOpen, setStudentTourOpen] = useState(null); // { id, start } | null
+  const [studentHelp, setStudentHelp] = useState(false);
   const tourUid = auth.profile?.id ?? null;
   useEffect(() => {
-    if (!tourScreen || auth.status === "loading" || tourSeen("estudiante", tourUid, tourScreen)) return undefined;
-    // The first practice from the landing goes straight to the question: no tutorial on top of it.
-    if (quickStart || attempt?.custom?.label === FIRST_PRACTICE) return undefined;
-    // Before the first practice is finished nothing else gets in the way: tutorials start after it.
-    if (auth.status === "ready" && loadHistory().length === 0) return undefined;
-    const t = setTimeout(() => setStudentTourOpen((cur) => cur ?? tourScreen), 700);
-    return () => clearTimeout(t);
-  }, [tourScreen, tourUid, auth.status, quickStart, attempt?.custom?.label]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    const ask = (e) => setStudentTourOpen(e.detail || studentTourId(view) || "inicio");
+    const ask = (e) => { if (e.detail) { setStudentHelp(false); setStudentTourOpen({ id: String(e.detail), start: 0 }); } else setStudentHelp(true); };
     window.addEventListener("condor:student-tour", ask);
     return () => window.removeEventListener("condor:student-tour", ask);
-  }, [view]);
+  }, []);
   const closeStudentTour = useCallback(() => {
-    setStudentTourOpen((id) => { if (id) markTourSeen("estudiante", tourUid, id); return null; });
+    setStudentTourOpen((t) => { if (t) markTourSeen("estudiante", tourUid, t.id); return null; });
   }, [tourUid]);
 
   // Teachers and coordinators land in their panel when they sign in, not on the student home. Once they choose
@@ -1002,9 +995,19 @@ export default function App() {
       {needsAttempt && !attempt && <main className="frame"><p className="muted">Esta actividad ya no está abierta.</p><button type="button" className="primary" onClick={goHome}>Volver al inicio</button></main>}
       </ScreenBoundary>
 
+      {studentHelp && view !== "teacher" && (
+        <FeatureIndex who="estudiante" sections={studentFeatureIndex({ name: studentName, signedIn })} here={studentTourId(view)}
+          seen={(id) => tourSeen("estudiante", tourUid, id)} onClose={() => setStudentHelp(false)}
+          onPick={(id, start, item) => {
+            setStudentHelp(false);
+            const to = item?.to ?? studentTourView(id);
+            if (to && (to !== view || item?.to)) go(to);
+            setStudentTourOpen({ id, start });
+          }} />
+      )}
       {studentTourOpen && view !== "teacher" && (() => {
-        const t = studentTour(studentTourOpen, { name: studentName, signedIn });
-        return <Tour key={studentTourOpen} label={t.label} steps={t.steps} onClose={closeStudentTour} />;
+        const t = studentTour(studentTourOpen.id, { name: studentName, signedIn });
+        return <Tour key={`${studentTourOpen.id}:${studentTourOpen.start}`} label={t.label} steps={t.steps} start={studentTourOpen.start} onClose={closeStudentTour} />;
       })()}
       {navView && <BottomNav active={navView} onGo={go} name={studentName} course={course} role={signedIn ? auth.profile?.role : null} />}
     </div>

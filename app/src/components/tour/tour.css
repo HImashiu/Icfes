@@ -84,7 +84,52 @@
 .fi-sec li button:hover svg { opacity: 1; color: var(--accent-ink); }
 @media (max-width: 640px) {
   .ob-index { top: auto; bottom: 8px; transform: translateX(-50%); width: calc(100vw - 16px); max-height: 86vh; padding: 16px 14px; }
-  .fi-head .mascot, .fi-head svg:first-child { display: none; }
   .fi-head h2 { font-size: 19px; }
 }
 .ob-index:focus, .ob-index:focus-visible { outline: none; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45); border-color: var(--line); }
+
+/* 2026-11-14 · Guides on demand, in the landing's look. «Ayuda» (the list) is a sheet the owl peeks over; each guide
+   card is a chunky sticker card with a lime label. Nothing here opens on its own. */
+.ob-card { border: 2px solid color-mix(in srgb, var(--text) 18%, transparent); box-shadow: 0 6px 0 rgba(0, 0, 0, 0.32), 0 22px 50px rgba(0, 0, 0, 0.42); border-radius: 22px; }
+.ob-card .ob-count { justify-self: start; display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; background: var(--accent); color: var(--cx-ink, #0D110F); letter-spacing: 0.04em; transform: rotate(-2deg); }
+.ob-card.center .ob-count, .ob-card.final .ob-count, .ob-card.owl .ob-count { justify-self: center; }
+.ob-card h2 { font-family: var(--cx-display, "Bricolage Grotesque", sans-serif); font-size: 23px; letter-spacing: -0.01em; }
+.ob-card.owl { padding-top: 22px; }
+.ob-bullets li { grid-template-columns: 20px minmax(0, 1fr); }
+.ob-bullets li svg { box-sizing: content-box; width: 10px; height: 10px; padding: 3px; margin-top: 2px; border-radius: 50%; background: var(--accent); color: var(--cx-ink, #0D110F); }
+.ob-foot .primary { min-width: 120px; }
+.ob-owl { position: fixed; z-index: 1; pointer-events: none; overflow: visible; filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.3)); }
+.ob-card.sheet h2 { font-size: 20px; }
+
+.ob-index { position: static; transform: none; left: auto; top: auto; width: auto; max-height: calc(100vh - 96px); border: 2px solid color-mix(in srgb, var(--text) 18%, transparent); border-radius: 24px;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.32), 0 22px 50px rgba(0, 0, 0, 0.42); padding: 18px 18px 20px; gap: 12px; animation: none; }
+.fi-box { position: fixed; left: 50%; top: calc(50% + 34px); transform: translate(-50%, -50%); width: min(880px, calc(100vw - 24px)); animation: ob-in 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.25); }
+.fi-owl { position: absolute; right: 44px; bottom: 100%; margin-bottom: -10px; z-index: 1; pointer-events: none; overflow: visible; }
+.fi-head { padding-right: 0; align-items: flex-start; }
+.fi-head > div { flex: 1; }
+.fi-head h2 { font-family: var(--cx-display, "Bricolage Grotesque", sans-serif); font-size: 26px; letter-spacing: -0.01em; }
+.fi-x { position: static; flex: none; margin: -6px -6px 0 0; }
+.fi-search { display: flex; align-items: center; gap: 8px; padding: 0 6px 0 14px; min-height: 46px; border-radius: 14px; border: 2px solid var(--line); background: var(--surface-2); color: var(--text-2); }
+.fi-search:focus-within { border-color: var(--accent); color: var(--text); }
+#root .fi-search input, .fi-search input { flex: 1; min-width: 0; border: 0 !important; background: transparent !important; box-shadow: none !important; outline: none; padding: 10px 0; color: var(--text); font: 600 15px/1.2 Figtree, Arial, sans-serif; }
+.fi-search input::-webkit-search-cancel-button { display: none; }
+.fi-sec { border-radius: 16px; background: var(--surface); }
+.fi-here { border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 7%, var(--surface)); }
+.fi-here ul { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); column-gap: 8px; }
+.fi-sec-name { display: grid; min-width: 0; }
+.fi-tag { font-size: 10.5px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent-ink); }
+.fi-all { display: inline-flex; align-items: center; gap: 2px; }
+.fi-here .fi-all { padding: 6px 10px; border-radius: 999px; background: var(--accent); color: var(--cx-ink, #0D110F); box-shadow: 0 3px 0 var(--accent-shadow, rgba(0, 0, 0, 0.3)); }
+.fi-none { margin: 4px 0; color: var(--text-2); text-align: center; }
+@media (max-width: 640px) {
+  .fi-box { top: auto; bottom: 0; transform: translateX(-50%); width: 100vw; animation: fi-up 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.1); }
+  .ob-index { position: static; transform: none; width: auto; max-height: calc(100vh - 110px); border-radius: 22px 22px 0 0; border-bottom: 0; padding: 16px 14px calc(16px + env(safe-area-inset-bottom)); }
+  .fi-owl { right: 24px; width: 80px; height: 72px; }
+  .fi-head h2 { font-size: 22px; }
+  .fi-head p { font-size: 13.5px; }
+  .fi-here .fi-all { padding: 5px 9px; font-size: 11.5px; }
+  .fi-here ul { grid-template-columns: 1fr; }
+}
+@keyframes fi-up { from { transform: translate(-50%, 40px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .fi-box { animation: none; } }
+.ob-card.center .ob-bullets, .ob-card.final .ob-bullets, .ob-card.sheet .ob-bullets { text-align: left; justify-self: stretch; }

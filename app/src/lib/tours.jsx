@@ -17,14 +17,14 @@ export function teacherTourId(route) {
 export const TEACHER_TOUR_IDS = ["hoy", "actividades", "nueva", "actividad", "cuadernillo", "estudiantes", "resultados", "biblioteca", "colegio", "cuenta"];
 
 const LABELS = {
-  hoy: "Tutorial · Hoy", actividades: "Tutorial · Actividades", nueva: "Tutorial · Nueva actividad", actividad: "Tutorial · Una actividad",
-  cuadernillo: "Cómo hacer un cuadernillo", estudiantes: "Tutorial · Estudiantes", resultados: "Tutorial · Resultados", biblioteca: "Tutorial · Biblioteca",
-  colegio: "Tutorial · Colegio", cuenta: "Tutorial · Mi cuenta",
+  hoy: "Guía · Hoy", actividades: "Guía · Actividades", nueva: "Guía · Nueva actividad", actividad: "Guía · Una actividad",
+  cuadernillo: "Cómo hacer un cuadernillo", estudiantes: "Guía · Estudiantes", resultados: "Guía · Resultados", biblioteca: "Guía · Biblioteca",
+  colegio: "Guía · Colegio", cuenta: "Guía · Mi cuenta",
 };
 
 function hoySteps({ admin, name, first, intro = true }) {
   return seen([
-    intro && { id: "hola", owl: "happy", title: `¡Hola${name ? `, ${name}` : ""}!`, text: "Este es tu espacio docente. Cada sección tiene su propio tutorial: se abre la primera vez que entras y lo repites cuando quieras con el botón «?» de arriba. En «Todas las funciones» ves la lista completa. Empezamos por Hoy." },
+    intro && { id: "hola", owl: "happy", title: `¡Hola${name ? `, ${name}` : ""}!`, text: "Este es tu espacio docente. Te mostramos Hoy en un minuto. Cuando quieras ver otra función, abre la Ayuda con el botón «?» de arriba: toca una función y te llevamos a ella." },
     intro && BETA_STEP,
     { id: "hoy", route: { section: "hoy" }, target: "nav-hoy", title: "Hoy, tu inicio", text: "Todo lo que pide atención en tus clases, en una sola pantalla.",
       bullets: [
@@ -47,7 +47,7 @@ function hoySteps({ admin, name, first, intro = true }) {
       bullets: ["Tarea, Práctica en clase, Quiz, Simulacro con tiempo y Simulacro en papel.", "También Juego en vivo, Clase para proyectar, Desde el banco de preguntas y Refuerzo personal."] },
     { id: "vivo", target: "live", title: "Juego en vivo", text: "Proyecta preguntas en clase y tus estudiantes responden desde el celular con un código o un QR. Sin posiciones ni ranking: cada estudiante se compara solo consigo mismo." },
     { id: "bell", target: "bell", title: "Novedades", text: "La campana guarda un recibo de todo lo que guardas (actividades, listas importadas, hojas escaneadas, refuerzos) con los lugares donde quedaron los datos." },
-    { id: "nav", target: "nav|nav-actividades", title: "Las demás secciones", text: "Cada una abre su propio tutorial la primera vez.",
+    { id: "nav", target: "nav|nav-actividades", title: "Las demás secciones", text: "Cada una tiene su guía corta en la Ayuda («?»).",
       bullets: seen([
         "Actividades: todas tus tareas, prácticas, simulacros, juegos en vivo y refuerzos.",
         "Estudiantes: cada estudiante de todas tus clases, seguimiento, grupos y listas de clase.",
@@ -56,7 +56,7 @@ function hoySteps({ admin, name, first, intro = true }) {
         admin && "Colegio (solo coordinación): cursos y materias, docentes y permisos, quién hizo qué, calificación y ajustes.",
       ]) },
     { id: "side", target: "side-help", title: "Ayuda y datos de ejemplo", bullets: [
-      "Tutorial de esta sección y Recorrido completo: repite cualquier tutorial o recorre todas las funciones de una vez.",
+      "Ayuda: la lista de todas las funciones, con buscador. Toca una y te llevamos a su pantalla y te la mostramos ahí.",
       "Datos de ejemplo: mira todas las herramientas con un colegio inventado, sin tocar el tuyo; apágalo para volver.",
       "Mi cuenta y permisos, contraer la barra lateral y Volver a la app de estudiante (ves exactamente lo que ven tus estudiantes).",
     ] },
@@ -83,7 +83,7 @@ function actividadesSteps({ openTour }) {
       "Al final: informe de la clase, Tarea de refuerzo con las falladas y Juegos anteriores. Sin ranking.",
     ] },
     { id: "a-refuerzo", route: { section: "actividades", tab: "refuerzo" }, target: "tab-refuerzo", title: "Refuerzo personal", text: "Un plan distinto para cada estudiante con las preguntas que más ha fallado: eliges cuadernillo, cuántas preguntas y la fecha, y «Calcular planes» los arma todos." },
-    { id: "a-nueva", target: "new", title: "Crear una actividad", text: "Desde «Nueva actividad» eliges el tipo y armas la actividad; su propio tutorial te guía la primera vez.",
+    { id: "a-nueva", target: "new", title: "Crear una actividad", text: "Desde «Nueva actividad» eliges el tipo y armas la actividad; su guía está en la Ayuda («?»).",
       extra: openTour ? <TourLink onClick={() => openTour("cuadernillo")}>¿Vas a imprimir? Ver «Cómo hacer un cuadernillo»</TourLink> : null },
   ];
 }
@@ -284,7 +284,7 @@ export function teacherTour(id, ctx) {
     colegio: () => colegioSteps(ctx),
     cuenta: () => cuentaSteps(ctx),
   }[id]?.() ?? hoySteps(ctx);
-  return { label: LABELS[id] ?? "Tutorial", steps };
+  return { label: LABELS[id] ?? "Guía", steps };
 }
 
 // «Todas las funciones»: every function the school gets, grouped by section. Each one opens its section's tutorial
@@ -300,8 +300,7 @@ export function teacherFeatureIndex(ctx) {
     .filter(([id]) => id !== "actividad" || ctx.activityId || ctx.sample)
     .map(([id, title, icon]) => {
       const steps = teacherTour(id, { ...ctx, intro: false, first: null }).steps;
-      const items = steps.map((s, k) => ({ title: s.title, start: k, final: s.final })).filter((s) => !s.final || steps.length === 1);
-      return { id, title, icon, items };
+      return { id, title, icon, items: indexItems(steps) };
     });
 }
 
@@ -348,8 +347,8 @@ export const STUDENT_TOUR_IDS = ["inicio", "materias", "practicar", "simulacro",
 
 export function studentTour(id, { name = null, signedIn = true } = {}) {
   const tours = {
-    inicio: { label: "Tutorial · Inicio", steps: seen([
-      { id: "hola", owl: "happy", title: `¡Hola${name ? `, ${name}` : ""}!`, text: "Así se usa Cóndor para prepararte para el Saber 11. Cada pantalla tiene un tutorial corto que se abre la primera vez; lo repites con el botón «?»." },
+    inicio: { label: "Guía · Inicio", steps: seen([
+      { id: "hola", owl: "happy", title: `¡Hola${name ? `, ${name}` : ""}!`, text: "Así se usa Cóndor para prepararte para el Saber 11. Cuando quieras ver cómo funciona algo, abre la Ayuda con el botón «?»: toca una función y te llevamos a ella." },
       BETA_STEP,
       { id: "hero", target: "s-hero", title: "Lo siguiente que te toca", text: "Tu próxima tarea o la práctica de hoy de tu plan, lista para empezar." },
       { id: "meta", target: "s-goal", title: "Meta de hoy y racha", text: "Ganas XP con cada pregunta. El anillo muestra cuánto llevas de tu meta diaria y los días seguidos que has practicado." },
@@ -361,14 +360,14 @@ export function studentTour(id, { name = null, signedIn = true } = {}) {
       { id: "vivo", target: "s-live", title: "Juego en vivo", text: "Cuando tu docente proyecte un juego, entra aquí con el código o escaneando el QR. Los juegos programados también aparecen en tu inicio." },
       { id: "nav", target: "snav-subjects", title: "Tu menú", bullets: ["Inicio, Materias, Practicar, Progreso y Perfil.", "En el celular está abajo; en el computador, a la izquierda."], final: true },
     ]) },
-    materias: { label: "Tutorial · Materias", steps: [
+    materias: { label: "Guía · Materias", steps: [
       { id: "m", target: "snav-subjects", title: "Materias", bullets: [
         "Mis materias: una página por materia con su docente, tus resultados, sus tareas y su historial.",
         "Tareas: todas tus tareas pendientes y entregadas, con su fecha de cierre; abre una entregada para ver tu resultado.",
         "Practicar el área: una práctica libre de esa materia.",
       ] },
     ] },
-    practicar: { label: "Tutorial · Practicar", steps: [
+    practicar: { label: "Guía · Practicar", steps: [
       { id: "p", target: "snav-setup", title: "Practicar", bullets: [
         "Elige el cuadernillo y la sesión (Sesión 1 o 2), como en el examen real.",
         "Examen completo o un área, con tu dominio y las preguntas pendientes de cada una; cambia el orden de las áreas.",
@@ -377,7 +376,7 @@ export function studentTour(id, { name = null, signedIn = true } = {}) {
         "Repechaje: solo las que fallaste antes.",
       ] },
     ] },
-    simulacro: { label: "Tutorial · Simulacro", steps: seen([
+    simulacro: { label: "Guía · Simulacro", steps: seen([
       { id: "t-top", target: "t-top", title: "Arriba", text: "Tu avance, el cronómetro (en modo cronometrado) y la X para salir; tu avance se guarda y puedes continuar después." },
       { id: "t-flag", target: "t-flag", title: "Marcar para revisar", text: "Marca una pregunta para volver a ella antes de entregar." },
       { id: "t-map", target: "t-map|t-bottom", title: "Mapa de preguntas", text: "Salta a cualquier pregunta; ves cuáles respondiste y cuáles marcaste." },
@@ -391,7 +390,7 @@ export function studentTour(id, { name = null, signedIn = true } = {}) {
       { id: "t-bottom", target: "t-bottom", title: "Responder", text: "En práctica, «Comprobar» te dice si acertaste y muestra la explicación (hecha con IA); «Saltar» pasa a la siguiente. En cronometrado, «Entregar» al final." },
       { ...BETA_STEP, id: "t-report", target: "t-report", owl: null, title: "¿Ves un error en la pregunta?", final: true },
     ]) },
-    resultados: { label: "Tutorial · Resultados", steps: [
+    resultados: { label: "Guía · Resultados", steps: [
       { id: "r", title: "Tus resultados", owl: "happy", bullets: [
         "Correctas, respondidas, XP ganado, la nota de tu docente y tu puntaje estimado.",
         "Por área y tiempo por pregunta: las que más tiempo te tomaron.",
@@ -400,10 +399,10 @@ export function studentTour(id, { name = null, signedIn = true } = {}) {
         "Revisar respuestas: cada pregunta con la correcta y su explicación.",
       ], final: true },
     ] },
-    revision: { label: "Tutorial · Revisión", steps: [
+    revision: { label: "Guía · Revisión", steps: [
       { id: "rv", title: "Revisión", bullets: ["Filtra Todas, Errores o Marcadas.", "Cada pregunta con tu respuesta, la correcta, la explicación y el tiempo que te tomó.", "«Reportar un error» si algo de la pregunta está mal."], final: true },
     ] },
-    progreso: { label: "Tutorial · Progreso", steps: [
+    progreso: { label: "Guía · Progreso", steps: [
       { id: "pg", target: "snav-progress", title: "Progreso", bullets: [
         "Resumen: tu resultado y tendencia por área, y qué reforzar primero. «Ver el reporte como el del ICFES».",
         "Plan: lo que te toca practicar cada día hasta el examen.",
@@ -412,7 +411,7 @@ export function studentTour(id, { name = null, signedIn = true } = {}) {
         "Historial: cada simulacro y práctica con su puntaje por área; ábrelo para revisarlo.",
       ], final: true },
     ] },
-    perfil: { label: "Tutorial · Perfil", steps: [
+    perfil: { label: "Guía · Perfil", steps: [
       { id: "pf", target: "snav-profile", title: "Perfil", bullets: [
         "Mi meta: la fecha de tu Saber 11, tu XP diaria y el puntaje al que quieres llegar.",
         "Mi progreso y análisis por área, y Mis logros.",
@@ -421,11 +420,41 @@ export function studentTour(id, { name = null, signedIn = true } = {}) {
         "Cerrar sesión. Si eres docente, aquí escribes tu código para abrir el panel docente.",
       ], final: true },
     ] },
-    vivo: { label: "Tutorial · Juego en vivo", steps: [
+    vivo: { label: "Guía · Juego en vivo", steps: [
       { id: "lv", title: "Juego en vivo", bullets: ["Escribe el código que proyecta tu docente o escanea el QR.", "Responde desde tu celular antes de que se acabe el tiempo; puedes decir si estás seguro.", "Al final ves cómo te fue y puedes practicar las que fallaste. No hay posiciones ni ranking."], final: true },
     ] },
   };
   return tours[id] ?? tours.inicio;
+}
+
+// The student's Ayuda list: every screen with what it holds. A function opens that screen (when it can be opened
+// from anywhere) and shows its guide at that step. Simulacro, resultados and revisión belong to a practice in
+// progress, so they open as a guide card where you are.
+const STUDENT_INDEX = [
+  ["inicio", "Inicio", "home", "home"], ["materias", "Materias y tareas", "book", "subjects"], ["practicar", "Practicar", "pencil", "setup"],
+  ["simulacro", "Durante una práctica", "clock", null], ["resultados", "Tus resultados", "chart", null], ["revision", "Revisar respuestas", "check", null],
+  ["progreso", "Progreso", "chart", "progress"], ["perfil", "Perfil", "user", "profile"], ["vivo", "Juego en vivo", "bolt", "liveJoin"],
+];
+// A function inside a screen that has its own tab: the list opens that tab (Progreso › Errores, Materias › Tareas…).
+const STUDENT_TABS = { "Mis materias": "subjects", Tareas: "tasks", Resumen: "progress", Plan: "plan", Errores: "errors", Logros: "achievements", Historial: "history" };
+export const studentTourView = (id) => STUDENT_INDEX.find(([k]) => k === id)?.[3] ?? null;
+export function studentFeatureIndex(ctx) {
+  return STUDENT_INDEX.map(([id, title, icon]) => {
+    const steps = studentTour(id, ctx).steps;
+    return { id, title, icon, items: indexItems(steps) };
+  });
+}
+
+// One row per step; a single-step guide lists each of its functions instead (each opens that step).
+function indexItems(steps) {
+  const head = (b) => String(b).split(": ")[0];
+  const named = (b) => String(b).includes(": ") && head(b).length <= 40;
+  if (steps.length === 1 && (steps[0].bullets ?? []).some(named)) {
+    return steps[0].bullets.map((b, k) => ({ key: `0-${k}`, title: named(b) ? head(b) : String(b).replace(/\.$/, ""), start: 0, find: String(b), to: STUDENT_TABS[head(b)] }));
+  }
+  // The greeting is not a function: the list starts at the first real step.
+  return steps.map((s, k) => ({ key: String(k), id: s.id, title: s.title, start: k, find: [s.text, ...(s.bullets ?? [])].filter(Boolean).join(" ") }))
+    .filter((s) => s.id !== "hola");
 }
 
 // A link-like button inside a tutorial card that opens another tutorial.
