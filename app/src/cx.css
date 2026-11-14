@@ -111,8 +111,8 @@
   #root .tl-bottom .cx-fab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 46px; padding: 2px 0; border: 0; background: transparent;
     color: var(--text); font-size: 10.5px; font-weight: 800; cursor: pointer; }
   #root .tl-bottom .cx-fab .cx-fab-ico { display: grid; place-items: center; width: 44px; height: 30px; border-radius: 11px; background: var(--accent); color: var(--cx-ink);
-    box-shadow: 0 3px 0 var(--accent-shadow); transition: transform 0.28s var(--cx-spring), background-color 0.2s, box-shadow 0.2s; }
-  #root .tl-bottom .cx-fab .cx-fab-ico svg { transition: transform 0.32s var(--cx-spring); }
+    box-shadow: 0 3px 0 var(--accent-shadow); transition: transform 0.15s ease-out, background-color 0.2s, box-shadow 0.2s; }
+  #root .tl-bottom .cx-fab .cx-fab-ico svg { transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1); }
   #root .tl-bottom .cx-fab:active .cx-fab-ico { transform: translateY(3px); box-shadow: none; }
   #root .tl-bottom .cx-fab.open .cx-fab-ico { background: var(--cx-ink); color: var(--accent); box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35); }
   #root .tl-bottom .cx-fab.open .cx-fab-ico svg { transform: rotate(135deg); }
@@ -263,9 +263,11 @@
 #root .cx-offline { margin: 8px auto; width: max-content; max-width: calc(100% - 24px); padding: 6px 14px; border-radius: 999px; background: #3A2A12; color: #FFD48A;
   border: 1.5px solid #6A5220; font-weight: 700; font-size: 13px; text-align: center; }
 /* Teacher phone «Más»: a sheet from the bottom with the sections that don't fit on the bar. */
-.cx-sheet-wrap { position: fixed; inset: 0; z-index: 60; background: rgba(5, 8, 6, 0.6); display: flex; align-items: flex-end; animation: cx-fade 0.2s var(--cx-ease); }
-.cx-sheet { width: 100%; max-width: 560px; margin: 0 auto; background: var(--surface); border: 1.5px solid var(--line); border-bottom: 0; border-radius: 28px 28px 0 0;
-  padding: 10px 16px calc(18px + env(safe-area-inset-bottom)); display: grid; gap: 8px; animation: cx-up 0.3s var(--cx-spring); }
+.cx-sheet-wrap { position: fixed; inset: 0; z-index: 700; background: rgba(5, 8, 6, 0.6); display: flex; align-items: flex-end; padding: 0 8px calc(84px + env(safe-area-inset-bottom)); animation: cx-fade 0.22s ease-out both; }
+.cx-sheet { width: 100%; max-width: 560px; margin: 0 auto; background: var(--surface); border: 1.5px solid var(--line); border-radius: 24px;
+  padding: 10px 16px 14px; display: grid; gap: 8px; animation: cx-sheet-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) both; will-change: transform, opacity; }
+.cx-sheet-wrap.leaving { animation: cx-fade-out 0.16s ease-in forwards; pointer-events: none; }
+.cx-sheet-wrap.leaving .cx-sheet { animation: cx-sheet-out 0.16s cubic-bezier(0.4, 0, 0.6, 1) forwards; }
 .cx-sheet-grip { width: 40px; height: 4px; border-radius: 9px; background: var(--line); justify-self: center; }
 .cx-sheet-me { display: grid; gap: 2px; padding: 4px 2px 6px; }
 .cx-sheet-me strong { font-weight: 800; font-size: 16px; }
@@ -407,19 +409,21 @@
 .na-item.na-kind .na-ico { background: var(--cx-ink); color: var(--k); width: 34px; height: 34px; border-radius: 12px; }
 .na-tarea { --k: #C8F04A; } .na-practica { --k: #5ED3B4; } .na-quiz { --k: #8AB4FF; } .na-simulacro { --k: #FFB547; } .na-papel { --k: #F59EC4; }
 .na-sep { grid-column: 1 / -1; height: auto; background: none; margin: 6px 4px 0; }
-/* Phone: the sheet rises out of «Crear» as a card above the bar, its cards popping in one after another. */
+/* Phone: the sheet slides up as a card above the bar and slides back down on close. Only opacity and a short
+   translate are animated (no scale, no overshoot, no per-card bounce): smooth even on a slow phone. */
 @media (max-width: 800px) {
-  body.na-open #root .tl-bottom { z-index: 720; }
+  body.na-open #root .tl-bottom, body.cx-more-open #root .tl-bottom { z-index: 720; }
   body.na-open .na-sheet { left: 8px; right: 8px; bottom: calc(84px + env(safe-area-inset-bottom)); max-height: calc(100dvh - 120px); border-radius: 24px; padding-bottom: 10px;
-    transform-origin: 50% 100%; animation: na-rise 0.34s var(--cx-spring, cubic-bezier(0.34, 1.56, 0.64, 1)); }
-  .na-sheet .na-item { animation: na-pop 0.36s var(--cx-spring, cubic-bezier(0.34, 1.56, 0.64, 1)) both; animation-delay: calc(var(--i, 0) * 35ms + 60ms); }
-  body.na-open .na-sheet.leaving, .na-sheet.leaving { animation: na-sink 0.2s cubic-bezier(0.4, 0, 1, 1) forwards; pointer-events: none; }
-  .na-sheet-wrap.leaving .na-backdrop { opacity: 0 !important; transition: opacity 0.2s; }
+    animation: cx-sheet-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) both; transition: none; will-change: transform, opacity; }
+  .na-sheet .na-item.na-kind { transform: none; }
+  body.na-open .na-sheet.leaving, .na-sheet.leaving { animation: cx-sheet-out 0.16s cubic-bezier(0.4, 0, 0.6, 1) forwards; pointer-events: none; }
+  .na-sheet-wrap .na-backdrop { animation: cx-fade 0.22s ease-out both; }
+  .na-sheet-wrap.leaving .na-backdrop { animation: cx-fade-out 0.16s ease-in forwards; }
 }
-@keyframes na-rise { from { opacity: 0; transform: translateY(40px) scale(0.6); } to { opacity: 1; transform: none; } }
-@keyframes na-sink { to { opacity: 0; transform: translateY(40px) scale(0.6); } }
-@keyframes na-pop { from { opacity: 0; transform: translateY(14px) scale(0.92); } }
-@media (prefers-reduced-motion: reduce) { .na-sheet, .na-sheet .na-item, .na-sheet.leaving { animation: none !important; } }
+@keyframes cx-sheet-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes cx-sheet-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(18px); } }
+@keyframes cx-fade-out { to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .na-sheet, .na-sheet.leaving, .na-backdrop, .cx-sheet, .cx-sheet-wrap { animation: none !important; } }
 .na-sep span { font: 800 12px var(--cx-display); text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-2); }
 .na-item:not(.na-kind) { grid-column: 1 / -1; border: 1.5px solid var(--line); border-radius: 16px; background: var(--surface-2); }
 .na-item:not(.na-kind) .na-ico { border-radius: 50%; }
