@@ -17,7 +17,7 @@ export default function ContextSwitcher({ contexts, value, onChange }) {
   useLayoutEffect(() => {
     if (!open) return undefined;
     const place = () => {
-      const phone = window.matchMedia("(max-width: 800px)").matches;
+      const phone = window.matchMedia ? window.matchMedia("(max-width: 800px)").matches : window.innerWidth <= 800;
       const r = ref.current?.getBoundingClientRect();
       setAt(phone || !r ? null : { top: r.bottom + 8, left: Math.max(12, Math.min(r.left, window.innerWidth - 392)) });
     };
