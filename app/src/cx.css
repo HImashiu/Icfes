@@ -458,3 +458,35 @@
 .td-scan-title { font-family: var(--cx-display); font-weight: 800; text-transform: uppercase; font-size: 20px; letter-spacing: -0.01em; padding: 2px 2px 6px; }
 .td-scan-title em { font-family: Newsreader, Georgia, serif; font-style: italic; font-weight: 600; text-transform: none; color: var(--accent); font-size: 1.1em; }
 .td-scan .cx-sheet-row svg { flex: none; color: var(--accent); }
+
+/* The owl on the green greeting cards peeks over the buttons (Juan 2026-11-14: standing front-on looked like a mug
+   shot). Only his head shows above the buttons' top edge and his wings hang over it; he rises when the card appears.
+   His mortarboard is the card's own green (#377B3A), so a cream die-cut outline (the landing's sticker owl) keeps it. */
+#root .td-hero .td-actions { grid-column: 1 / -1; position: relative; z-index: 1; }
+#root .td-hero .td-peek { grid-column: 2; grid-row: 1; align-self: end; justify-self: end; position: relative; z-index: 2;
+  margin: -4px 6px -14px 0; pointer-events: none; overflow: visible;
+  filter: drop-shadow(2px 0 0 var(--cx-cream)) drop-shadow(-2px 0 0 var(--cx-cream)) drop-shadow(0 -2px 0 var(--cx-cream)) drop-shadow(0 4px 4px rgba(0, 0, 0, 0.25)); }
+.owl-peek .o-rise { animation: owl-rise 0.9s cubic-bezier(0.3, 1.35, 0.5, 1) 0.25s backwards, owl-duck 9s ease-in-out 4s infinite; }
+.owl-peek .o-head { animation: owl-look 5.6s ease-in-out infinite; }
+.owl-peek .o-tassel { animation: owl-sway 2.8s ease-in-out infinite; }
+.owl-peek .o-hand { animation: owl-grip 0.9s cubic-bezier(0.3, 1.35, 0.5, 1) 0.45s backwards; }
+@keyframes owl-rise { from { transform: translateY(70%); } }
+@keyframes owl-grip { from { opacity: 0; transform-origin: 50% 100%; } }
+@keyframes owl-duck { 0%, 90%, 100% { transform: none; } 93% { transform: translateY(26%); } 96% { transform: translateY(-3%); } }
+/* Student Inicio: same owl, over the left end of the big button (phone) or the card's bottom edge (desktop). */
+#root .sh-hero { position: relative; }
+#root .sh-hero .sh-peek { grid-column: 1; grid-row: 1; align-self: end; position: relative; z-index: 2; pointer-events: none; overflow: visible;
+  margin: 0 0 -24px 2px; filter: drop-shadow(2px 0 0 var(--cx-cream)) drop-shadow(-2px 0 0 var(--cx-cream)) drop-shadow(0 -2px 0 var(--cx-cream)) drop-shadow(0 4px 4px rgba(0, 0, 0, 0.25)); }
+#root .sh-hero .primary { position: relative; z-index: 1; }
+@media (max-width: 600px) { #root .sh-hero .sh-peek { width: 84px; height: auto; margin-bottom: -16px; } }
+@media (min-width: 801px) {
+  #root .sh-hero { padding-bottom: 20px; }
+  #root .sh-hero .sh-peek { margin: 0 0 -30px; }
+}
+/* Desktop: the buttons sit in one row on the left, so he peeks over the card's bottom edge instead. */
+@media (min-width: 801px) {
+  #root .td-hero { padding-bottom: 20px; }
+  #root .td-hero .td-actions { grid-column: 1; }
+  #root .td-hero .td-peek { grid-row: 1 / span 2; margin: 0 8px -30px 0; width: 118px; height: auto; }
+}
+@media (prefers-reduced-motion: reduce) { .owl-peek .o-rise, .owl-peek .o-head, .owl-peek .o-tassel, .owl-peek .o-hand { animation: none; } }

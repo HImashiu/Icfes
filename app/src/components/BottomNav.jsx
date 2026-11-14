@@ -33,7 +33,7 @@ export default function BottomNav({ active, onGo, name, course, role = null }) {
       <div className="nav-brand">
         <span aria-hidden="true" className="nav-brand-mark"><Logo size={36} /><Wordmark height={20} /></span>
         <BetaPill />
-        <TourButton label="Tutorial de esta pantalla" onClick={() => window.dispatchEvent(new CustomEvent("condor:student-tour"))} />
+        <TourButton label="Ayuda" onClick={() => window.dispatchEvent(new CustomEvent("condor:student-tour"))} />
       </div>
       {ITEMS.map((item) => (
         <button

@@ -84,9 +84,8 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
   const [receipts, setReceipts] = useState(() => loadReceipts(profile.id));
   const [shownReceipt, setShownReceipt] = useState(null);
   const [bell, setBell] = useState(false);
-  // Tutorials: each section has its own, which opens by itself the first time the teacher visits it (once per
-  // teacher and device) and replays from «?». «Todas las funciones» lists every function and opens
-  // its section tutorial at that step. { id, start?, from? } or null.
+  // Guides: never open by themselves. «?» / Ayuda opens the list of every function ({ id: "completo" }); a function
+  // opens its section's guide at that step, on its own screen. { id, start?, from? } or null.
   const [tour, setTour] = useState(null);
   // A trial school (migration 0035): days and teacher seats left, so the end never comes as a surprise.
   const [trial, setTrial] = useState(null);
@@ -175,27 +174,14 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
   }, [menu]);
   const openGroup = (key) => { pickContext({ subject: null, courseId: null, group: key }); go({ section: "hoy" }); };
 
-  // A section's tutorial opens by itself on the first visit; a tour that moved through other sections marks them
-  // seen and does not set off the next one where it ends.
-  const routeKey = `${route.section}/${route.tab ?? ""}`;
-  const tourEnd = useRef(null);
+  // Guides open only when asked for (Juan 2026-11-14: "it should be called for, not put in your face"): the «?»
+  // button and Ayuda open the list of functions; a function takes you to its screen and shows it there.
   const closeTour = useCallback((done) => {
     setTour((t) => {
       if (t && t.id !== "completo") markTourSeen("docente", profile.id, t.id);
-      // A section opened from the list goes back to the list when it ends.
-      return t?.from === "completo" && done === true ? { id: "completo" } : null;
+      return null;
     });
-    tourEnd.current = routeKey;
-  }, [profile.id, routeKey]);
-  useEffect(() => {
-    if (!loaded || tour || tourEnd.current === routeKey) return undefined;
-    tourEnd.current = null;
-    const id = teacherTourId(route);
-    if (!id || tourSeen("docente", profile.id, id)) return undefined;
-    const t = setTimeout(() => setTour((cur) => cur ?? { id }), 450);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded, routeKey, tour]);
+  }, [profile.id]);
 
   // Any screen can ask for a tutorial by name (for example «Cómo hacer un cuadernillo» from Papel).
   useEffect(() => {
@@ -278,9 +264,6 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           <button type="button" className="t-nav cx-help-btn" aria-expanded={help} onClick={() => setHelp(!help)} title={rail ? "Ayuda" : undefined}>
             <span className="cx-help-q" aria-hidden="true">?</span><span>Ayuda</span>{demoEnabled && <i className="cx-help-dot" aria-label="Datos de ejemplo encendidos" />}<Icon name="right" size={14} strokeWidth={3} />
           </button>
-          <button type="button" className="t-nav" onClick={() => setTour({ id: teacherTourId(r) ?? "hoy" })} title={rail ? "Tutorial de esta sección" : undefined}>
-            <Icon name="play" size={18} strokeWidth={2.4} /><span>Tutorial de esta sección</span>
-          </button>
           <button type="button" className="t-nav" onClick={() => setTour({ id: "completo" })} title={rail ? "Todas las funciones" : undefined}>
             <Icon name="map" size={18} strokeWidth={2.4} /><span>Todas las funciones</span>
           </button>
@@ -309,8 +292,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
                 <strong>{profile.full_name || profile.email}</strong>
                 {trial && <span className="caption tl-menu-trial">Prueba gratis · {trialLine}</span>}
                 <button type="button" role="menuitem" onClick={() => { setMenu(false); go({ section: "cuenta" }); }}><Icon name="user" size={16} /> Mi cuenta y permisos</button>
-                <button type="button" role="menuitem" onClick={() => { setMenu(false); setTour({ id: teacherTourId(r) ?? "hoy" }); }}><Icon name="play" size={16} /> Tutorial de esta sección</button>
-                <button type="button" role="menuitem" onClick={() => { setMenu(false); setTour({ id: "completo" }); }}><Icon name="map" size={16} /> Todas las funciones</button>
+                <button type="button" role="menuitem" onClick={() => { setMenu(false); setTour({ id: "completo" }); }}><Icon name="map" size={16} /> Ayuda: todas las funciones</button>
                 <ExampleDataSwitch className="tl-menu-switch" />
                 <button type="button" role="menuitem" onClick={() => { setMenu(false); onExit(); }}><Icon name="left" size={16} /> App de estudiante</button>
               </span>
@@ -330,7 +312,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
             <Icon name="bolt" size={15} /><span>Juego en vivo</span>
           </button>
           <span className="tl-new-wrap" data-tour="new"><NewActivityMenu go={go} disabled={loaded && allCourses.length === 0} onLive={() => setLiveNew((n) => n + 1)} /></span>
-          <TourButton onClick={() => setTour({ id: teacherTourId(r) ?? "hoy" })} />
+          <TourButton label="Ayuda: todas las funciones" onClick={() => setTour({ id: "completo" })} />
           <span className="tl-bell-wrap" data-tour="bell"><Novedades receipts={receipts} open={bell} onToggle={(v) => { setBell(v); if (v) setReceipts(markSeen(profile.id)); }} onOpen={openReceipt} /></span>
         </header>
 
@@ -464,7 +446,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
             ))}
             <div className="cx-sheet-pair">
               <button type="button" className="secondary" onClick={() => { setMore(false); go({ section: "actividades", tab: "vivo" }); }}><Icon name="bolt" size={16} /> Juego en vivo</button>
-              <button type="button" className="secondary" onClick={() => { setMore(false); setTour({ id: teacherTourId(r) ?? "hoy" }); }}><Icon name="play" size={16} /> Tutorial</button>
+              <button type="button" className="secondary" onClick={() => { setMore(false); setTour({ id: "completo" }); }}><Icon name="map" size={16} /> Ayuda</button>
             </div>
             <ExampleDataSwitch className="tl-menu-switch" />
           </div>
@@ -481,7 +463,7 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           openTour: (id) => { markTourSeen("docente", profile.id, tour.id); setTour({ id }); },
         };
         if (tour.id === "completo") {
-          return <FeatureIndex sections={teacherFeatureIndex(ctx)} seen={(id) => tourSeen("docente", profile.id, id)}
+          return <FeatureIndex sections={teacherFeatureIndex(ctx)} here={teacherTourId(r)} seen={(id) => tourSeen("docente", profile.id, id)}
             onPick={(id, start) => setTour({ id, start, from: "completo" })} onClose={() => closeTour(false)} />;
         }
         const t = teacherTour(tour.id, { ...ctx, intro: !tour.from, first: tour.from ? null : ctx.first });
