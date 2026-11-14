@@ -230,7 +230,19 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
   // The sidebar folds down to an icon rail and back; the choice is remembered on this device.
   // Tutorial, every function and the example data live under one «Ayuda» entry (open while the example is on).
   const [help, setHelp] = useState(() => demoEnabled);
-  const [more, setMore] = useState(false);
+  const [more, setMoreNow] = useState(false);
+  // «Más» closes with its slide down first (like «Crear»); the bar stays above the dimmed page while it is open.
+  const [moreLeaving, setMoreLeaving] = useState(false);
+  const setMore = (v) => {
+    if (v) { setMoreLeaving(false); setMoreNow(true); return; }
+    if (!more || moreLeaving) return;
+    setMoreLeaving(true);
+    setTimeout(() => { setMoreLeaving(false); setMoreNow(false); }, 170);
+  };
+  useEffect(() => {
+    document.body.classList.toggle("cx-more-open", more);
+    return () => document.body.classList.remove("cx-more-open");
+  }, [more]);
   // The phone bar's «Crear» shows whether its sheet is open (the sheet lives in NewActivityMenu).
   const [fabOpen, setFabOpen] = useState(false);
   useEffect(() => {
@@ -444,12 +456,12 @@ export default function TeacherLive({ auth, exams, fetchExam, onExit }) {
           </button>
         </Fragment>))}
         {/* Biblioteca, Colegio, Cuenta and Ayuda don't fit on a phone bar: they live in the «Más» sheet. */}
-        <button type="button" data-tour="nav-mas" className={["biblioteca", "colegio", "cuenta"].includes(current) || more ? "on" : ""} aria-expanded={more} onClick={() => setMore(!more)}>
+        <button type="button" data-tour="nav-mas" className={["biblioteca", "colegio", "cuenta"].includes(current) || (more && !moreLeaving) ? "on" : ""} aria-expanded={more && !moreLeaving} onClick={() => setMore(!(more && !moreLeaving))}>
           <Icon name="menu" size={21} /><span>Más</span>
         </button>
       </nav>
       {more && (
-        <div className="cx-sheet-wrap" onClick={() => setMore(false)}>
+        <div className={moreLeaving ? "cx-sheet-wrap leaving" : "cx-sheet-wrap"} onClick={() => setMore(false)}>
           <div className="cx-sheet" role="dialog" aria-label="Más secciones" onClick={(e) => e.stopPropagation()}>
             <span className="cx-sheet-grip" aria-hidden="true" />
             <div className="cx-sheet-me"><strong>{profile.full_name || profile.email}</strong><span className="caption">{admin ? "Coordinación" : "Docente"}{trial ? ` · Prueba gratis · ${trialLine}` : ""}</span></div>

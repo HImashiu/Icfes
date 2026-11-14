@@ -177,7 +177,7 @@ export function NewActivityMenu({ go, disabled, onLive }) {
     if (!open || leaving) return;
     if (!phone() || box) { setOpen(false); return; }
     setLeaving(true);
-    setTimeout(() => { setLeaving(false); setOpen(false); }, 230);
+    setTimeout(() => { setLeaving(false); setOpen(false); }, 170);
   };
   useLayoutEffect(() => { if (open) place(); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
