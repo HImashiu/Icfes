@@ -133,7 +133,7 @@ export default function Login({ onBack, gate = false }) {
         ) : (
           <>
             <strong>Crea tu espacio docente</strong>
-            <span className="caption">Entra con tu Google y en un minuto tienes tus cursos, el banco de preguntas y tus primeros simulacros. Gratis durante la demostración, sin tarjeta.</span>
+            <span className="caption">Entra con tu Google y en un minuto tienes tus cursos, el banco de preguntas y tus primeros simulacros.</span>
             <label className="field login-code">
               <span className="label">¿Tu colegio te dio un código? (opcional)</span>
               <input value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" spellCheck={false} placeholder="CND-0000-0000-0000-0000" />

@@ -38,7 +38,7 @@ export default function TeacherCode({ onDone, error: firstError = null, open: st
       <strong>{mode === "trial" ? "Crea tu espacio docente" : "Entrar como docente"}</strong>
       {mode === "trial" ? (
         <>
-          <span className="caption">Tus cursos, el banco de preguntas, simulacros en línea y en papel. Gratis durante la demostración. Tu cuenta {auth.user?.email ? `(${auth.user.email}) ` : ""}pasa a ser de docente.</span>
+          <span className="caption">Tus cursos, el banco de preguntas, simulacros en línea y en papel. Tu cuenta {auth.user?.email ? `(${auth.user.email}) ` : ""}pasa a ser de docente.</span>
           <label className="field">
             <span className="label">Tu colegio</span>
             <input value={school} onChange={(e) => setSchool(e.target.value)} maxLength={120} autoComplete="organization" placeholder="Ej.: IE San José" />
