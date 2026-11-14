@@ -19,16 +19,22 @@ const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 const firstName = (p) => String(p.full_name || p.email || "").split(/[\s@]/)[0];
 
 // Hoy: the teacher's home. What needs attention first, then the week, each class and who needs support.
+// What Hoy last loaded for this api: coming back to Hoy shows it at once and refreshes quietly (no «Preparando tu día…» every time).
+const dayCache = new WeakMap();
+
 export default function Today({ api, profile, courses, readOnlyIds = [], assignments, ws, store, alertStore, receipts, subject, contextName, go, onOpenStudent, onOpenStudents, onOpenReceipt, onReinforce, onConvert, steps = [], onTour }) {
-  const [data, setData] = useState(null);
+  const [data, setData] = useState(() => dayCache.get(api) ?? null);
   const [error, setError] = useState(null);
+  const [scanPick, setScanPick] = useState(false);
   useEffect(() => {
     let alive = true;
+    if (dayCache.has(api)) setData(dayCache.get(api));
     (async () => {
       try {
         const [members, attempts] = await Promise.all([api.allMembers(), api.reportAttempts ? api.reportAttempts() : api.allAttempts()]);
+        dayCache.set(api, { members, attempts });
         if (alive) setData({ members, attempts });
-      } catch (e) { if (alive) setError(e.message); }
+      } catch (e) { if (alive && !dayCache.has(api)) setError(e.message); }
     })();
     return () => { alive = false; };
   }, [api]);
@@ -73,8 +79,35 @@ export default function Today({ api, profile, courses, readOnlyIds = [], assignm
   const k = m.kpis;
   const delta = (d) => (d == null ? null : `${d > 0 ? "+" : ""}${d}`);
 
+  // «Escanear hojas»: straight to the scanner of the paper activity (a short list first when there are several).
+  const paperList = (assignments ?? []).filter((a) => a.delivery === "paper" && !a.assignee_id && !readOnlyIds.includes(a.course_id))
+    .sort((a, b) => String(b.due_at ?? b.created_at ?? "").localeCompare(String(a.due_at ?? a.created_at ?? "")));
+  const openScan = (a) => { try { sessionStorage.setItem("condor:scan", a.id); } catch { /* private mode: the page still opens on En papel */ } setScanPick(false); go({ section: "actividad", id: a.id, tab: "papel" }); };
+  const scanStart = (list) => (list.length === 1 ? openScan(list[0]) : setScanPick(true));
+  const scanCourse = (id) => (courses ?? []).find((c) => c.id === id)?.name ?? "";
+
   return (
     <div className="td" style={{ "--ctx": tint }}>
+      {scanPick && (
+        <div className="cx-sheet-wrap" role="presentation" onClick={(e) => { if (e.target === e.currentTarget) setScanPick(false); }}>
+          <div className="cx-sheet td-scan" role="dialog" aria-label="Escanear hojas">
+            <span className="cx-sheet-grip" aria-hidden="true" />
+            <strong className="td-scan-title">¿De qué actividad son <em>las hojas?</em></strong>
+            {paperList.length ? paperList.slice(0, 8).map((a) => (
+              <button key={a.id} type="button" className="cx-sheet-row" onClick={() => openScan(a)}>
+                <Icon name="camera" size={20} />
+                <span><b>{a.title}</b><small>{[scanCourse(a.course_id), a.due_at ? `cierra ${new Date(a.due_at).toLocaleDateString("es-CO", { day: "numeric", month: "short" })}` : ""].filter(Boolean).join(" · ")}</small></span>
+              </button>
+            )) : (
+              <>
+                <p className="caption">Todavía no hay actividades en papel. Crea una, imprime las hojas de respuestas y después las escaneas aquí.</p>
+                <button type="button" className="primary" onClick={() => { setScanPick(false); go({ section: "actividades", tab: "nueva", preset: "papel" }); }}><Icon name="plus" size={18} /> Crear simulacro en papel</button>
+              </>
+            )}
+            <button type="button" className="secondary" onClick={() => setScanPick(false)}>Cancelar</button>
+          </div>
+        </div>
+      )}
       <section className="td-hero card">
         <div className="td-hello">
           {(() => { const n = m.attention.length + groupAlerts(shownAlerts).filter((a) => a.severity >= 3).length; const extra = [k.active ? `${k.active} ${k.active === 1 ? "actividad abierta" : "actividades abiertas"}` : "", m.fresh.length ? `${m.fresh.length} con resultados nuevos` : ""].filter(Boolean).join(" · "); return (<>
@@ -85,7 +118,7 @@ export default function Today({ api, profile, courses, readOnlyIds = [], assignm
         </div>
         <div className="td-actions">
           <button type="button" className="primary" onClick={() => go({ section: "actividades", tab: "nueva" })}><Icon name="plus" size={18} strokeWidth={2.8} /> Nueva actividad</button>
-          <button type="button" className="secondary" onClick={() => go({ section: "actividades", tab: "lista" })}><Icon name="camera" size={18} /> Escanear hojas</button>
+          <button type="button" className="secondary" onClick={() => scanStart(paperList)}><Icon name="camera" size={18} /> Escanear hojas</button>
           <button type="button" className="secondary" onClick={() => go({ section: "biblioteca", tab: "clases" })}><Icon name="play" size={18} /> Proyectar clase</button>
           <button type="button" className="secondary" onClick={() => go({ section: "actividades", tab: "vivo" })}><Icon name="bolt" size={18} /> Juego en vivo</button>
         </div>

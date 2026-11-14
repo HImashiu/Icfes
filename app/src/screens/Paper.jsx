@@ -175,6 +175,13 @@ function Scan({ api, assignment, bundle, questions, roster, plan, guard, setNoti
 
 // Sección “Papel”: simulacro impreso para colegios sin un dispositivo por estudiante.
 // Inside an activity page it works on that one assignment (fixedId) without its own header or picker.
+// Brings the scanner into view when it opens (it sits under the paper guide, so opening it looked like nothing happened).
+function ScrollHere() {
+  const ref = useRef(null);
+  useEffect(() => { const el = ref.current; if (el?.scrollIntoView) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 60); }, []);
+  return <span ref={ref} className="scroll-anchor" aria-hidden="true" style={{ display: "block", scrollMarginTop: 90 }} />;
+}
+
 export default function Paper({ api, assignments, fetchExam, guard, setNotice, fixedId = null, embedded = false, initialMode = null, onSaved = null }) {
   const choices = assignments.filter((a) => !a.assignee_id);
   const [id, setId] = useState(fixedId ?? choices[0]?.id ?? "");
@@ -262,6 +269,7 @@ export default function Paper({ api, assignments, fetchExam, guard, setNotice, f
           siblings={choices.filter((a) => a.id !== assignment.id && a.course_id === assignment.course_id)} loadSibling={loadSibling} />
       )}
       {mode === "chart" && bundle && plan && <SeatChartSheet plan={plan} names={Object.fromEntries(roster.map((m) => [m.id, m.full_name || m.email]))} title={assignment.title} course={course} onClose={() => setMode(null)} />}
+      {mode === "scan" && bundle && <ScrollHere />}
       {mode === "scan" && bundle && <Scan api={api} assignment={assignment} bundle={bundle} questions={questions} roster={roster} plan={plan} guard={guard} setNotice={setNotice} onSaved={onSaved} onClose={() => setMode(null)} />}
     </>
   );

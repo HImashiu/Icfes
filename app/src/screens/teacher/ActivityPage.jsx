@@ -34,7 +34,8 @@ export function activitySteps({ assignment, students, attempts, paper, model, no
 
 export default function ActivityPage({ api, profile, assignment, course, tab, go, models, reloadModels, fetchExam, guard, setNotice, reload, assignments, courses, onScanned, focusMember, onOpenStudent, readOnly = false, editableCourses = null, log, schoolMembers = [] }) {
   const [info, setInfo] = useState(null);
-  const [scanNow, setScanNow] = useState(false);
+  // A request to open the scanner: a counter, so pressing «Escanear hojas» again reopens it after it was closed.
+  const [scanNow, setScanNow] = useState(() => { try { if (sessionStorage.getItem("condor:scan") === assignment.id) { sessionStorage.removeItem("condor:scan"); return 1; } } catch { /* no storage */ } return 0; });
   const [version, setVersion] = useState(0);
   useEffect(() => {
     let alive = true;
@@ -60,7 +61,7 @@ export default function ActivityPage({ api, profile, assignment, course, tab, go
     return (assignments ?? []).filter((a) => a.id !== assignment.id && a.course_id !== assignment.course_id && sig(a) === sig(assignment))
       .map((a) => ({ assignment: a, course: (courses ?? []).find((c) => c.id === a.course_id) ?? null }));
   }, [assignments, courses, assignment]);
-  const scanned = ({ count, average }) => { setScanNow(false); setVersion((v) => v + 1); onScanned({ assignment, course, count, average }); };
+  const scanned = ({ count, average }) => { setScanNow(0); setVersion((v) => v + 1); onScanned({ assignment, course, count, average }); };
 
   return (
     <div className="ap" style={{ "--ctx": tint }}>
@@ -76,7 +77,7 @@ export default function ActivityPage({ api, profile, assignment, course, tab, go
         </div>
         <div className="ap-actions" data-tour="ap-actions">
           <button type="button" className="secondary" onClick={() => go({ section: "actividad", id: assignment.id, tab: "papel" })}><Icon name="print" size={18} /> Imprimir</button>
-          <button type="button" className="primary" onClick={() => { setScanNow(true); go({ section: "actividad", id: assignment.id, tab: "papel" }); }}><Icon name="camera" size={18} /> Escanear hojas</button>
+          <button type="button" className="primary" onClick={() => { setScanNow((n) => n + 1); go({ section: "actividad", id: assignment.id, tab: "papel" }); }}><Icon name="camera" size={18} /> Escanear hojas</button>
         </div>
       </header>
 

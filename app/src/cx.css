@@ -453,3 +453,8 @@
   .cx-ctx .ctx-classes { padding-left: 32px; }
 }
 @keyframes cx-rise { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Hoy › «Escanear hojas»: which paper activity the sheets belong to. */
+.td-scan-title { font-family: var(--cx-display); font-weight: 800; text-transform: uppercase; font-size: 20px; letter-spacing: -0.01em; padding: 2px 2px 6px; }
+.td-scan-title em { font-family: Newsreader, Georgia, serif; font-style: italic; font-weight: 600; text-transform: none; color: var(--accent); font-size: 1.1em; }
+.td-scan .cx-sheet-row svg { flex: none; color: var(--accent); }
