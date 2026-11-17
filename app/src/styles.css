@@ -2659,9 +2659,9 @@ body:has(.bottom-nav) .demo-banner { bottom: 84px; }
   .su-sessions { width: 100%; }
   .su-sessions .seg { flex: 1; }
 }
-/* Five items in the student bottom bar */
+/* Six items in the student bottom bar (Amigos added with migration 0052) */
 @media (max-width: 767px) {
-  .bottom-nav { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .bottom-nav { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .bottom-nav .nav-item { padding-left: 2px; padding-right: 2px; font-size: 11px; }
 }
 .sh-subject-top b, .sj-avg b, .task-score b { white-space: nowrap; }
