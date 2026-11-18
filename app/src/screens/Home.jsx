@@ -86,8 +86,8 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
         <div className="pills">
           <span className="pill" title="Racha"><Icon name="flame" size={16} className="flame-ico" /><b className="flame-text">{streak}</b></span>
           <span className="pill" title="XP"><Icon name="bolt" size={16} className="accent-ico" /><b className="accent-text">{fmtInt(xp)}</b></span>
-          {onFriends && <button type="button" className="pill sh-friends" data-tour="s-friends" onClick={onFriends} aria-label="Amigos y parches"><Icon name="users" size={16} /><b>Amigos</b></button>}
         </div>
+        {onFriends && <button type="button" className="ob-help sh-friends" data-tour="s-friends" onClick={onFriends} aria-label="Amigos" title="Amigos"><Icon name="users" size={18} /></button>}
         <TourButton className="sh-head-help" label="Ayuda" onClick={() => window.dispatchEvent(new CustomEvent("condor:student-tour"))} />
       </header>
 
