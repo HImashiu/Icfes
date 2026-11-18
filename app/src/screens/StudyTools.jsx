@@ -26,7 +26,8 @@ const byArea = (list) => {
   const rank = (k) => (AREA_ORDER.includes(k) ? AREA_ORDER.indexOf(k) : 99);
   return [...m.entries()].sort((x, y) => rank(x[0]) - rank(y[0]));
 };
-const bookName = (slug) => `Cuadernillo ${bookletCode(slug)} · Sesión ${sessionOf(slug)}`;
+// Past exams (ICFES-2014, ICFES-2020-2A…) have no session in their slug: no «Sesión null».
+const bookName = (slug) => { const n = sessionOf(slug); return `Cuadernillo ${bookletCode(slug)}${n ? ` · Sesión ${n}` : ""}`; };
 
 // Cuaderno de errores: cada pregunta fallada, con por qué crees que la fallaste, una nota tuya, la pregunta a la
 // vista con tu respuesta y la explicación, y rondas para practicar las pendientes. Solo lo ves tú.
