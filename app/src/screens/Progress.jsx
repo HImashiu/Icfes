@@ -85,11 +85,15 @@ function Summary({ ins, history, onPracticeArea, onNew }) {
 
         <div className="card sh-card">
           <div className="section-head"><span className="label">Tu evolución</span><span className="caption">últimos {rows.length} intentos</span></div>
-          <svg className="pg-line" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" role="img" aria-label="Porcentaje de aciertos en cada intento">
-            {[25, 50, 75].map((p) => <line key={p} x1="0" x2={w} y1={y(p)} y2={y(p)} stroke="var(--line)" strokeWidth="1" />)}
-            <polyline points={rows.map((r, i) => `${x(i)},${y(r.percent)}`).join(" ")} fill="none" stroke="var(--text-2)" strokeWidth="2" strokeLinejoin="round" opacity="0.6" />
-            {rows.map((r, i) => <circle key={r.id} cx={x(i)} cy={y(r.percent)} r="6" fill={contextColor(main(r))} stroke="var(--surface)" strokeWidth="2"><title>{`${r.title}: ${Math.round(r.percent)} %`}</title></circle>)}
-          </svg>
+          {/* The SVG stretches to the card's width (preserveAspectRatio none), so the points are drawn
+              as HTML dots on top of it: they stay round at every width. */}
+          <div className="pg-line" role="img" aria-label="Porcentaje de aciertos en cada intento">
+            <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" aria-hidden="true">
+              {[25, 50, 75].map((p) => <line key={p} x1="0" x2={w} y1={y(p)} y2={y(p)} stroke="var(--line)" strokeWidth="1" vectorEffect="non-scaling-stroke" />)}
+              <polyline points={rows.map((r, i) => `${x(i)},${y(r.percent)}`).join(" ")} fill="none" stroke="var(--text-2)" strokeWidth="2" strokeLinejoin="round" opacity="0.6" vectorEffect="non-scaling-stroke" />
+            </svg>
+            {rows.map((r, i) => <span key={r.id} className="pg-dot" style={{ left: `${(100 * x(i)) / w}%`, top: `${(100 * y(r.percent)) / h}%`, background: contextColor(main(r)) }} title={`${r.title}: ${Math.round(r.percent)} %`} />)}
+          </div>
           <div className="pg-legend">{ins.areas.map((a) => <span key={a.name}><span className="dot" style={{ background: a.color }} /> {areaShort(a.name)}</span>)}</div>
         </div>
 
@@ -176,12 +180,14 @@ function ScoreTrend({ summary, target }) {
   return (
     <div className="card sh-card">
       <div className="section-head"><span className="label">Tus simulacros completos</span><span className="caption">{rows.length} · de 0 a 500{target ? ` · meta ${target}` : ""}</span></div>
-      <svg className="pg-line" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" role="img" aria-label="Puntaje estimado de cada simulacro completo">
-        {Array.from({ length: (hi - lo) / 50 - 1 }, (_, k) => lo + 50 * (k + 1)).map((v) => <line key={v} x1="0" x2={w} y1={y(v)} y2={y(v)} stroke="var(--line)" strokeWidth="1" />)}
-        {target ? <line x1="0" x2={w} y1={y(target)} y2={y(target)} stroke="var(--flame)" strokeWidth="2" strokeDasharray="5 5" /> : null}
-        <polyline points={rows.map((r, i) => `${x(i)},${y(r.global)}`).join(" ")} fill="none" stroke="var(--accent-ink)" strokeWidth="3" strokeLinejoin="round" />
-        {rows.map((r, i) => <circle key={`${r.at}-${i}`} cx={x(i)} cy={y(r.global)} r="6" fill="var(--accent)" stroke="var(--surface)" strokeWidth="2"><title>{`${r.code}: ${r.global}`}</title></circle>)}
-      </svg>
+      <div className="pg-line" role="img" aria-label="Puntaje estimado de cada simulacro completo">
+        <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" aria-hidden="true">
+          {Array.from({ length: (hi - lo) / 50 - 1 }, (_, k) => lo + 50 * (k + 1)).map((v) => <line key={v} x1="0" x2={w} y1={y(v)} y2={y(v)} stroke="var(--line)" strokeWidth="1" vectorEffect="non-scaling-stroke" />)}
+          {target ? <line x1="0" x2={w} y1={y(target)} y2={y(target)} stroke="var(--flame)" strokeWidth="2" strokeDasharray="5 5" vectorEffect="non-scaling-stroke" /> : null}
+          <polyline points={rows.map((r, i) => `${x(i)},${y(r.global)}`).join(" ")} fill="none" stroke="var(--accent-ink)" strokeWidth="3" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+        </svg>
+        {rows.map((r, i) => <span key={`${r.at}-${i}`} className="pg-dot" style={{ left: `${(100 * x(i)) / w}%`, top: `${(100 * y(r.global)) / h}%`, background: "var(--accent)" }} title={`${r.code}: ${r.global}`} />)}
+      </div>
       <div className="pg-sims">
         {[...rows].reverse().slice(0, 4).map((r, i) => (
           <span key={`${r.at}-${i}`}><b>{r.global}</b><span className="caption">{r.code} · {new Date(r.at).toLocaleDateString("es-CO", { day: "numeric", month: "short" })}</span></span>
