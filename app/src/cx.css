@@ -326,11 +326,11 @@
 #root .ui-pop { border-radius: 20px; border: 1.5px solid var(--line); box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45); }
 #root .ui-option { border-radius: 12px; font-weight: 600; }
 #root .ui-option.selected { background: var(--accent); color: var(--cx-ink); }
-/* Text actions («Editar», «Uso», «+1 semana», «Vaciar»): small pill buttons, never underlined links. */
-#root .link { text-decoration: none; min-height: 36px; padding: 6px 14px; border-radius: 999px; border: 1.5px solid color-mix(in srgb, var(--accent) 45%, var(--line));
-  color: var(--accent-ink); background: color-mix(in srgb, var(--accent) 9%, transparent); font-weight: 800; font-size: 13.5px; align-items: center; gap: 6px;
+/* Text actions («Ver materias», «Editar», «Uso», «Vaciar»): plain bold text, no bubble (Juan 2026-11-18: «Sin burbuja»). */
+#root .link { text-decoration: none; min-height: 36px; padding: 6px 2px; border-radius: 6px; border: 0;
+  color: var(--accent-ink); background: none; font-weight: 800; font-size: 13.5px; align-items: center; gap: 6px;
   transition: background-color 0.15s, transform 0.15s var(--cx-spring); }
-#root .link:hover:not(:disabled) { background: var(--accent); color: var(--cx-ink); }
+#root .link:hover:not(:disabled) { background: none; color: var(--accent-ink); text-decoration: underline; text-underline-offset: 3px; }
 #root .link:active:not(:disabled) { transform: translateY(2px); }
 /* Links inside running text stay inline. */
 #root p .link, #root .caption .link, #root .tl-crumb .link, #root .t-exit, #root .lp-legal .link { border: 0; background: none; padding: 0; min-height: 0; border-radius: 0; text-decoration: underline; text-underline-offset: 3px; display: inline; }

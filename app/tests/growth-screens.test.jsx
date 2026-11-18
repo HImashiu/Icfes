@@ -9,7 +9,7 @@ vi.mock("../src/lib/usage.js", () => ({ visitorId: () => "11111111-1111-4111-811
 const { default: GrowthHome } = await import("../src/screens/growth/GrowthHome.jsx");
 const { default: GrowthProfile } = await import("../src/screens/growth/GrowthProfile.jsx");
 const { default: GrowthSurvey } = await import("../src/screens/growth/GrowthSurvey.jsx");
-const { default: Parche } = await import("../src/screens/growth/Parche.jsx");
+const { default: Friends } = await import("../src/screens/Friends.jsx");
 const { default: AdminGrowth } = await import("../src/screens/AdminGrowth.jsx");
 const { firstSteps, onSignedIn } = await import("../src/lib/growth/app.js");
 
@@ -57,14 +57,34 @@ describe("invitations", () => {
   });
 });
 
-describe("study groups", () => {
-  it("joins a group from its link", async () => {
+describe("study groups (Amigos › Parches, migration 0052)", () => {
+  const me = { code: "vale7k", name: "Valentina", share: "nada", streak: 0, today: false };
+  const empty = { me, friends: [], incoming: [], outgoing: [], cheers: [], invites: [] };
+  const overview = {
+    id: "g", code: "abc123", name: "Los de 11-B", weekly_goal: 300, mine: false, week_total: 0, streak: 0, today_done: false, missions_done: 0,
+    week_ends: "2026-11-22", missions: [{ id: "area", title: "Respondan 40 preguntas de Inglés entre todos", target: 40, progress: 0, done: false }],
+    members: [{ id: "u1", name: "Valentina", me: true, friend: false, today: false, days: 0, cheered: false }], challenges: [], activities: [],
+  };
+  it("joins a group from its link and opens it", async () => {
     let groups = [];
-    answers({ my_study_groups: () => groups, study_group_preview: { name: "Los de 11-B", members: 3, weekly_goal: 300 }, join_study_group: () => { groups = [{ id: "g", code: "abc123", name: "Los de 11-B", weekly_goal: 300, week_total: 0, members: [{ name: "Valentina", me: true, today: false, days: 0 }] }]; return { id: "g" }; } });
-    render(<Parche profile={student} code="abc123" onExit={() => {}} />);
-    fireEvent.click(await screen.findByText("Unirme"));
+    answers({
+      my_friends: empty, my_study_groups: () => groups, study_group_preview: { name: "Los de 11-B", members: 3, weekly_goal: 300 }, group_overview: overview,
+      join_study_group: () => { groups = [{ id: "g", code: "abc123", name: "Los de 11-B", weekly_goal: 300, week_total: 0, members: [] }]; return { id: "g" }; },
+    });
+    render(<Friends tab="parches" onTab={() => {}} joinCode="abc123" profileName="Valentina" />);
+    fireEvent.click(await screen.findByText("Unirme como Valentina"));
     await waitFor(() => expect(rpc).toHaveBeenCalledWith("join_study_group", { p_code: "abc123", p_display: "Valentina" }));
     expect(await screen.findByText("Valentina (tú)")).toBeTruthy();
+    expect(screen.getByText("Respondan 40 preguntas de Inglés entre todos")).toBeTruthy();
+  });
+  it("adds a friend by code", async () => {
+    answers({ my_friends: empty, my_study_groups: [], friend_code_preview: { name: "Camila", me: false }, add_friend: { status: "sent" } });
+    render(<Friends tab="amigos" onTab={() => {}} profileName="Valentina" />);
+    fireEvent.change(await screen.findByPlaceholderText("abc234"), { target: { value: "cami23" } });
+    expect(await screen.findByText("Vas a agregar a Camila.")).toBeTruthy();
+    fireEvent.click(screen.getByText("Agregar"));
+    await waitFor(() => expect(rpc).toHaveBeenCalledWith("add_friend", { p_code: "cami23" }));
+    expect(await screen.findByText("Le enviamos tu solicitud a Camila.")).toBeTruthy();
   });
 });
 

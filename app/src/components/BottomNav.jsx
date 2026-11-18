@@ -14,7 +14,7 @@ const ITEMS = [
 
 // Student navigation: bottom nav on phone, icon rail on tablet, labelled sidebar on desktop.
 // Materias holds each subject and every task; Practicar opens the setup screen; Progreso has the analysis, logros
-// and finished attempts.
+// and finished attempts. Amigos (friends and parches) opens from Inicio's header.
 // The active item uses the accent ink color.
 // Under the name: a student's curso; a teacher or coordinator who opens the student app sees their role, not the
 // list of every class they teach.

@@ -2659,7 +2659,7 @@ body:has(.bottom-nav) .demo-banner { bottom: 84px; }
   .su-sessions { width: 100%; }
   .su-sessions .seg { flex: 1; }
 }
-/* Five items in the student bottom bar */
+/* Five items in the student bottom bar (Amigos opens from Inicio's header) */
 @media (max-width: 767px) {
   .bottom-nav { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .bottom-nav .nav-item { padding-left: 2px; padding-right: 2px; font-size: 11px; }

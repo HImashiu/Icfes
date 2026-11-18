@@ -54,7 +54,8 @@ import AdminGrowth from "./screens/AdminGrowth.jsx";
 import GrowthHome from "./screens/growth/GrowthHome.jsx";
 import GrowthProfile from "./screens/growth/GrowthProfile.jsx";
 import GrowthSurvey from "./screens/growth/GrowthSurvey.jsx";
-import Parche from "./screens/growth/Parche.jsx";
+import Friends, { FriendsPulse } from "./screens/Friends.jsx";
+import { setDemoSample } from "./lib/friends.js";
 import { noteConsent, notePracticeDone, onSignedIn, registerServiceWorker } from "./lib/growth/app.js";
 import { noteAnswered } from "./lib/growth/events.js";
 import { localQuota, spendLocal } from "./lib/practiceQuota.js";
@@ -68,7 +69,7 @@ import { bookletsFor, condorDay, condorKeys, condorTaskRows } from "./lib/condor
 import Loading from "./components/Loading.jsx";
 
 // Screens where the public-demo notice shows (never inside an exam, a live game or the school tools).
-const LAUNCH_VIEWS = new Set(["home", "subjects", "setup", "progress", "profile", "login", "history", "results"]);
+const LAUNCH_VIEWS = new Set(["home", "subjects", "setup", "progress", "friends", "profile", "login", "history", "results"]);
 
 // A screen that throws must never leave a blank page: show a way back instead.
 class ScreenBoundary extends Component {
@@ -148,6 +149,23 @@ const MORE_PRACTICE = "5 preguntas más";
 // Screens that cannot show anything without an open booklet.
 const BOOKLET_VIEWS = new Set(["setup", "custom", "test", "results", "review"]);
 
+// Amigos without an account: friends and parches live on the server, so they need one.
+function FriendsSignIn({ onLogin }) {
+  return (
+    <section className="fr-screen">
+      <header className="screen-head"><h1>Amigos</h1></header>
+      <div className="card fr-empty">
+        <Mascot size={80} pose="happy" idle />
+        <div>
+          <strong>Practica con tus amigos</strong>
+          <span className="caption">Con una cuenta puedes agregar amigos, animarlos, llevar una racha juntos y armar un parche con misiones de la semana.</span>
+        </div>
+        <button type="button" className="primary" onClick={onLogin}>Entrar</button>
+      </div>
+    </section>
+  );
+}
+
 export default function App() {
   const rootAuth = useAuth();
   // Demo mode: the student side is one invented student of 11 A; the teacher side is the school's coordinator.
@@ -178,6 +196,7 @@ export default function App() {
   const [subjectTab, setSubjectTab] = useState("materias");
   const [subjectId, setSubjectId] = useState(null);
   const [progressTab, setProgressTab] = useState("resumen");
+  const [friendsTab, setFriendsTab] = useState("amigos");
   const [attempt, setAttempt] = useState(null);
   // Came from the landing's «Practicar gratis» (#empezar): straight into a first short practice once signed in.
   const [quickStart, setQuickStart] = useState(() => readQuickStart());
@@ -188,9 +207,24 @@ export default function App() {
   const quickAreaTried = useRef(false);
   // The founder's dashboard (#admin, #admin/personas…): only accounts in app_admins get data (migrations 0037, 0040).
   const [adminPage, setAdminPage] = useState(() => typeof window !== "undefined" && window.location.hash.startsWith("#admin"));
-  // Growth pages by address (docs/growth/LEDGER.md): #admin/crecimiento (control room), #parche[/código] (study groups).
+  // Growth pages by address (docs/growth/LEDGER.md): #admin/crecimiento (control room). Amigos (migration 0052):
+  // #amigos, #amigos/agregar/<código> (a friend's link), #amigos/parches, #parche/<código> (a parche's invitation).
   const [hashNow, setHashNow] = useState(() => (typeof window !== "undefined" ? window.location.hash : ""));
   useEffect(() => { const on = () => setHashNow(window.location.hash); window.addEventListener("hashchange", on); return () => window.removeEventListener("hashchange", on); }, []);
+  const friendsRoute = (() => {
+    const clean = (c) => (c || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 6) || null;
+    const parts = hashNow.replace(/^#/, "").split("/");
+    if (parts[0] === "parche") return { tab: "parches", join: clean(parts[1]) };
+    if (parts[0] !== "amigos") return null;
+    if (parts[1] === "agregar") return { tab: "amigos", add: clean(parts[2]) };
+    if (parts[1] === "parche") return { tab: "parches", join: clean(parts[2]) };
+    return { tab: parts[1] === "parches" ? "parches" : "amigos" };
+  })();
+  useEffect(() => {
+    if (!friendsRoute) return;
+    setFriendsTab(friendsRoute.tab);
+    setView("friends");
+  }, [hashNow]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const on = () => setAdminPage(window.location.hash.startsWith("#admin"));
     window.addEventListener("hashchange", on);
@@ -374,6 +408,13 @@ export default function App() {
     doneSent.current.add(attempt.startedAt);
     notePracticeDone({ mode: attempt.mode, n: Object.keys(attempt.answers ?? {}).length });
   }, [view, attempt]);
+
+  // The demo's group practice uses real questions of the open booklet.
+  useEffect(() => {
+    if (!demoEnabled || !selected || selected.slug === TEACHER_SLUG) return;
+    const sec = selected.exam.sections.find((x) => x.name === "Lectura crítica") ?? selected.exam.sections[0];
+    if (sec) setDemoSample({ slug: selected.slug, keys: sec.questions.slice(0, 8).map((q) => q.key), area: sec.name });
+  }, [selected]);
 
   // Usage statistics (migration 0037): this visit, and every question answered with an account.
   useEffect(() => { if (!demoEnabled) { trackVisit("app"); registerServiceWorker(); } }, []);
@@ -759,9 +800,6 @@ export default function App() {
     );
   }
   if (adminPage && signedIn && !demoEnabled && hashNow.startsWith("#admin/crecimiento")) return <AdminGrowth onExit={() => { history.replaceState(null, "", window.location.pathname); setAdminPage(false); }} />;
-  if (hashNow.startsWith("#parche") && signedIn && !demoEnabled) {
-    return <main className="app"><Parche profile={auth.profile} code={(hashNow.split("/")[1] || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 6) || null} onExit={() => { history.replaceState(null, "", window.location.pathname); setHashNow(""); }} /></main>;
-  }
   if (adminPage && signedIn && !demoEnabled) return <Founder onExit={() => { history.replaceState(null, "", window.location.pathname); setAdminPage(false); }} />;
   if (exams === null) return <Loading page label="Cargando…" />;
 
@@ -789,7 +827,7 @@ export default function App() {
   // The run is named by its area, not by the booklet it was drawn from.
   const examTitle = selected ? scopeTitle : "";
   // The sidebar stays on every screen except the test; results and review belong to Practicar, reports to Perfil.
-  const navView = { home: "home", subjects: "subjects", setup: "setup", results: "setup", review: "setup", custom: "setup", history: "progress", progress: "progress", profile: "profile", login: "profile", reports: "profile" }[view] ?? null;
+  const navView = { home: "home", subjects: "subjects", setup: "setup", results: "setup", review: "setup", custom: "setup", history: "progress", progress: "progress", friends: "home", profile: "profile", login: "profile", reports: "profile" }[view] ?? null;
   // A teacher or coordinator previewing the student app is not "in" the classes they teach: no course label.
   const staffView = signedIn && auth.profile?.role && auth.profile.role !== "student";
   const course = staffView ? null : studentCourses(classesFrom({ classes: myClasses, assignments: signedIn ? assigned.assignments : [] })).join(", ") || null;
@@ -809,7 +847,17 @@ export default function App() {
     if (to === "errors" || to === "plan") { setProgressTab(to === "errors" ? "errores" : "plan"); return setView("progress"); }
     if (to === "progress" || to === "history") { setProgressTab(to === "history" ? "historial" : "resumen"); return setView("progress"); }
     if (to === "setup") setPreset(null);
+    if (to === "friends" || to === "parches") { setFriendsTab(to === "parches" ? "parches" : "amigos"); return setView("friends"); }
+    // Leaving Amigos forgets its address, so a friend's link opened again later still lands there.
+    if (/^#(amigos|parche)/.test(window.location.hash)) { history.replaceState(null, "", window.location.pathname + window.location.search); setHashNow(""); }
     return setView(to);
+  };
+  // Práctica en parche: questions of one area from the open booklet (school-hidden ones left out), shuffled.
+  const pickGroupKeys = (area, n) => {
+    if (!selected || selected.slug === TEACHER_SLUG) return null;
+    const sec = withoutHidden(selected.exam, hidden, selected.slug).sections.find((s) => s.name === area);
+    const keys = [...(sec?.questions ?? [])].sort(() => Math.random() - 0.5).slice(0, n).map((q) => q.key);
+    return keys.length ? { slug: selected.slug, keys, area } : null;
   };
   const practiceArea = (area) => { setPreset({ scope: area, mode: "practice" }); setView("setup"); };
   const needsAttempt = view === "test" || view === "results" || view === "review";
@@ -855,12 +903,13 @@ export default function App() {
           assigned={signedIn ? assigned : null}
           onStartAssigned={startAssigned}
           condor={condor}
+          onFriends={() => go("friends")}
           realName={studentName}
           independent={signedIn && !auth.profile?.school_id}
           onLive={auth.status !== "demo" && auth.status !== "loading" ? () => { setLiveCode(""); setView("liveJoin"); } : null}
           liveGames={liveGames}
           onJoinGame={demoEnabled ? null : joinGame}
-          extra={demoEnabled ? null : <><GrowthHome signedIn={signedIn} onSetup={(p) => { setPreset(p); setView("setup"); }} onGo={go} />{signedIn && <GrowthSurvey profile={auth.profile} />}</>}
+          extra={<>{(signedIn || demoEnabled) && <FriendsPulse onOpen={(tab) => go(tab === "parches" ? "parches" : "friends")} />}{demoEnabled ? null : <><GrowthHome signedIn={signedIn} onSetup={(p) => { setPreset(p); setView("setup"); }} onGo={go} />{signedIn && <GrowthSurvey profile={auth.profile} />}</>}</>}
         />
       )}
 
@@ -973,6 +1022,11 @@ export default function App() {
         fetchExam={fetchExam} onPracticeKeys={startKeys} onGoal={() => go("profile")}
         onSimulacro={() => { setPreset({ scope: "all", mode: "timed" }); setView("setup"); }}
         onMix={() => selected && startKeys(selected.slug, mixedKeys(selected.exam), { label: "Mezcla de áreas", mode: "timed", perQuestionSec: 120 })} />}
+      {view === "friends" && (signedIn || demoEnabled
+        ? <Friends tab={friendsTab} onTab={setFriendsTab} profileName={studentName} addCode={friendsRoute?.add ?? null} joinCode={friendsRoute?.join ?? null}
+            groupAreas={selected && selected.slug !== TEACHER_SLUG ? selected.exam.sections.map((s) => s.name) : []}
+            pickKeys={pickGroupKeys} onPracticeKeys={(slug, keys, label) => startKeys(slug, keys, { label, mode: "practice" })} />
+        : <FriendsSignIn onLogin={() => setView("login")} />)}
       {view === "login" && <Login onBack={() => { justClaimed.current = true; setView("home"); }} />}
       {view === "history" && <History onBack={() => setView("home")} onNew={() => setView("setup")} onOpen={openFromHistory} />}
       {view === "reports" && <Reports onBack={() => setView("profile")} onPractice={() => setView("setup")} onOpen={openFromReport} />}
