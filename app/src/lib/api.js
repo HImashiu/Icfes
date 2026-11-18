@@ -294,11 +294,19 @@ export function createApi(client) {
     // Free practice's daily allowance (migration 0033). practiceQuota reads it; takePracticeQuestions takes up to n.
     async practiceQuota() {
       const q = unwrap(await client.rpc("practice_quota"));
-      return { used: q.used, limit: q.limit, remaining: q.remaining };
+      return { used: q.used, limit: q.limit, remaining: q.remaining, bonus: q.bonus ?? 0, pass: !!q.pass };
     },
     async takePracticeQuestions(n) {
       const r = unwrap(await client.rpc("take_practice_questions", { p_count: n }));
-      return { granted: r.granted, used: r.used, limit: r.limit, remaining: r.remaining };
+      return { granted: r.granted, used: r.used, limit: r.limit, remaining: r.remaining, bonus: r.bonus ?? 0, pass: !!r.pass };
+    },
+    // Full simulacros (migration 0053): a monthly allowance plus the ones earned by inviting friends. takeSimulacro
+    // starts (or reopens, free within 30 days) the simulacro of a cuadernillo; both sessions count as one.
+    async simulacroQuota() {
+      return unwrap(await client.rpc("simulacro_quota"));
+    },
+    async takeSimulacro(slug) {
+      return unwrap(await client.rpc("take_simulacro", { p_slug: slug }));
     },
 
     // Teacher-written questions. Row-level security returns the ones this person may read.

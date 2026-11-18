@@ -67,20 +67,21 @@ select pg_temp.as_user('00000000-0000-4000-8000-000000000002');
 select pg_temp.ok(claim_referral((select code from c)) = 'ok', 'Beto claims');
 select pg_temp.ok(claim_referral((select code from c)) = 'already', 'only once');
 select pg_temp.ok(claim_referral('nope-123') = 'unknown', 'unknown code');
-select pg_temp.ok((practice_quota() ->> 'bonus')::int = 10, 'invited account gets +10 its first week');
+-- Rewards changed in 0053 (supabase/tests/referral_rewards_0053.sql has the full rules): +40 the first week.
+select pg_temp.ok((practice_quota() ->> 'bonus')::int = 40, 'invited account gets the welcome bonus its first week');
 select pg_temp.as_user('00000000-0000-4000-8000-000000000004');
 select pg_temp.ok(claim_referral((select code from c), 'profe') = 'ok', 'teacher claims');
 select pg_temp.as_user('00000000-0000-4000-8000-000000000001');
 select pg_temp.ok((my_referrals() ->> 'invited')::int = 1 and (my_referrals() ->> 'teachers')::int = 1, 'my_referrals counts');
-select pg_temp.ok((my_referrals() ->> 'bonus')::int = 20, 'teacher bonus before activation');
+select pg_temp.ok((my_referrals() ->> 'bonus')::int = 0, 'a teacher counts once they create a course (0053)');
 reset role;
 insert into answer_log (user_id, attempt_id, exam_slug, qkey, area, answer, correct)
 select '00000000-0000-4000-8000-000000000002', 'a1', 'S11-A_1ra', g::text, 'Matemáticas', 'A', g % 2 = 0 from generate_series(1, 6) g;
 set local role authenticated;
 select pg_temp.as_user('00000000-0000-4000-8000-000000000001');
-select pg_temp.ok((my_referrals() ->> 'activated')::int = 1, 'activation after 5 answers');
-select pg_temp.ok((practice_quota() ->> 'limit')::int = 40 + 30, 'limit includes +10 friend +20 teacher');
-select pg_temp.ok((take_practice_questions(100) ->> 'granted')::int = 70, 'take uses the bonus');
+select pg_temp.ok((my_referrals() ->> 'activated')::int = 0, '6 answers on one day are not enough (0053)');
+select pg_temp.ok((practice_quota() ->> 'limit')::int = 40, 'no bonus before a friend is verified');
+select pg_temp.ok((take_practice_questions(100) ->> 'granted')::int = 40, 'take uses the plain limit');
 -- Too-old accounts can't claim.
 reset role;
 update profiles set created_at = now() - interval '30 days' where id = '00000000-0000-4000-8000-000000000003';

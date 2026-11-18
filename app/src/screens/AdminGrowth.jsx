@@ -20,6 +20,8 @@ function Table({ head, rows, empty = "Todavía no hay datos." }) {
   return <table><thead><tr>{head.map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{rows.length ? rows : <tr><td colSpan={head.length} className="caption">{empty}</td></tr>}</tbody></table>;
 }
 
+const REF_STATE = { ok: "Cuenta", practicing: "Practicando", same_device: "Mismo dispositivo", week_cap: "Tope semanal", void: "Anulada" };
+
 export default function AdminGrowth({ onExit }) {
   const [allowed, setAllowed] = useState(null);
   const [days, setDays] = useState(30);
@@ -31,8 +33,8 @@ export default function AdminGrowth({ onExit }) {
   const load = async () => {
     setError(null);
     try {
-      const names = ["admin_growth_overview", "admin_growth_funnel", "admin_experiment_readout", "admin_referrals", "admin_partners", "admin_leads", "admin_surveys", "admin_content_gaps", "admin_client_errors", "admin_web_vitals", "admin_item_stats", "admin_school_demand", "admin_short_links", "admin_testimonials", "admin_growth_events"];
-      const withDays = new Set(["admin_growth_overview", "admin_growth_funnel", "admin_referrals", "admin_leads", "admin_surveys", "admin_content_gaps", "admin_client_errors", "admin_web_vitals", "admin_growth_events"]);
+      const names = ["admin_growth_overview", "admin_growth_funnel", "admin_experiment_readout", "admin_referrals", "admin_partners", "admin_leads", "admin_surveys", "admin_content_gaps", "admin_client_errors", "admin_web_vitals", "admin_item_stats", "admin_school_demand", "admin_short_links", "admin_testimonials", "admin_growth_events", "admin_ref_review"];
+      const withDays = new Set(["admin_growth_overview", "admin_growth_funnel", "admin_referrals", "admin_leads", "admin_surveys", "admin_content_gaps", "admin_client_errors", "admin_web_vitals", "admin_growth_events", "admin_ref_review"]);
       const out = await Promise.all(names.map((n) => call(n, withDays.has(n) ? { p_days: days } : n === "admin_item_stats" ? { p_min: 20 } : {}).catch((e) => ({ __error: e.message }))));
       const firstErr = out.find((x) => x?.__error);
       if (firstErr && out.every((x) => x?.__error)) throw new Error(firstErr.__error);
@@ -94,6 +96,21 @@ export default function AdminGrowth({ onExit }) {
                   : <button type="button" className="link small" onClick={act(() => call("admin_set_experiment", { p_key: e.key, p_status: "running", p_winner: null }))}>Volver a correr</button>}
               </div>
             ))}
+          </Card>
+
+          <Card title="Verificar invitaciones" note="Quién invitó a quién y si cuenta (migración 0053). Anula las que no sean reales.">
+            <Table head={["Fecha", "Invitó", "Llegó", "Estado", "Práctica", "Ese día", ""]} empty="Sin invitaciones en este periodo."
+              rows={(d.ref_review ?? []).map((r) => (
+                <tr key={r.friend}>
+                  <td>{new Date(r.at).toLocaleDateString("es-CO", { day: "numeric", month: "short" })}</td>
+                  <td>{r.referrer_name ?? "—"}<br /><span className="caption">{r.referrer_email} · nivel {r.referrer_level ?? 0}</span></td>
+                  <td>{r.friend_name ?? "—"}{r.friend_role && r.friend_role !== "student" ? " (profe)" : ""}<br /><span className="caption">{r.friend_email}</span></td>
+                  <td>{REF_STATE[r.void ? "void" : r.state] ?? r.state}{r.void_note ? <><br /><span className="caption">{r.void_note}</span></> : null}</td>
+                  <td>{nf(r.answers)} resp. · {nf(r.days)} días</td>
+                  <td>{r.same_day > 2 ? <b>{r.same_day}</b> : r.same_day}</td>
+                  <td><button type="button" className="link" onClick={act(() => call("admin_void_referral", { p_friend: r.friend, p_void: !r.void, p_note: r.void ? null : "Anulada a mano" }))}>{r.void ? "Restaurar" : "Anular"}</button></td>
+                </tr>
+              ))} />
           </Card>
 
           <div className="au-two">

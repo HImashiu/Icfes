@@ -53,12 +53,13 @@ import Founder from "./screens/Founder.jsx";
 import AdminGrowth from "./screens/AdminGrowth.jsx";
 import GrowthHome from "./screens/growth/GrowthHome.jsx";
 import GrowthProfile from "./screens/growth/GrowthProfile.jsx";
+import InvitePanel, { InviteNudge } from "./screens/growth/Rewards.jsx";
 import GrowthSurvey from "./screens/growth/GrowthSurvey.jsx";
 import Friends, { FriendsPulse } from "./screens/Friends.jsx";
 import { setDemoSample } from "./lib/friends.js";
 import { noteConsent, notePracticeDone, onSignedIn, registerServiceWorker } from "./lib/growth/app.js";
 import { noteAnswered } from "./lib/growth/events.js";
-import { localQuota, spendLocal } from "./lib/practiceQuota.js";
+import { localQuota, spendLocal, takeLocalSimulacro } from "./lib/practiceQuota.js";
 import { drawPractice, randomSeed } from "./lib/practiceDraw.js";
 import { resolveModel, xpFactor } from "./lib/grading.js";
 import { attemptForAssignment, attemptRow, attemptsLeft, kindMode, questionsForAttempt, revealAllowed } from "./lib/assignments.js";
@@ -220,6 +221,8 @@ export default function App() {
     if (parts[1] === "parche") return { tab: "parches", join: clean(parts[2]) };
     return { tab: parts[1] === "parches" ? "parches" : "amigos" };
   })();
+  // #invitar: «Invita y estudia más» (migration 0053).
+  useEffect(() => { if (hashNow === "#invitar") setView("invite"); }, [hashNow]);
   useEffect(() => {
     if (!friendsRoute) return;
     setFriendsTab(friendsRoute.tab);
@@ -451,7 +454,7 @@ export default function App() {
     if (slug !== TEACHER_SLUG) {
       const left = await readQuota();
       if (left.remaining < keys.length) {
-        return setOpenError(left.remaining > 0 ? `Hoy te quedan ${left.remaining} preguntas de práctica. Elige hasta ${left.remaining}.` : "Hoy ya usaste tus preguntas de práctica. Vuelve mañana.");
+        return left.remaining > 0 ? setOpenError(`Hoy te quedan ${left.remaining} preguntas de práctica. Elige hasta ${left.remaining}.`) : outOf("Hoy ya usaste tus preguntas de práctica. Vuelve mañana o invita amigos para tener más.");
       }
       setQuota(await takeQuota(keys.length));
     }
@@ -479,6 +482,16 @@ export default function App() {
     }
     return spendLocal(want);
   };
+  // Full simulacros (migration 0053): a monthly allowance plus the ones friends earn. Staff are never limited.
+  const takeSimulacro = async (slug) => {
+    if (signedIn && auth.profile?.role && auth.profile.role !== "student") return { granted: true };
+    if (signedIn && auth.api) {
+      try { return await auth.api.takeSimulacro(slug); } catch { /* fall back to this browser */ }
+    }
+    return takeLocalSimulacro(slug);
+  };
+  // When the day's questions or the month's simulacros run out: the way to get more.
+  const outOf = (text) => setOpenError(<InviteNudge text={text} onInvite={() => { setOpenError(null); go(signedIn ? "invite" : "login"); }} />);
   useEffect(() => {
     if (view === "setup" || view === "home" || view === "custom") readQuota().then(setQuota).catch(() => null);
   }, [view, readQuota]);
@@ -493,11 +506,24 @@ export default function App() {
     if (free.held && pool.length === 0) return setOpenError("Tu colegio reservó estas preguntas para un simulacro. Elige otro cuadernillo.");
     const simulacro = mode === "timed" && scope === "all";
     let drawn = null;
+    if (simulacro) {
+      startingRef.current = true;
+      try {
+        const sim = await takeSimulacro(selected.slug);
+        if (!sim.granted) {
+          return outOf(signedIn
+            ? "Ya usaste los simulacros completos que tenías. Cada amigo que invitas te da 2 más."
+            : "Ya hiciste el simulacro completo de este mes. Entra con tu cuenta e invita amigos para tener más.");
+        }
+      } finally {
+        startingRef.current = false;
+      }
+    }
     if (!simulacro) {
       startingRef.current = true;
       try {
         const took = await takeQuota(pool.length);
-        if (took.granted === 0) return setOpenError("Hoy ya usaste tus preguntas de práctica. Vuelve mañana.");
+        if (took.granted === 0) return outOf("Hoy ya usaste tus preguntas de práctica. Vuelve mañana o invita amigos para tener más.");
         setQuota(took);
         drawn = drawPractice(pool, took.granted, { areaOrder: scope === "all" ? order : null, seed: randomSeed() });
       } finally {
@@ -632,7 +658,7 @@ export default function App() {
     if (!t || t.kind === "preview") return;
     if (t.kind === "simulacro") { setPreset({ scope: "all", mode: "timed" }); return setView("setup"); }
     const left = await readQuota();
-    if (left.remaining <= 0) return setOpenError("Hoy ya usaste tus preguntas de práctica. Cóndor te deja la tarea lista para mañana.");
+    if (left.remaining <= 0) return outOf("Hoy ya usaste tus preguntas de práctica. Cóndor te deja la tarea lista para mañana.");
     const count = Math.min(t.count ?? 10, left.remaining);
     const opts = { label: a.title, mode: t.mode, condor: t };
     if (t.kind === "review") return startKeys(t.slug, t.keys.slice(0, count), opts);
@@ -827,7 +853,7 @@ export default function App() {
   // The run is named by its area, not by the booklet it was drawn from.
   const examTitle = selected ? scopeTitle : "";
   // The sidebar stays on every screen except the test; results and review belong to Practicar, reports to Perfil.
-  const navView = { home: "home", subjects: "subjects", setup: "setup", results: "setup", review: "setup", custom: "setup", history: "progress", progress: "progress", friends: "home", profile: "profile", login: "profile", reports: "profile" }[view] ?? null;
+  const navView = { home: "home", subjects: "subjects", setup: "setup", results: "setup", review: "setup", custom: "setup", history: "progress", progress: "progress", friends: "home", invite: "profile", profile: "profile", login: "profile", reports: "profile" }[view] ?? null;
   // A teacher or coordinator previewing the student app is not "in" the classes they teach: no course label.
   const staffView = signedIn && auth.profile?.role && auth.profile.role !== "student";
   const course = staffView ? null : studentCourses(classesFrom({ classes: myClasses, assignments: signedIn ? assigned.assignments : [] })).join(", ") || null;
@@ -929,6 +955,7 @@ export default function App() {
           onBack={() => setView("home")}
           onStart={startAttempt}
           quota={quota}
+          onInvite={signedIn && auth.profile?.role === "student" ? () => go("invite") : null}
           pendingKeys={pendingKeys(selected.slug, selected.exam)}
           onRepechaje={() => startRepechaje(pendingKeys(selected.slug, selected.exam))}
         />
@@ -1026,6 +1053,9 @@ export default function App() {
         ? <Friends tab={friendsTab} onTab={setFriendsTab} profileName={studentName} addCode={friendsRoute?.add ?? null} joinCode={friendsRoute?.join ?? null}
             groupAreas={selected && selected.slug !== TEACHER_SLUG ? selected.exam.sections.map((s) => s.name) : []}
             pickKeys={pickGroupKeys} onPracticeKeys={(slug, keys, label) => startKeys(slug, keys, { label, mode: "practice" })} />
+        : <FriendsSignIn onLogin={() => setView("login")} />)}
+      {view === "invite" && (signedIn
+        ? <InvitePanel profile={auth.profile} onBack={() => { if (window.location.hash === "#invitar") { history.replaceState(null, "", window.location.pathname + window.location.search); setHashNow(""); } go("home"); }} />
         : <FriendsSignIn onLogin={() => setView("login")} />)}
       {view === "login" && <Login onBack={() => { justClaimed.current = true; setView("home"); }} />}
       {view === "history" && <History onBack={() => setView("home")} onNew={() => setView("setup")} onOpen={openFromHistory} />}
