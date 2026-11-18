@@ -42,6 +42,7 @@ import { GlossaryProvider } from "./components/Glossary.jsx";
 import { loadHistory } from "./lib/local.js";
 import { demoEnabled } from "./demo/mode.js";
 import Tour, { markTourSeen, tourSeen } from "./components/tour/Tour.jsx";
+import WelcomeInvite, { markWelcomeInviteSeen, welcomeInviteSeen } from "./components/tour/WelcomeInvite.jsx";
 import { studentFeatureIndex, studentTour, studentTourId, studentTourView } from "./lib/tours.jsx";
 import FeatureIndex from "./components/tour/FeatureIndex.jsx";
 import { pendingMisses, repechajeKeys } from "./lib/repechaje.js";
@@ -364,22 +365,12 @@ export default function App() {
     if (auth.status === "ready") {
       let pending = false;
       try { pending = sessionStorage.getItem("icfes-login-pending") === "1"; sessionStorage.removeItem("icfes-login-pending"); } catch { /* blocked */ }
-      // Students land on a first practice (no history yet in this browser) or on Inicio; staff on their profile.
-      if (pending && view === "home" && !quickStart) {
-        if (auth.profile?.role !== "student") setView("profile");
-        else if (loadHistory().length === 0) setQuickStart(true);
-      }
+      // Students land on Inicio (the main menu, Juan 2026-11-18: a random first question confused people); staff on
+      // their profile.
+      if (pending && view === "home" && !quickStart && auth.profile?.role !== "student") setView("profile");
     }
   }, [auth.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // A new account was just created on Ingresar: a student with no practice yet goes straight to a first practice
-  // (teachers are taken to their panel by the effect above).
-  const justClaimed = useRef(false);
-  useEffect(() => {
-    if (!justClaimed.current || auth.status !== "ready") return;
-    justClaimed.current = false;
-    if (auth.profile?.role === "student" && loadHistory().length === 0) setQuickStart(true);
-  }, [auth.status, auth.profile]);
 
   // Open the first exam once the index is known, preferring one that has Inglés (the 1ra booklets have none).
   useEffect(() => {
@@ -577,6 +568,23 @@ export default function App() {
     auth.api.myConsents().then(setConsents).catch(() => setConsents([{ kind: "terms", version: CONSENT_VERSION }]));
   }, [signedIn, auth.api]);
 
+  // First visit: Inicio opens (never a question by itself) and the Inicio guide is offered once, after the page has
+  // settled. Not over the terms, a guide already open, a sign-in in progress, staff, or someone who already practiced.
+  const [welcome, setWelcome] = useState(false);
+  const welcomeReady = view === "home" && !demoEnabled && !welcome && !studentTourOpen && !studentHelp && !quickStart
+    && auth.status !== "loading" && auth.status !== "needs-profile"
+    && (auth.status !== "ready" || (auth.profile?.role === "student" && consents !== null && !needsTerms(consents)));
+  useEffect(() => {
+    if (!welcomeReady || welcomeInviteSeen() || tourSeen("estudiante", tourUid, "inicio") || loadHistory().length > 0) return;
+    const t = setTimeout(() => setWelcome(true), 700);
+    return () => clearTimeout(t);
+  }, [welcomeReady, tourUid]);
+  const closeWelcome = useCallback((tutorial) => {
+    markWelcomeInviteSeen();
+    setWelcome(false);
+    if (tutorial) setStudentTourOpen({ id: "inicio", start: 0 });
+  }, []);
+
   // «Practicar gratis» from the landing: once there is an account, a booklet open and the terms accepted, five
   // questions (one per area) start right away, no menus in between.
   useEffect(() => {
@@ -599,8 +607,8 @@ export default function App() {
       setView("setup");
       return;
     }
-    // From an area card on the landing: five questions of that test. If the open booklet has none (Inglés is only in
-    // Sesión 2), a booklet that has it opens first.
+    // From an area card on the landing: that test's practice screen (the person picks how many and starts; no question
+    // opens by itself). If the open booklet has none (Inglés is only in Sesión 2), a booklet that has it opens first.
     if (quickArea && selected.slug !== TEACHER_SLUG) {
       const hasArea = (names) => (names ?? []).some((n) => testOf(n)?.id === quickArea);
       if (!hasArea(selected.exam.sections.map((s) => s.name)) && !quickAreaTried.current) {
@@ -609,19 +617,18 @@ export default function App() {
         if (pool.length) { openExam(pool[Math.floor(Math.random() * pool.length)].slug); return; }
       }
       const sec = withoutHidden(selected.exam, hidden, selected.slug).sections.find((s) => testOf(s.name)?.id === quickArea);
-      const areaKeys = sec ? [...sec.questions].sort((a, b) => textLength(a) - textLength(b)).slice(0, Math.max(5, Math.ceil(sec.questions.length / 2))).sort(() => Math.random() - 0.5).slice(0, 5).map((q) => q.key) : [];
-      if (areaKeys.length) {
+      if (sec) {
         setQuickStart(false);
         clearQuickStart();
-        startKeys(selected.slug, areaKeys, { label: FIRST_PRACTICE, mode: "practice" });
+        setPreset({ scope: sec.name, mode: "practice" });
+        setView("setup");
         return;
       }
     }
+    // Plain «Practicar gratis» / «Entrar»: Inicio, the main menu. No question opens by itself (Juan 2026-11-18); a
+    // first-time visitor is offered the tutorial there and «Tu primera práctica» is one tap away.
     setQuickStart(false);
     clearQuickStart();
-    if (selected.slug === TEACHER_SLUG) return;
-    const keys = quickKeys(withoutHidden(selected.exam, hidden, selected.slug), 5);
-    if (keys.length) startKeys(selected.slug, keys, { label: FIRST_PRACTICE, mode: "practice" });
   }, [quickStart, quickExam, quickArea, quickQuestion, exams, signedIn, selected, opening, attempt, consents]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Profesor Cóndor's tasks (students with no teacher, lib/condorTeacher.js). A review brings its own keys; an area or
@@ -1027,7 +1034,7 @@ export default function App() {
             groupAreas={selected && selected.slug !== TEACHER_SLUG ? selected.exam.sections.map((s) => s.name) : []}
             pickKeys={pickGroupKeys} onPracticeKeys={(slug, keys, label) => startKeys(slug, keys, { label, mode: "practice" })} />
         : <FriendsSignIn onLogin={() => setView("login")} />)}
-      {view === "login" && <Login onBack={() => { justClaimed.current = true; setView("home"); }} />}
+      {view === "login" && <Login onBack={() => setView("home")} />}
       {view === "history" && <History onBack={() => setView("home")} onNew={() => setView("setup")} onOpen={openFromHistory} />}
       {view === "reports" && <Reports onBack={() => setView("profile")} onPractice={() => setView("setup")} onOpen={openFromReport} />}
       {view === "teacher" && (rootAuth.status === "ready" && rootAuth.profile.role !== "student"
@@ -1059,6 +1066,7 @@ export default function App() {
             setStudentTourOpen({ id, start });
           }} />
       )}
+      {welcome && view === "home" && <WelcomeInvite name={studentName} onTutorial={() => closeWelcome(true)} onClose={() => closeWelcome(false)} />}
       {studentTourOpen && view !== "teacher" && (() => {
         const t = studentTour(studentTourOpen.id, { name: studentName, signedIn });
         return <Tour key={`${studentTourOpen.id}:${studentTourOpen.start}`} label={t.label} steps={t.steps} start={studentTourOpen.start} onClose={closeStudentTour} />;
