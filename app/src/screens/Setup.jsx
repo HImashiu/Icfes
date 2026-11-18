@@ -30,7 +30,7 @@ function initialScope(exam, preset) {
   return exam.sections[0]?.name ?? "all";
 }
 
-export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, preset, pendingKeys = [], onRepechaje, onCustom, quota = null }) {
+export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, preset, pendingKeys = [], onRepechaje, onCustom, quota = null, onInvite = null }) {
   const [scope, setScope] = useState(() => initialScope(exam, preset));
   const [mode, setMode] = useState(preset?.mode ?? "practice");
   // Switching booklets can drop the chosen area (1ra booklets have no Inglés): fall back to the whole booklet.
@@ -182,9 +182,9 @@ export default function Setup({ exam, slug, onStart, onBack, exams, onPickExam, 
               );
             })}
           </div>
-          {!full && quota && <span className="caption">Práctica de hoy: quedan {fmtInt(quota.remaining)} de {fmtInt(quota.limit)} preguntas.</span>}
+          {!full && quota && <span className="caption">{quota.pass ? "Práctica de hoy: tienes el Pase total, sin límite de preguntas." : <>Práctica de hoy: quedan {fmtInt(quota.remaining)} de {fmtInt(quota.limit)} preguntas.</>}{onInvite && !quota.pass && <> <button type="button" className="link" onClick={onInvite}>Consigue más invitando amigos</button></>}</span>}
           {trimmed && runSize > 0 && <span className="caption">Salen al azar: {fmtInt(runSize)} de {fmtInt(scoped.length)} preguntas.</span>}
-          {runSize === 0 && <span className="caption">Llegaste al límite de hoy. Vuelve mañana: las preguntas de práctica se renuevan cada día.</span>}
+          {runSize === 0 && <span className="caption">Llegaste al límite de hoy. Vuelve mañana: las preguntas de práctica se renuevan cada día.{onInvite && <> <button type="button" className="link" onClick={onInvite}>Invita amigos y estudia más</button></>}</span>}
           {lastHere && <span className="caption">La última vez aquí: {Math.round(lastHere.percent)} % · {new Date(lastHere.at).toLocaleDateString("es-CO", { day: "numeric", month: "short" })}</span>}
           {pendingKeys.length > 0 && <span className="caption">{pendingKeys.length} {pendingKeys.length === 1 ? "pregunta fallada espera" : "preguntas falladas esperan"} repechaje.</span>}
         </div>

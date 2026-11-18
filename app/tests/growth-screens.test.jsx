@@ -46,12 +46,27 @@ describe("invitations", () => {
     expect(localStorage.getItem("condor:ref")).toBeNull();
     expect(localStorage.getItem("condor:signed")).toBe("1");
   });
-  it("shows the student's link, WhatsApp invite and bonus on Perfil", async () => {
-    answers({ my_referral_code: "valentina-k7d", my_referrals: { code: "valentina-k7d", invited: 3, activated: 2, teachers: 0, bonus: 20 }, certificate_progress: { answered: 40, areas: 2, days: 2, need: { answered: 150, areas: 3, days: 5 } }, partner_stats: [] });
+  it("shows the student's link, WhatsApp invite, level and each friend's state on Perfil (migration 0053)", async () => {
+    answers({
+      my_referral_code: "valentina-k7d",
+      my_referrals: {
+        code: "valentina-k7d", invited: 3, activated: 1, teachers: 0, bonus: 40,
+        reward: { points: 1, level: 1, pass_until: null, bonus: 40, questions: 80, simulacro_extra: 2 },
+        simulacros: { month_limit: 1, month_used: 0, extra: 2, extra_used: 0, remaining: 3, unlimited: false },
+        friends: [{ name: "Beto", teacher: false, state: "ok", answers: 20, days: 2 }, { name: "Caro", teacher: false, state: "practicing", answers: 12, days: 1 },
+          { name: "Dani", teacher: false, state: "same_device", answers: 20, days: 2 }],
+        rules: { answers: 20, days: 2, l1: 1, l2: 3, l3: 5 },
+      },
+      certificate_progress: { answered: 40, areas: 2, days: 2, need: { answered: 150, areas: 3, days: 5 } }, partner_stats: [],
+    });
     render(<GrowthProfile profile={student} />);
     expect(await screen.findByText(/r\/valentina-k7d/)).toBeTruthy();
     expect(screen.getByText("Invitar por WhatsApp").getAttribute("href")).toContain("wa.me");
-    expect(await screen.findByText("+20")).toBeTruthy();
+    expect(await screen.findByText("Ya cuenta")).toBeTruthy();
+    expect(screen.getByText("Le falta: 8 preguntas y practicar otro día")).toBeTruthy();
+    expect(screen.getByText("No cuenta: usó tu mismo celular")).toBeTruthy();
+    expect(screen.getByText("80")).toBeTruthy();
+    expect(screen.getByText(/faltan/).textContent).toContain("2 amigos");
     expect(screen.getByText("40 de 150 preguntas")).toBeTruthy();
     expect(screen.getByText("Crear mi certificado").disabled).toBe(true);
   });

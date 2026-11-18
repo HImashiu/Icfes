@@ -60,7 +60,7 @@ const SITE = typeof window !== "undefined" ? `${window.location.origin}/` : "htt
 export const inviteLink = (code, via = "amigo") => (via === "amigo" ? `${SITE}r/${code}` : `${SITE}?ref=${code}&via=${via}`);
 export const whatsapp = (text) => `https://wa.me/?text=${encodeURIComponent(text)}`;
 export function inviteMessage(code, name) {
-  return `${name ? `${name} te invita: ` : ""}practica el ICFES con preguntas reales en Cóndor. Con mi enlace los dos tenemos preguntas extra al día: ${inviteLink(code)}`;
+  return `${name ? `${name} te invita: ` : ""}practica el ICFES con preguntas reales en Cóndor. Entrando con mi enlace tienes el doble de preguntas tu primera semana y un simulacro completo extra: ${inviteLink(code)}`;
 }
 export function teacherMessage(code) {
   return `Profe, estoy practicando el ICFES en Cóndor con preguntas reales de cuadernillos del ICFES. Tiene un espacio para docentes con diagnóstico del curso, tareas por prueba y simulacros en papel. Se lo recomiendo: ${SITE}prueba-docente/?ref=${code}&via=profe`;

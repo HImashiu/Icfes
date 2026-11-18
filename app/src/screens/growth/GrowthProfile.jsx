@@ -6,15 +6,16 @@ import { loadGoal } from "../../lib/goal.js";
 import { loadHistory } from "../../lib/local.js";
 import { icsCalendar, practiceReminders } from "../../lib/growth/tools-core.js";
 import {
-  canInstall, certificateLink, certificateProgress, createMyFamilyReport, disablePush, enablePush, inviteLink, inviteMessage,
-  isInstalled, isIos, issueCertificate, myReferralCode, partnerStats, myReferrals, mySchoolName, onInstallChange, promptInstall, pushStatus,
+  canInstall, certificateLink, certificateProgress, createMyFamilyReport, disablePush, enablePush,
+  isInstalled, isIos, issueCertificate, myReferralCode, partnerStats, mySchoolName, onInstallChange, promptInstall, pushStatus,
   pushSupported, setMySchoolName, teacherMessage, whatsapp,
 } from "../../lib/growth/app.js";
 import { track } from "../../lib/growth/events.js";
+import InvitePanel from "./Rewards.jsx";
 import "./growth.css";
 
 // Growth cards on the student's Perfil (docs/growth/LEDGER.md):
-//   F8  Invita a tus amigos: personal link and code, extra daily questions for both when the friend practices
+//   F8  Invita y estudia más (Rewards.jsx, migration 0053): link, levels, each friend's state
 //   F9  Recomiéndale Cóndor a tu profe: a ready WhatsApp message with the teacher trial link
 //   F11 Parche de estudio: link to the study groups
 //   F14 Cartel con tu QR: printable poster with the personal link
@@ -30,8 +31,6 @@ export default function GrowthProfile({ profile }) {
   const student = profile?.role === "student";
   const firstName = String(profile?.full_name ?? "").split(" ")[0];
   const [code, setCode] = useState(null);
-  const [refs, setRefs] = useState(null);
-  const [copied, setCopied] = useState(false);
   const [school, setSchool] = useState({ name: "", city: "" });
   const [schoolMsg, setSchoolMsg] = useState("");
   const [days, setDays] = useState("0,2,4");
@@ -47,7 +46,7 @@ export default function GrowthProfile({ profile }) {
 
   useEffect(() => {
     if (!profile) return;
-    myReferralCode().then((c) => { setCode(c); return myReferrals(); }).then(setRefs).catch(() => null);
+    myReferralCode().then(setCode).catch(() => null);
     mySchoolName().then((s) => s && setSchool({ name: s.name ?? "", city: s.city ?? "" }));
     if (student) certificateProgress().then(setCert).catch(() => null);
     if (pushSupported()) pushStatus().then(setPush).catch(() => null);
@@ -58,9 +57,7 @@ export default function GrowthProfile({ profile }) {
   const history = useMemo(() => loadHistory(), []);
   if (!profile) return null;
 
-  const link = code ? inviteLink(code) : "";
   const share = (via) => { try { localStorage.setItem("condor:invited", "1"); } catch { /* blocked */ } track(`share:${via}`, {}); };
-  const copy = () => navigator.clipboard?.writeText(link).then(() => { setCopied(true); share("copiar"); setTimeout(() => setCopied(false), 2000); });
 
   const saveSchool = async () => {
     try {
@@ -131,25 +128,7 @@ export default function GrowthProfile({ profile }) {
           <div className="gr-row" style={{ marginTop: 10 }}><a className="secondary" href={`../cartel/?ref=${p.code}`} target="_blank" rel="noreferrer">Cartel con tu QR</a><a className="link" href="../diagnostico-icfes/curso/" target="_blank" rel="noreferrer">Diagnóstico para tu grupo</a></div>
         </div>
       ))}
-      {code && (
-        <div className="card sp-card gr-invite">
-          <div className="section-head"><span className="label">Invita a tus amigos</span><span className="caption">Practicar acompañado rinde más</span></div>
-          <p className="caption">Cuando un amigo entra con tu enlace y responde 5 preguntas, los dos tienen <b>10 preguntas extra al día</b>. Si invitas a un profe y se une, son 20.</p>
-          <div className="gr-code"><code>{link.replace(/^https?:\/\//, "")}</code><button type="button" className="secondary small" onClick={copy}>{copied ? "Copiado" : "Copiar"}</button></div>
-          <div className="gr-row">
-            <a className="primary" href={whatsapp(inviteMessage(code, firstName))} target="_blank" rel="noreferrer" onClick={() => share("whatsapp-app")}>Invitar por WhatsApp</a>
-            <a className="secondary" href={`../cartel/?ref=${code}&de=${encodeURIComponent(firstName)}`} target="_blank" rel="noreferrer" onClick={() => share("cartel")}>Cartel con mi QR</a>
-          </div>
-          {refs && (
-            <div className="gr-kpis">
-              <span><b>{refs.invited ?? 0}</b><span className="caption">entraron</span></span>
-              <span><b>{refs.activated ?? 0}</b><span className="caption">ya practican</span></span>
-              <span><b>+{refs.bonus ?? 0}</b><span className="caption">preguntas extra hoy</span></span>
-            </div>
-          )}
-          {refs?.invited_by && <span className="caption">Llegaste invitado por {refs.invited_by}.</span>}
-        </div>
-      )}
+      {code && <InvitePanel profile={profile} />}
 
       {code && student && (
         <div className="card sp-card">
