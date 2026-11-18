@@ -244,9 +244,9 @@ export default function Home({ exam, slug, resumable, onContinue, onPractice, on
               <span className="caption">XP por día · <span className="muted">meta {goal.dailyXp}</span></span>
             </div>
             <svg className="week-chart" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" role="img" aria-label="XP de la semana frente a tu meta diaria">
-              {[h / 4, h / 2, (3 * h) / 4].map((y) => <line key={y} x1="0" x2={w} y1={y} y2={y} stroke="var(--line)" strokeWidth="1" />)}
-              <line x1="0" x2={w} y1={goalY} y2={goalY} stroke="var(--text-2)" strokeWidth="2" strokeDasharray="4 4" />
-              <polyline className="mine" points={weekly.slice(0, todayIndex + 1).map(pt).join(" ")} fill="none" stroke="var(--accent-ink)" strokeWidth="3" strokeLinejoin="round" />
+              {[h / 4, h / 2, (3 * h) / 4].map((y) => <line key={y} x1="0" x2={w} y1={y} y2={y} stroke="var(--line)" strokeWidth="1" vectorEffect="non-scaling-stroke" />)}
+              <line x1="0" x2={w} y1={goalY} y2={goalY} stroke="var(--text-2)" strokeWidth="2" strokeDasharray="4 4" vectorEffect="non-scaling-stroke" />
+              <polyline className="mine" points={weekly.slice(0, todayIndex + 1).map(pt).join(" ")} fill="none" stroke="var(--accent-ink)" strokeWidth="3" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
             </svg>
             <div className="week-axis">{DAYS.map((d, i) => <span key={d + i}>{d}</span>)}</div>
           </div>
