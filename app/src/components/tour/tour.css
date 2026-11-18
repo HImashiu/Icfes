@@ -133,3 +133,9 @@
 @keyframes fi-up { from { transform: translate(-50%, 40px); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .fi-box { animation: none; } }
 .ob-card.center .ob-bullets, .ob-card.final .ob-bullets, .ob-card.sheet .ob-bullets { text-align: left; justify-self: stretch; }
+/* First-visit invitation to the Inicio guide (WelcomeInvite.jsx): centered card, owl peeking over its top edge. */
+.ob-welcome { display: grid; place-items: center; padding: 16px; }
+.ob-welcome .ob-welcome-card { position: relative; width: min(400px, 100%); padding-top: 26px; overflow: visible; }
+.ob-welcome .ob-welcome-owl { position: absolute; top: -70px; left: 50%; transform: translateX(-50%); pointer-events: none; }
+.ob-welcome .ob-welcome-card { padding-top: 34px; }
+.ob-welcome .ob-welcome-foot { position: static; justify-content: center; margin: 4px 0 0; padding: 0; background: none; }
