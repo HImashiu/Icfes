@@ -827,7 +827,7 @@ export default function App() {
   // The run is named by its area, not by the booklet it was drawn from.
   const examTitle = selected ? scopeTitle : "";
   // The sidebar stays on every screen except the test; results and review belong to Practicar, reports to Perfil.
-  const navView = { home: "home", subjects: "subjects", setup: "setup", results: "setup", review: "setup", custom: "setup", history: "progress", progress: "progress", friends: "friends", profile: "profile", login: "profile", reports: "profile" }[view] ?? null;
+  const navView = { home: "home", subjects: "subjects", setup: "setup", results: "setup", review: "setup", custom: "setup", history: "progress", progress: "progress", friends: "home", profile: "profile", login: "profile", reports: "profile" }[view] ?? null;
   // A teacher or coordinator previewing the student app is not "in" the classes they teach: no course label.
   const staffView = signedIn && auth.profile?.role && auth.profile.role !== "student";
   const course = staffView ? null : studentCourses(classesFrom({ classes: myClasses, assignments: signedIn ? assigned.assignments : [] })).join(", ") || null;
@@ -903,6 +903,7 @@ export default function App() {
           assigned={signedIn ? assigned : null}
           onStartAssigned={startAssigned}
           condor={condor}
+          onFriends={() => go("friends")}
           realName={studentName}
           independent={signedIn && !auth.profile?.school_id}
           onLive={auth.status !== "demo" && auth.status !== "loading" ? () => { setLiveCode(""); setView("liveJoin"); } : null}

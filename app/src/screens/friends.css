@@ -180,3 +180,8 @@
 /* Inicio card */
 .fr-pulse { width: 100%; display: flex; gap: 12px; align-items: center; text-align: left; font: inherit; color: var(--text); cursor: pointer; grid-column: 1 / -1; }
 .fr-pulse > span { flex: 1; display: grid; gap: 2px; min-width: 0; }
+
+/* Amigos chip in Inicio's header (next to racha and XP) */
+.home-head .pill.sh-friends { border: 1.5px solid var(--accent); background: var(--accent-soft); color: var(--accent-ink); font: inherit; font-weight: 800; cursor: pointer; gap: 6px; }
+.home-head .pill.sh-friends b { font-size: 14px; }
+.home-head .pill.sh-friends:active { transform: translateY(1px); }
